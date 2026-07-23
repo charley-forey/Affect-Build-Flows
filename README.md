@@ -55,5 +55,6 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - `analysis/excel-tracker/` — **full teardown of the client's Monthly Progress Report workbook**: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and 14 verified defects
 - `powerbi/` — the build kit: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan
 - `resources/` — curated documentation and links, one folder per solution (Procore, Sage 100 Contractor, Fabric, Power BI, Power Automate, Outbuild, Ramp, ADP)
+- `call-prep/2026-07-23-warehouse-review.md` — agenda, findings summary, and the information request for the warehouse review call
 - `meeting-notes/` — notes from calls and meetings
 - `YY-000 PROJECT NAME_InternalReport_YYMMDD.xlsx` — the client's reporting template (the spec for D5)

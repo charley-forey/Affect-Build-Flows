@@ -5,31 +5,7 @@ connection, currently queried live from Power BI — bypasses the Lakehouse enti
 
 ---
 
-## ⚠️ Read this first: the circulated documentation link is for the wrong product
-
-The link shared on Jul 22 2026:
-
-```
-https://help-sage100.na.sage.com/2023/FLOR/index.htm#File_and_Table_Listings/...
-```
-
-This is the **File Layouts and Object Reference for Sage 100 ERP** (Standard / Advanced /
-Premium). It resolves, and it is real Sage documentation — it is just a **different
-product**.
-
-Affect runs **Sage 100 *Contractor***. Confirmed two ways: the engagement notes name it,
-and Procore's own connector page states the integration supports "Sage 100 Contractor®
-(Version 20.5 and higher)".
-
-The two products have **different schemas**. Writing an ingestion against the ERP file
-layouts would produce table and column names that do not exist in Affect's database.
-
-**Worth raising early on the call** — it determines which schema the ETL is written
-against, and it is a five-minute correction now versus a rewrite later.
-
----
-
-## Correct documentation
+## Documentation
 
 All links below verified to resolve (HTTP 200), Jul 2026.
 
