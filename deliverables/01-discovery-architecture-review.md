@@ -20,13 +20,13 @@ Understand and document Affect's current data environment well enough to validat
 N/A — assessment deliverable. Output informs D2–D4 designs.
 
 ## Tasks
-- [x] Prep deep-dive agenda (`call-prep/technical-deep-dive-rebecca.md`)
+- [x] Prep deep-dive agenda
 - [ ] Sign NDA, receive Fabric access
 - [ ] Deep-dive call with Rebecca — architecture + ETL walkthrough
-- [ ] Obtain and analyze Excel project tracker
+- [x] Obtain and analyze Excel project tracker — [`analysis/excel-tracker/`](../analysis/excel-tracker/)
 - [ ] Document current-state architecture (diagram + notes)
-- [ ] Field-by-field Excel classification
-- [ ] Data model recommendations
+- [x] Field-by-field Excel classification — [`field-inventory.md`](../analysis/excel-tracker/field-inventory.md)
+- [x] Data model recommendations — [`powerbi/semantic-model.md`](../powerbi/semantic-model.md)
 - [ ] Written Phase 1 findings + prioritized roadmap + scope of work for D2–D5
 - [ ] Review findings with Rebecca/Chris; get sign-off on next scope
 
@@ -36,11 +36,15 @@ N/A — assessment deliverable. Output informs D2–D4 designs.
 - Roadmap and scope of work for the next deliverables agreed
 
 ## Files & resources
-- `call-prep/technical-deep-dive-rebecca.md`
+- **[`analysis/excel-tracker/`](../analysis/excel-tracker/)** — full teardown of the reporting template: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, 14 verified defects, open questions
+- **[`powerbi/`](../powerbi/)** — semantic model, DAX library, report spec, theme, manual-input template, phased build plan
+- **[`resources/`](../resources/)** — curated documentation per solution
 - `meeting-notes/2026-07-21-discovery-meeting.md`
-- (add: architecture diagram, Excel field map, findings doc)
+- (add: architecture diagram, written findings summary for Affect)
 
 ## Log
 | Date | Note |
 |---|---|
 | 2026-07-21 | Discovery meeting held; NDA + Fabric access pending on Affect's side |
+| 2026-07-22 | Excel reporting template received and fully assessed. 14 defects found, 3 affecting reported numbers — notably 42% of the scorecard weight is disconnected from project reality. Power BI build kit drafted. |
+| 2026-07-23 | Data warehouse review with Rebecca (7:30am) |

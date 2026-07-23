@@ -33,7 +33,11 @@ Raw Lakehouse tables (D2, D3) → curated/gold tables via Fabric notebooks or SQ
 - Model documented; Rebecca can add a column/table following the pattern
 
 ## Files & resources
-- (add: ERD, mapping tables doc, notebook links)
+- **[`powerbi/semantic-model.md`](../powerbi/semantic-model.md)** — the star schema: 11 fact tables, 8 dimensions, 6 manual/narrative tables, 2 config tables, with grain, keys, and relationship cardinality
+- **[`powerbi/source-mapping.md`](../powerbi/source-mapping.md)** — every field → Procore endpoint / Sage table / manual input, including which pulls the Procore↔Sage connector makes redundant
+- **[`powerbi/manual-input-template.md`](../powerbi/manual-input-template.md)** — the home for the ~40% of fields that exist nowhere but Excel
+- **[`analysis/excel-tracker/field-inventory.md`](../analysis/excel-tracker/field-inventory.md)** — every tracker field classified input/formula/dropdown with its target source system
+- (add: ERD export, notebook links)
 
 ## Log
 | Date | Note |

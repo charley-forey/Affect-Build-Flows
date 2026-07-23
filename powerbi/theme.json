@@ -1,0 +1,246 @@
+{
+  "name": "Affect Group — Project Report",
+  "$schema": "https://raw.githubusercontent.com/microsoft/powerbi-desktop-samples/main/Report%20Theme%20JSON%20Schema/reportThemeSchema-2.114.json",
+
+  "_comment_palette": "dataColors are CATEGORICAL — series identity only. They are deliberately NOT the RAG colors. Status colors live in good/neutral/bad and in the dim_Status[HexColor] column, and are never reused for a series. Slots 1-2 (blue, orange) carry the RFI/Submittal chart and pass every validator check in both light and dark modes.",
+
+  "dataColors": [
+    "#2a78d6",
+    "#eb6834",
+    "#1baf7a",
+    "#eda100",
+    "#e87ba4",
+    "#008300",
+    "#4a3aa7",
+    "#e34948"
+  ],
+
+  "_comment_status": "RAG steps corrected from Affect's workbook values. Original #FFD800 amber measured 1.36:1 contrast on a light surface (effectively invisible) and #01AF00 green 2.87:1 — both below the 3:1 floor. These steps preserve the same semantics and read as the same colors, but all clear 3:1. See report-spec.md for the accompanying icon+label rule.",
+
+  "good": "#1B7F3B",
+  "neutral": "#B26A00",
+  "bad": "#C62828",
+  "minimum": "#C62828",
+  "center": "#B26A00",
+  "maximum": "#1B7F3B",
+  "null": "#6B6B6B",
+
+  "foreground": "#0b0b0b",
+  "foregroundNeutralSecondary": "#52514e",
+  "foregroundNeutralTertiary": "#8a8985",
+  "background": "#ffffff",
+  "backgroundLight": "#f5f5f3",
+  "backgroundNeutral": "#e8e8e4",
+  "tableAccent": "#2a78d6",
+  "secondaryBackground": "#f5f5f3",
+
+  "textClasses": {
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 16,
+      "color": "#0b0b0b"
+    },
+    "header": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12,
+      "color": "#0b0b0b"
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 10,
+      "color": "#52514e"
+    },
+    "callout": {
+      "fontFace": "Segoe UI Light",
+      "fontSize": 36,
+      "color": "#0b0b0b"
+    }
+  },
+
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{ "show": true, "color": { "solid": { "color": "#ffffff" } }, "transparency": 0 }],
+        "border": [{ "show": true, "color": { "solid": { "color": "#e8e8e4" } }, "radius": 6 }],
+        "dropShadow": [{ "show": false }],
+        "visualHeader": [{ "show": true, "background": { "solid": { "color": "#ffffff" } }, "transparency": 100 }],
+        "title": [{
+          "show": true,
+          "fontColor": { "solid": { "color": "#0b0b0b" } },
+          "fontFamily": "Segoe UI Semibold",
+          "fontSize": 12,
+          "alignment": "left",
+          "background": { "solid": { "color": "#ffffff" } }
+        }],
+        "categoryAxis": [{
+          "showAxisTitle": false,
+          "labelColor": { "solid": { "color": "#52514e" } },
+          "fontSize": 9,
+          "gridlineShow": false
+        }],
+        "valueAxis": [{
+          "showAxisTitle": false,
+          "labelColor": { "solid": { "color": "#52514e" } },
+          "fontSize": 9,
+          "gridlineShow": true,
+          "gridlineColor": { "solid": { "color": "#eeeeea" } },
+          "gridlineThickness": 1,
+          "gridlineStyle": "solid"
+        }],
+        "legend": [{
+          "show": true,
+          "position": "TopLeft",
+          "showTitle": false,
+          "labelColor": { "solid": { "color": "#52514e" } },
+          "fontSize": 9
+        }],
+        "labels": [{
+          "show": false,
+          "color": { "solid": { "color": "#52514e" } },
+          "fontSize": 9
+        }]
+      }
+    },
+
+    "barChart": {
+      "*": {
+        "dataPoint": [{ "fill": { "solid": { "color": "#2a78d6" } } }],
+        "categoryAxis": [{ "gridlineShow": false }],
+        "valueAxis": [{ "gridlineShow": true }]
+      }
+    },
+
+    "clusteredBarChart": {
+      "*": {
+        "_comment": "The Submittals & RFI chart — the only visual carried over from the Excel. Two series, slots 1 and 2.",
+        "categoryAxis": [{ "gridlineShow": false, "innerPadding": 25 }],
+        "labels": [{ "show": true, "fontSize": 9, "color": { "solid": { "color": "#52514e" } } }]
+      }
+    },
+
+    "lineChart": {
+      "*": {
+        "lineStyles": [{ "strokeWidth": 2, "showMarker": true, "markerSize": 4 }],
+        "valueAxis": [{ "gridlineShow": true }],
+        "categoryAxis": [{ "gridlineShow": false }]
+      }
+    },
+
+    "card": {
+      "*": {
+        "labels": [{
+          "color": { "solid": { "color": "#0b0b0b" } },
+          "fontSize": 28,
+          "fontFamily": "Segoe UI Light"
+        }],
+        "categoryLabels": [{
+          "show": true,
+          "color": { "solid": { "color": "#52514e" } },
+          "fontSize": 9,
+          "fontFamily": "Segoe UI"
+        }],
+        "background": [{ "show": true, "color": { "solid": { "color": "#ffffff" } } }],
+        "border": [{ "show": true, "color": { "solid": { "color": "#e8e8e4" } }, "radius": 6 }]
+      }
+    },
+
+    "multiRowCard": {
+      "*": {
+        "dataLabels": [{ "color": { "solid": { "color": "#0b0b0b" } }, "fontSize": 14 }],
+        "categoryLabels": [{ "color": { "solid": { "color": "#52514e" } }, "fontSize": 9 }],
+        "cardTitle": [{ "color": { "solid": { "color": "#0b0b0b" } }, "fontSize": 11 }]
+      }
+    },
+
+    "kpi": {
+      "*": {
+        "indicator": [{ "fontSize": 28, "fontFamily": "Segoe UI Light" }],
+        "trendline": [{ "show": true }],
+        "goals": [{ "show": true, "label": "vs last month" }]
+      }
+    },
+
+    "tableEx": {
+      "*": {
+        "grid": [{
+          "gridVertical": false,
+          "gridHorizontal": true,
+          "gridHorizontalColor": { "solid": { "color": "#eeeeea" } },
+          "gridHorizontalWeight": 1,
+          "rowPadding": 4,
+          "outlineColor": { "solid": { "color": "#e8e8e4" } },
+          "outlineWeight": 1
+        }],
+        "columnHeaders": [{
+          "fontColor": { "solid": { "color": "#0b0b0b" } },
+          "backColor": { "solid": { "color": "#f5f5f3" } },
+          "fontFamily": "Segoe UI Semibold",
+          "fontSize": 9,
+          "autoSizeColumnWidth": false,
+          "wordWrap": true
+        }],
+        "values": [{
+          "fontColor": { "solid": { "color": "#0b0b0b" } },
+          "backColor": { "solid": { "color": "#ffffff" } },
+          "backColorSecondary": { "solid": { "color": "#fbfbfa" } },
+          "fontSize": 9,
+          "wordWrap": true
+        }],
+        "total": [{
+          "fontColor": { "solid": { "color": "#0b0b0b" } },
+          "backColor": { "solid": { "color": "#f5f5f3" } },
+          "fontFamily": "Segoe UI Semibold",
+          "fontSize": 9
+        }]
+      }
+    },
+
+    "pivotTable": {
+      "*": {
+        "grid": [{
+          "gridVertical": false,
+          "gridHorizontal": true,
+          "gridHorizontalColor": { "solid": { "color": "#eeeeea" } },
+          "rowPadding": 4
+        }],
+        "columnHeaders": [{
+          "fontColor": { "solid": { "color": "#0b0b0b" } },
+          "backColor": { "solid": { "color": "#f5f5f3" } },
+          "fontFamily": "Segoe UI Semibold",
+          "fontSize": 9
+        }],
+        "values": [{ "fontSize": 9, "fontColor": { "solid": { "color": "#0b0b0b" } } }]
+      }
+    },
+
+    "slicer": {
+      "*": {
+        "general": [{ "outlineColor": { "solid": { "color": "#e8e8e4" } }, "outlineWeight": 1 }],
+        "header": [{ "show": true, "fontColor": { "solid": { "color": "#52514e" } }, "fontSize": 9 }],
+        "items": [{ "fontColor": { "solid": { "color": "#0b0b0b" } }, "fontSize": 9 }],
+        "selection": [{ "singleSelect": false }]
+      }
+    },
+
+    "textbox": {
+      "*": {
+        "background": [{ "show": false }],
+        "border": [{ "show": false }]
+      }
+    },
+
+    "shape": {
+      "*": {
+        "fill": [{ "show": false }],
+        "line": [{ "show": true, "lineColor": { "solid": { "color": "#e8e8e4" } }, "weight": 1 }]
+      }
+    },
+
+    "page": {
+      "*": {
+        "background": [{ "color": { "solid": { "color": "#f5f5f3" } }, "transparency": 0 }],
+        "outspace": [{ "color": { "solid": { "color": "#e8e8e4" } }, "transparency": 0 }]
+      }
+    }
+  }
+}

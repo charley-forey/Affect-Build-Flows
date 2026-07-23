@@ -1,0 +1,630 @@
+// =============================================================================
+// Affect Group — Monthly Progress Report
+// DAX measure library
+//
+// Model:      semantic-model.md
+// Derivation: ../analysis/excel-tracker/calculations.md
+// Defects:    ../analysis/excel-tracker/defects-and-questions.md
+//
+// Every measure below is traceable to a specific Excel cell, noted in comments.
+// Where the Excel formula is defective, the DAX implements the CORRECTED logic
+// and the comment says so explicitly.
+//
+// Place all measures in a dedicated `_Measures` table.
+// =============================================================================
+
+
+// -----------------------------------------------------------------------------
+// 1. SCHEDULE
+// -----------------------------------------------------------------------------
+
+// Project-level rollups. Excel: SCHEDULE!D4:K4 (=MIN of starts, =MAX of finishes)
+Contract Start =
+MIN ( fct_Milestone[ContractStart] )
+
+Contract Finish =
+MAX ( fct_Milestone[ContractFinish] )
+
+Baseline Start =
+MIN ( fct_Milestone[BaselineStart] )
+
+Baseline Finish =
+MAX ( fct_Milestone[BaselineFinish] )
+
+Current Start =
+MIN ( fct_Milestone[CurrentStart] )
+
+Current Finish =
+MAX ( fct_Milestone[CurrentFinish] )
+
+Actual Start =
+MIN ( fct_Milestone[ActualStart] )
+
+Actual Finish =
+MAX ( fct_Milestone[ActualFinish] )
+
+
+// Excel: DASHBOARD!L16 — days the current forecast finishes past the CONTRACT date.
+// Stays numeric. The Excel returned the text "0 days" on zero, which is defect #1b.
+Completion Variance vs Contract =
+DATEDIFF ( [Contract Finish], [Current Finish], DAY )
+
+// Excel: DASHBOARD!M16 — same, vs BASELINE. This is the scorecard driver.
+Completion Variance vs Baseline =
+DATEDIFF ( [Baseline Finish], [Current Finish], DAY )
+
+
+// Excel: DASHBOARD!L19
+//   =COUNTIF(Table5[START VARIANCE],">=1")/COUNT(Table5[ACTUAL START])
+// Denominator counts only started milestones (Excel's COUNT ignored the "NA" text).
+// Returns a FRACTION (0.4 = 40%) — the scorecard must compare against 0.05, not 5.
+Critical Missed Starts % =
+VAR Started =
+    FILTER ( fct_Milestone, NOT ISBLANK ( fct_Milestone[ActualStart] ) )
+RETURN
+    DIVIDE (
+        COUNTROWS ( FILTER ( Started, fct_Milestone[StartVariance] >= 1 ) ),
+        COUNTROWS ( Started )
+    )
+
+
+// Excel: DASHBOARD!L21
+//   =IF(M12>TODAY(),0,((TODAY()-M12))/(O12-M12))
+// FIX (defect #5): anchored to the selected reporting date, not the system clock,
+// so a saved/exported report reports the same number forever.
+Project % Complete (Time) =
+VAR AsOf     = MAX ( dim_Date[Date] )
+VAR StartDt  = [Current Start]
+VAR FinishDt = [Current Finish]
+RETURN
+    IF (
+        StartDt > AsOf,
+        0,
+        DIVIDE ( DATEDIFF ( StartDt, AsOf, DAY ), DATEDIFF ( StartDt, FinishDt, DAY ) )
+    )
+
+// RECOMMENDED ALTERNATIVE — progress by cost put in place rather than calendar days.
+// See open question #6. Requires fct_BudgetLine.
+Project % Complete (Cost) =
+DIVIDE ( [Spent To Date], [Current Budget] )
+
+
+// Excel: DASHBOARD!O21 — is the project behind its own baseline pace?
+// The sharpest calculation in the workbook: compares actual pace to baseline pace
+// rather than to a fixed threshold.
+Baseline Pace =
+VAR AsOf = MAX ( dim_Date[Date] )
+RETURN
+    DIVIDE (
+        DATEDIFF ( [Baseline Start], AsOf, DAY ),
+        DATEDIFF ( [Baseline Start], [Baseline Finish], DAY )
+    )
+
+Schedule Slippage Flag =
+IF (
+    [Project % Complete (Time)] < [Baseline Pace],
+    "Warning — slippage, provide recovery plan"
+)
+
+// Excel: DASHBOARD!O16 and O19
+Completion Variance Flag =
+IF ( [Completion Variance vs Contract] > 0, "Warning — provide Recovery Plan" )
+
+Missed Starts Flag =
+IF ( [Critical Missed Starts %] > 0.2, "Warning — provide Recovery Plan" )
+
+
+// Excel: SCHEDULE!E22/G22/I22/K22 — MTM change against the hand-pasted row 21.
+// The manual paste-special disappears; DATEADD does it.
+Substantial Completion MoM Days =
+VAR Prior =
+    CALCULATE ( [Contract Finish], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN
+    IF ( NOT ISBLANK ( Prior ), DATEDIFF ( Prior, [Contract Finish], DAY ) )
+
+
+// Excel: SCHEDULE!Table14 / DASHBOARD!P18:T22 — capped at 5 subs. No cap here.
+Avg Daily Manpower =
+AVERAGEX (
+    VALUES ( fct_ManpowerDaily[Date] ),
+    CALCULATE ( SUM ( fct_ManpowerDaily[WorkerCount] ) )
+)
+
+// The Excel's literal "Avg Daily over past 30 days", now over any selected window.
+Avg Daily Manpower L30D =
+CALCULATE (
+    [Avg Daily Manpower],
+    DATESINPERIOD ( dim_Date[Date], MAX ( dim_Date[Date] ), -30, DAY )
+)
+
+
+// Data-quality surface for defect #6 — milestones where start is after finish.
+Milestones With Date Inversion =
+CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[HasDateInversion] = TRUE () )
+
+
+// -----------------------------------------------------------------------------
+// 2. SAFETY
+// -----------------------------------------------------------------------------
+
+// Excel: DASHBOARD!AI48 / AI51 / AI54 — INDEX/MATCH on AU4.
+// Filter context from dim_Date replaces the whole INDEX/MATCH mechanic.
+Hours Worked =
+SUM ( fct_SafetyMonthly[HoursWorked] )
+
+Recordable Incidents =
+SUM ( fct_SafetyMonthly[RecordableIncidents] )
+
+Orientations =
+SUM ( fct_SafetyMonthly[Orientations] )
+
+
+// Excel: SAFETY!D34:F34 — the "Total to Date" tiles.
+Hours Worked To Date =
+CALCULATE ( [Hours Worked], ALL ( dim_Date ) )
+
+Recordable Incidents To Date =
+CALCULATE ( [Recordable Incidents], ALL ( dim_Date ) )
+
+Orientations To Date =
+CALCULATE ( [Orientations], ALL ( dim_Date ) )
+
+
+// MoM deltas. Excel glued these into a text string with the value (defect #8) and
+// divided without a guard, so any month after a zero month gave #DIV/0!.
+// DIVIDE returns blank instead — which matters on every new project.
+Hours Worked MoM % =
+VAR Prior = CALCULATE ( [Hours Worked], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN DIVIDE ( [Hours Worked] - Prior, Prior )
+
+Orientations MoM % =
+VAR Prior = CALCULATE ( [Orientations], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN DIVIDE ( [Orientations] - Prior, Prior )
+
+
+// Excel: SAFETY!L27 -> DASHBOARD!AI57. Open violations only.
+Open Violation Value =
+CALCULATE (
+    SUM ( fct_Violation[Value] ),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "OPEN" )
+)
+
+// Excel: DASHBOARD!AM57 = COUNTIF(SAFETY!L3:L26,">1")
+// FIX (defect #3): the Excel counted violations worth more than $1, not violations
+// that are open — so a $0 open violation (stop-work order, unfined citation) was
+// invisible. Counted by STATUS here.
+Open Violation Count =
+CALCULATE (
+    COUNTROWS ( fct_Violation ),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "OPEN" )
+)
+
+
+// Standard industry safety rates — not in the Excel, but free once hours and
+// incidents are in the model. Worth offering to Affect.
+TRIR =
+DIVIDE ( [Recordable Incidents To Date] * 200000, [Hours Worked To Date] )
+
+
+// -----------------------------------------------------------------------------
+// 3. QUALITY
+// -----------------------------------------------------------------------------
+
+// Excel: DASHBOARD!K64 / O64 (this period) and M64 / P64 (to date).
+Observations =
+SUM ( fct_QualityMonthly[Observations] )
+
+Punchlist Items =
+SUM ( fct_QualityMonthly[PunchlistItems] )
+
+Observations To Date =
+CALCULATE ( [Observations], ALL ( dim_Date ) )
+
+Punchlist Items To Date =
+CALCULATE ( [Punchlist Items], ALL ( dim_Date ) )
+
+
+// Excel: QUALITY!D38:E39 were TYPED IN BY HAND. Computed here.
+// The IF(...=0,"N/A",...) wrapper is dropped — a blank average is blank, and the
+// visual formats it. Converting a real zero to text is what caused defect #1b.
+Avg Days Past Due =
+AVERAGEX (
+    FILTER ( fct_QualityItem, NOT ISBLANK ( fct_QualityItem[DueDate] ) ),
+    fct_QualityItem[DaysPastDue]
+)
+
+Avg Days To Close =
+AVERAGEX (
+    FILTER ( fct_QualityItem, NOT ISBLANK ( fct_QualityItem[ClosedDate] ) ),
+    fct_QualityItem[DaysToClose]
+)
+
+Avg Days Past Due (Observations) =
+CALCULATE ( [Avg Days Past Due], fct_QualityItem[ItemType] = "Observation" )
+
+Avg Days To Close (Observations) =
+CALCULATE ( [Avg Days To Close], fct_QualityItem[ItemType] = "Observation" )
+
+Avg Days Past Due (Punchlist) =
+CALCULATE ( [Avg Days Past Due], fct_QualityItem[ItemType] = "Punchlist" )
+
+Avg Days To Close (Punchlist) =
+CALCULATE ( [Avg Days To Close], fct_QualityItem[ItemType] = "Punchlist" )
+
+
+// Excel: QUALITY!D40:E44 — "MAIN OFFENDER 1-5", typed by hand.
+// Now ranked automatically. Use with a table visual on dim_Vendor.
+Open Quality Items =
+CALCULATE (
+    COUNTROWS ( fct_QualityItem ),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] IN { "OPEN", "NCR", "REJECTED" } )
+)
+
+Offender Rank =
+IF (
+    NOT ISBLANK ( [Open Quality Items] ),
+    RANKX ( ALL ( dim_Vendor[VendorName] ), [Open Quality Items], , DESC, DENSE )
+)
+
+
+// -----------------------------------------------------------------------------
+// 4. RFIs & SUBMITTALS
+// -----------------------------------------------------------------------------
+
+// Excel: SUBMITTALS & RFI!C:D — the per-trade counts behind the only chart.
+Open Critical RFIs =
+CALCULATE (
+    COUNTROWS ( fct_RfiSubmittal ),
+    fct_RfiSubmittal[ItemType] = "RFI",
+    fct_RfiSubmittal[IsCritical] = TRUE (),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "OPEN" )
+)
+
+Open Critical Submittals =
+CALCULATE (
+    COUNTROWS ( fct_RfiSubmittal ),
+    fct_RfiSubmittal[ItemType] = "Submittal",
+    fct_RfiSubmittal[IsCritical] = TRUE (),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "OPEN" )
+)
+
+// Not in the Excel — available free once the items themselves are stored.
+Avg RFI Days Open =
+CALCULATE (
+    AVERAGE ( fct_RfiSubmittal[DaysOpen] ),
+    fct_RfiSubmittal[ItemType] = "RFI"
+)
+
+
+// -----------------------------------------------------------------------------
+// 5. FINANCIAL
+// -----------------------------------------------------------------------------
+
+Original Contract    = SUM ( fct_FinancialPeriod[OriginalContract] )
+Current Contract     = SUM ( fct_FinancialPeriod[CurrentContract] )
+Pending Change Orders= SUM ( fct_FinancialPeriod[PendingChangeOrders] )
+Contingency Remaining= SUM ( fct_FinancialPeriod[ContingencyRemaining] )
+Total Billed         = SUM ( fct_FinancialPeriod[TotalBilled] )
+Billed This Period   = SUM ( fct_FinancialPeriod[BilledThisPeriod] )
+Total Paid           = SUM ( fct_FinancialPeriod[TotalPaid] )
+Remaining Balance    = SUM ( fct_FinancialPeriod[RemainingBalance] )
+Retainage            = SUM ( fct_FinancialPeriod[Retainage] )
+Cost To Complete     = SUM ( fct_FinancialPeriod[CostToComplete] )
+AR Outstanding       = SUM ( fct_FinancialPeriod[ArOutstanding] )
+Aging Balance        = SUM ( fct_FinancialPeriod[AgingBalance] )
+OT Hours             = SUM ( fct_FinancialPeriod[OtHours] )
+
+
+// Excel: DASHBOARD!AT11 = (AT10-AT9)/AT9
+Contract Growth % =
+DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )
+
+
+// Excel: DASHBOARD!AT14:AT19 rendered each of these as
+//   TEXT(amount,"$#,##0.0") & " / " & TEXT(amount/contract,"0.0%")
+// One dead text string per tile (defect #8). Split into numeric pairs: same card
+// visual, but now chartable, sortable, and trendable.
+Billed This Period %  = DIVIDE ( [Billed This Period], [Current Contract] )
+Total Billed %        = DIVIDE ( [Total Billed],       [Current Contract] )
+Total Paid %          = DIVIDE ( [Total Paid],         [Current Contract] )
+Remaining Balance %   = DIVIDE ( [Remaining Balance],  [Current Contract] )
+Retainage %           = DIVIDE ( [Retainage],          [Current Contract] )
+Cost To Complete %    = DIVIDE ( [Cost To Complete],   [Current Contract] )
+
+
+// Excel: FINANCIALS!E4:E15 — the "& DIF" column, driven by a hand-keyed
+// LAST PERIOD column. DATEADD replaces the re-keying.
+Current Contract MoM % =
+VAR Prior = CALCULATE ( [Current Contract], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN DIVIDE ( [Current Contract] - Prior, Prior )
+
+Total Billed MoM % =
+VAR Prior = CALCULATE ( [Total Billed], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN DIVIDE ( [Total Billed] - Prior, Prior )
+
+Pending CO MoM % =
+VAR Prior = CALCULATE ( [Pending Change Orders], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN DIVIDE ( [Pending Change Orders] - Prior, Prior )
+
+OT Hours MoM % =
+VAR Prior = CALCULATE ( [OT Hours], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN DIVIDE ( [OT Hours] - Prior, Prior )
+
+OT Hours To Date =
+CALCULATE ( [OT Hours], ALL ( dim_Date ) )
+
+
+// Excel: FINANCIALS!F56 = AVERAGE of (paid date - sent date)
+Avg Days To Payment =
+AVERAGEX (
+    FILTER ( fct_Invoice, NOT ISBLANK ( fct_Invoice[PaidDate] ) ),
+    DATEDIFF ( fct_Invoice[SentDate], fct_Invoice[PaidDate], DAY )
+)
+
+
+// Excel: FINANCIALS!C6 — typed in by hand. Derived here.
+Age Of Oldest Unapproved CO =
+VAR AsOf = MAX ( dim_Date[Date] )
+RETURN
+    MAXX (
+        FILTER ( fct_ChangeOrder, ISBLANK ( fct_ChangeOrder[ApprovedDate] ) ),
+        DATEDIFF ( fct_ChangeOrder[CreatedDate], AsOf, DAY )
+    )
+
+
+// Excel: FINANCIALS!D62 = D61/D60
+Trade Costs Budgeted  = SUM ( fct_FinancialPeriod[TradeCostsBudgeted] )
+Trade Costs Committed = SUM ( fct_FinancialPeriod[TradeCostsCommitted] )
+
+Percent Bought Out =
+DIVIDE ( [Trade Costs Committed], [Trade Costs Budgeted] )
+
+
+// Excel: FINANCIALS!C8 was a DROPDOWN — a human judgment. But the formula was
+// written out in the note at G8:
+//   (Cash Collected + AR Outstanding) / Remaining Forecasted Cost
+// It is fully computable from Sage. Making it a measure removes one of three
+// subjective inputs to the scorecard. See open question #7.
+Cash Position % =
+DIVIDE ( [Total Paid] + [AR Outstanding], [Cost To Complete] )
+
+Cash Position Band =
+SWITCH (
+    TRUE (),
+    [Cash Position %] >= 1,   "Good",
+    [Cash Position %] >= 0.5, "Watch",
+    "Bad"
+)
+
+
+// Budget lines. Excel: FINANCIALS!Table11011 (only 2 rows — defect #13).
+Current Budget  = SUM ( fct_BudgetLine[BudgetAmount] )
+Forecast Amount = SUM ( fct_BudgetLine[ForecastAmount] )
+Spent To Date   = SUM ( fct_BudgetLine[SpentToDate] )
+
+Budget Variance % =
+DIVIDE ( [Current Budget] - [Spent To Date], [Current Budget] )
+
+// Excel: FINANCIALS!F19:F20 was a hand-picked dropdown, even though the rule was
+// written out two columns away at H18:J21. Derived here, so the two can no longer
+// disagree (they currently do — see dashboard-map.md §6).
+Budget Status =
+SWITCH (
+    TRUE (),
+    ISBLANK ( [Current Budget] ), BLANK (),
+    [Budget Variance %] >= 0,     "On Track",
+    [Budget Variance %] >= -0.05, "Watch",
+    "Over Budget"
+)
+
+Spent To Date % =
+DIVIDE ( [Spent To Date], [Current Budget] )
+
+
+// -----------------------------------------------------------------------------
+// 6. SCORECARD
+//
+// Nine weighted categories, scored 3 / 2 / 0, normalised by dividing by 3.
+// Excel: SCORECARD CALC!E4:E28 (band lookup), G4:G30 (weighting), G31 (total).
+//
+// Weights are read from dim_ScorecardWeight so Affect can retune without a model
+// change. Three of the nine bands are CORRECTED here — see defect #1.
+// -----------------------------------------------------------------------------
+
+Weight AR            = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Accounts Receivable" )
+Weight Profitability = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Profitability" )
+Weight Cash          = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Cash Position" )
+Weight CO            = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Change Orders" )
+Weight Safety        = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Safety Incidents" )
+Weight Schedule      = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Schedule Performance" )
+Weight Completion    = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Completion Variance" )
+Weight Observations  = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Observations" )
+Weight DailyReports  = CALCULATE ( MAX ( dim_ScorecardWeight[Weight] ), dim_ScorecardWeight[CategoryName] = "Daily Reports" )
+
+
+// FIX (defect #1c): the Excel read DASHBOARD!AT25 — the aging BALANCE (a dollar
+// amount) — against bands that are plainly DAY COUNTS. Driven by avg days to
+// payment here, which is what the category name implies.
+Score - Accounts Receivable =
+SWITCH ( TRUE (),
+    ISBLANK ( [Avg Days To Payment] ), BLANK (),
+    [Avg Days To Payment] < 45,  3,
+    [Avg Days To Payment] <= 60, 2,
+    0
+)
+
+Score - Profitability =
+VAR S = SELECTEDVALUE ( fct_FinancialPeriod[ProfitabilityStatusKey] )
+RETURN
+    SWITCH (
+        LOOKUPVALUE ( dim_Status[Code], dim_Status[StatusKey], S ),
+        "IN_RANGE",      3,
+        "OUT_WITH_PLAN", 2,
+        "MARGIN_FADE",   0,
+        BLANK ()
+    )
+
+Score - Cash Position =
+SWITCH ( TRUE (),
+    ISBLANK ( [Cash Position %] ), BLANK (),
+    [Cash Position %] >= 1,   3,
+    [Cash Position %] >= 0.5, 2,
+    0
+)
+
+Score - Change Orders =
+SWITCH ( TRUE (),
+    ISBLANK ( [Age Of Oldest Unapproved CO] ), 3,   // nothing unapproved = best case
+    [Age Of Oldest Unapproved CO] <= 45, 3,
+    [Age Of Oldest Unapproved CO] <= 60, 2,
+    0
+)
+
+Score - Safety Incidents =
+SWITCH ( TRUE (),
+    [Recordable Incidents] = 0, 3,
+    [Recordable Incidents] <= 1, 2,
+    0
+)
+
+// FIX (defect #1a): the Excel compared this FRACTION (0.4 = 40%) against the
+// integers 5 / 9 / 10, so `0.4 <= 5` was always TRUE and this 15%-weighted
+// category ALWAYS awarded full marks — even at 100% missed starts.
+// Bands expressed as fractions here. Note DASHBOARD!O19 already used 0.2
+// correctly, so the intent was never in doubt.
+Score - Schedule Performance =
+SWITCH ( TRUE (),
+    ISBLANK ( [Critical Missed Starts %] ), BLANK (),
+    [Critical Missed Starts %] < 0.05, 3,
+    [Critical Missed Starts %] < 0.10, 2,
+    0
+)
+
+// FIX (defect #1b): the Excel's driver cell returned the TEXT "0 days" when the
+// variance was zero. Excel ranks text above every number, so all three band tests
+// failed and a project finishing exactly on baseline — the best outcome — scored
+// 0 out of 3 on a 15%-weighted category. Numeric throughout here.
+Score - Completion Variance =
+SWITCH ( TRUE (),
+    ISBLANK ( [Completion Variance vs Baseline] ), BLANK (),
+    [Completion Variance vs Baseline] <= 0,  3,
+    [Completion Variance vs Baseline] <= 14, 2,
+    0
+)
+
+Score - Observations =
+SWITCH ( TRUE (),
+    ISBLANK ( [Avg Days To Close (Observations)] ), BLANK (),
+    [Avg Days To Close (Observations)] < 5,   3,
+    [Avg Days To Close (Observations)] <= 10, 2,
+    0
+)
+
+// Excel: SCORECARD CALC!E28 — manual input. Derivable from Procore daily logs
+// once we know how Affect defines "complete and distributed same day".
+Score - Daily Reports =
+VAR Incomplete = [Daily Reports Not Same Day]
+RETURN
+    SWITCH ( TRUE (),
+        ISBLANK ( Incomplete ), BLANK (),
+        Incomplete < 2, 3,
+        Incomplete <= 4, 2,
+        0
+    )
+
+Daily Reports Not Same Day =
+CALCULATE (
+    COUNTROWS ( fct_DailyLog ),
+    fct_DailyLog[DistributedSameDay] = FALSE ()
+)
+
+
+// Excel: SCORECARD CALC!G4:G30 = ((score * weight) / 3), G31 = SUM
+// Verified: recomputing this from the workbook's own cached values reproduces
+// G31 = 0.59 exactly. See calculations.md section 6c.
+Project Scorecard =
+DIVIDE (
+      COALESCE ( [Score - Accounts Receivable],  0 ) * [Weight AR]
+    + COALESCE ( [Score - Profitability],        0 ) * [Weight Profitability]
+    + COALESCE ( [Score - Cash Position],        0 ) * [Weight Cash]
+    + COALESCE ( [Score - Change Orders],        0 ) * [Weight CO]
+    + COALESCE ( [Score - Safety Incidents],     0 ) * [Weight Safety]
+    + COALESCE ( [Score - Schedule Performance], 0 ) * [Weight Schedule]
+    + COALESCE ( [Score - Completion Variance],  0 ) * [Weight Completion]
+    + COALESCE ( [Score - Observations],         0 ) * [Weight Observations]
+    + COALESCE ( [Score - Daily Reports],        0 ) * [Weight DailyReports],
+    3
+)
+
+// Excel: DASHBOARD conditional formatting on C65:G67, bands 0-0.5 / 0.5-0.75 / 0.75-1.
+// The Excel bands overlapped at the boundaries; half-open intervals here.
+Scorecard Band =
+SWITCH ( TRUE (),
+    ISBLANK ( [Project Scorecard] ), BLANK (),
+    [Project Scorecard] >= 0.75, "Good",
+    [Project Scorecard] >= 0.5,  "Watch",
+    "At Risk"
+)
+
+Scorecard Color =
+SWITCH ( [Scorecard Band], "Good", "#01AF00", "Watch", "#FFD800", "At Risk", "#DB1918" )
+
+// Not in the Excel — the report has no history. Free once dim_Date exists.
+Project Scorecard MoM =
+VAR Prior = CALCULATE ( [Project Scorecard], DATEADD ( dim_Date[Date], -1, MONTH ) )
+RETURN [Project Scorecard] - Prior
+
+
+// Excel: SCORECARD CALC!C42 = SUM(C36:C41)/(COUNTA(B36:B41)*5)
+// COUNTA on the question labels means a blank answer scores zero rather than
+// being excluded — faithful to the original.
+Client Satisfaction =
+DIVIDE ( SUM ( man_Survey[Score] ), COUNTROWS ( man_Survey ) * 5 )
+
+Client Satisfaction Band =
+SWITCH ( TRUE (),
+    ISBLANK ( [Client Satisfaction] ), BLANK (),
+    [Client Satisfaction] >= 0.75, "Good",
+    [Client Satisfaction] >= 0.5,  "Watch",
+    "At Risk"
+)
+
+
+// -----------------------------------------------------------------------------
+// 7. NARRATIVE COUNTS (for card headers on the manual tables)
+// -----------------------------------------------------------------------------
+
+Open Risks =
+CALCULATE (
+    COUNTROWS ( man_Risks ),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] <> "COMPLETE" )
+)
+
+High Impact Risks =
+CALCULATE (
+    COUNTROWS ( man_Risks ),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "HIGH" )
+)
+
+Priority Items At Risk =
+CALCULATE (
+    COUNTROWS ( man_PriorityItems ),
+    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "AT_RISK" )
+)
+
+
+// -----------------------------------------------------------------------------
+// 8. HOUSEKEEPING
+// -----------------------------------------------------------------------------
+
+Report Month Label =
+FORMAT ( MAX ( dim_Date[MonthStart] ), "MMMM YYYY" )
+
+Last Refresh =
+"Data as of " & FORMAT ( MAX ( dim_Date[Date] ), "MMM d, yyyy" )
+
+// Surfaces on a hidden diagnostics page. The Excel had no equivalent, which is
+// exactly how the inverted milestone dates and $200M placeholder buyout survived.
+Data Quality Issues =
+[Milestones With Date Inversion]
+    + CALCULATE ( COUNTROWS ( fct_Milestone ), ISBLANK ( fct_Milestone[BaselineFinish] ) )

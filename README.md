@@ -20,8 +20,10 @@ Home base for the Affect Group consulting engagement (construction data & automa
 
 - ✅ Intro call with Rebecca (Jul 15)
 - ✅ In-person discovery meeting with wider team (Tue Jul 21, 8:30am at their office)
+- ✅ Excel project reporting template received (Jul 22) and **fully assessed** — see `analysis/excel-tracker/`
+- ✅ Power BI build kit drafted — semantic model, DAX, report spec, theme (`powerbi/`)
+- 📅 **Data warehouse review with Rebecca — Thu Jul 23, 7:30–8:30am**
 - ⏳ Affect working internally on **Fabric access + NDA**
-- ⏳ Scheduling **technical deep dive with Rebecca** to review the data warehouse — I proposed Thu/Fri this week, 7–9:30am or 4:30–7pm (email sent Jul 21, 9:57pm)
 
 ## Engagement structure
 
@@ -50,5 +52,8 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - `dashboard.md` — **start here**: rollup of all deliverables, integration status, blockers, hours summary
 - `hours-log.md` — append-only time ledger (billing/validation source of truth) + invoicing record
 - `deliverables/` — one file per deliverable (D1–D7): objective, scope, key data, integration approach, tasks, acceptance criteria, files. New deliverables copy `_template.md`.
-- `meeting-notes/2026-07-21-discovery-meeting.md` — notes from the in-person discovery meeting
-- `call-prep/technical-deep-dive-rebecca.md` — agenda & question checklist for the upcoming warehouse review call
+- `analysis/excel-tracker/` — **full teardown of the client's Monthly Progress Report workbook**: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and 14 verified defects
+- `powerbi/` — the build kit: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan
+- `resources/` — curated documentation and links, one folder per solution (Procore, Sage 100 Contractor, Fabric, Power BI, Power Automate, Outbuild, Ramp, ADP)
+- `meeting-notes/` — notes from calls and meetings
+- `YY-000 PROJECT NAME_InternalReport_YYMMDD.xlsx` — the client's reporting template (the spec for D5)

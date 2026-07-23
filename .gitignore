@@ -23,3 +23,8 @@ credentials.json
 *.tmp
 *.log
 ~$*
+
+# Large regenerable vendor artifacts (52MB — over GitHub's 50MB warning threshold).
+# Re-download instructions in resources/procore/README.md; the committed
+# endpoints-cheatsheet.md is generated from it.
+resources/**/combined_OAS.json
