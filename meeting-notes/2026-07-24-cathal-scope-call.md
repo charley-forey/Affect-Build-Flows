@@ -17,14 +17,11 @@ duration, hours, rate, and working expectations.
 | **Term** | Long-term engagement — **9–10 months** |
 | **Initial scoped work** | **20 hours over ~1 month** |
 | **Ongoing cadence** | **5 hrs/week** — workflow building + mentoring Rebecca |
-| **Envelope discussed** | 10 months × 40 hrs/month × $125 = **$50,000** |
 | **Deliverables** | Per the project hub — treated as living, refined as desired outcomes align |
 
-> ⚠️ **To confirm with Cal.** Two numbers said on the call don't reconcile: 5 hrs/week is
-> ~21.7 hrs/month (~$27k over 10 months), while the $50,000 figure implies ~40 hrs/month
-> (~9–10 hrs/week). Also "9 months" vs "10 months". Working assumption until corrected:
-> **5 hrs/week is the steady-state baseline; build phases flex upward toward 40 hrs/month,
-> with $50,000 as the outer envelope over 9–10 months.** Raised in the recap email.
+> **Billed on hours actually worked.** No projected engagement total — scope is committed a
+> block at a time, starting with Phase 0's twenty hours. The term was discussed as 9–10
+> months; treat that as direction of travel, not a commitment to a volume of hours.
 
 ## Roles & relationship
 
@@ -71,12 +68,10 @@ Recorded because it framed the whole conversation, and it sets expectations both
 
 ## Action items
 
-- **Charley** — send recap email to Cal, cc Rebecca, Bernard, Chris (includes the hours
-  reconciliation question).
+- **Charley** — send recap email to Cal, cc Rebecca, Bernard, Chris.
 - **Charley** — update the hub: commercial terms, Phase 0 plan, hours log rate.
 - **Charley** — start Phase 0 the moment NDA + Fabric access land.
 - **Affect** — NDA, Fabric workspace access, Procore API credentials, Sage read-only SQL.
-- **Affect (Cal)** — confirm the weekly-hours / total-envelope reading above.
 - **Open from Jul 23, still outstanding** — the shared project identifier, 2–3 real
   completed project reports, the six client-satisfaction questions, where the ~40% manual
   data lives.

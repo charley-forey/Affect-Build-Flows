@@ -29,7 +29,6 @@ see [`meeting-notes/2026-07-24-cathal-scope-call.md`](meeting-notes/2026-07-24-c
 | **Term** | **9–10 months** |
 | **Initial scoped work** | **20 hours over ~1 month** (Phase 0, below) |
 | **Ongoing cadence** | **5 hrs/week** — workflow building + mentoring Rebecca |
-| **Envelope discussed** | ~$50,000 over the full term |
 | **Rebecca's access** | Text, call, email — **unlimited, not charged, not logged** |
 
 - **One rate, no tiering.** Advisory, build work, and teaching all bill at $125/hr. This
@@ -40,11 +39,8 @@ see [`meeting-notes/2026-07-24-cathal-scope-call.md`](meeting-notes/2026-07-24-c
 - **Pre-agreement work stays non-billable.** The 12.0 hrs already delivered (tracker
   assessment, Power BI build kit, resource library, warehouse review) is goodwill — it
   shrinks Phase 0 rather than adding to it.
-
-> ⚠️ **Open — to confirm with Cal.** 5 hrs/week ≈ 21.7 hrs/month ≈ $27k over 10 months, but
-> the $50,000 figure implies ~40 hrs/month. Working assumption: 5 hrs/week is the
-> steady-state baseline, build phases flex upward, $50,000 is the outer envelope. Raised in
-> the Jul 24 recap email.
+- **Billed on hours actually worked.** No projected total — scope is committed a block at a
+  time, starting with Phase 0's twenty hours.
 
 ## Phase 0 — the initial 20 hours (~1 month)
 
@@ -108,7 +104,6 @@ See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** — billab
 - [ ] Where critical-path milestones live — Procore, Outbuild, or spreadsheet-only
 - [ ] 2–3 **real** completed project reports (the file received is a template with demo data)
 - [ ] The six client-satisfaction survey questions (only scores are stored in the workbook)
-- [ ] **Cal to confirm** the weekly-hours vs $50k-envelope reading (see Commercial terms)
 - [x] Data warehouse review with Rebecca held — **Thu Jul 23** (`meeting-notes/2026-07-23-warehouse-review.md`)
 - [x] **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (`meeting-notes/2026-07-24-cathal-scope-call.md`)
 - [x] Excel project tracker shared (Jul 22) and assessed
