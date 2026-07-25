@@ -37,7 +37,7 @@ see [`meeting-notes/2026-07-24-cathal-scope-call.md`](meeting-notes/2026-07-24-c
 - **Mentorship is core scope, not a freebie.** Sessions with Rebecca are billable work and
   are **video-recorded** so they become a durable internal asset.
 - **Ad-hoc access is free.** Rebecca's questions by text/call/email aren't metered.
-- **Pre-agreement work stays non-billable.** The 11.0 hrs already delivered (tracker
+- **Pre-agreement work stays non-billable.** The 12.0 hrs already delivered (tracker
   assessment, Power BI build kit, resource library, warehouse review) is goodwill — it
   shrinks Phase 0 rather than adding to it.
 
