@@ -211,9 +211,10 @@ the connector removes the Sage job-cost pull, and whether milestones live in Pro
 Outbuild. **P0 narrows all three.** Re-estimate after the deep-dive call rather than
 committing to a number now.
 
-Per the engagement structure: advisory at $250/hr; development scoped as defined milestones
-with agreed deliverables. P0 is naturally advisory; P1–P5 are scopeable as fixed milestones
-once P0 lands.
+Per the engagement structure (agreed Jul 24): **$125/hr flat**, with development scoped as
+defined milestones. This plan's P0 overlaps the engagement's Phase 0 — see `dashboard.md` →
+Phase 0 for the 20-hour breakdown actually committed. P1–P5 are scopeable once P0 lands, and
+run against the ~5 hrs/week ongoing cadence.
 
 ---
 
