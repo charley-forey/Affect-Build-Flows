@@ -1,8 +1,8 @@
 # D1 — Discovery & Architecture Review
 
-**Status:** 🟡 In progress | **Phase:** 1 — Foundation | **Billing:** Fixed review — $250/hr, not to exceed 10 hrs ($2,500); prior assessment work included at no charge | **Target:** ~2 weeks after access granted
+**Status:** 🟡 In progress | **Phase:** 1 — Foundation | **Billing:** $125/hr — 4 hrs allocated in Phase 0 (endpoint inventory); prior assessment work at no charge | **Target:** Within the initial 20-hour month
 
-> This review is priced small on purpose — it's what makes the build work scopable. The build (per-solution scripts + SQL + Lakehouse landing, then the dashboard) is quoted block-by-block from what this review finds, not committed up front. See `dashboard.md` → Billing approach.
+> Most of this review is already done and given at no charge (`analysis/excel-tracker/`, `powerbi/`, the Jul 23 warehouse walkthrough). What remains inside Phase 0 is the **endpoint inventory** — every Procore and Sage endpoint needed to reproduce the Excel report. See `dashboard.md` → Phase 0.
 
 ## Objective
 Understand and document Affect's current data environment well enough to validate the Procore ETL, scope the Sage 100 ingestion, and define the first Power BI deliverable — producing a written current-state assessment and prioritized roadmap.
@@ -51,4 +51,4 @@ N/A — assessment deliverable. Output informs D2–D4 designs.
 | 2026-07-21 | Discovery meeting held; NDA + Fabric access pending on Affect's side |
 | 2026-07-22 | Excel reporting template received and fully assessed. 14 defects found, 3 affecting reported numbers — notably 42% of the scorecard weight is disconnected from project reality. Power BI build kit drafted. |
 | 2026-07-23 | Data warehouse review held with Rebecca — Fabric workspace walkthrough (ingestion, transformation, lakehouses, semantic model). Notes: `meeting-notes/2026-07-23-warehouse-review.md`. Key findings: credentials hard-coded in a notebook, full-table reload (needs incremental refresh), endpoint coverage financial-only, vendor/cost-code bridging unresolved. Foundation is strong; remaining work is validation + relational bridging. |
-| 2026-07-24 | Scope & deliverables call with Cathal (~8am). Billing reframed to fixed capped review + per-solution build. Fabric MCP wired to the repo. |
+| 2026-07-24 | Scope, terms & engagement call with Cathal (~8am, ~20 min). Terms agreed: $125/hr flat, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing, mentorship as core billable scope. This deliverable's remaining work narrows to the endpoint inventory (4 hrs in Phase 0). Notes: `meeting-notes/2026-07-24-cathal-scope-call.md`. Fabric MCP wired to the repo. |

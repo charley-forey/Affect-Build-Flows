@@ -35,7 +35,11 @@ The Affect team assigned Rebecca to find an industry expert to help and support 
 
 ## Engagement structure discussed
 
-- Consulting & development time: **$250/hour**
+> **Superseded Jul 24, 2026** — final terms agreed with Cathal at **$125/hr flat**, 9–10
+> months, 20 hrs initial scope, 5 hrs/wk ongoing. Kept here as the record of what was
+> discussed on the day. See `meeting-notes/2026-07-24-cathal-scope-call.md`.
+
+- Consulting & development time: **$250/hour** *(as discussed at this meeting)*
 - Automations can be quoted **per project with a defined deliverable** — after the full workflow is understood and visually outlined with the team.
 
 ## Next steps

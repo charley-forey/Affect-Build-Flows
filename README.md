@@ -14,7 +14,7 @@ Home base for the Affect Group consulting engagement (construction data & automa
 | Rebecca Buckley | Accounts Payable & Receivable | Primary contact & internal technical lead — built the Fabric data lake and Procore ETL. RBuckley@affect-group.com, O: 917-830-4204, C: 917-774-0635 |
 | Chris Mayer | Fractional CTO | Ex-Suffolk Chief Innovation Officer. Developing SOPs for all business functions. In office Mon/Tue. |
 | Bernard McNamee | Leadership | Copied on emails |
-| Cathal Egan | Leadership | Copied on emails |
+| Cathal Egan (Cal) | Leadership | **Commercial owner of the engagement** — agreed scope, terms and rate (Jul 24). C: 929-202-3638 |
 
 ## Engagement status (as of Jul 24, 2026)
 
@@ -23,18 +23,41 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - ✅ Excel project reporting template received (Jul 22) and **fully assessed** — see `analysis/excel-tracker/`
 - ✅ Power BI build kit drafted — semantic model, DAX, report spec, theme (`powerbi/`)
 - ✅ **Data warehouse review with Rebecca (Thu Jul 23)** — Fabric workspace walkthrough; findings in `meeting-notes/2026-07-23-warehouse-review.md`
-- ✅ Billing reframed to a **fixed capped review + per-solution build** model — see `dashboard.md` → Billing approach
 - ✅ **Fabric MCP** wired for the repo (`.mcp.json`) to read notebooks/schema and test joins once access lands — see `resources/microsoft-fabric/`
-- 📅 **Scope & deliverables call with Cathal — Fri Jul 24, ~8am**
-- ⏳ Affect working internally on **Fabric access + NDA**
+- ✅ **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (~20 min call). $125/hr, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing — see `meeting-notes/2026-07-24-cathal-scope-call.md`
+- 🟡 **Phase 0 planned** — the initial 20-hour month is scoped and ready to start (`dashboard.md` → Phase 0)
+- ⏳ Affect working internally on **Fabric access + NDA** — the only thing gating the start
 
 ## Engagement structure
 
-- **Discovery / architecture review first:** one small, **fixed capped fee** — the only thing quoted up front, because it's what makes the build scopable and correct
-- **Build work:** scoped **per solution** from the review's findings (connect → format → validate SQL → land in Lakehouse), then the dashboard on top — committed block-by-block, never as a lump sum
-- **Advisory / mentorship / learning:** $250/hr for advisory; teaching Rebecca and evening/learning time logged non-billable
-- Full detail: `dashboard.md` → **Billing approach**
-- Role: **architect + accelerator + expert resource** — enabling Rebecca and the Affect team to build and maintain their own data platform
+Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commercial terms**.
+
+| | |
+|---|---|
+| **Rate** | **$125/hr** — flat across advisory, development, and mentoring |
+| **Term** | **9–10 months** |
+| **Initial scope** | **20 hours over ~1 month** (Phase 0) |
+| **Ongoing** | **5 hrs/week** — workflow building + mentoring Rebecca |
+| **Envelope** | ~$50,000 over the term |
+| **Rebecca's access** | Text, call, email — unlimited and **not charged** |
+
+- **Two things are being built at once:** the data platform, and Rebecca's ability to run it.
+  Mentorship is core billable scope, delivered as collaborative working sessions and
+  **recorded on video** so they become a reusable internal asset.
+- **Rebecca's trajectory** — growing into an Operations role focused on technology, bringing
+  deep accounting domain knowledge and a process-driven approach. Knowledge transfer runs
+  both directions.
+- Role: **architect + accelerator + teacher** — enabling Affect to build and maintain their
+  own data platform, not becoming a permanent dependency.
+
+### Availability
+
+| | |
+|---|---|
+| Meetings (video / in-person) | M–F **7–9am** and **5–7pm**; weekends on request |
+| Text / email / call | Throughout the day, **1–4 hr response** |
+| Build & recording | Evenings |
+| On-site | Encouraged — discovery, working sessions, presentations, implementation |
 
 ## Their tech stack
 
@@ -62,5 +85,6 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - `resources/` — curated documentation and links, one folder per solution (Procore, Sage 100 Contractor, Fabric, Power BI, Power Automate, Outbuild, Ramp, ADP)
 - `.mcp.json` — Fabric MCP server config for Claude Code (reads the live workspace once access is granted; see `resources/microsoft-fabric/`)
 - `call-prep/2026-07-23-warehouse-review.md` — agenda, findings summary, and the information request for the warehouse review call
-- `meeting-notes/` — notes from calls and meetings (discovery Jul 21, warehouse review Jul 23)
+- `meeting-notes/` — notes from calls and meetings (discovery Jul 21, warehouse review Jul 23, **scope & terms Jul 24**)
+- `internal/` — not client-facing: strategy, communications log, and sent-email drafts
 - `YY-000 PROJECT NAME_InternalReport_YYMMDD.xlsx` — the client's reporting template (the spec for D5)

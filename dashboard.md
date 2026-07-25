@@ -6,33 +6,62 @@ Single-page rollup of the engagement. Detail lives in `deliverables/` (one file 
 
 ## Deliverables
 
-| ID | Deliverable | Phase | Status | Billing | Depends on | Detail |
-|----|-------------|-------|--------|---------|------------|--------|
-| D1 | Discovery & Architecture Review | 1 — Foundation | 🟡 In progress | Fixed review — ≤10 hrs ($2,500) | NDA, Fabric access | [D1](deliverables/01-discovery-architecture-review.md) |
-| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🔴 Not started | Scoped from D1 review | D1 | [D2](deliverables/02-procore-etl-validation.md) |
-| D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | Scoped from D1 review | D1 | [D3](deliverables/03-sage100-ingestion.md) |
-| D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | Scoped from D1 review | D2, D3 | [D4](deliverables/04-project-data-model.md) |
-| D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Spec + DAX + theme drafted | Scoped project | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
-| D6 | Power Automate — Payments Workflow | 3 — Automation | 🔴 Not started | Scoped project | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
-| D7 | Power Automate — Lien Waiver Workflow | 3 — Automation | 🔴 Not started | Scoped project | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
-| — | Ongoing advisory / mentorship (Rebecca) | All | 🟡 Ongoing | Hourly $250 | — | Tracked in `hours-log.md` only |
+| ID | Deliverable | Phase | Status | Phase 0 hours | Depends on | Detail |
+|----|-------------|-------|--------|---------------|------------|--------|
+| D1 | Discovery & Architecture Review | 1 — Foundation | 🟡 In progress | 4 (endpoint inventory) | NDA, Fabric access | [D1](deliverables/01-discovery-architecture-review.md) |
+| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🔴 Not started | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
+| D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | — (post Phase 0) | D1 | [D3](deliverables/03-sage100-ingestion.md) |
+| D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | 4 | D2, D3 | [D4](deliverables/04-project-data-model.md) |
+| D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Spec + DAX + theme drafted | — (post Phase 0) | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
+| D6 | Power Automate — Payments Workflow | 3 — Automation | 🔴 Not started | — | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
+| D7 | Power Automate — Lien Waiver Workflow | 3 — Automation | 🔴 Not started | — | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
+| D8 | Quick-win automation — vendor / insurance / contract list | 1 — Foundation | 🔴 Not started | 3 | Fabric access | [D8](deliverables/08-vendor-list-automation.md) |
+| — | Mentoring & recorded walkthroughs (Rebecca) | All | 🟡 Ongoing | 3 | — | Tracked in `hours-log.md` |
 
-## Billing approach
+## Commercial terms
 
-Priced to stay small and fair — you pay for specific outcomes, not an open-ended roadmap:
+Agreed with Cathal Egan on the scope call, **Fri Jul 24, 2026** —
+see [`meeting-notes/2026-07-24-cathal-scope-call.md`](meeting-notes/2026-07-24-cathal-scope-call.md).
 
-- **The deep review comes first, and it's the only thing quoted up front** — fixed and
-  capped. Reviewing the current build (Procore implementation, schema, SQL, Lakehouse) is
-  cheap on purpose: it's what makes everything after it scopable and correct.
-- **Build work is scoped per solution, from what the review finds.** Each source follows
-  the same unit — connect script → format & validate the SQL → land it in the Lakehouse —
-  quoted as its own small block when we reach it. You choose how many connectors and in what
-  order. There's no lump-sum "everything" number to commit to.
-- **The dashboard sits on top** of whatever data has landed, quoted as its own block.
-- **Mentorship and learning are non-billable.** Teaching Rebecca, evening build time, and
-  working out new tooling are logged at $0 — see [`hours-log.md`](hours-log.md).
+| | |
+|---|---|
+| **Rate** | **$125/hr**, flat across advisory, development, and mentoring |
+| **Term** | **9–10 months** |
+| **Initial scoped work** | **20 hours over ~1 month** (Phase 0, below) |
+| **Ongoing cadence** | **5 hrs/week** — workflow building + mentoring Rebecca |
+| **Envelope discussed** | ~$50,000 over the full term |
+| **Rebecca's access** | Text, call, email — **unlimited, not charged, not logged** |
 
-Net: a small fixed review, then pay only for the specific solutions you decide to build.
+- **One rate, no tiering.** Advisory, build work, and teaching all bill at $125/hr. This
+  replaces the earlier $250/hr advisory + fixed-review + per-solution-quote structure.
+- **Mentorship is core scope, not a freebie.** Sessions with Rebecca are billable work and
+  are **video-recorded** so they become a durable internal asset.
+- **Ad-hoc access is free.** Rebecca's questions by text/call/email aren't metered.
+- **Pre-agreement work stays non-billable.** The 11.0 hrs already delivered (tracker
+  assessment, Power BI build kit, resource library, warehouse review) is goodwill — it
+  shrinks Phase 0 rather than adding to it.
+
+> ⚠️ **Open — to confirm with Cal.** 5 hrs/week ≈ 21.7 hrs/month ≈ $27k over 10 months, but
+> the $50,000 figure implies ~40 hrs/month. Working assumption: 5 hrs/week is the
+> steady-state baseline, build phases flex upward, $50,000 is the outer envelope. Raised in
+> the Jul 24 recap email.
+
+## Phase 0 — the initial 20 hours (~1 month)
+
+Drawn straight from the Jul 23 warehouse review's agreed ingestion-first sequence. Starts
+when NDA + Fabric access land.
+
+| # | Work | Deliverable | Hrs |
+|---|---|---|---|
+| 1 | **Endpoint inventory** — every Procore (then Sage) endpoint needed to reproduce the Excel report, mapped field by field | D1 | 4 |
+| 2 | **Notebook & transformation review** — confirm every required column/ID is pulled and not dropped; move hard-coded credentials to secure storage; design incremental refresh | D2 | 6 |
+| 3 | **Relational bridging** — resolve the vendor ↔ cost-code linkage (invoice as the bridge) so the model slices by both | D4 | 4 |
+| 4 | **Quick-win automation** — vendor list with insurance and contract info, to demonstrate value early | D8 | 3 |
+| 5 | **Mentoring + recorded walkthroughs** — working sessions with Rebecca on everything above | — | 3 |
+| | | **Total** | **20** |
+
+Exit criteria: Procore ingestion trusted and hardened, the vendor/cost-code model resolved,
+one automation live, and Rebecca able to extend the pattern to a new endpoint herself.
 
 ## Integration status (data → Fabric Lakehouse)
 
@@ -60,7 +89,13 @@ Full detail in [`analysis/excel-tracker/`](analysis/excel-tracker/).
 
 ## Hours summary
 
-See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** (billable time starts at NDA + agreed Phase 1 scope). Non-billable relationship/setup/pre-NDA: **11.0 hrs** — 7.0 of which is the tracker assessment and Power BI build kit, worth revisiting once the engagement is formalised.
+See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** — billable time starts at NDA + Fabric access. Non-billable pre-agreement: **12.0 hrs**, delivered as goodwill (tracker assessment, Power BI build kit, resource library, warehouse review).
+
+| | Hours | @ $125 |
+|---|---|---|
+| Phase 0 budget | 20 | $2,500 |
+| Consumed | 0 | $0 |
+| Remaining | 20 | $2,500 |
 
 ## Blockers & waiting on
 
@@ -73,15 +108,28 @@ See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** (billable 
 - [ ] Where critical-path milestones live — Procore, Outbuild, or spreadsheet-only
 - [ ] 2–3 **real** completed project reports (the file received is a template with demo data)
 - [ ] The six client-satisfaction survey questions (only scores are stored in the workbook)
+- [ ] **Cal to confirm** the weekly-hours vs $50k-envelope reading (see Commercial terms)
 - [x] Data warehouse review with Rebecca held — **Thu Jul 23** (`meeting-notes/2026-07-23-warehouse-review.md`)
+- [x] **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (`meeting-notes/2026-07-24-cathal-scope-call.md`)
 - [x] Excel project tracker shared (Jul 22) and assessed
 - [ ] Payments + lien waiver SOPs finalized (Chris, ~50% complete)
 
 ## Reporting cadence
 
 - **Per session:** log hours + evidence in `hours-log.md`, update deliverable checklists
-- **Bi-weekly sync with Rebecca:** review this dashboard, update statuses, agree next priorities
+- **Weekly with Rebecca (5 hrs/wk):** working session + mentoring, **video-recorded**
+- **Bi-weekly:** review this dashboard, update statuses, agree next priorities
 - **Per invoice:** ledger entries roll up into the invoicing record in `hours-log.md`
+
+### Availability
+
+| | |
+|---|---|
+| Meetings (video / in-person) | M–F **7–9am** and **5–7pm**; weekends on request |
+| Text / email / call | Throughout the day, **1–4 hr response** |
+| Build & recording | Evenings |
+| On-site | Encouraged — discovery, working sessions, presentations, implementation |
+| Rebecca's ad-hoc access | Unlimited, **not charged** |
 
 ## How this structure grows
 
