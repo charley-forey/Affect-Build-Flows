@@ -16,6 +16,32 @@ All links verified to resolve, Jul 2026.
 | Deployment pipelines (CI/CD) | https://learn.microsoft.com/en-us/fabric/cicd/deployment-pipelines/intro-to-deployment-pipelines |
 | On-premises data gateway | https://learn.microsoft.com/en-us/power-bi/connect-data/service-gateway-onprem |
 
+## AI-assisted access — Fabric MCP server
+
+[`ms-fabric-mcp-server`](https://pypi.org/project/ms-fabric-mcp-server/) exposes Fabric
+operations (workspaces, items, notebooks, lakehouse files, pipelines, semantic models, and
+SQL) as tools Claude Code can call directly. Configured for this repo in
+[`../../.mcp.json`](../../.mcp.json).
+
+**Why it matters here.** It reads the environment instead of relying on screen-share — on
+the Jul 23 review Rebecca ran out of time before showing the schema. With access we can:
+
+- `list_notebooks` / `get_notebook_definition` — read the Procore ETL as-is (D2)
+- `get_semantic_model_details` / `execute_dax_query` — inspect the project→fact relationships
+- `execute_sql_query` against the Lakehouse SQL endpoint — **test the vendor ↔ commitment ↔
+  cost-code joins that are D4's open problem** before committing them to the model
+
+**Auth.** `DefaultAzureCredential` — a plain `az login` with an account that has Fabric
+access. No secrets in the repo. **Blocked until the NDA + Fabric access land** (pending, see
+D1 log), so the config is inert today and works the moment access is granted.
+
+**Guardrails.** Work read-first (`list_*`, `get_*`, `execute_sql_query`, `execute_dax_query`).
+The package also ships destructive tools (`delete_item`, `delete_lakehouse_file`, arbitrary
+Spark via Livy) and its maintainer flags it dev-only — so point it at a **non-production /
+dev workspace** and every tool call is reviewed before it runs (Claude Code prompts per
+call). The `[sql]` extra needs the Microsoft ODBC Driver for SQL Server (18 or 17) installed
+locally; without it the server still starts with the 57 non-SQL tools.
+
 ## Architecture — what to confirm on the deep dive
 
 Current understanding, to be validated:

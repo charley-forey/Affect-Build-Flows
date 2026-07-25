@@ -1,6 +1,6 @@
 # D3 — Sage 100 Ingestion Pipeline
 
-**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** TBD after D1 (likely scoped project) | **Target:** TBD
+**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review (per-solution block) | **Target:** TBD
 
 ## Objective
 Sage 100 Contractor data lands in the Fabric Lakehouse on a schedule, replacing the current live SQL queries from Power BI, so accounting data joins the warehouse alongside Procore.

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "fabric": {
+      "command": "uvx",
+      "args": ["--from", "ms-fabric-mcp-server[sql]", "ms-fabric-mcp-server"]
+    }
+  }
+}

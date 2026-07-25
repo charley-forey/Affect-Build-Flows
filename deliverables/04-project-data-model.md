@@ -1,6 +1,6 @@
 # D4 — Core Project Data Model
 
-**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** TBD after D1 | **Target:** TBD
+**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review | **Target:** TBD
 
 ## Objective
 A curated, relationally-mapped set of Lakehouse tables that unify Procore + Sage 100 (+ Excel-only fields) into a single project-centric model — the semantic foundation every report and automation builds on.
@@ -42,4 +42,4 @@ Raw Lakehouse tables (D2, D3) → curated/gold tables via Fabric notebooks or SQ
 ## Log
 | Date | Note |
 |---|---|
-| | |
+| 2026-07-23 | Vendor / cost-code linkage confirmed as the central modeling problem (`meeting-notes/2026-07-23-warehouse-review.md`). Coverage is uneven — some tables carry cost-code ID, some vendor ID, some neither. Resolution approach: **bridge via the tables that carry both** — e.g. commitments have no vendor ID, but invoices reference both commitment ID and vendor ID, so the invoice bridges vendor → commitment. Same pattern for cost-code vs vendor on requisition/invoice lines. Prerequisite: confirm the ID columns survive transformation (see D2 finding 5). Project↔Sage link exists today via project ID + Sage project ID on the Project dimension. |

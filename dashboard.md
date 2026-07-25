@@ -8,14 +8,31 @@ Single-page rollup of the engagement. Detail lives in `deliverables/` (one file 
 
 | ID | Deliverable | Phase | Status | Billing | Depends on | Detail |
 |----|-------------|-------|--------|---------|------------|--------|
-| D1 | Discovery & Architecture Review | 1 — Foundation | 🟡 In progress | Hourly, est. 10–20 hrs | NDA, Fabric access | [D1](deliverables/01-discovery-architecture-review.md) |
-| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🔴 Not started | TBD after D1 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
-| D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | TBD after D1 | D1 | [D3](deliverables/03-sage100-ingestion.md) |
-| D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | TBD after D1 | D2, D3 | [D4](deliverables/04-project-data-model.md) |
+| D1 | Discovery & Architecture Review | 1 — Foundation | 🟡 In progress | Fixed review — ≤10 hrs ($2,500) | NDA, Fabric access | [D1](deliverables/01-discovery-architecture-review.md) |
+| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🔴 Not started | Scoped from D1 review | D1 | [D2](deliverables/02-procore-etl-validation.md) |
+| D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | Scoped from D1 review | D1 | [D3](deliverables/03-sage100-ingestion.md) |
+| D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | Scoped from D1 review | D2, D3 | [D4](deliverables/04-project-data-model.md) |
 | D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Spec + DAX + theme drafted | Scoped project | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
 | D6 | Power Automate — Payments Workflow | 3 — Automation | 🔴 Not started | Scoped project | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
 | D7 | Power Automate — Lien Waiver Workflow | 3 — Automation | 🔴 Not started | Scoped project | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
 | — | Ongoing advisory / mentorship (Rebecca) | All | 🟡 Ongoing | Hourly $250 | — | Tracked in `hours-log.md` only |
+
+## Billing approach
+
+Priced to stay small and fair — you pay for specific outcomes, not an open-ended roadmap:
+
+- **The deep review comes first, and it's the only thing quoted up front** — fixed and
+  capped. Reviewing the current build (Procore implementation, schema, SQL, Lakehouse) is
+  cheap on purpose: it's what makes everything after it scopable and correct.
+- **Build work is scoped per solution, from what the review finds.** Each source follows
+  the same unit — connect script → format & validate the SQL → land it in the Lakehouse —
+  quoted as its own small block when we reach it. You choose how many connectors and in what
+  order. There's no lump-sum "everything" number to commit to.
+- **The dashboard sits on top** of whatever data has landed, quoted as its own block.
+- **Mentorship and learning are non-billable.** Teaching Rebecca, evening build time, and
+  working out new tooling are logged at $0 — see [`hours-log.md`](hours-log.md).
+
+Net: a small fixed review, then pay only for the specific solutions you decide to build.
 
 ## Integration status (data → Fabric Lakehouse)
 
@@ -43,7 +60,7 @@ Full detail in [`analysis/excel-tracker/`](analysis/excel-tracker/).
 
 ## Hours summary
 
-See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** (billable time starts at NDA + agreed Phase 1 scope). Non-billable relationship/setup/pre-NDA: **10.0 hrs** — 7.0 of which is the tracker assessment and Power BI build kit, worth revisiting once the engagement is formalised.
+See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** (billable time starts at NDA + agreed Phase 1 scope). Non-billable relationship/setup/pre-NDA: **11.0 hrs** — 7.0 of which is the tracker assessment and Power BI build kit, worth revisiting once the engagement is formalised.
 
 ## Blockers & waiting on
 
@@ -56,7 +73,7 @@ See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** (billable 
 - [ ] Where critical-path milestones live — Procore, Outbuild, or spreadsheet-only
 - [ ] 2–3 **real** completed project reports (the file received is a template with demo data)
 - [ ] The six client-satisfaction survey questions (only scores are stored in the workbook)
-- [x] Deep-dive call with Rebecca scheduled — **Thu Jul 23, 7:30–8:30am**
+- [x] Data warehouse review with Rebecca held — **Thu Jul 23** (`meeting-notes/2026-07-23-warehouse-review.md`)
 - [x] Excel project tracker shared (Jul 22) and assessed
 - [ ] Payments + lien waiver SOPs finalized (Chris, ~50% complete)
 

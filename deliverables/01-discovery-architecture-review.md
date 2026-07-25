@@ -1,6 +1,8 @@
 # D1 — Discovery & Architecture Review
 
-**Status:** 🟡 In progress | **Phase:** 1 — Foundation | **Billing:** Hourly $250, est. 10–20 hrs | **Target:** ~2 weeks after access granted
+**Status:** 🟡 In progress | **Phase:** 1 — Foundation | **Billing:** Fixed review — $250/hr, not to exceed 10 hrs ($2,500); prior assessment work included at no charge | **Target:** ~2 weeks after access granted
+
+> This review is priced small on purpose — it's what makes the build work scopable. The build (per-solution scripts + SQL + Lakehouse landing, then the dashboard) is quoted block-by-block from what this review finds, not committed up front. See `dashboard.md` → Billing approach.
 
 ## Objective
 Understand and document Affect's current data environment well enough to validate the Procore ETL, scope the Sage 100 ingestion, and define the first Power BI deliverable — producing a written current-state assessment and prioritized roadmap.
@@ -39,6 +41,7 @@ N/A — assessment deliverable. Output informs D2–D4 designs.
 - **[`analysis/excel-tracker/`](../analysis/excel-tracker/)** — full teardown of the reporting template: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, 14 verified defects, open questions
 - **[`powerbi/`](../powerbi/)** — semantic model, DAX library, report spec, theme, manual-input template, phased build plan
 - **[`resources/`](../resources/)** — curated documentation per solution
+- **[`resources/microsoft-fabric/README.md`](../resources/microsoft-fabric/README.md#ai-assisted-access--fabric-mcp-server)** — Fabric MCP server for reading notebooks/schema and testing joins directly once access lands
 - `meeting-notes/2026-07-21-discovery-meeting.md`
 - (add: architecture diagram, written findings summary for Affect)
 
@@ -47,4 +50,5 @@ N/A — assessment deliverable. Output informs D2–D4 designs.
 |---|---|
 | 2026-07-21 | Discovery meeting held; NDA + Fabric access pending on Affect's side |
 | 2026-07-22 | Excel reporting template received and fully assessed. 14 defects found, 3 affecting reported numbers — notably 42% of the scorecard weight is disconnected from project reality. Power BI build kit drafted. |
-| 2026-07-23 | Data warehouse review with Rebecca (7:30am) |
+| 2026-07-23 | Data warehouse review held with Rebecca — Fabric workspace walkthrough (ingestion, transformation, lakehouses, semantic model). Notes: `meeting-notes/2026-07-23-warehouse-review.md`. Key findings: credentials hard-coded in a notebook, full-table reload (needs incremental refresh), endpoint coverage financial-only, vendor/cost-code bridging unresolved. Foundation is strong; remaining work is validation + relational bridging. |
+| 2026-07-24 | Scope & deliverables call with Cathal (~8am). Billing reframed to fixed capped review + per-solution build. Fabric MCP wired to the repo. |
