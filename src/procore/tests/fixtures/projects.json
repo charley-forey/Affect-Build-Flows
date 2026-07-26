@@ -1,0 +1,26 @@
+{
+  "endpoint": "projects",
+  "_note": "Hand-built from Procore's documented response shape - NOT captured from a live sandbox. Replace with `run_local.py --capture` as soon as sandbox credentials exist.",
+  "records": [
+    {
+      "id": 1001,
+      "project_number": "25-014",
+      "name": "Hudson Yards Fit-Out",
+      "active": true,
+      "start_date": "2025-11-03",
+      "completion_date": "2026-12-18",
+      "customer": { "id": 44, "name": "Related Companies" },
+      "project_stage": { "id": 3, "name": "Course of Construction" }
+    },
+    {
+      "id": 1002,
+      "project_number": "25-021",
+      "name": "Brooklyn Navy Yard Lab",
+      "active": true,
+      "start_date": "2026-02-16",
+      "completion_date": "2027-03-31",
+      "customer": { "id": 51, "name": "BNYDC" },
+      "project_stage": { "id": 3, "name": "Course of Construction" }
+    }
+  ]
+}

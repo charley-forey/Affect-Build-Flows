@@ -1,0 +1,9 @@
+{
+  "endpoint": "rfi_priorities",
+  "_note": "From /rfis/filter_options/priority. endpoints-cheatsheet.md:80-82 flags this as the likely definition of 'critical' - the workbook never defines the word (open question #5).",
+  "records": [
+    { "_project_id": 1001, "value": "low", "label": "Low" },
+    { "_project_id": 1001, "value": "medium", "label": "Medium" },
+    { "_project_id": 1001, "value": "high", "label": "High" }
+  ]
+}

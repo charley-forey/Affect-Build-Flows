@@ -1,0 +1,72 @@
+table dim_Status
+
+	lineageTag: 8a1c0004-0000-4000-8000-000000000001
+
+	column StatusKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0004-0000-4000-8000-000000000101
+		summarizeBy: none
+		sourceColumn: StatusKey
+		isKey
+
+	column Domain
+		dataType: string
+		lineageTag: 8a1c0004-0000-4000-8000-000000000102
+		summarizeBy: none
+		sourceColumn: Domain
+
+	/// Join and filter on this, never on Label. Codes are stable; labels are cosmetic.
+	column Code
+		dataType: string
+		lineageTag: 8a1c0004-0000-4000-8000-000000000103
+		summarizeBy: none
+		sourceColumn: Code
+
+	column Label
+		dataType: string
+		lineageTag: 8a1c0004-0000-4000-8000-000000000104
+		summarizeBy: none
+		sourceColumn: Label
+		sortByColumn: SortOrder
+
+	column RAG
+		dataType: string
+		lineageTag: 8a1c0004-0000-4000-8000-000000000105
+		summarizeBy: none
+		sourceColumn: RAG
+
+	column SortOrder
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0004-0000-4000-8000-000000000106
+		summarizeBy: none
+		sourceColumn: SortOrder
+		isHidden
+
+	/// Sampled from the workbook's actual font colours so the report matches what
+	/// Affect already recognises. #DB1918 red, #FFD800 amber, #01AF00 green.
+	column HexColor
+		dataType: string
+		lineageTag: 8a1c0004-0000-4000-8000-000000000107
+		summarizeBy: none
+		sourceColumn: HexColor
+
+	/// Set only on the RfiStatus / SubmittalStatus domains. A simpler alternative to
+	/// filtering dim_Status[Code] = "OPEN" in the DAX.
+	column IsOpen
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 8a1c0004-0000-4000-8000-000000000108
+		summarizeBy: none
+		sourceColumn: IsOpen
+
+	partition dim_Status = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(GoldFolder & "\dim_Status.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

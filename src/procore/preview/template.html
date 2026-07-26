@@ -1,0 +1,228 @@
+<title>Procore Pipeline — RFIs &amp; Submittals</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-0: #f4f4f2;
+    --surface-1: #fcfcfb;
+    --border: #dededa;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #75746f;
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --good: #01af00;
+    --warn: #ffd800;
+    --bad: #db1918;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-0: #111110;
+      --surface-1: #1a1a19;
+      --border: #34342f;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #94938a;
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --good: #3fbf3f;
+      --warn: #e5c200;
+      --bad: #e66767;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-0: #111110;
+    --surface-1: #1a1a19;
+    --border: #34342f;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #94938a;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --good: #3fbf3f;
+    --warn: #e5c200;
+    --bad: #e66767;
+  }
+
+  .viz-root {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 28px 20px 56px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header { margin-bottom: 26px; }
+  h1 { font-size: 1.45rem; font-weight: 650; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .sub { color: var(--text-secondary); font-size: 0.9rem; margin: 0; }
+  .runbar {
+    display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px;
+    font-size: 0.8rem; color: var(--text-muted);
+  }
+  .runbar b { color: var(--text-secondary); font-weight: 600; }
+
+  .card {
+    background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin-bottom: 18px;
+  }
+  h2 {
+    font-size: 0.78rem; font-weight: 650; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--text-secondary); margin: 0 0 4px;
+  }
+  .note { font-size: 0.83rem; color: var(--text-muted); margin: 0 0 18px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 18px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .tile .v { font-size: 2rem; font-weight: 660; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .tile .k { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+  .legend { display: flex; gap: 16px; margin-bottom: 16px; font-size: 0.83rem; color: var(--text-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+  .rows { display: flex; flex-direction: column; gap: 14px; }
+  .row { display: grid; grid-template-columns: 132px 1fr; gap: 14px; align-items: center; }
+  .row .lbl { font-size: 0.87rem; color: var(--text-secondary); text-align: right; }
+  .pair { display: flex; flex-direction: column; gap: 2px; }
+  .bar { display: flex; align-items: center; gap: 8px; }
+  .fill { height: 13px; border-radius: 0 4px 4px 0; min-width: 2px; }
+  .val { font-family: var(--mono); font-size: 0.78rem; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+  .zero { color: var(--text-muted); }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; min-width: 620px; }
+  th {
+    text-align: left; font-weight: 600; font-size: 0.73rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); padding: 0 12px 8px 0;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+  td.n { font-variant-numeric: tabular-nums; }
+  td.id {
+    color: var(--text-primary); font-weight: 550;
+    font-family: var(--mono); font-size: 0.84rem; letter-spacing: -0.01em;
+  }
+  .pill {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    font-size: 0.74rem; font-weight: 600; border: 1px solid;
+  }
+  .pill.open { color: var(--bad); border-color: var(--bad); }
+  .pill.closed { color: var(--good); border-color: var(--good); }
+  .flag { color: var(--text-muted); font-size: 0.8rem; }
+  .crit { color: var(--bad); font-weight: 650; }
+
+  .dq { display: flex; flex-direction: column; gap: 9px; }
+  .dq div { display: flex; align-items: baseline; gap: 10px; font-size: 0.87rem; }
+  .dq .sev {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 7px; border-radius: 4px; border: 1px solid;
+  }
+  .sev.reject { color: var(--bad); border-color: var(--bad); }
+  .sev.warn { color: var(--text-secondary); border-color: var(--warn); }
+  .dq .cnt { font-variant-numeric: tabular-nums; font-weight: 650; color: var(--text-primary); }
+  .dq .why { color: var(--text-muted); }
+  .clean { color: var(--good); font-size: 0.88rem; }
+
+  footer { margin-top: 26px; font-size: 0.79rem; color: var(--text-muted); line-height: 1.65; }
+  code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 0.92em; }
+</style>
+
+<div class="viz-root">
+<div class="wrap">
+
+  <header>
+    <h1>Procore → Lakehouse → Report</h1>
+    <p class="sub">Slice 1 — RFIs &amp; Submittals, end to end. This page renders the pipeline's actual gold tables.</p>
+    <div class="runbar" id="runbar"></div>
+  </header>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <h2>Open critical items by trade</h2>
+    <p class="note">Reproduces <code>SUBMITTALS &amp; RFI!Table22</code> — the table behind the workbook's only chart, typed in by hand today.</p>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--series-1)"></i>Open critical RFIs</span>
+      <span><i class="sw" style="background:var(--series-2)"></i>Open critical submittals</span>
+    </div>
+    <div class="rows" id="chart"></div>
+  </div>
+
+  <div class="card">
+    <h2>All items in the fact table</h2>
+    <p class="note">Every row that reached <code>fct_RfiSubmittal</code>, including those flagged by the data-quality rules.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Item</th><th>Type</th><th>Trade</th><th>Status</th><th>Critical</th><th>Days open</th></tr></thead>
+      <tbody id="items"></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>Data quality</h2>
+    <p class="note">Rejected rows never reach the model; warnings do, flagged. Neither disappears silently.</p>
+    <div class="dq" id="dq"></div>
+  </div>
+
+  <footer id="foot"></footer>
+
+</div>
+</div>
+
+<script>
+const DATA = /*__DATA__*/ null;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+document.getElementById('runbar').innerHTML =
+  `<span><b>Source</b> ${esc(DATA.source)}</span>` +
+  `<span><b>Run</b> ${esc(DATA.generated_at)}</span>` +
+  `<span><b>Projects</b> ${DATA.projects.map(p => esc(p.number + ' ' + p.name)).join(' · ')}</span>`;
+
+document.getElementById('tiles').innerHTML = DATA.tiles
+  .map(t => `<div class="tile"><div class="v">${esc(t.value)}</div><div class="k">${esc(t.label)}</div></div>`)
+  .join('');
+
+// Grouped horizontal bars. Max across both series sets a shared scale - one axis,
+// never two, so the two series stay directly comparable.
+const max = Math.max(1, ...DATA.by_trade.flatMap(r => [r.rfis, r.submittals]));
+const bar = (v, color) => v > 0
+  ? `<div class="bar"><div class="fill" style="width:${(v / max * 100).toFixed(1)}%;background:${color}"></div><span class="val">${v}</span></div>`
+  : `<div class="bar"><span class="val zero">0</span></div>`;
+
+document.getElementById('chart').innerHTML = DATA.by_trade.length
+  ? DATA.by_trade.map(r => `
+      <div class="row">
+        <div class="lbl">${esc(r.trade)}</div>
+        <div class="pair">${bar(r.rfis, 'var(--series-1)')}${bar(r.submittals, 'var(--series-2)')}</div>
+      </div>`).join('')
+  : '<p class="note">No open critical items in this run.</p>';
+
+document.getElementById('items').innerHTML = DATA.items.map(i => `
+  <tr>
+    <td class="id">${esc(i.number)}</td>
+    <td>${esc(i.type)}</td>
+    <td>${i.trade === 'Unassigned' ? '<span class="flag">Unassigned</span>' : esc(i.trade)}</td>
+    <td><span class="pill ${i.is_open ? 'open' : 'closed'}">${esc(i.status)}</span></td>
+    <td>${i.is_critical ? '<span class="crit">Critical</span>' : '<span class="flag">—</span>'}</td>
+    <td class="n">${i.days_open}</td>
+  </tr>`).join('');
+
+document.getElementById('dq').innerHTML = DATA.data_quality.length
+  ? DATA.data_quality.map(d => `
+      <div>
+        <span class="sev ${esc(d.severity)}">${esc(d.severity)}</span>
+        <span class="cnt">${d.count}</span>
+        <span>${esc(d.issue.replace(/_/g, ' '))}</span>
+        <span class="why">${esc(d.why)}</span>
+      </div>`).join('')
+  : '<p class="clean">Clean — nothing rejected or flagged.</p>';
+
+document.getElementById('foot').innerHTML =
+  `Generated by <code>src/procore/run_local.py</code> from <code>.local/gold/*.parquet</code>. ` +
+  `The same <code>sql/</code> files run in Fabric via <code>notebooks/02_transform.py</code>. ` +
+  `<b>&quot;Critical&quot;</b> is currently Procore priority High/Urgent and <b>trade mapping</b> is a best-effort name match — ` +
+  `both are undefined by the client and marked in the SQL for a one-line change once confirmed.`;
+</script>

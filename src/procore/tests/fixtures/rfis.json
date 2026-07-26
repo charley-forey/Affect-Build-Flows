@@ -1,0 +1,76 @@
+{
+  "endpoint": "rfis",
+  "_note": "Hand-built from Procore's documented v1.0 RFI shape - NOT captured from a live sandbox. Deliberately includes two bad rows and one unmappable cost code so the data-quality path is exercised.",
+  "records": [
+    {
+      "_project_id": 1001,
+      "id": 5001,
+      "number": "RFI-001",
+      "subject": "Ceiling height conflict at grid E-4",
+      "status": "open",
+      "priority": "High",
+      "created_at": "2026-05-04T14:12:00Z",
+      "due_date": "2026-05-18T00:00:00Z",
+      "closed_at": null,
+      "cost_code": { "id": 900, "name": "Electrical" }
+    },
+    {
+      "_project_id": 1001,
+      "id": 5002,
+      "number": "RFI-002",
+      "subject": "Sprinkler head spacing in corridor 2",
+      "status": "open",
+      "priority": "Low",
+      "created_at": "2026-05-09T09:30:00Z",
+      "due_date": "2026-05-23T00:00:00Z",
+      "closed_at": null,
+      "cost_code": { "id": 901, "name": "Sprinkler" }
+    },
+    {
+      "_project_id": 1001,
+      "id": 5003,
+      "number": "RFI-003",
+      "subject": "Slab edge detail at curtain wall",
+      "status": "closed",
+      "priority": "High",
+      "created_at": "2026-04-11T11:00:00Z",
+      "due_date": "2026-04-25T00:00:00Z",
+      "closed_at": "2026-04-22T16:45:00Z",
+      "cost_code": { "id": 902, "name": "03 30 00 Cast-In-Place Concrete" }
+    },
+    {
+      "_project_id": 1001,
+      "id": 5004,
+      "number": "",
+      "subject": "Draft with no number assigned yet",
+      "status": "draft",
+      "priority": "Medium",
+      "created_at": "2026-05-20T08:00:00Z",
+      "closed_at": null,
+      "cost_code": { "id": 903, "name": "Plumbing" }
+    },
+    {
+      "_project_id": 1001,
+      "id": 5005,
+      "number": "RFI-005",
+      "subject": "Backdated close - impossible dates",
+      "status": "closed",
+      "priority": "High",
+      "created_at": "2026-06-01T10:00:00Z",
+      "closed_at": "2026-05-01T10:00:00Z",
+      "cost_code": { "id": 904, "name": "HVAC" }
+    },
+    {
+      "_project_id": 1002,
+      "id": 5010,
+      "number": "RFI-010",
+      "subject": "Fume hood exhaust routing",
+      "status": "open",
+      "priority": "High",
+      "created_at": "2026-06-02T13:20:00Z",
+      "due_date": "2026-06-16T00:00:00Z",
+      "closed_at": null,
+      "cost_code": { "id": 905, "name": "HVAC" }
+    }
+  ]
+}

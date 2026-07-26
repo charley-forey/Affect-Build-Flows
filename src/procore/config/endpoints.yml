@@ -1,0 +1,66 @@
+# Procore endpoint registry.
+#
+# This is the only file that grows when we add an endpoint. The extractor
+# (../procore_extract.py) is generic - auth, pagination, retry, the v2.0 header rule
+# and watermarking are implemented once and driven from here.
+#
+# Fields
+#   name          logical name; also the bronze `_source_endpoint` value
+#   path          template; {company_id} / {project_id} are filled per scope
+#   scope         company | project   (project => called once per active project)
+#   api_version   drives the Procore-Company-Id header (required on 2.0+, a 403 if
+#                 sent to the wrong version) - endpoints-cheatsheet.md:18-19
+#   bronze_table  destination table in the bronze lakehouse
+#   key           natural key used for the merge (default "id")
+#   incremental   filter param for the watermark; omit for a full reload.
+#                 A full reload is still idempotent because the load is a MERGE on
+#                 `key`, not an append.
+#
+# Slice 1 = RFIs & Submittals end to end. endpoints-cheatsheet.md:69-73.
+
+endpoints:
+  # -- reference / dimension -------------------------------------------------
+  - name: projects
+    path: /rest/v1.0/projects
+    scope: company
+    api_version: "1.0"
+    bronze_table: bronze_procore_projects
+    incremental: filters[updated_at]
+
+  # -- RFIs ------------------------------------------------------------------
+  # NOTE: endpoints-cheatsheet.md:69 lists filters[created_at] for this endpoint but
+  # NOT filters[updated_at]. Incrementing on created_at would miss status changes on
+  # existing RFIs - and "open critical RFIs" is precisely a status question. So this
+  # is a full reload until the filter list is confirmed against the live sandbox.
+  # Re-running is safe: the merge key makes it idempotent.
+  - name: rfis
+    path: /rest/v1.0/projects/{project_id}/rfis
+    scope: project
+    api_version: "1.0"
+    bronze_table: bronze_procore_rfis
+
+  - name: rfi_statuses
+    path: /rest/v1.0/projects/{project_id}/rfis/filter_options/status
+    scope: project
+    api_version: "1.0"
+    bronze_table: bronze_procore_rfi_statuses
+    key: value
+
+  # The likely definition of "critical" - the workbook never defines it (open
+  # question #5). endpoints-cheatsheet.md:80-82.
+  - name: rfi_priorities
+    path: /rest/v1.0/projects/{project_id}/rfis/filter_options/priority
+    scope: project
+    api_version: "1.0"
+    bronze_table: bronze_procore_rfi_priorities
+    key: value
+
+  # -- Submittals ------------------------------------------------------------
+  # v1.1 - version mixing across a single pipeline is normal for Procore, not a
+  # mistake to correct. endpoints-cheatsheet.md:226-228.
+  # Same created_at/updated_at caveat as RFIs above.
+  - name: submittals
+    path: /rest/v1.1/projects/{project_id}/submittals
+    scope: project
+    api_version: "1.1"
+    bronze_table: bronze_procore_submittals

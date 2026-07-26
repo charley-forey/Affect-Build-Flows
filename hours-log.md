@@ -24,6 +24,7 @@ Source of truth for time/project validation and invoicing. **Append-only** — n
 | 7 | 2026-07-24 | Consulting | 0.5 | No | General | Meeting-notes write-up and hub update — README/dashboard/deliverable logs, billing reframe, Fabric MCP config; prep for Cathal scope call | This repo | — |
 | 8 | 2026-07-24 | Consulting | 0.5 | No | General | Scope, terms & engagement call with Cathal (~20 min) — objectives, deliverables, duration, hours, rate, working expectations. Terms agreed: $125/hr, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing | `meeting-notes/2026-07-24-cathal-scope-call.md` | — |
 | 9 | 2026-07-24 | Consulting | 0.5 | No | General | Post-call hub alignment — commercial terms, Phase 0 twenty-hour plan, D8 quick-win deliverable, availability and cadence, recap email to Cal + team | This repo | — |
+| 10 | 2026-07-26 | Development | 4.0 | No | [D2](deliverables/02-procore-etl-validation.md) / [D5](deliverables/05-powerbi-project-dashboard.md) | Built the reference Procore → Lakehouse pipeline, RFI/submittal slice, end to end: config-driven extractor (auth via Key Vault, pagination off response headers, `Retry-After` backoff, v2.0 header rule, `updated_at` watermark, active-project filter), version-controlled Spark SQL for silver/gold with a data-quality log that flags rather than drops, two Fabric notebooks, and a DuckDB runner that executes the same SQL locally. 34 assert-based tests pass, including proof that re-running does not double rows. Produced `fct_RfiSubmittal` plus its dimensions, a TMDL semantic model, and a generated preview page. | [`src/procore/`](src/procore/), [`powerbi/AffectProjectReport.pbip`](powerbi/AffectProjectReport.pbip), branch `worktree-procore-pipeline` | — |
 
 ## Running totals
 
@@ -32,7 +33,7 @@ Source of truth for time/project validation and invoicing. **Append-only** — n
 | Consulting (billable) | 0.0 | $0 |
 | Development (billable) | 0.0 | $0 |
 | Mentoring (billable) | 0.0 | $0 |
-| Non-billable (pre-agreement) | 12.0 | — |
+| Non-billable (pre-agreement) | 16.0 | — |
 
 ### Phase 0 budget — 20 hrs / $2,500
 
@@ -42,7 +43,7 @@ Source of truth for time/project validation and invoicing. **Append-only** — n
 | Consumed | 0.0 | $0 |
 | **Remaining** | **20.0** | **$2,500** |
 
-> All 12.0 hours logged to date are **non-billable by choice** — the tracker assessment,
+> All 16.0 hours logged to date are **non-billable by choice** — the tracker assessment,
 > Power BI build kit, resource library, warehouse review, and the scope call itself were
 > delivered before terms were agreed. They stay at $0: goodwill that shrinks the Phase 0
 > estimate rather than adding to the bill.

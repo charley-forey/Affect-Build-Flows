@@ -1,0 +1,9 @@
+{
+  "endpoint": "rfi_statuses",
+  "_note": "Procore's own RFI status vocabulary from /rfis/filter_options/status. This is what seeds the RfiStatus domain of dim_Status - Procore's words, not ours.",
+  "records": [
+    { "_project_id": 1001, "value": "draft", "label": "Draft" },
+    { "_project_id": 1001, "value": "open", "label": "Open" },
+    { "_project_id": 1001, "value": "closed", "label": "Closed" }
+  ]
+}

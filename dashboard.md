@@ -9,7 +9,7 @@ Single-page rollup of the engagement. Detail lives in `deliverables/` (one file 
 | ID | Deliverable | Phase | Status | Phase 0 hours | Depends on | Detail |
 |----|-------------|-------|--------|---------------|------------|--------|
 | D1 | Discovery & Architecture Review | 1 — Foundation | 🟡 In progress | 4 (endpoint inventory) | NDA, Fabric access | [D1](deliverables/01-discovery-architecture-review.md) |
-| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🔴 Not started | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
+| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🟡 Reference pipeline built (slice 1) | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
 | D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | — (post Phase 0) | D1 | [D3](deliverables/03-sage100-ingestion.md) |
 | D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | 4 | D2, D3 | [D4](deliverables/04-project-data-model.md) |
 | D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Spec + DAX + theme drafted | — (post Phase 0) | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
@@ -67,7 +67,7 @@ one automation live, and Rebecca able to extend the pattern to a new endpoint he
 
 | Source | Method | Status | Owner | Deliverable |
 |---|---|---|---|---|
-| Procore | API → ETL script → Lakehouse | 🟡 Built by Rebecca, needs review | Rebecca / Charley | D2 |
+| Procore | API → ETL script → Lakehouse | 🟡 Built by Rebecca, needs review. **Reference pipeline for the RFI/submittal slice built and running** — [`src/procore/`](src/procore/) | Rebecca / Charley | D2 |
 | Sage 100 Contractor | Read-only SQL (currently live-queried from Power BI) | 🔴 Ingestion to Lakehouse not built | Charley | D3 |
 | Excel project tracker | Manual today; every field mapped to a source | 🟢 **Analysis complete** — see `analysis/excel-tracker/` | Charley | D4/D5 |
 | Manual-only fields (~40% of the report) | SharePoint input workbook → Fabric (proposed) | 🔴 Awaiting Affect decision | Charley | D4 |
@@ -136,5 +136,5 @@ See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** — billab
 - New deliverable → copy `deliverables/_template.md`, assign next ID, add a row here
 - New data source → add a row to the integration table; when work starts, it becomes a deliverable
 - Meeting → new file in `meeting-notes/` + hours entry pointing to it
-- Code/scripts → keep in this repo where possible (e.g., `src/sage100/`), so commits become billing evidence
+- Code/scripts → keep in this repo where possible (`src/<source-system>/`, e.g. [`src/procore/`](src/procore/)), so commits become billing evidence. New sources copy the Procore shape: config-driven extractor + `.sql` transforms + a local runner
 - Later, if the ledger gets big: the hours table converts cleanly to CSV → Power BI for engagement-level reporting
