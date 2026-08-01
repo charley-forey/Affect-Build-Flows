@@ -21,8 +21,14 @@ That is the whole of Sage's public schema documentation for this product. The
 no table or column reference. Sage publishes a table-by-table schema for Sage 100 *ERP*,
 a different product that shares the name; that documentation does not apply here.
 
-**Consequence: the authoritative schema is the live database.** First query of the
-engagement, through the existing read-only account:
+**But we are not starting from zero.** A dataflow already reads Sage in production, and
+its Power Query names six real tables and most of their columns. That is extracted and
+documented in **[`schema/`](schema/README.md)** — read it before the docs below. It gives
+the table names, the naming convention, the joins in use, and what the current dataflow
+does *not* cover.
+
+**The authoritative schema is still the live database.** First query of the engagement,
+through the existing read-only account — use it to confirm and extend `schema/`:
 
 ```sql
 SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE
@@ -133,15 +139,21 @@ gets verified against the live database, not the docs.
 
 ## Concrete next steps
 
-1. Run the two `INFORMATION_SCHEMA` queries above. This is the missing 90% and it takes
-   30 seconds.
-2. Pull the queries Power BI runs against Sage today — they encode table knowledge that
-   exists in no document.
-3. Cross-read the resulting table list against `help/Modules/3-*` and `help/Modules/5-*`
-   to name the AR and payroll tables.
-4. Check `Advanced Company Settings` for the real history-retention period before
+1. Run the two `INFORMATION_SCHEMA` queries above, and diff the result against
+   [`schema/OBSERVED-SCHEMA.md`](schema/OBSERVED-SCHEMA.md). That closes the schema
+   question outright.
+2. ~~Pull the queries Power BI runs against Sage today~~ — **done**, they were in the repo:
+   [`schema/README.md`](schema/README.md).
+3. Add `apivln` / `arivln` (invoice lines) — the current dataflow reads headers only, so
+   there is no line-level or cost-code detail today.
+4. Find the job-cost and payroll tables. `actrec` exposes `jobcst`, `budget`, `cstcmp`,
+   `emptme`, `hrscmp` as relationships; none are queried yet.
+5. Stop dropping `retain` — retainage is a required Excel field and the column is already
+   present on `acpinv` and `acrinv`.
+6. Check `Advanced Company Settings` for the real history-retention period before
    designing incremental loads.
-5. Confirm SQL Server host location → gateway requirement.
+7. ~~Confirm SQL Server host location → gateway requirement~~ — **settled**: an on-prem
+   gateway is already configured and in use by the dataflow.
 
 ---
 

@@ -13,14 +13,17 @@ us for building the Lakehouse ingestion.
 
 | Path | What it is |
 |---|---|
-| [`help/`](help/INDEX.md) | **1,937 topics** — the complete v20.5 online help, mirroring Sage's own tree. Browse via [`help/INDEX.md`](help/INDEX.md). |
+| [`schema/`](schema/README.md) | **The real table/column knowledge** — six confirmed tables, naming conventions, joins in use, gaps. Derived from our own production dataflow. |
+| [`help/`](help/INDEX.md) | **2,023 topics** — the complete v20.5 online help, mirroring Sage's own tree. Browse via [`help/INDEX.md`](help/INDEX.md). |
 | [`guides/`](guides/) | The five PDF guides converted to text (DB & Company Administration ×3, Your Business 2026.1, User's Guide v23.1). |
 | [`INTEGRATION-NOTES.md`](INTEGRATION-NOTES.md) | The bridge doc: schema gap, header/detail rule, audit-table retention, connection mechanics. |
-| [`refresh.py`](refresh.py) | Regenerates all of the above. `python refresh.py` |
+| [`refresh.py`](refresh.py) | Regenerates `help/` + `guides/`. `python refresh.py` |
 
-**Corpus headline:** across all 1,937 topics and five guides, exactly one physical table
-name appears (`CMPANY`). Sage publishes no table schema for this product — see
-[`INTEGRATION-NOTES.md`](INTEGRATION-NOTES.md). The live database is the schema reference.
+**Corpus headline:** across all 2,023 topics and five guides, exactly one physical table
+name appears (`CMPANY`). Sage publishes no table schema for this product. The gap is
+filled by [`schema/`](schema/README.md), reconstructed from the Power Query that already
+reads Sage in production — and confirmed against the live database via
+`INFORMATION_SCHEMA`.
 
 ## Upstream sources
 
@@ -98,17 +101,24 @@ The ✅ rows may be obtainable from Procore once the connector is live.
 
 1. **Which tables and views does the read-only account actually expose?** Run
    `SELECT * FROM INFORMATION_SCHEMA.TABLES` and we have a real answer in 30 seconds.
-2. **Which queries does Power BI run against Sage today?** These are the starting point
-   for the ingestion and they encode knowledge that exists nowhere else.
-3. **Where does the SQL Server live?** On-prem means an **on-premises data gateway** is
-   required for Fabric ingestion — a dependency with procurement lead time. Identify it
-   early.
+   *Partly answered* — [`schema/`](schema/README.md) documents six confirmed tables and
+   ~28 more discovered through foreign keys. The query confirms and completes it.
+2. ~~**Which queries does Power BI run against Sage today?**~~ **Answered** — they were
+   already in this repo, at `foundation/01-ingestion/Sage/Build_Sage_Test.Dataflow`.
+   Extracted and documented in [`schema/`](schema/README.md).
+3. ~~**Where does the SQL Server live?**~~ **Answered** — on-prem
+   (`NC-AFFECT-1\SAGE100CON`), and an **on-premises data gateway is already configured**
+   and in use by the existing dataflow. No procurement lead time to worry about.
 4. **Are the audit tables accessible to the read-only account, and what is the retention
    period set to?** Free change tracking if so — but only back to the retention horizon
    (Sage default 90 days), so ask for the configured value, not just access.
 5. **What is the job numbering scheme,** and does it match Procore project numbers and the
    `YY-000` in the Excel filename convention? *This is the linchpin question for the whole
-   model.*
+   model.* **Reframed:** `jobnum` on the invoice tables is a foreign key to
+   `actrec.recnum`, not a readable job number — the readable name is `actrec.jobnme`. A
+   `dim_projects_procoreXsage` crosswalk (`Sage Project ID` ↔ `Project ID`) already exists
+   in the Silver lakehouse. The open part is whether that crosswalk is complete and
+   maintained, or hand-built and stale.
 6. **Cost code structure** — segmented? Does it reconcile with Procore's list?
 7. **Payroll: Sage or ADP** as the source for hours worked and OT hours?
 8. **Which Sage 100 Contractor version?** Determines schema specifics and connector
