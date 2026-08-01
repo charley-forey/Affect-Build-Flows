@@ -1,0 +1,22 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "Procore_vendors_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_vendors_raw": {
+      "queryId": "1f5bb44b-3bd0-44cb-89d4-8fc32eacdc92",
+      "queryName": "procore_vendors_raw"
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

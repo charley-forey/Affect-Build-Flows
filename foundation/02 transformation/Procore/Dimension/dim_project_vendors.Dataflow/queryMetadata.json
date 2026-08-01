@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "dim_project_vendors",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "dim_procore_project_vendor": {
+      "queryId": "fb3ae58a-a5f8-4b09-96f8-e1b946263a81",
+      "queryName": "dim_procore_project_vendor",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "24edd1bf-d5ed-4951-8cf5-ee3b2ec959fe",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+table dim_projects_procoreXsage
+	lineageTag: d490a059-18fa-4f05-ac7b-168a2d77ad7d
+	sourceLineageTag: [dbo].[dim_projects_procoreXsage]
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 5eb721a0-f8f0-42a1-a652-10e9b2406998
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Project Name'
+		dataType: string
+		lineageTag: 731a649b-15ce-4eac-946e-931e729d1633
+		sourceLineageTag: Project Name
+		summarizeBy: none
+		sourceColumn: Project Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Sage Project ID'
+		dataType: string
+		lineageTag: 8f7b8cbf-2039-4367-b0e0-ec1eca15826b
+		sourceLineageTag: Sage Project ID
+		summarizeBy: none
+		sourceColumn: Sage Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column origin_code
+		dataType: string
+		lineageTag: b9a21b2f-12eb-484d-9a41-190dbf96fb4d
+		sourceLineageTag: origin_code
+		summarizeBy: none
+		sourceColumn: origin_code
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_projects_procoreXsage = entity
+		mode: directLake
+		source
+			entityName: dim_projects_procoreXsage
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

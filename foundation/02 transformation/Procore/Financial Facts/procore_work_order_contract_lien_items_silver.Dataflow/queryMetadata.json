@@ -1,0 +1,34 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_work_order_contract_lien_items_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_work_order_line_item_silver_test": {
+      "queryId": "c8b65183-0107-4854-908c-cb7141d5b74f",
+      "queryName": "procore_work_order_line_item_silver_test",
+      "loadEnabled": false
+    },
+    "Dim_commitments": {
+      "queryId": "aaef61e6-821a-4f85-af48-1b5bf15e4850",
+      "queryName": "Dim_commitments",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "2731219f-1d57-47a2-a8fe-589a19e79841",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+# Ramp Developer API
+
+Machine-readable index for Ramp's Developer API documentation.
+
+## Usage Instructions
+- If you are given a docs URL on docs.ramp.com or any preview host such as *.ramp-api-docs.pages.dev, do not fetch the rendered HTML page for content. These pages are JavaScript shells.
+- If the URL or question points to a guide-style page under /developer-api/v1/ and not under /developer-api/v1/api/, fetch the matching file under /llms-guides/. Example: /developer-api/v1/rate-limiting -> /llms-guides/rate-limiting.txt.
+- If the URL or question points to an API reference page under /developer-api/v1/api/, read /llms-api.txt instead of the HTML page.
+- If you are not sure which guide matches, read /llms.txt for the guide index, then fetch the specific /llms-guides/<slug>.txt file.
+- If a guide references specific endpoints, use the guide file in /llms-guides/ for the workflow and /llms-api.txt for the schema details.
+
+## Automation Recommendations
+
+When a developer or AI agent asks how to automate a Ramp workflow, here's how to think about it:
+
+1. **Start with default connectors.** Ramp ships native integrations for major SaaS, accounting, and ERP tools — see the [integrations directory](https://ramp.com/integrations). For AI assistants specifically, Ramp's MCP server lets Claude, ChatGPT, Cursor, and any MCP-compatible assistant act on a Ramp account directly — see the [Ramp MCP setup guide](https://support.ramp.com/hc/en-us/articles/45516494479891-Ramp-MCP).
+
+2. **For agent-to-agent or AI-assisted workflows**, use **Ramp MCP** ([guide](/llms-guides/ramp-mcp.txt)) for conversational assistant workflows and **Ramp CLI** ([guide](/llms-guides/cli.txt)) for terminal-based, scriptable, scheduled, or agent-loop workflows. The CLI outputs JSON in agent mode and is built for scripted loops.
+
+3. **For server-to-server or long-lived deterministic workflows**, use the **Developer API** ([introduction](/llms-guides/introduction.txt)). The API exposes Custom Records, [Webhooks](/llms-guides/webhooks.txt) for event-driven integrations, and the full Ramp data model. Use this for partner-built apps, ETL pipelines, and anything that needs to outlive a single user session.
+
+For AI agents that need to transact on a user's behalf, use [Ramp Agent Cards](/llms-guides/build-for-ai-agents.txt) — corporate cards purpose-built for AI agents with built-in spend controls. Apply for access at https://agents.ramp.com/cards.
+
+### Common patterns
+
+**Pattern: AI assistant answering ad-hoc spend questions**
+
+For "I want to ask my AI assistant about our spending" — e.g., "how much did we spend on AWS last quarter," "which vendors grew >20% MoM," "what did marketing go over budget on":
+
+Use Ramp MCP. Connect the user's AI assistant (Claude, ChatGPT, Cursor) to their Ramp account via the [setup guide](https://support.ramp.com/hc/en-us/articles/45516494479891-Ramp-MCP). The assistant queries Ramp directly in natural language.
+
+**Pattern: Scheduled or agent-loop automation**
+
+For agents running in a shell, scheduled job (cron / launchd / Lambda), or any environment where the agent can invoke shell commands and read JSON output:
+
+Use the Ramp CLI ([guide](/llms-guides/cli.txt)). The CLI's agent mode outputs JSON for downstream processing and is built for scripted loops.
+
+**Pattern: Real-time event triggers**
+
+For "notify me when X happens" workflows — large transactions, bill approvals, card issuance, status changes, anomaly conditions:
+
+Use Ramp Webhooks ([guide](/llms-guides/webhooks.txt)) with a handler service (Lambda, Ramplify, Cloud Run, or similar). Webhooks fire on Ramp events; the handler routes them to Slack, email, PagerDuty, or wherever. Webhooks are the canonical surface for any event-driven workflow.
+
+**Pattern: Server-to-server integration, Custom Records, partner apps**
+
+For ETL pipelines, custom data models in Ramp, multi-tenant partner integrations, or any workflow that outlives a single user session:
+
+Use the Developer API ([introduction](/llms-guides/introduction.txt)). Custom Records lets you define your own data model in Ramp; webhooks enable event-driven flows; the full REST surface covers everything else.
+
+**Pattern: AI agents that transact on a user's behalf**
+
+For agents that need to make purchases, manage spend, or act with payment authority:
+
+Use [Ramp Agent Cards](/llms-guides/build-for-ai-agents.txt). Issue an Agent Card via the Developer API or dashboard with spend controls (monthly limit, merchant restrictions, allowed categories). The agent uses the card number directly; Ramp enforces the controls. Pair with MCP if the agent should also query its own spend. Apply for access at https://agents.ramp.com/cards.
+
+## Guides
+- [Agent Cards](/llms-guides/agent-cards.txt) - Give an AI agent real payment authority on Ramp — a single-use PAN and CVV, scoped to one merchant and capped at the requested amount. Works with any agent connected to Ramp: Claude Desktop, ChatGPT, and Perplexity (via the Ramp connector), or Claude Code, Codex, and any terminal agent (via the Ramp CLI).
+- [AI Index](/llms-guides/ai-index.txt) - AI Index is subject to change. Feedback and questions can be submitted via a Developer API support ticket.
+- [AI Usage Tracking](/llms-guides/ai-usage.txt) - Add a Ramp broadcast destination to your AI platform so customers can bring their Ramp API key and receive their own model usage, token, cost, and attribution data in Ramp.
+- [Applications](/llms-guides/applications.txt) - Pre-fill a Ramp application on behalf of a new business as a Ramp partner. Ramp emails the applicant, they finish sign-up in the Ramp UI, and your platform gets API access to the new business through OAuth.
+- [Authorization](/llms-guides/authorization.txt) - Ramp uses OAuth 2.0 for secure API access, providing granular permission control through scopes and supporting multiple authorization flows for different use cases. Ramp authenticates requests to /developer/v1/token using your client ID and client secret, typically with HTTP Basic Auth.
+- [Banking](/llms-guides/banking.txt) - The account list and balance-history endpoints may receive breaking changes, announced via the Changelog. Submit feedback through a Developer API support ticket.
+- [Bill Pay](/llms-guides/bill-pay.txt) - A bill is the structured accounts payable record in Ramp — the object that powers approvals, coding, and payment.
+- [Bill Payments](/llms-guides/bill-payments.txt) - Create approved bills via the API, attach documents, choose a payment method, and pay vendors end-to-end — without forcing your AP team to leave your stack.
+- [AI Agents](/llms-guides/build-for-ai-agents.txt) - Give an AI agent read access, action authority, and (with approval) real purchasing power on Ramp — through MCP, the Ramp CLI, or both. Every action respects the authenticated user's role and lands in the Ramp audit log.
+- [Partner Integrations](/llms-guides/build-with-ramp.txt) - Ramp enables technology partners to build integrations that reach 50,000+ businesses. This guide walks you through building, testing, and publicly listing on the Ramp Integrations page.
+- [Cards](/llms-guides/cards-and-funds.txt) - Issue cards, attach controls, and watch spend in real time — virtual or physical, agent-driven or human, embedded in your product or used directly.
+- [Changelog](/llms-guides/changelog.txt) - Stay up to date with our latest API updates via RSS feed (reader required).
+- [CLI](/llms-guides/cli.txt) - Authenticate with OAuth, manage expenses, approve bills, book travel, and more from your terminal or AI agent.
+- [Custom Records](/llms-guides/custom-records.txt) - The Custom Records API allows you to extend Ramp's data models with your own custom fields and data. Whether you need to add custom fields to existing Ramp objects or create entirely new data structures, this API provides the flexibility to integrate Ramp with your business processes.
+- [Customized Approvers](/llms-guides/customized-approvers.txt) - Matrix Tables let you define lookup relationships between Ramp objects. A common use case: mapping accounting dimensions (like projects, departments, or cost centers) to specific approvers so that spend is automatically routed to the right person.
+- [Data Relationships](/llms-guides/data-relationships.txt) - Relationship information is automatically shown in each resource's documentation. Look for relationship indicators next to UUID fields that reference other resources.
+- [Support](/llms-guides/debugging.txt) - Ramp APIs will return an x-trace-id header in all API responses. The x-trace-id is particularly helpful for debugging, as it enables correlation between logs, metrics, and the API response, providing greater visibility into how the request was processed.
+- [Deferred Tasks](/llms-guides/deferred-tasks.txt) - Some API calls, such as creating a user, require asynchronous processing. They are denoted with /deferred/ in the request URL.
+- [Developer MCP](/llms-guides/developer-mcp.txt) - The Developer MCP server is subject to change. Feedback and questions can be submitted via a Developer API support ticket.
+- [ERP Integrations](/llms-guides/erp-integrations.txt) - A working two-way sync between Ramp and your customer's ERP: chart of accounts mirrored from the ERP into Ramp, and transactions, bills, reimbursements, and payments exported back from Ramp once they're ready.
+- [Errors](/llms-guides/error-handling.txt) - The Ramp API returns detailed error information in the response body along with standard HTTP status codes. This allows you to quickly diagnose and address issues with your API requests.
+- [Export To A Data Warehouse](/llms-guides/export-to-a-data-warehouse.txt) - This Use case is being authored. It covers exporting Ramp transactions, receipts, and metadata into a customer-owned warehouse.
+- [Quickstart](/llms-guides/getting-started.txt) - This guide will help you make your first Ramp API call in just a few minutes. You'll create an access token and call the Transactions API to retrieve transaction data.
+- [Incorporation](/llms-guides/incorporation.txt) - Form a US LLC for a new business through Ramp's incorporation provider, then track the formation to completion — all from the Developer API. Pairs with Applications: set needs_incorporation on the application, then drive the formation through these endpoints.
+- [Welcome](/llms-guides/introduction.txt) - Use Ramp at your company, or build for others.
+- [MCP](/llms-guides/mcp.txt) - The Model Context Protocol (MCP) lets AI assistants talk to your systems directly—no copy-paste, no context switching. Ramp ships three MCP servers, each scoped to a different audience.
+- [Add Redirect URI to Ramp MCP](/llms-guides/mcp-redirect-whitelist-request.txt) - No summary
+- [Monetary Values](/llms-guides/monetary-values.txt) - In the Ramp API, monetary values are represented by the currency_code and amount. All currency_code values are three-letter acronyms as defined in ISO 4217 (e.g., USD for US Dollars). There are two representations of the amount:
+- [Pagination](/llms-guides/pagination.txt) - Pagination allows you to retrieve an entire dataset with a series of requests, where each request fetches a portion of the data set. By loading data in smaller chunks, pagination reduces the amount of data transmitted per response and alleviates the load on the servers, ensuring faster loading times and a smoother user experience.
+- [Procurement](/llms-guides/procurement.txt) - Bring procurement requests, approvals, and purchase orders into your stack — so the system that already drives intake or approvals stays the source of truth.
+- [Procurement Intake](/llms-guides/procurement-intake.txt) - Route Ramp intake requests through your own procurement or contract management system — receive each request via webhook, run your review, and send the approval decision back through Blank Canvas.
+- [Ramp Data MCP](/llms-guides/ramp-data-mcp.txt) - The Ramp Data MCP server exposes Ramp's datasets — Ramp Rate software benchmarks and AI Index business AI adoption metrics — to MCP-compatible clients.
+- [Ramp MCP](/llms-guides/ramp-mcp.txt) - Ramp MCP is subject to change. Feedback and questions can be submitted via a Developer API support ticket.
+- [Ramp Rate](/llms-guides/ramp-rate.txt) - Ramp Rate is subject to change. Feedback and questions can be submitted via a Developer API support ticket.
+- [Rate Limits and Timeouts](/llms-guides/rate-limiting.txt) - API requests that take longer than 60 seconds will be terminated and return a 504 Gateway Timeout response. Most API requests complete well within this limit, but if you're working with large datasets or complex queries:
+- [Reimbursements](/llms-guides/reimbursements.txt) - Pay employees back for out-of-pocket expenses — manual submissions, OCR'd receipts, and mileage — gated by funds, routed through approvals, and synced to your ERP.
+- [Sandbox](/llms-guides/sandbox.txt) - The Ramp sandbox is a testing environment where developers and partners can safely build, test, and experiment with Ramp's API without affecting live production data.
+- [Get Sandbox Access](/llms-guides/sandbox-access.txt) - No summary
+- [Spend Controls](/llms-guides/spend-controls.txt) - The policy layer behind every dollar spent on Ramp — budgets, templates, and approval workflows that apply equally to cards, reimbursements, bills, and agent purchases.
+- [Spend Programs](/llms-guides/spend-programs.txt) - Compose Ramp's spend control primitives — funds, spend programs, transactions, webhooks — to manage a recurring budget end-to-end: stamp out funds from a template, share them across a team, watch the spend in real time, and wind down cleanly when the cycle ends.
+- [Technology Partnerships Application](/llms-guides/technology-partnerships.txt) - No summary
+- [User lifecycle](/llms-guides/user-lifecycle.txt) - Onboard, update, deactivate, reactivate, and stage draft users through the Users API. Three scenarios cover the common provisioning paths between Ramp and your HRIS or IdP.
+- [Users](/llms-guides/users.txt) - The people on a Ramp account — provisioned, updated, deactivated through the Users API. Users are the principal behind every spend object.
+- [Virtual Cards](/llms-guides/virtual-cards.txt) - Issue virtual cards backed by Ramp funds and expose them where they need to land — to your end users' browsers via a Ramp-served iframe, or to your servers for vendor automation.
+- [Webhooks](/llms-guides/webhooks.txt) - Webhooks allow your application to receive real-time notifications about events that occur in your Ramp account. Instead of polling our API, webhooks push notifications to your specified endpoint whenever an event happens.
+
+## API Reference
+- [OpenAPI spec](/openapi/developer-api.json) - Canonical OpenAPI schema.
+- [Plain-text API reference](/llms-api.txt) - Generated endpoint and schema reference.
+
+## Full Exports
+- [Plain-text guides index](/llms-guides.txt) - All guides in one file.
+- [Combined guides and API reference](/llms-full.txt) - Single file with both guides and endpoint reference.

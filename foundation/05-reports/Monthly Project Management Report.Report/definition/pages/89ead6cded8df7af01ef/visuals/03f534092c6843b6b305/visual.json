@@ -1,0 +1,206 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "03f534092c6843b6b305",
+  "position": {
+    "x": 0,
+    "y": 329.59435626102294,
+    "z": 2001,
+    "height": 195.27336860670192,
+    "width": 617.42504409171067,
+    "tabOrder": 2001
+  },
+  "visual": {
+    "visualType": "funnel",
+    "query": {
+      "queryState": {
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Current Contract Amount"
+                }
+              },
+              "queryRef": "DAX Measures.Current Contract Amount",
+              "nativeQueryRef": "Current Contract Amount",
+              "format": "\\$#,0.###############;(\\$#,0.###############);\\$#,0.###############"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Total Paid"
+                }
+              },
+              "queryRef": "DAX Measures.Total Paid",
+              "nativeQueryRef": "Total Paid",
+              "format": "\\$#,0.###############;(\\$#,0.###############);\\$#,0.###############"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Remaining Balance"
+                }
+              },
+              "queryRef": "DAX Measures.Remaining Balance",
+              "nativeQueryRef": "Remaining Balance",
+              "format": "\\$#,0.###############;(\\$#,0.###############);\\$#,0.###############"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Remaining To Bill"
+                }
+              },
+              "queryRef": "DAX Measures.Remaining To Bill",
+              "nativeQueryRef": "Remaining To Bill",
+              "format": "\\$#,0.###############;(\\$#,0.###############);\\$#,0.###############"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "DAX Measures"
+                  }
+                },
+                "Property": "Current Contract Amount"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "objects": {
+      "dataPoint": [
+        {
+          "properties": {
+            "fill": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 2,
+                      "Percent": 0.4
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "keepLayerOrder": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.5
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "border": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "radius": {
+              "expr": {
+                "Literal": {
+                  "Value": "16D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "ThemeDataColor": {
+                      "ColorId": 0,
+                      "Percent": -0.2
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Project Billing'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

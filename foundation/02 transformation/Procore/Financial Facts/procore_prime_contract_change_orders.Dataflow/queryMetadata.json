@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_prime_contract_change_orders",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_prime_change_orders": {
+      "queryId": "1a23f234-80b6-482e-ac1c-bd10451182fb",
+      "queryName": "procore_prime_change_orders",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "408c2e6b-1d8a-4b1e-bc76-4197b921458e",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

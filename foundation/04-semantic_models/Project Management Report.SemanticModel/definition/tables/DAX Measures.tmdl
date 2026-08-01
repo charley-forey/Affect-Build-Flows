@@ -1,0 +1,426 @@
+table 'DAX Measures'
+	lineageTag: c18fdf4b-a9eb-4829-9852-4f7f31db6d97
+
+	measure 'Current Contract Amount' = ```
+			
+			SUM('procore_prime_contracts_silver'[Prime Contract Value]) 
+			+ CALCULATE(
+			    SUM('procore_prime_change_orders'[CO Value $]),
+			    'procore_prime_change_orders'[Status] = "approved"
+			  )
+			```
+		lineageTag: 10f850e8-9078-4cac-bc07-0fd665bc75e2
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Original Prime Contract Amount' =
+			
+			SUM(procore_prime_contracts_silver[Prime Contract Value])
+		lineageTag: 06549562-2071-42b5-871e-dae814bdda1a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure '% Change in Contract Value' =
+			
+			DIVIDE(
+			    [Current Contract Amount] - [Original Prime Contract Amount],
+			    [Original Prime Contract Amount]
+			)
+		lineageTag: 0773f5e2-994a-4f32-9619-f90116c29a69
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending CO Value' =
+			
+			CALCULATE(
+			    SUM('procore_prime_change_orders'[CO Value $]),
+			    'procore_prime_change_orders'[Status] = "pending"
+			)
+		lineageTag: c629be48-ac67-4a26-924f-b07c91a01c27
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Billed This Month' =
+			
+			CALCULATE(
+			    SUM('Revenue_AllTime'[Invoice Total]),
+			    MONTH('Revenue_AllTime'[Invoice Date]) = MONTH(TODAY()),
+			    YEAR('Revenue_AllTime'[Invoice Date]) = YEAR(TODAY())
+			)
+		lineageTag: a36e956e-91aa-43fe-842f-3377688b5141
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Billed This Month % of Contract' =
+			
+			DIVIDE(
+			    [Billed This Month],
+			    [Current Contract Amount]
+			)
+		lineageTag: 31f1371e-7745-418a-b766-0916dea0e22e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Billed Last Month' =
+			
+			CALCULATE(
+			    SUM('Revenue_AllTime'[Invoice Total]),
+			    MONTH('Revenue_AllTime'[Invoice Date]) = MONTH(EOMONTH(TODAY(), -1)),
+			    YEAR('Revenue_AllTime'[Invoice Date]) = YEAR(EOMONTH(TODAY(), -1))
+			)
+		lineageTag: 344f6d23-4893-4a5f-8f15-b58affa97175
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Billed Last Month % of Contract' =
+			
+			DIVIDE(
+			    [Billed Last Month],
+			    [Current Contract Amount]
+			)
+		lineageTag: 59efc86a-dca7-4d7c-8538-fa7c0e120f99
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Billed' =
+			
+			SUM('Revenue_AllTime'[Invoice Total])
+		lineageTag: f104a6c9-f7dc-4d2f-9d78-a1bb707bf32a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Billed % of Contract' =
+			
+			DIVIDE(
+			    [Total Billed],
+			    [Current Contract Amount]
+			)
+		lineageTag: a3ba7303-2905-47e0-9eb6-71bf402edea3
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Paid' =
+			
+			SUM('Revenue_AllTime'[Amount Paid])
+		lineageTag: bd604e66-c4ab-485c-9c1f-36a755887fdd
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Paid % of Contract' =
+			
+			DIVIDE(
+			    [Total Paid],
+			    [Current Contract Amount]
+			)
+		lineageTag: 0dd6be19-b7cc-4a28-af2c-cb93b8bc3a34
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Open Balance' =
+			
+			SUM('Revenue_AllTime'[Invoice Balance])
+		lineageTag: 164a0c8f-60f6-4353-aeae-24517f917775
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Open Balance % of Contract' =
+			
+			DIVIDE(
+			    [Open Balance],
+			    [Current Contract Amount]
+			)
+		lineageTag: 8c62df5b-b09f-4515-9136-45c25e178125
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending COs Count' =
+			
+			CALCULATE(
+			    COUNTROWS('procore_prime_change_orders'),
+			    'procore_prime_change_orders'[Status] = "pending"
+			)
+		formatString: 0
+		lineageTag: 51d18f83-9ff4-4d73-8912-a99dfe2ace3f
+
+	measure 'Pending COs Last Month Count' =
+			
+			CALCULATE(
+			    COUNTROWS('procore_prime_change_orders'),
+			    'procore_prime_change_orders'[Status] = "pending",
+			    MONTH('procore_prime_change_orders'[Date Created]) = MONTH(EOMONTH(TODAY(), -1)),
+			    YEAR('procore_prime_change_orders'[Date Created]) = YEAR(EOMONTH(TODAY(), -1))
+			)
+		formatString: 0
+		lineageTag: 338d55ae-14ca-4efc-b597-5b2a2c3e4546
+
+	measure 'Pending COs Last Month %' =
+			
+			DIVIDE(
+			    [Pending COs Last Month Count],
+			    [Pending COs Count]
+			)
+		lineageTag: c404a840-f712-415c-ba17-0b56bb12c845
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Pending COs Change' =
+			
+			[Pending COs Count] - [Pending COs Last Month Count]
+		formatString: 0
+		lineageTag: c841242e-e06b-44c1-8448-a727d7a689ee
+
+	measure 'Pending COs Change Label' =
+			
+			VAR Change = [Pending COs Change]
+			RETURN
+			    IF(
+			        Change > 0,
+			        "+" & Change & " this period",
+			        IF(
+			            Change < 0,
+			            Change & " this period",
+			            "-"
+			        )
+			    )
+		lineageTag: 3eedd37a-d310-4915-b914-64242a2bd7bd
+
+	measure 'Total Approved CO Value' =
+			
+			CALCULATE(
+			    SUM('procore_prime_change_orders'[CO Value $]),
+			    'procore_prime_change_orders'[Status] = "Approved"
+			)
+		lineageTag: 3c9b0bd6-8fbf-4711-acc1-e17a86b376bf
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Requirements Spent To Date $' =
+			
+			CALCULATE(
+			    SUM('procore_budgets_silver'[INVOICED_TO_DATE_P]),
+			    'procore_budgets_silver'[root_cost_code_id] IN {
+			        562950308851368,
+			        562950355300142,
+			        562950355920624,
+			        562950364892573,
+			        562950366254056,
+			        562950388264217,
+			        562950406932349,
+			        562950444336421,
+			        562950485889142
+			    }
+			)
+		lineageTag: 7e824f0b-6952-40fa-8911-f2e680d88632
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Conditions Spent To Date $' =
+			
+			CALCULATE(
+			    SUM('procore_budgets_silver'[INVOICED_TO_DATE_P]),
+			    'procore_budgets_silver'[root_cost_code_id] IN {
+			        562950308851305,
+			        562950355300079,
+			        562950355920561,
+			        562950366254155,
+			        562950388264155,
+			        562950444336359
+			    }
+			)
+		lineageTag: 9a7d4506-31d2-4edf-b0b9-7ce4857a52af
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Conditions Budget' =
+			
+			CALCULATE(
+			    SUM('procore_budgets_silver'[UPDATED_PRIME_CONTRACT_BUDGET_D_A+B+C]),
+			    'procore_budgets_silver'[root_cost_code_id] IN {
+			        562950308851305,
+			        562950355300079,
+			        562950355920561,
+			        562950366254155,
+			        562950388264155,
+			        562950444336359
+			    }
+			)
+		lineageTag: 1e4250af-2675-476d-9028-47ed5535a669
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Requirements Budget' =
+			
+			CALCULATE(
+			    SUM('procore_budgets_silver'[UPDATED_PRIME_CONTRACT_BUDGET_D_A+B+C]),
+			    'procore_budgets_silver'[root_cost_code_id] IN {
+			        562950308851368,
+			        562950355300142,
+			        562950355920624,
+			        562950364892573,
+			        562950366254056,
+			        562950388264217,
+			        562950406932349,
+			        562950444336421,
+			        562950485889142
+			    }
+			)
+		lineageTag: c441052b-3e47-4771-8aad-18682dda08c9
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Requirements Forecast' =
+			
+			CALCULATE(
+			    SUM('procore_budgets_silver'[PROJECTED_PRIME_CONTRACT_BUDGET_F_D+E]),
+			    'procore_budgets_silver'[root_cost_code_id] IN {
+			        562950308851368,
+			        562950355300142,
+			        562950355920624,
+			        562950364892573,
+			        562950366254056,
+			        562950388264217,
+			        562950406932349,
+			        562950444336421,
+			        562950485889142
+			    }
+			)
+		lineageTag: 67eaf938-80b0-4f7b-a648-a7e32ae91f74
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Conditions Forecast' =
+			
+			CALCULATE(
+			    SUM('procore_budgets_silver'[PROJECTED_PRIME_CONTRACT_BUDGET_F_D+E]),
+			    'procore_budgets_silver'[root_cost_code_id] IN {
+			        562950308851305,
+			        562950355300079,
+			        562950355920561,
+			        562950366254155,
+			        562950388264155,
+			        562950444336359
+			    }
+			)
+		lineageTag: a82498b5-b88f-453c-921e-0693088be80a
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Requirements % Spent' =
+			
+			DIVIDE(
+			    [General Requirements Spent To Date $],
+			    [General Requirements Budget],
+			    0
+			)
+		lineageTag: 1198d301-f4e5-4c04-99a0-8da4a2029899
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Conditions % Spent' =
+			
+			DIVIDE(
+			    [General Conditions Spent To Date $],
+			    [General Conditions Budget],
+			    0
+			)
+		lineageTag: 2fd72c71-a07a-4f47-801f-a60671fbf76e
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Requirements Budget vs Forecast %' =
+			
+			DIVIDE(
+			    [General Requirements Forecast] - [General Requirements Budget],
+			    [General Requirements Budget],
+			    0
+			)
+		lineageTag: 43aa7297-2a0d-4f6f-8a10-3baf1caeba80
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Requirements Budget vs Forecast $' =
+			
+			[General Requirements Forecast] - [General Requirements Budget]
+		lineageTag: 5341233e-63c6-4c89-a93c-9fdc77c02f3d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Conditions Budget vs Forecast %' =
+			
+			DIVIDE(
+			    [General Conditions Forecast] - [General Conditions Budget],
+			    [General Conditions Budget],
+			    0
+			)
+		lineageTag: 21ac0bfc-1b47-4d7c-8411-cba41f9e70c5
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'General Conditions Budget vs Forecast $' =
+			
+			[General Conditions Forecast] - [General Conditions Budget]
+		lineageTag: a02e489f-da89-4bea-8bb1-d23eb0bdee42
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Remaining To Bill' =
+			
+			([Current Contract Amount]- [Total Billed])
+		lineageTag: 50ac81b9-2847-465f-b61c-430b80515089
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Remaining Balance' =
+			
+			([Current Contract Amount]- [Total Paid])
+		lineageTag: 5c0361f1-5e7a-49b9-b752-3072d0eb38ff
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Age of Oldest Unapproved CO' =
+			
+			VAR OldestPendingDate =
+			    CALCULATE(
+			        MIN(procore_prime_change_orders[Date Created]),
+			        procore_prime_change_orders[Status] = "Pending"
+			    )
+			RETURN
+			    IF(
+			        ISBLANK(OldestPendingDate),
+			        BLANK(),
+			        DATEDIFF(OldestPendingDate, TODAY(), DAY)
+			    )
+		formatString: 0
+		lineageTag: a0c26ac8-eb5b-478f-b87e-41013ce12ecd
+
+	measure 'AR Outstanding' =
+			
+			([Total Billed]- [Total Paid])
+		lineageTag: a6dec868-e98c-488d-8bd1-202e479dff14
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Cost To Complete' =
+			
+			SUM(procore_budgets_silver[COST_TO_COMPLETE_Q_K-P])
+		lineageTag: bdb23108-02ca-4241-ab1c-be660530a8e8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Cash Position' =
+			
+			(([Total Paid]+[AR Outstanding])/[Cost To Complete])
+		formatString: 0
+		lineageTag: c4a86fa7-b967-4a16-8481-4541a50d72ae
+
+	partition 'DAX Measures' = m
+		mode: import
+		source =
+				let
+				  Source = "",
+				  #"Removed Columns" = Table.RemoveColumns(Source, {"DAX Measures"})
+				in
+				  #"Removed Columns"
+
+	annotation PBI_ResultType = Text
+

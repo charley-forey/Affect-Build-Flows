@@ -1,0 +1,29 @@
+table Dim__Sage_Projects
+	lineageTag: a7de4655-6580-41c5-b709-6f95dd5b8e24
+	sourceLineageTag: [dbo].[Dim__Sage_Projects]
+
+	column jobnme
+		dataType: string
+		lineageTag: 5ff528e3-a2cd-4e76-9492-0d850b939417
+		sourceLineageTag: jobnme
+		summarizeBy: none
+		sourceColumn: jobnme
+
+		annotation SummarizationSetBy = Automatic
+
+	column recnum
+		dataType: string
+		lineageTag: 78a6ad21-68a0-4082-a050-8dd89cd776bd
+		sourceLineageTag: recnum
+		summarizeBy: none
+		sourceColumn: recnum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim__Sage_Projects = entity
+		mode: directLake
+		source
+			entityName: Dim__Sage_Projects
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

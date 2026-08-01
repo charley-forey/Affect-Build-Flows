@@ -1,0 +1,154 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "ec0afa5ed113150cae12",
+  "position": {
+    "x": 13.902249806051202,
+    "y": 173.77812257564003,
+    "z": 3,
+    "height": 65.53917765709852,
+    "width": 280.0310318076028,
+    "tabOrder": 3
+  },
+  "visual": {
+    "visualType": "slicer",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim__Sage_Projects"
+                    }
+                  },
+                  "Property": "jobnme"
+                }
+              },
+              "queryRef": "Dim__Sage_Projects.jobnme",
+              "nativeQueryRef": "jobnme",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Sage_Vendors"
+                    }
+                  },
+                  "Property": "Vendor Name"
+                }
+              },
+              "queryRef": "Dim_Sage_Vendors.Vendor Name",
+              "nativeQueryRef": "Vendor Name",
+              "active": false
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "data": [
+        {
+          "properties": {
+            "mode": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Dropdown'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "general": [
+        {
+          "properties": {}
+        }
+      ],
+      "header": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Select Vendor'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "cad0743f6c0ac3b454d4",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Dim__Sage_Projects"
+              }
+            },
+            "Property": "jobnme"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "f4f579db7700849b6d65",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Dim_Sage_Vendors"
+              }
+            },
+            "Property": "Vendor Name"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

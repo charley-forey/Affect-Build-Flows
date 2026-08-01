@@ -1,0 +1,438 @@
+table procore_budgets_silver
+	lineageTag: e81f4991-9c45-4420-a46d-abc6df5260ab
+	sourceLineageTag: [dbo].[procore_budgets_silver]
+
+	column curve
+		dataType: string
+		lineageTag: 695816a2-05a9-4cd2-8932-e8a39f49fa1c
+		sourceLineageTag: curve
+		summarizeBy: none
+		sourceColumn: curve
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f85af069-167e-4ef9-85b7-b95f82151994
+		sourceLineageTag: start_date
+		summarizeBy: none
+		sourceColumn: start_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column end_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 59a1fb64-6b02-47c7-be7c-46a5237eda82
+		sourceLineageTag: end_date
+		summarizeBy: none
+		sourceColumn: end_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column deletable
+		dataType: string
+		lineageTag: fac8804b-38c3-4c82-a1a8-709dea302143
+		sourceLineageTag: deletable
+		summarizeBy: none
+		sourceColumn: deletable
+
+		annotation SummarizationSetBy = Automatic
+
+	column budgeted
+		dataType: string
+		lineageTag: 6ec421cf-0a21-4a64-b531-c8bd28451e44
+		sourceLineageTag: budgeted
+		summarizeBy: none
+		sourceColumn: budgeted
+
+		annotation SummarizationSetBy = Automatic
+
+	column budgetable
+		dataType: string
+		lineageTag: cde1fc8a-224e-4c57-8ede-ee03b477ba8a
+		sourceLineageTag: budgetable
+		summarizeBy: none
+		sourceColumn: budgetable
+
+		annotation SummarizationSetBy = Automatic
+
+	column wbs_code_id
+		dataType: int64
+		formatString: 0
+		lineageTag: d9585155-1072-4ce4-b3d1-3ae3b99c052c
+		sourceLineageTag: wbs_code_id
+		summarizeBy: sum
+		sourceColumn: wbs_code_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column id
+		dataType: int64
+		formatString: 0
+		lineageTag: 541ec8b6-2d8b-4ffb-9512-63aa487dc7ec
+		sourceLineageTag: id
+		summarizeBy: sum
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	column root_cost_code_id
+		dataType: int64
+		formatString: 0
+		lineageTag: d1f0b8e5-aff2-459b-8ec7-e3115b5f83ff
+		sourceLineageTag: root_cost_code_id
+		summarizeBy: sum
+		sourceColumn: root_cost_code_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_code_level_1_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1fd6b2c1-7897-45b4-8b66-59f926bcbb02
+		sourceLineageTag: cost_code_level_1_id
+		summarizeBy: sum
+		sourceColumn: cost_code_level_1_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_code_level_2_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 6ce6a06e-380f-4339-8e87-0db5ca62cc32
+		sourceLineageTag: cost_code_level_2_id
+		summarizeBy: sum
+		sourceColumn: cost_code_level_2_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column category_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 0bc92ae8-0092-472d-ab57-a39f54519606
+		sourceLineageTag: category_id
+		summarizeBy: sum
+		sourceColumn: category_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column root_cost_code
+		dataType: string
+		lineageTag: efb04172-8fca-4ddf-add7-ec14e39a24ad
+		sourceLineageTag: root_cost_code
+		summarizeBy: none
+		sourceColumn: root_cost_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_code
+		dataType: string
+		lineageTag: 61df3e3a-79bf-451e-96a9-8c6e38625d99
+		sourceLineageTag: cost_code
+		summarizeBy: none
+		sourceColumn: cost_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column category
+		dataType: string
+		lineageTag: fc7fc4e8-eb88-4e96-be8c-7a1a9ee1691c
+		sourceLineageTag: category
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+	column unit_cost
+		dataType: double
+		lineageTag: 4853fcb6-70da-456c-b0c9-11d8ddbadb94
+		sourceLineageTag: unit_cost
+		summarizeBy: sum
+		sourceColumn: unit_cost
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column quantity
+		dataType: double
+		lineageTag: f5f7788d-198a-43cb-9c5a-1b4e6b3a71fd
+		sourceLineageTag: quantity
+		summarizeBy: sum
+		sourceColumn: quantity
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column calculation_strategy
+		dataType: string
+		lineageTag: 3feb6be4-7eae-49dd-bc4a-c1c23113d741
+		sourceLineageTag: calculation_strategy
+		summarizeBy: none
+		sourceColumn: calculation_strategy
+
+		annotation SummarizationSetBy = Automatic
+
+	column project
+		dataType: string
+		lineageTag: a2b3ef3c-c2e0-4068-bf0d-bc15966bb327
+		sourceLineageTag: project
+		summarizeBy: none
+		sourceColumn: project
+
+		annotation SummarizationSetBy = Automatic
+
+	column original_budget_amount
+		dataType: double
+		lineageTag: 65882dd6-0156-4f82-b1b0-e7800e7c2a51
+		sourceLineageTag: original_budget_amount
+		summarizeBy: sum
+		sourceColumn: original_budget_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column budget_modifications
+		dataType: double
+		lineageTag: afa3b650-99d6-40a9-ac0b-1e632a748b2b
+		sourceLineageTag: budget_modifications
+		summarizeBy: sum
+		sourceColumn: budget_modifications
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column DIRECT_COSTS_J
+		dataType: double
+		lineageTag: 650619c7-63be-4895-8b7a-7f85865dc14d
+		sourceLineageTag: DIRECT_COSTS_J
+		summarizeBy: sum
+		sourceColumn: DIRECT_COSTS_J
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'COMMITTMENT_CO''S_H'
+		dataType: double
+		lineageTag: a215b09e-fdb2-4676-8ad8-94b24178057c
+		sourceLineageTag: COMMITTMENT_CO'S_H
+		summarizeBy: sum
+		sourceColumn: COMMITTMENT_CO'S_H
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column COMMITTED_COSTS_G
+		dataType: double
+		lineageTag: c4e1ad15-a166-47e8-be2a-609b0e9b4e48
+		sourceLineageTag: COMMITTED_COSTS_G
+		summarizeBy: sum
+		sourceColumn: COMMITTED_COSTS_G
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PENDING_PRIME_CONTRACT_CO_E
+		dataType: double
+		lineageTag: f59a3864-559b-4ad6-b728-d051c272d442
+		sourceLineageTag: PENDING_PRIME_CONTRACT_CO_E
+		summarizeBy: sum
+		sourceColumn: PENDING_PRIME_CONTRACT_CO_E
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column APPROVED_PRIME_CONTRACT_CO_C
+		dataType: double
+		lineageTag: 8a53ff52-cac1-4ff3-b80f-c7d1edbfe0f9
+		sourceLineageTag: APPROVED_PRIME_CONTRACT_CO_C
+		summarizeBy: sum
+		sourceColumn: APPROVED_PRIME_CONTRACT_CO_C
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'PENDING_CO''S_M'
+		dataType: double
+		lineageTag: 07333fbc-ae45-4024-bc23-1e0a692bc12e
+		sourceLineageTag: PENDING_CO'S_M
+		summarizeBy: sum
+		sourceColumn: PENDING_CO'S_M
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column BALANCE_TO_FINISH_R_D-P
+		dataType: double
+		lineageTag: 618a92ff-2927-451d-a2ff-b3fd61402b90
+		sourceLineageTag: BALANCE_TO_FINISH_R_D-P
+		summarizeBy: sum
+		sourceColumn: BALANCE_TO_FINISH_R_D-P
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column COST_TO_COMPLETE_Q_K-P
+		dataType: double
+		lineageTag: c605eb87-93b5-4104-9e93-de230455d4e4
+		sourceLineageTag: COST_TO_COMPLETE_Q_K-P
+		summarizeBy: sum
+		sourceColumn: COST_TO_COMPLETE_Q_K-P
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column INVOICED_TO_DATE_P
+		dataType: double
+		lineageTag: 4a948582-96d1-4494-a37e-766f01dcbf13
+		sourceLineageTag: INVOICED_TO_DATE_P
+		summarizeBy: sum
+		sourceColumn: INVOICED_TO_DATE_P
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PROJECTED_OVER/UNDER_O_F-N
+		dataType: double
+		lineageTag: 15788b01-5c91-466f-82dd-c3e0d7c85c4c
+		sourceLineageTag: PROJECTED_OVER/UNDER_O_F-N
+		summarizeBy: sum
+		sourceColumn: PROJECTED_OVER/UNDER_O_F-N
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column OVER/UNDER_L_D-K
+		dataType: double
+		lineageTag: 498a3c2f-3707-4641-aa08-8720766dd6fc
+		sourceLineageTag: OVER/UNDER_L_D-K
+		summarizeBy: sum
+		sourceColumn: OVER/UNDER_L_D-K
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TOTAL_COMMITTED_TO_DATE_K_G+H+I+J
+		dataType: double
+		lineageTag: 86c274c2-3cd2-4695-92b6-85412bfc2387
+		sourceLineageTag: TOTAL_COMMITTED_TO_DATE_K_G+H+I+J
+		summarizeBy: sum
+		sourceColumn: TOTAL_COMMITTED_TO_DATE_K_G+H+I+J
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PROJECTED_PRIME_CONTRACT_BUDGET_F_D+E
+		dataType: double
+		lineageTag: edb9f215-843b-4ca6-8f21-cb4c09562c24
+		sourceLineageTag: PROJECTED_PRIME_CONTRACT_BUDGET_F_D+E
+		summarizeBy: sum
+		sourceColumn: PROJECTED_PRIME_CONTRACT_BUDGET_F_D+E
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column UPDATED_PRIME_CONTRACT_BUDGET_D_A+B+C
+		dataType: double
+		lineageTag: fc91ecd8-8ee3-45fe-9668-b8fd16bdca23
+		sourceLineageTag: UPDATED_PRIME_CONTRACT_BUDGET_D_A+B+C
+		summarizeBy: sum
+		sourceColumn: UPDATED_PRIME_CONTRACT_BUDGET_D_A+B+C
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column PROJECTED_COMMITTED_BUDGET_N_K+M
+		dataType: double
+		lineageTag: 6df0eb93-7849-4043-9c82-ca9f0364ca1c
+		sourceLineageTag: PROJECTED_COMMITTED_BUDGET_N_K+M
+		summarizeBy: sum
+		sourceColumn: PROJECTED_COMMITTED_BUDGET_N_K+M
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column %_OVER/UNDER
+		dataType: double
+		lineageTag: 35c7cc76-1d41-4ae1-b69a-235ed740a633
+		sourceLineageTag: %_OVER/UNDER
+		summarizeBy: sum
+		sourceColumn: %_OVER/UNDER
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column snapshot_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: bb226ba3-cd63-476a-99c9-4fa539eee278
+		sourceLineageTag: snapshot_date
+		summarizeBy: none
+		sourceColumn: snapshot_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: 9429739d-b6ed-4198-8ad8-5f4f049f472f
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: a87bceb2-6746-4fd8-b1bf-def8f8c83b08
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Unit Of Measurment'
+		dataType: string
+		lineageTag: 37077bcc-0d1f-460c-b1fd-c29bbd92852b
+		sourceLineageTag: Unit Of Measurment
+		summarizeBy: none
+		sourceColumn: Unit Of Measurment
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_code_origin_id
+		dataType: string
+		lineageTag: fee3ab43-8265-4585-a82e-258ab0319dda
+		sourceLineageTag: cost_code_origin_id
+		summarizeBy: none
+		sourceColumn: cost_code_origin_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_budgets_silver = entity
+		mode: directLake
+		source
+			entityName: procore_budgets_silver
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

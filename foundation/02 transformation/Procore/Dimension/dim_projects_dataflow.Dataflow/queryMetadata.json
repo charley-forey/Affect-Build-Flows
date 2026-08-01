@@ -1,0 +1,39 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "dim_projects_dataflow",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "dim_projects": {
+      "queryId": "55d6d63c-26ae-49c0-95eb-fd282bb60ee2",
+      "queryName": "dim_projects",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "3288bb2b-0d30-475a-ab2c-6bceac6df313",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "dim_projects_procoreXsage": {
+      "queryId": "c53a6d8c-f094-4b82-9599-6bae98a12f38",
+      "queryName": "dim_projects_procoreXsage",
+      "loadEnabled": false
+    },
+    "Table": {
+      "queryId": "311b10ca-8182-4fef-96b0-c3a51a58e910",
+      "queryName": "Table",
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_prime_contracts_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_prime_contracts_silver": {
+      "queryId": "77e20169-278d-463b-826a-8db412fc22ab",
+      "queryName": "procore_prime_contracts_silver",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "12d40dad-bc35-4e66-84f9-7443d6f28e65",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

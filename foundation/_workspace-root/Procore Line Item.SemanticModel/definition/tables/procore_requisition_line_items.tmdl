@@ -1,0 +1,282 @@
+table procore_requisition_line_items
+	lineageTag: b4a339f1-87c8-4156-9b65-f73feac1a32f
+	sourceLineageTag: [dbo].[procore_requisition_line_items]
+
+	column description_of_work
+		dataType: string
+		lineageTag: 24773953-558a-4efe-979a-764c72de19df
+		sourceLineageTag: description_of_work
+		summarizeBy: none
+		sourceColumn: description_of_work
+
+		annotation SummarizationSetBy = Automatic
+
+	column materials_moved
+		dataType: string
+		lineageTag: 1f9a196f-8b42-4aa2-9a2c-7a2b5541fefc
+		sourceLineageTag: materials_moved
+		summarizeBy: none
+		sourceColumn: materials_moved
+
+		annotation SummarizationSetBy = Automatic
+
+	column materials_presently_stored
+		dataType: string
+		lineageTag: 62b3cca3-50e1-4dd2-8c2f-32cc3c67fbb0
+		sourceLineageTag: materials_presently_stored
+		summarizeBy: none
+		sourceColumn: materials_presently_stored
+
+		annotation SummarizationSetBy = Automatic
+
+	column materials_retainage_retained_moved
+		dataType: string
+		lineageTag: c198c7c6-da67-4631-a211-daa2f5b32404
+		sourceLineageTag: materials_retainage_retained_moved
+		summarizeBy: none
+		sourceColumn: materials_retainage_retained_moved
+
+		annotation SummarizationSetBy = Automatic
+
+	column materials_stored_retainage_currently_retained
+		dataType: string
+		lineageTag: 6e322d66-fac0-4296-ab4d-5b49dc133190
+		sourceLineageTag: materials_stored_retainage_currently_retained
+		summarizeBy: none
+		sourceColumn: materials_stored_retainage_currently_retained
+
+		annotation SummarizationSetBy = Automatic
+
+	column materials_stored_retainage_percent_this_period
+		dataType: string
+		lineageTag: f9dfbabf-cdbf-435b-9865-f7938e8f2feb
+		sourceLineageTag: materials_stored_retainage_percent_this_period
+		summarizeBy: none
+		sourceColumn: materials_stored_retainage_percent_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+	column materials_stored_retainage_released_this_period
+		dataType: string
+		lineageTag: 5c2bec1e-de14-4f71-9c24-e6bf407e47e7
+		sourceLineageTag: materials_stored_retainage_released_this_period
+		summarizeBy: none
+		sourceColumn: materials_stored_retainage_released_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+	column position
+		dataType: int64
+		formatString: 0
+		lineageTag: b0e314ea-5371-44cd-98b8-017f7b1cd263
+		sourceLineageTag: position
+		summarizeBy: sum
+		sourceColumn: position
+
+		annotation SummarizationSetBy = Automatic
+
+	column scheduled_value
+		dataType: double
+		lineageTag: c60eaf0b-adc3-4365-ad35-2b93ad8a6f0c
+		sourceLineageTag: scheduled_value
+		summarizeBy: sum
+		sourceColumn: scheduled_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ssr_manual_override
+		dataType: string
+		lineageTag: 3e400cde-03eb-497d-bb75-fde05fc1a252
+		sourceLineageTag: ssr_manual_override
+		summarizeBy: none
+		sourceColumn: ssr_manual_override
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 577670c9-5053-42a0-9656-9403acc16233
+		sourceLineageTag: status
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column subcontractor_claimed_amount
+		dataType: double
+		lineageTag: f9173acd-8174-42d8-a745-0c7736907d65
+		sourceLineageTag: subcontractor_claimed_amount
+		summarizeBy: sum
+		sourceColumn: subcontractor_claimed_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_completed_and_stored_to_date
+		dataType: double
+		lineageTag: 97eecabd-346e-46d1-9c84-bf032e3ea478
+		sourceLineageTag: total_completed_and_stored_to_date
+		summarizeBy: sum
+		sourceColumn: total_completed_and_stored_to_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_completed_and_stored_to_date_percent
+		dataType: string
+		lineageTag: f937206f-aa41-48d5-b495-1803d8644e80
+		sourceLineageTag: total_completed_and_stored_to_date_percent
+		summarizeBy: none
+		sourceColumn: total_completed_and_stored_to_date_percent
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_completed_from_previous_application
+		dataType: double
+		lineageTag: 6e9ef7a3-8480-4d2d-8bfd-93e88c86179c
+		sourceLineageTag: work_completed_from_previous_application
+		summarizeBy: sum
+		sourceColumn: work_completed_from_previous_application
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column work_completed_retainage_from_previous_application
+		dataType: string
+		lineageTag: be2a7dfe-36c7-4e23-962d-439182aac64b
+		sourceLineageTag: work_completed_retainage_from_previous_application
+		summarizeBy: none
+		sourceColumn: work_completed_retainage_from_previous_application
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_completed_retainage_percent_this_period
+		dataType: string
+		lineageTag: df8985df-7a12-4baf-9032-b48b22d78de6
+		sourceLineageTag: work_completed_retainage_percent_this_period
+		summarizeBy: none
+		sourceColumn: work_completed_retainage_percent_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_completed_retainage_released_this_period
+		dataType: string
+		lineageTag: f27552dc-6287-4b32-a7c9-916ab567a090
+		sourceLineageTag: work_completed_retainage_released_this_period
+		summarizeBy: none
+		sourceColumn: work_completed_retainage_released_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_completed_retainage_retained_this_period
+		dataType: string
+		lineageTag: 8cc9c6ff-8525-499b-821d-fd7cc1ec4537
+		sourceLineageTag: work_completed_retainage_retained_this_period
+		summarizeBy: none
+		sourceColumn: work_completed_retainage_retained_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+	column work_completed_this_period
+		dataType: string
+		lineageTag: 7169c169-ae3b-4de9-8367-14fc1f5b6e20
+		sourceLineageTag: work_completed_this_period
+		summarizeBy: none
+		sourceColumn: work_completed_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+	column requisition_number
+		dataType: int64
+		formatString: 0
+		lineageTag: ef224d39-1acc-46c4-a4aa-9de71f681515
+		sourceLineageTag: requisition_number
+		summarizeBy: sum
+		sourceColumn: requisition_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column requisition_status
+		dataType: string
+		lineageTag: 8c179f16-8e22-4307-a70a-092e116c5fd8
+		sourceLineageTag: requisition_status
+		summarizeBy: none
+		sourceColumn: requisition_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column project_name
+		dataType: string
+		lineageTag: de7b713c-fea1-4812-8a48-8dc1738a3144
+		sourceLineageTag: project_name
+		summarizeBy: none
+		sourceColumn: project_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column id
+		dataType: string
+		lineageTag: 435bfe14-4fc8-4896-a1a2-04c26bf22519
+		sourceLineageTag: id
+		summarizeBy: none
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: aaba9079-fa19-4752-aec2-92b0c1237bbd
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: 4f8bafa2-e8c7-40a9-b3bc-4f4737d2c131
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column detail_line_item_id
+		dataType: string
+		lineageTag: e1e1bbbb-e3d8-482e-b15e-bf80d6f7fafa
+		sourceLineageTag: detail_line_item_id
+		summarizeBy: none
+		sourceColumn: detail_line_item_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'WBS ID?'
+		dataType: string
+		lineageTag: f60b891f-5292-4c23-9486-0cfc388d6b76
+		sourceLineageTag: WBS ID?
+		summarizeBy: none
+		sourceColumn: WBS ID?
+
+		annotation SummarizationSetBy = Automatic
+
+	column requisition_id
+		dataType: string
+		lineageTag: 03c5e3fb-33a2-401f-9014-84674ab57233
+		sourceLineageTag: requisition_id
+		summarizeBy: none
+		sourceColumn: requisition_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_requisition_line_items = entity
+		mode: directLake
+		source
+			entityName: procore_requisition_line_items
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

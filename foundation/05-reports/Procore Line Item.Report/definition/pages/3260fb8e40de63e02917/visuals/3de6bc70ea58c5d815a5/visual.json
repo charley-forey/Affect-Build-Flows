@@ -1,0 +1,56 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "3de6bc70ea58c5d815a5",
+  "position": {
+    "x": 882.29765013054828,
+    "y": 349.79982593559617,
+    "z": 5,
+    "height": 312,
+    "width": 295,
+    "tabOrder": 5
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "procore_requisition_line_items"
+                    }
+                  },
+                  "Property": "work_completed_this_period"
+                }
+              },
+              "queryRef": "procore_requisition_line_items.work_completed_this_period",
+              "nativeQueryRef": "work_completed_this_period"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "a699ab209a02d2bc0600",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "procore_requisition_line_items"
+              }
+            },
+            "Property": "work_completed_this_period"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

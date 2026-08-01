@@ -1,0 +1,74 @@
+table 'DAX Measures'
+	lineageTag: 0f305559-6fca-4e8f-a895-cec01c12357c
+
+	measure 'Revenue This Year' =
+			
+			CALCULATE(
+			    SUM(Revenue_AllTime[Invoice Total]),
+			    YEAR(revenue_AllTime[Invoice Date]) = YEAR(TODAY())
+			)
+		lineageTag: 048d846e-5f85-43c8-aed9-f9b6aa60fd43
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Revenue Last Year' =
+			
+			CALCULATE(
+			    SUM(Revenue_AllTime[Invoice Total]),
+			    YEAR(revenue_AllTime[Invoice Date]) = YEAR(TODAY()) - 1
+			)
+		lineageTag: 76b41456-6a00-45ee-a2d3-b7fb514da0d8
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Open AP' = ```
+			
+			SUM(AP_Open[Invoice Balance])
+			
+			```
+		lineageTag: c362fc7e-e74f-47b3-aeba-ec8b0e2f91fc
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Open AR' =
+			
+			SUM(AR_Open[Invoice Balance])
+		lineageTag: c52d1f52-159e-4f98-981a-0b9bc6fa4c8c
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'AP/AR Ratio' =
+			
+			DIVIDE([Total Open AP], [Total Open AR])
+		lineageTag: 3b3a7005-abee-4b1f-8363-af1d66e838f0
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Net AP/AR Position' = [Total Open AR] - [Total Open AP]
+		lineageTag: 4822636d-3607-4f09-acd5-5b2882d88d3d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'AP/AR Ratio Target' = 1.0
+		lineageTag: 681c85f3-108f-4e6f-9000-6fe3199ba5c4
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'Total Revenue' =
+			
+			(SUM(Revenue_AllTime[Invoice Total]))
+		lineageTag: 98f61953-674b-478c-a89b-d8bc3c8c223d
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition 'DAX Measures' = m
+		mode: import
+		source =
+				let
+				  Source = "",
+				  #"Removed Columns" = Table.RemoveColumns(Source, {"DAX Measures"})
+				in
+				  #"Removed Columns"
+
+	annotation PBI_ResultType = Text
+

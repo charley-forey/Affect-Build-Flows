@@ -1,0 +1,76 @@
+table procore_work_order_line_item_silver_test
+	lineageTag: 005ae00f-9920-4e25-8130-5f2b326a8777
+	sourceLineageTag: [dbo].[procore_work_order_line_item_silver_test]
+
+	column amount
+		dataType: double
+		lineageTag: 7d311f77-ca2f-4015-b944-14cb4efdc509
+		sourceLineageTag: amount
+		summarizeBy: sum
+		sourceColumn: amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 3813852e-54a5-4c32-b338-799415e3e051
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: 4a225982-33d6-427c-8faa-f1d6d37ef019
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Commitment ID'
+		dataType: string
+		lineageTag: eb0f8745-e60e-4159-966e-87d5aceddd14
+		sourceLineageTag: Commitment ID
+		summarizeBy: none
+		sourceColumn: Commitment ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Line Item ID'
+		dataType: string
+		lineageTag: 006d2dae-4cdd-414e-8541-7484484d3ac2
+		sourceLineageTag: Line Item ID
+		summarizeBy: none
+		sourceColumn: Line Item ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column id
+		dataType: string
+		lineageTag: 5299f9d0-2c34-4b42-8a1e-02db5799dbca
+		sourceLineageTag: id
+		summarizeBy: none
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Work Order Contract ID'
+		dataType: string
+		lineageTag: 06922f66-44d3-4805-8795-8d6e1e7f222d
+		sourceLineageTag: Work Order Contract ID
+		summarizeBy: none
+		sourceColumn: Work Order Contract ID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_work_order_line_item_silver_test = entity
+		mode: directLake
+		source
+			entityName: procore_work_order_line_item_silver_test
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

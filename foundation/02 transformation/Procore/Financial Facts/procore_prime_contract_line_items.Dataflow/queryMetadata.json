@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_prime_contract_line_items",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_prime_contract_line_items": {
+      "queryId": "5ceb87e8-d1a1-43be-a4bf-c0982ea8e4b3",
+      "queryName": "procore_prime_contract_line_items",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "426a1cc7-7d23-4f02-8310-b66d8bb1ce9c",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

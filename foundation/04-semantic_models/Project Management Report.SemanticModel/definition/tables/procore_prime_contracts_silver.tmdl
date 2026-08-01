@@ -1,0 +1,128 @@
+table procore_prime_contracts_silver
+	lineageTag: d8a614b2-1bdd-4ddc-b4e0-b8fc1c2c1b2b
+	sourceLineageTag: [dbo].[procore_prime_contracts_silver]
+
+	column 'Prime Contract ID'
+		dataType: string
+		lineageTag: 51eb6354-ab65-43aa-8a96-fbe6327ac202
+		sourceLineageTag: Prime Contract ID
+		summarizeBy: none
+		sourceColumn: Prime Contract ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 56239e10-e372-4c39-bc6a-a4796b5947ff
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Estimated Completion Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 07b894b0-0da8-4906-9f6a-228a1b4691b3
+		sourceLineageTag: Estimated Completion Date
+		summarizeBy: none
+		sourceColumn: Estimated Completion Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Start Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: f674efcc-ba9e-4983-9c30-5a7e7a90b692
+		sourceLineageTag: Start Date
+		summarizeBy: none
+		sourceColumn: Start Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Created At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 625c1c8f-f055-4970-b557-cbd1b70a138a
+		sourceLineageTag: Created At
+		summarizeBy: none
+		sourceColumn: Created At
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Updated At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 17c7d8de-87f9-403f-bdf5-45b937609a04
+		sourceLineageTag: Updated At
+		summarizeBy: none
+		sourceColumn: Updated At
+
+		annotation SummarizationSetBy = Automatic
+
+	column Executed
+		dataType: string
+		lineageTag: 821effd3-5e0b-4efb-89ae-36a2256d25dd
+		sourceLineageTag: Executed
+		summarizeBy: none
+		sourceColumn: Executed
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Prime Contract Value'
+		dataType: double
+		lineageTag: 63cd424f-4ea3-4d3f-befe-8bbc77a00ea5
+		sourceLineageTag: Prime Contract Value
+		summarizeBy: sum
+		sourceColumn: Prime Contract Value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Retainage %'
+		dataType: double
+		lineageTag: e71356be-2e41-4aa7-9e94-3044a2987c43
+		sourceLineageTag: Retainage %
+		summarizeBy: sum
+		sourceColumn: Retainage %
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Signed Contract Recieved Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 30ed2611-7ff7-4579-8c38-daab2221ad3b
+		sourceLineageTag: Signed Contract Recieved Date
+		summarizeBy: none
+		sourceColumn: Signed Contract Recieved Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Status
+		dataType: string
+		lineageTag: 6c4d7247-49d2-475d-a5fc-202d45d8efab
+		sourceLineageTag: Status
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column signature_required
+		dataType: string
+		lineageTag: 4da3a602-ad46-4262-9290-2ba8104d06dd
+		sourceLineageTag: signature_required
+		summarizeBy: none
+		sourceColumn: signature_required
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_prime_contracts_silver = entity
+		mode: directLake
+		source
+			entityName: procore_prime_contracts_silver
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

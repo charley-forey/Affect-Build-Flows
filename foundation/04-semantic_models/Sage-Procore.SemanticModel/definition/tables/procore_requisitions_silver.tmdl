@@ -1,0 +1,234 @@
+table procore_requisitions_silver
+	lineageTag: ac559883-481f-46c1-8b0b-6bbaac130777
+	sourceLineageTag: [dbo].[procore_requisitions_silver]
+
+	column comment
+		dataType: string
+		lineageTag: c18ec212-5e4f-4bca-a99a-4a4efac51775
+		sourceLineageTag: comment
+		summarizeBy: none
+		sourceColumn: comment
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Invoice Number'
+		dataType: int64
+		formatString: 0
+		lineageTag: c166897c-2eac-400e-b68e-71681981fd91
+		sourceLineageTag: Invoice Number
+		summarizeBy: sum
+		sourceColumn: Invoice Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Percent Complete _%_'
+		dataType: double
+		lineageTag: c538ce0c-8832-4293-b0b5-53046727bca9
+		sourceLineageTag: Percent Complete _%_
+		summarizeBy: sum
+		sourceColumn: Percent Complete _%_
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoiced Amount _$_'
+		dataType: double
+		lineageTag: 8693add8-7164-4eff-b76b-daa9107c12b0
+		sourceLineageTag: Invoiced Amount _$_
+		summarizeBy: sum
+		sourceColumn: Invoiced Amount _$_
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoice Status'
+		dataType: string
+		lineageTag: 52874bce-a9e5-49f8-beb7-ccb50e37ea91
+		sourceLineageTag: Invoice Status
+		summarizeBy: none
+		sourceColumn: Invoice Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_summary
+		dataType: string
+		lineageTag: 9b99afc8-a85e-41b8-af73-8247e25c42f8
+		sourceLineageTag: payment_summary
+		summarizeBy: none
+		sourceColumn: payment_summary
+
+		annotation SummarizationSetBy = Automatic
+
+	column commitment_type
+		dataType: string
+		lineageTag: b8f4586b-4906-46d8-8bc1-839b6ba1320e
+		sourceLineageTag: commitment_type
+		summarizeBy: none
+		sourceColumn: commitment_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column contract_invoicing_method
+		dataType: string
+		lineageTag: 3d7bbbae-2fed-407d-9c99-2e5de778a36b
+		sourceLineageTag: contract_invoicing_method
+		summarizeBy: none
+		sourceColumn: contract_invoicing_method
+
+		annotation SummarizationSetBy = Automatic
+
+	column contract_name
+		dataType: string
+		lineageTag: 7f03178b-2a37-415c-bacc-45c17a3d0bb1
+		sourceLineageTag: contract_name
+		summarizeBy: none
+		sourceColumn: contract_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_at
+		dataType: string
+		lineageTag: 1d826b0c-7bab-4561-9641-d529a8cb3eb4
+		sourceLineageTag: created_at
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column created_by
+		dataType: string
+		lineageTag: b775133c-ef5f-48ab-b0b9-d4fe2e5067b5
+		sourceLineageTag: created_by
+		summarizeBy: none
+		sourceColumn: created_by
+
+		annotation SummarizationSetBy = Automatic
+
+	column erp_status
+		dataType: string
+		lineageTag: 90914268-0cf7-4cd3-9258-ad79fd19eb1d
+		sourceLineageTag: erp_status
+		summarizeBy: none
+		sourceColumn: erp_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column final
+		dataType: string
+		lineageTag: 8bb1778b-d9b5-4bd3-a77b-aad9b2237f2a
+		sourceLineageTag: final
+		summarizeBy: none
+		sourceColumn: final
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Vendor''s Invoice Number'
+		dataType: string
+		lineageTag: a0ab5bc2-79cd-4fcd-947f-9877b6a5bdf5
+		sourceLineageTag: Vendor's Invoice Number
+		summarizeBy: none
+		sourceColumn: Vendor's Invoice Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column invoice_type
+		dataType: string
+		lineageTag: 097c7b6c-7518-4d78-adea-def266542d67
+		sourceLineageTag: invoice_type
+		summarizeBy: none
+		sourceColumn: invoice_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column requisition_end
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 82052610-20fd-4b82-84a1-58995da6b345
+		sourceLineageTag: requisition_end
+		summarizeBy: none
+		sourceColumn: requisition_end
+
+		annotation SummarizationSetBy = Automatic
+
+	column requisition_start
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 15c37728-0853-4357-bf34-c0470007db76
+		sourceLineageTag: requisition_start
+		summarizeBy: none
+		sourceColumn: requisition_start
+
+		annotation SummarizationSetBy = Automatic
+
+	column summary
+		dataType: string
+		lineageTag: 86678015-3f2c-4db0-8de7-1ad0b78cca9c
+		sourceLineageTag: summary
+		summarizeBy: none
+		sourceColumn: summary
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: string
+		lineageTag: 114f5b31-fea9-4fd0-839a-b187eba39983
+		sourceLineageTag: updated_at
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column commitment_id
+		dataType: string
+		lineageTag: 18877837-8833-4e1e-b3da-9a9619a72f13
+		sourceLineageTag: commitment_id
+		summarizeBy: none
+		sourceColumn: commitment_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Vendor ID'
+		dataType: string
+		lineageTag: dad3a0a5-b7bd-4877-8a5f-a51be98772a4
+		sourceLineageTag: Vendor ID
+		summarizeBy: none
+		sourceColumn: Vendor ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: e81de0b2-bc61-454a-b606-683c03792021
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column period_id
+		dataType: string
+		lineageTag: 47b5ae09-158d-4406-8be7-0ba7fa36bbb2
+		sourceLineageTag: period_id
+		summarizeBy: none
+		sourceColumn: period_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column id
+		dataType: string
+		lineageTag: 304d8ba5-2216-4541-b7f8-930be7bebd86
+		sourceLineageTag: id
+		summarizeBy: none
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_requisitions_silver = entity
+		mode: directLake
+		source
+			entityName: procore_requisitions_silver
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

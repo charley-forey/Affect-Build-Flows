@@ -1,0 +1,38 @@
+table dim_procore_cost_codes
+	lineageTag: 8378f715-ea63-41c0-a3d1-c227b1424ccc
+	sourceLineageTag: [dbo].[dim_procore_cost_codes]
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: 5cf6aa91-b429-432b-b6f9-20ed7f7d0e07
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code _Name_'
+		dataType: string
+		lineageTag: c4ec0e54-7d38-4a5a-95c1-7b1084f6e125
+		sourceLineageTag: Cost Code _Name_
+		summarizeBy: none
+		sourceColumn: Cost Code _Name_
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'id.1'
+		dataType: string
+		lineageTag: a8e30f51-f790-4d74-aa40-e36842f12c23
+		sourceLineageTag: id.1
+		summarizeBy: none
+		sourceColumn: id.1
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_procore_cost_codes = entity
+		mode: directLake
+		source
+			entityName: dim_procore_cost_codes
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

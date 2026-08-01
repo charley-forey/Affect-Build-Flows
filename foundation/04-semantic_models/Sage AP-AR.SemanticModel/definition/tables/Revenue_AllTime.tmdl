@@ -1,0 +1,92 @@
+table Revenue_AllTime
+	lineageTag: 0d3b0508-4d82-47e7-849a-4bc1b0b04c2d
+	sourceLineageTag: [dbo].[Revenue_AllTime]
+
+	column 'Billing Period'
+		dataType: int64
+		formatString: 0
+		lineageTag: e37f312d-ea61-43f0-902a-7b9deb303e3d
+		sourceLineageTag: Billing Period
+		summarizeBy: sum
+		sourceColumn: Billing Period
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Invoice Balance'
+		dataType: double
+		lineageTag: 015d9513-307f-4c3b-a29b-ab6d003dd157
+		sourceLineageTag: Invoice Balance
+		summarizeBy: sum
+		sourceColumn: Invoice Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoice Total'
+		dataType: double
+		lineageTag: 9fb01b2e-f3ca-4c0f-b11e-7b23eff627a1
+		sourceLineageTag: Invoice Total
+		summarizeBy: sum
+		sourceColumn: Invoice Total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Amount Paid'
+		dataType: double
+		lineageTag: 7e17cb5e-b60d-4075-a399-48cbe2d29555
+		sourceLineageTag: Amount Paid
+		summarizeBy: sum
+		sourceColumn: Amount Paid
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Due Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 1b4f707e-59a0-4a25-b4df-b11f318e8e2b
+		sourceLineageTag: Due Date
+		summarizeBy: none
+		sourceColumn: Due Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Description
+		dataType: string
+		lineageTag: b3a14b36-f583-4aa5-9d80-0c616e6b9e5d
+		sourceLineageTag: Description
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Invoice Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 3b0b59a9-34bb-4810-8a4c-4571ca310609
+		sourceLineageTag: Invoice Date
+		summarizeBy: none
+		sourceColumn: Invoice Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Job Number'
+		dataType: string
+		lineageTag: 008cd59d-a76a-4b79-ab4a-92a948b9099e
+		sourceLineageTag: Job Number
+		summarizeBy: none
+		sourceColumn: Job Number
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Revenue_AllTime = entity
+		mode: directLake
+		source
+			entityName: Revenue_AllTime
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

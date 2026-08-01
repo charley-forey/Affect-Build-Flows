@@ -1,0 +1,57 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "07597938afbacae78240",
+  "position": {
+    "x": 849.69536423841055,
+    "y": 146.86092715231788,
+    "z": 4002,
+    "height": 162.11920529801324,
+    "width": 246.03973509933775,
+    "tabOrder": 4002
+  },
+  "visual": {
+    "visualType": "cardVisual",
+    "query": {
+      "queryState": {
+        "Data": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Cash Position"
+                }
+              },
+              "queryRef": "DAX Measures.Cash Position",
+              "nativeQueryRef": "Cash Position",
+              "format": "0.00 %;-0.00 %;0.00 %"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "DAX Measures"
+                  }
+                },
+                "Property": "Cash Position"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}
