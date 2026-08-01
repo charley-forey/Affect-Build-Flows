@@ -73,7 +73,47 @@ Stated plainly so nobody plans around something that does not exist:
 | Semantic model TMDL | Not started |
 | Reports (Monthly Progress, Vendor & Insurance) | Not started |
 | Orchestration pipeline | Not started |
-| **Items created in Fabric** | **None.** Everything is on disk only |
+
+## Live in Fabric
+
+Workspace `Build`, folder `charley-dev`. **62 items in the workspace; nothing outside
+`charley-dev` touched.**
+
+| Item | Type | Note |
+|---|---|---|
+| `CD_Bronze_Lakehouse` | Lakehouse | schema-enabled (`dbo`) |
+| `CD_Silver_Lakehouse` | Lakehouse | schema-enabled (`dbo`) |
+| `CD_Gold_Lakehouse` | Lakehouse | schema-enabled (`dbo`) — holds the 7 seeded dimensions |
+| `cd_20_seed_gold` | Notebook | generated from the `.sql`, asserts its own row counts |
+
+Deploy and verify:
+
+```bash
+python foundation/charley-dev/_local/deploy.py --verify        # items + schema check
+python foundation/charley-dev/_local/deploy_seeds.py --apply   # rebuild + rerun the seeds
+```
+
+Both are idempotent, dry-run by default, and refuse to write outside the `charley-dev`
+folder.
+
+**The seed run verifies itself.** A notebook that prints "0 rows" still reports
+Completed, so the final cell asserts the exact row counts the offline suite checked, plus
+the weights summing to 1.00. Proven by injecting a wrong expected count and confirming the
+run fails — so `Completed` means the tables exist at the right size, not merely that the
+SQL parsed.
+
+### Found only by running it in Fabric
+
+Exactly the class of problem the plan said offline testing could not cover:
+
+1. **Bare `VARCHAR` is invalid in Spark** — it wants `STRING`. 36 casts affected. DuckDB
+   accepts `STRING` too, so one spelling now serves both engines.
+2. **Long-running-operation `Location` headers are absolute** and point at a different
+   host (a regional `wabi-*` redirect); they must be followed as given.
+3. **`enableSchemas` is creation-only** — the first three lakehouses came out without
+   schemas and had to be dropped and recreated.
+4. **Deleting an item does not release its name** — Fabric returns a retriable 409 for
+   some minutes, so `deploy.py` retries on it.
 
 ## First-run checks, once anything is pushed to Fabric
 
@@ -92,7 +132,14 @@ The offline suite verifies logic. These need a live tenant and cannot be done he
 ## Environment gaps to close
 
 - `pyodbc` + Microsoft ODBC Driver 18 — needed for local SQL-endpoint verification.
-- **Fabric MCP tools are not registered.** `.mcp.json` configures
-  `ms-fabric-mcp-server[sql]`, but no `mcp__fabric__*` tool resolves in-session; it needs a
-  Claude Code restart. The REST API path with the `az` token is proven working in the
-  meantime, and is what produced the table at the top of this page.
+- **Fabric MCP server is healthy but its tools bind at session start.**
+  `claude mcp list` reports `fabric: ✔ Connected`, and the server runs fine
+  (`uvx --from ms-fabric-mcp-server[sql] ms-fabric-mcp-server --help` works). A session
+  that starts *before* it finishes connecting never gets the tool schemas — restart
+  Claude Code and the ~57 tools appear. Nothing is wrong with the `az` login.
+
+  Worth knowing regardless: the REST path in `deploy.py` is the better mechanism for
+  *creating* items, because it is committed, idempotent, reviewable in a diff, and
+  refuses to write outside `charley-dev`. The MCP tools are more useful for
+  *exploration* — `execute_sql_query` against the SQL endpoint, `execute_dax_query`
+  against a model — which is exactly what the reconciliation gate will need.
