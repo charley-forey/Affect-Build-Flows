@@ -7,7 +7,7 @@ corpus in [`help/`](help/INDEX.md) + [`guides/`](guides/) and the code we have t
 
 ## The headline: there is no published table schema
 
-We scraped all 1,937 published help topics and all five PDF guides. Across the entire
+We scraped all 2,023 published help topics and all five PDF guides. Across the entire
 corpus **exactly one physical table name appears** — `CMPANY`, in an SQL example in
 [About SQL syntax](help/Modules/13-Review_and_Reporting/About_SQL_syntax.md):
 
@@ -148,11 +148,16 @@ gets verified against the live database, not the docs.
    there is no line-level or cost-code detail today.
 4. Find the job-cost and payroll tables. `actrec` exposes `jobcst`, `budget`, `cstcmp`,
    `emptme`, `hrscmp` as relationships; none are queried yet.
-5. Stop dropping `retain` — retainage is a required Excel field and the column is already
-   present on `acpinv` and `acrinv`.
-6. Check `Advanced Company Settings` for the real history-retention period before
+5. **Find where retainage actually lives.** `acpinv.retain` / `acrinv.retain` exist and
+   already reach Silver, but every value is zero across all 940 invoices (verified against
+   the lakehouse). Check `arivln`, `actrec.retain`, and progress billing (screen 3-7)
+   before building anything on the header column.
+6. **Complete the Procore↔Sage crosswalk.** Only 15 of 23 Sage projects are mapped, and
+   six job numbers on real AR invoices have no entry — those jobs vanish from any joined
+   report today.
+7. Check `Advanced Company Settings` for the real history-retention period before
    designing incremental loads.
-7. ~~Confirm SQL Server host location → gateway requirement~~ — **settled**: an on-prem
+8. ~~Confirm SQL Server host location → gateway requirement~~ — **settled**: an on-prem
    gateway is already configured and in use by the dataflow.
 
 ---

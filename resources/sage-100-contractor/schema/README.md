@@ -89,13 +89,28 @@ Against the Excel tracker's Sage scope in the [main README](../README.md):
 |---|---|
 | Total Billed, AR Outstanding, aging, invoice dates | ✅ covered by `AR_Open` / `Revenue_AllTime` |
 | Total Paid | ✅ `Reciepts` (from `acrpmt`) |
-| **Retainage** | ⚠️ `retain` column exists on both `acpinv` and `acrinv` — **explicitly dropped** by the current queries |
+| **Retainage** | ❌ **not where you would expect** — see below |
 | **Hours worked / OT** | ❌ no payroll table read; `actrec` exposes `emptme` / `hrscmp`, unexplored |
 | **Cost to Complete / Spent to Date** | ❌ no job-cost table read; `actrec` exposes `jobcst` / `budget` / `cstcmp`, unexplored |
 | Line-level / cost-code detail | ❌ `apivln` / `arivln` not queried |
 
-The `retain` one is worth a look first — the column is right there and already being
-selected away.
+### Retainage is not in the invoice header
+
+`acpinv.retain` and `acrinv.retain` exist, are typed `decimal`, and **already land in
+Silver** in the `_raw` tables — they are dropped only from the curated tables downstream.
+So surfacing them looks like a free win. It is not:
+
+```sql
+-- verified against Silver_Lakehouse, Aug 2026
+-- AR: 135 rows, 0 with retain <> 0
+-- AP: 805 rows, 0 with retain <> 0
+```
+
+**Every value is zero.** Retainage for this company is not held on the invoice header.
+Before building anything, find where it actually lives — most likely candidates are the
+line tables (`arivln`), the job master (`actrec` has a `retain` column of its own), or
+progress billing (screen 3-7). Do not wire `acrinv.retain` into the Monthly Progress
+Report; it will silently report zero.
 
 ## Operational facts worth knowing
 
@@ -111,6 +126,37 @@ selected away.
   90-day retention note in [`../INTEGRATION-NOTES.md`](../INTEGRATION-NOTES.md).
 - Query named `Reciepts` is misspelled in production (sic). Left alone here so searches
   match; renaming it is a breaking change to anything downstream.
+
+## Verified against live data
+
+The Sage server itself is not reachable from a dev machine (`NC-AFFECT-1` does not
+resolve off the client network), but **the Silver lakehouse is** — and its `_raw` tables
+are Sage columns with Sage data, so they confirm much of the above. Checked Aug 2026 via
+the Fabric SQL endpoint on `Silver_Lakehouse`:
+
+| Check | Result |
+|---|---|
+| `jobnum` / `Job Number` type | `bigint` — confirms it is a numeric surrogate key, not a readable job code |
+| AR invoices (`acrinv`) | 135 rows, 2024-12-31 → 2026-07-20 |
+| AP invoices (`acpinv`) | 805 rows, 2025-01-02 → 2026-07-24 |
+| Rows with non-zero `retain` | **0 of 940** — see the retainage section above |
+| Sage projects vs. crosswalk | 23 projects in `Dim__Sage_Projects`, **15** rows in `dim_projects_procoreXsage` |
+| AR job numbers with no crosswalk entry | **6** |
+
+Two things to take from this:
+
+- **The crosswalk is incomplete.** 15 of 23 Sage projects are mapped to Procore, and six
+  job numbers that appear on real AR invoices have no mapping at all. Anything joining
+  Sage to Procore through `dim_projects_procoreXsage` silently drops those jobs today.
+  This is the concrete form of the README's "linchpin" question.
+- **History is about 19 months deep and does not accumulate.** The dataflow is a weekly
+  full replace, so Silver holds whatever Sage holds — there is no growing history. If the
+  report ever needs a longer look-back than Sage retains, that has to be designed in.
+
+Data types in `OBSERVED-SCHEMA.md` come from the semantic model's interpretation; the
+types in the table above come from SQL Server via the lakehouse and are more trustworthy.
+Note `vodrec` is `varchar` on `acpinv` but `bigint` on `acrinv` — the M code tests
+`= ""` for one and `= 0` for the other. Not a typo; mirror it if you rewrite the query.
 
 ## Caveats
 
