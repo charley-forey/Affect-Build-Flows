@@ -26,10 +26,19 @@ REPO = CHARLEY_DEV.parent.parent
 #                      Reused rather than duplicated; two copies of a seed is two seeds
 #                      that drift.
 #   charley-dev      - the five the earlier work did not cover.
+#
+# SEEDS ONLY - files starting with 0. The 1*/2*/3* files in the same folder build the
+# dimensions and facts, and those need the `sv_*` source views. Globbing the whole folder
+# here pulled them into the SEED notebook, which has no source views, and the run failed
+# with no obvious cause. Prefixes carry meaning (see 00-platform/naming-standards.md), so
+# they are what selects.
 SEED_DIRS = (
     (REPO / "src" / "procore" / "sql", ("20_gold_dim_trade.sql", "21_gold_dim_status.sql")),
-    (CHARLEY_DEV / "02-transformation" / "sql" / "gold", None),  # None = every .sql
+    (CHARLEY_DEV / "02-transformation" / "sql" / "gold", "0*.sql"),
 )
+
+# Dimensions and facts, built after the seeds and over the sv_* fixtures.
+GOLD_GLOB = "[123]*.sql"
 
 # Spark -> DuckDB. Both are exact 1:1 mappings, which is why one .sql serves both.
 MACROS = (
@@ -39,6 +48,87 @@ MACROS = (
     "CREATE OR REPLACE MACRO explode(l) AS unnest(l)",
     # Used by dim_Status to read Procore's raw payloads. Same macro src/procore uses.
     "CREATE OR REPLACE MACRO get_json_object(j, p) AS json_extract_string(j, p)",
+    # Spark's datediff(end, start) is 2-arg; DuckDB ships only the 3-arg date_diff(part,
+    # start, end). Overloading by arity is allowed, so the Spark spelling works here too.
+    "CREATE OR REPLACE MACRO datediff(e, s) AS date_diff('day', CAST(s AS DATE), CAST(e AS DATE))",
+)
+
+# Fixtures standing in for sql/silver/00_source_views.sql.
+#
+# That file is Spark-only (backticks + abfss paths), so offline runs recreate the same
+# `sv_*` views from literals instead. The COLUMN NAMES here must match the view definitions
+# exactly - that is the contract the gold SQL is written against, and the reason the gold
+# files are quote-free and run unchanged on both engines.
+#
+# Values deliberately exercise the edge cases the gold SQL handles: a project with no prime
+# contract, a vendor with no Sage match, a cost code that does not parse into a division,
+# an AR invoice whose job does not resolve, a responded vs still-open submittal, a
+# non-critical activity that must be excluded, and a milestone with inverted dates.
+SOURCE_FIXTURES = (
+    """CREATE OR REPLACE VIEW sv_projects AS SELECT * FROM (VALUES
+        ('P1', 'Tower A', 'S100', 'PROCORE'),
+        ('P2', 'Depot B', NULL,   'PROCORE')
+    ) AS t(project_id, project_name, sage_project_id, origin_code)""",
+
+    # 8,800,000 is FINANCIALS!C3 verbatim. Combined with the approved change order below,
+    # this reproduces the workbook's own Current Contract (9,116,960.48) and Contract
+    # Growth (3.60%) - two values from the reconciliation gate in
+    # powerbi/build-plan.md:142-158. The fixture is faithful to the real project so the
+    # offline suite checks the numbers Affect will actually look at.
+    """CREATE OR REPLACE VIEW sv_prime_contracts AS SELECT * FROM (VALUES
+        ('C1', 'P1', 8800000.0, 0.10, DATE '2025-01-01', DATE '2026-06-30', 'Approved')
+    ) AS t(prime_contract_id, project_id, contract_value, retainage_pct,
+           start_date, estimated_completion_date, status)""",
+
+    """CREATE OR REPLACE VIEW sv_vendors AS SELECT * FROM (VALUES
+        ('V1', 'SV1', '  Acme Concrete  '),
+        ('V2', NULL,  'Bright Electric')
+    ) AS t(procore_vendor_id, sage_vendor_id, vendor_name)""",
+
+    """CREATE OR REPLACE VIEW sv_cost_codes AS SELECT * FROM (VALUES
+        ('CC1', '03-100 Concrete'),
+        ('CC2', 'General')
+    ) AS t(cost_code_id, cost_code_name)""",
+
+    """CREATE OR REPLACE VIEW sv_budgets AS SELECT * FROM (VALUES
+        ('P1','CC1','03-100','Materials', DATE '2025-05-01',
+         1000000.0, 50000.0, 1050000.0, 1100000.0, 900000.0, 400000.0, 350000.0, 550000.0),
+        ('P1','CC2','General','Labor',    DATE '2025-05-01',
+          500000.0,      0.0,  500000.0,  500000.0, 480000.0, 200000.0, 150000.0, 330000.0)
+    ) AS t(project_id, cost_code_id, cost_code, category, snapshot_date,
+           original_budget, budget_modifications, updated_budget, forecast_budget,
+           committed_to_date, direct_costs, invoiced_to_date, cost_to_complete)""",
+
+    # The approved CO is the workbook's own contract growth (9,116,960.48 - 8,800,000).
+    # The two unapproved ones are real addends from FINANCIALS!C5, which the workbook
+    # stores as the formula "=65000+3158.46+11550+4620" typed into a value cell - the
+    # components exist nowhere else once someone edits it. Here each is a row.
+    """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
+        ('P1','CO1','C1', DATE '2025-05-02', 316960.48, '1', 'Approved'),
+        ('P1','CO2','C1', DATE '2025-05-10',   3158.46, '2', 'Pending'),
+        ('P1','CO3','C1', DATE '2025-05-20',  11550.0,  '3', 'Draft')
+    ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
+
+    """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES
+        ('S100', DATE '2025-05-05', DATE '2025-06-04', 'App 1', 500000.0, 500000.0,      0.0, '5'),
+        ('S100', DATE '2025-05-25', DATE '2025-06-24', 'App 2', 300000.0,      0.0, 300000.0, '5'),
+        ('S999', DATE '2025-05-05', DATE '2025-06-04', 'Orphan', 1000.0,       0.0,   1000.0, '5')
+    ) AS t(sage_project_id, invoice_date, due_date, description,
+           invoice_total, amount_paid, invoice_balance, billing_period)""",
+
+    """CREATE OR REPLACE VIEW sv_submittals AS SELECT * FROM (VALUES
+        ('P1','SB1','001','Rebar shop drawings','Open',    'CC1', DATE '2025-05-01', DATE '2025-05-20', NULL),
+        ('P1','SB2','002','Concrete mix design','Approved','CC1', DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-15'),
+        ('P1','SB3','003','No cost code',        'Open',    NULL,  DATE '2025-05-03', DATE '2099-01-01', NULL)
+    ) AS t(project_id, item_id, item_number, subject, status_label, cost_code_id,
+           created_date, due_date, responded_date)""",
+
+    """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
+        ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress'),
+        ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress'),
+        ('P1','A3','Inverted dates',      DATE '2025-07-01', DATE '2025-06-01', 0.0, 10.0, TRUE,  'Task','Not Started')
+    ) AS t(project_id, activity_id, activity_name, start_date, end_date,
+           progress, duration, is_critical, activity_type, status)""",
 )
 
 # dim_Status is not a pure seed: it unions its 32 static rows with Procore's OWN status
@@ -56,15 +146,25 @@ UPSTREAM_STUBS = (
 def seed_files() -> list[Path]:
     """Every seed file, in the order the pipeline runs them."""
     files: list[Path] = []
-    for directory, only in SEED_DIRS:
-        found = sorted(directory.glob("*.sql"))
-        if only is not None:
-            found = [p for p in found if p.name in only]
-        missing = set(only or ()) - {p.name for p in found}
-        if missing:
-            raise FileNotFoundError(f"expected seed(s) not found in {directory}: {sorted(missing)}")
+    for directory, selector in SEED_DIRS:
+        if isinstance(selector, str):
+            found = sorted(directory.glob(selector))
+        else:
+            found = [p for p in sorted(directory.glob("*.sql")) if p.name in selector]
+            missing = set(selector) - {p.name for p in found}
+            if missing:
+                raise FileNotFoundError(
+                    f"expected seed(s) not found in {directory}: {sorted(missing)}"
+                )
+        if not found:
+            raise FileNotFoundError(f"no files matched {selector!r} in {directory}")
         files.extend(found)
     return files
+
+
+def gold_files() -> list[Path]:
+    """Dimension and fact files, which depend on the sv_* source views."""
+    return sorted((CHARLEY_DEV / "02-transformation" / "sql" / "gold").glob(GOLD_GLOB))
 
 
 def split_statements(sql: str) -> list[str]:
@@ -82,10 +182,12 @@ def build(verbose: bool = False) -> Any:
     import duckdb
 
     con = duckdb.connect()
-    for statement in (*MACROS, *UPSTREAM_STUBS):
+    for statement in (*MACROS, *UPSTREAM_STUBS, *SOURCE_FIXTURES):
         con.execute(statement)
 
-    for path in seed_files():
+    # Seeds first, then dimensions and facts - the same order the pipeline runs, and the
+    # order the facts' foreign keys require.
+    for path in [*seed_files(), *gold_files()]:
         for statement in split_statements(path.read_text(encoding="utf-8")):
             try:
                 con.execute(statement)

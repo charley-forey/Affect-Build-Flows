@@ -40,14 +40,15 @@ def one(con, sql: str):
 
 
 def test_dim_date(con) -> None:
-    # 2023-01-01 .. 2030-12-31 inclusive, two leap years in range.
-    assert one(con, "SELECT COUNT(*) FROM dim_Date") == 2922
-    assert one(con, "SELECT MIN(Date) FROM dim_Date") == date(2023, 1, 1)
-    assert one(con, "SELECT MAX(Date) FROM dim_Date") == date(2030, 12, 31)
-    check("dim_Date spans 2023-01-01..2030-12-31 (2922 days)")
+    # 2015-01-01 .. 2035-12-31 inclusive. Widened from 2023-2030 after the first run
+    # against real data put change orders and submittals outside the calendar.
+    assert one(con, "SELECT COUNT(*) FROM dim_Date") == 7670
+    assert one(con, "SELECT MIN(Date) FROM dim_Date") == date(2015, 1, 1)
+    assert one(con, "SELECT MAX(Date) FROM dim_Date") == date(2035, 12, 31)
+    check("dim_Date spans 2015-01-01..2035-12-31 (7670 days)")
 
     # A date key must be unique or every measure over it double-counts.
-    assert one(con, "SELECT COUNT(DISTINCT Date) FROM dim_Date") == 2922
+    assert one(con, "SELECT COUNT(DISTINCT Date) FROM dim_Date") == 7670
     check("dim_Date[Date] is unique")
 
     # Contiguous: no gaps. A missing day is exactly the silent #N/A the Excel suffers.
@@ -67,10 +68,10 @@ def test_dim_date(con) -> None:
     ) == 0
     check("dim_Date[MonthStart] is the 1st of the row's own month")
 
-    # 8 years x 12 months of distinct month starts, and one month-end flag each.
-    assert one(con, "SELECT COUNT(DISTINCT MonthStart) FROM dim_Date") == 96
-    assert one(con, "SELECT COUNT(*) FROM dim_Date WHERE IsMonthEnd") == 96
-    check("dim_Date has 96 months, each with exactly one IsMonthEnd")
+    # 21 years x 12 months of distinct month starts, one month-end flag each.
+    assert one(con, "SELECT COUNT(DISTINCT MonthStart) FROM dim_Date") == 252
+    assert one(con, "SELECT COUNT(*) FROM dim_Date WHERE IsMonthEnd") == 252
+    check("dim_Date has 252 months, each with exactly one IsMonthEnd")
 
     # Leap day present, and Feb 2024 flagged on the 29th not the 28th.
     assert one(con, "SELECT COUNT(*) FROM dim_Date WHERE Date = DATE '2024-02-29'") == 1

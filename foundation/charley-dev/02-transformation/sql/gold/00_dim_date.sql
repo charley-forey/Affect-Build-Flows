@@ -27,9 +27,13 @@
 -- call because the two engines spell that differently. 0 = the current month, negative
 -- = past. It is what makes "last 3 months" a filter instead of a hand-edited date.
 
+-- RANGE WIDENED after the first run against real data: change orders, submittals and one
+-- financial period fell OUTSIDE 2023-2030, so their MonthStart resolved to nothing and the
+-- measures over them would have silently returned blank. Affect has ~14 years of history,
+-- so the calendar now starts in 2015 and runs to 2035 for the forecast tail.
 CREATE OR REPLACE TABLE dim_Date AS
 WITH days AS (
-    SELECT explode(sequence(DATE '2023-01-01', DATE '2030-12-31', INTERVAL 1 DAY)) AS Date
+    SELECT explode(sequence(DATE '2015-01-01', DATE '2035-12-31', INTERVAL 1 DAY)) AS Date
 ),
 parts AS (
     SELECT

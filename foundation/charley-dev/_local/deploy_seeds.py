@@ -88,7 +88,7 @@ built = []
     # Asserting the exact counts the offline suite verified makes the run status mean
     # something: Completed == the same tables, the same sizes, as test_seeds.py checked.
     expected = {
-        "dim_Date": 2922, "dim_Trade": 29, "dim_Status": 32, "dim_Owner": 10,
+        "dim_Date": 7670, "dim_Trade": 29, "dim_Status": 32, "dim_Owner": 10,
         "dim_ActivityCategory": 28, "dim_ScorecardWeight": 9, "dim_ScorecardBand": 27,
     }
     cells.append(
@@ -112,6 +112,14 @@ total = spark.sql(
 print(f"\\n  scorecard weights sum to {{total}}")
 if float(total) != 1.0:
     bad.append(f"scorecard weights sum to {{total}}, not 1.00")
+
+# Persist the outcome before raising. The Fabric jobs API reports only "statement
+# execution failures" with no detail, so without this a failed check is indistinguishable
+# from a failed statement - and both just say the run failed.
+import json as _json, os as _os
+_os.makedirs("/lakehouse/default/Files/_diag", exist_ok=True)
+with open("/lakehouse/default/Files/_diag/seed_run.json", "w", encoding="utf-8") as _fh:
+    _json.dump({{"counts": actual, "expected": expected, "findings": bad}}, _fh, indent=1)
 
 if bad:
     raise AssertionError("gold seed verification failed:\\n  " + "\\n  ".join(bad))
