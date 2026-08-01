@@ -1,0 +1,300 @@
+# Procore endpoint registry - the complete set charley-dev ingests.
+#
+# This is the ONLY file that grows when an endpoint is added. Auth, pagination, the
+# v2.0 header rule, 429 retry and watermarking are implemented once in
+# src/procore/procore_extract.py and driven from here.
+#
+# Every path below is verified against resources/procore/endpoints-cheatsheet.md.
+# Nothing here is guessed. Line references point at the verifying row.
+#
+# Fields
+#   name          logical name; also the bronze `_source_endpoint` value
+#   path          template; {company_id} / {project_id} / {parent_id} filled per scope
+#   scope         company | project | parent
+#   api_version   drives the Procore-Company-Id header (required on 2.0+, a 403 if sent
+#                 to the wrong version) - endpoints-cheatsheet.md:18-19
+#   bronze_table  destination table in CD_Bronze_Lakehouse
+#   key           natural key used for the MERGE (default "id")
+#   incremental   watermark filter param; omit for a full reload.
+#                 A full reload is still idempotent - the load is a MERGE on `key`.
+#   parent        for scope: parent - which endpoint supplies {parent_id}, and the
+#                 field on those records to read it from. See lib/procore_scope.py.
+#
+# INCREMENTAL DISCIPLINE: `incremental: filters[updated_at]` appears ONLY where the
+# cheatsheet confirms that endpoint accepts it. Several endpoints (rfis, submittals)
+# document filters[created_at] but NOT filters[updated_at]. Incrementing on created_at
+# would miss status changes on existing records - and "open critical RFIs" is precisely
+# a status question. Those stay full reloads until confirmed against a live tenant.
+
+endpoints:
+
+  # ==========================================================================
+  # Reference / dimensions
+  # ==========================================================================
+
+  - name: projects
+    path: /rest/v1.0/projects
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_projects
+    incremental: filters[updated_at]        # cheatsheet:29
+
+  - name: vendors
+    path: /rest/v1.0/vendors
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_vendors # cheatsheet:31
+
+  - name: project_vendors
+    path: /rest/v1.0/projects/{project_id}/vendors
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_project_vendors   # cheatsheet:32
+
+  - name: cost_codes
+    path: /rest/v1.0/cost_codes
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_cost_codes        # cheatsheet:33
+
+  - name: standard_cost_codes
+    path: /rest/v1.0/standard_cost_codes
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_standard_cost_codes  # cheatsheet:34
+
+  # ==========================================================================
+  # Financial
+  # ==========================================================================
+
+  - name: prime_contracts
+    path: /rest/v1.0/prime_contracts
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_prime_contracts
+    incremental: filters[updated_at]        # cheatsheet:138
+
+  # Sub-resource: needs a prime_contract id, which only the call above can supply.
+  - name: prime_contract_line_items
+    path: /rest/v1.0/prime_contracts/{parent_id}/line_items
+    scope: parent
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_prime_contract_line_items
+    incremental: filters[updated_at]        # cheatsheet:139
+    parent:
+      endpoint: prime_contracts
+      field: id
+
+  # Owner invoices. source-mapping.md:188 - if Affect bills through Procore rather than
+  # Sage, billing data is already here. Worth confirming before building the Sage side.
+  - name: payment_applications
+    path: /rest/v1.0/prime_contracts/{parent_id}/payment_applications
+    scope: parent
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_payment_applications   # cheatsheet:140
+    parent:
+      endpoint: prime_contracts
+      field: id
+
+  # Subcontractor invoices.
+  - name: requisitions
+    path: /rest/v1.1/requisitions
+    scope: project
+    api_version: "1.1"
+    bronze_table: cd_bronze_procore_requisitions           # cheatsheet:141
+
+  - name: work_order_contracts
+    path: /rest/v1.0/work_order_contracts
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_work_order_contracts   # cheatsheet:142
+
+  - name: commitments
+    path: /rest/v1.0/commitments
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_commitments            # cheatsheet:162
+
+  # v2.0 - requires the Procore-Company-Id header. Version mixing across one pipeline is
+  # normal for Procore, not a mistake to correct. source-mapping.md:248-251
+  - name: commitment_contracts
+    path: /rest/v2.0/companies/{company_id}/projects/{project_id}/commitment_contracts
+    scope: project
+    api_version: "2.0"
+    bronze_table: cd_bronze_procore_commitment_contracts   # cheatsheet:163
+
+  - name: budget
+    path: /rest/v1.0/projects/{project_id}/budget
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_budget                 # cheatsheet:157
+
+  - name: budget_views
+    path: /rest/v1.0/budget_views
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_budget_views           # cheatsheet:158
+
+  # The actual budget numbers by cost code - feeds fct_BudgetLine.
+  - name: budget_detail_rows
+    path: /rest/v1.0/budget_views/{parent_id}/detail_rows
+    scope: parent
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_budget_detail_rows     # cheatsheet:159
+    parent:
+      endpoint: budget_views
+      field: id
+
+  - name: direct_costs
+    path: /rest/v1.1/projects/{project_id}/direct_costs
+    scope: project
+    api_version: "1.1"
+    bronze_table: cd_bronze_procore_direct_costs           # cheatsheet:164
+
+  # -- Change orders ---------------------------------------------------------
+  # Feeds [AgeOfOldestUnapprovedCO], typed by hand in FINANCIALS!C6 today.
+
+  - name: potential_change_orders
+    path: /rest/v1.0/potential_change_orders
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_potential_change_orders
+    incremental: filters[updated_at]        # cheatsheet:178
+
+  - name: change_order_requests
+    path: /rest/v1.0/change_order_requests
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_change_order_requests
+    incremental: filters[updated_at]        # cheatsheet:179
+
+  - name: change_order_statuses
+    path: /rest/v1.0/change_order/statuses
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_change_order_statuses  # cheatsheet:180
+
+  # ==========================================================================
+  # Project management - the current gap. Feeds fct_RfiSubmittal, fct_QualityItem.
+  # ==========================================================================
+
+  # NOTE: cheatsheet:69 lists filters[created_at] for RFIs but NOT filters[updated_at].
+  # Full reload until confirmed live - see INCREMENTAL DISCIPLINE above.
+  - name: rfis
+    path: /rest/v1.0/projects/{project_id}/rfis
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_rfis                   # cheatsheet:69
+
+  - name: rfi_statuses
+    path: /rest/v1.0/projects/{project_id}/rfis/filter_options/status
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_rfi_statuses           # cheatsheet:70
+    key: value
+
+  # The likely definition of "critical" - the workbook never defines it (open question #5).
+  - name: rfi_priorities
+    path: /rest/v1.0/projects/{project_id}/rfis/filter_options/priority
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_rfi_priorities         # cheatsheet:71
+    key: value
+
+  - name: submittals
+    path: /rest/v1.1/projects/{project_id}/submittals
+    scope: project
+    api_version: "1.1"
+    bronze_table: cd_bronze_procore_submittals             # cheatsheet:72
+
+  # Fixes Excel defect #2: QUALITY!D5:D6 currently read SAFETY orientations instead.
+  - name: observations
+    path: /rest/v1.0/observations/items
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_observations           # cheatsheet:89
+
+  - name: observation_types
+    path: /rest/v1.0/observations/types
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_observation_types      # cheatsheet:90
+
+  - name: punch_items
+    path: /rest/v1.0/punch_items
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_punch_items            # cheatsheet:92
+
+  - name: punch_item_types
+    path: /rest/v1.0/punch_item_types
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_punch_item_types       # cheatsheet:93
+
+  - name: inspection_logs
+    path: /rest/v1.0/projects/{project_id}/inspection_logs
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_inspection_logs        # cheatsheet:95
+
+  # ==========================================================================
+  # Field ops - the current gap. Feeds fct_SafetyMonthly, fct_ManpowerDaily, fct_DailyLog.
+  # ==========================================================================
+
+  - name: incidents
+    path: /rest/v1.0/projects/{project_id}/incidents
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_incidents
+    incremental: filters[updated_at]        # cheatsheet:113
+
+  - name: incident_injuries
+    path: /rest/v1.0/projects/{project_id}/incidents/injuries
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_incident_injuries      # cheatsheet:115
+
+  - name: incident_near_misses
+    path: /rest/v1.0/projects/{project_id}/incidents/near_misses
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_incident_near_misses   # cheatsheet:116
+
+  - name: incident_severity_levels
+    path: /rest/v1.0/companies/{company_id}/incidents/severity_levels
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_incident_severity_levels
+    incremental: filters[updated_at]        # cheatsheet:117
+
+  # Computes SCHEDULE!Table14 "Avg Daily over past 30 days" exactly, at daily grain -
+  # which also removes the workbook's hard cap of 5 subcontractors.
+  - name: manpower_daily_totals
+    path: /rest/v1.0/projects/{project_id}/manpower_logs/daily_totals
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_manpower_daily_totals  # cheatsheet:50
+    key: date
+
+  - name: manpower_logs
+    path: /rest/v1.0/projects/{project_id}/manpower_logs
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_manpower_logs          # cheatsheet:49
+
+  # Derives SCORECARD CALC!E28 ("Daily Reports"), typed by hand today.
+  - name: daily_log_headers
+    path: /rest/v1.0/projects/{project_id}/daily_log_headers
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_daily_log_headers      # cheatsheet:51
+
+  # Schedule TASKS, not milestones - the OAS has no milestone path at all
+  # (source-mapping.md:87). Outbuild is the real milestone source; this is pulled for
+  # comparison so we can show Affect what Procore does and does not hold.
+  - name: schedule
+    path: /rest/v1.0/projects/{project_id}/schedule
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_schedule               # cheatsheet:47
