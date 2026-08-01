@@ -1,0 +1,72 @@
+table dim_Project
+
+	lineageTag: 8a1c0002-0000-4000-8000-000000000001
+
+	column ProjectKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0002-0000-4000-8000-000000000101
+		summarizeBy: none
+		sourceColumn: ProjectKey
+		isKey
+
+	column ProcoreProjectId
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0002-0000-4000-8000-000000000102
+		summarizeBy: none
+		sourceColumn: ProcoreProjectId
+
+	column ProjectNumber
+		dataType: string
+		lineageTag: 8a1c0002-0000-4000-8000-000000000103
+		summarizeBy: none
+		sourceColumn: ProjectNumber
+
+	column SageJobNumber
+		dataType: string
+		lineageTag: 8a1c0002-0000-4000-8000-000000000104
+		summarizeBy: none
+		sourceColumn: SageJobNumber
+
+	column ProjectName
+		dataType: string
+		lineageTag: 8a1c0002-0000-4000-8000-000000000105
+		summarizeBy: none
+		sourceColumn: ProjectName
+
+	column ClientName
+		dataType: string
+		lineageTag: 8a1c0002-0000-4000-8000-000000000106
+		summarizeBy: none
+		sourceColumn: ClientName
+
+	column ContractStart
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0002-0000-4000-8000-000000000107
+		summarizeBy: none
+		sourceColumn: ContractStart
+
+	column ContractFinish
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0002-0000-4000-8000-000000000108
+		summarizeBy: none
+		sourceColumn: ContractFinish
+
+	column Status
+		dataType: string
+		lineageTag: 8a1c0002-0000-4000-8000-000000000109
+		summarizeBy: none
+		sourceColumn: Status
+
+	partition dim_Project = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(GoldFolder & "\dim_Project.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

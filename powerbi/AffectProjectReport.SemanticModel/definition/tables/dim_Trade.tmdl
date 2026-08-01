@@ -1,0 +1,36 @@
+table dim_Trade
+
+	lineageTag: 8a1c0003-0000-4000-8000-000000000001
+
+	column TradeKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0003-0000-4000-8000-000000000101
+		summarizeBy: none
+		sourceColumn: TradeKey
+		isKey
+
+	column TradeName
+		dataType: string
+		lineageTag: 8a1c0003-0000-4000-8000-000000000102
+		summarizeBy: none
+		sourceColumn: TradeName
+		sortByColumn: SortOrder
+
+	column SortOrder
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0003-0000-4000-8000-000000000103
+		summarizeBy: none
+		sourceColumn: SortOrder
+		isHidden
+
+	partition dim_Trade = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(GoldFolder & "\dim_Trade.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

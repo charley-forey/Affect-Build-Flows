@@ -1,0 +1,54 @@
+{
+  "endpoint": "submittals",
+  "_note": "Hand-built from Procore's documented v1.1 Submittal shape - NOT captured from a live sandbox. Note status and priority are objects here but bare strings on RFIs; the silver SQL COALESCEs both.",
+  "records": [
+    {
+      "_project_id": 1001,
+      "id": 7001,
+      "number": "SUB-001",
+      "title": "Domestic water pipe and fittings",
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 1, "name": "High" },
+      "created_at": "2026-05-06T10:05:00Z",
+      "due_date": "2026-05-27T00:00:00Z",
+      "completed_at": null,
+      "specification_section": { "id": 220, "description": "Plumbing" }
+    },
+    {
+      "_project_id": 1001,
+      "id": 7002,
+      "number": "SUB-002",
+      "title": "Panelboard schedules",
+      "status": { "id": 2, "name": "Closed" },
+      "priority": { "id": 2, "name": "Medium" },
+      "created_at": "2026-04-14T08:40:00Z",
+      "due_date": "2026-05-05T00:00:00Z",
+      "completed_at": "2026-04-30T15:10:00Z",
+      "specification_section": { "id": 260, "description": "26 00 00 Electrical" }
+    },
+    {
+      "_project_id": 1001,
+      "id": 7003,
+      "number": "SUB-003",
+      "title": "Single-ply membrane roofing",
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 2, "name": "Medium" },
+      "created_at": "2026-05-21T12:00:00Z",
+      "due_date": "2026-06-11T00:00:00Z",
+      "completed_at": null,
+      "specification_section": { "id": 75, "description": "Roofing" }
+    },
+    {
+      "_project_id": 1002,
+      "id": 7010,
+      "number": "SUB-010",
+      "title": "Lab casework and fume hoods",
+      "status": { "id": 1, "name": "Open" },
+      "priority": { "id": 3, "name": "Urgent" },
+      "created_at": "2026-06-05T09:15:00Z",
+      "due_date": "2026-06-26T00:00:00Z",
+      "completed_at": null,
+      "specification_section": { "id": 233, "description": "HVAC" }
+    }
+  ]
+}

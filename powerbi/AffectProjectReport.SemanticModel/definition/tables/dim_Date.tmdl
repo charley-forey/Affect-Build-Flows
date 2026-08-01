@@ -1,0 +1,77 @@
+/// Calendar table. Generated in DAX rather than built in the lakehouse - it is pure
+/// calendar, no source data, so a gold table for it would be a table to maintain for
+/// nothing. Range 2023-01-01 to 2030-12-31 per powerbi/build-plan.md:56.
+table dim_Date
+
+	lineageTag: 8a1c0005-0000-4000-8000-000000000001
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0005-0000-4000-8000-000000000101
+		summarizeBy: none
+		sourceColumn: [Date]
+		dataCategory: PaddedDateTableDates
+		isKey
+
+	column Year = YEAR ( dim_Date[Date] )
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0005-0000-4000-8000-000000000102
+		summarizeBy: none
+
+	column MonthStart = DATE ( YEAR ( dim_Date[Date] ), MONTH ( dim_Date[Date] ), 1 )
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0005-0000-4000-8000-000000000103
+		summarizeBy: none
+
+	column MonthEnd = EOMONTH ( dim_Date[Date], 0 )
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0005-0000-4000-8000-000000000104
+		summarizeBy: none
+
+	column MonthNumber = MONTH ( dim_Date[Date] )
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0005-0000-4000-8000-000000000105
+		summarizeBy: none
+		isHidden
+
+	column MonthName = FORMAT ( dim_Date[Date], "MMM" )
+		dataType: string
+		lineageTag: 8a1c0005-0000-4000-8000-000000000106
+		summarizeBy: none
+		sortByColumn: MonthNumber
+
+	column MonthYear = FORMAT ( dim_Date[Date], "MMM yyyy" )
+		dataType: string
+		lineageTag: 8a1c0005-0000-4000-8000-000000000107
+		summarizeBy: none
+		sortByColumn: MonthStart
+
+	column Quarter = "Q" & FORMAT ( QUARTER ( dim_Date[Date] ), "0" )
+		dataType: string
+		lineageTag: 8a1c0005-0000-4000-8000-000000000108
+		summarizeBy: none
+
+	/// 0 = the current month. Makes relative-month filtering trivial in the report.
+	column MonthOffset = DATEDIFF ( TODAY (), dim_Date[Date], MONTH )
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0005-0000-4000-8000-000000000109
+		summarizeBy: none
+
+	column IsMonthEnd = dim_Date[Date] = EOMONTH ( dim_Date[Date], 0 )
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 8a1c0005-0000-4000-8000-000000000110
+		summarizeBy: none
+
+	partition dim_Date = calculated
+		mode: import
+		source = CALENDAR ( DATE ( 2023, 1, 1 ), DATE ( 2030, 12, 31 ) )
+
+	annotation PBI_Id = dimDateCalculated

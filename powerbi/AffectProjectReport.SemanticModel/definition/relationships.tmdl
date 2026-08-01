@@ -1,0 +1,21 @@
+/// All relationships are many-to-one with SINGLE cross-filter direction.
+/// powerbi/semantic-model.md:429-444 - no bidirectional filters anywhere in this model.
+/// Bidirectional filtering on a status or trade dimension produces ambiguous paths the
+/// moment a second fact table joins to the same dimension, and every fact in the full
+/// model does.
+
+relationship 8a1c0f01-0000-4000-8000-000000000001
+	fromColumn: fct_RfiSubmittal.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship 8a1c0f02-0000-4000-8000-000000000002
+	fromColumn: fct_RfiSubmittal.TradeKey
+	toColumn: dim_Trade.TradeKey
+
+relationship 8a1c0f03-0000-4000-8000-000000000003
+	fromColumn: fct_RfiSubmittal.StatusKey
+	toColumn: dim_Status.StatusKey
+
+relationship 8a1c0f04-0000-4000-8000-000000000004
+	fromColumn: fct_RfiSubmittal.CreatedDate
+	toColumn: dim_Date.Date

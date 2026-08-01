@@ -1,0 +1,12 @@
+/// Where the pipeline's gold parquet lives. Set this once after cloning - it is the
+/// ONLY thing that changes between a local run and the Fabric Lakehouse.
+///
+/// Local:  the .local/gold folder that `python src/procore/run_local.py` writes.
+/// Fabric: replace these partitions with the Lakehouse SQL endpoint. The tables,
+///         relationships and measures do not change.
+expression GoldFolder = "..\..\.local\gold" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 8a1c0e01-0000-4000-8000-000000000001
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text

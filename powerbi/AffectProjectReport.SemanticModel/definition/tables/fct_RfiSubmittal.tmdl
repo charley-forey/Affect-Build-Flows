@@ -1,0 +1,122 @@
+table fct_RfiSubmittal
+
+	lineageTag: 8a1c0001-0000-4000-8000-000000000001
+
+	measure 'Open Critical RFIs' =
+			CALCULATE (
+			    COUNTROWS ( fct_RfiSubmittal ),
+			    fct_RfiSubmittal[ItemType] = "RFI",
+			    fct_RfiSubmittal[IsCritical] = TRUE (),
+			    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "OPEN" )
+			)
+		formatString: 0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000a01
+
+	measure 'Open Critical Submittals' =
+			CALCULATE (
+			    COUNTROWS ( fct_RfiSubmittal ),
+			    fct_RfiSubmittal[ItemType] = "Submittal",
+			    fct_RfiSubmittal[IsCritical] = TRUE (),
+			    FILTER ( ALL ( dim_Status ), dim_Status[Code] = "OPEN" )
+			)
+		formatString: 0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000a02
+
+	measure 'Avg RFI Days Open' =
+			CALCULATE (
+			    AVERAGE ( fct_RfiSubmittal[DaysOpen] ),
+			    fct_RfiSubmittal[ItemType] = "RFI"
+			)
+		formatString: 0.0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000a03
+
+	column ProjectKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000101
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column TradeKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000102
+		summarizeBy: none
+		sourceColumn: TradeKey
+
+	column StatusKey
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000103
+		summarizeBy: none
+		sourceColumn: StatusKey
+
+	column ItemType
+		dataType: string
+		lineageTag: 8a1c0001-0000-4000-8000-000000000104
+		summarizeBy: none
+		sourceColumn: ItemType
+
+	column ItemNumber
+		dataType: string
+		lineageTag: 8a1c0001-0000-4000-8000-000000000105
+		summarizeBy: none
+		sourceColumn: ItemNumber
+
+	column Subject
+		dataType: string
+		lineageTag: 8a1c0001-0000-4000-8000-000000000106
+		summarizeBy: none
+		sourceColumn: Subject
+
+	column IsCritical
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 8a1c0001-0000-4000-8000-000000000107
+		summarizeBy: none
+		sourceColumn: IsCritical
+
+	column IsOpen
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 8a1c0001-0000-4000-8000-000000000108
+		summarizeBy: none
+		sourceColumn: IsOpen
+
+	column DaysOpen
+		dataType: int64
+		formatString: 0
+		lineageTag: 8a1c0001-0000-4000-8000-000000000109
+		summarizeBy: none
+		sourceColumn: DaysOpen
+
+	column CreatedDate
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0001-0000-4000-8000-000000000110
+		summarizeBy: none
+		sourceColumn: CreatedDate
+
+	column DueDate
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0001-0000-4000-8000-000000000111
+		summarizeBy: none
+		sourceColumn: DueDate
+
+	column ClosedDate
+		dataType: dateTime
+		formatString: yyyy-mm-dd
+		lineageTag: 8a1c0001-0000-4000-8000-000000000112
+		summarizeBy: none
+		sourceColumn: ClosedDate
+
+	partition fct_RfiSubmittal = m
+		mode: import
+		source =
+				let
+				    Source = Parquet.Document(File.Contents(GoldFolder & "\fct_RfiSubmittal.parquet"))
+				in
+				    Source
+
+	annotation PBI_ResultType = Table

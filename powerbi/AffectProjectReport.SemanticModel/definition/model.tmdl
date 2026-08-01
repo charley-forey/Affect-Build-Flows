@@ -1,0 +1,20 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	discourageImplicitMeasures
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["GoldFolder","dim_Project","dim_Trade","dim_Status","fct_RfiSubmittal"]
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+ref table dim_Date
+ref table dim_Project
+ref table dim_Status
+ref table dim_Trade
+ref table fct_RfiSubmittal
+
+ref cultureInfo en-US

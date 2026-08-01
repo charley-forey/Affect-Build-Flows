@@ -80,7 +80,8 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 - `hours-log.md` — append-only time ledger (billing/validation source of truth) + invoicing record
 - `deliverables/` — one file per deliverable (D1–D7): objective, scope, key data, integration approach, tasks, acceptance criteria, files. New deliverables copy `_template.md`.
 - `analysis/excel-tracker/` — **full teardown of the client's Monthly Progress Report workbook**: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and 14 verified defects
-- `powerbi/` — the build kit: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan
+- `src/` — **the pipeline code**. `src/procore/` takes RFIs & submittals from the Procore API through bronze → silver → gold and runs end to end today; `src/README.md` explains the layers and how to deploy into Fabric
+- `powerbi/` — the build kit: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan, and `AffectProjectReport.pbip` (the TMDL model over the pipeline's gold tables)
 - `resources/` — curated documentation and links, one folder per solution (Procore, Sage 100 Contractor, Fabric, Power BI, Power Automate, Outbuild, Ramp, ADP)
 - `.mcp.json` — Fabric MCP server config for Claude Code (reads the live workspace once access is granted; see `resources/microsoft-fabric/`)
 - `call-prep/2026-07-23-warehouse-review.md` — agenda, findings summary, and the information request for the warehouse review call
