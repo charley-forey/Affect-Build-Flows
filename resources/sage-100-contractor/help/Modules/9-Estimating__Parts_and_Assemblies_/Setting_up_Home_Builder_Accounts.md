@@ -1,0 +1,33 @@
+<!-- Source: http://sage100contractorhelp.sagecre.com/help/sage100contractor/US/20_5/Content/Modules/9-Estimating__Parts_and_Assemblies_/Setting_up_Home_Builder_Accounts.htm (Sage 100 Contractor help v20.5) -->
+
+### Setting up Home Builder Accounts
+
+Note: This functionality is available only if you have the [Estimating Module](http://www.na.sage.com/sage-100-contractor/modules/estimating).
+
+When you select the **Home Builder Accounts** from **1-8 General Ledger Setup**, Sage 100 Contractor automatically sets up the account ranges, controlling account numbers, posting account numbers, and then creates the ledger accounts. You can then modify the ledger setup to meet your particular needs. However, you will then need to edit the ledger accounts to match any changes made in the **1-8 General Ledger Setup** window.
+
+After setting up the chart of accounts, you can edit account numbers, delete unnecessary accounts, and set up controlling accounts for subsidiary accounts or departments in the Ledger Accounts window. If you changed a controlling or posting account number in **1-8 General Ledger Setup**, you must also change the ledger account number.
+
+Important! The option to install the Home Builders Accounts is only available when you set up a new company. After ledger accounts have been set up and utilized in any given company, you cannot install a new system of accounts, and you will not see the **Options** menu anymore.
+
+#### To set up Home Builder Accounts in the General Ledger:
+
+|  | 1 | Open **1-8 General Ledger Setup**. |
+|---|---|---|
+
+|  | 2 | On the menu bar, click **Options**, then click **Home Builders Accounts**. |
+|---|---|---|
+
+|  | 3 | A prompt appears and asks whether you want to install the Home Builder estimating data, tasks, and cost codes. If you select **Yes**, the **Estimating Data Setup** window appears. |
+|---|---|---|
+
+|  | 4 | Under **Cost Codes**, select **CSI** or **Home Builder** as your base cost code list. You can modify this later if necessary |
+|---|---|---|
+
+|  | 5 | Under **Framing Species**, select the wood species to base your estimating data on. |
+|---|---|---|
+
+Note: The sample **Cost Code** list and **Task List** contain starter sets aimed at meeting the needs of home builders. You may need to modify these lists to better meet your company’s needs.
+
+| Links to more information . . . [About Home Builder estimating data](About_Home_Builder_estimating_data.md) [About Remodeler estimating data](About_Remodeler_estimating_data.md) [About ledger accounts](../1-General_Ledger/About_general_ledger_accounts.md) |
+|---|

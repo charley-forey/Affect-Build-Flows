@@ -1,0 +1,6 @@
+<!-- Source: http://sage100contractorhelp.sagecre.com/help/sage100contractor/US/20_5/Content/Modules/6-Project_Management/6-6-1_Purchase_Orders.htm (Sage 100 Contractor help v20.5) -->
+
+### 6-6-1 Purchase Orders
+
+| [About purchase orders](About_purchase_orders.md) [About manufacturer details](About_manufacturer_details.md) [Creating purchase orders for jobs](Creating_purchase_orders_for_jobs.md) [About purchase order status](About_purchase_order_status.md) [Setting up purchase order types](Setting_up_purchase_order_types.md) [About closing purchase orders automatically](About_closing_purchase_orders_automatically.md) [Closing purchase orders manually](Closing_purchase_orders_manually.md) [Issuing purchase orders](Issuing_purchase_orders.md) [Issuing batches of purchase orders](Issuing_batches_of_purchase_orders.md) [Retracting purchase orders](Retracting_purchase_orders.md) [Retracting batches of purchase orders](Retracting_batches_of_purchase_orders.md) [Voiding purchase orders](Voiding_purchase_orders.md) [Canceling ordered items](Canceling_ordered_items.md) [Deleting purchase orders](Deleting_purchase_orders.md) [Opening job schedules when purchase order dates change](Opening_job_schedules_when_purchase_order_dates_change.md) |
+|---|

@@ -1,0 +1,6 @@
+<!-- Source: http://sage100contractorhelp.sagecre.com/help/sage100contractor/US/20_5/Content/Appendices/B-Sage_100_Contractor_Reports/5-Payroll_Reports.htm (Sage 100 Contractor help v20.5) -->
+
+## 5-Payroll Reports
+
+| [5-1-1 Employee List](5-1-1_Employee_List.md) [5-1-2 Payroll Cheque Register](5-1-2_Payroll_Check_Register.md) [5-1-3 Federal Tax Report](5-1-3_Federal_Tax_Report.md) [5-1-4 Provincial Tax Report](5-1-4_State_Tax_Report.md) [5-1-5 Workers Comp Report](5-1-5_Workers_Comp_Report.md) [5-1-7 Union Reports](5-1-7_Union_Reports.md) [5-1-8 Hours Report](5-1-8_Hours_Report.md) [5-1-10 Employee Documents](5-1-10_Employee_Documents.md) [5-2-1 Employees](5-2-1_Employees.md) [5-2-2 Payroll Records](5-2-2_Payroll_Records.md) [5-2-4 Payroll Cheques](5-2-4_Payroll_Checks.md) [5-2-5 Direct Deposit File Manager](5-2-5_Direct_Deposit_File_Manager.md) [5-2-7 Compensation Slips](5-2-7_Compensation_Slips.md) [5-2-8 Timecard Journal](5-2-8_Timecard_Journal.md) [5-3-1 Payroll Calculations](5-3-1_Payroll_Calculations.md) [5-3-4 Paygroups](5-3-4_Paygroups.md) [5-5-1 Daily Payroll Entry](5-5-1_Daily_Payroll_Entry.md) [5-5-2 Daily Job Reports](5-5-2_Daily_Job_Reports.md) [5-5-3 Daily Labour Reports](5-5-3_Daily_Labor_Reports.md) [5-5-4 Daily Equipment Reports](5-5-4_Daily_Equipment_Reports.md) |
+|---|

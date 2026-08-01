@@ -5,9 +5,26 @@ connection, currently queried live from Power BI — bypasses the Lakehouse enti
 
 ---
 
-## Documentation
+## Vendored documentation
 
-All links below verified to resolve (HTTP 200), Jul 2026.
+The full published documentation set is extracted to markdown in this folder. Start with
+**[`INTEGRATION-NOTES.md`](INTEGRATION-NOTES.md)** — what the corpus does and does not give
+us for building the Lakehouse ingestion.
+
+| Path | What it is |
+|---|---|
+| [`help/`](help/INDEX.md) | **1,937 topics** — the complete v20.5 online help, mirroring Sage's own tree. Browse via [`help/INDEX.md`](help/INDEX.md). |
+| [`guides/`](guides/) | The five PDF guides converted to text (DB & Company Administration ×3, Your Business 2026.1, User's Guide v23.1). |
+| [`INTEGRATION-NOTES.md`](INTEGRATION-NOTES.md) | The bridge doc: schema gap, header/detail rule, audit-table retention, connection mechanics. |
+| [`refresh.py`](refresh.py) | Regenerates all of the above. `python refresh.py` |
+
+**Corpus headline:** across all 1,937 topics and five guides, exactly one physical table
+name appears (`CMPANY`). Sage publishes no table schema for this product — see
+[`INTEGRATION-NOTES.md`](INTEGRATION-NOTES.md). The live database is the schema reference.
+
+## Upstream sources
+
+All links below verified to resolve (HTTP 200), Aug 2026.
 
 | Resource | URL |
 |---|---|
@@ -49,6 +66,13 @@ via SQL Server Management Studio. **If these are available to the read-only acco
 give change tracking for free** — worth asking about, because it would make incremental
 loading and history straightforward.
 
+> **Confirmed, with a catch.** The 2025 administration guide states audit/history rows are
+> purged during nightly maintenance according to a retention policy in *Advanced Company
+> Settings*, **default 90 days**. So the audit tables are a rolling CDC window, not a
+> permanent history store — usable for incremental loads, but Bronze must hold the history
+> itself. Confirm Affect's actual retention setting. See
+> [`INTEGRATION-NOTES.md`](INTEGRATION-NOTES.md).
+
 ## What the Excel tracker needs from Sage
 
 Roughly 15% of the Monthly Progress Report. From
@@ -79,7 +103,9 @@ The ✅ rows may be obtainable from Procore once the connector is live.
 3. **Where does the SQL Server live?** On-prem means an **on-premises data gateway** is
    required for Fabric ingestion — a dependency with procurement lead time. Identify it
    early.
-4. **Are the audit tables accessible?** Free change tracking if so.
+4. **Are the audit tables accessible to the read-only account, and what is the retention
+   period set to?** Free change tracking if so — but only back to the retention horizon
+   (Sage default 90 days), so ask for the configured value, not just access.
 5. **What is the job numbering scheme,** and does it match Procore project numbers and the
    `YY-000` in the Excel filename convention? *This is the linchpin question for the whole
    model.*
@@ -95,4 +121,7 @@ The ✅ rows may be obtainable from Procore once the connector is live.
 - **On-prem gateway** required if the server is not cloud-hosted.
 - **Read-only account, credentials rotated on a schedule**, managed centrally.
 - ODBC guidance found online is mostly written for **Sage 100 ERP** and is largely not
-  applicable here — another consequence of the two products sharing a name.
+  applicable here — another consequence of the two products sharing a name. Sage's own
+  [ODBC topic](help/Appendices/A-Sage_100_Contractor_Features/About_Open_Database_Connectivity__ODBC_.md)
+  confirms it: it describes the **FoxPro 2.6** file format and states outright that
+  "Sage 100 Contractor itself is not ODBC-compliant." That page predates the SQL version.
