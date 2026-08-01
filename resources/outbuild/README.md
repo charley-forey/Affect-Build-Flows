@@ -28,17 +28,33 @@ a data source at all.
 | Resource | URL |
 |---|---|
 | Product site | https://www.outbuild.com |
+| API docs (upstream) | https://pp-docs.outbuild.com |
+| **API docs (local mirror)** | [`api/`](api/README.md) — 19 pages, scraped 2026-08-01 |
 
-> API documentation availability is **unverified**. Not yet confirmed whether Outbuild
-> offers a public REST API, a Procore integration, or export-only. To be established
-> before any scoping — do not assume an API exists.
+**Outbuild does expose an API — two, in fact:**
+
+- **Datahub API** (`datahub.outbuild.com`) — read-only, GET-only, paginated, `authorizationToken`
+  header. Explicitly built for Power BI / Tableau. 17 endpoint groups covering projects,
+  activities, tasks, commitments, roadblocks, RFVs and tags.
+- **Public API** (`publicapi.outbuild.com/api`) — older, operational, sector-oriented,
+  Basic + Bearer auth.
+
+Access to Datahub is granted by an Outbuild Customer Success rep, not self-serve — **starting
+that request is a lead-time item**, worth raising before it blocks scoping.
 
 ## Open questions
 
 1. Is Outbuild in active use, or still being evaluated? (Meeting notes suggest estimating;
    the README says scheduling — worth clarifying which.)
-2. **Does the critical-path milestone list live here?**
-3. Does Outbuild expose an API? Does it have a native Procore integration?
-4. If milestones live here, does Outbuild also hold baseline vs. current vs. actual dates —
-   or only the current plan?
+2. **Does the critical-path milestone list live here?** The API has no `milestone` entity —
+   if the list lives in Outbuild it is activities flagged `is_critical` or picked out by
+   naming/tagging convention. Which convention does Affect use?
+3. ~~Does Outbuild expose an API?~~ Yes — see above. Native Procore integration still unconfirmed,
+   but `/projects` returns a `procore_id`, so the two systems are at least linkable.
+4. ~~Does Outbuild hold baseline vs. current dates?~~ `/activities` returns `baseline_start_date`,
+   `baseline_end_date` and `baseline_duration` alongside `start_date` / `end_date`.
+   **Still open:** *actual* and *contract* dates are not exposed at all. Actuals could be
+   inferred from the `historical-progress` endpoint (progress % by date); contract dates have
+   no Outbuild source and would stay manual.
 5. Who maintains the schedule day to day?
+6. Who owns the Outbuild account relationship, i.e. who requests the Datahub token?
