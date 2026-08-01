@@ -1,0 +1,6 @@
+<!-- Source: http://sage100contractorhelp.sagecre.com/help/sage100contractor/US/20_5/Content/Modules/5-Payroll/Employee_Payroll_Calculations.htm (Sage 100 Contractor help v20.5) -->
+
+### Employee Payroll Calculations
+
+| [About calculations in employee records](About_calculations_in_employee_records.md) [About applying the Labour Burden when calculating Payroll](About_applying_the_Labor_Burden_when_calculating_Payroll.md) [Setting up vacation time on the 5-2-1 Employees Compensation tab](Setting_up_vacation_on_the_5-2-1_Employees_Compensation_tab.md) [Setting up sick time on the 5-2-1 Employees Compensation tab](Setting_up_sick_time_on_the_5-2-1_Employees_Compensation_tab.md) [Adding payroll calculations to employee records](Adding_payroll_calculations_to_employee_records.md) [About non-union shops and prevailing-wage jobs](About_non-union_shops_and_prevailing-wage_jobs.md) [Entering offset credits for prevailing-wage jobs](Entering_offset_credits_for_prevailing-wage_jobs.md) [About updating employee calculations](About_updating_employees_calculations.md) [Deleting payroll calculations from employee records](Deleting_payroll_calculations_from_employee_records.md) [Changing the pay period from weekly to biweekly](Changing_the_pay_period_from_weekly_to_biweekly.md) |
+|---|

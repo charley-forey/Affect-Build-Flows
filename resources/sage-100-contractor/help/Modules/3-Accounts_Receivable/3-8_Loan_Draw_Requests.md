@@ -1,0 +1,6 @@
+<!-- Source: http://sage100contractorhelp.sagecre.com/help/sage100contractor/US/20_5/Content/Modules/3-Accounts_Receivable/3-8_Loan_Draw_Requests.htm (Sage 100 Contractor help v20.5) -->
+
+## 3-8 Loan Draw Requests
+
+| [About loan draw requests](About_loan_draw_requests.md) [Creating new loan draw applications automatically](Creating_new_loan_draw_applications_automatically.md) [Creating new loan draw applications manually](Creating_new_loan_draw_requests_manually.md) [About updating costs in loan draw applications from change orders](About_updating_costs_in_loan_draw_applications_from_change_orders.md) [Updating costs from change orders for loan draws automatically](Updating_costs_from_change_orders_for_loan_draws_automatically.md) [Updating costs from change orders for loan draws manually](Updating_costs_from_change_orders_for_loan_draws_manually.md) [Appending costs from change orders to loan draw applications](Appending_costs_from_change_orders_to_loan_draw_applications.md) [About updating project costs automatically](About_updating_project_costs_automatically.md) [Processing loan draw applications](Processing_loan_draw_applications.md) [Preparing the next loan draw application](Preparing_the_next_loan_application.md) [Voiding loan draw applications](Voiding_loan_draw_applications.md) |
+|---|

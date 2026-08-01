@@ -1,0 +1,22 @@
+<!-- Source: http://sage100contractorhelp.sagecre.com/help/sage100contractor/US/20_5/Content/Modules/7-Utilities/Alert_Wizard_Define_the_Alert_s_Processing_Criteria.htm (Sage 100 Contractor help v20.5) -->
+
+# Alert Wizard: Define the Alert's Processing Criteria
+
+|  | 1 | Select the fields for report selection criteria. |
+|---|---|---|
+
+|  | 2 | Double click on fields from the Fields list. |
+|---|---|---|
+
+|  | 3 | In the bottom panel, you can do the following actions: |
+|---|---|---|
+
+|  | a | Select the comparison option to set as the default. |
+|---|---|---|
+
+Note: For example, if you would like the default to be between or equal, you can set that as the default on the report printing window.
+
+|  | b | Lock criteria values to fix those values permanently in the report. |
+|---|---|---|
+
+Note: For example, in an invoice report that should exclude voided invoices, lock the invoice status criteria as 'Less than 5-Void .'
