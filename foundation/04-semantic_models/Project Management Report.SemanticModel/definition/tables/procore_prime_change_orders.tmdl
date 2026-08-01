@@ -1,0 +1,87 @@
+table procore_prime_change_orders
+	lineageTag: 80f7d15e-02f6-4972-93b9-5f19ac17232c
+	sourceLineageTag: [dbo].[procore_prime_change_orders]
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 405c0a85-3c95-4576-be62-ef9f3691ac69
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Change Order ID'
+		dataType: string
+		lineageTag: d7717b3e-efbd-4822-b9e2-1b7880918527
+		sourceLineageTag: Change Order ID
+		summarizeBy: none
+		sourceColumn: Change Order ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column batch_id
+		dataType: string
+		lineageTag: eebc0544-1bb0-42f8-8a19-15f4c1f3907d
+		sourceLineageTag: batch_id
+		summarizeBy: none
+		sourceColumn: batch_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Contract ID'
+		dataType: string
+		lineageTag: 7ffa403f-c84a-4a9f-beb4-79ce6c7a7626
+		sourceLineageTag: Contract ID
+		summarizeBy: none
+		sourceColumn: Contract ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Date Created'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 7d5773db-aa34-474f-ae2b-c1bd6c6f32ce
+		sourceLineageTag: Date Created
+		summarizeBy: none
+		sourceColumn: Date Created
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'CO Value $'
+		dataType: double
+		lineageTag: 23578c36-c41f-48c4-be9a-edf4c5590cc0
+		sourceLineageTag: CO Value $
+		summarizeBy: sum
+		sourceColumn: CO Value $
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column number
+		dataType: int64
+		formatString: 0
+		lineageTag: 65a387ad-bebe-444f-bd02-a30c4500684d
+		sourceLineageTag: number
+		summarizeBy: sum
+		sourceColumn: number
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: 9e449e79-d3b3-418a-9aa5-d5db543d4228
+		sourceLineageTag: status
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_prime_change_orders = entity
+		mode: directLake
+		source
+			entityName: procore_prime_change_orders
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

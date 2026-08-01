@@ -1,0 +1,342 @@
+table Outbuild_activities
+	lineageTag: 896a9bdf-9b0e-4a3f-ba2e-91d6bcd5e8b8
+	sourceLineageTag: [dbo].[Outbuild_activities]
+
+	column id
+		dataType: int64
+		formatString: 0
+		lineageTag: 75e83a7b-a091-4569-b10c-1aa515f3a084
+		sourceLineageTag: id
+		summarizeBy: sum
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	column parent_id
+		dataType: string
+		lineageTag: bb1a5358-fdb7-41ac-b283-9f98fe5963de
+		sourceLineageTag: parent_id
+		summarizeBy: none
+		sourceColumn: parent_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column unique_id
+		dataType: string
+		lineageTag: 2cc1703f-1c31-48dc-80d0-317696485109
+		sourceLineageTag: unique_id
+		summarizeBy: none
+		sourceColumn: unique_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column name
+		dataType: string
+		lineageTag: 335cf85e-b7a3-4c04-a25a-2071202ae548
+		sourceLineageTag: name
+		summarizeBy: none
+		sourceColumn: name
+
+		annotation SummarizationSetBy = Automatic
+
+	column duration
+		dataType: double
+		lineageTag: 7613a4f0-e830-4f69-97b1-eccadbc8f009
+		sourceLineageTag: duration
+		summarizeBy: sum
+		sourceColumn: duration
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cost_budgeted
+		dataType: double
+		lineageTag: 9278dd5e-9369-41ab-b582-d6d562225a50
+		sourceLineageTag: cost_budgeted
+		summarizeBy: sum
+		sourceColumn: cost_budgeted
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column progress
+		dataType: double
+		lineageTag: 23f2138b-7cdc-4588-9d1b-deee0aad6ad6
+		sourceLineageTag: progress
+		summarizeBy: sum
+		sourceColumn: progress
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column constraint_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: df1328f2-e2f1-4431-8c39-89819dc7156f
+		sourceLineageTag: constraint_date
+		summarizeBy: none
+		sourceColumn: constraint_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column start_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 9ae434c2-a0dd-45c3-b750-66cf4754f357
+		sourceLineageTag: start_date
+		summarizeBy: none
+		sourceColumn: start_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column end_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: c16d61c8-a2b5-4abd-9d5c-6ceed5894492
+		sourceLineageTag: end_date
+		summarizeBy: none
+		sourceColumn: end_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column constraint_type
+		dataType: string
+		lineageTag: b6aef8e0-904f-46cc-8179-e961eebc1e93
+		sourceLineageTag: constraint_type
+		summarizeBy: none
+		sourceColumn: constraint_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column activity_type
+		dataType: string
+		lineageTag: bf5852da-c507-4190-b57c-be43cfd5f856
+		sourceLineageTag: activity_type
+		summarizeBy: none
+		sourceColumn: activity_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column correlative_id
+		dataType: int64
+		formatString: 0
+		lineageTag: b7812b0a-753a-47e3-a698-a187397d7069
+		sourceLineageTag: correlative_id
+		summarizeBy: sum
+		sourceColumn: correlative_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column has_child_activities
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: b541ca13-0b32-4c6c-9b57-ae8f0ed200f1
+		sourceLineageTag: has_child_activities
+		summarizeBy: none
+		sourceColumn: has_child_activities
+
+		annotation SummarizationSetBy = Automatic
+
+	column labor_hours_earned
+		dataType: double
+		lineageTag: fc370014-3139-4d6e-aab8-ef408fa23318
+		sourceLineageTag: labor_hours_earned
+		summarizeBy: sum
+		sourceColumn: labor_hours_earned
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column weight
+		dataType: double
+		lineageTag: bda2d9b5-6498-41c0-9da9-77c33aefdcad
+		sourceLineageTag: weight
+		summarizeBy: sum
+		sourceColumn: weight
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column created_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 29e9ebd1-cb9e-4c44-8f05-230bf4cb04f0
+		sourceLineageTag: created_at
+		summarizeBy: none
+		sourceColumn: created_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column updated_at
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 71157681-41c5-4ac7-9512-7f43db2cd845
+		sourceLineageTag: updated_at
+		summarizeBy: none
+		sourceColumn: updated_at
+
+		annotation SummarizationSetBy = Automatic
+
+	column gantt_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 0642df45-4af8-4a91-bfd4-4947d18f9cbe
+		sourceLineageTag: gantt_id
+		summarizeBy: sum
+		sourceColumn: gantt_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column schedule_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 79b52b69-d8e2-411d-a258-a503a98fe330
+		sourceLineageTag: schedule_id
+		summarizeBy: sum
+		sourceColumn: schedule_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column calendar_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 74ecc855-eaf6-42f8-bd89-140e05794a59
+		sourceLineageTag: calendar_id
+		summarizeBy: sum
+		sourceColumn: calendar_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column cost_actual
+		dataType: double
+		lineageTag: 24e331a6-29ab-4c3c-8427-488e32980aa0
+		sourceLineageTag: cost_actual
+		summarizeBy: sum
+		sourceColumn: cost_actual
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column cost_earned
+		dataType: double
+		lineageTag: c164ce2a-aa2f-4165-896a-7379f9cceeb0
+		sourceLineageTag: cost_earned
+		summarizeBy: sum
+		sourceColumn: cost_earned
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column labor_hours_budgeted
+		dataType: double
+		lineageTag: 38e62c62-cefe-4c40-ab54-e98f4c78a171
+		sourceLineageTag: labor_hours_budgeted
+		summarizeBy: sum
+		sourceColumn: labor_hours_budgeted
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column sum_of_duration_recursively
+		dataType: double
+		lineageTag: 88d209cb-198a-4b2f-84d3-d7c94a35b243
+		sourceLineageTag: sum_of_duration_recursively
+		summarizeBy: sum
+		sourceColumn: sum_of_duration_recursively
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column company_id
+		dataType: double
+		lineageTag: 7dae5f98-dab7-4d3d-aff1-1392dff30cfe
+		sourceLineageTag: company_id
+		summarizeBy: sum
+		sourceColumn: company_id
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column free_float
+		dataType: int64
+		formatString: 0
+		lineageTag: 426b820c-dc69-496f-a77b-41d097c0b3d3
+		sourceLineageTag: free_float
+		summarizeBy: sum
+		sourceColumn: free_float
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_critical
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 07ecc026-d318-47c1-9244-2f61c57e8959
+		sourceLineageTag: is_critical
+		summarizeBy: none
+		sourceColumn: is_critical
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_new_activity
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 274e0c61-dfbc-4be3-9838-5f027dcdb7d6
+		sourceLineageTag: is_new_activity
+		summarizeBy: none
+		sourceColumn: is_new_activity
+
+		annotation SummarizationSetBy = Automatic
+
+	column unique_correlative_id
+		dataType: string
+		lineageTag: eeaea419-91b8-4526-a855-60c020d77da3
+		sourceLineageTag: unique_correlative_id
+		summarizeBy: none
+		sourceColumn: unique_correlative_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Outbuild Project ID'
+		dataType: string
+		lineageTag: 4422e841-84ce-49c5-ab02-991c13e97b2a
+		sourceLineageTag: Outbuild Project ID
+		summarizeBy: none
+		sourceColumn: Outbuild Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Procore Project ID'
+		dataType: string
+		lineageTag: 37fb752a-3eb2-405e-92e5-a0c40a9fdd80
+		sourceLineageTag: Procore Project ID
+		summarizeBy: none
+		sourceColumn: Procore Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Status
+		dataType: string
+		lineageTag: f1453f25-58ee-4d14-888b-3428b313a62b
+		sourceLineageTag: Status
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Outbuild_activities = entity
+		mode: directLake
+		source
+			entityName: Outbuild_activities
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

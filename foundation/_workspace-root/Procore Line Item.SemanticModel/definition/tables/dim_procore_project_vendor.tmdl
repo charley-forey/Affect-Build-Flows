@@ -1,0 +1,38 @@
+table dim_procore_project_vendor
+	lineageTag: 21c5c9a0-b1f4-46ed-98be-4871d7580c99
+	sourceLineageTag: [dbo].[dim_procore_project_vendor]
+
+	column 'Vendor Name'
+		dataType: string
+		lineageTag: e913dca3-f36f-4119-953d-f2cc2b0cd34a
+		sourceLineageTag: Vendor Name
+		summarizeBy: none
+		sourceColumn: Vendor Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Procore Vendor ID'
+		dataType: string
+		lineageTag: f3388570-34a8-41e2-aee5-85660977aded
+		sourceLineageTag: Procore Vendor ID
+		summarizeBy: none
+		sourceColumn: Procore Vendor ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Sage Vendor ID'
+		dataType: string
+		lineageTag: fdffc4d0-0ea4-4a24-b11f-d82130523990
+		sourceLineageTag: Sage Vendor ID
+		summarizeBy: none
+		sourceColumn: Sage Vendor ID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_procore_project_vendor = entity
+		mode: directLake
+		source
+			entityName: dim_procore_project_vendor
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

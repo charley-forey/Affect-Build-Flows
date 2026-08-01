@@ -1,0 +1,146 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "85b4dd663251e9726789",
+  "position": {
+    "x": 801.36539953452279,
+    "y": 121.14817688130333,
+    "z": 2004,
+    "height": 252.22653219550037,
+    "width": 451.82311869666404,
+    "tabOrder": 2004
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "AR_Open"
+                    }
+                  },
+                  "Property": "Aging Bucket"
+                }
+              },
+              "queryRef": "AR_Open.Aging Bucket",
+              "nativeQueryRef": "Aging Bucket"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim__Sage_Projects"
+                    }
+                  },
+                  "Property": "jobnme"
+                }
+              },
+              "queryRef": "Dim__Sage_Projects.jobnme",
+              "nativeQueryRef": "jobnme"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Total Open AR"
+                }
+              },
+              "queryRef": "DAX Measures.Total Open AR",
+              "nativeQueryRef": "Total Open AR",
+              "format": "\\$#,0;(\\$#,0);\\$#,0"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "DAX Measures"
+                  }
+                },
+                "Property": "Total Open AR"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "f580d94fc69e7631cccb",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Dim__Sage_Projects"
+              }
+            },
+            "Property": "jobnme"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "bbe506f2bcf8db38ef9c",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DAX Measures"
+              }
+            },
+            "Property": "Total Open AR"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "e12f691004a57ab105a2",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "AR_Open"
+              }
+            },
+            "Property": "Aging Bucket"
+          }
+        },
+        "type": "Categorical"
+      }
+    ]
+  }
+}

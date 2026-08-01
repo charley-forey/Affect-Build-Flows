@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_commitments_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_commitments_silver_2": {
+      "queryId": "8fabba52-71e6-4b55-a3c8-d2c7ecef4a60",
+      "queryName": "procore_commitments_silver_2",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "7ef4f6e1-a2fd-4fd4-a277-bafed9b8f275",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

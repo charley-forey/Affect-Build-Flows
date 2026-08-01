@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_payment_application_g703_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_payment_application_line_items_silver": {
+      "queryId": "101685d8-49c8-4582-b98b-a9edd6156e62",
+      "queryName": "procore_payment_application_line_items_silver",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "8f6c00d7-92f9-4b02-80a9-ce976d41221a",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

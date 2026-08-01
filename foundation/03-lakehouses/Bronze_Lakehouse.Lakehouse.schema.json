@@ -1,0 +1,3335 @@
+{
+  "lakehouse": "Bronze_Lakehouse",
+  "table_count": 29,
+  "column_count": 654,
+  "tables": {
+    "dbo.bronze_outbuild_activities": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "parent_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "unique_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "duration",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_budgeted",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "progress",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "constraint_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "start_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "end_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "constraint_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "activity_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "correlative_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "has_child_activities",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "labor_hours_earned",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "weight",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "gantt_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "schedule_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "calendar_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_actual",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_earned",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "labor_hours_budgeted",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "sum_of_duration_recursively",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "company_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "free_float",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_critical",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_new_activity",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "unique_correlative_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "organization_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "outbuild_project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "procore_project_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "ingested_at",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_budgets_raw": [
+      {
+        "column": "curve",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "start_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "end_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "deletable",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "budgeted",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "budgetable",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "budget_forecast",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "wbs_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "wbs_code_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "currency_configuration",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "budget_row_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "biller_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "root_cost_code_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "category_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "biller",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "biller_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "root_cost_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "category",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "uom",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "unit_cost",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "quantity",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "calculation_strategy",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "company_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "company",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "original_budget_amount",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "budget_modifications",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "DIRECT_COSTS_J",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "COMMITTMENT_CO'S_H",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "COMMITTED_COSTS_G",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "PENDING_PRIME_CONTRACT_CO_E",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "APPROVED_PRIME_CONTRACT_CO_C",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "PENDING_CO'S_M",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "BALANCE_TO_FINISH_R_D-P",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "COST_TO_COMPLETE_Q_K-P",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "INVOICED_TO_DATE_P",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "PROJECTED_OVER/UNDER_O_F-N",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "OVER/UNDER_L_D-K",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "TOTAL_COMMITTED_TO_DATE_K_G+H+I+J",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "PROJECTED_PRIME_CONTRACT_BUDGET_F_D+E",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "UPDATED_PRIME_CONTRACT_BUDGET_D_A+B+C",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "PROJECTED_COMMITTED_BUDGET_N_K+M",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "%_OVER/UNDER",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_origin_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_1_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_2_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_3_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_4_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_5_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_1",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_level_2",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "snapshot_date",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_commitment_change_orders": [
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "change_order_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "raw_json",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "pulled_at",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_commitments_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "accounting_method",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "actual_completion_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "allow_change_orders_ssov",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "approved_change_orders",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "billing_schedule_of_values_status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_estimated_completion_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_start_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_by_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "currency_configuration",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "custom_fields",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "draft_change_orders_amount",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "enable_ssov",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "exclusions",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "executed",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "grand_total",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "has_change_order_packages",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "has_potential_change_orders",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "inclusions",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "issued_on_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "pending_change_orders",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "pending_revised_contract",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "percentage_paid",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "private",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "remaining_balance_outstanding",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "requisitions_are_enabled",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "retainage_percent",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "revised_contract",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "show_line_items_to_non_admins",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "signed_contract_received_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "title",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_draw_requests_amount",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_payments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_requisitions_amount",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "vendor",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "commitment_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "assignee",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "bill_to_address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "delivery_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_terms",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "ship_to_address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "ship_via",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_cost_codes_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "full_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "standard_cost_code_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "biller",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "biller_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "biller_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "budgeted",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "parent",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "sortable_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "line_item_types",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_payment_application_line_items_raw": [
+      {
+        "column": "payment_application_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_application_number",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_application_status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "invoice_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "billing_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "period_start",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "period_end",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_amount_accrued_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "prime_contract_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "line_item_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "item_number",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_full_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "wbs_flat_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "wbs_description",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description_of_work",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "scheduled_value",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_from_previous_application",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_completed_and_stored_to_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_completed_and_stored_to_date_percent",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_presently_stored",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "balance_to_finish",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_retainage_currently_retained",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_retainage_retained_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_retainage_released_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_payment_applications_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "billing_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "invoice_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "percent_complete",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "period_start",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "period_end",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "period_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_amount_paid",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_amount_accrued_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "formatted_contract_company",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "currency_configuration",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "number",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_application_url",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "prime_contract_url",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "g702",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "billing_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_prime_change_orders": [
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "change_order_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "raw_json",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "pulled_at",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_prime_contract_line_items": [
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "prime_contract_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "prime_contract_title",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "line_item_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "raw_json",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "pulled_at",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_prime_contracts_raw": [
+      {
+        "column": "id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "accounting_method",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "allow_change_orders_ssov",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "allow_comments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "allow_markups",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "allow_payment_applications",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "allow_payments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "auto_approve_prefilled_requisitions_on_payapp",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "change_order_level_of_detail",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_estimated_completion_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_start_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contractor",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_by",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "currency_configuration",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "display_materials_retainage",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "display_work_retainage",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "enable_ssov",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "exclusions",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "executed",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "grand_total",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "inclusions",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "private",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "retainage_percent",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "show_cost_code_on_pdf",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "show_line_items_to_non_admins",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "signature_required",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "signed_contract_received_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "title",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "vendor",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "architect",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_project_vendors_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "abbreviated_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "attachments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "authorized_bidder",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "business_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "business_phone",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "city",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "company",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "company_vendor",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "country_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "email_address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "fax_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_active",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_connected",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "labor_union",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "license_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "logo",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "non_union_prevailing_wage",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "notes",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_data",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "prequalified",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "primary_contact",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_ids",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "state_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "synced_to_erp",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "trade_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "union_member",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "website",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "zip",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_projects_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "active",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "actual_start_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "city",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "company",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "completion_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "country_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "county",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_by",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "custom_fields",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "delivery_method",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "display_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "erp_integrated",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "estimated_value",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "fax",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_demo",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "latitude",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "longitude",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_data",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "parent_job_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "phone",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "photo_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_bid_type_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_owner_type_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_sector_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_stage",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "projected_finish_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "sector",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "square_feet",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "start_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "state_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "time_zone",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_value",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_scope",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "zip",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_requisition_line_items_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "currency_configuration",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description_of_work",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "detail_line_item_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "item_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_moved",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_presently_stored",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_retainage_retained_moved",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_stored_retainage_currently_retained",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_stored_retainage_percent_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "materials_stored_retainage_released_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "position",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "scheduled_value",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "ssr_manual_override",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "subcontractor_claimed_amount",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_completed_and_stored_to_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_completed_and_stored_to_date_percent",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "wbs_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_from_previous_application",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_retainage_from_previous_application",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_retainage_percent_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_retainage_released_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_retainage_retained_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_completed_this_period",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "requisition_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "requisition_number",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "requisition_status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_requisitions_raw": [
+      {
+        "column": "attachments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "billing_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "comment",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "commitment_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "commitment_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_invoicing_method",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "contract_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_by",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "currency_configuration",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "custom_fields",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "deletable",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "erp_status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "final",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "invoice_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "invoice_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "move_materials_to_previous_work_completed",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "number",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "payment_summary",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "percent_complete",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "period_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "previous_requisition_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "requisition_end",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "requisition_start",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submitted_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "summary",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_claimed_amount",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "vendor_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "vendor_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_submittals_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "actual_delivery_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "approvers",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "associated_attachments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "ball_in_court",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "closed_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "cost_code_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_by",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "current_revision",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "custom_fields",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "description",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "distributed_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "distribution_members",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "drawing_ids",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "due_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "formatted_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "issue_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_distributed_submittal",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "lead_time",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "linked_drawing_ids",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "location_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "private",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "received_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "received_from",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "required_on_site_date",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "responsible_contractor",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "revision",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "scheduled_task",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "specification_section",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submit_by",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submittal_manager",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submittal_package",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submittal_workflow_template",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submittal_workflow_template_applied_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "title",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_vendors_raw": [
+      {
+        "column": "id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "abbreviated_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "attachments",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "authorized_bidder",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "bidding",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "bidding_distribution",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "business_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "business_phone",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "children_count",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "city",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "company",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "company_vendor",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "connected_to_company_id",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "contact_count",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "country_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "created_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "email_address",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "fax_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_active",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_connected",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "labor_union",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "legal_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "license_number",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "logo",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "non_union_prevailing_wage",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "notes",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_data",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "origin_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "prequalified",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "primary_contact",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "project_ids",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "standard_cost_codes",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "state_code",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "synced_to_erp",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "trade_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "trades",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "union_member",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "updated_at",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "website",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "zip",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "dbo.procore_work_order_line_items": [
+      {
+        "column": "project_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "work_order_contract_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "line_item_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "raw_json",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "pulled_at",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "queryinsights.exec_requests_history": [
+      {
+        "column": "distributed_statement_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "database_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "submit_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "start_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "end_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_distributed",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "is_accelerated",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "statement_type",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "login_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "row_count",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "session_id",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "connection_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "program_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "batch_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "root_batch_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "query_hash",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "label",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "result_cache_hit",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "sql_pool_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "error_code",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "error_severity",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "error_state",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "allocated_cpu_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "data_scanned_remote_storage_mb",
+        "type": "decimal",
+        "nullable": "YES"
+      },
+      {
+        "column": "data_scanned_memory_mb",
+        "type": "decimal",
+        "nullable": "YES"
+      },
+      {
+        "column": "data_scanned_disk_mb",
+        "type": "decimal",
+        "nullable": "YES"
+      },
+      {
+        "column": "command",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "queryinsights.exec_sessions_history": [
+      {
+        "column": "session_id",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "connection_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "session_start_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "session_end_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "program_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "login_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "status",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "context_info",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "total_query_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_request_start_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_request_end_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_user_process",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "prev_error",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "group_id",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "database_id",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "authenticating_database_id",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "open_transaction_count",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "text_size",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "language",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "date_format",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "date_first",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "quoted_identifier",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "arithabort",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "ansi_null_dflt_on",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "ansi_defaults",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "ansi_warnings",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "ansi_padding",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "ansi_nulls",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "concat_null_yields_null",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "transaction_isolation_level",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "lock_timeout",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "deadlock_priority",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "original_security_id",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "database_name",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "queryinsights.frequently_run_queries": [
+      {
+        "column": "database_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_accelerated_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "min_run_total_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "max_run_total_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "avg_total_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_successful_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_failed_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_canceled_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_total_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_start_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_dist_statement_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "query_hash",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_command",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "queryinsights.long_running_queries": [
+      {
+        "column": "database_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "median_total_elapsed_time_ms",
+        "type": "float",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_total_elapsed_time_ms",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_start_time",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_dist_statement_id",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_session_id",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "number_of_accelerated_runs",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "query_hash",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_run_command",
+        "type": "varchar",
+        "nullable": "YES"
+      }
+    ],
+    "queryinsights.sql_pool_insights": [
+      {
+        "column": "sql_pool_name",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "timestamp",
+        "type": "datetime2",
+        "nullable": "YES"
+      },
+      {
+        "column": "max_resource_percentage",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_optimized_for_reads",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "current_workspace_capacity",
+        "type": "varchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_pool_under_pressure",
+        "type": "bit",
+        "nullable": "YES"
+      },
+      {
+        "column": "cache_cooldown_minutes",
+        "type": "int",
+        "nullable": "YES"
+      }
+    ],
+    "sys.dm_db_external_tables_log_status": [
+      {
+        "column": "object_id",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "latest_log_version",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "latest_checkpoint_version",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "last_update_time_utc",
+        "type": "datetime",
+        "nullable": "NO"
+      },
+      {
+        "column": "is_blocked",
+        "type": "bit",
+        "nullable": "NO"
+      }
+    ],
+    "sys.external_delta_tables": [
+      {
+        "column": "table_id",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "is_blocked",
+        "type": "bit",
+        "nullable": "NO"
+      },
+      {
+        "column": "block_reason",
+        "type": "tinyint",
+        "nullable": "NO"
+      },
+      {
+        "column": "local_path",
+        "type": "nvarchar",
+        "nullable": "NO"
+      },
+      {
+        "column": "relative_path",
+        "type": "nvarchar",
+        "nullable": "NO"
+      },
+      {
+        "column": "latest_manifest_version",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "latest_checkpoint_version",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "latest_checksum_version",
+        "type": "bigint",
+        "nullable": "YES"
+      },
+      {
+        "column": "latest_etag",
+        "type": "nvarchar",
+        "nullable": "NO"
+      },
+      {
+        "column": "latest_checkpoint_file_name",
+        "type": "nvarchar",
+        "nullable": "NO"
+      },
+      {
+        "column": "last_update_time",
+        "type": "datetime",
+        "nullable": "NO"
+      },
+      {
+        "column": "shortcut_type",
+        "type": "tinyint",
+        "nullable": "NO"
+      }
+    ],
+    "sys.managed_delta_table_checkpoints": [
+      {
+        "column": "delta_log_commit_sequence_id",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "part",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "file_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "version",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "source_table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "source_database_guid",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "checkpoint_file_name",
+        "type": "nvarchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "manifest_root",
+        "type": "nvarchar",
+        "nullable": "YES"
+      }
+    ],
+    "sys.managed_delta_table_forks": [
+      {
+        "column": "commit_sequence_id",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "fork_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "source_table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "source_database_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "xdes_ts",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "commit_time",
+        "type": "datetime",
+        "nullable": "NO"
+      },
+      {
+        "column": "table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "folder_name",
+        "type": "nvarchar",
+        "nullable": "YES"
+      }
+    ],
+    "sys.managed_delta_table_log_files": [
+      {
+        "column": "commit_sequence_id",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "file_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "xdes_ts",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "append_only",
+        "type": "bit",
+        "nullable": "NO"
+      },
+      {
+        "column": "rows_inserted",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "commit_time",
+        "type": "datetime",
+        "nullable": "NO"
+      },
+      {
+        "column": "source_table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "source_database_guid",
+        "type": "uniqueidentifier",
+        "nullable": "YES"
+      },
+      {
+        "column": "manifest_file_name",
+        "type": "nvarchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "manifest_root",
+        "type": "nvarchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      }
+    ],
+    "sys.managed_delta_tables": [
+      {
+        "column": "table_id",
+        "type": "bigint",
+        "nullable": "NO"
+      },
+      {
+        "column": "object_id",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "table_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "fork_guid",
+        "type": "uniqueidentifier",
+        "nullable": "NO"
+      },
+      {
+        "column": "delta_log_feature_status",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "manifest_root",
+        "type": "nvarchar",
+        "nullable": "YES"
+      },
+      {
+        "column": "system_task_consideration_bitmask",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "drop_commit_time",
+        "type": "datetime",
+        "nullable": "YES"
+      }
+    ],
+    "sys.sys_dw_schemas": [
+      {
+        "column": "name",
+        "type": "nvarchar",
+        "nullable": "NO"
+      },
+      {
+        "column": "schema_id",
+        "type": "int",
+        "nullable": "NO"
+      },
+      {
+        "column": "principal_id",
+        "type": "int",
+        "nullable": "YES"
+      },
+      {
+        "column": "is_internal",
+        "type": "bit",
+        "nullable": "YES"
+      }
+    ]
+  }
+}

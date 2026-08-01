@@ -1,0 +1,193 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "2d4b5db446b00dec1f3b",
+  "position": {
+    "x": 640.4965089216447,
+    "y": 87.3855702094647,
+    "z": 1,
+    "height": 357.48642358417374,
+    "width": 612.6920093095423,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Sage_Vendors"
+                    }
+                  },
+                  "Property": "Vendor Name"
+                }
+              },
+              "queryRef": "Dim_Sage_Vendors.Vendor Name",
+              "nativeQueryRef": "Vendor Name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "AP_Open"
+                    }
+                  },
+                  "Property": "Aging Bucket"
+                }
+              },
+              "queryRef": "AP_Open.Aging Bucket",
+              "nativeQueryRef": "Aging Bucket"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "AP_Open"
+                        }
+                      },
+                      "Property": "Invoice Balance"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(AP_Open.Invoice Balance)",
+              "nativeQueryRef": "Sum of Invoice Balance",
+              "format": "\\$#,0.00;(\\$#,0.00);\\$#,0.00"
+            },
+            {
+              "field": {
+                "Aggregation": {
+                  "Expression": {
+                    "Column": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "AP_Open"
+                        }
+                      },
+                      "Property": "Billing Period"
+                    }
+                  },
+                  "Function": 0
+                }
+              },
+              "queryRef": "Sum(AP_Open.Billing Period)",
+              "nativeQueryRef": "Sum of Billing Period"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "AP_Open"
+                  }
+                },
+                "Property": "Aging Bucket"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "dropShadow": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "41af8727ebf707269956",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Dim_Sage_Vendors"
+              }
+            },
+            "Property": "Vendor Name"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "bc119148807362800963",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "AP_Open"
+                  }
+                },
+                "Property": "Invoice Balance"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "05ee9ffbe4070d5154af",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "AP_Open"
+              }
+            },
+            "Property": "Aging Bucket"
+          }
+        },
+        "type": "Categorical"
+      },
+      {
+        "name": "c1d78a04e074b2249082",
+        "field": {
+          "Aggregation": {
+            "Expression": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "AP_Open"
+                  }
+                },
+                "Property": "Billing Period"
+              }
+            },
+            "Function": 0
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

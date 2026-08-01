@@ -1,0 +1,25 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["DirectLake - Silver_Lakehouse","Measure","DAX Measures"]
+
+annotation PBI_ProTooling = ["DirectLakeOnOneLakeInWeb","WebModelingEdit"]
+
+ref table Revenue_AllTime
+ref table AR_Open
+ref table Dim__Sage_Projects
+ref table AP_Open
+ref table Dim_Sage_Vendors
+ref table Expenditure_AllTIme
+ref table Dim_Date
+ref table DateTableTemplate_93de2046-897c-499a-9d2f-b0fd58c127f9
+ref table LocalDateTable_ed94948d-35d8-4a8f-a616-835afb8d5221
+ref table 'DAX Measures'
+

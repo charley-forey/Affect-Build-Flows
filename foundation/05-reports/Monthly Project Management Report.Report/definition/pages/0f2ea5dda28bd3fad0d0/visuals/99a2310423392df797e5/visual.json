@@ -1,0 +1,70 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "99a2310423392df797e5",
+  "position": {
+    "x": 758.14569536423835,
+    "y": 144.95364238410596,
+    "z": 4000,
+    "height": 575.04635761589407,
+    "width": 231.73509933774832,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "hundredPercentStackedColumnChart",
+    "query": {
+      "queryState": {
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Original Prime Contract Amount"
+                }
+              },
+              "queryRef": "DAX Measures.Original Prime Contract Amount",
+              "nativeQueryRef": "Original Prime Contract Amount"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Total Approved CO Value"
+                }
+              },
+              "queryRef": "DAX Measures.Total Approved CO Value",
+              "nativeQueryRef": "Total Approved CO Value"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "DAX Measures"
+                  }
+                },
+                "Property": "Original Prime Contract Amount"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

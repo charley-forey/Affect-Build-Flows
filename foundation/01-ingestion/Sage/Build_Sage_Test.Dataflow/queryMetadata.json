@@ -1,0 +1,86 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "Dataflow 1",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "gatewayObjectId": "1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e",
+  "queriesMetadata": {
+    "AP_Open_Complete": {
+      "queryId": "fb2e951a-f4b9-4b68-b1bc-71c8ff7ff86a",
+      "queryName": "AP_Open_Complete"
+    },
+    "AR_Open_Complete": {
+      "queryId": "02abed05-a944-414f-b14e-91b4349882e4",
+      "queryName": "AR_Open_Complete"
+    },
+    "Expenditure_AllTIme_raw": {
+      "queryId": "7a060113-f29b-43a6-8c10-b50325c7e775",
+      "queryName": "Expenditure_AllTIme_raw",
+      "loadEnabled": false
+    },
+    "Revenue_AllTime_raw": {
+      "queryId": "235110d0-607f-459b-81e9-ec554f098db8",
+      "queryName": "Revenue_AllTime_raw",
+      "loadEnabled": false
+    },
+    "Payments": {
+      "queryId": "97092300-0818-4d6e-b827-4e93986ca5f3",
+      "queryName": "Payments"
+    },
+    "Reciepts": {
+      "queryId": "0551f322-0024-4178-b2cc-a82658f3a445",
+      "queryName": "Reciepts"
+    },
+    "Dim_Sage_Vendors": {
+      "queryId": "61de5803-c97a-41fa-8d7d-3ef2d65c4e70",
+      "queryName": "Dim_Sage_Vendors",
+      "loadEnabled": false
+    },
+    "Dim__Sage_Projects": {
+      "queryId": "55a84b5d-232a-461a-917a-89ade26d14c8",
+      "queryName": "Dim__Sage_Projects",
+      "loadEnabled": false
+    },
+    "AR_Open": {
+      "queryId": "cabd6f0f-58d0-479b-a3ad-12aa21df580c",
+      "queryName": "AR_Open",
+      "loadEnabled": false
+    },
+    "AP_Open": {
+      "queryId": "6baf66af-7270-434f-82a6-97089738c329",
+      "queryName": "AP_Open",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "9ebcc4da-94db-40d5-8ef6-5f2a6e9a8207",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "Revenue_AllTime": {
+      "queryId": "10ea64a6-c804-44e1-bb9c-6616381cdf21",
+      "queryName": "Revenue_AllTime",
+      "loadEnabled": false
+    },
+    "Expenditure_AllTIme": {
+      "queryId": "59e4e4b5-be17-44c5-bdd4-4564cb5d7947",
+      "queryName": "Expenditure_AllTIme",
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "nc-affect-1\\sage100con;Affect Group",
+      "kind": "SQL",
+      "connectionId": "{\"ClusterId\":\"1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e\",\"DatasourceId\":\"835e72c8-7995-4171-91cb-2a32fbd2050a\"}"
+    },
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+table procore_submittals_silver
+	lineageTag: eab98c0a-4d26-49e7-b9f4-1fb8455e18bb
+	sourceLineageTag: [dbo].[procore_submittals_silver]
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 40fb8d14-9839-4e9e-bb5f-918401ddecf9
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column Status
+		dataType: string
+		lineageTag: 9fcb45a8-1cc4-4924-80f6-367d3d76ef17
+		sourceLineageTag: Status
+		summarizeBy: none
+		sourceColumn: Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: dbd02040-8f30-4d7e-a856-af821d2bb845
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Submittal Status'
+		dataType: string
+		lineageTag: 3615d8d8-b9ba-42fb-848c-e4e5ef92c96a
+		sourceLineageTag: Submittal Status
+		summarizeBy: none
+		sourceColumn: Submittal Status
+
+		annotation SummarizationSetBy = Automatic
+
+	column id
+		dataType: string
+		lineageTag: 4c0bb9c7-f376-47a2-9b90-54413ed32060
+		sourceLineageTag: id
+		summarizeBy: none
+		sourceColumn: id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Created At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: cd597f4f-e420-415b-8514-95f10ff60d58
+		sourceLineageTag: Created At
+		summarizeBy: none
+		sourceColumn: Created At
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Created BY'
+		dataType: string
+		lineageTag: fc7de826-9977-415b-b6b6-cbe931310187
+		sourceLineageTag: Created BY
+		summarizeBy: none
+		sourceColumn: Created BY
+
+		annotation SummarizationSetBy = Automatic
+
+	column current_revision
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: e51f40d6-d4e5-41a0-9449-a49df25019f1
+		sourceLineageTag: current_revision
+		summarizeBy: none
+		sourceColumn: current_revision
+
+		annotation SummarizationSetBy = Automatic
+
+	column Description
+		dataType: string
+		lineageTag: da4bcc63-bf33-4a86-b63d-8487f2f4da95
+		sourceLineageTag: Description
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column number
+		dataType: string
+		lineageTag: e31f25fe-3b9d-414e-be52-119a9909f04a
+		sourceLineageTag: number
+		summarizeBy: none
+		sourceColumn: number
+
+		annotation SummarizationSetBy = Automatic
+
+	column received_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 10cf5c9e-59d2-4d41-95f2-5623cc080ed2
+		sourceLineageTag: received_date
+		summarizeBy: none
+		sourceColumn: received_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column required_on_site_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 92601771-a381-4c30-a4a9-e3634b29b291
+		sourceLineageTag: required_on_site_date
+		summarizeBy: none
+		sourceColumn: required_on_site_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column revision
+		dataType: string
+		lineageTag: 34313d8b-5b5c-492e-b6e1-e46b9eef0cc8
+		sourceLineageTag: revision
+		summarizeBy: none
+		sourceColumn: revision
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Updated At'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ba94d349-b615-437f-84f5-8b7ee2cdcb38
+		sourceLineageTag: Updated At
+		summarizeBy: none
+		sourceColumn: Updated At
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_submittals_silver = entity
+		mode: directLake
+		source
+			entityName: procore_submittals_silver
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

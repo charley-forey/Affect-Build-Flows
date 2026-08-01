@@ -1,0 +1,215 @@
+table procore_payment_application_line_items_silver
+	lineageTag: eb6948ac-74b0-4b5a-a87e-8a3a501ed140
+	sourceLineageTag: [dbo].[procore_payment_application_line_items_silver]
+
+	column payment_application_status
+		dataType: string
+		lineageTag: c4322e29-b768-43ff-ac95-fba2032b8544
+		sourceLineageTag: payment_application_status
+		summarizeBy: none
+		sourceColumn: payment_application_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column invoice_number
+		dataType: string
+		lineageTag: c43b0dfa-2c83-4b1a-81a2-66d3707bfb31
+		sourceLineageTag: invoice_number
+		summarizeBy: none
+		sourceColumn: invoice_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_amount_accrued_this_period
+		dataType: double
+		lineageTag: 7411d3f9-cb1d-4475-b2d7-089960a54091
+		sourceLineageTag: total_amount_accrued_this_period
+		summarizeBy: sum
+		sourceColumn: total_amount_accrued_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column scheduled_value
+		dataType: double
+		lineageTag: c250d708-5f9d-4be3-9941-eda4fe74f831
+		sourceLineageTag: scheduled_value
+		summarizeBy: sum
+		sourceColumn: scheduled_value
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column work_completed_from_previous_application
+		dataType: double
+		lineageTag: d980d7be-df98-486a-93c6-299cb34fb619
+		sourceLineageTag: work_completed_from_previous_application
+		summarizeBy: sum
+		sourceColumn: work_completed_from_previous_application
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_completed_and_stored_to_date
+		dataType: double
+		lineageTag: 0600552f-1e0e-4a6f-b94d-ecfeb4e355e1
+		sourceLineageTag: total_completed_and_stored_to_date
+		summarizeBy: sum
+		sourceColumn: total_completed_and_stored_to_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_completed_and_stored_to_date_percent
+		dataType: double
+		lineageTag: 99b73b21-cadd-4edf-9da9-f3838c8554dc
+		sourceLineageTag: total_completed_and_stored_to_date_percent
+		summarizeBy: sum
+		sourceColumn: total_completed_and_stored_to_date_percent
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column materials_presently_stored
+		dataType: double
+		lineageTag: 50cc3901-5b85-459a-873b-708ec05e158f
+		sourceLineageTag: materials_presently_stored
+		summarizeBy: sum
+		sourceColumn: materials_presently_stored
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column balance_to_finish
+		dataType: double
+		lineageTag: 20e03580-6263-4f3e-88c4-53b413473a80
+		sourceLineageTag: balance_to_finish
+		summarizeBy: sum
+		sourceColumn: balance_to_finish
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_retainage_currently_retained
+		dataType: double
+		lineageTag: 326fa2ec-efca-431d-806e-d7e76a6f097c
+		sourceLineageTag: total_retainage_currently_retained
+		summarizeBy: sum
+		sourceColumn: total_retainage_currently_retained
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column work_completed_retainage_retained_this_period
+		dataType: double
+		lineageTag: 732c3755-5a12-449c-b612-53bb0a715fdf
+		sourceLineageTag: work_completed_retainage_retained_this_period
+		summarizeBy: sum
+		sourceColumn: work_completed_retainage_retained_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column work_completed_retainage_released_this_period
+		dataType: double
+		lineageTag: 5443c78a-8d42-45fe-97f0-46152bd93ecc
+		sourceLineageTag: work_completed_retainage_released_this_period
+		summarizeBy: sum
+		sourceColumn: work_completed_retainage_released_this_period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 4b490b9a-3130-4c4d-8777-3675e4b80e62
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Line Item ID'
+		dataType: string
+		lineageTag: 351650cd-9d08-4e18-8921-6b2b0414999c
+		sourceLineageTag: Line Item ID
+		summarizeBy: none
+		sourceColumn: Line Item ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Prime Contract ID'
+		dataType: string
+		lineageTag: 44f39ccb-898e-4446-992d-9fa82073fb49
+		sourceLineageTag: Prime Contract ID
+		summarizeBy: none
+		sourceColumn: Prime Contract ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: 39ecbc2f-e156-4c7f-a8a5-8831dbf8dc6c
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_application_id
+		dataType: string
+		lineageTag: f151050c-0399-4071-a8c1-c518339bf020
+		sourceLineageTag: payment_application_id
+		summarizeBy: none
+		sourceColumn: payment_application_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column payment_application_number
+		dataType: string
+		lineageTag: 999b436d-abc8-4f9a-8f42-8b00f1906f79
+		sourceLineageTag: payment_application_number
+		summarizeBy: none
+		sourceColumn: payment_application_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Billing Period'
+		dataType: double
+		lineageTag: 4dd723cc-9bc7-493e-a237-60937dfa3570
+		sourceLineageTag: Billing Period
+		summarizeBy: sum
+		sourceColumn: Billing Period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Work Completed This Period'
+		dataType: double
+		lineageTag: 4cfebce7-211e-4681-98ea-6cc49a3e378d
+		sourceLineageTag: Work Completed This Period
+		summarizeBy: sum
+		sourceColumn: Work Completed This Period
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition procore_payment_application_line_items_silver = entity
+		mode: directLake
+		source
+			entityName: procore_payment_application_line_items_silver
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

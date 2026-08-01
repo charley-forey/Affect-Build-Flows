@@ -1,0 +1,24 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["DirectLake - Silver_Lakehouse","DAX Measures"]
+
+annotation PBI_ProTooling = ["DirectLakeOnOneLakeInWeb","WebModelingEdit"]
+
+ref table procore_prime_change_orders
+ref table procore_prime_contracts_silver
+ref table 'DAX Measures'
+ref table dim_projects_procoreXsage
+ref table Revenue_AllTime
+ref table dim_procore_cost_codes
+ref table procore_submittals_silver
+ref table Outbuild_activities
+ref table procore_budgets_silver
+

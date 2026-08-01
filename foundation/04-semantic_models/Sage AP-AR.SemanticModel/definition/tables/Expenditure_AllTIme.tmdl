@@ -1,0 +1,100 @@
+table Expenditure_AllTIme
+	lineageTag: aace253f-1dbf-4029-b208-d3ced99bbaca
+	sourceLineageTag: [dbo].[Expenditure_AllTIme]
+
+	column Description
+		dataType: string
+		lineageTag: 90677222-3c59-4de9-a320-6fa60954fda2
+		sourceLineageTag: Description
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Invoiced Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ec38135b-44d0-4aaa-90f5-368bc0b65b53
+		sourceLineageTag: Invoiced Date
+		summarizeBy: none
+		sourceColumn: Invoiced Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Due Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: dfa45a0b-7a46-4697-8534-53996cc20d42
+		sourceLineageTag: Due Date
+		summarizeBy: none
+		sourceColumn: Due Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Amount Paid'
+		dataType: double
+		lineageTag: 068c6250-5a3a-4be2-b5b0-852c16427a9f
+		sourceLineageTag: Amount Paid
+		summarizeBy: sum
+		sourceColumn: Amount Paid
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoice Total'
+		dataType: double
+		lineageTag: e9c13e64-777f-4fed-be51-9fa1e9bda97f
+		sourceLineageTag: Invoice Total
+		summarizeBy: sum
+		sourceColumn: Invoice Total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoice Balance'
+		dataType: double
+		lineageTag: 603b0280-fc6a-44af-b8b5-1b1d6ddb49bf
+		sourceLineageTag: Invoice Balance
+		summarizeBy: sum
+		sourceColumn: Invoice Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Vendor ID'
+		dataType: string
+		lineageTag: be1eb20c-380e-4476-ae1a-29e9e7a7ca56
+		sourceLineageTag: Vendor ID
+		summarizeBy: none
+		sourceColumn: Vendor ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Job Number'
+		dataType: string
+		lineageTag: d53a473e-04be-489d-9a7e-b16f39df0ae4
+		sourceLineageTag: Job Number
+		summarizeBy: none
+		sourceColumn: Job Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Billing Period'
+		dataType: string
+		lineageTag: 9e59fce4-c25c-4412-ac0d-2d9a2285c28d
+		sourceLineageTag: Billing Period
+		summarizeBy: none
+		sourceColumn: Billing Period
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Expenditure_AllTIme = entity
+		mode: directLake
+		source
+			entityName: Expenditure_AllTIme
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

@@ -1,0 +1,135 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.10.0/schema.json",
+  "name": "0363e59bab55b5f4784f",
+  "position": {
+    "x": 537.22265321955,
+    "y": 201.58262218774243,
+    "z": 1,
+    "height": 518.35531419705194,
+    "width": 488.56477889837083,
+    "tabOrder": 1
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "Dim_Date"
+                    }
+                  },
+                  "Property": "Quarter Number"
+                }
+              },
+              "queryRef": "Dim_Date.Quarter Number",
+              "nativeQueryRef": "Sum of Quarter Number",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Revenue Last Year"
+                }
+              },
+              "queryRef": "DAX Measures.Revenue Last Year",
+              "nativeQueryRef": "Revenue Last Year"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "DAX Measures"
+                    }
+                  },
+                  "Property": "Revenue This Year"
+                }
+              },
+              "queryRef": "DAX Measures.Revenue This Year",
+              "nativeQueryRef": "Revenue This Year"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "DAX Measures"
+                  }
+                },
+                "Property": "Revenue Last Year"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "09bfd8acad65223ef147",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DAX Measures"
+              }
+            },
+            "Property": "Revenue Last Year"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "90c38a84870d76b1d614",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "DAX Measures"
+              }
+            },
+            "Property": "Revenue This Year"
+          }
+        },
+        "type": "Advanced"
+      },
+      {
+        "name": "e733b72aeeb6cfe20f29",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "Dim_Date"
+              }
+            },
+            "Property": "Quarter Number"
+          }
+        },
+        "type": "Advanced"
+      }
+    ]
+  }
+}

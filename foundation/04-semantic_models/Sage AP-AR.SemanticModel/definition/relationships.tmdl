@@ -1,0 +1,46 @@
+relationship 567ccd5c-a347-db48-0695-84bb5ac6648b
+	crossFilteringBehavior: bothDirections
+	fromColumn: AP_Open.'Job Number'
+	toColumn: Dim__Sage_Projects.recnum
+
+relationship 76702438-5a26-fde1-f05d-7d46fd08b946
+	fromColumn: AR_Open.'Job Number'
+	toColumn: Dim__Sage_Projects.recnum
+
+relationship 862f4b4f-99b2-81c6-b9ab-3027897df6cb
+	fromColumn: Expenditure_AllTIme.'Job Number'
+	toColumn: Dim__Sage_Projects.recnum
+
+relationship a8947da2-9ca5-39d2-9e3b-8239d3081649
+	fromColumn: Revenue_AllTime.'Job Number'
+	toColumn: Dim__Sage_Projects.recnum
+
+relationship 6fe5aac4-9784-1384-b3f8-47cfc6df3b53
+	fromColumn: Expenditure_AllTIme.'Vendor ID'
+	toColumn: Dim_Sage_Vendors.'Vendor ID'
+
+relationship b03b1c07-38ff-fc1a-424d-774a5bab69d6
+	fromColumn: AP_Open.Vendor_ID
+	toColumn: Dim_Sage_Vendors.'Vendor ID'
+
+relationship ec811053-4cc4-4462-9398-28bfb0588393
+	joinOnDateBehavior: datePartOnly
+	fromColumn: Dim_Date.Date
+	toColumn: LocalDateTable_ed94948d-35d8-4a8f-a616-835afb8d5221.Date
+
+relationship ad87b164-12ae-39ee-5872-31fdb7cd3a84
+	fromColumn: AR_Open.'Invoice Date'
+	toColumn: Dim_Date.Date
+
+relationship de9c425f-7c60-e3d2-2fa6-f9f41dc3a869
+	fromColumn: AP_Open.'Invoiced Date'
+	toColumn: Dim_Date.Date
+
+relationship cac64396-d791-d621-5f72-1e7f5552b014
+	fromColumn: Revenue_AllTime.'Invoice Date'
+	toColumn: Dim_Date.Date
+
+relationship c20cd716-2b9d-d934-65e3-acdc9dd4cf9e
+	fromColumn: Expenditure_AllTIme.'Invoiced Date'
+	toColumn: Dim_Date.Date
+

@@ -1,0 +1,28 @@
+relationship cea4246e-3361-45a6-5678-47d3a32fdb7c
+	fromColumn: procore_prime_change_orders.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship ae06397f-73f6-407a-7d48-ad77732d2680
+	fromColumn: procore_prime_contracts_silver.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship a9023806-23a2-a641-61df-ced5f025912a
+	fromColumn: Revenue_AllTime.'Job Number'
+	toColumn: dim_projects_procoreXsage.'Sage Project ID'
+
+relationship fbc6819a-4a53-40f8-9cd1-9fef3fd1d135
+	fromColumn: procore_submittals_silver.'Cost Code ID'
+	toColumn: dim_procore_cost_codes.'Cost Code ID'
+
+relationship 574a208e-2c6c-bf19-20a5-bd8d5e475aff
+	fromColumn: procore_submittals_silver.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship 013c5451-299f-aeaf-c76e-916f60b59bd2
+	fromColumn: Outbuild_activities.'Procore Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship b788284f-0e7f-7791-b780-a6e65a96ee80
+	fromColumn: procore_budgets_silver.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+

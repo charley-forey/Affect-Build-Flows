@@ -1,0 +1,788 @@
+{
+  "workspace": "Build",
+  "workspace_id": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "exported_utc": "2026-08-01T16:00:25Z",
+  "folders": [
+    {
+      "path": "01-ingestion",
+      "fabric_name": "01- Ingestion",
+      "id": "012f24a1-2f56-42e4-aff2-c73a142e805f"
+    },
+    {
+      "path": "01-ingestion\\Procore_APICalls",
+      "fabric_name": "Procore_APICalls",
+      "id": "594bfe88-1c54-4530-8b3d-67677407b43d"
+    },
+    {
+      "path": "01-ingestion\\Ramp_APICalls",
+      "fabric_name": "Ramp_APICalls",
+      "id": "31a6002f-6af0-4b54-8b54-7b7cf58996d8"
+    },
+    {
+      "path": "01-ingestion\\Sage",
+      "fabric_name": "Sage",
+      "id": "01758c83-a908-40a1-80a5-2ea57455f7ab"
+    },
+    {
+      "path": "02 transformation",
+      "fabric_name": "02- Transformation",
+      "id": "567825e0-34be-4377-95b7-13381098f862"
+    },
+    {
+      "path": "02 transformation\\Procore",
+      "fabric_name": "Procore",
+      "id": "067a844f-cc60-4c85-b076-798d249fbac4"
+    },
+    {
+      "path": "01-ingestion\\Outbuild_APICalls",
+      "fabric_name": "Outbuild_APICalls",
+      "id": "3bf2952c-061a-4e40-b1bc-c009eaf5fcf2"
+    },
+    {
+      "path": "03-lakehouses",
+      "fabric_name": "03- Lakehouses",
+      "id": "7da91fed-c37a-4f01-8798-9480edd001ad"
+    },
+    {
+      "path": "04-semantic_models",
+      "fabric_name": "04- Semantic Models",
+      "id": "b70cd426-d973-4d85-a4dc-21a0f5c7cc83"
+    },
+    {
+      "path": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "fabric_name": "Financial Facts",
+      "id": "26568ca0-c947-4ab3-bf1e-c417f277476c"
+    },
+    {
+      "path": "01-ingestion\\Procore_APICalls\\Dimensions",
+      "fabric_name": "Dimensions",
+      "id": "7f1790f2-5140-4451-8767-88b53ebbc272"
+    },
+    {
+      "path": "02 transformation\\Procore\\Dimension",
+      "fabric_name": "Dimension",
+      "id": "eed52727-8d9c-4d0c-8edc-cd0766fd3eda"
+    },
+    {
+      "path": "02 transformation\\Procore\\Financial Facts",
+      "fabric_name": "Financial Facts",
+      "id": "0d3f6ce0-55c8-4ff4-ae78-1fdcb621e07e"
+    },
+    {
+      "path": "05-reports",
+      "fabric_name": "05- Reports",
+      "id": "c85c75fe-a99d-4ff0-af4c-5b26a18b3add"
+    },
+    {
+      "path": "01-ingestion\\Procore_APICalls\\Testing",
+      "fabric_name": "Testing",
+      "id": "7204fe4d-94ca-422b-b479-6041a2518389"
+    },
+    {
+      "path": "02 transformation\\Outbuild",
+      "fabric_name": "Outbuild",
+      "id": "d0e864bc-1202-41ba-a87e-e5f4cf34b18b"
+    },
+    {
+      "path": "charley-dev",
+      "fabric_name": "charley-dev",
+      "id": "25dd1e34-bd57-43ca-aa29-c8fd33013101"
+    }
+  ],
+  "items": [
+    {
+      "name": "Build_Sage_Test",
+      "type": "Dataflow",
+      "id": "2a9a89b7-bfeb-42b9-8f3a-f72e32f133c9",
+      "description": "",
+      "folder": "01-ingestion\\Sage",
+      "export": "01-ingestion\\Sage\\Build_Sage_Test.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".schedules",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Outbuild_activities",
+      "type": "Dataflow",
+      "id": "e59a67b9-48f2-4486-bd60-e72af6b24a11",
+      "description": "",
+      "folder": "02 transformation\\Outbuild",
+      "export": "02 transformation\\Outbuild\\Outbuild_activities.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Procore_vendors_silver",
+      "type": "Dataflow",
+      "id": "99450f06-7cdc-46ae-999a-2db40d438b59",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Dimension",
+      "export": "02 transformation\\Procore\\Dimension\\Procore_vendors_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "dim_procore_cost_codes",
+      "type": "Dataflow",
+      "id": "5b5198eb-9f5a-4d2e-8ed7-9536f6f8ac84",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Dimension",
+      "export": "02 transformation\\Procore\\Dimension\\dim_procore_cost_codes.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "dim_project_vendors",
+      "type": "Dataflow",
+      "id": "31d11dae-6231-4d89-ab05-ff9dbf39156a",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Dimension",
+      "export": "02 transformation\\Procore\\Dimension\\dim_project_vendors.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "dim_projects_dataflow",
+      "type": "Dataflow",
+      "id": "d8bc3f44-9dd2-4d8e-8849-7f2cd097e386",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Dimension",
+      "export": "02 transformation\\Procore\\Dimension\\dim_projects_dataflow.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_budgets_silver",
+      "type": "Dataflow",
+      "id": "35b05606-4b5d-4720-b396-61df58211b8c",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_budgets_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_commitment_change_orders",
+      "type": "Dataflow",
+      "id": "17fdebd3-f4dd-40fa-a73b-d346fdc74ea4",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Financial Facts",
+      "export": "02 transformation\\Procore\\Financial Facts\\procore_commitment_change_orders.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_commitments_silver",
+      "type": "Dataflow",
+      "id": "20a9b627-6721-499f-925d-d136e2d988c1",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_commitments_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_payment_application_g703_silver",
+      "type": "Dataflow",
+      "id": "d934bf2a-b0f4-4a5b-878b-10a7c69d441f",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Financial Facts",
+      "export": "02 transformation\\Procore\\Financial Facts\\procore_payment_application_g703_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_payment_applications_silver",
+      "type": "Dataflow",
+      "id": "3002c8d8-aaa1-40e9-862b-6b8bc3f31849",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_payment_applications_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_prime_contract_change_orders",
+      "type": "Dataflow",
+      "id": "bfc4000b-9a0a-409f-a329-65ca8f9fe5d2",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Financial Facts",
+      "export": "02 transformation\\Procore\\Financial Facts\\procore_prime_contract_change_orders.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".schedules",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_prime_contract_line_items",
+      "type": "Dataflow",
+      "id": "096b6e7e-074d-47d8-b1f8-5aefb5e349ee",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Financial Facts",
+      "export": "02 transformation\\Procore\\Financial Facts\\procore_prime_contract_line_items.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_prime_contracts_silver",
+      "type": "Dataflow",
+      "id": "8218ef73-2bd4-4db3-a0c6-fd8e9ef87fe3",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_prime_contracts_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_requisitions_line_items",
+      "type": "Dataflow",
+      "id": "d4750fa8-00ea-4564-b543-aa16b4da0454",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_requisitions_line_items.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_requisitions_silver",
+      "type": "Dataflow",
+      "id": "c852de99-51d5-40bd-9f6d-e6bf29327e79",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_requisitions_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_submittals_silver",
+      "type": "Dataflow",
+      "id": "1bfe48ea-fee2-4b0e-bf6e-4fecbd116163",
+      "description": "",
+      "folder": "02 transformation\\Procore",
+      "export": "02 transformation\\Procore\\procore_submittals_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "procore_work_order_contract_lien_items_silver",
+      "type": "Dataflow",
+      "id": "0fa7d7e9-43d0-4dc5-aa63-8ab86c532407",
+      "description": "",
+      "folder": "02 transformation\\Procore\\Financial Facts",
+      "export": "02 transformation\\Procore\\Financial Facts\\procore_work_order_contract_lien_items_silver.Dataflow",
+      "parts": [
+        "queryMetadata.json",
+        "mashup.pq",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Bronze_Lakehouse",
+      "type": "Lakehouse",
+      "id": "4256b1ed-3884-4e26-96b5-aac4d8e6281f",
+      "description": "",
+      "folder": "03-lakehouses",
+      "export": "metadata-only"
+    },
+    {
+      "name": "Silver_Lakehouse",
+      "type": "Lakehouse",
+      "id": "2e05dca7-ff80-4646-b711-6681dd4993e1",
+      "description": "",
+      "folder": "03-lakehouses",
+      "export": "metadata-only"
+    },
+    {
+      "name": "StagingLakehouseForDataflows_20260506005626",
+      "type": "Lakehouse",
+      "id": "14e6d61f-3c0a-410b-b4a5-d12c10467b75",
+      "description": "",
+      "folder": "_workspace-root",
+      "export": "metadata-only"
+    },
+    {
+      "name": "Line_Item_Req_Test",
+      "type": "Notebook",
+      "id": "c13bc1a4-b129-419f-876c-3c6e92c1ab12",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Testing",
+      "export": "01-ingestion\\Procore_APICalls\\Testing\\Line_Item_Req_Test.ipynb"
+    },
+    {
+      "name": "Outbuild_Test",
+      "type": "Notebook",
+      "id": "3100c930-0eef-4221-9e23-9685a00d0519",
+      "description": "",
+      "folder": "01-ingestion\\Outbuild_APICalls",
+      "export": "01-ingestion\\Outbuild_APICalls\\Outbuild_Test.ipynb"
+    },
+    {
+      "name": "Silver_Transform_Dim_Billing_Periods",
+      "type": "Notebook",
+      "id": "c9518653-28d4-4151-b99b-77f8e3b6685f",
+      "description": "",
+      "folder": "02 transformation",
+      "export": "02 transformation\\Silver_Transform_Dim_Billing_Periods.ipynb"
+    },
+    {
+      "name": "outbuild_activities_variance",
+      "type": "Notebook",
+      "id": "cc84f5b5-c55d-44ce-9249-adb45de2fdf9",
+      "description": "",
+      "folder": "01-ingestion\\Outbuild_APICalls",
+      "export": "01-ingestion\\Outbuild_APICalls\\outbuild_activities_variance.ipynb"
+    },
+    {
+      "name": "procore_Work_Order_Contract _Line_Items",
+      "type": "Notebook",
+      "id": "3719fb6e-8b1f-4fe3-bfdc-a7d855063fea",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_Work_Order_Contract _Line_Items.ipynb"
+    },
+    {
+      "name": "procore_auth",
+      "type": "Notebook",
+      "id": "6ab12e40-85ca-4051-b97a-ef6570bc08a6",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls",
+      "export": "01-ingestion\\Procore_APICalls\\procore_auth.ipynb"
+    },
+    {
+      "name": "procore_budget_snapshots_bronze",
+      "type": "Notebook",
+      "id": "29088cc9-84cc-4a81-abf6-d25a4fc6862e",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Testing",
+      "export": "01-ingestion\\Procore_APICalls\\Testing\\procore_budget_snapshots_bronze.ipynb"
+    },
+    {
+      "name": "procore_budgets_bronze",
+      "type": "Notebook",
+      "id": "14c987bf-5e0a-4d67-a2f8-ec9cffa77e81",
+      "description": "New notebook",
+      "folder": "01-ingestion\\Procore_APICalls\\Testing",
+      "export": "01-ingestion\\Procore_APICalls\\Testing\\procore_budgets_bronze.ipynb"
+    },
+    {
+      "name": "procore_commitment_change_orders",
+      "type": "Notebook",
+      "id": "e6513d1b-2562-45b7-809b-89c5caf20c82",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_commitment_change_orders.ipynb"
+    },
+    {
+      "name": "procore_commitments_bronze",
+      "type": "Notebook",
+      "id": "f3687e8a-af09-4fd6-8f5f-44149220ed24",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_commitments_bronze.ipynb"
+    },
+    {
+      "name": "procore_cost_codes_bronze",
+      "type": "Notebook",
+      "id": "f4fbd6c9-c229-47f1-ba13-c8c3783932f8",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Dimensions",
+      "export": "01-ingestion\\Procore_APICalls\\Dimensions\\procore_cost_codes_bronze.ipynb"
+    },
+    {
+      "name": "procore_payment_application_g703",
+      "type": "Notebook",
+      "id": "c1e765dd-94d2-4521-8f8c-dc2bb7bd29e9",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_payment_application_g703.ipynb"
+    },
+    {
+      "name": "procore_payment_applications_bronze",
+      "type": "Notebook",
+      "id": "dec5b19b-ad18-4f80-9d75-b55306dfa076",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_payment_applications_bronze.ipynb"
+    },
+    {
+      "name": "procore_prime_contract_SOV_lines",
+      "type": "Notebook",
+      "id": "28d334e4-0b1b-43c5-a338-2fff733e0400",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_prime_contract_SOV_lines.ipynb"
+    },
+    {
+      "name": "procore_prime_contract_change_orders",
+      "type": "Notebook",
+      "id": "20928f72-cc86-4efc-bc4c-5d8269ed34c7",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_prime_contract_change_orders.ipynb"
+    },
+    {
+      "name": "procore_prime_contracts_bronze",
+      "type": "Notebook",
+      "id": "a62e73ff-6233-41f0-bd79-22db10b1b013",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_prime_contracts_bronze.ipynb"
+    },
+    {
+      "name": "procore_project_vendors_bronze",
+      "type": "Notebook",
+      "id": "b589488e-783d-4786-b7b9-dd355c8a754e",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Dimensions",
+      "export": "01-ingestion\\Procore_APICalls\\Dimensions\\procore_project_vendors_bronze.ipynb"
+    },
+    {
+      "name": "procore_projects_bronze",
+      "type": "Notebook",
+      "id": "effa9773-9672-4054-abd5-cb8e69bdba82",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Dimensions",
+      "export": "01-ingestion\\Procore_APICalls\\Dimensions\\procore_projects_bronze.ipynb"
+    },
+    {
+      "name": "procore_requisition_line_items_bronze",
+      "type": "Notebook",
+      "id": "4cf1b7ce-b260-4d36-9c25-e8c74844615d",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_requisition_line_items_bronze.ipynb"
+    },
+    {
+      "name": "procore_requisitions_bronze",
+      "type": "Notebook",
+      "id": "bde9a95d-cf8a-469a-9180-21d8fdc3abb8",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Financial_Facts",
+      "export": "01-ingestion\\Procore_APICalls\\Financial_Facts\\procore_requisitions_bronze.ipynb"
+    },
+    {
+      "name": "procore_submittals_bronze",
+      "type": "Notebook",
+      "id": "83b5e5e3-1f6a-404b-b79b-8bd3b6e8025e",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Testing",
+      "export": "01-ingestion\\Procore_APICalls\\Testing\\procore_submittals_bronze.ipynb"
+    },
+    {
+      "name": "procore_vendors_bronze",
+      "type": "Notebook",
+      "id": "f228d58f-6b4f-4a06-9b57-4e5d8e13dcca",
+      "description": "",
+      "folder": "01-ingestion\\Procore_APICalls\\Dimensions",
+      "export": "01-ingestion\\Procore_APICalls\\Dimensions\\procore_vendors_bronze.ipynb"
+    },
+    {
+      "name": "Monthly Project Management Report",
+      "type": "Report",
+      "id": "cc08712d-91c6-4bc7-8d14-aa534700752c",
+      "description": "",
+      "folder": "05-reports",
+      "export": "05-reports\\Monthly Project Management Report.Report",
+      "parts": [
+        "definition.pbir",
+        "StaticResources/SharedResources/BaseThemes/CY26SU07.json",
+        "definition/version.json",
+        "definition/report.json",
+        "definition/pages/pages.json",
+        "definition/pages/5419d0fb319d8f42d297/page.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/9f7e194dd87e5262eb73/visual.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/907e5292244b1b101186/visual.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/1c29f94456b2f1a14ed2/visual.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/ac22fcef5c48b728a2d5/visual.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/6837e36bdd54f9770ab7/visual.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/9d822537e59766a02d29/visual.json",
+        "definition/pages/5419d0fb319d8f42d297/visuals/07597938afbacae78240/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/page.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/aaa97d6d2a862f7e61ab/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/0d3fccb98082c5cb48b2/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/03f534092c6843b6b305/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/32eb7c25a85e319b1f2f/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/b83eeb5dae324e92a69d/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/897325f1295b9a86b9c0/visual.json",
+        "definition/pages/89ead6cded8df7af01ef/visuals/cadfafd96dfc1d9a698f/visual.json",
+        "definition/pages/0f2ea5dda28bd3fad0d0/page.json",
+        "definition/pages/0f2ea5dda28bd3fad0d0/visuals/fecc0437d81f02484206/visual.json",
+        "definition/pages/0f2ea5dda28bd3fad0d0/visuals/9f612ca5d7a482040583/visual.json",
+        "definition/pages/0f2ea5dda28bd3fad0d0/visuals/1ecb74492dc339020844/visual.json",
+        "definition/pages/0f2ea5dda28bd3fad0d0/visuals/53ba5563710a2b31625e/visual.json",
+        "definition/pages/0f2ea5dda28bd3fad0d0/visuals/99a2310423392df797e5/visual.json",
+        "definition/pages/1859ed0a234abc56b15e/page.json",
+        "definition/pages/1859ed0a234abc56b15e/visuals/6469f13905a7a6c15113/visual.json",
+        "definition/pages/1859ed0a234abc56b15e/visuals/093259a58f57d6ea9c15/visual.json",
+        "definition/pages/1859ed0a234abc56b15e/visuals/b5e7c344ced82592f995/visual.json",
+        "definition/pages/1859ed0a234abc56b15e/visuals/7205002959edfcd928c3/visual.json",
+        "definition/pages/1859ed0a234abc56b15e/visuals/dfe5fc744cf1971fbbf8/visual.json",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Procore Line Item",
+      "type": "Report",
+      "id": "5f157e96-a03d-4652-a8ac-6f89d06c6782",
+      "description": "",
+      "folder": "05-reports",
+      "export": "05-reports\\Procore Line Item.Report",
+      "parts": [
+        "definition.pbir",
+        "StaticResources/SharedResources/BaseThemes/CY26SU07.json",
+        "definition/version.json",
+        "definition/report.json",
+        "definition/pages/pages.json",
+        "definition/pages/3260fb8e40de63e02917/page.json",
+        "definition/pages/3260fb8e40de63e02917/visuals/96d517779eb29c02bbdb/visual.json",
+        "definition/pages/3260fb8e40de63e02917/visuals/fa9015833d334e6ee67b/visual.json",
+        "definition/pages/3260fb8e40de63e02917/visuals/438b79c00ecbc4110dc0/visual.json",
+        "definition/pages/3260fb8e40de63e02917/visuals/0d20f74fb8602208371a/visual.json",
+        "definition/pages/3260fb8e40de63e02917/visuals/ee08ad0563ee74a6408b/visual.json",
+        "definition/pages/3260fb8e40de63e02917/visuals/3de6bc70ea58c5d815a5/visual.json",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Sage AP/ AR",
+      "type": "Report",
+      "id": "55576760-2944-48b0-a512-0a1640d871d6",
+      "description": "",
+      "folder": "05-reports",
+      "export": "05-reports\\Sage AP- AR.Report",
+      "parts": [
+        "definition.pbir",
+        "StaticResources/SharedResources/BaseThemes/CY26SU05.json",
+        "definition/version.json",
+        "definition/report.json",
+        "definition/pages/pages.json",
+        "definition/pages/0a29b81932081334a1f9/page.json",
+        "definition/pages/0a29b81932081334a1f9/visuals/aa32c103a78c4a6bcf0a/visual.json",
+        "definition/pages/0a29b81932081334a1f9/visuals/0363e59bab55b5f4784f/visual.json",
+        "definition/pages/0a29b81932081334a1f9/visuals/ad77be9b54ab59744b4b/visual.json",
+        "definition/pages/d2908a73562c764e5901/page.json",
+        "definition/pages/d2908a73562c764e5901/visuals/b257cc01e8c75c18f77b/visual.json",
+        "definition/pages/d2908a73562c764e5901/visuals/0a1549ffb5ba5d302b19/visual.json",
+        "definition/pages/d2908a73562c764e5901/visuals/24b1a42cfb31343bafde/visual.json",
+        "definition/pages/d2908a73562c764e5901/visuals/3b4e4e33d571765433bd/visual.json",
+        "definition/pages/d2908a73562c764e5901/visuals/146986d2e9eb05ca7a3a/visual.json",
+        "definition/pages/d2908a73562c764e5901/visuals/85b4dd663251e9726789/visual.json",
+        "definition/pages/47ec3f707d1557eef0aa/page.json",
+        "definition/pages/47ec3f707d1557eef0aa/visuals/cb306e6e698ae15fa698/visual.json",
+        "definition/pages/47ec3f707d1557eef0aa/visuals/2d4b5db446b00dec1f3b/visual.json",
+        "definition/pages/47ec3f707d1557eef0aa/visuals/e4674b822a58e1eb2e35/visual.json",
+        "definition/pages/47ec3f707d1557eef0aa/visuals/ec0afa5ed113150cae12/visual.json",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Sage/ Procore",
+      "type": "Report",
+      "id": "d29e1aee-9c22-4f4e-8a4d-6b6fd3dc3f9a",
+      "description": "",
+      "folder": "05-reports",
+      "export": "05-reports\\Sage- Procore.Report",
+      "parts": [
+        "definition.pbir",
+        "StaticResources/SharedResources/BaseThemes/CY26SU07.json",
+        "definition/version.json",
+        "definition/report.json",
+        "definition/pages/pages.json",
+        "definition/pages/7a7bba6b08c52e99dab7/page.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/726cb6b3229420238506/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/8effff27e47766ec0bba/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/1eb4690082b0b021048e/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/705b2f2b826ed7926793/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/eb39553c64cbb5dba9a5/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/502af50c655bdad5955a/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/3febc502170d0cc90a52/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/1b476de5cdb868e34b2b/visual.json",
+        "definition/pages/7a7bba6b08c52e99dab7/visuals/bcbb9e60b3abca1b6e32/visual.json",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Bronze_Lakehouse",
+      "type": "SQLEndpoint",
+      "id": "58b8a860-d4fa-4811-bf0a-29a3d36d7b50",
+      "description": "",
+      "folder": "03-lakehouses",
+      "export": "metadata-only"
+    },
+    {
+      "name": "Silver_Lakehouse",
+      "type": "SQLEndpoint",
+      "id": "f461c94c-243d-4595-850c-9abd55cb8e8b",
+      "description": "",
+      "folder": "03-lakehouses",
+      "export": "metadata-only"
+    },
+    {
+      "name": "StagingLakehouseForDataflows_20260506005626",
+      "type": "SQLEndpoint",
+      "id": "1b1c5f0c-0b25-4c2b-88e8-4551330811bf",
+      "description": "",
+      "folder": "_workspace-root",
+      "export": "metadata-only"
+    },
+    {
+      "name": "Procore Line Item",
+      "type": "SemanticModel",
+      "id": "e25779bc-2389-487f-9b1d-c620b2fc10c3",
+      "description": "",
+      "folder": "_workspace-root",
+      "export": "_workspace-root\\Procore Line Item.SemanticModel",
+      "parts": [
+        "definition.pbism",
+        "definition/tables/dim_projects.tmdl",
+        "definition/tables/dim_procore_project_vendor.tmdl",
+        "definition/tables/dim_procore_cost_codes.tmdl",
+        "definition/tables/procore_prime_contract_line_items.tmdl",
+        "definition/tables/procore_payment_application_line_items_silver.tmdl",
+        "definition/tables/procore_work_order_line_item_silver_test.tmdl",
+        "definition/tables/Dim_commitments.tmdl",
+        "definition/tables/procore_requisitions_silver.tmdl",
+        "definition/tables/procore_requisition_line_items.tmdl",
+        "definition/relationships.tmdl",
+        "definition/expressions.tmdl",
+        "definition/model.tmdl",
+        "definition/database.tmdl",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Project Management Report",
+      "type": "SemanticModel",
+      "id": "5bf652ba-8eaf-41bd-992c-8177f1d97e74",
+      "description": "",
+      "folder": "04-semantic_models",
+      "export": "04-semantic_models\\Project Management Report.SemanticModel",
+      "parts": [
+        "definition.pbism",
+        "definition/tables/procore_prime_change_orders.tmdl",
+        "definition/tables/procore_prime_contracts_silver.tmdl",
+        "definition/tables/DAX Measures.tmdl",
+        "definition/tables/dim_projects_procoreXsage.tmdl",
+        "definition/tables/Revenue_AllTime.tmdl",
+        "definition/tables/dim_procore_cost_codes.tmdl",
+        "definition/tables/procore_submittals_silver.tmdl",
+        "definition/tables/Outbuild_activities.tmdl",
+        "definition/tables/procore_budgets_silver.tmdl",
+        "definition/relationships.tmdl",
+        "definition/expressions.tmdl",
+        "definition/model.tmdl",
+        "definition/database.tmdl",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Sage AP/AR",
+      "type": "SemanticModel",
+      "id": "5c5476cc-2309-4143-b8cc-18a464c0fdea",
+      "description": "",
+      "folder": "04-semantic_models",
+      "export": "04-semantic_models\\Sage AP-AR.SemanticModel",
+      "parts": [
+        "definition.pbism",
+        "definition/tables/Revenue_AllTime.tmdl",
+        "definition/tables/AR_Open.tmdl",
+        "definition/tables/Dim__Sage_Projects.tmdl",
+        "definition/tables/AP_Open.tmdl",
+        "definition/tables/Dim_Sage_Vendors.tmdl",
+        "definition/tables/Expenditure_AllTIme.tmdl",
+        "definition/tables/Dim_Date.tmdl",
+        "definition/tables/DateTableTemplate_93de2046-897c-499a-9d2f-b0fd58c127f9.tmdl",
+        "definition/tables/LocalDateTable_ed94948d-35d8-4a8f-a616-835afb8d5221.tmdl",
+        "definition/tables/DAX Measures.tmdl",
+        "definition/relationships.tmdl",
+        "definition/expressions.tmdl",
+        "definition/model.tmdl",
+        "definition/database.tmdl",
+        ".platform"
+      ]
+    },
+    {
+      "name": "Sage/Procore",
+      "type": "SemanticModel",
+      "id": "65f1e0e1-0d86-4e83-bb18-c9cb757b7500",
+      "description": "",
+      "folder": "04-semantic_models",
+      "export": "04-semantic_models\\Sage-Procore.SemanticModel",
+      "parts": [
+        "definition.pbism",
+        "definition/tables/Revenue_AllTime.tmdl",
+        "definition/tables/dim_procore_project_vendor.tmdl",
+        "definition/tables/dim_projects_procoreXsage.tmdl",
+        "definition/tables/dim_procore_cost_codes.tmdl",
+        "definition/tables/procore_prime_contract_line_items.tmdl",
+        "definition/tables/procore_payment_application_line_items_silver.tmdl",
+        "definition/tables/procore_work_order_line_item_silver_test.tmdl",
+        "definition/tables/Expenditure_AllTIme.tmdl",
+        "definition/tables/procore_requisitions_silver.tmdl",
+        "definition/relationships.tmdl",
+        "definition/expressions.tmdl",
+        "definition/model.tmdl",
+        "definition/database.tmdl",
+        ".platform"
+      ]
+    },
+    {
+      "name": "StagingWarehouseForDataflows_20260506005639",
+      "type": "Warehouse",
+      "id": "257edab4-cd73-4460-bc11-37225ef46266",
+      "description": "",
+      "folder": "_workspace-root",
+      "export": "metadata-only"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+relationship e4b71458-9da1-0324-4e61-68cf5c50216d
+	crossFilteringBehavior: bothDirections
+	fromColumn: procore_prime_contract_line_items.'Project ID'
+	toColumn: dim_projects.'Project ID'
+
+relationship fbe59686-81e8-b33d-bb59-14c27ac4b247
+	fromColumn: procore_work_order_line_item_silver_test.'Project ID'
+	toColumn: dim_projects.'Project ID'
+
+relationship 0cc43ce1-e19a-4408-0797-1e088ce1bae8
+	crossFilteringBehavior: bothDirections
+	fromColumn: procore_work_order_line_item_silver_test.'Commitment ID'
+	toColumn: Dim_commitments.'Commitment ID'
+
+relationship adcd55ec-4503-6023-24ba-e14ce5438793
+	crossFilteringBehavior: bothDirections
+	fromColumn: procore_requisitions_silver.commitment_id
+	toColumn: Dim_commitments.'Commitment ID'
+
+relationship 21ccdc4e-59be-96c9-f69e-16011ce918fb
+	fromColumn: procore_payment_application_line_items_silver.'Project ID'
+	toColumn: dim_projects.'Project ID'
+
+relationship 85b3c597-a548-b98a-a6ef-2ca562cbae4d
+	crossFilteringBehavior: bothDirections
+	fromColumn: procore_requisitions_silver.'Vendor ID'
+	toColumn: dim_procore_project_vendor.'Procore Vendor ID'
+
+relationship b673b451-7bd5-bd3e-f116-f43dd3167d6f
+	crossFilteringBehavior: bothDirections
+	fromColumn: procore_prime_contract_line_items.'Cost Code ID'
+	toColumn: dim_procore_cost_codes.'Cost Code ID'
+

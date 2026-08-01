@@ -1,0 +1,39 @@
+table Dim_Sage_Vendors
+	lineageTag: c2b48b3e-b0fd-4bf9-aa54-37cfa92421a7
+	sourceLineageTag: [dbo].[Dim_Sage_Vendors]
+
+	column 'Vendor Name'
+		dataType: string
+		lineageTag: b332809e-f089-499b-be16-fcce4d32ec63
+		sourceLineageTag: Vendor Name
+		summarizeBy: none
+		sourceColumn: Vendor Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column vndnum
+		dataType: int64
+		formatString: 0
+		lineageTag: 8b1fe65b-d4f6-401d-b487-5fd16f005ea1
+		sourceLineageTag: vndnum
+		summarizeBy: sum
+		sourceColumn: vndnum
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Vendor ID'
+		dataType: string
+		lineageTag: beed0a58-8a6e-4728-bc44-316827b6edf8
+		sourceLineageTag: Vendor ID
+		summarizeBy: none
+		sourceColumn: Vendor ID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_Sage_Vendors = entity
+		mode: directLake
+		source
+			entityName: Dim_Sage_Vendors
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

@@ -1,0 +1,39 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_budgets_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_budgets_silver": {
+      "queryId": "07b5290e-aa1d-4880-bfde-6f0dd7eb4a6d",
+      "queryName": "procore_budgets_silver",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "82939f03-fc31-4333-9bdf-eac1fa744d0d",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "procore_budgets_costcodes_level2": {
+      "queryId": "4b9f5641-0215-47f5-8b78-c397bd91128e",
+      "queryName": "procore_budgets_costcodes_level2",
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    },
+    {
+      "path": "lmrkfmsojpwefossy7q4fxvfqa-22xhyh4k7bje5pedtjeyufstae.datawarehouse.fabric.microsoft.com;Bronze_Lakehouse",
+      "kind": "SQL",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"4b51fd50-3c2c-4e43-a046-30b80bbd9621\"}"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+relationship fd9fae11-e211-04bc-53c9-afdb032bb085
+	fromColumn: Expenditure_AllTIme.'Vendor ID'
+	toColumn: dim_procore_project_vendor.'Sage Vendor ID'
+
+relationship 39efcd3b-33da-8f73-74d1-337f185d8277
+	fromColumn: Expenditure_AllTIme.'Job Number'
+	toColumn: dim_projects_procoreXsage.'Sage Project ID'
+
+relationship 65c9e0a1-eaf7-df7b-3c62-ccaa9a90d461
+	fromColumn: procore_work_order_line_item_silver_test.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship 2dce9064-0651-7861-df48-52156b3787db
+	fromColumn: procore_work_order_line_item_silver_test.'Cost Code ID'
+	toColumn: dim_procore_cost_codes.'Cost Code ID'
+
+relationship b121750b-c27a-9879-7d0a-cb1b0939a7ef
+	fromColumn: procore_payment_application_line_items_silver.'Cost Code ID'
+	toColumn: dim_procore_cost_codes.'Cost Code ID'
+
+relationship ce1fa215-7309-b79e-e90a-997d7dcd68ed
+	fromColumn: procore_payment_application_line_items_silver.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship 2b396227-5fc3-2bfe-61c7-0a81941c0525
+	fromColumn: procore_prime_contract_line_items.'Cost Code ID'
+	toColumn: dim_procore_cost_codes.'Cost Code ID'
+
+relationship 25ac583d-b239-cd0f-63ac-ce87e094adb1
+	fromColumn: Revenue_AllTime.'Job Number'
+	toColumn: dim_projects_procoreXsage.'Sage Project ID'
+
+relationship 78dcb156-3ef4-0610-6d76-ba3c56704140
+	crossFilteringBehavior: bothDirections
+	fromColumn: procore_prime_contract_line_items.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship 61593614-adaf-a7c2-3b4b-f83fe364949f
+	fromColumn: procore_requisitions_silver.'Project ID'
+	toColumn: dim_projects_procoreXsage.'Project ID'
+
+relationship ddeb005b-080f-18f7-e5c9-8d69a8769398
+	fromColumn: procore_requisitions_silver.'Vendor ID'
+	toColumn: dim_procore_project_vendor.'Procore Vendor ID'
+

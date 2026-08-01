@@ -1,0 +1,65 @@
+table dim_projects
+	lineageTag: ee32db6f-378f-4699-8930-c5f00882d272
+	sourceLineageTag: [dbo].[dim_projects]
+
+	column 'Project Name'
+		dataType: string
+		lineageTag: 3918d91d-8d3e-4056-aa70-b35f2c68fa3c
+		sourceLineageTag: Project Name
+		summarizeBy: none
+		sourceColumn: Project Name
+
+		annotation SummarizationSetBy = Automatic
+
+	column project_number
+		dataType: string
+		lineageTag: 2865fe99-3d7b-4011-b870-bd59832ee648
+		sourceLineageTag: project_number
+		summarizeBy: none
+		sourceColumn: project_number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: 8ee067fe-ee84-4aa6-877a-ec2056142ea0
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column origin_code
+		dataType: string
+		lineageTag: 7ad48a34-36c3-4b9b-bc24-d9e377ced878
+		sourceLineageTag: origin_code
+		summarizeBy: none
+		sourceColumn: origin_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column origin_data
+		dataType: string
+		lineageTag: f0f0c8c5-e661-4ea9-9ee8-bf2355923075
+		sourceLineageTag: origin_data
+		summarizeBy: none
+		sourceColumn: origin_data
+
+		annotation SummarizationSetBy = Automatic
+
+	column origin_id
+		dataType: string
+		lineageTag: 158af52b-2cdb-4627-ac7d-0d61e4319b47
+		sourceLineageTag: origin_id
+		summarizeBy: none
+		sourceColumn: origin_id
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_projects = entity
+		mode: directLake
+		source
+			entityName: dim_projects
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

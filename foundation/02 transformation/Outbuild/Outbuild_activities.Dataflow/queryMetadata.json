@@ -1,0 +1,29 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "Outbuild_activities",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "Outbuild_activities": {
+      "queryId": "a204a506-ed2a-4f7b-97e8-1b3fb8a5801f",
+      "queryName": "Outbuild_activities",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "1115d4f5-64d7-4543-8d63-c65f40d8c31a",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

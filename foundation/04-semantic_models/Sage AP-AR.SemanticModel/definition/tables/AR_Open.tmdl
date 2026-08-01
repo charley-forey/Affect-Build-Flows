@@ -1,0 +1,111 @@
+table AR_Open
+	lineageTag: c63cbdc2-4e89-4303-98bd-d45a724e70ed
+	sourceLineageTag: [dbo].[AR_Open]
+
+	column 'Invoice Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: e5a1d183-e6e6-481e-9498-ea81484b8091
+		sourceLineageTag: Invoice Date
+		summarizeBy: none
+		sourceColumn: Invoice Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Description
+		dataType: string
+		lineageTag: 3b200958-ea4f-481b-a29e-747ab15382ec
+		sourceLineageTag: Description
+		summarizeBy: none
+		sourceColumn: Description
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Due Date'
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: ea517337-db67-47b2-a508-01e6f6a24431
+		sourceLineageTag: Due Date
+		summarizeBy: none
+		sourceColumn: Due Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Billing Period'
+		dataType: int64
+		formatString: 0
+		lineageTag: c015b3cf-d06e-491e-9171-2d3e940e1167
+		sourceLineageTag: Billing Period
+		summarizeBy: sum
+		sourceColumn: Billing Period
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Amount Paid'
+		dataType: double
+		lineageTag: 899b216f-5031-4cd7-aea9-3b7a9a92a829
+		sourceLineageTag: Amount Paid
+		summarizeBy: sum
+		sourceColumn: Amount Paid
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoice Total'
+		dataType: double
+		lineageTag: e2de5562-ed47-4f03-97c7-ad4f29033eb6
+		sourceLineageTag: Invoice Total
+		summarizeBy: sum
+		sourceColumn: Invoice Total
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Invoice Balance'
+		dataType: double
+		lineageTag: af2073ec-e68a-4a25-bab6-658a57d0ce94
+		sourceLineageTag: Invoice Balance
+		summarizeBy: sum
+		sourceColumn: Invoice Balance
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Aging Bucket'
+		dataType: string
+		lineageTag: 7c7dab13-b3cc-4ef5-85be-627e52685894
+		sourceLineageTag: Aging Bucket
+		summarizeBy: none
+		sourceColumn: Aging Bucket
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Days Aged'
+		dataType: int64
+		formatString: 0
+		lineageTag: 634c17ec-3186-4b99-9a09-fab8ad7448b2
+		sourceLineageTag: Days Aged
+		summarizeBy: sum
+		sourceColumn: Days Aged
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Job Number'
+		dataType: string
+		lineageTag: f6af9cc3-dd05-4059-8a38-253f659bd586
+		sourceLineageTag: Job Number
+		summarizeBy: none
+		sourceColumn: Job Number
+
+		annotation SummarizationSetBy = Automatic
+
+	partition AR_Open = entity
+		mode: directLake
+		source
+			entityName: AR_Open
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

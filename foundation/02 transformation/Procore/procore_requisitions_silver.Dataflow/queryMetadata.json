@@ -1,0 +1,34 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "procore_requisitions_silver",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "procore_requisitions_silver": {
+      "queryId": "df92c4bb-56d9-4180-b9a4-553b881389f0",
+      "queryName": "procore_requisitions_silver",
+      "loadEnabled": false
+    },
+    "DefaultDestination": {
+      "queryId": "68c84e98-f173-49a1-857a-6b94f0bf69ed",
+      "queryName": "DefaultDestination",
+      "isHidden": true,
+      "loadEnabled": false
+    },
+    "Procore_commitmentsXvendor": {
+      "queryId": "d0d95c43-cfe8-4bb3-901e-7c0a7b9dac11",
+      "queryName": "Procore_commitmentsXvendor",
+      "loadEnabled": false
+    }
+  },
+  "connections": [
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
+}

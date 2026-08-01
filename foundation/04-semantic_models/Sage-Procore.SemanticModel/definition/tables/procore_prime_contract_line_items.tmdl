@@ -1,0 +1,78 @@
+table procore_prime_contract_line_items
+	lineageTag: 612df99a-75c6-4abf-9188-5e58f1ddeb19
+	sourceLineageTag: [dbo].[procore_prime_contract_line_items]
+
+	column '$ Amount'
+		dataType: double
+		lineageTag: c29eb600-9547-4303-9061-055f87b9ddb6
+		sourceLineageTag: $ Amount
+		summarizeBy: sum
+		sourceColumn: $ Amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column total_amount
+		dataType: double
+		lineageTag: 53f5134e-c3cd-4a61-9f15-a76b8f8677fa
+		sourceLineageTag: total_amount
+		summarizeBy: sum
+		sourceColumn: total_amount
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column 'Project ID'
+		dataType: string
+		lineageTag: debf0c89-2ee8-45a0-8d20-b79155f75301
+		sourceLineageTag: Project ID
+		summarizeBy: none
+		sourceColumn: Project ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Prime Contract ID'
+		dataType: string
+		lineageTag: c9e66b4b-5670-489f-889e-8e97f86d742c
+		sourceLineageTag: Prime Contract ID
+		summarizeBy: none
+		sourceColumn: Prime Contract ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Line Item ID'
+		dataType: string
+		lineageTag: 61bc82fb-cac3-431a-8962-46badfd6b570
+		sourceLineageTag: Line Item ID
+		summarizeBy: none
+		sourceColumn: Line Item ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Cost Code ID'
+		dataType: string
+		lineageTag: d0e4490c-d18a-4c7d-864f-4394146346c9
+		sourceLineageTag: Cost Code ID
+		summarizeBy: none
+		sourceColumn: Cost Code ID
+
+		annotation SummarizationSetBy = Automatic
+
+	column full_code
+		dataType: string
+		lineageTag: 761bfd13-ca4b-4221-b397-9386c5670386
+		sourceLineageTag: full_code
+		summarizeBy: none
+		sourceColumn: full_code
+
+		annotation SummarizationSetBy = Automatic
+
+	partition procore_prime_contract_line_items = entity
+		mode: directLake
+		source
+			entityName: procore_prime_contract_line_items
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+

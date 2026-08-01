@@ -1,0 +1,20 @@
+table Dim_commitments
+	lineageTag: 90e95d5f-ad1d-446e-88be-119ca2e32c3b
+	sourceLineageTag: [dbo].[Dim_commitments]
+
+	column 'Commitment ID'
+		dataType: string
+		lineageTag: be7b0d9c-880e-44f0-9d24-fb9571ed0c79
+		sourceLineageTag: Commitment ID
+		summarizeBy: none
+		sourceColumn: Commitment ID
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Dim_commitments = entity
+		mode: directLake
+		source
+			entityName: Dim_commitments
+			schemaName: dbo
+			expressionSource: 'DirectLake - Silver_Lakehouse'
+
