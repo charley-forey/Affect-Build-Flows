@@ -18,14 +18,14 @@
 
 CREATE OR REPLACE TABLE dim_Owner AS
 SELECT * FROM (VALUES
-    (0, 'Unassigned',           999, CAST(NULL AS VARCHAR)),
-    (1, 'Principal',              1, CAST(NULL AS VARCHAR)),
-    (2, 'PX',                     2, CAST(NULL AS VARCHAR)),
-    (3, 'Senior PM',              3, CAST(NULL AS VARCHAR)),
-    (4, 'Dir. of Construction',   4, CAST(NULL AS VARCHAR)),
-    (5, 'PM',                     5, CAST(NULL AS VARCHAR)),
-    (6, 'Asst. PM',               6, CAST(NULL AS VARCHAR)),
-    (7, 'Super',                  7, CAST(NULL AS VARCHAR)),
-    (8, 'Asst. Super',            8, CAST(NULL AS VARCHAR)),
-    (9, 'Scheduler',              9, CAST(NULL AS VARCHAR))
+    (0, 'Unassigned',           999, CAST(NULL AS STRING)),
+    (1, 'Principal',              1, CAST(NULL AS STRING)),
+    (2, 'PX',                     2, CAST(NULL AS STRING)),
+    (3, 'Senior PM',              3, CAST(NULL AS STRING)),
+    (4, 'Dir. of Construction',   4, CAST(NULL AS STRING)),
+    (5, 'PM',                     5, CAST(NULL AS STRING)),
+    (6, 'Asst. PM',               6, CAST(NULL AS STRING)),
+    (7, 'Super',                  7, CAST(NULL AS STRING)),
+    (8, 'Asst. Super',            8, CAST(NULL AS STRING)),
+    (9, 'Scheduler',              9, CAST(NULL AS STRING))
 ) AS t(OwnerKey, RoleName, SortOrder, PersonName);

@@ -60,7 +60,7 @@ SELECT
         WHEN 1 THEN 'Jan' WHEN 2 THEN 'Feb' WHEN 3  THEN 'Mar' WHEN 4  THEN 'Apr'
         WHEN 5 THEN 'May' WHEN 6 THEN 'Jun' WHEN 7  THEN 'Jul' WHEN 8  THEN 'Aug'
         WHEN 9 THEN 'Sep' WHEN 10 THEN 'Oct' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dec'
-    END || ' ' || CAST(Year AS VARCHAR)             AS MonthYear,
+    END || ' ' || CAST(Year AS STRING)             AS MonthYear,
     -- Sorts MonthYear chronologically instead of alphabetically ('Apr 2026' first).
     (Year * 100) + Month                            AS MonthYearSort,
     (Year * 12 + Month)

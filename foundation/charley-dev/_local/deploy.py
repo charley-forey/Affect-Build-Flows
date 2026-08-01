@@ -89,8 +89,12 @@ def token() -> str:
 
 
 def call(method: str, path: str, tok: str, body: dict | None = None) -> tuple[int, dict, dict]:
+    # Long-running-operation Location headers are absolute and often point at a DIFFERENT
+    # host (a regional wabi-* redirect), so they must be used as given rather than
+    # re-prefixed with the API base.
+    url = path if path.startswith("http") else f"{API}{path}"
     request = urllib.request.Request(
-        f"{API}{path}",
+        url,
         method=method,
         data=json.dumps(body).encode() if body else None,
         headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"},
@@ -109,10 +113,9 @@ def wait_for_operation(headers: dict, tok: str, timeout: int = 180) -> None:
     location = headers.get("Location")
     if not location:
         return
-    path = location.replace(API, "")
     deadline = time.time() + timeout
     while time.time() < deadline:
-        _, body, _ = call("GET", path, tok)
+        _, body, _ = call("GET", location, tok)
         status = body.get("status", "")
         if status in ("Succeeded", "Completed"):
             return

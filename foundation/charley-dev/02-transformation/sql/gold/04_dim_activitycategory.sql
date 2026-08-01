@@ -16,7 +16,7 @@
 
 CREATE OR REPLACE TABLE dim_ActivityCategory AS
 SELECT * FROM (VALUES
-    (0,  'Unassigned', 'Unassigned',      CAST(NULL AS VARCHAR),          'Unassigned'),
+    (0,  'Unassigned', 'Unassigned',      CAST(NULL AS STRING),          'Unassigned'),
 
     -- DROPDOWN!I - safety activity category (16)
     (1,  'Safety',  'High-Risk Item',    'Completed',                    'High-Risk Item – Completed'),
