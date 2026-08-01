@@ -38,7 +38,6 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 | **Term** | **9–10 months** |
 | **Initial scope** | **20 hours over ~1 month** (Phase 0) |
 | **Ongoing** | **5 hrs/week** — workflow building + mentoring Rebecca |
-| **Envelope** | ~$50,000 over the term |
 | **Rebecca's access** | Text, call, email — unlimited and **not charged** |
 
 - **Two things are being built at once:** the data platform, and Rebecca's ability to run it.
