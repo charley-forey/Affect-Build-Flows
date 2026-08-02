@@ -1,0 +1,25 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	discourageImplicitMeasures
+
+annotation PBI_QueryOrder = ["DirectLake - CD_Gold_Lakehouse"]
+
+ref table _Measures
+ref table dim_Date
+ref table dim_Project
+ref table dim_Vendor
+ref table dim_CostCode
+ref table dim_Trade
+ref table dim_Status
+ref table dim_Owner
+ref table dim_ActivityCategory
+ref table dim_ScorecardWeight
+ref table dim_ScorecardBand
+ref table fct_BudgetLine
+ref table fct_ChangeOrder
+ref table fct_Invoice
+ref table fct_RfiSubmittal
+ref table fct_Milestone
+ref table fct_FinancialPeriod

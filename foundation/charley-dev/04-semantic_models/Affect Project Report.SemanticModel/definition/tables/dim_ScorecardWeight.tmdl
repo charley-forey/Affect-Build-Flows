@@ -1,0 +1,40 @@
+table dim_ScorecardWeight
+
+	column CategoryKey
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: CategoryKey
+
+	column CategoryName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CategoryName
+
+	column Weight
+		dataType: decimal
+		summarizeBy: sum
+		sourceColumn: Weight
+
+	column SortOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SortOrder
+
+	column EffectiveFrom
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: EffectiveFrom
+		formatString: yyyy-mm-dd
+
+	column EffectiveTo
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: EffectiveTo
+		formatString: yyyy-mm-dd
+
+	partition dim_ScorecardWeight = entity
+		mode: directLake
+		source
+			entityName: dim_scorecardweight
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

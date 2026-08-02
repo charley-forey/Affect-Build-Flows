@@ -1,0 +1,33 @@
+table dim_CostCode
+
+	column CostCodeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCodeKey
+
+	column CostCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCode
+
+	column Description
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Description
+
+	column Division
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Division
+
+	column IsInSource
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInSource
+
+	partition dim_CostCode = entity
+		mode: directLake
+		source
+			entityName: dim_costcode
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

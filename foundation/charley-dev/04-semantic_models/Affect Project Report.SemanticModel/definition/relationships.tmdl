@@ -1,0 +1,55 @@
+relationship rel_00_fct_BudgetLine_dim_Project_ProjectKey
+	fromColumn: fct_BudgetLine.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_01_fct_BudgetLine_dim_CostCode_CostCodeKey
+	fromColumn: fct_BudgetLine.CostCodeKey
+	toColumn: dim_CostCode.CostCodeKey
+
+relationship rel_02_fct_BudgetLine_dim_Date_MonthStart
+	fromColumn: fct_BudgetLine.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_03_fct_ChangeOrder_dim_Project_ProjectKey
+	fromColumn: fct_ChangeOrder.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_04_fct_ChangeOrder_dim_Date_MonthStart
+	fromColumn: fct_ChangeOrder.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_05_fct_Invoice_dim_Project_ProjectKey
+	fromColumn: fct_Invoice.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_06_fct_Invoice_dim_Date_MonthStart
+	fromColumn: fct_Invoice.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_07_fct_RfiSubmittal_dim_Project_ProjectKey
+	fromColumn: fct_RfiSubmittal.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_08_fct_RfiSubmittal_dim_CostCode_CostCodeKey
+	fromColumn: fct_RfiSubmittal.CostCodeKey
+	toColumn: dim_CostCode.CostCodeKey
+
+relationship rel_09_fct_RfiSubmittal_dim_Date_MonthStart
+	fromColumn: fct_RfiSubmittal.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_10_fct_Milestone_dim_Project_ProjectKey
+	fromColumn: fct_Milestone.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_11_fct_Milestone_dim_Date_MonthStart
+	fromColumn: fct_Milestone.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_12_fct_FinancialPeriod_dim_Project_ProjectKey
+	fromColumn: fct_FinancialPeriod.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_13_fct_FinancialPeriod_dim_Date_MonthStart
+	fromColumn: fct_FinancialPeriod.MonthStart
+	toColumn: dim_Date.Date

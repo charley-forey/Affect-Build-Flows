@@ -1,0 +1,137 @@
+table _Measures
+
+	/// Replaces FINANCIALS!C3
+	measure 'Original Contract' = SUM ( fct_FinancialPeriod[OriginalContract] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!C4
+	measure 'Current Contract' = SUM ( fct_FinancialPeriod[CurrentContract] )
+		formatString: "$#,0"
+
+	/// Replaces DASHBOARD!AT11
+	measure 'Contract Growth %' = DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )
+		formatString: "0.00%"
+
+	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell
+	measure 'Pending Change Orders' = SUM ( fct_FinancialPeriod[PendingChangeOrders] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!C6 - typed by hand
+	measure 'Age Of Oldest Unapproved CO' = MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )
+		formatString: "#,0"
+
+	/// Replaces FINANCIALS!C19:C20
+	measure 'Budget' = SUM ( fct_BudgetLine[BudgetAmount] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!D19:D20
+	measure 'Forecast' = SUM ( fct_BudgetLine[ForecastAmount] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!D61
+	measure 'Committed' = SUM ( fct_BudgetLine[CommittedAmount] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!E19:E20
+	measure 'Spent To Date' = SUM ( fct_BudgetLine[SpentToDate] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!C15
+	measure 'Cost To Complete' = SUM ( fct_BudgetLine[CostToComplete] )
+		formatString: "$#,0"
+
+	/// Replaces derived
+	measure 'Budget Variance' = [Budget] - [Spent To Date]
+		formatString: "$#,0"
+
+	/// Replaces the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown
+	measure 'Budget Variance %' = DIVIDE ( [Budget Variance], [Budget] )
+		formatString: "0.0%"
+
+	/// Replaces FINANCIALS!F19:F20 - derivable, but typed by hand today
+	measure 'Budget Status' =
+			VAR V = [Budget Variance %]
+			RETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "On Track", V >= -0.05, "Watch", "Over Budget" )
+
+	/// Replaces FINANCIALS!D62
+	measure 'Percent Bought Out' = DIVIDE ( [Committed], [Budget] )
+		formatString: "0.0%"
+
+	/// Replaces FINANCIALS!C10
+	measure 'Total Billed' = SUM ( fct_Invoice[Amount] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!C12
+	measure 'Total Paid' = SUM ( fct_Invoice[AmountPaid] )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!F57
+	measure 'AR Outstanding' = SUM ( fct_Invoice[Balance] )
+		formatString: "$#,0"
+
+	/// Replaces DASHBOARD!AT15 - was a TEXT string, so it could never be charted
+	measure 'Total Billed %' = DIVIDE ( [Total Billed], [Current Contract] )
+		formatString: "0.0%"
+
+	/// Replaces replaces the hand-keyed LAST PERIOD column
+	measure 'Total Billed MoM %' =
+			VAR Prior = CALCULATE ( [Total Billed], DATEADD ( dim_Date[Date], -1, MONTH ) )
+			RETURN DIVIDE ( [Total Billed] - Prior, Prior )
+		formatString: "0.0%"
+
+	/// Replaces SUBMITTALS & RFI!D
+	measure 'Open Submittals' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE )
+		formatString: "#,0"
+
+	/// Replaces derived - the workbook has no equivalent
+	measure 'Open Submittals Past Due' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE )
+		formatString: "#,0"
+
+	/// Replaces QUALITY!D39 - typed by hand
+	measure 'Avg Days Open' = AVERAGE ( fct_RfiSubmittal[DaysOpen] )
+		formatString: "#,0.0"
+
+	/// Replaces SCHEDULE!Table5
+	measure 'Critical Milestones' = COUNTROWS ( fct_Milestone )
+		formatString: "#,0"
+
+	/// Replaces derived
+	measure 'Overdue Milestones' = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )
+		formatString: "#,0"
+
+	/// Replaces DASHBOARD!L19 - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)
+	measure 'Schedule Performance %' = DIVIDE ( [Overdue Milestones], [Critical Milestones] )
+		formatString: "0.0%"
+
+	/// Replaces derived
+	measure 'Avg Milestone Progress' = AVERAGE ( fct_Milestone[PercentComplete] )
+		formatString: "0.0%"
+
+	/// Replaces diagnostics - cannot join to Sage until fixed
+	measure 'DQ Projects Without Crosswalk' = CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )
+		formatString: "#,0"
+
+	/// Replaces diagnostics
+	measure 'DQ Cost Codes Not In Source' = CALCULATE ( COUNTROWS ( dim_CostCode ), dim_CostCode[IsInSource] = FALSE )
+		formatString: "#,0"
+
+	/// Replaces diagnostics - Excel defect #6, never flagged in the workbook
+	measure 'DQ Milestones With Inverted Dates' = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[HasDateInversion] = TRUE )
+		formatString: "#,0"
+
+	/// Replaces diagnostics - AR rows whose Sage job resolves to no project
+	measure 'DQ Unmatched Invoices' = CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )
+		formatString: "#,0"
+
+	column _placeholder
+		isHidden
+		dataType: string
+		summarizeBy: none
+		sourceColumn: _placeholder
+
+	partition _Measures = entity
+		mode: directLake
+		source
+			entityName: measures_anchor
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

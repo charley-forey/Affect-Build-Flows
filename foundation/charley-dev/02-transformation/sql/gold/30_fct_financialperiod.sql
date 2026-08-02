@@ -28,26 +28,26 @@ WITH months AS (
 ),
 budget AS (
     SELECT ProjectKey, MonthStart,
-           SUM(BudgetAmount)     AS BudgetAmount,
-           SUM(ForecastAmount)   AS ForecastAmount,
-           SUM(CommittedAmount)  AS CommittedAmount,
-           SUM(SpentToDate)      AS SpentToDate,
-           SUM(CostToComplete)   AS CostToComplete
+           CAST(SUM(BudgetAmount) AS DOUBLE)     AS BudgetAmount,
+           CAST(SUM(ForecastAmount) AS DOUBLE)   AS ForecastAmount,
+           CAST(SUM(CommittedAmount) AS DOUBLE)  AS CommittedAmount,
+           CAST(SUM(SpentToDate) AS DOUBLE)      AS SpentToDate,
+           CAST(SUM(CostToComplete) AS DOUBLE)   AS CostToComplete
     FROM fct_BudgetLine GROUP BY ProjectKey, MonthStart
 ),
 billing AS (
     SELECT ProjectKey, MonthStart,
-           SUM(Amount)      AS BilledThisPeriod,
-           SUM(AmountPaid)  AS PaidThisPeriod,
-           SUM(Balance)     AS ArOutstanding,
+           CAST(SUM(Amount) AS DOUBLE)      AS BilledThisPeriod,
+           CAST(SUM(AmountPaid) AS DOUBLE)  AS PaidThisPeriod,
+           CAST(SUM(Balance) AS DOUBLE)     AS ArOutstanding,
            COUNT(*)         AS InvoiceCount
     FROM fct_Invoice GROUP BY ProjectKey, MonthStart
 ),
 change_orders AS (
     SELECT ProjectKey, MonthStart,
-           SUM(Amount)                                          AS ChangeOrderValue,
-           SUM(CASE WHEN IsPending THEN Amount ELSE 0 END)      AS PendingChangeOrders,
-           MAX(CASE WHEN IsPending THEN DaysOpen END)           AS AgeOfOldestUnapprovedCO,
+           CAST(SUM(Amount) AS DOUBLE)                                          AS ChangeOrderValue,
+           CAST(SUM(CASE WHEN IsPending THEN Amount ELSE 0 END) AS DOUBLE)      AS PendingChangeOrders,
+           CAST(MAX(CASE WHEN IsPending THEN DaysOpen END) AS BIGINT)           AS AgeOfOldestUnapprovedCO,
            COUNT(*)                                             AS ChangeOrderCount
     FROM fct_ChangeOrder GROUP BY ProjectKey, MonthStart
 )
@@ -57,9 +57,9 @@ SELECT
     p.OriginalContractAmount                          AS OriginalContract,
     -- Current contract = original + approved change orders, which is what
     -- FINANCIALS!C4 holds and what every "% of contract" tile divides by.
-    COALESCE(p.OriginalContractAmount, 0)
-        + COALESCE(c.ChangeOrderValue, 0)
-        - COALESCE(c.PendingChangeOrders, 0)          AS CurrentContract,
+    CAST(COALESCE(p.OriginalContractAmount, 0)
+         + COALESCE(c.ChangeOrderValue, 0)
+         - COALESCE(c.PendingChangeOrders, 0) AS DOUBLE) AS CurrentContract,
     c.PendingChangeOrders,
     c.AgeOfOldestUnapprovedCO,
     c.ChangeOrderCount,
@@ -75,7 +75,7 @@ SELECT
     -- Buyout: committed / budgeted. FINANCIALS!D62 computes this from two hand-typed cells
     -- currently holding 200,000,000 and 190,000,001 against a $9.1M contract (defect #12).
     CASE WHEN COALESCE(b.BudgetAmount, 0) = 0 THEN NULL
-         ELSE b.CommittedAmount / b.BudgetAmount END  AS PercentBoughtOut
+         ELSE CAST(b.CommittedAmount / b.BudgetAmount AS DOUBLE) END AS PercentBoughtOut
 FROM months m
 LEFT JOIN dim_Project  p ON m.ProjectKey = p.ProjectKey
 LEFT JOIN budget       b ON m.ProjectKey = b.ProjectKey AND m.MonthStart = b.MonthStart

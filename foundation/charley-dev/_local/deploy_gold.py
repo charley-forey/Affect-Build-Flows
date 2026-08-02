@@ -210,6 +210,20 @@ print(f"  sentinel-date guard: checked 5 date columns")
 # as diagnosable as a failed statement. Without this the run just says "failed" again.
 results.append({"step": "verification", "ok": not bad,
                 "counts": counts, "findings": bad})
+
+# Publish the ACTUAL Spark schema. The semantic model's TMDL types must match what Fabric
+# really has; inferring them from the offline DuckDB build is unsound, because DuckDB
+# reads DECIMAL from a VALUES literal where Spark has DOUBLE. A declared type that does not
+# match makes DirectLake drop the whole table - silently, as a missing table.
+schema = {}
+for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
+                   "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
+                   "measures_anchor"]:
+    schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
+with open(f"{DIAG}/gold_schema.json", "w", encoding="utf-8") as fh:
+    json.dump(schema, fh, indent=1)
+print(f"  published schema for {len(schema)} tables")
+
 write_diag()
 
 if bad:

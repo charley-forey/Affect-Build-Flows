@@ -50,7 +50,10 @@ contracts AS (
     -- the project's total rather than whichever row happened to sort first.
     SELECT
         project_id,
-        SUM(contract_value)            AS contract_value,
+        -- Explicit DOUBLE: DuckDB widens SUM(DOUBLE) to DECIMAL while Spark keeps DOUBLE.
+        -- The semantic model infers its types from the offline build, so a difference here
+        -- makes the table fail to load in DirectLake - silently, as a missing table.
+        CAST(SUM(contract_value) AS DOUBLE) AS contract_value,
         MAX(retainage_pct)             AS retainage_pct,
         MIN(start_date)                AS contract_start,
         MAX(estimated_completion_date) AS contract_finish

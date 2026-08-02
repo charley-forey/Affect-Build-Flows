@@ -1,0 +1,70 @@
+table fct_ChangeOrder
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ChangeOrderKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ChangeOrderKey
+
+	column ContractId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ContractId
+
+	column ChangeOrderNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ChangeOrderNumber
+
+	column ChangeOrderType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ChangeOrderType
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column Amount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column CreatedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CreatedDate
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HasOutOfRangeDate
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasOutOfRangeDate
+
+	column IsPending
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsPending
+
+	column DaysOpen
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysOpen
+
+	partition fct_ChangeOrder = entity
+		mode: directLake
+		source
+			entityName: fct_changeorder
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

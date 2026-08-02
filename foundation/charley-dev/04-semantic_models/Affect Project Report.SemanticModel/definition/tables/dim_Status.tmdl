@@ -1,0 +1,48 @@
+table dim_Status
+
+	column StatusKey
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: StatusKey
+
+	column Domain
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Domain
+
+	column Code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Code
+
+	column Label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Label
+
+	column RAG
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RAG
+
+	column SortOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SortOrder
+
+	column HexColor
+		dataType: string
+		summarizeBy: none
+		sourceColumn: HexColor
+
+	column IsOpen
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsOpen
+
+	partition dim_Status = entity
+		mode: directLake
+		source
+			entityName: dim_status
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'
