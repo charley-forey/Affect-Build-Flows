@@ -1,0 +1,108 @@
+# Outbuild Datahub API endpoint registry.
+#
+# Same idea as the Procore registry: adding an endpoint is a YAML entry, not a notebook.
+# The shapes differ enough that Outbuild gets its own small client
+# (_local/extract_outbuild_local.py) rather than a fork of the Procore extractor:
+#
+#   auth        `authorizationToken: <token>` header - NOT `Authorization: Bearer`
+#   base        https://datahub.outbuild.com
+#   paging      ?page=N, 500 rows per page, sorted by id descending
+#   scope       organisation-wide; per-project variants exist but are not needed for a
+#               full pull, and would multiply the request count by the project count
+#
+# WHY THIS SOURCE MATTERS: Outbuild is the ONLY source of milestone data anywhere in the
+# estate. Procore's OAS has no milestone endpoint (powerbi/source-mapping.md:87), so
+# fct_Milestone and the entire Schedule page have no other path to real numbers.
+#
+# Paths verified against resources/outbuild/api/DatahubAPI/Endpoints/*.md - note several
+# are NOT the obvious slug: /rfvtypes and /roadblocktypes have no hyphen, while
+# /rfv-tasks and /roadblock-tasks do; Weekly Commitments is /commitments; User is /users.
+
+endpoints:
+  # ---- the milestone-bearing core -----------------------------------------
+  - name: projects
+    path: /projects
+    bronze_table: cd_bronze_outbuild_projects
+    key: id
+
+  # Dates, baseline dates, progress and is_critical. This is fct_Milestone's only source.
+  - name: activities
+    path: /activities
+    bronze_table: cd_bronze_outbuild_activities
+    key: id
+
+  - name: tasks
+    path: /tasks
+    bronze_table: cd_bronze_outbuild_tasks
+    key: id
+
+  # Weekly commitments - the lookahead plan. Feeds "critical missed starts", which the
+  # workbook computes by hand.
+  - name: weekly_commitments
+    path: /commitments
+    bronze_table: cd_bronze_outbuild_weekly_commitments
+    key: id
+
+  # ---- constraints: why a task did not start ------------------------------
+  - name: roadblocks
+    path: /roadblocks
+    bronze_table: cd_bronze_outbuild_roadblocks
+    key: id
+
+  - name: roadblock_tasks
+    path: /roadblock-tasks
+    bronze_table: cd_bronze_outbuild_roadblock_tasks
+    key: id
+
+  - name: roadblock_types
+    path: /roadblocktypes
+    bronze_table: cd_bronze_outbuild_roadblock_types
+    key: id
+
+  # RFV = reasons for variance. The recorded cause when a commitment is missed - the
+  # closest thing to a root-cause field anywhere in the estate.
+  - name: rfvs
+    path: /rfvs
+    bronze_table: cd_bronze_outbuild_rfvs
+    key: id
+
+  - name: rfv_tasks
+    path: /rfv-tasks
+    bronze_table: cd_bronze_outbuild_rfv_tasks
+    key: id
+
+  - name: rfv_types
+    path: /rfvtypes
+    bronze_table: cd_bronze_outbuild_rfv_types
+    key: id
+
+  - name: schedule_impact_requests
+    path: /scheduleimpactrequests
+    bronze_table: cd_bronze_outbuild_schedule_impact_requests
+    key: id
+
+  # ---- reference ----------------------------------------------------------
+  - name: companies
+    path: /companies
+    bronze_table: cd_bronze_outbuild_companies
+    key: id
+
+  - name: users
+    path: /users
+    bronze_table: cd_bronze_outbuild_users
+    key: id
+
+  - name: tags
+    path: /tags
+    bronze_table: cd_bronze_outbuild_tags
+    key: id
+
+  - name: activity_tags
+    path: /activitytags
+    bronze_table: cd_bronze_outbuild_activity_tags
+    key: id
+
+  - name: task_tags
+    path: /tasktags
+    bronze_table: cd_bronze_outbuild_task_tags
+    key: id
