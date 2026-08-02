@@ -356,6 +356,44 @@ def main() -> int:
     assert abs(sum(float(w) for w in lookup.values()) - 1.0) < 1e-9
     CHECKS.append("scorecard weights still sum to exactly 1.00")
 
+    # THE AUDIT TABLE'S CLAIM. The Scorecard page shows a contribution per category and
+    # invites the reader to add them up. If that column does not sum to the headline
+    # number, the page is worse than no page - it looks auditable and disagrees.
+    #
+    # Both come from the same SWITCH, so this asserts the per-category measures resolve
+    # the same way inside a row context as they do inside the total's ALL() iteration.
+    audit = dax(model["id"], tok, """
+        EVALUATE
+        ROW( "Summed", SUMX( ALL( dim_ScorecardWeight ), [Category Weighted] ) )
+    """)[0]["[Summed]"]
+    assert abs(float(audit) - float(totals["[Scorecard]"])) < 0.001, (
+        f"audit table sums to {audit}, headline says {totals['[Scorecard]']}")
+    CHECKS.append("[Category Weighted] sums to [Project Scorecard] - the audit table adds up")
+
+    # Every category resolves a band label, including the unmeasured ones. A blank here
+    # would render an empty cell that reads as "zero" rather than "no data".
+    bands = dax(model["id"], tok, """
+        EVALUATE SUMMARIZECOLUMNS(
+            dim_ScorecardWeight[CategoryName], "Band", [Category Band] )
+    """)
+    blank_bands = [r["dim_ScorecardWeight[CategoryName]"] for r in bands if not r.get("[Band]")]
+    assert not blank_bands, f"categories with no band label: {blank_bands}"
+    CHECKS.append(f"all {len(bands)} categories resolve a band label, measured or not")
+
+    # The S-curve. Cumulative at the end of time must equal the sum of the period movement
+    # over all time - if it does not, the accumulation window is wrong and every point on
+    # the curve is wrong with it.
+    curve = dax(model["id"], tok, """
+        EVALUATE
+        ROW(
+            "Cumulative", CALCULATE( [Billed Cumulative], ALL( dim_Date ) ),
+            "Movement",   CALCULATE( [Billed This Period], ALL( dim_Date ) )
+        )
+    """)[0]
+    assert abs(float(curve["[Cumulative]"] or 0) - float(curve["[Movement]"] or 0)) < 1.0, (
+        f"S-curve endpoint {curve['[Cumulative]']} != total movement {curve['[Movement]']}")
+    CHECKS.append("[Billed Cumulative] ends at the total of [Billed This Period]")
+
     print()
     for label in CHECKS:
         print(f"  ok  {label}")
