@@ -1,12 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "2c5874deb488a8f2597c",
+  "name": "0f2e275eefbf06dc4a24",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 664,
     "z": 0,
-    "width": 1100,
-    "height": 44
+    "width": 1240,
+    "height": 78
   },
   "visual": {
     "visualType": "textbox",
@@ -18,7 +18,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Surfacing bad data rather than letting it flow silently into a rollup. This page is how the Excel's defects would have been caught.  Status is always shown as TEXT, never colour alone - around 8% of men have some colour-vision deficiency, and this report goes to leadership.",
+                    "value": "WHY THIS DIFFERS FROM THE 0.59 IN THE WORKBOOK.  Two scoring bands are wrong there: Schedule Performance uses 5/10 where the data is a fraction (0.05/0.10), so it always scored 3; Completion Variance never matched any band, so it always scored 0. On the sample project those two errors cancel exactly - which is why nobody noticed. On a project where they do not cancel, the workbook's score is wrong by the difference.  The bands here are corrected (dim_ScorecardBand). Affect decides when to switch the number reported to leadership.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",

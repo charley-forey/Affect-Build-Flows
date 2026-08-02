@@ -201,8 +201,10 @@ def page_data_quality() -> tuple[str, list[dict]]:
         textbox(p, "title", "Data Quality", 20, 16, 600, 44),
         textbox(p, "note",
                 "Surfacing bad data rather than letting it flow silently into a rollup. "
-                "This page is how the Excel's defects would have been caught.",
-                20, 56, 900, 30, size=10, color=MUTED),
+                "This page is how the Excel's defects would have been caught.  Status is "
+                "always shown as TEXT, never colour alone - around 8% of men have some "
+                "colour-vision deficiency, and this report goes to leadership.",
+                20, 56, 1100, 44, size=10, color=MUTED),
         card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 110, 260, 130),
         card(p, "dq_codes", "DQ Cost Codes Not In Source", 296, 110, 260, 130),
         card(p, "dq_inv", "DQ Milestones With Inverted Dates", 572, 110, 260, 130),
@@ -245,6 +247,26 @@ def page_scorecard() -> tuple[str, list[dict]]:
                {"Values": [column("dim_ScorecardWeight", "CategoryName"),
                            column("dim_ScorecardWeight", "Weight")]},
                title="Category weights (sum to 1.00)"),
+        # THE TRUST PARAGRAPH. Affect reports 0.59 to leadership today and this model does
+        # not reproduce it. Shipping a different number with no explanation is how a new
+        # system gets labelled wrong; showing the arithmetic is how it gets adopted.
+        #
+        # It is TEXT, not a measure, because the workbook's number cannot be recomputed
+        # from correct bands - the defects are wrong band SCORES multiplied by category
+        # weights, so the error varies per project and only happens to cancel on this one.
+        # A measure claiming to reproduce it would have to be arithmetic that is always
+        # zero, which reads as confirmation the two agree.
+        textbox(p, "correction",
+                "WHY THIS DIFFERS FROM THE 0.59 IN THE WORKBOOK.  Two scoring bands are "
+                "wrong there: Schedule Performance uses 5/10 where the data is a fraction "
+                "(0.05/0.10), so it always scored 3; Completion Variance never matched any "
+                "band, so it always scored 0. On the sample project those two errors cancel "
+                "exactly - which is why nobody noticed. On a project where they do not "
+                "cancel, the workbook's score is wrong by the difference.  The bands here "
+                "are corrected (dim_ScorecardBand). Affect decides when to switch the "
+                "number reported to leadership.",
+                20, 664, 1240, 78, size=10, color=MUTED),
+
         visual(p, "bands", "tableEx", 660, 260, 600, 390,
                {"Values": [column("dim_ScorecardBand", "CategoryKey"),
                            column("dim_ScorecardBand", "Score"),
