@@ -23,6 +23,7 @@ SUITES = [
     ("watermark self-check", LIB / "watermark.py"),
     ("procore_scope self-check", LIB / "procore_scope.py"),
     ("gold seeds", TESTS / "test_seeds.py"),
+    ("bronze to silver", TESTS / "test_silver.py"),
     ("gold dimensions and facts", TESTS / "test_gold.py"),
     ("extractor compatibility", TESTS / "test_extractor_compat.py"),
 ]

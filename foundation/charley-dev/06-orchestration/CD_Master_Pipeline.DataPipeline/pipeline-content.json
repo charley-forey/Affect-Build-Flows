@@ -1,0 +1,92 @@
+{
+  "properties": {
+    "activities": [
+      {
+        "name": "Extract Procore",
+        "type": "TridentNotebook",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
+        "name": "Seed Gold Dimensions",
+        "type": "TridentNotebook",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "4fb4f05d-da18-4348-a0a6-dff17742ff77",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
+        "name": "Bronze To Silver",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Extract Procore",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "28860d22-6cca-4783-96fe-727f8354998c",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
+        "name": "Build Gold",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Bronze To Silver",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "Seed Gold Dimensions",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "64cb0737-9928-4964-8bd5-965e0e2f19b5",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      }
+    ],
+    "annotations": [],
+    "description": "charley-dev medallion: extract -> silver -> gold. Fails the run on any stage failure rather than rebuilding over stale data."
+  }
+}
