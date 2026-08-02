@@ -123,6 +123,93 @@ current reporting distinguishes them. **This is a question for Affect, not a dat
 
 ---
 
+## Are we pulling from Sage? No. Here is exactly what feeds the dashboard
+
+This is the question to be clear about before the Affect call, because the honest answer has
+two halves: **Sage data is on the dashboard, and we are not the ones pulling it.**
+
+| Source | Who pulls it | Into | Latest data | Ours? |
+|---|---|---|---|---|
+| **Procore** | **us** — 42-endpoint registry, run locally, landed as NDJSON | `CD_Bronze` → `CD_Silver` | 2026-08-02 04:44 | **yes** |
+| **Sage 100** | Rebecca's `Build_Sage_Test` dataflow | existing `Silver_Lakehouse` | invoice 2026-07-20 | no |
+| **Outbuild** | Rebecca's `Outbuild_activities` dataflow | existing `Silver_Lakehouse` | updated 2026-07-14 | no |
+
+`01_source_views_cd.sql` points 18 of its views at our own `CD_Silver` and leaves 8 reading
+the existing warehouse — deliberately, per-view rather than all-or-nothing, because a view
+pointing at the old source is a smaller problem than one pointing at an empty new one. The
+three that matter:
+
+- `sv_ar_invoices` → Sage AR. **All 117 rows of `fct_Invoice` come from here.**
+- `sv_outbuild_activities` → Outbuild. **All 52 rows of `fct_Milestone` come from here.**
+- `sv_vendors` → carries `sage_vendor_id`, which Procore does not put on a vendor record.
+
+**So if Rebecca's dataflows stop, our dashboard's financial and schedule data stops with
+them** — and it would not error, it would just quietly stop moving. Nothing currently alerts
+on that. The Sage data is already ~2 weeks old and Outbuild ~3 weeks old; neither dataflow
+appears to have run since mid-July.
+
+There is also not much of it. 117 revenue invoices and **13 open AR rows** for a $35M
+portfolio is thin — worth asking Affect whether that is the real shape of their AR or whether
+the existing dataflow is filtering most of it away. It does filter: `Invoice Balance <> 0`.
+
+### What Sage actually needs — and it is not Key Vault
+
+**There is no hard-coded Sage credential to find.** Sage 100 is on-premises; the dataflow
+connects via `Sql.Database("NC-AFFECT-1\SAGE100CON", "Affect Group")` through the
+**on-premises data gateway**, and the credential lives in the gateway's connection
+configuration, not in any notebook. That is the correct design, and it is recorded as F3 in
+[`security-findings.md`](security-findings.md).
+
+The one hard-coded credential in the estate is **Procore** (F1, in the live `procore_auth`
+notebook) — and that path is already in use: extraction runs locally with it and lands files.
+Procore data is flowing today because of it.
+
+Which means:
+
+> **Sage is not blocked on the Azure subscription or on Key Vault.** It is blocked on
+> permission to bind `CD_Sage_Ingest` to a gateway connection that **already exists and
+> already works**, because `Build_Sage_Test` uses it every time it runs.
+
+Key Vault is needed to move *Procore* extraction off a laptop and into Fabric. Sage needs a
+connection binding. They are separate asks with separate owners, and conflating them has been
+costing us the one that could have been done weeks ago.
+
+**Outbuild is the genuine blocker** — `OUTBUILD_API_TOKEN` has never been issued, and no
+workaround exists. It is also the highest-value gap: 17 of 19 projects have no milestones, and
+Outbuild is the only milestone source anywhere.
+
+### What to ask for on the call
+
+1. **Bind `CD_Sage_Ingest` to the existing gateway connection.** Needs someone with
+   permission on that connection — not a subscription. This is the single highest-value ask
+   and it can be done the same day.
+2. **Issue `OUTBUILD_API_TOKEN`.** Unblocks milestones for 17 projects.
+3. **Rotate the Procore credential** (F1) and put the new pair in Key Vault once the
+   subscription lands. Rotation should not wait for the vault — the old pair has been
+   readable by anyone with Viewer on the workspace.
+4. Confirm the gateway account is **read-only** on the Sage database.
+5. Ask whether 13 open AR rows is real, or a filter artefact.
+
+---
+
+## Every field on the report resolves — now
+
+The Project Detail page rendered "There's something wrong with one or more fields". One
+visual, two broken references: `fct_ChangeOrder[Status]` (the column has always been
+`StatusLabel`) and `[Approved Change Orders]`, a measure the table asked for by name that had
+never been written.
+
+Neither failed the deploy, the refresh, or any log. **A visual bound to a name the model does
+not have is invisible to everything except a person looking at that page.** Both are fixed,
+and `test_report.py` now resolves all 138 field references against the model offline, so this
+class of defect cannot reach the report again.
+
+If a page still looks wrong, it is almost certainly the *other* failure mode — a measure that
+resolves fine and returns BLANK because its source data does not exist. Those are listed
+under *Scorecard coverage* and *Data quality* below, and they are access problems, not bugs.
+
+---
+
 ## Source control: three branches, none merged to main
 
 | Branch | State |
@@ -264,7 +351,11 @@ regression is back.
 
 ## Recommended order
 
+0. **Bind `CD_Sage_Ingest` to the existing gateway connection.** Highest value, needs no
+   subscription, and can be done the day someone with connection permission says yes.
 1. ~~Deploy the change-order fix.~~ **Done** — deployed and verified 2026-08-02 22:56.
+1b. ~~Fix the two broken fields on Project Detail.~~ **Done** — deployed, and all 138 report
+   field references are now checked offline on every run.
 2. Fix the DQ persist gap: create `cd_dq_results`, move `_persist_rejects` out of the shared
    `try`, and put the persist outcome on the heartbeat. Until then a green gate does not
    mean the Data Quality page is current.
