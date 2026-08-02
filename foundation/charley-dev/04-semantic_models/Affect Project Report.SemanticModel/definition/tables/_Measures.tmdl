@@ -171,11 +171,11 @@ table _Measures
 	measure 'Profitability Code' = SELECTEDVALUE ( man_Flags[ProfitabilityCode] )
 
 	/// Replaces SAFETY!E - Procore /incidents, in the registry but not yet ingested
-	measure 'Recordable Incidents' = SUM ( man_SafetyMonthly[RecordableIncidents] )
+	measure 'Recordable Incidents' = COALESCE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), 0 )
 		formatString: "#,0"
 
 	/// Replaces SAFETY!D - Sage payroll / ADP / Procore timecards, undecided
-	measure 'Hours Worked' = SUM ( man_SafetyMonthly[HoursWorked] )
+	measure 'Hours Worked' = COALESCE ( SUM ( fct_SafetyMonthly[HoursWorked] ), 0 )
 		formatString: "#,0"
 
 	/// Replaces Procore /observations/items - was QUALITY!D, typed by hand

@@ -53,7 +53,7 @@ MODEL_TABLES = [
     "dim_Date", "dim_Project", "dim_Vendor", "dim_CostCode", "dim_Trade", "dim_Status",
     "dim_Owner", "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
     "fct_BudgetLine", "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal",
-    "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem",
+    "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem", "fct_SafetyMonthly",
     # The ~40% that lives nowhere but the spreadsheet. Empty today; bound now so the model
     # and the scorecard are complete in shape before a single row is entered.
     "man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
@@ -76,6 +76,8 @@ RELATIONSHIPS = [
     ("fct_RfiSubmittal", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_QualityItem", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_QualityItem", "MonthStart", "dim_Date", "Date"),
+    ("fct_SafetyMonthly", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_SafetyMonthly", "MonthStart", "dim_Date", "Date"),
     ("fct_RfiSubmittal", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_RfiSubmittal", "MonthStart", "dim_Date", "Date"),
     ("fct_Milestone", "ProjectKey", "dim_Project", "ProjectKey"),

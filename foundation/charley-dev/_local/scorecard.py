@@ -127,13 +127,16 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Recordable Incidents",
-            "SUM ( man_SafetyMonthly[RecordableIncidents] )",
+            "COALESCE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), 0 )",
             '"#,0"',
             "SAFETY!E - Procore /incidents, in the registry but not yet ingested",
         ),
         (
             "Hours Worked",
-            "SUM ( man_SafetyMonthly[HoursWorked] )",
+            # From the FACT now: 911 project-days of Procore manpower logs, summed. Was
+            # man_SafetyMonthly, the hand-typed table that is still empty - so this
+            # category scored BLANK and dragged [Scorecard Coverage %] down with it.
+            "COALESCE ( SUM ( fct_SafetyMonthly[HoursWorked] ), 0 )",
             '"#,0"',
             "SAFETY!D - Sage payroll / ADP / Procore timecards, undecided",
         ),

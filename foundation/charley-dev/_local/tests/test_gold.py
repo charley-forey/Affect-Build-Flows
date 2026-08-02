@@ -316,13 +316,40 @@ def test_fct_qualityitem(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE CostCodeKey IS NULL") == 3
     check("items without a cost code are kept, not dropped")
 
+
+def test_fct_safetymonthly(con) -> None:
+    """Hours worked and incidents per project-month - SAFETY!Table1, typed by hand today.
+
+    Hours matter as much as incidents: a count without them cannot be compared between a
+    12-person job and a 200-person one, which is the whole reason TRIR exists.
+    """
+    # P1 has hours + incidents; P2 has an incident and no manpower log. A FULL OUTER JOIN
+    # keeps both - an inner join would drop P2 entirely and understate the incident count.
+    assert one(con, "SELECT COUNT(*) FROM fct_SafetyMonthly") == 2
+    assert one(con, "SELECT HasNoManpowerLog FROM fct_SafetyMonthly WHERE ProjectKey='P2'") is True
+    check("fct_SafetyMonthly keeps months with incidents but no logged hours")
+
+    assert one(con, "SELECT HoursWorked FROM fct_SafetyMonthly WHERE ProjectKey='P1'") == 1000.0
+    assert one(con, "SELECT IncidentCount FROM fct_SafetyMonthly WHERE ProjectKey='P1'") == 2
+    assert one(con, "SELECT RecordableIncidents FROM fct_SafetyMonthly WHERE ProjectKey='P1'") == 1
+    check("hours sum across days; recordables are distinguished from all incidents")
+
+    # TRIR = recordables per 200,000 hours. 1 recordable / 1,000 hours = 200.
+    assert one(con, "SELECT ROUND(TRIR, 1) FROM fct_SafetyMonthly WHERE ProjectKey='P1'") == 200.0
+    check("TRIR uses the OSHA 200,000-hour base")
+
+    # NULL, not zero, with no hours. A zero would read as a perfect safety record on a
+    # project that simply logged nothing.
+    assert one(con, "SELECT TRIR FROM fct_SafetyMonthly WHERE ProjectKey='P2'") is None
+    check("TRIR is NULL when there are no hours, never a misleading zero")
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity, test_crosswalks, test_fct_qualityitem):
+        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

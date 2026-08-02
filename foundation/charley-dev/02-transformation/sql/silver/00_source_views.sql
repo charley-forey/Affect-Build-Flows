@@ -229,3 +229,16 @@ SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS punch_item_id
        CAST(NULL AS DATE) AS created_date, CAST(NULL AS DATE) AS due_date,
        CAST(NULL AS DATE) AS closed_date
 WHERE 1=0;
+
+-- Empty under this source: no incident or manpower data exists in the existing warehouse.
+-- Declared with real types so gold/26 runs unchanged under both sources.
+CREATE OR REPLACE TEMPORARY VIEW sv_incidents AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS incident_id,
+       CAST(NULL AS STRING) AS title, CAST(NULL AS STRING) AS status_label,
+       CAST(NULL AS BOOLEAN) AS is_recordable, CAST(NULL AS DATE) AS event_date
+WHERE 1=0;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_manpower_daily AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS DATE) AS log_date,
+       CAST(NULL AS DOUBLE) AS total_hours, CAST(NULL AS DOUBLE) AS total_workers
+WHERE 1=0;

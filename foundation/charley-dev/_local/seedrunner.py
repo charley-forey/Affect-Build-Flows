@@ -191,6 +191,19 @@ SOURCE_FIXTURES = (
            status_label, priority, trade, manager_name, cost_code_id,
            created_date, due_date, closed_date)""",
 
+    """CREATE OR REPLACE VIEW sv_manpower_daily AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 800.0, 100.0),
+        ('P1', DATE '2025-05-02', 200.0,  25.0)
+    ) AS t(project_id, log_date, total_hours, total_workers)""",
+
+    # P2 has an incident and NO manpower log - the case the FULL OUTER JOIN preserves and
+    # an inner join would silently drop.
+    """CREATE OR REPLACE VIEW sv_incidents AS SELECT * FROM (VALUES
+        ('P1','I1','Cut hand','CLOSED', TRUE,  DATE '2025-05-10'),
+        ('P1','I2','Near miss','CLOSED', FALSE, DATE '2025-05-12'),
+        ('P2','I3','Orphan month','OPEN', TRUE, DATE '2025-05-20')
+    ) AS t(project_id, incident_id, title, status_label, is_recordable, event_date)""",
+
     """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
         ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress'),
         ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress'),

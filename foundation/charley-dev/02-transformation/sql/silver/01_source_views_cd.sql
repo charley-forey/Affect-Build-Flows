@@ -189,3 +189,11 @@ SELECT project_id, punch_item_id, punch_item_number, title, punch_item_type,
        status_label, priority, trade, manager_name, cost_code_id,
        created_date, due_date, closed_date
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_punch_items`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_incidents AS
+SELECT project_id, incident_id, title, status_label, is_recordable, event_date
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_incidents`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_manpower_daily AS
+SELECT project_id, log_date, total_hours, total_workers
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_manpower_daily`;
