@@ -52,9 +52,14 @@ READ_ROOT = REPO.resolve()
 DEPLOY_SCRIPTS = {
     "deploy.py", "deploy_seeds.py", "deploy_gold.py", "deploy_model.py",
     "deploy_report.py", "deploy_ingestion.py", "deploy_silver.py",
-    "deploy_pipeline.py", "validate_model.py",
+    "deploy_pipeline.py", "deploy_landing.py", "validate_model.py",
 }
-DEPLOY_FLAGS = {"--apply", "--run", "--verify", "--recreate", "--dry-run"}
+# extract_procore_local.py and setup_keyvault.py are DELIBERATELY absent. Both read the
+# .env, and an agent that can run them can print a credential into its own transcript -
+# which is the one thing read_file's secret guard exists to prevent. A human runs those two.
+DEPLOY_FLAGS = {"--apply", "--run", "--verify", "--recreate", "--dry-run",
+                # deploy_gold.py --source {existing,cd} - the source migration switch.
+                "--source", "existing", "cd"}
 
 # Substring match, lowercased. Deliberately broad - a false refusal costs one turn, a
 # credential in a transcript costs a rotation.
@@ -390,6 +395,12 @@ def _selfcheck() -> None:
     assert err and "not allowed" in out, out
     out, err = dispatch(live2, "deploy", {"script": "deploy.py", "flags": ["--verify"]})
     assert not err and "DRY RUN" in out, out
+
+    # The two credential-reading scripts must stay unreachable, or the secret guard on
+    # read_file is decorative - an agent could just run the extractor and read the output.
+    for script in ("extract_procore_local.py", "setup_keyvault.py"):
+        out, err = dispatch(live2, "deploy", {"script": script})
+        assert err and "not an allow-listed" in out, f"{script} is reachable: {out}"
 
     # 5. Every advertised tool has a handler, and vice versa.
     assert {s["name"] for s in SCHEMAS} == set(HANDLERS), "schema/handler mismatch"
