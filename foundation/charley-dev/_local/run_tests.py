@@ -16,12 +16,16 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 LIB = HERE.parent / "00-platform" / "lib"
 TESTS = HERE / "tests"
+AGENTS = HERE / "agents"
 
 SUITES = [
     ("fabric_common self-check", LIB / "fabric_common.py"),
     ("dq self-check", LIB / "dq.py"),
     ("watermark self-check", LIB / "watermark.py"),
     ("procore_scope self-check", LIB / "procore_scope.py"),
+    # The agent gates guard autonomous Fabric deploys, so they are harness-critical: if a
+    # gate stops firing, everything downstream of it is running unprotected.
+    ("agent gates", AGENTS / "tools.py"),
     ("gold seeds", TESTS / "test_seeds.py"),
     ("bronze to silver", TESTS / "test_silver.py"),
     ("gold dimensions and facts", TESTS / "test_gold.py"),
