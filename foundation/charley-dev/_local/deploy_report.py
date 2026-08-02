@@ -398,10 +398,66 @@ DRILLTHROUGH = {
     "projectdetail": ("dim_Project", "ProjectName"),
 }
 
+
+def page_safety_quality() -> tuple[str, list[dict]]:
+    """SAFETY!Table1 and QUALITY!Table18 - both typed by hand every month today.
+
+    Every number here now comes from Procore records rather than a person's memory of them,
+    which also retires workbook defect #2: QUALITY!D5:D6 read SAFETY orientations, so the
+    quality tab has been reporting a safety number. A count sourced from the observation
+    records cannot make that mistake.
+    """
+    p = "safetyquality"
+    return p, [
+        textbox(p, "title", "Safety & Quality", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Every figure is counted from Procore records - observations, punch items, "
+                "incidents and manpower logs - rather than typed each month. Status is "
+                "shown as text, never colour alone.",
+                20, 56, 1100, 30, size=10, color=MUTED),
+
+        # SAFETY. Hours first: an incident count without hours cannot be compared between a
+        # 12-person job and a 200-person one, which is the entire reason TRIR exists.
+        textbox(p, "safety_h", "Safety", 20, 100, 300, 28, size=13),
+        card(p, "sq_hours", "Hours Worked", 20, 132, 250, 110),
+        card(p, "sq_rec", "Recordable Incidents", 286, 132, 250, 110),
+
+        # QUALITY.
+        textbox(p, "quality_h", "Quality", 560, 100, 300, 28, size=13),
+        card(p, "sq_obs", "Observations", 560, 132, 230, 110),
+        card(p, "sq_punch", "Punchlist Items", 806, 132, 230, 110),
+        card(p, "sq_open", "Open Quality Items", 1052, 132, 208, 110),
+
+        # Open and past due are the actionable pair - the second is a subset of the first,
+        # and the gap between them is what a PM does something about this week.
+        card(p, "sq_pastdue", "Quality Items Past Due", 20, 262, 250, 100),
+        card(p, "sq_avgpast", "Avg Days Past Due", 286, 262, 250, 100),
+        card(p, "sq_avgclose", "Avg Observation Days Open", 552, 262, 250, 100),
+
+        visual(p, "sq_by_type", "columnChart", 20, 382, 520, 300,
+               {"Category": [column("fct_QualityItem", "ItemType")],
+                "Y": [measure("Open Quality Items")]},
+               title="Open items by type"),
+
+        visual(p, "sq_by_trade", "barChart", 560, 382, 340, 300,
+               {"Category": [column("fct_QualityItem", "Trade")],
+                "Y": [measure("Open Quality Items")]},
+               title="Open items by trade"),
+
+        # The list a PM actually works from: what is late, and how late.
+        visual(p, "sq_overdue", "tableEx", 920, 382, 340, 300,
+               {"Values": [column("fct_QualityItem", "Title"),
+                           column("fct_QualityItem", "AssignedTo"),
+                           column("fct_QualityItem", "DaysPastDue")]},
+               title="Past due, by days late"),
+    ]
+
+
 PAGES = [
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
     ("Schedule & Quality", page_schedule_quality, False),
+    ("Safety & Quality", page_safety_quality, False),
     ("Scorecard", page_scorecard, False),
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target

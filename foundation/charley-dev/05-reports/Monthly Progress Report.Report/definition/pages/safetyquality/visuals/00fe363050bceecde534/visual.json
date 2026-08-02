@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "00fe363050bceecde534",
+  "position": {
+    "x": 920,
+    "y": 382,
+    "z": 0,
+    "width": 340,
+    "height": 300
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QualityItem"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "fct_QualityItem.Title",
+              "nativeQueryRef": "Title"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QualityItem"
+                    }
+                  },
+                  "Property": "AssignedTo"
+                }
+              },
+              "queryRef": "fct_QualityItem.AssignedTo",
+              "nativeQueryRef": "AssignedTo"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QualityItem"
+                    }
+                  },
+                  "Property": "DaysPastDue"
+                }
+              },
+              "queryRef": "fct_QualityItem.DaysPastDue",
+              "nativeQueryRef": "DaysPastDue"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Past due, by days late'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
