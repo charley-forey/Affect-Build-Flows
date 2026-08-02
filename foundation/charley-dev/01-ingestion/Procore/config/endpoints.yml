@@ -145,6 +145,19 @@ endpoints:
       endpoint: budget_views
       field: id
 
+  # Prime contract change orders. Procore exposes these as a CHILD of the prime contract,
+  # not as a project-level list - which is why a project-scoped guess 404s. This is the
+  # 1,812-row fact behind fct_ChangeOrder and [Contract Growth %]; silver reads
+  # cd_bronze_procore_prime_change_orders and produced 0 rows until this existed.
+  - name: prime_change_orders
+    path: /rest/v1.0/prime_contracts/{parent_id}/change_orders
+    scope: parent
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_prime_change_orders
+    parent:
+      endpoint: prime_contracts
+      field: id
+
   - name: direct_costs
     path: /rest/v1.1/projects/{project_id}/direct_costs
     scope: project

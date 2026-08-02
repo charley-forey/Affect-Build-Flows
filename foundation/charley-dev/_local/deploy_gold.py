@@ -30,7 +30,24 @@ from make_notebooks import cell, notebook  # noqa: E402
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
 GOLD_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "gold"
-SOURCE_VIEWS = CHARLEY_DEV / "02-transformation" / "sql" / "silver" / "00_source_views.sql"
+SILVER_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
+
+# WHICH SILVER FEEDS GOLD. This choice is the entire source migration - the gold files,
+# measures and report visuals are identical either way, which is why source naming was
+# isolated in one file instead of spread across nine.
+#
+#   existing  read Rebecca's Silver_Lakehouse (how the model was validated before we had
+#             Procore credentials)
+#   cd        read OUR CD_Silver_Lakehouse, fed by our own Procore ingestion
+#
+# `cd` is not a clean break: three views in it still read the existing warehouse, for the
+# sources Procore does not hold (Sage AR, Outbuild milestones, the Sage vendor crosswalk).
+# The file says which and why.
+SOURCES = {
+    "existing": SILVER_SQL / "00_source_views.sql",
+    "cd": SILVER_SQL / "01_source_views_cd.sql",
+}
+DEFAULT_SOURCE = "existing"
 
 NOTEBOOK_NAME = "cd_30_build_gold"
 
@@ -38,6 +55,14 @@ NOTEBOOK_NAME = "cd_30_build_gold"
 SILVER_SOURCE_ID = "2e05dca7-ff80-4646-b711-6681dd4993e1"
 SILVER_ABFSS = (
     f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/{SILVER_SOURCE_ID}/Tables/dbo"
+)
+
+# Ours. Read from fabric_ids.json rather than hardcoded, because unlike Rebecca's it can be
+# dropped and recreated (enableSchemas is creation-only) and the id changes when it is.
+CD_SILVER_ABFSS = (
+    f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/"
+    f"{json.loads((HERE / 'fabric_ids.json').read_text())['CD_Silver_Lakehouse']['id']}"
+    f"/Tables/dbo"
 )
 
 # Dimensions, facts and the manual tables. The 0* seed files are built by cd_20_seed_gold.
@@ -53,7 +78,7 @@ def gold_files() -> list[Path]:
     return sorted(p for p in GOLD_SQL.glob("*.sql") if p.name[0] in GOLD_PREFIXES)
 
 
-def build_notebook() -> dict:
+def build_notebook(source_views: Path) -> dict:
     cells = [
         cell(
             f"""
@@ -126,7 +151,9 @@ def write_diag():
         )
     )
 
-    view_sql = SOURCE_VIEWS.read_text(encoding="utf-8").replace("{SILVER_ABFSS}", SILVER_ABFSS)
+    view_sql = (source_views.read_text(encoding="utf-8")
+                .replace("{SILVER_ABFSS}", SILVER_ABFSS)
+                .replace("{CD_SILVER_ABFSS}", CD_SILVER_ABFSS))
     body = "\n".join(
         f"run_sql({json.dumps('view:' + str(i))}, {json.dumps(s)})\n"
         for i, s in enumerate(statements(view_sql))
@@ -327,7 +354,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--diag", action="store_true", help="download the last run's diagnostics")
+    parser.add_argument("--source", choices=sorted(SOURCES), default=DEFAULT_SOURCE,
+                        help="which silver feeds gold (default: %(default)s)")
     args = parser.parse_args()
+
+    source_views = SOURCES[args.source]
+    print(f"source: {args.source} ({source_views.name})")
 
     if args.diag:
         report_diagnostics(ds.lakehouse()["id"])
@@ -340,7 +372,7 @@ def main() -> int:
     print(f"reading source: Silver_Lakehouse {SILVER_SOURCE_ID} (read-only)")
     print(f"{len(files)} gold file(s): {', '.join(p.name for p in files)}")
 
-    nb = ds.attach(build_notebook(), lh, dp.WORKSPACE_ID)
+    nb = ds.attach(build_notebook(source_views), lh, dp.WORKSPACE_ID)
     existing = ds.find_item(tok, NOTEBOOK_NAME, "Notebook")
     print(f"would {'update' if existing else 'create'} {NOTEBOOK_NAME} ({len(nb['cells'])} cells) and run it")
 
