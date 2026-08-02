@@ -1,107 +1,165 @@
 # Procore ingestion
 
-Deployed and running in Fabric as `cd_01_extract_procore`, bound to `CD_Bronze_Lakehouse`.
-It gets as far as authentication and stops there: **no Procore credentials exist in the
-environment or in Key Vault.** That is the only thing missing.
+**Live against Affect's production tenant** (`api.procore.com`, Affect Build LLC,
+19 active projects) as of 2026-08-02.
 
-## Verified working, in Fabric
-
-The run reached `load_settings`, which means everything before it succeeded:
-
-| Step | Status |
-|---|---|
-| Shared library loads from `Files/lib/` | ok — 4 modules, 36,831 bytes |
-| Registry loads from `Files/config/endpoints.yml` | ok |
-| Registry **validates** — no duplicate names or tables, no missing parent, no cycle | ok |
-| Resolution order computed — parents before children | ok |
-| `load_settings()` — read the credentials | **fails** |
+The pipeline is split in two, and the split is deliberate:
 
 ```
-RuntimeError: Secret 'PROCORE_CLIENT_ID' not found. Set it in Key Vault (and
-PROCORE_KEYVAULT_URL) or as an environment variable.
+.env (local)  ->  extract_procore_local.py  ->  Procore REST
+                                                     |
+                              CD_Bronze_Lakehouse/Files/_landing/<batch>/*.jsonl
+                                                     |
+                                    cd_05_land_to_bronze   (no credentials)
+                                                     v
+                                          cd_bronze_procore_*  (Delta, MERGE)
 ```
 
-Captured in `Files/_diag/ingest_run.json`, which also records which secrets were visible:
-all five absent. Retrieve it with:
+## Why it is split
+
+`cd_01_extract_procore` is the real, scheduled ingestion and it runs inside Fabric. It needs
+a Procore secret, and the only safe way to give a Fabric notebook a secret is Key Vault —
+which needs an Azure subscription this tenant does not currently have (`az account list`
+returns a tenant-level account with no subscription). Every alternative inside Fabric — a
+Spark property, a workspace environment variable, a notebook cell — is plaintext-readable by
+any workspace member. That is exactly finding **F1** in `security-findings.md`, and
+reproducing the finding we just reported would be an odd way to fix it.
+
+So: the half that needs a secret runs where the secret already lives, and the half that needs
+Spark runs in Fabric, where it needs no secret at all. Nothing reaches the workspace except
+data.
+
+**This is a bridge, not the destination.** When a subscription lands, run
+`setup_keyvault.py --apply`, point `PROCORE_KEYVAULT_URL` at the vault, and
+`cd_01_extract_procore` takes over on a schedule. `cd_05_land_to_bronze` keeps working either
+way, because all it ever does is read files that are already there.
+
+## Running it
 
 ```bash
-python foundation/charley-dev/_local/deploy_ingestion.py   # dry run shows the same locally
+cd foundation/charley-dev/_local
+python extract_procore_local.py --list      # the 36-endpoint registry, in resolution order
+python extract_procore_local.py --probe     # auth + project count, no extraction
+python extract_procore_local.py             # full run, dry (nothing lands)
+python extract_procore_local.py --apply     # full run, lands in OneLake
+python deploy_landing.py --apply            # merge the files into cd_bronze_* Delta
 ```
 
-## What is needed
+The extractor itself is **not** reimplemented locally: `src/procore/procore_extract.py` is
+imported whole — the same module `deploy_ingestion.py` uploads to `Files/lib/`. Auth,
+pagination, retry and the bronze row shape are shared, so the local runner cannot drift from
+what Fabric will eventually do.
 
-Three values, from a Procore **Data Connector App** using the **client-credentials**
-grant:
+## Credentials
 
-| Secret | Notes |
-|---|---|
-| `PROCORE_CLIENT_ID` | |
-| `PROCORE_CLIENT_SECRET` | |
-| `PROCORE_COMPANY_ID` | The existing `procore_auth.ipynb` hardcodes `562949953444705` — an org identifier, not a credential |
-| `PROCORE_BASE_URL` | `https://api.procore.com` for production; a sandbox host while testing |
+Three values, from a Procore **Data Connector App** using the **client-credentials** grant:
+`PROCORE_CLIENT_ID`, `PROCORE_CLIENT_SECRET`, `PROCORE_COMPANY_ID` (the last is an org
+identifier, not a secret). `PROCORE_BASE_URL` defaults to the sandbox in the shared
+extractor, so the local runner forces `https://api.procore.com` — a silent sandbox run would
+land a convincing set of empty tables.
 
 **Client credentials, not a user token.** A user-based (`authorization_code`) token expires
 and breaks the pipeline at the worst moment — flagged in
 `resources/procore/endpoints-cheatsheet.md:196-200` as the most common Procore ETL failure
-mode. Rebecca's existing notebooks should be checked for which grant they use.
+mode.
 
-## Two ways to supply them
+## Three defects found by running it for real
 
-**Key Vault (production).** Put the three secrets in a vault the Fabric workspace identity
-can read, and set `PROCORE_KEYVAULT_URL` on the Spark environment. `get_secret()` resolves
-Key Vault first, so nothing else changes. This is the mechanism the Jul 23 warehouse review
-asked for — *"credentials are hard-coded in a notebook cell. First fix."*
+None of these were visible without live credentials. Each cost endpoints.
 
-**Environment variables (local testing only).** Copy
-`src/procore/config/settings.example.env` to `.env` at the repo root and fill it in;
-`.gitignore:30` already excludes it. This runs the extractor locally against fixtures or a
-sandbox without touching Fabric.
+### 1. `Procore-Company-Id` is required at every API version
 
-Nothing in this repo reads or stores a credential. `deploy_ingestion.py` only reports
-whether they are reachable.
+The documented rule — and the cheatsheet at line 41 — says only v2.0+ needs this header,
+because v1.x takes the company in the path or query. Affect's tenant disagrees. Same token,
+same project, v1.0 RFIs:
 
-## Then
-
-```bash
-python foundation/charley-dev/_local/deploy_ingestion.py --run
-```
-
-The notebook pulls **active projects only** — the existing notebooks loop every project on
-every run, and most are closed (Jul 23 review). It then walks the 36 endpoints in
-dependency order, merging each into `cd_bronze_procore_*` on its natural key.
-
-Re-running is safe by construction: the load is a Delta `MERGE`, not an append, which is
-also what makes the deliberate one-hour watermark overlap harmless.
-
-## What it unblocks
-
-23 of the 36 endpoints have no equivalent anywhere in the current warehouse
-(`_docs/endpoint-inventory.md`). The ones that change the report most:
-
-| Endpoint | Unblocks |
+| Request | Result |
 |---|---|
-| `rfis` | The missing half of `fct_RfiSubmittal` — no RFI data exists anywhere today |
-| `observations` | `man_QualityMonthly` becomes automatic; fixes Excel defect #2 |
-| `punch_items` | Quality metrics |
-| `incidents` | `man_SafetyMonthly.RecordableIncidents` → scorecard +0.14 weight |
-| `daily_log_headers` | `man_DailyLogCompliance` → scorecard +0.02 weight |
-| `manpower_daily_totals` | `SCHEDULE!Table14`, without the workbook's 5-subcontractor cap |
-| `change_order_requests` | Sharpens age-of-oldest-unapproved-CO |
+| header + `per_page=1000` | 200, 32 rows |
+| header, no params | 200, 32 rows |
+| **no header** + `per_page=1000` | **404** |
+| **no header**, no params | **404** |
 
-Between them these take `[Scorecard Coverage %]` from 35% toward 88% without anybody
-typing a number into a spreadsheet.
+Identical on v1.1 submittals, v1.0 incidents and v1.0 manpower_logs.
 
-## Sequencing note
+The failure is a **404, not a 403** — it reads as "this project has no RFI tool", not "you
+forgot a header". That is why the first full run lost 28 of 36 endpoints and looked like a
+permissions problem. `procore_scope.Endpoint.needs_company_header` now returns `True`
+unconditionally, with an assertion pinning it so the documented-but-wrong rule cannot creep
+back in.
 
-Gold currently reads the **existing** `Silver_Lakehouse`, read-only, which is how the model
-was validated against real data before credentials landed. Once this ingestion populates
-`CD_Bronze`, the path becomes:
+### 2. Ten endpoints take `project_id` as a query parameter
 
-```
-cd_01_extract_procore  ->  CD_Bronze
-cd_10_bronze_to_silver ->  CD_Silver     (not yet written - needs bronze to exist)
-cd_30_build_gold       ->  CD_Gold       (only sql/silver/00_source_views.sql changes)
-```
+They were declared `scope: project` with a company-shaped path, so `expand_paths` had no
+`{project_id}` to substitute and dropped the project entirely — Procore then 400s because it
+cannot tell which project is meant. Fixed in `endpoints.yml` by putting the placeholder in
+the query string: `/rest/v1.0/commitments?project_id={project_id}`.
 
-No gold file, measure or report visual moves. That was the point of isolating source
-naming in the `sv_*` views.
+`cost_codes` was additionally mis-scoped as `company`. The company form 400s; the project
+form returns **5,433 rows**.
+
+### 3. One project's missing tool must not fail the endpoint
+
+Across 19 projects not every tool is enabled everywhere, and a 403/404 on one project was
+aborting the whole endpoint. It now skips that project and reports the count. Losing 18
+projects' data to the 19th is not a useful failure mode.
+
+## What comes back
+
+| Endpoint | Rows | Note |
+|---|---:|---|
+| `cost_codes` | 5,433 | after the re-scope; 4,765 in the existing warehouse |
+| `submittals` | 2,245 | existing warehouse has 2,242 |
+| `punch_items` | 1,469 | not in the existing warehouse |
+| `vendors` | 1,098 | existing warehouse has 1,075 |
+| `potential_change_orders` | 1,050 | not in the existing warehouse |
+| `observations` | 850 | not in the existing warehouse |
+| `rfis` | 616 | **not in the existing warehouse at all** |
+| `requisitions` | 473 | existing warehouse has 556 |
+| `direct_costs` | 418 | |
+| `project_vendors` | 393 | |
+| `commitments` | 298 | existing warehouse has 264 |
+| `work_order_contracts` | 189 | |
+| `budget_views` | 100 | feeds `budget_detail_rows` |
+| `rfi_statuses` / `rfi_priorities` | 95 / 76 | answers open question 2, "which RFIs are critical" |
+| `observation_types` | 28 | |
+| `projects` | 19 | existing warehouse has 18 |
+| `budget` / `manpower_daily_totals` | 19 / 19 | |
+| `incident_severity_levels` | 5 | |
+| `incidents` | 3 | |
+
+RFIs are the notable one: no RFI data exists anywhere in the current warehouse, so the RFI
+half of the workbook's only chart has never been automated.
+
+The row counts that differ from the existing warehouse are worth a look rather than a shrug —
+they are either our extraction or theirs, and either is useful to know. That comparison is
+the L2 parity check and a genuinely useful review artifact for D2.
+
+## Still failing, and why
+
+| Endpoint | Status | Cause |
+|---|---|---|
+| `punch_item_types` | 403 | Permission — the service account cannot read company-level punch item types |
+| `schedule` | 403 | Permission — same, on the project schedule tool |
+| `standard_cost_codes` | 404 | Company-level standard cost codes are not configured for this tenant |
+| `daily_log_headers` | 404 | Wrong path; the daily-log API needs a date range (`The Start Date and End Date parameters are required`) |
+| `commitment_contracts` | 400 | v2.0 path shape needs revisiting |
+
+The two 403s are **Affect's to grant**, not ours to fix — worth raising on the next call
+alongside `OUTBUILD_API_TOKEN`. The rest is registry work.
+
+## Incremental loading
+
+Only 7 of 36 endpoints declare `incremental: filters[updated_at]`; the rest are full pulls,
+because Procore does not document a reliable updated-at filter for them and a filter that
+silently misses rows is worse than a full reload.
+
+**RFIs and submittals are deliberately excluded from incremental** even though they are the
+largest: they document `created_at` only, so an incremental pull would miss status changes —
+precisely the data the report needs.
+
+## Rate limits
+
+The extractor honours `Retry-After` on 429 and backs off exponentially otherwise. Procore
+throttles per hour, and the run pulls **active projects only** — the existing foundation
+notebooks loop every project regardless of status, most of which are closed.
