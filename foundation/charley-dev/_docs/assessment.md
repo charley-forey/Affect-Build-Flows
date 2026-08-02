@@ -18,8 +18,13 @@ The platform is real, deployed, and running. The medallion is populated from Aff
 production Procore tenant, the nightly pipeline runs green, the semantic model is a proper
 Direct Lake star schema, and all 99 measures evaluate against live data.
 
-One material defect was found and fixed: **the dashboard understated the portfolio contract
-value by $4.85M.** Details below.
+One material defect was found, fixed and deployed: **the dashboard understated the portfolio
+contract value by $4.85M.** Current Contract now reads $35,102,931.14 and Contract Growth
+16.03%, against $30,254,551.24 and 0.00% before. Details below.
+
+A second, smaller defect is diagnosed but **not** fixed: the DQ gate reports success while
+silently failing to write its reject detail, so the Data Quality page shows rows from an
+older run. Counts are trustworthy; drill-through is not.
 
 Two things that read as failures are not: three gold tables invisible to SQL, and 105 of 105
 insurance certificates expired. Both are explained below — do not "fix" either.
@@ -78,8 +83,25 @@ through a fixture that could not express the bug.
 carries the contract as it stood that month. The fixture gained a second month, and three
 assertions now cover it, including that the contract is monotonic per project.
 
-**Status: fixed in code, tests pass, NOT YET DEPLOYED.** See *Blocked* below. Until
-`cd_30_build_gold` is re-run, the dashboard still shows the understated figure.
+**Status: FIXED AND DEPLOYED** — `cd_30_build_gold` re-run 2026-08-02 22:56, model reframed,
+DQ gate re-run 23:01 (63 expectations, 0 blocking). Verified live:
+
+| Measure | Before | After |
+|---|---:|---:|
+| `Current Contract` | $30,254,551.24 | **$35,102,931.14** |
+| `Contract Growth %` | 0.00% | **16.03%** |
+| `Pending Change Orders` | $22,891.76 | **$59,170.97** |
+| `Total Billed %` | 73.05% | 62.96% |
+| `Billed Cumulative % Of Contract` | 89.90% | 77.48% |
+
+The last two moved *down* because the denominator was corrected — those figures were
+flattering the portfolio, not just wrong. All 17 live DAX checks pass, including
+`[Current Contract] is a balance, not a running total of months`.
+
+**A contract may still legitimately fall.** Five projects show a decrease, each matching a
+negative (credit) change order that month to the cent. The first version of the regression
+test asserted plain monotonicity and would have called all five a bug; it now asserts that
+every decrease is accounted for by that month's approved COs.
 
 ---
 
@@ -130,11 +152,40 @@ correct for coverage gaps as opposed to corruption.
 | every project is in Outbuild | 17 of 19 | No `OUTBUILD_API_TOKEN`. Outbuild is the **only** milestone source |
 | every project is in Sage | 4 | 2 are test/template projects; 2 are real and read as zero revenue |
 
-**The reject detail is stale.** `cd_dq_rejects` holds only batch `20260802T100451Z` while the
-heartbeat records runs at 20:40, 21:13 and 22:04. Three later runs each reported 6 failing
-expectations and wrote no reject rows. The counts are trustworthy; the drill-through detail
-is twelve hours old. Worth a look — the Data Quality page shows rows that no longer
-correspond to the run that produced the summary above them.
+### The reject detail is stale, and the gate does not say so — ROOT CAUSE FOUND
+
+`cd_dq_rejects` holds only batch `20260802T100451Z`. Four later runs — including one
+triggered during this assessment at 23:01 — each reported 6 failing expectations and wrote
+**no reject rows**, while the heartbeat recorded `Status: ok` every time.
+
+The persist block in `cd_40_dq_checks` is wrapped in a `try/except` that catches the
+failure, prints it to the notebook's stdout, and continues:
+
+```python
+try:
+    dq._persist_results(spark, results, batch_id)
+    for r in results:
+        if r.failing_rows > 0:
+            dq._persist_rejects(...)
+except Exception as exc:
+    print(f"PERSIST FAILED ...")   # nobody sees this
+```
+
+`_persist_results` writes `cd_dq_results` — **a table that does not exist in
+`CD_Gold_Lakehouse`.** It raises, the `except` swallows it, and `_persist_rejects` is never
+reached because it is inside the same `try`. The jobs API does not expose cell output, so
+the message goes nowhere; the heartbeat then writes `ok` because the *evaluation* succeeded.
+
+The intent was sound — a persistence failure should not discard a good evaluation. But the
+run now reports healthy while the Data Quality page shows rows from a different, older run
+sitting under a summary from the current one. Two fixes, both small:
+
+1. Move `_persist_rejects` out of the shared `try`, so a results failure cannot suppress it.
+2. Record the persist outcome on the heartbeat, so `Status: ok` means the whole gate
+   completed rather than just the part that was measured.
+
+The **counts are trustworthy** — `Files/_diag/dq_run.json` is written before the persist and
+was current at 23:01:37. Only the drill-through detail is stale.
 
 **Source coverage is 5.26%** — 1 of 19 projects present in all three systems. This is the
 single biggest limit on the report, and it is an access problem, not a build problem.
@@ -172,28 +223,31 @@ Not defects, but they do not reconcile at face value and someone will ask:
 
 ---
 
-## Blocked
+## Deploying
 
-**The change-order fix is not deployed.** Writing to Fabric — `deploy_gold.py --apply` and
-`update_notebook_definition` — was refused by the permission layer during this assessment.
-The fix is committed and green offline; deploying it needs someone with write access to run:
+The full sequence, in order. This is what was run on 2026-08-02:
 
 ```bash
-python foundation/charley-dev/_local/deploy_gold.py --source cd --apply
-python foundation/charley-dev/_local/validate_model.py
+python foundation/charley-dev/_local/run_tests.py                        # 12 suites offline
+python foundation/charley-dev/_local/deploy_gold.py --source cd --apply  # rebuild gold
+python foundation/charley-dev/_local/validate_model.py                   # reframe + 17 DAX checks
 ```
+
+Then re-run `cd_40_dq_checks` to refresh the gate and heartbeat.
 
 **`--source cd` is not optional.** `deploy_gold.py` defaults to `--source existing`, and a
 bare `--apply` silently reverts gold to reading the legacy `Silver_Lakehouse` instead of our
-own medallion. That default should be changed.
+own medallion. **That default should be changed** — it is the easiest way to quietly undo
+the source migration.
 
-After deploying, confirm the fix landed:
+Confirm any gold rebuild landed:
 
 ```
 EVALUATE ROW("Current", [Current Contract], "Growth", [Contract Growth %])
 ```
 
-Expect Current Contract ≈ $35,102,931 and Contract Growth ≈ 16%, not $30,254,551 and 0%.
+Expect ≈ $35,102,931 and ≈ 16%. If it reads $30,254,551 and 0.00%, the change-order
+regression is back.
 
 ---
 
@@ -210,9 +264,13 @@ Expect Current Contract ≈ $35,102,931 and Contract Growth ≈ 16%, not $30,254
 
 ## Recommended order
 
-1. **Deploy the change-order fix.** It is the only thing making a published number wrong.
-2. Open the PR to `main` and pull locally — the workspace is ahead of the default branch.
-3. Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the source.
-4. Chase the Outbuild token. It is the largest single coverage gain available.
-5. Investigate why `cd_dq_rejects` stopped receiving batches after 10:04.
+1. ~~Deploy the change-order fix.~~ **Done** — deployed and verified 2026-08-02 22:56.
+2. Fix the DQ persist gap: create `cd_dq_results`, move `_persist_rejects` out of the shared
+   `try`, and put the persist outcome on the heartbeat. Until then a green gate does not
+   mean the Data Quality page is current.
+3. Merge `worktree-charley-dev-build` → `main`. The default branch is still 9 commits behind
+   what is deployed, and does not contain this fix.
+4. Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the source.
+5. Chase the Outbuild token. It is the largest single coverage gain available — 17 of 19
+   projects have no milestones.
 6. Put the insurance finding in front of Affect as a question, not a metric.

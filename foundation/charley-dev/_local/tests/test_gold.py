@@ -231,16 +231,24 @@ def test_fct_financialperiod(con) -> None:
     assert june_pending == pending, (june_pending, pending)
     check("fct_FinancialPeriod[PendingChangeOrders] accumulates rather than resetting")
 
-    # Never goes backwards. The per-month version did, on 8 of 12 months in production.
+    # A contract only shrinks when a change order was itself negative. Asserting plain
+    # monotonicity would be wrong - production has five genuine credits, and the first
+    # version of this check called all five a bug. So the invariant is that every decrease
+    # is ACCOUNTED FOR by that month's approved COs, which still catches a roll-up that
+    # resets while allowing a credit through.
     assert one(
         con,
         "SELECT COUNT(*) FROM ("
-        "  SELECT CurrentContract - LAG(CurrentContract) OVER "
-        "         (PARTITION BY ProjectKey ORDER BY MonthStart) AS d"
-        "  FROM fct_FinancialPeriod"
-        ") WHERE d < 0",
+        "  SELECT f.ProjectKey, f.MonthStart,"
+        "         f.CurrentContract - LAG(f.CurrentContract) OVER "
+        "           (PARTITION BY f.ProjectKey ORDER BY f.MonthStart) AS d,"
+        "         (SELECT COALESCE(SUM(c.Amount), 0) FROM fct_ChangeOrder c"
+        "           WHERE c.ProjectKey = f.ProjectKey AND c.MonthStart = f.MonthStart"
+        "             AND NOT c.IsPending) AS approved"
+        "  FROM fct_FinancialPeriod f"
+        ") WHERE d < -0.005 AND ABS(d - approved) > 0.005",
     ) == 0
-    check("fct_FinancialPeriod[CurrentContract] is monotonic per project")
+    check("fct_FinancialPeriod[CurrentContract] only falls by that month's credit COs")
 
     # The unmatched AR row still produces a period row, so the money is visible somewhere
     # rather than silently vanishing from the portfolio total.
