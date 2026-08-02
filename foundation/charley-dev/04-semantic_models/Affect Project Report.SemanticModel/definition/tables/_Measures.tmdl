@@ -80,6 +80,67 @@ table _Measures
 		formatString: "0.0%"
 		displayFolder: 02 Budget & Cost
 
+	/// Replaces no workbook equivalent - the spreadsheet cannot say when it was last correct
+	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
+		formatString: "yyyy-mm-dd hh:nn"
+
+	/// Replaces derived
+	measure 'Hours Since Last Checked Run' =
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )
+		formatString: "#,0"
+
+	/// Replaces derived
+	measure 'Pipeline Status' =
+			VAR Hrs = [Hours Since Last Checked Run]
+			RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", "STALE - these numbers may be weeks old" )
+
+	/// Replaces derived
+	measure 'Blocking Violations Last Run' =
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			RETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),
+			meta_PipelineRun[RunAt] = Last ), 0 )
+		formatString: "#,0"
+
+	/// Replaces no workbook equivalent - vendor spend could not be sliced by cost code
+	measure 'Vendor Spend' = CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = "Actual" )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!D61 - committed by vendor and cost code, which the workbook cannot slice
+	measure 'Vendor Committed' = CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = "Committed" )
+		formatString: "$#,0"
+
+	/// Replaces derived
+	measure 'Cost Codes Per Vendor' = COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[CostCodeKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces derived
+	measure 'Vendors Per Cost Code' = COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[VendorKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8
+	measure 'Certificates On File' = COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8
+	measure 'Vendors With Insurance' = COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8
+	measure 'Expired Certificates' = COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = "Expired" ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8 - the renewals to chase this month
+	measure 'Certificates Expiring Soon' = COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8 - a vendor with no certificate never appears in the insurance table
+	measure 'Vendors Without Insurance' =
+			VAR Insured = VALUES ( fct_VendorInsurance[VendorKey] )
+			RETURN COALESCE ( COUNTROWS ( EXCEPT (
+			VALUES ( bridge_ProjectVendor[VendorKey] ), Insured ) ), 0 )
+		formatString: "#,0"
+
 	/// Replaces no workbook equivalent - Sage holds no header retainage
 	measure 'Retainage Held Owner' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
 		formatString: "$#,0"

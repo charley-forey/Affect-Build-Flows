@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "e0075e91dedc75d1d43a",
   "position": {
-    "x": 960,
+    "x": 720,
     "y": 664,
     "z": 0,
-    "width": 300,
+    "width": 540,
     "height": 44,
     "tabOrder": 99
   },
@@ -42,6 +42,20 @@
               },
               "queryRef": "_Measures.Last Refresh",
               "nativeQueryRef": "Last Refresh"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Pipeline Status"
+                }
+              },
+              "queryRef": "_Measures.Pipeline Status",
+              "nativeQueryRef": "Pipeline Status"
             }
           ]
         }
@@ -55,7 +69,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Report footer. States the reporting period shown and the time the underlying data was last built.'"
+                  "Value": "'Report footer. States the reporting period shown, the time the underlying data was last built, and whether the pipeline that built it has run recently enough to trust.'"
                 }
               }
             }

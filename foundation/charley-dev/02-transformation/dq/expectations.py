@@ -287,6 +287,146 @@ def build_suite() -> Suite:
         ),
     )
 
+    # -------------------------------------------- vendor <-> cost code, insurance
+    suite.add(
+        unique_key("bridge_VendorCostCode", ["VendorCostCodeKey"]),
+        unique_key("fct_VendorInsurance", ["InsuranceKey"]),
+        not_null("bridge_VendorCostCode", "VendorKey"),
+        not_null("bridge_VendorCostCode", "CostCodeKey"),
+        not_null("fct_VendorInsurance", "VendorKey"),
+        referential("bridge_VendorCostCode", "ProjectKey", "dim_Project", "ProjectKey"),
+        referential("bridge_VendorCostCode", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
+    )
+
+    suite.add(
+        # The bridge INNER JOINs lines to their headers, because a line with no vendor
+        # cannot be attributed and would otherwise become a silent "unallocated" bucket
+        # that every vendor-filtered view drops without saying so. That is the right
+        # choice, but it means dropped lines have to be counted SOMEWHERE - this is it.
+        # Without this check, the bridge could silently cover a fraction of spend and
+        # still look complete.
+        # This suite runs against GOLD, so it cannot see the silver line items directly -
+        # it checks the consequence instead. If the bridge covers only a sliver of direct
+        # cost spend, most lines failed to join and the bridge is materially incomplete
+        # while still looking populated.
+        Expectation(
+            name="the vendor bridge covers most direct cost spend",
+            table="bridge_VendorCostCode",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT (SELECT COALESCE(SUM(Amount), 0) FROM bridge_VendorCostCode"
+                "          WHERE AmountType = 'Actual') AS bridge,"
+                "         (SELECT COALESCE(SUM(GrandTotal), 0) FROM fct_DirectCost) AS direct"
+                ") WHERE direct > 0 AND bridge < direct * 0.5"),
+            severity=SEVERITY_WARN,
+            description="bridge covers under half of direct spend - lines are not joining",
+        ),
+        # Spend on the bridge must not exceed what fct_DirectCost says was spent. If it
+        # does, lines have been double-counted - the classic fan-out when a join key is
+        # not as unique as assumed.
+        # ACTUAL only. The committed half is legitimately far larger than direct cost
+        # spend - $25.5M committed against $1.5M spent - so comparing the unfiltered total
+        # would fire on every run and teach everyone to ignore it.
+        Expectation(
+            name="bridge actual spend does not exceed direct cost spend",
+            table="bridge_VendorCostCode",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT (SELECT COALESCE(SUM(Amount), 0) FROM bridge_VendorCostCode"
+                "          WHERE AmountType = 'Actual') AS bridge,"
+                "         (SELECT COALESCE(SUM(GrandTotal), 0) FROM fct_DirectCost) AS direct"
+                ") WHERE bridge > direct * 1.01"),
+            severity=SEVERITY_ERROR,
+            description="bridge spend above direct cost spend means lines fanned out",
+        ),
+        # A negative committed line is a credit against a subcontract - real, but rare
+        # enough to be worth a look, and indistinguishable from an inverted sign without
+        # one. Per row, not in aggregate, where a credit and an error cancel.
+        Expectation(
+            name="committed lines are not negative",
+            table="bridge_VendorCostCode",
+            failing_sql=("SELECT * FROM bridge_VendorCostCode "
+                         "WHERE AmountType = 'Committed' AND Amount < 0"),
+            severity=SEVERITY_WARN,
+            description="a negative committed line is a credit, or an inverted sign",
+        ),
+        # COVERAGE, reported as a number rather than assumed. Live this fires on ~228 of
+        # 251 vendors, and that IS the finding: the vendor list was never checkable before.
+        Expectation(
+            name="vendors on a project have a certificate on file",
+            table="bridge_ProjectVendor",
+            failing_sql=(
+                "SELECT v.* FROM bridge_ProjectVendor v "
+                "LEFT JOIN fct_VendorInsurance i ON i.VendorKey = v.VendorKey "
+                "WHERE i.VendorKey IS NULL"),
+            severity=SEVERITY_WARN,
+            description="a vendor with no certificate on file cannot be shown as compliant",
+        ),
+        # CURRENCY, counted apart from coverage. Live, all 105 certificates are lapsed and
+        # the newest expired 2025-04-01 - which most likely means the Procore insurance
+        # module was abandoned rather than that the subs are uninsured. WARN either way:
+        # this is Affect's data to correct, and blocking the report would not help them.
+        Expectation(
+            name="certificates on file are in date",
+            table="fct_VendorInsurance",
+            failing_sql=("SELECT * FROM fct_VendorInsurance "
+                         "WHERE ExpiryStatus = 'Expired' AND NOT COALESCE(IsExempt, FALSE)"),
+            severity=SEVERITY_WARN,
+            description="an expired certificate is not coverage - chase the renewal",
+        ),
+        # A certificate that ends before it starts is a data-entry error, and it makes any
+        # validity window computed from the pair meaningless.
+        date_order("fct_VendorInsurance", "EffectiveDate", "ExpirationDate",
+                   severity=SEVERITY_WARN),
+    )
+
+    # ------------------------------------------------------------- freshness
+    #
+    # Until Key Vault exists, extraction runs locally and lands files, and the nightly
+    # pipeline reprocesses whatever is there. That design is sound but it has one silent
+    # failure mode: if nobody runs the extractor, every stage still succeeds, the DQ gate
+    # still passes, the model still refreshes, and the report shows last quarter's numbers
+    # with today's date on the page. Nothing anywhere would say so.
+    #
+    # These are the checks that say so. WARN rather than ERROR deliberately - stale data is
+    # still the best available data, and blocking the pipeline would replace a slightly old
+    # report with no report at all.
+    suite.add(
+        Expectation(
+            name="billing data is not stale",
+            table="fct_Billing",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT MAX(PeriodEnd) AS newest FROM fct_Billing"
+                # 75 days, not 30: billing is monthly and a period can legitimately close
+                # six weeks before anyone looks at it. Past 75 days a month has been missed.
+                ") WHERE newest IS NULL OR datediff(CURRENT_DATE, newest) > 75"),
+            severity=SEVERITY_WARN,
+            description="no billing period closed in 75 days - has the extract been run?",
+        ),
+        Expectation(
+            name="direct cost data is not stale",
+            table="fct_DirectCost",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT MAX(CostDate) AS newest FROM fct_DirectCost"
+                # Payroll and expenses post continuously, so this one should be recent.
+                ") WHERE newest IS NULL OR datediff(CURRENT_DATE, newest) > 45"),
+            severity=SEVERITY_WARN,
+            description="no direct cost posted in 45 days - has the extract been run?",
+        ),
+        Expectation(
+            name="field operations data is not stale",
+            table="fct_QualityItem",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT MAX(CreatedDate) AS newest FROM fct_QualityItem"
+                ") WHERE newest IS NULL OR datediff(CURRENT_DATE, newest) > 45"),
+            severity=SEVERITY_WARN,
+            description="no observation or punch item raised in 45 days on any project",
+        ),
+    )
+
     # ------------------------------------------------------ scorecard integrity
     #
     # ERROR, because this is the number leadership reads. The workbook's scorecard was

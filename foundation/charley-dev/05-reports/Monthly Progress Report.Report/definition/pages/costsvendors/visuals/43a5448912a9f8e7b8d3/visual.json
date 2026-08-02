@@ -1,0 +1,134 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "43a5448912a9f8e7b8d3",
+  "position": {
+    "x": 20,
+    "y": 436,
+    "z": 0,
+    "width": 610,
+    "height": 220,
+    "tabOrder": 21
+  },
+  "visual": {
+    "visualType": "matrix",
+    "query": {
+      "queryState": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_VendorCostCode"
+                    }
+                  },
+                  "Property": "VendorName"
+                }
+              },
+              "queryRef": "bridge_VendorCostCode.VendorName",
+              "nativeQueryRef": "VendorName"
+            }
+          ]
+        },
+        "Columns": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_VendorCostCode"
+                    }
+                  },
+                  "Property": "AmountType"
+                }
+              },
+              "queryRef": "bridge_VendorCostCode.AmountType",
+              "nativeQueryRef": "AmountType"
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Vendor Spend"
+                }
+              },
+              "queryRef": "_Measures.Vendor Spend",
+              "nativeQueryRef": "Vendor Spend"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Vendor Committed"
+                }
+              },
+              "queryRef": "_Measures.Vendor Committed",
+              "nativeQueryRef": "Vendor Committed"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'matrix. Vendor: committed vs actual. Shows Vendor Spend, Vendor Committed for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Vendor: committed vs actual'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

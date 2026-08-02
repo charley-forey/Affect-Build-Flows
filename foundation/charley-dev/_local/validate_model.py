@@ -148,12 +148,29 @@ def main() -> int:
     #                                 silver keeps one per (project, cost code) at the
     #                                 latest snapshot, and two pairs were duplicated. That
     #                                 is the dedup working, not data lost.
-    #   ChangeOrders   307 vs 1,812   LOWER - OPEN. Prime COs come from
-    #                                 change_order_packages in this tenant; the warehouse's
-    #                                 1,812 probably also counts commitment COs, which are
-    #                                 a different grain. Must be resolved before this report
-    #                                 replaces theirs - a lower number that is not explained
-    #                                 is indistinguishable from a lost one.
+    #   ChangeOrders   307 vs 1,812   LOWER - RESOLVED 2026-08-02, and the resolution is
+    #                                 that THEIR number is wrong.
+    #
+    #                                 procore_prime_change_orders holds 1,812 rows for 454
+    #                                 distinct Change Order IDs - each one repeated EXACTLY
+    #                                 four times. The pattern is uniform within every
+    #                                 batch_id group (4 rows per CO, 12 for 3, 52 for 13),
+    #                                 which is a fan-out from an un-deduplicated join, not
+    #                                 an ingestion artifact.
+    #
+    #                                 Summing CO Value $ off that table gives $20,152,671.
+    #                                 Deduplicated it is $5,056,742. Ours is $4,907,551 -
+    #                                 within 3%.
+    #
+    #                                 So nothing was lost. The residual 454 vs 307 is grain:
+    #                                 change_order_packages groups change orders, and their
+    #                                 table carries statuses ours does not (not_proceeding,
+    #                                 no_charge, rejected, pricing). Package grain is
+    #                                 accepted here because the money agrees; if CO-level
+    #                                 detail is needed later it is a different endpoint, not
+    #                                 a correction.
+    #
+    #                                 Reported to Affect, NOT fixed - it is Rebecca's table.
     #
     # Periods is derived from the fact date range, so it moves with the two above.
     EXPECTED_BY_SOURCE = {
@@ -187,6 +204,32 @@ def main() -> int:
     # added and then quietly understates what was actually checked.
     CHECKS.append(f"all {len(expected)} tables readable through DirectLake "
                   "at the expected row counts")
+
+    # 1b. EVERY table in the model must resolve, not just the ones with a row-count
+    #     baseline. This exists because of a failure that cost an hour:
+    #
+    #     A brand-new gold table is written to the lakehouse, deploy_model generates its
+    #     TMDL correctly, the model deploys with no error at all - and Direct Lake still
+    #     cannot bind it, because the SQL endpoint has not yet discovered the new Delta
+    #     table. The model then contains a table reference that resolves to nothing, and
+    #     every measure over it deploys perfectly and fails only when a visual renders,
+    #     with "the value cannot be determined". Nothing before this point says a word.
+    #
+    #     Checking COUNTROWS on all of them turns a render-time mystery into a deploy-time
+    #     failure. It costs one cheap query per table.
+    from deploy_model import MODEL_TABLES  # noqa: PLC0415
+
+    unresolved = []
+    for table in MODEL_TABLES:
+        try:
+            dax(model["id"], tok, f'EVALUATE ROW ( "n", COUNTROWS ( {table} ) )')
+        except Exception as exc:  # noqa: BLE001 - the message is what matters
+            unresolved.append(f"{table}: {str(exc)[:120]}")
+    assert not unresolved, (
+        f"{len(unresolved)} model table(s) do not resolve - Direct Lake has not bound "
+        "them. New tables can need a minute for the SQL endpoint to discover them; "
+        "re-run deploy_model.py --apply.\n  " + "\n  ".join(unresolved[:5]))
+    CHECKS.append(f"all {len(MODEL_TABLES)} model tables resolve through DirectLake")
 
     # 2. Every measure must evaluate. A measure referencing a renamed column fails HERE
     #    rather than as a blank tile in front of leadership.
@@ -346,8 +389,15 @@ def main() -> int:
         EVALUATE SUMMARIZECOLUMNS(
             dim_ScorecardWeight[CategoryName], dim_ScorecardWeight[Weight] )
     """)
+    # SUMMARIZECOLUMNS can return an extra all-null row - DAX's blank row, not a row in
+    # the table. Verified directly: COUNTROWS(dim_ScorecardWeight) is 9 and EVALUATE over
+    # the table returns 9 clean rows. Dropping it here rather than letting float(None)
+    # blow up, and pinning the count below so a genuinely missing category still fails.
     lookup = {r["dim_ScorecardWeight[CategoryName]"]: r["dim_ScorecardWeight[Weight]"]
-              for r in weights}
+              for r in weights
+              if r["dim_ScorecardWeight[CategoryName]"] is not None
+              and r["dim_ScorecardWeight[Weight]"] is not None}
+    assert len(lookup) == 9, f"expected 9 scorecard categories, found {len(lookup)}"
     expected_cov = sum(float(lookup[c]) for c in measured)
     assert abs(cov - expected_cov) < 0.001, f"coverage {cov} != summed weights {expected_cov}"
     CHECKS.append(f"[Scorecard Coverage %] = {cov:.0%}, matching the scored categories' weights")

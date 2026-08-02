@@ -234,7 +234,8 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           # The crosswalks are how "integrated across three systems" becomes verifiable
           # rather than asserted, so they are checked like any other gold table.
           "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
-          "fct_BudgetLine", "fct_QualityItem", "fct_SafetyMonthly", "fct_Billing", "fct_DirectCost", "bridge_ProjectVendor",
+          "fct_BudgetLine", "fct_QualityItem", "fct_SafetyMonthly", "fct_Billing", "fct_DirectCost", "bridge_ProjectVendor", "bridge_VendorCostCode",
+                  "fct_VendorInsurance",
           "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal", "fct_Milestone",
           "fct_FinancialPeriod"]
 
@@ -301,6 +302,16 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
                    "measures_anchor"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
+
+# meta_PipelineRun is written by the DQ GATE, which runs after this notebook - so on a
+# brand-new lakehouse it does not exist yet and this must not fail. It appears in the
+# schema from the second run onward, which is also the first run at which it has anything
+# to say.
+try:
+    schema["meta_PipelineRun"] = [(f.name, f.dataType.simpleString())
+                                  for f in spark.table("meta_PipelineRun").schema.fields]
+except Exception:
+    print("  meta_PipelineRun: not created yet (the DQ gate writes it) - skipping")
 with open(f"{DIAG}/gold_schema.json", "w", encoding="utf-8") as fh:
     json.dump(schema, fh, indent=1)
 print(f"  published schema for {len(schema)} tables")

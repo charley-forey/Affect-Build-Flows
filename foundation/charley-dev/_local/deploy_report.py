@@ -199,11 +199,18 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
     saved copy silently re-dated itself every time anyone opened it.
     """
     items = [
-        visual(page, "footer", "multiRowCard", 960, 664, 300, 44,
-               {"Values": [measure("Report Month Label"), measure("Last Refresh")]},
+        # [Pipeline Status] is here rather than only on the hidden Data Quality page. It
+        # answers "are these numbers from last night or from three weeks ago", which is a
+        # question about every page, not about the DQ page - and the failure it guards
+        # against went unnoticed for a month, with the nightly pipeline failing every
+        # night while reporting itself as enabled. Text, never colour alone.
+        visual(page, "footer", "multiRowCard", 720, 664, 540, 44,
+               {"Values": [measure("Report Month Label"), measure("Last Refresh"),
+                           measure("Pipeline Status")]},
                tab=99,
-               alt="Report footer. States the reporting period shown and the time the "
-                   "underlying data was last built."),
+               alt="Report footer. States the reporting period shown, the time the "
+                   "underlying data was last built, and whether the pipeline that built "
+                   "it has run recently enough to trust."),
     ]
     # A drill-through page receives its project from the caller. Putting a project slicer
     # on it would let a reader change that selection out from under the filter they
@@ -274,17 +281,28 @@ def page_portfolio() -> tuple[str, list[dict]]:
                       measure("Total Paid")]},
                title="Contract, billed and paid by project"),
 
-        visual(p, "pf_ar_rank", "barChart", 20, 532, 600, 128,
+        visual(p, "pf_ar_rank", "barChart", 20, 528, 400, 128,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("AR Outstanding")]},
                title="AR outstanding, ranked"),
 
         # Coverage sits on the portfolio page too, because the honest reading of any
         # cross-project comparison is "and how much of each score is real".
-        visual(p, "pf_coverage", "barChart", 640, 532, 600, 128,
+        visual(p, "pf_coverage", "barChart", 436, 528, 400, 128,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Scorecard Coverage %")]},
                title="Scorecard coverage by project"),
+
+        # Insurance exposure belongs at portfolio level, not only on the Insurance page:
+        # "which jobs are running subs with no certificate on file" is a question about
+        # all of them at once. [Vendors Without Insurance] is a set difference (EXCEPT)
+        # over two key lists, NOT a RELATEDTABLE - there is no relationship from
+        # bridge_ProjectVendor to fct_VendorInsurance, both hang off dim_Vendor, and a
+        # RELATEDTABLE version would deploy perfectly cleanly and then fail at render.
+        visual(p, "pf_uninsured", "barChart", 852, 528, 388, 128,
+               {"Category": [column("dim_Project", "ProjectName")],
+                "Y": [measure("Vendors Without Insurance")]},
+               title="Vendors with no certificate on file, by project"),
     ]
 
 
@@ -416,18 +434,28 @@ def page_data_quality() -> tuple[str, list[dict]]:
                 "This page is how the Excel's defects would have been caught.  Status is "
                 "always shown as TEXT, never colour alone - around 8% of men have some "
                 "colour-vision deficiency, and this report goes to leadership.",
-                20, 56, 1100, 44, size=10, color=MUTED),
-        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 110, 260, 130),
-        card(p, "dq_codes", "DQ Cost Codes Not In Source", 296, 110, 260, 130),
-        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 572, 110, 260, 130),
-        card(p, "dq_ar", "DQ Unmatched Invoices", 848, 110, 260, 130),
-        visual(p, "no_crosswalk", "tableEx", 20, 260, 600, 390,
+                20, 56, 1100, 40, size=10, color=MUTED),
+
+        # FIRST band on the page, deliberately. Every other number here describes the data;
+        # this one says whether the data arrived at all. A DQ page full of green checks on
+        # three-week-old numbers is worse than no DQ page.
+        textbox(p, "hb_h", "Pipeline", 20, 104, 300, 24, size=13),
+        card(p, "dq_hb_status", "Pipeline Status", 20, 132, 300, 100),
+        card(p, "dq_hb_hours", "Hours Since Last Checked Run", 336, 132, 260, 100),
+        card(p, "dq_hb_last", "Last Checked Run", 612, 132, 260, 100),
+        card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 132, 260, 100),
+
+        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 244, 260, 100),
+        card(p, "dq_codes", "DQ Cost Codes Not In Source", 296, 244, 260, 100),
+        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 572, 244, 260, 100),
+        card(p, "dq_ar", "DQ Unmatched Invoices", 848, 244, 260, 100),
+        visual(p, "no_crosswalk", "tableEx", 20, 356, 600, 300,
                {"Values": [column("dim_Project", "ProjectKey"),
                            column("dim_Project", "ProjectName"),
                            column("dim_Project", "IsInCrosswalk"),
                            column("dim_Project", "HasPrimeContract")]},
                title="Projects - crosswalk and contract coverage"),
-        visual(p, "unmatched_ar", "tableEx", 640, 260, 620, 390,
+        visual(p, "unmatched_ar", "tableEx", 640, 356, 620, 300,
                {"Values": [column("fct_Invoice", "SageJobNumber"),
                            column("fct_Invoice", "Description"),
                            measure("Total Billed")]},
@@ -464,7 +492,7 @@ def page_scorecard() -> tuple[str, list[dict]]:
         # what it contributed. The contribution column sums to [Project Scorecard] exactly,
         # because it is driven by the same SWITCH the headline measure uses. This is the
         # view in which the workbook's three dead bands would have been obvious.
-        visual(p, "audit", "tableEx", 20, 260, 800, 390,
+        visual(p, "audit", "tableEx", 20, 260, 800, 320,
                {"Values": [column("dim_ScorecardWeight", "CategoryName"),
                            measure("Category Score"),
                            measure("Category Band"),
@@ -492,9 +520,10 @@ def page_scorecard() -> tuple[str, list[dict]]:
                 "cancel, the workbook's score is wrong by the difference.  The bands here "
                 "are corrected (dim_ScorecardBand). Affect decides when to switch the "
                 "number reported to leadership.",
-                # Stops at x=940 so it clears the footer, and at y=708 so it clears the
-                # canvas - it previously ran to 742 on a 720-high page.
-                20, 656, 920, 52, size=10, color=MUTED),
+                # Ends at y=664, the top of the footer band, so it can run the full width
+                # of the canvas. It previously ran to 742 on a 720-high page, and then to
+                # x=940, which the widened footer would have covered.
+                20, 588, 1240, 76, size=10, color=MUTED),
 
         # The band table stays, as the reference behind the Band column - but keyed by the
         # category NAME rather than the surrogate integer the previous version showed.
@@ -757,29 +786,49 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                 "prequalification record, which is not the same as current insurance.",
                 20, 56, 1240, 34, size=10, color=MUTED),
 
-        card(p, "c_direct", "Direct Costs", 20, 104, 250, 110),
-        card(p, "c_labour", "Self Performed Labour", 286, 104, 250, 110),
-        card(p, "c_unapproved", "Unapproved Direct Costs", 552, 104, 250, 110),
-        card(p, "c_vendors", "Vendors On Project", 818, 104, 220, 110),
+        # Six across. The vendor/cost-code bridge added a sixth headline number to a row
+        # that was already full, so the whole row narrows rather than the new one wrapping
+        # to a band of its own.
+        card(p, "c_direct", "Direct Costs", 20, 104, 195, 92),
+        card(p, "c_labour", "Self Performed Labour", 229, 104, 195, 92),
+        card(p, "c_unapproved", "Unapproved Direct Costs", 438, 104, 195, 92),
+        card(p, "c_vendors", "Vendors On Project", 647, 104, 195, 92),
         # Half of Affect's vendors are not written back to Sage. That is a reconciliation
         # gap - cost exists in one system and not the other - and nothing surfaced it
         # before this card.
-        card(p, "c_missing", "Vendors Missing From ERP", 1054, 104, 206, 110),
+        card(p, "c_missing", "Vendors Missing From ERP", 856, 104, 195, 92),
+        # Committed and actual are shown side by side and NEVER summed: committed is what
+        # was promised, actual is what has gone out, and adding them counts the same work
+        # twice. The gap between them is work in progress.
+        card(p, "c_committed", "Vendor Committed", 1065, 104, 195, 92),
 
-        visual(p, "c_by_type", "columnChart", 20, 232, 520, 212,
+        visual(p, "c_by_type", "columnChart", 20, 208, 400, 216,
                {"Category": [column("fct_DirectCost", "CostCategory")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by category"),
 
-        visual(p, "c_trend", "columnChart", 560, 232, 700, 212,
+        visual(p, "c_trend", "columnChart", 436, 208, 400, 216,
                {"Category": [column("dim_Date", "MonthStart")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by month"),
 
+        # Spend by vendor AND cost code - the linkage that exists in no single Procore
+        # object, and that nothing in the current reporting can slice.
+        visual(p, "c_topcodes", "barChart", 852, 208, 408, 216,
+               {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
+                "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
+               title="Committed and actual by cost code"),
+
+        visual(p, "c_matrix", "matrix", 20, 436, 610, 220,
+               {"Rows": [column("bridge_VendorCostCode", "VendorName")],
+                "Columns": [column("bridge_VendorCostCode", "AmountType")],
+                "Values": [measure("Vendor Spend"), measure("Vendor Committed")]},
+               title="Vendor: committed vs actual"),
+
         # The D8 deliverable itself: the list somebody assembles by hand today.
         # Was 300 tall at y=542, which ran 122px off the bottom of the canvas - invisible
         # in a PDF export and clipped in the service, neither of which reports an error.
-        visual(p, "c_vendorlist", "tableEx", 20, 456, 1240, 200,
+        visual(p, "c_vendorlist", "tableEx", 646, 436, 614, 220,
                {"Values": [column("bridge_ProjectVendor", "VendorName"),
                            column("bridge_ProjectVendor", "TradeName"),
                            column("bridge_ProjectVendor", "City"),
@@ -787,6 +836,74 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                            column("bridge_ProjectVendor", "IsPrequalified"),
                            column("bridge_ProjectVendor", "SyncedToErp")]},
                title="Vendor list - prequalification and ERP sync"),
+    ]
+
+
+def page_insurance() -> tuple[str, list[dict]]:
+    """D8's other half: certificates of insurance.
+
+    THE PAGE LEADS WITH THE BAD NEWS ON PURPOSE. Live, every one of the 105 certificates
+    in Procore is past its expiry date, the most recent lapsed 2025-04-01, and only 23 of
+    251 vendors have a certificate on file at all.
+
+    That is not proof the subcontractors are uninsured - far more likely the module was
+    populated once and abandoned, with current certificates living in email. But a
+    compliance page that renders that as a green tick is worse than no page, and the two
+    readings have very different consequences for a general contractor.
+
+    Coverage and currency are shown as separate numbers throughout, because "no
+    certificate on file" and "certificate lapsed" need different follow-up: chase the
+    document, or chase the renewal.
+    """
+    p = "insurance"
+    return p, [
+        textbox(p, "title", "Vendor Insurance", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Sourced from Procore's insurance records. COVERAGE (is there a "
+                "certificate at all) and CURRENCY (is it in date) are counted separately - "
+                "a vendor with no record and a vendor with a lapsed record both fail a "
+                "single compliance flag and need different follow-up. Exempt vendors are "
+                "counted apart from lapsed ones.",
+                20, 56, 1240, 46, size=10, color=MUTED),
+
+        # Three coverage numbers on the left, three currency numbers on the right, one
+        # band. i_soon sits with currency rather than in a row of its own - "expiring
+        # soon" is a renewal question, not a coverage one.
+        textbox(p, "cov_h", "Coverage", 20, 112, 400, 28, size=13),
+        card(p, "i_vendors", "Vendors On Project", 20, 144, 195, 100),
+        card(p, "i_insured", "Vendors With Insurance", 229, 144, 195, 100),
+        card(p, "i_missing", "Vendors Without Insurance", 438, 144, 195, 100),
+
+        textbox(p, "cur_h", "Currency", 647, 112, 400, 28, size=13),
+        card(p, "i_certs", "Certificates On File", 647, 144, 195, 100),
+        card(p, "i_expired", "Expired Certificates", 856, 144, 195, 100),
+        card(p, "i_soon", "Certificates Expiring Soon", 1065, 144, 195, 100),
+
+        visual(p, "i_by_status", "columnChart", 20, 256, 400, 196,
+               {"Category": [column("fct_VendorInsurance", "ExpiryStatus")],
+                "Y": [measure("Certificates On File")]},
+               title="Certificates by expiry status"),
+
+        visual(p, "i_by_type", "barChart", 436, 256, 400, 196,
+               {"Category": [column("fct_VendorInsurance", "InsuranceType")],
+                "Y": [measure("Certificates On File")]},
+               title="Certificates by type (Procore's free-text values, untidied)"),
+
+        visual(p, "i_state", "columnChart", 852, 256, 408, 196,
+               {"Category": [column("fct_VendorInsurance", "ComplianceState")],
+                "Y": [measure("Certificates On File")]},
+               title="Lapsed vs in date vs exempt"),
+
+        # The working list: who to chase, for what, and how overdue.
+        visual(p, "i_list", "tableEx", 20, 464, 1240, 192,
+               {"Values": [column("fct_VendorInsurance", "VendorKey"),
+                           column("fct_VendorInsurance", "InsuranceType"),
+                           column("fct_VendorInsurance", "Provider"),
+                           column("fct_VendorInsurance", "PolicyNumber"),
+                           column("fct_VendorInsurance", "ExpirationDate"),
+                           column("fct_VendorInsurance", "ExpiryStatus"),
+                           column("fct_VendorInsurance", "DaysUntilExpiry")]},
+               title="Certificates - what to chase, and how overdue"),
     ]
 
 
@@ -800,6 +917,7 @@ PAGES = [
     ("Safety & Quality", page_safety_quality, False),
     ("Billing & Retainage", page_billing, False),
     ("Direct Costs & Vendors", page_costs_vendors, False),
+    ("Vendor Insurance", page_insurance, False),
     ("Scorecard", page_scorecard, False),
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target

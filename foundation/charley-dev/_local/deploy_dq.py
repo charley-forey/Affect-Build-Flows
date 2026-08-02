@@ -119,6 +119,42 @@ try:
 except Exception as exc:
     print(f"PERSIST FAILED ({type(exc).__name__}: {exc}) - "
           f"evaluation stands, see Files/_diag/dq_run.json")
+
+# ---------------------------------------------------------------- heartbeat
+#
+# One row per run of this gate. Written LAST, and only once the evaluation above has
+# actually happened, so a row here means the whole medallion reached the end and the
+# numbers were checked - not merely that something started.
+#
+# This is the alerting the platform has. Active alerting (email, Teams) needs a
+# credentialed connector nobody has set up; this needs nothing. If any upstream stage
+# fails, this cell never runs, no row is written, and [Hours Since Last Checked Run] on the
+# report climbs until somebody notices. Absence of a heartbeat is the signal.
+#
+# APPEND, never overwrite: the history is what makes "it has been failing since Tuesday"
+# answerable, and that is usually the more useful question than "is it broken now".
+try:
+    from pyspark.sql import Row
+    from datetime import datetime, timezone
+
+    failing = sum(1 for r in results if r.failing_rows > 0)
+    blocking = sum(1 for r in results if r.blocking)
+    heartbeat = spark.createDataFrame([Row(
+        RunId=batch_id,
+        RunAt=datetime.now(timezone.utc).replace(tzinfo=None),
+        Stage="dq_gate",
+        Status="blocked" if blocking else "ok",
+        Expectations=len(results),
+        Failing=failing,
+        Blocking=blocking,
+    )])
+    heartbeat.write.format("delta").mode("append").saveAsTable("meta_PipelineRun")
+    print(f"heartbeat written: {batch_id} "
+          f"({len(results)} expectations, {failing} failing, {blocking} blocking)")
+except Exception as exc:
+    # A failed heartbeat must not fail the run - it is a monitoring aid, and taking the
+    # pipeline down to protect the thing that watches the pipeline is backwards.
+    print(f"HEARTBEAT FAILED ({type(exc).__name__}: {exc}) - the run itself is unaffected")
 '''
         ),
         cell(

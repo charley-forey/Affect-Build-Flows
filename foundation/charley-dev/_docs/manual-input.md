@@ -195,3 +195,52 @@ Sage line tables (`arivln`) or progress billing, not a manual entry — see
 Four of these six have a real system of record identified and move out of `man_*` when
 that ingestion runs. They are manual because the pipe is not connected, not because the
 data is inherently a judgement — only Profitability is genuinely that.
+
+---
+
+## Status, 2026-08-02 — and a correction
+
+I previously described the manual-input pipework as "built and waiting on SharePoint". That
+was not accurate, and the inaccuracy mattered, because it made the remaining work look like
+an admin ticket when part of it is a decision only Affect can make.
+
+### What is genuinely built and live
+
+| Layer | State |
+|---|---|
+| CSV templates | **Live** — `Files/_manual/_templates/*.csv`, 9 lists, each with an example row |
+| CSV → bronze loader | **Live** — `cd_06_land_manual`, run and succeeding |
+| `cd_bronze_man_*` | **Live** — 9 tables, correctly typed, currently 0 rows |
+| Silver parsers | Written (`30_manual_silver.sql`), with dedup and a reject log |
+| Gold `man_*` tables | Exist, correctly typed, empty |
+| Model + scorecard | Bound to all 9, measures written, categories score BLANK not zero |
+
+**The SharePoint dependency is gone.** Data entry no longer waits on an administrator:
+download a template, fill it in, upload it to `Files/_manual/<list>.csv`, re-run the
+notebook. When the SharePoint lists are eventually provisioned the dataflow writes the same
+bronze tables and nothing downstream changes — two writers, one contract.
+
+That matters because the slow part was never the plumbing. It is people sitting down and
+typing a month of history, and that can start now.
+
+### What is NOT built, and needs an Affect decision first
+
+**There is no silver → gold link for `man_*`.** `40_man_tables.sql` creates the gold tables
+as empty typed placeholders; nothing populates them from `cd_silver_man_*`. Writing that
+join is small. Agreeing what it should say is not, because the two specs disagree on four
+tables — and each disagreement is a real question about what the scorecard should measure:
+
+| Table | Gold expects | Silver produces | The question |
+|---|---|---|---|
+| `man_DailyLogCompliance` | `LogsMissedSameDay` | `LogsSubmitted` | Is compliance "submitted at all" or "submitted the same day"? These give different scores |
+| `man_Milestones` | `ContractStart` + `ContractFinish`, `BaselineStart` + `BaselineFinish`, `ActivityKey` | single `ContractDate`, `BaselineDate`, `ForecastDate`, `ActualDate` | Are milestones a date or a span? Completion variance depends on which |
+| `man_Flags` | `ContingencyRemaining`, `BaselineApproved`, `BaselineRevision`, `MonthEndClosedOut`, `ForecastingInLine`, `ResourcesUpdated` | `ProfitabilityCode`, `CostMgmtFlag`, `ScheduleFlag`, `Notes` | Which attestations are actually captured monthly? |
+| `man_Survey` | `SurveyedParty` | *(not captured)* | Is the survey anonymous, or attributed? |
+
+Guessing any of these produces a scorecard number that looks authoritative and measures
+something nobody asked for — which is exactly the defect class this platform exists to
+remove. So they are questions for the next client call, not decisions to take here.
+
+**Until they are answered, `[Scorecard Coverage %]` stays at 59%** and the four unscored
+categories return BLANK rather than zero. That is the honest reading, and it is visible on
+the Scorecard page rather than buried.
