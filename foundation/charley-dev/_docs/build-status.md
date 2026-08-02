@@ -1,21 +1,51 @@
 # Build status
 
-What exists, what is verified, and what is not built yet.
+What exists, what is verified, and what is not built yet. Updated 2026-08-02.
 
 ## Live in Fabric
 
-Workspace `Build`, folder `charley-dev` (`25dd1e34-…`). **65 items in the workspace;
-nothing outside `charley-dev` has been touched.**
+Workspace `Build`, folder `charley-dev` (`25dd1e34-…`). **Nothing outside `charley-dev` has
+been touched** — `fabric_backup.py` diffed to a scratch directory is the acceptance gate, not
+a promise.
 
 | Item | Type | Contents |
 |---|---|---|
-| `CD_Bronze_Lakehouse` | Lakehouse | schema-enabled, awaiting Procore credentials |
-| `CD_Silver_Lakehouse` | Lakehouse | schema-enabled, awaiting our own ingestion |
-| `CD_Gold_Lakehouse` | Lakehouse | **16 tables, populated with real data** |
+| `CD_Bronze_Lakehouse` | Lakehouse | **populated from Affect's production Procore tenant** |
+| `CD_Silver_Lakehouse` | Lakehouse | **populated — 9,431 rows across 8 typed tables, 0 rejects** |
+| `CD_Gold_Lakehouse` | Lakehouse | 16 tables, populated |
+| `cd_01_extract_procore` | Notebook | deployed; blocked on Key Vault (see below) |
+| `cd_05_land_to_bronze` | Notebook | **new** — merges landed NDJSON into bronze Delta, no credentials |
+| `cd_10_bronze_to_silver` | Notebook | runs clean against real bronze |
 | `cd_20_seed_gold` | Notebook | 7 seed dimensions; asserts its own row counts |
 | `cd_30_build_gold` | Notebook | 9 dimensions/facts + integrity checks; publishes the schema |
-| `Affect Project Report` | SemanticModel | Direct Lake, 17 tables, 30 measures, 14 relationships |
-| `Monthly Progress Report` | Report | 4 pages, 42 visuals |
+| `Affect Project Report` | SemanticModel | Direct Lake, 26 tables, 52 measures, 31 relationships |
+| `Monthly Progress Report` | Report | 6 pages |
+
+### Bronze and silver, from our own ingestion
+
+| Silver table | Rows | Source |
+|---|---:|---|
+| `cd_silver_cost_codes` | 5,433 | Procore, production |
+| `cd_silver_submittals` | 2,245 | Procore, production |
+| `cd_silver_vendors` | 1,098 | Procore, production |
+| `cd_silver_rfis` | 616 | Procore — **no RFI data exists anywhere else in the estate** |
+| `cd_silver_prime_contracts` | 20 | Procore, production |
+| `cd_silver_projects` | 19 | Procore, production |
+| `cd_dq_rejects` | 0 | — |
+
+`cd_silver_prime_change_orders` and `cd_silver_budgets` are still empty; the endpoints that
+feed them were added to the registry after the first pull and are queued behind Procore's
+600-request hourly limit. See `procore-ingestion.md`.
+
+### Two blockers, both external
+
+| Blocker | Effect | Owner |
+|---|---|---|
+| **No Azure subscription** on this tenant (`az account list` returns a tenant-level account only) | Key Vault cannot be created, so `cd_01_extract_procore` cannot hold a credential. Extraction runs locally instead and lands files; `cd_05_land_to_bronze` merges them in Fabric with no secret. A bridge, not the destination — `procore-ingestion.md` has the steps to retire it. | Affect |
+| **`OUTBUILD_API_TOKEN` not issued** | Outbuild ingestion is built and verified but cannot run. Outbuild is the only milestone source anywhere. | Affect (via Outbuild CS) |
+
+Plus three access items worth raising on the same call: Procore 403s on `punch_item_types`
+and `schedule`, and the on-prem gateway binding for `CD_Sage_Ingest`.
 
 ### The gold model, with real data
 
