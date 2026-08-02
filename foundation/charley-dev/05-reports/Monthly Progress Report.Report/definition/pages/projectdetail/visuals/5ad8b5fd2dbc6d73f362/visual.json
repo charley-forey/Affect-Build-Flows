@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "5ad8b5fd2dbc6d73f362",
+  "position": {
+    "x": 660,
+    "y": 228,
+    "z": 0,
+    "width": 600,
+    "height": 300
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ChangeOrder"
+                    }
+                  },
+                  "Property": "ChangeOrderNumber"
+                }
+              },
+              "queryRef": "fct_ChangeOrder.ChangeOrderNumber",
+              "nativeQueryRef": "ChangeOrderNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ChangeOrder"
+                    }
+                  },
+                  "Property": "Status"
+                }
+              },
+              "queryRef": "fct_ChangeOrder.Status",
+              "nativeQueryRef": "Status"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Approved Change Orders"
+                }
+              },
+              "queryRef": "_Measures.Approved Change Orders",
+              "nativeQueryRef": "Approved Change Orders"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Change orders'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

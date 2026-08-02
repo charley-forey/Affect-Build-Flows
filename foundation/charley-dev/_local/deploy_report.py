@@ -334,12 +334,77 @@ def page_source_coverage() -> tuple[str, list[dict]]:
     ]
 
 
+
+def page_project_detail() -> tuple[str, list[dict]]:
+    """The drill-through target: everything about ONE project, reached by right-clicking it.
+
+    This is the capability the workbook fundamentally lacks. It holds one row per project
+    and no way down, so a number that looks wrong can only be checked by asking whoever
+    typed it. Here, every aggregate on every page is right-click -> Drill through, and the
+    underlying records are on screen.
+
+    The page is REACHABLE ONLY BY DRILLING - it is not in the page order. Opening it cold
+    would show every project at once, which is exactly the portfolio view the other pages
+    already give better.
+    """
+    p = "projectdetail"
+    return p, [
+        textbox(p, "title", "Project Detail", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Reached by right-clicking a project on any page and choosing Drill through. "
+                "Every figure here is for the single project you came from.",
+                20, 56, 1000, 30, size=10, color=MUTED),
+
+        card(p, "pd_contract", "Current Contract", 20, 100, 240, 110),
+        card(p, "pd_billed", "Total Billed", 276, 100, 240, 110),
+        card(p, "pd_paid", "Total Paid", 532, 100, 240, 110),
+        card(p, "pd_ar", "AR Outstanding", 788, 100, 240, 110),
+        card(p, "pd_score", "Project Scorecard", 1044, 100, 216, 110),
+
+        # Budget by cost code: the line-item grain the portfolio pages roll up.
+        visual(p, "pd_budget", "tableEx", 20, 228, 620, 300,
+               {"Values": [column("dim_CostCode", "CostCodeKey"),
+                           column("dim_CostCode", "Division"),
+                           measure("Budget"),
+                           measure("Spent To Date"),
+                           measure("Budget Variance")]},
+               title="Budget by cost code"),
+
+        visual(p, "pd_co", "tableEx", 660, 228, 600, 300,
+               {"Values": [column("fct_ChangeOrder", "ChangeOrderNumber"),
+                           column("fct_ChangeOrder", "Status"),
+                           measure("Approved Change Orders")]},
+               title="Change orders"),
+
+        visual(p, "pd_items", "tableEx", 20, 544, 620, 260,
+               {"Values": [column("fct_RfiSubmittal", "ItemType"),
+                           column("fct_RfiSubmittal", "ItemNumber"),
+                           column("fct_RfiSubmittal", "Subject"),
+                           column("fct_RfiSubmittal", "StatusLabel")]},
+               title="RFIs and submittals"),
+
+        visual(p, "pd_milestones", "tableEx", 660, 544, 600, 260,
+               {"Values": [column("fct_Milestone", "MilestoneName"),
+                           column("fct_Milestone", "CurrentStart"),
+                           column("fct_Milestone", "CurrentFinish"),
+                           column("fct_Milestone", "IsOverdue")]},
+               title="Milestones"),
+    ]
+
+
+# page id -> the (entity, column) it is drilled by. A page listed here becomes reachable
+# only by right-clicking that field somewhere else in the report.
+DRILLTHROUGH = {
+    "projectdetail": ("dim_Project", "ProjectName"),
+}
+
 PAGES = [
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
     ("Schedule & Quality", page_schedule_quality, False),
     ("Scorecard", page_scorecard, False),
     ("Source Coverage", page_source_coverage, False),
+    ("Project Detail", page_project_detail, True),    # drill-through target
     ("Data Quality", page_data_quality, True),   # hidden
 ]
 
@@ -390,15 +455,81 @@ def build(model_id: str) -> dict[str, str]:
         }
         if hidden:
             page["visibility"] = "HiddenInViewMode"
+
+        # DRILL-THROUGH BINDING. Two things make a page a drill-through target and both are
+        # required: a pageBinding of type Drillthrough, and a filter on the field being
+        # drilled by. Without the filter the page opens showing every project, which is the
+        # portfolio view the other pages already do better.
+        if pid in DRILLTHROUGH:
+            entity, prop = DRILLTHROUGH[pid]
+            page["pageBinding"] = {
+                "name": f"{pid}_binding",
+                "type": "Drillthrough",
+                # The parameter IS the contract: it names the field the caller passes in.
+                # Without it the import fails with "DrillThrough pods cannot contain null
+                # parameters" - the filter alone only says what this page is restricted by,
+                # not what it receives.
+                "parameters": [{"name": prop}],
+            }
+            page["filterConfig"] = {
+                "filters": [{
+                    "name": f"{pid}_drill",
+                    "field": {"Column": {
+                        "Expression": {"SourceRef": {"Entity": entity}},
+                        "Property": prop,
+                    }},
+                    "type": "Passthrough",
+                }]
+            }
         files[f"definition/pages/{pid}/page.json"] = json.dumps(page, indent=2)
         for v in visuals:
             files[f"definition/pages/{pid}/visuals/{v['name']}/visual.json"] = json.dumps(v, indent=2)
 
+    visible_order = [n for n in page_names if n not in DRILLTHROUGH]
     files["definition/pages/pages.json"] = json.dumps({
         "$schema": f"{SCHEMA}/pagesMetadata/1.0.0/schema.json",
-        "pageOrder": page_names,
-        "activePageName": page_names[0],
+        # Drill-through targets are deliberately absent: a page in the order appears in the
+        # tab strip, and opening it cold shows every project - which reads as broken.
+        "pageOrder": visible_order,
+        "activePageName": visible_order[0],
     }, indent=2)
+
+    # ------------------------------------------------------------- bookmarks
+    #
+    # The views people actually open the report to check. Each replaces four slicer changes
+    # with one click, which is the difference between a report someone uses monthly and one
+    # they rebuild in Excel because filtering it is a chore.
+    #
+    # Each captures the TARGET PAGE ONLY. A bookmark that also captured filter state would
+    # freeze whatever project was selected when it was authored, and then silently show the
+    # wrong project to everyone else.
+    bookmarks = [
+        ("bmOverview", "Portfolio overview", "overview"),
+        ("bmCoverage", "Where the data is missing", "sourcecoverage"),
+        ("bmScorecard", "Scorecard and how it is scored", "scorecard"),
+    ]
+    files["definition/bookmarks/bookmarks.json"] = json.dumps({
+        "$schema": f"{SCHEMA}/bookmarksMetadata/1.0.0/schema.json",
+        # Items carry the NAME only; the display name lives in the bookmark file itself.
+        # The metadata file is an index, not a duplicate of the bookmark definitions.
+        "items": [{"name": n} for n, _, _ in bookmarks],
+    }, indent=2)
+    for name, display, target in bookmarks:
+        files[f"definition/bookmarks/{name}.bookmark.json"] = json.dumps({
+            "$schema": f"{SCHEMA}/bookmark/1.0.0/schema.json",
+            "name": name,
+            "displayName": display,
+            "explorationState": {
+                "version": "1.0",
+                "activeSection": target,
+                # visualContainers is required by the schema, and empty is also what we
+                # want: these bookmarks NAVIGATE, they do not restore visual state.
+                # Capturing state would pin whatever project was selected when the bookmark
+                # was authored and show it to everyone who clicks - a report quietly
+                # answering a different question than the one asked.
+                "sections": {target: {"visualContainers": {}}},
+            },
+        }, indent=2)
 
     for rel, content in files.items():
         path = REPORT_DIR / rel
