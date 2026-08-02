@@ -100,6 +100,61 @@ def test_report() -> None:
     print(f"  {len(pages)} pages, {total} visuals: alt text, tab order, slicers, footer, theme")
 
 
+def test_report_refs() -> None:
+    """Every field a visual asks for must exist in the model.
+
+    A visual bound to a name the model does not have does not fail the deploy, does not
+    fail the refresh, and does not appear in any log - it renders in the report as "There's
+    something wrong with one or more fields". So it is invisible to everything except a
+    person looking at that page.
+
+    Two were live when this check was written: fct_ChangeOrder[Status], which has always
+    been StatusLabel in gold, and [Approved Change Orders], a measure the Project Detail
+    table asked for by name that had never been written. Both on the same visual.
+    """
+    import re
+
+    import deploy_model as dm
+
+    model = dm.MODEL_DIR / "definition" / "tables"
+    known: dict[str, set[str]] = {}
+    for tmdl in model.glob("*.tmdl"):
+        text = tmdl.read_text(encoding="utf-8")
+        table = re.search(r"^table\s+(.+)$", text, re.M)
+        if not table:
+            continue
+        known[table.group(1).strip().strip("'")] = set(
+            re.findall(r"^\tcolumn\s+(.+)$", text, re.M)
+        )
+
+    # Measures come from the generator rather than the committed tmdl, so a measure added
+    # to MEASURES counts immediately instead of only after the next deploy writes it out.
+    known.setdefault("_Measures", set()).update(m[0] for m in dm.MEASURES)
+
+    files = dr.build("00000000-0000-0000-0000-000000000000")
+    pattern = re.compile(
+        r'"Entity"\s*:\s*"([^"]+)"[^}]*\}\s*\}\s*,\s*"Property"\s*:\s*"([^"]+)"'
+    )
+    seen, broken = set(), []
+    for rel, content in files.items():
+        if not rel.endswith("visual.json"):
+            continue
+        page = rel.split("/")[2]
+        for entity, prop in pattern.findall(content):
+            seen.add((entity, prop))
+            if entity not in known:
+                broken.append(f"{page}: {entity} is not a table in the model")
+            elif prop not in known[entity]:
+                broken.append(f"{page}: {entity}[{prop}] does not exist")
+
+    assert not broken, "report references fields the model does not have:\n  " + "\n  ".join(
+        sorted(set(broken))
+    )
+    assert len(seen) > 100, f"only {len(seen)} refs found - the pattern stopped matching"
+    print(f"  {len(seen)} field references, all resolve against the model")
+
+
 if __name__ == "__main__":
     test_report()
+    test_report_refs()
     print("report checks passed")

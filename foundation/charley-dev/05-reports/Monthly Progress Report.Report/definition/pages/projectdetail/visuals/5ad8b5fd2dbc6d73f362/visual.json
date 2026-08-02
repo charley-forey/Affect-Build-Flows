@@ -37,11 +37,11 @@
                       "Entity": "fct_ChangeOrder"
                     }
                   },
-                  "Property": "Status"
+                  "Property": "StatusLabel"
                 }
               },
-              "queryRef": "fct_ChangeOrder.Status",
-              "nativeQueryRef": "Status"
+              "queryRef": "fct_ChangeOrder.StatusLabel",
+              "nativeQueryRef": "StatusLabel"
             },
             {
               "field": {
@@ -69,7 +69,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Change orders. Shows ChangeOrderNumber, Status, Approved Change Orders for the current selection.'"
+                  "Value": "'Table. Change orders. Shows ChangeOrderNumber, StatusLabel, Approved Change Orders for the current selection.'"
                 }
               }
             }

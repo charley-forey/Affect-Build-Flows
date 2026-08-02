@@ -34,6 +34,11 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 01 Contract & Change
 
+	/// Replaces derived - approved COs, the complement of [Pending Change Orders]
+	measure 'Approved Change Orders' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )
+		formatString: "$#,0"
+		displayFolder: 01 Contract & Change
+
 	/// Replaces FINANCIALS!C19:C20
 	measure 'Budget' = SUM ( fct_BudgetLine[BudgetAmount] )
 		formatString: "$#,0"

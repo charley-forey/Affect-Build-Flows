@@ -634,7 +634,10 @@ def page_project_detail() -> tuple[str, list[dict]]:
 
         visual(p, "pd_co", "tableEx", 660, 228, 600, 232,
                {"Values": [column("fct_ChangeOrder", "ChangeOrderNumber"),
-                           column("fct_ChangeOrder", "Status"),
+                           # StatusLabel, not Status. The column has never been called
+                           # Status in gold, so this visual has been broken since it was
+                           # written - see test_report_refs below, which now catches it.
+                           column("fct_ChangeOrder", "StatusLabel"),
                            measure("Approved Change Orders")]},
                title="Change orders"),
 

@@ -160,6 +160,14 @@ MEASURES = [
      '"$#,0"', "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"),
     ("Age Of Oldest Unapproved CO", "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
      '"#,0"', "FINANCIALS!C6 - typed by hand"),
+    # The Project Detail change-order table asked for this by name and it had never been
+    # written, so the visual rendered as "there's something wrong with one or more fields".
+    # Summed from the fact rather than derived as [Current Contract] - [Original Contract],
+    # because the table shows it PER CHANGE ORDER - the contract measures are balances that
+    # collapse to one value per project and would repeat that value down every row.
+    ("Approved Change Orders",
+     "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )",
+     '"$#,0"', "derived - approved COs, the complement of [Pending Change Orders]"),
     ("Budget", "SUM ( fct_BudgetLine[BudgetAmount] )", '"$#,0"', "FINANCIALS!C19:C20"),
     ("Forecast", "SUM ( fct_BudgetLine[ForecastAmount] )", '"$#,0"', "FINANCIALS!D19:D20"),
     ("Committed", "SUM ( fct_BudgetLine[CommittedAmount] )", '"$#,0"', "FINANCIALS!D61"),
