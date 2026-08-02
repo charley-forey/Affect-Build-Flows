@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "e55665bfcbc0f8f8f150",
   "position": {
-    "x": 20,
-    "y": 232,
+    "x": 1065,
+    "y": 104,
     "z": 0,
-    "width": 250,
-    "height": 100
+    "width": 195,
+    "height": 92,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Vendor Committed. Shows Vendor Committed for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

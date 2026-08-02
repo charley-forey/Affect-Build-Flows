@@ -6,6 +6,7 @@ table _Measures
 			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
 			SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )
 		formatString: "$#,0"
+		displayFolder: 01 Contract & Change
 
 	/// Replaces FINANCIALS!C4
 	measure 'Current Contract' =
@@ -13,10 +14,12 @@ table _Measures
 			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
 			SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )
 		formatString: "$#,0"
+		displayFolder: 01 Contract & Change
 
 	/// Replaces DASHBOARD!AT11
 	measure 'Contract Growth %' = DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )
 		formatString: "0.00%"
+		displayFolder: 01 Contract & Change
 
 	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell
 	measure 'Pending Change Orders' =
@@ -24,62 +27,76 @@ table _Measures
 			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
 			SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )
 		formatString: "$#,0"
+		displayFolder: 01 Contract & Change
 
 	/// Replaces FINANCIALS!C6 - typed by hand
 	measure 'Age Of Oldest Unapproved CO' = MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )
 		formatString: "#,0"
+		displayFolder: 01 Contract & Change
 
 	/// Replaces FINANCIALS!C19:C20
 	measure 'Budget' = SUM ( fct_BudgetLine[BudgetAmount] )
 		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D19:D20
 	measure 'Forecast' = SUM ( fct_BudgetLine[ForecastAmount] )
 		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D61
 	measure 'Committed' = SUM ( fct_BudgetLine[CommittedAmount] )
 		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!E19:E20
 	measure 'Spent To Date' = SUM ( fct_BudgetLine[SpentToDate] )
 		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!C15
 	measure 'Cost To Complete' = SUM ( fct_BudgetLine[CostToComplete] )
 		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces derived
 	measure 'Budget Variance' = [Budget] - [Spent To Date]
 		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown
 	measure 'Budget Variance %' = DIVIDE ( [Budget Variance], [Budget] )
 		formatString: "0.0%"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!F19:F20 - derivable, but typed by hand today
 	measure 'Budget Status' =
 			VAR V = [Budget Variance %]
 			RETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "On Track", V >= -0.05, "Watch", "Over Budget" )
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D62
 	measure 'Percent Bought Out' = DIVIDE ( [Committed], [Budget] )
 		formatString: "0.0%"
+		displayFolder: 02 Budget & Cost
 
 	/// Replaces no workbook equivalent - the spreadsheet cannot say when it was last correct
 	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
 		formatString: "yyyy-mm-dd hh:nn"
+		displayFolder: 14 Pipeline liveness
 
 	/// Replaces derived
 	measure 'Hours Since Last Checked Run' =
 			VAR Last = MAX ( meta_PipelineRun[RunAt] )
 			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )
 		formatString: "#,0"
+		displayFolder: 14 Pipeline liveness
 
 	/// Replaces derived
 	measure 'Pipeline Status' =
 			VAR Hrs = [Hours Since Last Checked Run]
 			RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", "STALE - these numbers may be weeks old" )
+		displayFolder: 14 Pipeline liveness
 
 	/// Replaces derived
 	measure 'Blocking Violations Last Run' =
@@ -87,38 +104,47 @@ table _Measures
 			RETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),
 			meta_PipelineRun[RunAt] = Last ), 0 )
 		formatString: "#,0"
+		displayFolder: 14 Pipeline liveness
 
 	/// Replaces no workbook equivalent - vendor spend could not be sliced by cost code
 	measure 'Vendor Spend' = CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = "Actual" )
 		formatString: "$#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces FINANCIALS!D61 - committed by vendor and cost code, which the workbook cannot slice
 	measure 'Vendor Committed' = CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = "Committed" )
 		formatString: "$#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces derived
 	measure 'Cost Codes Per Vendor' = COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[CostCodeKey] ), 0 )
 		formatString: "#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces derived
 	measure 'Vendors Per Cost Code' = COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[VendorKey] ), 0 )
 		formatString: "#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces D8
 	measure 'Certificates On File' = COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )
 		formatString: "#,0"
+		displayFolder: 15 Insurance
 
 	/// Replaces D8
 	measure 'Vendors With Insurance' = COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )
 		formatString: "#,0"
+		displayFolder: 15 Insurance
 
 	/// Replaces D8
 	measure 'Expired Certificates' = COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = "Expired" ), 0 )
 		formatString: "#,0"
+		displayFolder: 15 Insurance
 
 	/// Replaces D8 - the renewals to chase this month
 	measure 'Certificates Expiring Soon' = COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" ), 0 )
 		formatString: "#,0"
+		displayFolder: 15 Insurance
 
 	/// Replaces D8 - a vendor with no certificate never appears in the insurance table
 	measure 'Vendors Without Insurance' =
@@ -126,195 +152,287 @@ table _Measures
 			RETURN COALESCE ( COUNTROWS ( EXCEPT (
 			VALUES ( bridge_ProjectVendor[VendorKey] ), Insured ) ), 0 )
 		formatString: "#,0"
+		displayFolder: 15 Insurance
 
 	/// Replaces no workbook equivalent - Sage holds no header retainage
 	measure 'Retainage Held Owner' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces no workbook equivalent
 	measure 'Retainage Held Sub' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Subcontractor" )
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces derived - what Affect is owed, less what Affect holds
 	measure 'Net Retainage Position' = [Retainage Held Owner] - [Retainage Held Sub]
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces FINANCIALS!C10, sourced from Procore instead of Sage
 	measure 'Owner Billed To Date' = CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces FINANCIALS!C4, cross-check on [Current Contract]
 	measure 'Owner Contract Sum' = CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces derived - contract sum less completed, including retainage
 	measure 'Balance To Finish' = CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces derived - safe to sum, unlike the cumulative columns
 	measure 'Billed This Period' = CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = "Owner", fct_Billing[StatusLabel] <> "DRAFT" )
 		formatString: "$#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces derived
 	measure 'Billing Periods' = COALESCE ( COUNTROWS ( fct_Billing ), 0 )
 		formatString: "#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces derived - what is sitting unissued at month end
 	measure 'Draft Billings' = COALESCE ( CALCULATE ( COUNTROWS ( fct_Billing ), fct_Billing[StatusLabel] = "DRAFT" ), 0 )
 		formatString: "#,0"
+		displayFolder: 03 Billing & Retainage
 
 	/// Replaces no workbook equivalent - self-performed cost was never captured
 	measure 'Direct Costs' = SUM ( fct_DirectCost[GrandTotal] )
 		formatString: "$#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces no workbook equivalent
 	measure 'Self Performed Labour' = CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[CostType] = "payroll" )
 		formatString: "$#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces derived - cost committed but not yet approved
 	measure 'Unapproved Direct Costs' = CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[IsApproved] = FALSE () )
 		formatString: "$#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces D8 - the vendor list, assembled by hand from Procore today
 	measure 'Vendors On Project' = COALESCE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), 0 )
 		formatString: "#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces derived
 	measure 'Vendors Missing From ERP' = COALESCE ( CALCULATE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), bridge_ProjectVendor[IsMissingFromErp] = TRUE () ), 0 )
 		formatString: "#,0"
+		displayFolder: 04 Direct Costs & Vendors
 
 	/// Replaces FINANCIALS!C10
 	measure 'Total Billed' = SUM ( fct_Invoice[Amount] )
 		formatString: "$#,0"
+		displayFolder: 05 Cash & AR
 
 	/// Replaces FINANCIALS!C12
 	measure 'Total Paid' = SUM ( fct_Invoice[AmountPaid] )
 		formatString: "$#,0"
+		displayFolder: 05 Cash & AR
 
 	/// Replaces FINANCIALS!F57
 	measure 'AR Outstanding' = SUM ( fct_Invoice[Balance] )
 		formatString: "$#,0"
+		displayFolder: 05 Cash & AR
 
 	/// Replaces DASHBOARD!AT15 - was a TEXT string, so it could never be charted
 	measure 'Total Billed %' = DIVIDE ( [Total Billed], [Current Contract] )
 		formatString: "0.0%"
+		displayFolder: 05 Cash & AR
 
 	/// Replaces replaces the hand-keyed LAST PERIOD column
 	measure 'Total Billed MoM %' =
 			VAR Prior = CALCULATE ( [Total Billed], DATEADD ( dim_Date[Date], -1, MONTH ) )
 			RETURN DIVIDE ( [Total Billed] - Prior, Prior )
 		formatString: "0.0%"
+		displayFolder: 05 Cash & AR
 
 	/// Replaces SUBMITTALS & RFI!D
 	measure 'Open Submittals' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE )
 		formatString: "#,0"
+		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces derived - the workbook has no equivalent
 	measure 'Open Submittals Past Due' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE )
 		formatString: "#,0"
+		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces QUALITY!D39 - typed by hand
 	measure 'Avg Days Open' = AVERAGE ( fct_RfiSubmittal[DaysOpen] )
 		formatString: "#,0.0"
+		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces SCHEDULE!Table5
 	measure 'Critical Milestones' = COUNTROWS ( fct_Milestone )
 		formatString: "#,0"
+		displayFolder: 07 Schedule
 
 	/// Replaces derived
 	measure 'Overdue Milestones' = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )
 		formatString: "#,0"
+		displayFolder: 07 Schedule
 
 	/// Replaces DASHBOARD!L19 - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)
 	measure 'Schedule Performance %' = DIVIDE ( [Overdue Milestones], [Critical Milestones] )
 		formatString: "0.0%"
+		displayFolder: 07 Schedule
 
 	/// Replaces derived
 	measure 'Avg Milestone Progress' = AVERAGE ( fct_Milestone[PercentComplete] )
 		formatString: "0.0%"
+		displayFolder: 07 Schedule
 
 	/// Replaces QUALITY!Table18 - typed by hand today
 	measure 'Punchlist Items' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[ItemType] = "PunchItem" ), 0 )
 		formatString: "#,0"
+		displayFolder: 08 Quality
 
 	/// Replaces observations and punch items still outstanding
 	measure 'Open Quality Items' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsOpen] = TRUE ), 0 )
 		formatString: "#,0"
+		displayFolder: 08 Quality
 
 	/// Replaces open AND past their due date
 	measure 'Quality Items Past Due' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsPastDue] = TRUE ), 0 )
 		formatString: "#,0"
+		displayFolder: 08 Quality
 
 	/// Replaces QUALITY!D38:E38 - hand-computed today
 	measure 'Avg Days Past Due' = AVERAGEX ( FILTER ( fct_QualityItem, fct_QualityItem[IsPastDue] = TRUE ), fct_QualityItem[DaysPastDue] )
 		formatString: "0.0"
+		displayFolder: 08 Quality
 
 	/// Replaces present in Procore AND Sage AND Outbuild
 	measure 'Projects Fully Mapped' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[SystemCount] = 3 ), 0 )
 		formatString: "#,0"
+		displayFolder: 09 Source Coverage
 
 	/// Replaces these read as ZERO revenue everywhere - the most dangerous gap
 	measure 'Projects Missing From Sage' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInSage] = FALSE ), 0 )
 		formatString: "#,0"
+		displayFolder: 09 Source Coverage
 
 	/// Replaces no milestones - Outbuild is the only milestone source that exists
 	measure 'Projects Missing From Outbuild' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInOutbuild] = FALSE ), 0 )
 		formatString: "#,0"
+		displayFolder: 09 Source Coverage
 
 	/// Replaces share of projects present in all three systems
 	measure 'Source Coverage %' = DIVIDE ( [Projects Fully Mapped], COUNTROWS ( dim_ProjectCrosswalk ) )
 		formatString: "0.0%"
+		displayFolder: 09 Source Coverage
 
 	/// Replaces mostly expected - a vendor invited to bid is not a vendor who was paid
 	measure 'Vendors Missing From Sage' = COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )
 		formatString: "#,0"
+		displayFolder: 09 Source Coverage
 
 	/// Replaces diagnostics - cannot join to Sage until fixed
 	measure 'DQ Projects Without Crosswalk' = CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )
 		formatString: "#,0"
+		displayFolder: 10 Data Quality
 
 	/// Replaces diagnostics
 	measure 'DQ Cost Codes Not In Source' = CALCULATE ( COUNTROWS ( dim_CostCode ), dim_CostCode[IsInSource] = FALSE )
 		formatString: "#,0"
+		displayFolder: 10 Data Quality
 
 	/// Replaces diagnostics - Excel defect #6, never flagged in the workbook
 	measure 'DQ Milestones With Inverted Dates' = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[HasDateInversion] = TRUE )
 		formatString: "#,0"
+		displayFolder: 10 Data Quality
 
 	/// Replaces diagnostics - AR rows whose Sage job resolves to no project
 	measure 'DQ Unmatched Invoices' = CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )
 		formatString: "#,0"
+		displayFolder: 10 Data Quality
+
+	/// Replaces no workbook equivalent - a single snapshot cannot draw a curve
+	measure 'Billed Cumulative' = CALCULATE ( [Billed This Period], FILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) )
+		formatString: "$#,0"
+		displayFolder: 05 Cash & AR
+
+	/// Replaces the S-curve against the contract line
+	measure 'Billed Cumulative % Of Contract' = DIVIDE ( [Billed Cumulative], [Current Contract] )
+		formatString: "0.0%"
+		displayFolder: 05 Cash & AR
+
+	/// Replaces portfolio scope
+	measure 'Projects Reporting' = COUNTROWS ( dim_Project )
+		formatString: "#,0"
+		displayFolder: 13 Portfolio
+
+	/// Replaces no workbook equivalent - one workbook per project cannot rank them
+	measure 'Projects At Risk' = COUNTROWS ( FILTER ( dim_Project, NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )
+		formatString: "#,0"
+		displayFolder: 13 Portfolio
+
+	/// Replaces Gantt geometry - the transparent leading bar
+	measure 'Milestone Offset Days' =
+			VAR Origin = CALCULATE ( MIN ( fct_Milestone[CurrentStart] ), ALLSELECTED ( fct_Milestone ) )
+			RETURN DATEDIFF ( Origin, MIN ( fct_Milestone[CurrentStart] ), DAY )
+		formatString: "#,0"
+		displayFolder: 07 Schedule
+
+	/// Replaces Gantt geometry - the visible bar
+	measure 'Milestone Duration Days' = DATEDIFF ( MIN ( fct_Milestone[CurrentStart] ), MAX ( fct_Milestone[CurrentFinish] ), DAY )
+		formatString: "#,0"
+		displayFolder: 07 Schedule
+
+	/// Replaces no workbook equivalent - the Excel could not say when its numbers were true
+	measure 'Last Refresh' = MAX ( _Measures[_built_at] )
+		formatString: "yyyy-mm-dd hh:nn"
+		displayFolder: 00 Report context
+
+	/// Replaces DASHBOARD!AU4 - the month anchor, now driven by the slicer
+	measure 'Report Month Label' =
+			VAR L = MIN ( dim_Date[MonthStart] )
+			VAR H = MAX ( dim_Date[MonthStart] )
+			RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )
+		displayFolder: 00 Report context
 
 	/// Replaces FINANCIALS!F56 - blocked: Sage AR header has no payment date
 	measure 'Avg Days To Payment' = BLANK ()
 		formatString: "#,0.0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces FINANCIALS!C8 - a human judgement the workbook could already have computed
 	measure 'Cash Position %' = DIVIDE ( [Total Paid] + [AR Outstanding], [Cost To Complete] )
 		formatString: "0.0%"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces FINANCIALS!C7 - a genuine human judgement, stays manual
 	measure 'Profitability Code' = SELECTEDVALUE ( man_Flags[ProfitabilityCode] )
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces SAFETY!E - Procore /incidents, in the registry but not yet ingested
 	measure 'Recordable Incidents' = COALESCE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), 0 )
 		formatString: "#,0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces SAFETY!D - Sage payroll / ADP / Procore timecards, undecided
 	measure 'Hours Worked' = COALESCE ( SUM ( fct_SafetyMonthly[HoursWorked] ), 0 )
 		formatString: "#,0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces Procore /observations/items - was QUALITY!D, typed by hand
 	measure 'Observations' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[ItemType] = "Observation" ), 0 )
 		formatString: "#,0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces QUALITY!D39 - typed by hand today
 	measure 'Avg Observation Days Open' = AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), fct_QualityItem[DaysOpen] )
 		formatString: "#,0.0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces SCORECARD CALC!E28 - Procore /daily_log_headers derives this
 	measure 'Daily Reports Missed' = SUM ( man_DailyLogCompliance[LogsMissedSameDay] )
 		formatString: "#,0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces DASHBOARD!M16 - which returned the TEXT "0 days" (defect #1b)
 	measure 'Completion Variance Days' =
@@ -322,10 +440,12 @@ table _Measures
 			VAR Forecast = MAX ( fct_Milestone[CurrentFinish] )
 			RETURN IF ( ISBLANK ( Baseline ) || ISBLANK ( Forecast ), BLANK (), DATEDIFF ( Baseline, Forecast, DAY ) )
 		formatString: "#,0"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces SCORECARD CALC!C42
 	measure 'Client Satisfaction' = DIVIDE ( SUM ( man_Survey[Score] ), COUNTROWS ( man_Survey ) * 5 )
 		formatString: "0.0%"
+		displayFolder: 11 Scorecard drivers
 
 	/// Replaces SCORECARD CALC!E13 - FIX: driver is days to payment, not an aging balance (defect #1c)
 	measure 'Score - Accounts Receivable' =
@@ -345,6 +465,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E7
 	measure 'Score - Profitability' =
@@ -363,6 +484,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E10 - now computed rather than picked from a dropdown
 	measure 'Score - Cash Position' =
@@ -382,6 +504,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E14
 	measure 'Score - Change Orders' =
@@ -401,6 +524,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E16
 	measure 'Score - Safety Incidents' =
@@ -420,6 +544,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E19 - FIX: bands are fractions, so this stops always awarding 3/3 (defect #1a)
 	measure 'Score - Schedule Performance' =
@@ -439,6 +564,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E22 - FIX: numeric, so finishing on baseline scores 3 not 0 (defect #1b)
 	measure 'Score - Completion Variance' =
@@ -458,6 +584,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E25
 	measure 'Score - Observations' =
@@ -477,6 +604,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!E28
 	measure 'Score - Daily Reports' =
@@ -496,6 +624,7 @@ table _Measures
 			)
 			)
 		formatString: "0"
+		displayFolder: 12 Scorecard
 
 	/// Replaces SCORECARD CALC!G31
 	measure 'Project Scorecard' =
@@ -521,6 +650,7 @@ table _Measures
 			3
 			)
 		formatString: "0.00"
+		displayFolder: 12 Scorecard
 
 	/// Replaces no equivalent - the workbook could not tell you this
 	measure 'Scorecard Coverage %' =
@@ -543,16 +673,70 @@ table _Measures
 			RETURN IF ( ISBLANK ( S ), 0, dim_ScorecardWeight[Weight] )
 			)
 		formatString: "0.0%"
+		displayFolder: 12 Scorecard
 
 	/// Replaces derived - makes partial coverage comparable
 	measure 'Project Scorecard (Measured Only)' = DIVIDE ( [Project Scorecard], [Scorecard Coverage %] )
 		formatString: "0.00"
+		displayFolder: 12 Scorecard
+
+	/// Replaces SCORECARD CALC!E23:E31 - the per-category score, never displayed in the Excel
+	measure 'Category Score' =
+			VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )
+			RETURN
+			SWITCH (
+			K,
+			1, [Score - Accounts Receivable],
+			2, [Score - Profitability],
+			3, [Score - Cash Position],
+			4, [Score - Change Orders],
+			5, [Score - Safety Incidents],
+			6, [Score - Schedule Performance],
+			7, [Score - Completion Variance],
+			8, [Score - Observations],
+			9, [Score - Daily Reports],
+			BLANK ()
+			)
+		formatString: "0"
+		displayFolder: 12 Scorecard
+
+	/// Replaces SCORECARD CALC!G23:G31 - ((E*F)/3), the workbook's own normalisation
+	measure 'Category Weighted' =
+			VAR S = [Category Score]
+			VAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )
+			RETURN IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) )
+		formatString: "0.000"
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - the band the driver fell in, in the seed table's own words
+	measure 'Category Band' =
+			VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )
+			VAR S = [Category Score]
+			RETURN
+			IF (
+			ISBLANK ( S ),
+			"Not measured",
+			CALCULATE (
+			MAX ( dim_ScorecardBand[BandLabel] ),
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = K,
+			dim_ScorecardBand[Score] = S
+			)
+			)
+		displayFolder: 12 Scorecard
 
 	column _placeholder
 		isHidden
 		dataType: string
 		summarizeBy: none
 		sourceColumn: _placeholder
+
+	column _built_at
+		isHidden
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		summarizeBy: none
+		sourceColumn: _built_at
 
 	partition _Measures = entity
 		mode: directLake

@@ -6,7 +6,8 @@
     "y": 566,
     "z": 0,
     "width": 1100,
-    "height": 30
+    "height": 30,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Vendors below are expected to be mostly unmatched - a vendor invited to bid is not a vendor who was paid. What matters is a vendor WITH commitments and no Sage id.'"
+                }
+              }
+            }
           }
         }
       ]

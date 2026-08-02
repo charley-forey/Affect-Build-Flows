@@ -3,10 +3,11 @@
   "name": "6d12d1767bde2360258e",
   "position": {
     "x": 336,
-    "y": 128,
+    "y": 132,
     "z": 0,
     "width": 260,
-    "height": 110
+    "height": 100,
+    "tabOrder": 14
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Hours Since Last Checked Run. Shows Hours Since Last Checked Run for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

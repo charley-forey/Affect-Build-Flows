@@ -6,7 +6,8 @@
     "y": 210,
     "z": 0,
     "width": 440,
-    "height": 210
+    "height": 210,
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "clusteredColumnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Clustered column chart. Change orders by status. Shows Pending Change Orders by StatusLabel.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

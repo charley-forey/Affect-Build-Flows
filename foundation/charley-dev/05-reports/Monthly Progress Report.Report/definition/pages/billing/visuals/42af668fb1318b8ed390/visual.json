@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1240,
-    "height": 34
+    "height": 34,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Every figure is the CURRENT balance from the latest issued billing per contract - not a total of every period, which would count the same retainage once per month. Drafts are excluded from balances and counted separately below.'"
+                }
+              }
+            }
           }
         }
       ]

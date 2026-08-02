@@ -3,10 +3,11 @@
   "name": "761c091cd51f06347bb1",
   "position": {
     "x": 20,
-    "y": 96,
+    "y": 104,
     "z": 0,
     "width": 300,
-    "height": 28
+    "height": 24,
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Pipeline'"
+                }
+              }
+            }
           }
         }
       ]

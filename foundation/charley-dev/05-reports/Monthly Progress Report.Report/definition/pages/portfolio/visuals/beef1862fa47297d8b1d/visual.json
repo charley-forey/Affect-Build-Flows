@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "beef1862fa47297d8b1d",
+  "position": {
+    "x": 20,
+    "y": 58,
+    "z": 0,
+    "width": 720,
+    "height": 34,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "All projects, one screen. Scores use the same weights and bands as the Scorecard page. A category with no data reads as blank, never as zero - so a gap in the data cannot masquerade as bad performance.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'All projects, one screen. Scores use the same weights and bands as the Scorecard page. A category with no data reads as blank, never as zero - so a gap in the data cannot masquerade as bad performance.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "dab58176f11d508fd896",
+  "position": {
+    "x": 20,
+    "y": 210,
+    "z": 0,
+    "width": 740,
+    "height": 300,
+    "tabOrder": 17
+  },
+  "visual": {
+    "visualType": "stackedBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "MilestoneName"
+                }
+              },
+              "queryRef": "fct_Milestone.MilestoneName",
+              "nativeQueryRef": "MilestoneName"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Milestone Offset Days"
+                }
+              },
+              "queryRef": "_Measures.Milestone Offset Days",
+              "nativeQueryRef": "Milestone Offset Days"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Milestone Duration Days"
+                }
+              },
+              "queryRef": "_Measures.Milestone Duration Days",
+              "nativeQueryRef": "Milestone Duration Days"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Stacked bar timeline. One bar per milestone, positioned by its start date and sized by its duration in days, relative to the earliest milestone start currently shown.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Schedule timeline - current dates (set Offset series transparent)'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

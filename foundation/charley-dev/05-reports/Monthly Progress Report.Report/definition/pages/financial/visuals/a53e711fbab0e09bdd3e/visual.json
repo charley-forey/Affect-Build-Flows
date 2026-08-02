@@ -6,14 +6,29 @@
     "y": 210,
     "z": 0,
     "width": 780,
-    "height": 440
+    "height": 440,
+    "tabOrder": 17
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "pivotTable",
     "query": {
       "queryState": {
-        "Values": {
+        "Rows": {
           "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_CostCode"
+                    }
+                  },
+                  "Property": "Division"
+                }
+              },
+              "queryRef": "dim_CostCode.Division",
+              "nativeQueryRef": "Division"
+            },
             {
               "field": {
                 "Column": {
@@ -27,7 +42,11 @@
               },
               "queryRef": "dim_CostCode.CostCode",
               "nativeQueryRef": "CostCode"
-            },
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
             {
               "field": {
                 "Measure": {
@@ -78,6 +97,20 @@
                       "Entity": "_Measures"
                     }
                   },
+                  "Property": "Budget Variance %"
+                }
+              },
+              "queryRef": "_Measures.Budget Variance %",
+              "nativeQueryRef": "Budget Variance %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
                   "Property": "Budget Status"
                 }
               },
@@ -90,13 +123,26 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Matrix. Budget, spent to date, variance and status by cost code, grouped by division and expandable to individual codes.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget by cost code'"
+                  "Value": "'Budget by division and cost code'"
                 }
               }
             },

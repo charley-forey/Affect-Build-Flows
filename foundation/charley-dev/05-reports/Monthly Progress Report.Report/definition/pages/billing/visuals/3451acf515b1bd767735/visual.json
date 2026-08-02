@@ -6,7 +6,8 @@
     "y": 136,
     "z": 0,
     "width": 220,
-    "height": 110
+    "height": 110,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Owner Contract Sum. Shows Owner Contract Sum for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

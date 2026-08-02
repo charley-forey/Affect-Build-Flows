@@ -3,10 +3,11 @@
   "name": "d5608338e5d0e3d3af70",
   "position": {
     "x": 20,
-    "y": 390,
+    "y": 256,
     "z": 0,
-    "width": 520,
-    "height": 300
+    "width": 400,
+    "height": 196,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Certificates by expiry status. Shows Certificates On File by ExpiryStatus.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

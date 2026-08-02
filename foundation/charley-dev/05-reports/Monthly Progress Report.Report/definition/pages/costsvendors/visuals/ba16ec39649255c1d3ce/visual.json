@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "ba16ec39649255c1d3ce",
   "position": {
-    "x": 818,
+    "x": 647,
     "y": 104,
     "z": 0,
-    "width": 220,
-    "height": 110
+    "width": 195,
+    "height": 92,
+    "tabOrder": 15
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Vendors On Project. Shows Vendors On Project for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

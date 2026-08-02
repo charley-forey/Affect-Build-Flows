@@ -3,15 +3,25 @@
     python deploy_report.py            # dry run - write PBIR to disk only
     python deploy_report.py --apply    # create/update the report in Fabric
 
-Four pages, following powerbi/report-spec.md:
-  1. Overview        - the one-page replacement for the DASHBOARD tab
-  2. Financial       - contract, budget, change orders, billing
-  3. Schedule & Quality
-  4. Data Quality    - hidden; surfaces bad data instead of letting it flow into a rollup
+Eleven pages, following powerbi/report-spec.md:
+   1. Portfolio       - every project at once; the view leadership never had
+   2. Overview        - the one-page replacement for the DASHBOARD tab
+   3. Financial       - contract, budget, change orders, the billing S-curve
+   4. Schedule        - the milestone timeline
+   5. Safety & Quality
+   6. Billing & Retainage
+   7. Direct Costs & Vendors
+   8. Scorecard       - and the table showing how the score is built
+   9. Source Coverage - which projects exist in all three systems
+  10. Project Detail  - drill-through target
+  11. Data Quality    - hidden; surfaces bad data instead of letting it flow into a rollup
 
-Colours come from analysis/excel-tracker/dropdowns-and-status.md, sampled from the
-workbook's own font colours (#DB1918 red, #FFD800 amber, #01AF00 green) so the report
-matches what Affect already recognises.
+Every page carries the same two synced slicers and a footer naming the reporting period
+and the gold build time.
+
+Colours come from powerbi/theme.json, registered here as a custom theme. The workbook's
+own font colours (#DB1918 / #FFD800 / #01AF00) were measured and two of the three fail
+contrast, so the RAG steps are the corrected ones - see the constants below.
 """
 
 from __future__ import annotations
@@ -35,7 +45,21 @@ REPORT_DIR = CHARLEY_DEV / "05-reports" / "Monthly Progress Report.Report"
 REPORT_NAME = "Monthly Progress Report"
 MODEL_NAME = "Affect Project Report"
 
-GREEN, AMBER, RED, INK, MUTED = "#01AF00", "#FFD800", "#DB1918", "#252423", "#605E5C"
+# RAG steps, contrast-corrected. The workbook's own font colours were #01AF00 / #FFD800 /
+# #DB1918; two of the three fail against a light surface and were re-stepped in
+# powerbi/report-spec.md after measuring, not by eye:
+#   green  #01AF00 -> 2.87:1, below the 3:1 floor
+#   amber  #FFD800 -> 1.36:1, effectively invisible on white
+# The amber is worth raising with Affect directly - it is a plausible reason "Watch" status
+# gets overlooked in the spreadsheet today.
+#
+# Colour is never the only channel: every status in this report carries its text label too,
+# because red/green cannot be made colourblind-safe as colour alone (measured deuteranopia
+# separation is dE 7.1, below the dE 8 floor, and no re-stepping fixes the hue pair).
+GREEN, AMBER, RED, INK, MUTED = "#1B7F3B", "#B26A00", "#C62828", "#252423", "#605E5C"
+
+THEME_SRC = CHARLEY_DEV.parent.parent / "powerbi" / "theme.json"
+THEME_NAME = "AffectGroupProjectReport"
 
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
 
@@ -62,12 +86,54 @@ def column(table: str, col: str) -> dict:
     }
 
 
+def lit(value: str) -> dict:
+    """A string literal expression. Embedded quotes are doubled, not dropped.
+
+    Several of the notes on these pages contain apostrophes ("the Excel's defects"). An
+    unescaped one terminates the literal early and the property silently becomes garbage.
+    """
+    return {"expr": {"Literal": {"Value": "'" + value.replace("'", "''") + "'"}}}
+
+
+# What a visual type is, in words, for the alt text sentence.
+_SHAPE = {
+    "card": "Card", "tableEx": "Table", "slicer": "Slicer", "barChart": "Bar chart",
+    "columnChart": "Column chart", "clusteredColumnChart": "Clustered column chart",
+    "lineChart": "Line chart", "multiRowCard": "Card",
+}
+
+
+def describe(vtype: str, title: str | None, projections: dict) -> str:
+    """Alt text, generated from what the visual is actually bound to.
+
+    Screen-reader users get the same information sighted readers get from the title and
+    axes. Deriving it from the projections rather than hand-writing 101 strings means it
+    cannot drift out of date when a field changes - a hand-written one silently would.
+    """
+    shape = _SHAPE.get(vtype, vtype)
+    names = {role: [p.get("nativeQueryRef", "?") for p in items]
+             for role, items in projections.items()}
+    values = names.get("Values") or names.get("Y") or []
+    category = names.get("Category") or []
+    if vtype == "slicer":
+        return f"Slicer. Filters the report by {', '.join(values) or 'a field'}."
+    parts = [f"{shape}. {title}." if title else f"{shape}."]
+    if values:
+        parts.append(f"Shows {', '.join(values)}")
+        parts.append(f"by {', '.join(category)}." if category else "for the current selection.")
+    return " ".join(parts)
+
+
 def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
-           title: str | None = None) -> dict:
+           title: str | None = None, tab: int | None = None,
+           alt: str | None = None, sync: str | None = None) -> dict:
+    position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
+    if tab is not None:
+        position["tabOrder"] = tab
     v = {
         "$schema": f"{SCHEMA}/visualContainer/1.0.0/schema.json",
         "name": oid(page, key),
-        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h},
+        "position": position,
         "visual": {
             "visualType": vtype,
             "query": {"queryState": {
@@ -76,29 +142,42 @@ def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
             "drillFilterOtherVisuals": True,
         },
     }
+    container: dict = {"general": [{"properties": {
+        "altText": lit(alt or describe(vtype, title, projections)),
+    }}]}
     if title:
-        v["visual"]["visualContainerObjects"] = {
-            "title": [{"properties": {
-                "text": {"expr": {"Literal": {"Value": f"'{title}'"}}},
-                "fontColor": {"solid": {"color": {"expr": {"Literal": {"Value": f"'{INK}'"}}}}},
-                "fontSize": {"expr": {"Literal": {"Value": "12D"}}},
-            }}]
-        }
+        container["title"] = [{"properties": {
+            "text": lit(title),
+            "fontColor": {"solid": {"color": lit(INK)}},
+            "fontSize": {"expr": {"Literal": {"Value": "12D"}}},
+        }}]
+    v["visual"]["visualContainerObjects"] = container
+    # Slicers only. Keeps project and month selection together across every page, so a
+    # reader who picks a job on Overview does not land on Financial showing all of them.
+    if sync:
+        v["visual"]["syncGroup"] = {"groupName": sync, "fieldChanges": False,
+                                    "filterChanges": True}
     return v
 
 
 def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
-            color: str = INK) -> dict:
+            color: str = INK, tab: int | None = None) -> dict:
+    position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
+    if tab is not None:
+        position["tabOrder"] = tab
     return {
         "$schema": f"{SCHEMA}/visualContainer/1.0.0/schema.json",
         "name": oid(page, key),
-        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h},
+        "position": position,
         "visual": {
             "visualType": "textbox",
             "objects": {"general": [{"properties": {"paragraphs": [{
                 "textRuns": [{"value": text, "textStyle": {
                     "fontSize": f"{size}pt", "color": color, "fontWeight": "bold"}}]
             }]}}]},
+            # Textboxes carry their own words, so the alt text IS the text. Repeating it
+            # is what a screen reader needs; leaving it blank drops the sentence entirely.
+            "visualContainerObjects": {"general": [{"properties": {"altText": lit(text)}}]},
         },
     }
 
@@ -107,40 +186,155 @@ def card(page: str, key: str, name: str, x, y, w=180, h=110) -> dict:
     return visual(page, key, "card", x, y, w, h, {"Values": [measure(name)]}, title=name)
 
 
+def chrome(page: str, slicers: bool = True) -> list[dict]:
+    """Slicers and footer, identical on every page.
+
+    Two things the report did not have. There was no month slicer ANYWHERE, so a report
+    called "Monthly" could not be set to a month - it always showed all of time. And each
+    page carried its own project slicer or none at all, so a selection did not survive a
+    page change.
+
+    The footer states the reporting period and when the data was built, so a page printed
+    to PDF says what it is a snapshot of. The workbook could not: it used TODAY(), and a
+    saved copy silently re-dated itself every time anyone opened it.
+    """
+    items = [
+        # [Pipeline Status] is here rather than only on the hidden Data Quality page. It
+        # answers "are these numbers from last night or from three weeks ago", which is a
+        # question about every page, not about the DQ page - and the failure it guards
+        # against went unnoticed for a month, with the nightly pipeline failing every
+        # night while reporting itself as enabled. Text, never colour alone.
+        visual(page, "footer", "multiRowCard", 720, 664, 540, 44,
+               {"Values": [measure("Report Month Label"), measure("Last Refresh"),
+                           measure("Pipeline Status")]},
+               tab=99,
+               alt="Report footer. States the reporting period shown, the time the "
+                   "underlying data was last built, and whether the pipeline that built "
+                   "it has run recently enough to trust."),
+    ]
+    # A drill-through page receives its project from the caller. Putting a project slicer
+    # on it would let a reader change that selection out from under the filter they
+    # arrived by, so the page would answer a different question than the one asked.
+    if slicers:
+        items = [
+            visual(page, "slicer_project", "slicer", 768, 14, 240, 58,
+                   {"Values": [column("dim_Project", "ProjectName")]},
+                   title="Project", tab=1, sync="project"),
+            visual(page, "slicer_month", "slicer", 1020, 14, 240, 58,
+                   {"Values": [column("dim_Date", "MonthYear")]},
+                   title="Month", tab=2, sync="month"),
+        ] + items
+    return items
+
+
 # --------------------------------------------------------------------------
 # Pages
 # --------------------------------------------------------------------------
 
 
-def page_overview() -> tuple[str, list[dict]]:
-    p = "overview"
-    slicer = visual(p, "slicer_project", "slicer", 20, 80, 260, 90,
-                    {"Values": [column("dim_Project", "ProjectName")]}, title="Project")
-    cards = [
-        card(p, "c_contract", "Current Contract", 300, 80),
-        card(p, "c_billed", "Total Billed", 496, 80),
-        card(p, "c_billedpct", "Total Billed %", 692, 80),
-        card(p, "c_paid", "Total Paid", 888, 80),
-        card(p, "c_ar", "AR Outstanding", 1084, 80),
-        card(p, "c_growth", "Contract Growth %", 300, 206),
-        card(p, "c_bought", "Percent Bought Out", 496, 206),
-        card(p, "c_pending", "Pending Change Orders", 692, 206),
-        card(p, "c_open", "Open Submittals", 888, 206),
-        card(p, "c_milestones", "Critical Milestones", 1084, 206),
+def page_portfolio() -> tuple[str, list[dict]]:
+    """Every project at once - the view leadership never had.
+
+    The Excel is one workbook per job, so a portfolio question ("which of our jobs is in
+    trouble") could only be answered by opening them all and comparing by eye. Every page
+    of this report until now inherited that shape: one project behind a slicer.
+
+    The heatmap is the point. Nine categories across, one row per project, scored by the
+    same SWITCH that drives the headline number - so the answer to "which job, and what
+    about it" is one screen rather than seventeen files.
+
+    This page deliberately ignores the project slicer (it is the one page that should show
+    all of them) but still honours the month slicer.
+    """
+    p = "portfolio"
+    return p, [
+        textbox(p, "title", "Portfolio", 20, 16, 700, 44),
+        textbox(p, "sub",
+                "All projects, one screen. Scores use the same weights and bands as the "
+                "Scorecard page. A category with no data reads as blank, never as zero - "
+                "so a gap in the data cannot masquerade as bad performance.",
+                20, 58, 720, 34, size=10, color=MUTED),
+
+        card(p, "pf_projects", "Projects Reporting", 20, 100, 228, 100),
+        card(p, "pf_contract", "Current Contract", 268, 100, 228, 100),
+        card(p, "pf_billed", "Total Billed %", 516, 100, 228, 100),
+        card(p, "pf_ar", "AR Outstanding", 764, 100, 228, 100),
+        card(p, "pf_risk", "Projects At Risk", 1012, 100, 228, 100),
+
+        # THE HEATMAP. A matrix rather than a chart because the cell values are ordinal
+        # scores (0/2/3) against two categorical axes - there is no magnitude to compare
+        # lengths of, and conditional formatting carries the reading.
+        visual(p, "pf_heatmap", "pivotTable", 20, 216, 720, 300,
+               {"Rows": [column("dim_Project", "ProjectName")],
+                "Columns": [column("dim_ScorecardWeight", "CategoryName")],
+                "Values": [measure("Category Score")]},
+               title="Scorecard by project and category (0-3, blank = not measured)",
+               alt="Matrix. One row per project, one column per scorecard category, "
+                   "showing each category score out of 3. Blank cells are categories with "
+                   "no data rather than a score of zero."),
+
+        # Contract, billed and paid together per job: the gap between the bars IS the
+        # exposure, and reading three separate cards never showed it.
+        visual(p, "pf_money", "clusteredColumnChart", 760, 216, 500, 300,
+               {"Category": [column("dim_Project", "ProjectName")],
+                "Y": [measure("Current Contract"), measure("Total Billed"),
+                      measure("Total Paid")]},
+               title="Contract, billed and paid by project"),
+
+        visual(p, "pf_ar_rank", "barChart", 20, 528, 400, 128,
+               {"Category": [column("dim_Project", "ProjectName")],
+                "Y": [measure("AR Outstanding")]},
+               title="AR outstanding, ranked"),
+
+        # Coverage sits on the portfolio page too, because the honest reading of any
+        # cross-project comparison is "and how much of each score is real".
+        visual(p, "pf_coverage", "barChart", 436, 528, 400, 128,
+               {"Category": [column("dim_Project", "ProjectName")],
+                "Y": [measure("Scorecard Coverage %")]},
+               title="Scorecard coverage by project"),
+
+        # Insurance exposure belongs at portfolio level, not only on the Insurance page:
+        # "which jobs are running subs with no certificate on file" is a question about
+        # all of them at once. [Vendors Without Insurance] is a set difference (EXCEPT)
+        # over two key lists, NOT a RELATEDTABLE - there is no relationship from
+        # bridge_ProjectVendor to fct_VendorInsurance, both hang off dim_Vendor, and a
+        # RELATEDTABLE version would deploy perfectly cleanly and then fail at render.
+        visual(p, "pf_uninsured", "barChart", 852, 528, 388, 128,
+               {"Category": [column("dim_Project", "ProjectName")],
+                "Y": [measure("Vendors Without Insurance")]},
+               title="Vendors with no certificate on file, by project"),
     ]
-    trend = visual(p, "billed_trend", "columnChart", 20, 340, 640, 300,
+
+
+def page_overview() -> tuple[str, list[dict]]:
+    """The one-page replacement, and the page that gets exported to PDF and circulated.
+
+    The project slicer that used to sit at (20,80) has moved into the shared chrome with
+    the new month slicer, which frees the whole left column - so the card grid is five
+    across instead of four squeezed to the right.
+    """
+    p = "overview"
+    # Five columns, 228 wide on a 248 pitch: 20 .. 1240. Two rows.
+    xs = [20, 268, 516, 764, 1012]
+    row1 = ["Current Contract", "Total Billed", "Total Billed %", "Total Paid",
+            "AR Outstanding"]
+    row2 = ["Contract Growth %", "Percent Bought Out", "Pending Change Orders",
+            "Open Submittals", "Critical Milestones"]
+    cards = [card(p, f"c_r1_{i}", name, xs[i], 90, w=228) for i, name in enumerate(row1)]
+    cards += [card(p, f"c_r2_{i}", name, xs[i], 216, w=228) for i, name in enumerate(row2)]
+    trend = visual(p, "billed_trend", "columnChart", 20, 346, 640, 296,
                    {"Category": [column("dim_Date", "MonthYear")],
                     "Y": [measure("Total Billed")]},
                    title="Billed by month")
-    budget = visual(p, "budget_by_code", "barChart", 680, 340, 580, 300,
+    budget = visual(p, "budget_by_code", "barChart", 680, 346, 580, 296,
                     {"Category": [column("dim_CostCode", "Division")],
                      "Y": [measure("Budget"), measure("Spent To Date")]},
                     title="Budget vs spent by division")
     return p, [
-        textbox(p, "title", "Monthly Progress Report", 20, 16, 700, 50),
-        textbox(p, "sub", "Replaces the Excel Monthly Progress Report", 20, 56, 700, 24,
+        textbox(p, "title", "Monthly Progress Report", 20, 16, 700, 44),
+        textbox(p, "sub", "Replaces the Excel Monthly Progress Report", 20, 58, 700, 24,
                 size=10, color=MUTED),
-        slicer, *cards, trend, budget,
+        *cards, trend, budget,
     ]
 
 
@@ -154,19 +348,34 @@ def page_financial() -> tuple[str, list[dict]]:
         card(p, "f_spent", "Spent To Date", 608, 80),
         card(p, "f_ctc", "Cost To Complete", 804, 80),
         card(p, "f_var", "Budget Variance", 1000, 80),
-        visual(p, "budget_table", "tableEx", 20, 210, 780, 440,
-               {"Values": [column("dim_CostCode", "CostCode"),
-                           measure("Budget"), measure("Spent To Date"),
-                           measure("Budget Variance"), measure("Budget Status")]},
-               title="Budget by cost code"),
+        # A matrix rather than a flat table: cost codes roll up by division, so a reader
+        # starts at the level they care about and expands into the detail rather than
+        # scrolling 4,837 rows looking for it.
+        visual(p, "budget_table", "pivotTable", 20, 210, 780, 440,
+               {"Rows": [column("dim_CostCode", "Division"),
+                         column("dim_CostCode", "CostCode")],
+                "Values": [measure("Budget"), measure("Spent To Date"),
+                           measure("Budget Variance"), measure("Budget Variance %"),
+                           measure("Budget Status")]},
+               title="Budget by division and cost code",
+               alt="Matrix. Budget, spent to date, variance and status by cost code, "
+                   "grouped by division and expandable to individual codes."),
         visual(p, "co_by_status", "clusteredColumnChart", 820, 210, 440, 210,
                {"Category": [column("fct_ChangeOrder", "StatusLabel")],
                 "Y": [measure("Pending Change Orders")]},
                title="Change orders by status"),
-        visual(p, "billing_trend", "lineChart", 820, 440, 440, 210,
+        # THE S-CURVE. Cumulative billing against the contract line is the chart a GC reads
+        # to answer "are we billing at the pace we said we would" - and it is the one thing
+        # a single-month snapshot structurally cannot show, no matter how many tiles it has.
+        #
+        # Built on the period movement accumulated over time, NOT on the running-balance
+        # column, which is restated each period and would double-count.
+        visual(p, "s_curve", "lineChart", 820, 440, 440, 210,
                {"Category": [column("dim_Date", "MonthYear")],
-                "Y": [measure("Total Billed"), measure("Total Paid")]},
-               title="Billed vs paid"),
+                "Y": [measure("Billed Cumulative"), measure("Current Contract")]},
+               title="Billing S-curve vs contract",
+               alt="Line chart. Cumulative amount billed by month against the current "
+                   "contract value, showing billing pace over the life of the job."),
     ]
 
 
@@ -180,7 +389,28 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
         card(p, "s_prog", "Avg Milestone Progress", 608, 80),
         card(p, "s_open", "Open Submittals", 804, 80),
         card(p, "s_pastdue", "Open Submittals Past Due", 1000, 80),
-        visual(p, "milestones", "tableEx", 20, 210, 740, 440,
+        # THE TIMELINE. report-spec.md calls this the single biggest visual gain over the
+        # Excel, which could not draw one at all. Power BI has no native Gantt, so this is
+        # the standard stacked-bar construction: an invisible bar to the milestone's start,
+        # then a visible bar for its duration, both measured in days from the earliest
+        # start on screen.
+        #
+        # TO FINISH IN THE SERVICE: set the "Offset" series fill to transparent. That is a
+        # data-colour setting on one series, and it is the whole trick.
+        #
+        # WHAT THIS CANNOT SHOW: drift against a baseline. fct_Milestone carries
+        # CurrentStart/CurrentFinish only - there is no baseline and no actual anywhere in
+        # gold, because Outbuild is not supplying them. A baseline-vs-current timeline is
+        # the version Affect actually wants, and it needs that data first.
+        visual(p, "gantt", "stackedBarChart", 20, 210, 740, 300,
+               {"Category": [column("fct_Milestone", "MilestoneName")],
+                "Y": [measure("Milestone Offset Days"),
+                      measure("Milestone Duration Days")]},
+               title="Schedule timeline - current dates (set Offset series transparent)",
+               alt="Stacked bar timeline. One bar per milestone, positioned by its start "
+                   "date and sized by its duration in days, relative to the earliest "
+                   "milestone start currently shown."),
+        visual(p, "milestones", "tableEx", 20, 520, 740, 130,
                {"Values": [column("fct_Milestone", "MilestoneName"),
                            column("fct_Milestone", "CurrentStart"),
                            column("fct_Milestone", "CurrentFinish"),
@@ -198,33 +428,34 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
 def page_data_quality() -> tuple[str, list[dict]]:
     p = "dataquality"
     return p, [
-        # FIRST on the page, deliberately. Every other number here describes the data; this
-        # one says whether the data arrived at all. A DQ page full of green checks on
-        # three-week-old numbers is worse than no DQ page.
-        textbox(p, "hb_h", "Pipeline", 20, 96, 300, 28, size=13),
-        card(p, "dq_hb_status", "Pipeline Status", 20, 128, 300, 110),
-        card(p, "dq_hb_hours", "Hours Since Last Checked Run", 336, 128, 260, 110),
-        card(p, "dq_hb_last", "Last Checked Run", 612, 128, 260, 110),
-        card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 128, 260, 110),
-
         textbox(p, "title", "Data Quality", 20, 16, 600, 44),
         textbox(p, "note",
                 "Surfacing bad data rather than letting it flow silently into a rollup. "
                 "This page is how the Excel's defects would have been caught.  Status is "
                 "always shown as TEXT, never colour alone - around 8% of men have some "
                 "colour-vision deficiency, and this report goes to leadership.",
-                20, 56, 1100, 44, size=10, color=MUTED),
-        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 110, 260, 130),
-        card(p, "dq_codes", "DQ Cost Codes Not In Source", 296, 110, 260, 130),
-        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 572, 110, 260, 130),
-        card(p, "dq_ar", "DQ Unmatched Invoices", 848, 110, 260, 130),
-        visual(p, "no_crosswalk", "tableEx", 20, 260, 600, 390,
+                20, 56, 1100, 40, size=10, color=MUTED),
+
+        # FIRST band on the page, deliberately. Every other number here describes the data;
+        # this one says whether the data arrived at all. A DQ page full of green checks on
+        # three-week-old numbers is worse than no DQ page.
+        textbox(p, "hb_h", "Pipeline", 20, 104, 300, 24, size=13),
+        card(p, "dq_hb_status", "Pipeline Status", 20, 132, 300, 100),
+        card(p, "dq_hb_hours", "Hours Since Last Checked Run", 336, 132, 260, 100),
+        card(p, "dq_hb_last", "Last Checked Run", 612, 132, 260, 100),
+        card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 132, 260, 100),
+
+        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 244, 260, 100),
+        card(p, "dq_codes", "DQ Cost Codes Not In Source", 296, 244, 260, 100),
+        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 572, 244, 260, 100),
+        card(p, "dq_ar", "DQ Unmatched Invoices", 848, 244, 260, 100),
+        visual(p, "no_crosswalk", "tableEx", 20, 356, 600, 300,
                {"Values": [column("dim_Project", "ProjectKey"),
                            column("dim_Project", "ProjectName"),
                            column("dim_Project", "IsInCrosswalk"),
                            column("dim_Project", "HasPrimeContract")]},
                title="Projects - crosswalk and contract coverage"),
-        visual(p, "unmatched_ar", "tableEx", 640, 260, 620, 390,
+        visual(p, "unmatched_ar", "tableEx", 640, 356, 620, 300,
                {"Values": [column("fct_Invoice", "SageJobNumber"),
                            column("fct_Invoice", "Description"),
                            measure("Total Billed")]},
@@ -252,10 +483,25 @@ def page_scorecard() -> tuple[str, list[dict]]:
         card(p, "sc_cov", "Scorecard Coverage %", 276, 110, 240, 130),
         card(p, "sc_measured", "Project Scorecard (Measured Only)", 532, 110, 300, 130),
         card(p, "sc_client", "Client Satisfaction", 848, 110, 240, 130),
-        visual(p, "weights", "tableEx", 20, 260, 620, 390,
+        # THE AUDIT TABLE. This replaces two disconnected tables - one listing weights, the
+        # other listing raw band rows keyed by CategoryKey, an integer surrogate that was
+        # being rendered to readers. Neither could be read against the other, so the score
+        # was a number you either believed or did not.
+        #
+        # One row per category, showing the score, the band it landed in, the weight, and
+        # what it contributed. The contribution column sums to [Project Scorecard] exactly,
+        # because it is driven by the same SWITCH the headline measure uses. This is the
+        # view in which the workbook's three dead bands would have been obvious.
+        visual(p, "audit", "tableEx", 20, 260, 800, 320,
                {"Values": [column("dim_ScorecardWeight", "CategoryName"),
-                           column("dim_ScorecardWeight", "Weight")]},
-               title="Category weights (sum to 1.00)"),
+                           measure("Category Score"),
+                           measure("Category Band"),
+                           column("dim_ScorecardWeight", "Weight"),
+                           measure("Category Weighted")]},
+               title="How the score is built - category, score, band, weight, contribution",
+               alt="Table. One row per scorecard category showing its score out of 3, the "
+                   "band the driver fell into, the category weight, and the weighted "
+                   "contribution to the total. Categories with no data read Not measured."),
         # THE TRUST PARAGRAPH. Affect reports 0.59 to leadership today and this model does
         # not reproduce it. Shipping a different number with no explanation is how a new
         # system gets labelled wrong; showing the arithmetic is how it gets adopted.
@@ -274,10 +520,17 @@ def page_scorecard() -> tuple[str, list[dict]]:
                 "cancel, the workbook's score is wrong by the difference.  The bands here "
                 "are corrected (dim_ScorecardBand). Affect decides when to switch the "
                 "number reported to leadership.",
-                20, 664, 1240, 78, size=10, color=MUTED),
+                # Ends at y=664, the top of the footer band, so it can run the full width
+                # of the canvas. It previously ran to 742 on a 720-high page, and then to
+                # x=940, which the widened footer would have covered.
+                20, 588, 1240, 76, size=10, color=MUTED),
 
-        visual(p, "bands", "tableEx", 660, 260, 600, 390,
-               {"Values": [column("dim_ScorecardBand", "CategoryKey"),
+        # The band table stays, as the reference behind the Band column - but keyed by the
+        # category NAME rather than the surrogate integer the previous version showed.
+        # The name is a column on the band table itself, not reached through a
+        # relationship; see the note in deploy_model.RELATIONSHIPS for why.
+        visual(p, "bands", "tableEx", 840, 260, 420, 390,
+               {"Values": [column("dim_ScorecardBand", "CategoryName"),
                            column("dim_ScorecardBand", "Score"),
                            column("dim_ScorecardBand", "BandLabel")]},
                title="Scoring bands - corrected (defects #1a-#1c)"),
@@ -312,13 +565,13 @@ def page_source_coverage() -> tuple[str, list[dict]]:
         card(p, "cov_nooutbuild", "Projects Missing From Outbuild", 572, 116, 260, 120),
         card(p, "cov_pct", "Source Coverage %", 848, 116, 260, 120),
 
-        visual(p, "cov_status", "columnChart", 20, 252, 540, 300,
+        visual(p, "cov_status", "columnChart", 20, 252, 540, 232,
                {"Category": [column("dim_ProjectCrosswalk", "CoverageStatus")],
                 "Y": [measure("Projects Fully Mapped")]},
                title="Projects by coverage status"),
 
         # The list is the actionable artifact: it names the projects to go fix.
-        visual(p, "cov_detail", "tableEx", 580, 252, 700, 300,
+        visual(p, "cov_detail", "tableEx", 580, 252, 680, 232,
                {"Values": [column("dim_ProjectCrosswalk", "ProjectName"),
                            column("dim_ProjectCrosswalk", "CoverageStatus"),
                            column("dim_ProjectCrosswalk", "SageProjectId"),
@@ -330,12 +583,12 @@ def page_source_coverage() -> tuple[str, list[dict]]:
                 "is not a vendor who was paid. What matters is a vendor WITH commitments and "
                 "no Sage id.",
                 20, 566, 1100, 30, size=10, color=MUTED),
-        visual(p, "vendor_cov", "tableEx", 20, 600, 620, 260,
+        visual(p, "vendor_cov", "tableEx", 20, 528, 620, 128,
                {"Values": [column("dim_VendorCrosswalk", "VendorName"),
                            column("dim_VendorCrosswalk", "IsInSage"),
                            column("dim_VendorCrosswalk", "HasNameMismatch")]},
                title="Vendor mapping - Procore to Sage"),
-        visual(p, "costcode_cov", "tableEx", 660, 600, 620, 260,
+        visual(p, "costcode_cov", "tableEx", 660, 528, 600, 128,
                {"Values": [column("dim_CostCodeCrosswalk", "DivisionCode"),
                            column("dim_CostCodeCrosswalk", "CostCode"),
                            column("dim_CostCodeCrosswalk", "HasUnparseableCode")]},
@@ -371,7 +624,7 @@ def page_project_detail() -> tuple[str, list[dict]]:
         card(p, "pd_score", "Project Scorecard", 1044, 100, 216, 110),
 
         # Budget by cost code: the line-item grain the portfolio pages roll up.
-        visual(p, "pd_budget", "tableEx", 20, 228, 620, 300,
+        visual(p, "pd_budget", "tableEx", 20, 228, 620, 232,
                {"Values": [column("dim_CostCode", "CostCodeKey"),
                            column("dim_CostCode", "Division"),
                            measure("Budget"),
@@ -379,20 +632,20 @@ def page_project_detail() -> tuple[str, list[dict]]:
                            measure("Budget Variance")]},
                title="Budget by cost code"),
 
-        visual(p, "pd_co", "tableEx", 660, 228, 600, 300,
+        visual(p, "pd_co", "tableEx", 660, 228, 600, 232,
                {"Values": [column("fct_ChangeOrder", "ChangeOrderNumber"),
                            column("fct_ChangeOrder", "Status"),
                            measure("Approved Change Orders")]},
                title="Change orders"),
 
-        visual(p, "pd_items", "tableEx", 20, 544, 620, 260,
+        visual(p, "pd_items", "tableEx", 20, 474, 620, 182,
                {"Values": [column("fct_RfiSubmittal", "ItemType"),
                            column("fct_RfiSubmittal", "ItemNumber"),
                            column("fct_RfiSubmittal", "Subject"),
                            column("fct_RfiSubmittal", "StatusLabel")]},
                title="RFIs and submittals"),
 
-        visual(p, "pd_milestones", "tableEx", 660, 544, 600, 260,
+        visual(p, "pd_milestones", "tableEx", 660, 474, 600, 182,
                {"Values": [column("fct_Milestone", "MilestoneName"),
                            column("fct_Milestone", "CurrentStart"),
                            column("fct_Milestone", "CurrentFinish"),
@@ -443,18 +696,18 @@ def page_safety_quality() -> tuple[str, list[dict]]:
         card(p, "sq_avgpast", "Avg Days Past Due", 286, 262, 250, 100),
         card(p, "sq_avgclose", "Avg Observation Days Open", 552, 262, 250, 100),
 
-        visual(p, "sq_by_type", "columnChart", 20, 382, 520, 300,
+        visual(p, "sq_by_type", "columnChart", 20, 382, 520, 274,
                {"Category": [column("fct_QualityItem", "ItemType")],
                 "Y": [measure("Open Quality Items")]},
                title="Open items by type"),
 
-        visual(p, "sq_by_trade", "barChart", 560, 382, 340, 300,
+        visual(p, "sq_by_trade", "barChart", 560, 382, 340, 274,
                {"Category": [column("fct_QualityItem", "Trade")],
                 "Y": [measure("Open Quality Items")]},
                title="Open items by trade"),
 
         # The list a PM actually works from: what is late, and how late.
-        visual(p, "sq_overdue", "tableEx", 920, 382, 340, 300,
+        visual(p, "sq_overdue", "tableEx", 920, 382, 340, 274,
                {"Values": [column("fct_QualityItem", "Title"),
                            column("fct_QualityItem", "AssignedTo"),
                            column("fct_QualityItem", "DaysPastDue")]},
@@ -503,12 +756,12 @@ def page_billing() -> tuple[str, list[dict]]:
 
         # Billing over time uses the SUM-SAFE measure. A cumulative column on a trend chart
         # would slope upward regardless of activity, which looks like progress and is not.
-        visual(p, "b_trend", "columnChart", 20, 382, 620, 300,
+        visual(p, "b_trend", "columnChart", 20, 382, 620, 274,
                {"Category": [column("dim_Date", "MonthStart")],
                 "Y": [measure("Billed This Period")]},
                title="Billed by month (period movement, not cumulative)"),
 
-        visual(p, "b_by_project", "barChart", 660, 382, 600, 300,
+        visual(p, "b_by_project", "barChart", 660, 382, 600, 274,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Retainage Held Owner"),
                       measure("Retainage Held Sub")]},
@@ -533,45 +786,49 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                 "prequalification record, which is not the same as current insurance.",
                 20, 56, 1240, 34, size=10, color=MUTED),
 
-        card(p, "c_direct", "Direct Costs", 20, 104, 250, 110),
-        card(p, "c_labour", "Self Performed Labour", 286, 104, 250, 110),
-        card(p, "c_unapproved", "Unapproved Direct Costs", 552, 104, 250, 110),
-        card(p, "c_vendors", "Vendors On Project", 818, 104, 220, 110),
+        # Six across. The vendor/cost-code bridge added a sixth headline number to a row
+        # that was already full, so the whole row narrows rather than the new one wrapping
+        # to a band of its own.
+        card(p, "c_direct", "Direct Costs", 20, 104, 195, 92),
+        card(p, "c_labour", "Self Performed Labour", 229, 104, 195, 92),
+        card(p, "c_unapproved", "Unapproved Direct Costs", 438, 104, 195, 92),
+        card(p, "c_vendors", "Vendors On Project", 647, 104, 195, 92),
         # Half of Affect's vendors are not written back to Sage. That is a reconciliation
         # gap - cost exists in one system and not the other - and nothing surfaced it
         # before this card.
-        card(p, "c_missing", "Vendors Missing From ERP", 1054, 104, 206, 110),
+        card(p, "c_missing", "Vendors Missing From ERP", 856, 104, 195, 92),
+        # Committed and actual are shown side by side and NEVER summed: committed is what
+        # was promised, actual is what has gone out, and adding them counts the same work
+        # twice. The gap between them is work in progress.
+        card(p, "c_committed", "Vendor Committed", 1065, 104, 195, 92),
 
-        visual(p, "c_by_type", "columnChart", 20, 232, 520, 290,
+        visual(p, "c_by_type", "columnChart", 20, 208, 400, 216,
                {"Category": [column("fct_DirectCost", "CostCategory")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by category"),
 
-        visual(p, "c_trend", "columnChart", 560, 232, 700, 290,
+        visual(p, "c_trend", "columnChart", 436, 208, 400, 216,
                {"Category": [column("dim_Date", "MonthStart")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by month"),
 
-        # PHASE 0 ITEM 3. Spend by vendor AND cost code - the linkage that exists in no
-        # single Procore object, and that nothing in the current reporting can slice.
-        # PHASE 0 ITEM 3. Committed and actual side by side, never summed: committed is
-        # what was promised, actual is what has gone out, and adding them counts the same
-        # work twice. The gap between the two columns is work in progress.
-        card(p, "c_committed", "Vendor Committed", 20, 232, 250, 100),
+        # Spend by vendor AND cost code - the linkage that exists in no single Procore
+        # object, and that nothing in the current reporting can slice.
+        visual(p, "c_topcodes", "barChart", 852, 208, 408, 216,
+               {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
+                "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
+               title="Committed and actual by cost code"),
 
-        visual(p, "c_matrix", "matrix", 20, 542, 620, 320,
+        visual(p, "c_matrix", "matrix", 20, 436, 610, 220,
                {"Rows": [column("bridge_VendorCostCode", "VendorName")],
                 "Columns": [column("bridge_VendorCostCode", "AmountType")],
                 "Values": [measure("Vendor Spend"), measure("Vendor Committed")]},
                title="Vendor: committed vs actual"),
 
-        visual(p, "c_topcodes", "barChart", 660, 542, 600, 320,
-               {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
-                "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
-               title="Committed and actual by cost code"),
-
         # The D8 deliverable itself: the list somebody assembles by hand today.
-        visual(p, "c_vendorlist", "tableEx", 20, 882, 1240, 280,
+        # Was 300 tall at y=542, which ran 122px off the bottom of the canvas - invisible
+        # in a PDF export and clipped in the service, neither of which reports an error.
+        visual(p, "c_vendorlist", "tableEx", 646, 436, 614, 220,
                {"Values": [column("bridge_ProjectVendor", "VendorName"),
                            column("bridge_ProjectVendor", "TradeName"),
                            column("bridge_ProjectVendor", "City"),
@@ -609,33 +866,36 @@ def page_insurance() -> tuple[str, list[dict]]:
                 "counted apart from lapsed ones.",
                 20, 56, 1240, 46, size=10, color=MUTED),
 
-        textbox(p, "cov_h", "Coverage", 20, 112, 300, 28, size=13),
-        card(p, "i_vendors", "Vendors On Project", 20, 144, 240, 110),
-        card(p, "i_insured", "Vendors With Insurance", 276, 144, 240, 110),
-        card(p, "i_missing", "Vendors Without Insurance", 532, 144, 250, 110),
+        # Three coverage numbers on the left, three currency numbers on the right, one
+        # band. i_soon sits with currency rather than in a row of its own - "expiring
+        # soon" is a renewal question, not a coverage one.
+        textbox(p, "cov_h", "Coverage", 20, 112, 400, 28, size=13),
+        card(p, "i_vendors", "Vendors On Project", 20, 144, 195, 100),
+        card(p, "i_insured", "Vendors With Insurance", 229, 144, 195, 100),
+        card(p, "i_missing", "Vendors Without Insurance", 438, 144, 195, 100),
 
-        textbox(p, "cur_h", "Currency", 810, 112, 300, 28, size=13),
-        card(p, "i_certs", "Certificates On File", 810, 144, 210, 110),
-        card(p, "i_expired", "Expired Certificates", 1036, 144, 224, 110),
-        card(p, "i_soon", "Certificates Expiring Soon", 20, 270, 250, 100),
+        textbox(p, "cur_h", "Currency", 647, 112, 400, 28, size=13),
+        card(p, "i_certs", "Certificates On File", 647, 144, 195, 100),
+        card(p, "i_expired", "Expired Certificates", 856, 144, 195, 100),
+        card(p, "i_soon", "Certificates Expiring Soon", 1065, 144, 195, 100),
 
-        visual(p, "i_by_status", "columnChart", 20, 390, 520, 300,
+        visual(p, "i_by_status", "columnChart", 20, 256, 400, 196,
                {"Category": [column("fct_VendorInsurance", "ExpiryStatus")],
                 "Y": [measure("Certificates On File")]},
                title="Certificates by expiry status"),
 
-        visual(p, "i_by_type", "barChart", 560, 390, 340, 300,
+        visual(p, "i_by_type", "barChart", 436, 256, 400, 196,
                {"Category": [column("fct_VendorInsurance", "InsuranceType")],
                 "Y": [measure("Certificates On File")]},
                title="Certificates by type (Procore's free-text values, untidied)"),
 
-        visual(p, "i_state", "columnChart", 920, 390, 340, 300,
+        visual(p, "i_state", "columnChart", 852, 256, 408, 196,
                {"Category": [column("fct_VendorInsurance", "ComplianceState")],
                 "Y": [measure("Certificates On File")]},
                title="Lapsed vs in date vs exempt"),
 
         # The working list: who to chase, for what, and how overdue.
-        visual(p, "i_list", "tableEx", 20, 710, 1240, 320,
+        visual(p, "i_list", "tableEx", 20, 464, 1240, 192,
                {"Values": [column("fct_VendorInsurance", "VendorKey"),
                            column("fct_VendorInsurance", "InsuranceType"),
                            column("fct_VendorInsurance", "Provider"),
@@ -648,6 +908,9 @@ def page_insurance() -> tuple[str, list[dict]]:
 
 
 PAGES = [
+    # Portfolio first: leadership was named a primary audience and had no page at all.
+    # Overview stays second because it is the per-project page that gets exported to PDF.
+    ("Portfolio", page_portfolio, False),
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
     ("Schedule & Quality", page_schedule_quality, False),
@@ -660,6 +923,24 @@ PAGES = [
     ("Project Detail", page_project_detail, True),    # drill-through target
     ("Data Quality", page_data_quality, True),   # hidden
 ]
+
+
+def assign_tab_order(visuals: list[dict]) -> list[dict]:
+    """Give every visual on a page an explicit keyboard tab position, in reading order.
+
+    Power BI falls back to z-order for any visual without one, so setting tabOrder on SOME
+    visuals is worse than setting it on none: the reader tabs through the few that are
+    ordered, then jumps around the rest. Assigning here rather than at each call site means
+    a page cannot be added with the accessibility half-done.
+
+    Anything that set its own tab (the slicers at 1-2, the footer at 99) keeps it; the rest
+    are numbered top-to-bottom, left-to-right from 10.
+    """
+    auto = sorted((v for v in visuals if "tabOrder" not in v["position"]),
+                  key=lambda v: (v["position"]["y"], v["position"]["x"]))
+    for i, v in enumerate(auto, start=10):
+        v["position"]["tabOrder"] = i
+    return visuals
 
 
 def build(model_id: str) -> dict[str, str]:
@@ -687,16 +968,47 @@ def build(model_id: str) -> dict[str, str]:
         "definition/version.json": json.dumps(
             {"$schema": f"{SCHEMA}/versionMetadata/1.0.0/schema.json", "version": "2.0.0"},
             indent=2),
+        # The theme. Until now the report ran bare Power BI defaults while a validated
+        # theme sat unused in powerbi/theme.json - eight categorical slots checked for
+        # colour-vision separation and contrast in both light and dark, plus the corrected
+        # RAG steps. Registering it is one file and one reference, and it is the single
+        # largest visual change in this pass.
+        f"StaticResources/RegisteredResources/{THEME_NAME}.json":
+            THEME_SRC.read_text(encoding="utf-8"),
         "definition/report.json": json.dumps({
             "$schema": f"{SCHEMA}/report/2.0.0/schema.json",
-            "themeCollection": {"baseTheme": {"name": "CY24SU10", "reportVersionAtImport": "5.55",
-                                              "type": "SharedResources"}},
+            "themeCollection": {
+                "baseTheme": {"name": "CY24SU10", "reportVersionAtImport": "5.55",
+                              "type": "SharedResources"},
+                # Layered OVER the base theme, so anything the custom theme does not
+                # specify still falls back to a supported Microsoft base rather than to
+                # nothing.
+                "customTheme": {"name": f"{THEME_NAME}.json", "reportVersionAtImport": "5.55",
+                                "type": "RegisteredResources"},
+            },
+            "resourcePackages": [{
+                "name": "RegisteredResources",
+                "type": "RegisteredResources",
+                "items": [{"name": f"{THEME_NAME}.json", "path": f"{THEME_NAME}.json",
+                           "type": "CustomTheme"}],
+            }],
+            "settings": {
+                "useStylableVisualContainerHeader": True,
+                # Summarized only. The detail behind a visual is a lakehouse query, not a
+                # spreadsheet to re-download and re-key - which is the habit this whole
+                # report exists to retire.
+                "exportDataMode": "AllowSummarized",
+                "defaultDrillFilterOtherVisuals": True,
+                "useEnhancedTooltips": True,
+                "allowChangeFilterTypes": True,
+            },
         }, indent=2),
     }
 
     page_names = []
     for display, builder, hidden in PAGES:
         pid, visuals = builder()
+        visuals = assign_tab_order(visuals + chrome(pid, slicers=pid not in DRILLTHROUGH))
         page_names.append(pid)
         page: dict = {
             "$schema": f"{SCHEMA}/page/2.0.0/schema.json",

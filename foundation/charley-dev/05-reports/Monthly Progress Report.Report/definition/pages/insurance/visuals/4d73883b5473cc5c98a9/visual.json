@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1240,
-    "height": 46
+    "height": 46,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Sourced from Procore''s insurance records. COVERAGE (is there a certificate at all) and CURRENCY (is it in date) are counted separately - a vendor with no record and a vendor with a lapsed record both fail a single compliance flag and need different follow-up. Exempt vendors are counted apart from lapsed ones.'"
+                }
+              }
+            }
           }
         }
       ]

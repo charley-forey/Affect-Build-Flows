@@ -5,8 +5,9 @@
     "x": 20,
     "y": 144,
     "z": 0,
-    "width": 240,
-    "height": 110
+    "width": 195,
+    "height": 100,
+    "tabOrder": 14
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Vendors On Project. Shows Vendors On Project for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

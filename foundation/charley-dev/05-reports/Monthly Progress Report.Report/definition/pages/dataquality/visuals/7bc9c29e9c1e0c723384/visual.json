@@ -3,10 +3,11 @@
   "name": "7bc9c29e9c1e0c723384",
   "position": {
     "x": 20,
-    "y": 110,
+    "y": 244,
     "z": 0,
     "width": 260,
-    "height": 130
+    "height": 100,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. DQ Projects Without Crosswalk. Shows DQ Projects Without Crosswalk for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "987edfff6d7726110a4f",
   "position": {
-    "x": 810,
+    "x": 647,
     "y": 144,
     "z": 0,
-    "width": 210,
-    "height": 110
+    "width": 195,
+    "height": 100,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Certificates On File. Shows Certificates On File for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1100,
-    "height": 44
+    "height": 40,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Surfacing bad data rather than letting it flow silently into a rollup. This page is how the Excel''s defects would have been caught.  Status is always shown as TEXT, never colour alone - around 8% of men have some colour-vision deficiency, and this report goes to leadership.'"
+                }
+              }
+            }
           }
         }
       ]

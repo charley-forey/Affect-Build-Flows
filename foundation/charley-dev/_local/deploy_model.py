@@ -70,6 +70,12 @@ MODEL_TABLES = [
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
 # ambiguity and hurt performance (powerbi/semantic-model.md:443).
 RELATIONSHIPS = [
+    # NOTE: the two scorecard config tables are deliberately NOT related. Relating them so
+    # the band table could show a category name made Power BI add a blank unknown-member
+    # row to dim_ScorecardWeight - which rendered as an empty row on the Scorecard page, an
+    # empty column on the Portfolio heatmap, and broke the "weights sum to 1.00" assertion
+    # because the blank row's weight is NULL. Verified against the deployed model, not
+    # guessed. dim_ScorecardBand carries CategoryName as a column instead.
     ("fct_BudgetLine", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_BudgetLine", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_BudgetLine", "MonthStart", "dim_Date", "Date"),
@@ -403,7 +409,110 @@ MEASURES = [
     ("DQ Unmatched Invoices",
      "CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )",
      '"#,0"', "diagnostics - AR rows whose Sage job resolves to no project"),
+
+    # ---- Trend and portfolio ------------------------------------------------
+    #
+    # dim_Date is 7,670 contiguous days, marked, and DATEADD over it is asserted in
+    # validate_model.py - and until now the report used it for exactly one chart. These are
+    # the measures that make it earn its place: the question is never "what is the number",
+    # it is "which way is it moving".
+    ("Billed Cumulative",
+     # The S-curve. Uses the SUM-SAFE period movement accumulated over time, NOT the
+     # running-balance column - summing a restated balance double-counts every period it
+     # was restated in, and slopes upward whether or not anything was billed.
+     "CALCULATE ( [Billed This Period], "
+     "FILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) )",
+     '"$#,0"', "no workbook equivalent - a single snapshot cannot draw a curve"),
+    ("Billed Cumulative % Of Contract",
+     "DIVIDE ( [Billed Cumulative], [Current Contract] )",
+     '"0.0%"', "the S-curve against the contract line"),
+    # Portfolio counts. Every page today is one project behind a slicer; leadership was
+    # never given a number that spans the jobs.
+    ("Projects Reporting", "COUNTROWS ( dim_Project )", '"#,0"', "portfolio scope"),
+    ("Projects At Risk",
+     # Below 0.60 on the measured-only score, so a project is not flagged merely for being
+     # under-instrumented - that is what [Scorecard Coverage %] is for.
+     "COUNTROWS ( FILTER ( dim_Project, "
+     "NOT ISBLANK ( [Project Scorecard (Measured Only)] ) "
+     "&& [Project Scorecard (Measured Only)] < 0.6 ) )",
+     '"#,0"', "no workbook equivalent - one workbook per project cannot rank them"),
+
+    # ---- Schedule geometry --------------------------------------------------
+    #
+    # Power BI has no native Gantt. A stacked bar draws one: an invisible bar to the
+    # milestone's start, then a visible bar for its duration. Both are day counts from the
+    # earliest start in the current filter, so the axis reads as a timeline.
+    #
+    # NOTE: fct_Milestone carries CurrentStart/CurrentFinish only. There is no baseline and
+    # no actual, so this shows the schedule AS IT STANDS - it cannot show drift against a
+    # baseline. That needs baseline dates Outbuild is not supplying today.
+    ("Milestone Offset Days",
+     "VAR Origin = CALCULATE ( MIN ( fct_Milestone[CurrentStart] ), ALLSELECTED ( fct_Milestone ) )\n"
+     "RETURN DATEDIFF ( Origin, MIN ( fct_Milestone[CurrentStart] ), DAY )",
+     '"#,0"', "Gantt geometry - the transparent leading bar"),
+    ("Milestone Duration Days",
+     "DATEDIFF ( MIN ( fct_Milestone[CurrentStart] ), MAX ( fct_Milestone[CurrentFinish] ), DAY )",
+     '"#,0"', "Gantt geometry - the visible bar"),
+
+    # ---- Report context -----------------------------------------------------
+    #
+    # A page exported to PDF has to state what it is a snapshot OF. The workbook could not:
+    # DASHBOARD used TODAY(), so a saved file silently re-reported itself every time it was
+    # opened (defect #5). These two put the answer on the page instead.
+    #
+    # Last Refresh reads a real timestamp stamped into the anchor table when gold is built,
+    # not NOW() - NOW() is when the report was VIEWED, which is the same lie in a new place.
+    ("Last Refresh", "MAX ( _Measures[_built_at] )", '"yyyy-mm-dd hh:nn"',
+     "no workbook equivalent - the Excel could not say when its numbers were true"),
+    # Follows the slicer. With no month selected it names the full span rather than
+    # inventing a single month, because that IS what the reader is looking at.
+    ("Report Month Label",
+     'VAR L = MIN ( dim_Date[MonthStart] )\n'
+     'VAR H = MAX ( dim_Date[MonthStart] )\n'
+     'RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), '
+     'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )',
+     None, "DASHBOARD!AU4 - the month anchor, now driven by the slicer"),
 ] + scorecard.measures()
+
+
+# Field-list folders. Forward-filled: a measure inherits the folder of the last section
+# opened above it, so inserting a measure into a section needs no change here. The section
+# names mirror the comment headings the MEASURES list is already organised by.
+FOLDER_STARTS = [
+    ("Original Contract", "01 Contract & Change"),
+    ("Budget", "02 Budget & Cost"),
+    ("Retainage Held Owner", "03 Billing & Retainage"),
+    ("Direct Costs", "04 Direct Costs & Vendors"),
+    ("Total Billed", "05 Cash & AR"),
+    ("Open Submittals", "06 Submittals & RFIs"),
+    ("Critical Milestones", "07 Schedule"),
+    ("Punchlist Items", "08 Quality"),
+    ("Projects Fully Mapped", "09 Source Coverage"),
+    ("DQ Projects Without Crosswalk", "10 Data Quality"),
+    ("Billed Cumulative", "05 Cash & AR"),
+    ("Projects Reporting", "13 Portfolio"),
+    ("Milestone Offset Days", "07 Schedule"),
+    # These three start the groups merged in from the pipeline/vendor/insurance work. The
+    # fill is positional, so without them all 13 of those measures land in whatever folder
+    # the measure above them happens to be in - silently, and wrongly.
+    ("Last Checked Run", "14 Pipeline liveness"),
+    ("Vendor Spend", "04 Direct Costs & Vendors"),
+    ("Certificates On File", "15 Insurance"),
+    ("Avg Days To Payment", "11 Scorecard drivers"),
+    ("Score - Accounts Receivable", "12 Scorecard"),
+    ("Last Refresh", "00 Report context"),
+]
+
+
+def folder_for(name: str, _cache: dict = {}) -> str:
+    """Which display folder a measure belongs in, by forward-fill over FOLDER_STARTS."""
+    if not _cache:
+        starts = dict(FOLDER_STARTS)
+        current = "00 Report context"
+        for measure_name, *_ in MEASURES:
+            current = starts.get(measure_name, current)
+            _cache[measure_name] = current
+    return _cache[name]
 
 
 def introspect() -> dict[str, list[tuple[str, str]]]:
@@ -496,6 +605,9 @@ def measures_tmdl() -> str:
             lines.append(f"\tmeasure '{measure_name}' = {expression}")
         if fmt:
             lines.append(f"\t\tformatString: {fmt}")
+        # 75 measures in one flat list is a wall. Folders are the only grouping the field
+        # list offers, and they cost one line each.
+        lines.append(f'\t\tdisplayFolder: {folder_for(measure_name)}')
         lines.append("")
     # Direct Lake over a real one-row table, NOT a calculated table. Calculated tables are
     # unsupported in Direct Lake and do not fail loudly: the model deploys, reports
@@ -507,6 +619,15 @@ def measures_tmdl() -> str:
         "\t\tdataType: string",
         "\t\tsummarizeBy: none",
         "\t\tsourceColumn: _placeholder",
+        "",
+        # Stamped when gold is built, so [Last Refresh] reports when the DATA became true
+        # rather than when someone opened the report.
+        "\tcolumn _built_at",
+        "\t\tisHidden",
+        "\t\tdataType: dateTime",
+        "\t\tformatString: yyyy-mm-dd hh:nn:ss",
+        "\t\tsummarizeBy: none",
+        "\t\tsourceColumn: _built_at",
         "",
         "\tpartition _Measures = entity",
         "\t\tmode: directLake",

@@ -5,6 +5,31 @@
       "name": "CY24SU10",
       "reportVersionAtImport": "5.55",
       "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "AffectGroupProjectReport.json",
+      "reportVersionAtImport": "5.55",
+      "type": "RegisteredResources"
     }
+  },
+  "resourcePackages": [
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "AffectGroupProjectReport.json",
+          "path": "AffectGroupProjectReport.json",
+          "type": "CustomTheme"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "useStylableVisualContainerHeader": true,
+    "exportDataMode": "AllowSummarized",
+    "defaultDrillFilterOtherVisuals": true,
+    "useEnhancedTooltips": true,
+    "allowChangeFilterTypes": true
   }
 }

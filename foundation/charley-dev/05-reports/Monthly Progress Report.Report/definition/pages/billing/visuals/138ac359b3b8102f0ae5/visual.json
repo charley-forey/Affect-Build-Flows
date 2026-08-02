@@ -6,7 +6,8 @@
     "y": 262,
     "z": 0,
     "width": 260,
-    "height": 100
+    "height": 100,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Balance To Finish. Shows Balance To Finish for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

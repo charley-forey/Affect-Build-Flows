@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "ad25791397553239021f",
   "position": {
-    "x": 1036,
+    "x": 856,
     "y": 144,
     "z": 0,
-    "width": 224,
-    "height": 110
+    "width": 195,
+    "height": 100,
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Expired Certificates. Shows Expired Certificates for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

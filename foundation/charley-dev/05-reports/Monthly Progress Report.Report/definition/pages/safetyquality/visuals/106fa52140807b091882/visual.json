@@ -6,7 +6,8 @@
     "y": 132,
     "z": 0,
     "width": 208,
-    "height": 110
+    "height": 110,
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Open Quality Items. Shows Open Quality Items for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

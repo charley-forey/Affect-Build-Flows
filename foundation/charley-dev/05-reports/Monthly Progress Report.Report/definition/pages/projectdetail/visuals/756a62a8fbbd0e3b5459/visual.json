@@ -6,7 +6,8 @@
     "y": 100,
     "z": 0,
     "width": 240,
-    "height": 110
+    "height": 110,
+    "tabOrder": 14
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Total Paid. Shows Total Paid for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

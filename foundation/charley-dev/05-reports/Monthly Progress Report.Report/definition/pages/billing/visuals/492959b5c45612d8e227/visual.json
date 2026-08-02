@@ -6,7 +6,8 @@
     "y": 104,
     "z": 0,
     "width": 300,
-    "height": 28
+    "height": 28,
+    "tabOrder": 13
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Owner billing'"
+                }
+              }
+            }
           }
         }
       ]
