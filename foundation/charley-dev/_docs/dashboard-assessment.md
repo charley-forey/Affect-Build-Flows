@@ -70,8 +70,9 @@ The design work was already done. It had just never been applied.
 
 It had two tables that could not be read against each other: weights in one, raw band rows
 in the other keyed by `CategoryKey` — an integer surrogate being rendered to readers. The
-two tables were unrelated, so combining them would have produced a 9 × 27 cartesian; the
-missing many-to-one relationship is now in the model.
+band table now carries `CategoryName` as its own column, so the two stay unrelated. (A
+relationship was tried first and deploying it showed why not — see the deployment note
+below.)
 
 One table now gives **category · score · band · weight · contribution**, and the
 contribution column sums to `[Project Scorecard]` exactly, because it is driven by the same
