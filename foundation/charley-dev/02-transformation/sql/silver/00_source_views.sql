@@ -242,3 +242,47 @@ CREATE OR REPLACE TEMPORARY VIEW sv_manpower_daily AS
 SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS DATE) AS log_date,
        CAST(NULL AS DOUBLE) AS total_hours, CAST(NULL AS DOUBLE) AS total_workers
 WHERE 1=0;
+
+
+-- Empty under this source. The existing warehouse holds no progress billing, no direct
+-- costs and no project-vendor bridge - which is also why retainage could not be reported
+-- from it. Declared with real types so gold/27-29 run unchanged under both sources; a
+-- missing view would fail the build, and a wrongly-typed one would fail later and further
+-- from the cause.
+CREATE OR REPLACE TEMPORARY VIEW sv_billing AS
+SELECT CAST(NULL AS STRING) AS billing_type, CAST(NULL AS STRING) AS project_id,
+       CAST(NULL AS STRING) AS billing_id, CAST(NULL AS STRING) AS invoice_number,
+       CAST(NULL AS INT) AS period_number, CAST(NULL AS STRING) AS status_label,
+       CAST(NULL AS STRING) AS vendor_id, CAST(NULL AS STRING) AS counterparty_name,
+       CAST(NULL AS STRING) AS contract_id, CAST(NULL AS STRING) AS contract_name,
+       CAST(NULL AS STRING) AS contract_type, CAST(NULL AS DATE) AS billing_date,
+       CAST(NULL AS DATE) AS period_start, CAST(NULL AS DATE) AS period_end,
+       CAST(NULL AS DATE) AS payment_date, CAST(NULL AS DOUBLE) AS percent_complete,
+       CAST(NULL AS DOUBLE) AS original_contract_sum,
+       CAST(NULL AS DOUBLE) AS net_change_by_change_orders,
+       CAST(NULL AS DOUBLE) AS contract_sum_to_date, CAST(NULL AS DOUBLE) AS completed_to_date,
+       CAST(NULL AS DOUBLE) AS previous_certificates, CAST(NULL AS DOUBLE) AS retainage_amount,
+       CAST(NULL AS DOUBLE) AS retainage_percent,
+       CAST(NULL AS DOUBLE) AS stored_retainage_amount,
+       CAST(NULL AS DOUBLE) AS total_retainage, CAST(NULL AS DOUBLE) AS earned_less_retainage,
+       CAST(NULL AS DOUBLE) AS current_payment_due, CAST(NULL AS DOUBLE) AS balance_to_finish
+WHERE 1=0;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_direct_costs AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS direct_cost_id,
+       CAST(NULL AS STRING) AS description, CAST(NULL AS STRING) AS cost_type,
+       CAST(NULL AS STRING) AS status_label, CAST(NULL AS STRING) AS vendor_id,
+       CAST(NULL AS STRING) AS vendor_name, CAST(NULL AS STRING) AS employee_name,
+       CAST(NULL AS DATE) AS cost_date, CAST(NULL AS DOUBLE) AS amount,
+       CAST(NULL AS DOUBLE) AS grand_total
+WHERE 1=0;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_project_vendors AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS vendor_id,
+       CAST(NULL AS STRING) AS vendor_name, CAST(NULL AS STRING) AS trade_name,
+       CAST(NULL AS STRING) AS city, CAST(NULL AS STRING) AS state_code,
+       CAST(NULL AS STRING) AS business_phone, CAST(NULL AS STRING) AS email_address,
+       CAST(NULL AS BOOLEAN) AS is_prequalified, CAST(NULL AS BOOLEAN) AS is_active,
+       CAST(NULL AS BOOLEAN) AS is_union_member, CAST(NULL AS STRING) AS license_number,
+       CAST(NULL AS STRING) AS labor_union, CAST(NULL AS BOOLEAN) AS synced_to_erp
+WHERE 1=0;

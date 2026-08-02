@@ -24,7 +24,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from seedrunner import CHARLEY_DEV, MACROS, split_statements  # noqa: E402
 
 CHECKS: list[str] = []
-SILVER_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "silver" / "10_procore_silver.sql"
+# The SAME selection deploy_silver.py makes, for the same reason: a test that runs one
+# hand-named file while the deploy runs six is not testing the deploy. 20_fieldops_silver
+# and 21_financial_silver were both invisible here until this became a glob.
+SILVER_DIR = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
+SILVER_SQL = sorted(p for p in SILVER_DIR.glob("*.sql") if p.name[:2] not in ("00", "01", "30"))
 SWITCH_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "silver" / "01_source_views_cd.sql"
 
 
@@ -95,6 +99,84 @@ BRONZE = {
                            "status": {"name": "Open"},
                            "created_at": "0001-01-01"}, project_id="7"),
     ],
+    # Field ops. These parsers shipped with no offline fixture at all - the test named one
+    # SQL file by hand and never reached them. The glob that replaced it found this.
+    "cd_bronze_procore_observations": [
+        bronze_row("O1", {"id": "O1", "number": "1", "name": "  Missing guardrail  ",
+                          "type": {"name": "Safety"}, "category": {"name": "Fall"},
+                          # lowercase here...
+                          "status": "closed", "priority": "High", "trade": "Concrete",
+                          "assignee": {"name": "A Foreman"},
+                          "created_at": "2025-05-01", "due_date": "2025-05-08",
+                          "closed_at": "2025-05-05"}, project_id="7"),
+    ],
+    "cd_bronze_procore_punch_items": [
+        bronze_row("PI1", {"id": "PI1", "position": "1", "name": "Touch up paint",
+                           "punch_item_type": {"name": "Finish"},
+                           # ...and title case here, on the same concept one endpoint over.
+                           "status": "Closed", "workflow_status": "closed",
+                           "priority": "Low", "trade": "Painting",
+                           "cost_code": {"id": "CC1"},
+                           "punch_item_manager": {"name": "A PM"},
+                           "created_at": "2025-05-01", "due_date": "2025-05-20",
+                           "closed_at": None, "overdue": True}, project_id="7"),
+    ],
+    "cd_bronze_procore_incidents": [
+        bronze_row("I1", {"id": "I1", "title": "Cut hand", "status": "closed",
+                          "recordable": True, "event_date": "2025-05-10",
+                          "time_of_event": "09:30", "created_at": "2025-05-10"},
+                   project_id="7"),
+    ],
+    "cd_bronze_procore_manpower_logs": [
+        # One row PER VENDOR PER DAY. Two vendors on the same day must roll into one
+        # project-day or every safety rate double-counts its own denominator.
+        bronze_row("M1", {"date": "2025-05-01", "man_hours": "24.0",
+                          "num_workers": "3"}, project_id="7"),
+        bronze_row("M2", {"date": "2025-05-01", "man_hours": "16.0",
+                          "num_workers": "2"}, project_id="7"),
+    ],
+    # Progress billing. Two endpoints, one silver table - and the percent format differs
+    # between them, which is the whole reason this fixture has both.
+    "cd_bronze_procore_requisitions": [
+        bronze_row("Q1", {"id": "Q1", "invoice_number": "1", "number": 1,
+                          "status": "approved", "vendor_id": "V1", "vendor_name": "Demar",
+                          "commitment_id": "SC1", "contract_name": "Contract SC-1",
+                          "commitment_type": "WorkOrderContract",
+                          "billing_date": "2025-05-31", "requisition_start": "2025-05-01",
+                          "requisition_end": "2025-05-31",
+                          # WITH a percent sign. A bare CAST of this is NULL.
+                          "percent_complete": "9.28%",
+                          "summary": {"original_contract_sum": "1000000.00", "net_change_by_change_orders": "0.00", "contract_sum_to_date": "1000000.00", "total_completed_and_stored_to_date": "250000.00", "less_previous_certificates_for_payment": "0.00", "completed_work_retainage_percent": "5.00", "stored_materials_retainage_amount": "0.00", "total_retainage": "12500.00", "total_earned_less_retainage": "237500.00", "current_payment_due": "237500.00", "balance_to_finish_including_retainage": "762500.00", "completed_work_retainage_amount": "12500.00"}}, project_id="7"),
+    ],
+    "cd_bronze_procore_payment_applications": [
+        bronze_row("PA1", {"id": "PA1", "invoice_number": "1", "number": 1,
+                           "status": "approved",
+                           "formatted_contract_company": "Friends of Prospect",
+                           "contract": {"id": "PC1", "title": "Prime",
+                                        "type": "PrimeContract"},
+                           "billing_date": "2025-05-31", "period_start": "2025-05-01",
+                           "period_end": "2025-05-31",
+                           # WITHOUT one, on the same concept, from the same API.
+                           "percent_complete": "25.07",
+                           "g702": {"original_contract_sum": "1000000.00", "net_change_by_change_orders": "0.00", "contract_sum_to_date": "1000000.00", "total_completed_and_stored_to_date": "250000.00", "less_previous_certificates_for_payment": "0.00", "completed_work_retainage_percent": "5.00", "stored_materials_retainage_amount": "0.00", "total_retainage": "12514.28", "total_earned_less_retainage": "237500.00", "current_payment_due": "237500.00", "balance_to_finish_including_retainage": "762500.00", "completed_work_retainage_amount": "12514.28"}}, project_id="7"),
+    ],
+    "cd_bronze_procore_direct_costs": [
+        bronze_row("D1", {"id": "D1", "description": "  PM Payroll  ",
+                          "direct_cost_type": "payroll", "status": "approved",
+                          "vendor_id": "V1", "vendor_name": "Affect",
+                          "employee": {"id": "E1", "name": "A Foreman"},
+                          "direct_cost_date": "2025-05-31",
+                          "amount": "11275.5", "grand_total": "11400.0"}, project_id="7"),
+    ],
+    "cd_bronze_procore_project_vendors": [
+        bronze_row("V1", {"id": "V1", "name": "  Demar Plumbing  ",
+                          "trade_name": "Demar LLC", "city": "New York",
+                          "state_code": "NY", "prequalified": True, "is_active": True,
+                          "union_member": False, "synced_to_erp": False,
+                          # Empty strings, not nulls, is how Procore spells "not recorded".
+                          "license_number": "", "labor_union": "",
+                          "project_ids": ["7", "999"]}, project_id="7"),
+    ],
     "cd_bronze_procore_rfis": [
         bronze_row("R1", {"id": "R1", "number": "RFI-1", "subject": "  Slab edge  ",
                           "status": "Open", "priority": "High",
@@ -121,11 +203,14 @@ def build():
             f"CREATE OR REPLACE TABLE {table} AS "
             f"SELECT * FROM (VALUES {', '.join(rows)}) AS t({COLUMNS})"
         )
-    for statement in split_statements(SILVER_SQL.read_text(encoding="utf-8")):
-        try:
-            con.execute(statement)
-        except Exception as exc:
-            raise RuntimeError(f"silver SQL failed: {exc}") from exc
+    for path in SILVER_SQL:
+        for statement in split_statements(path.read_text(encoding="utf-8")):
+            try:
+                con.execute(statement)
+            except Exception as exc:
+                # Named, because "silver SQL failed" across six files is a search, not a
+                # diagnosis.
+                raise RuntimeError(f"{path.name}: {exc}") from exc
     return con
 
 
@@ -250,10 +335,81 @@ def test_column_contract(con) -> None:
     check(f"all {checked} silver tables satisfy the sv_* column contract")
 
 
+
+def test_billing_and_costs(con) -> None:
+    """Progress billing, direct costs and the vendor bridge - none previously parsed."""
+    # One table from two endpoints. They describe opposite directions of the same AIA G702
+    # form, so they union rather than living as two near-identical tables.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_billing") == 2
+    assert one(con, "SELECT billing_type FROM cd_silver_billing WHERE billing_id='Q1'") \
+        == "Subcontractor"
+    assert one(con, "SELECT billing_type FROM cd_silver_billing WHERE billing_id='PA1'") \
+        == "Owner"
+    check("requisitions and payment applications union into one billing table")
+
+    # THE SILENT ONE. Procore writes "9.28%" on requisitions and "25.07" on payment
+    # applications - same concept, same API, different format. An uncleaned CAST of the
+    # first returns NULL, and a NULL percent complete reads on a card as a job that has
+    # not started rather than as a parse failure.
+    assert one(con, "SELECT percent_complete FROM cd_silver_billing WHERE billing_id='Q1'") == 9.28
+    assert one(con, "SELECT percent_complete FROM cd_silver_billing WHERE billing_id='PA1'") == 25.07
+    check("percent parses whether or not the endpoint writes a % sign")
+
+    # Retainage, read from `summary` on one endpoint and `g702` on the other. This is the
+    # figure Sage cannot supply - its invoice header is zero across all 940 rows.
+    assert one(con, "SELECT retainage_amount FROM cd_silver_billing WHERE billing_id='Q1'") == 12500.0
+    assert one(con, "SELECT retainage_amount FROM cd_silver_billing WHERE billing_id='PA1'") == 12514.28
+    assert one(con, "SELECT contract_sum_to_date FROM cd_silver_billing WHERE billing_id='PA1'") \
+        == 1000000.0
+    check("the G702 block resolves under both its parent names")
+
+    assert one(con, "SELECT cost_type FROM cd_silver_direct_costs") == "payroll"
+    assert one(con, "SELECT description FROM cd_silver_direct_costs") == "PM Payroll"
+    assert one(con, "SELECT grand_total FROM cd_silver_direct_costs") == 11400.0
+    assert one(con, "SELECT employee_name FROM cd_silver_direct_costs") == "A Foreman"
+    check("direct costs carry self-performed labour, which no other feed does")
+
+    # The pair comes from _project_id, stamped by the extractor from the path it called -
+    # not from the payload's project_ids array, which lists project 999 that we never read.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_project_vendors") == 1
+    assert one(con, "SELECT project_id FROM cd_silver_project_vendors") == "7"
+    assert one(con, "SELECT vendor_name FROM cd_silver_project_vendors") == "Demar Plumbing"
+    check("the vendor bridge pairs only projects we actually read")
+
+    # "" is how Procore spells "not recorded". Left as an empty string it reads on a report
+    # as a licence number that exists and happens to be blank.
+    assert one(con, "SELECT license_number FROM cd_silver_project_vendors") is None
+    check("Procore's empty-string placeholders become real nulls")
+
+
+def test_fieldops(con) -> None:
+    """The field-ops parsers, which had no offline coverage until the glob found them."""
+    # `status` is lowercase on observations and title case on punch items - same concept,
+    # one endpoint apart. UPPER on both means a downstream comparison cannot be defeated
+    # by casing that varies per endpoint.
+    assert one(con, "SELECT status_label FROM cd_silver_observations") == "CLOSED"
+    assert one(con, "SELECT status_label FROM cd_silver_punch_items") == "CLOSED"
+    check("status casing is normalised across endpoints that disagree about it")
+
+    assert one(con, "SELECT title FROM cd_silver_observations") == "Missing guardrail"
+    assert one(con, "SELECT observation_type FROM cd_silver_observations") == "Safety"
+    assert one(con, "SELECT punch_item_type FROM cd_silver_punch_items") == "Finish"
+    check("nested type and category names resolve on field-ops payloads")
+
+    assert one(con, "SELECT is_recordable FROM cd_silver_incidents") is True
+    check("the OSHA recordable flag survives as a boolean, not a string")
+
+    # man_hours arrives as a STRING ("24.0"). Summed without an explicit cast this is the
+    # kind of thing that concatenates quietly rather than failing.
+    assert one(con, "SELECT total_hours FROM cd_silver_manpower_daily") == 40.0
+    assert one(con, "SELECT total_workers FROM cd_silver_manpower_daily") == 5.0
+    assert one(con, "SELECT vendor_entries FROM cd_silver_manpower_daily") == 2
+    check("manpower sums per vendor per day into one project-day, from string hours")
+
 def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
-               test_column_contract):
+               test_column_contract, test_billing_and_costs, test_fieldops):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

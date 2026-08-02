@@ -453,11 +453,115 @@ def page_safety_quality() -> tuple[str, list[dict]]:
     ]
 
 
+
+def page_billing() -> tuple[str, list[dict]]:
+    """Progress billing and retainage - neither of which exists in the workbook.
+
+    Retainage has no cell anywhere in the spreadsheet and no column in Sage that carries
+    it: the invoice header is zero across all 940 rows. It is held in Procore progress
+    billing, and this is the first time Affect can see it.
+
+    The layout puts the net position first because that is the one number a GC acts on -
+    owner retainage is cash owed to Affect, sub retainage is cash Affect is holding, and
+    only the difference tells you which way the money is flowing.
+    """
+    p = "billing"
+    return p, [
+        textbox(p, "title", "Billing & Retainage", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Every figure is the CURRENT balance from the latest issued billing per "
+                "contract - not a total of every period, which would count the same "
+                "retainage once per month. Drafts are excluded from balances and counted "
+                "separately below.",
+                20, 56, 1240, 34, size=10, color=MUTED),
+
+        # Retainage first. This is the new information on the page.
+        textbox(p, "ret_h", "Retainage", 20, 104, 300, 28, size=13),
+        card(p, "b_net", "Net Retainage Position", 20, 136, 260, 110),
+        card(p, "b_ret_own", "Retainage Held Owner", 296, 136, 240, 110),
+        card(p, "b_ret_sub", "Retainage Held Sub", 552, 136, 240, 110),
+
+        textbox(p, "bill_h", "Owner billing", 820, 104, 300, 28, size=13),
+        card(p, "b_contract", "Owner Contract Sum", 820, 136, 220, 110),
+        card(p, "b_todate", "Owner Billed To Date", 1056, 136, 204, 110),
+
+        card(p, "b_balance", "Balance To Finish", 20, 262, 260, 100),
+        # Shown beside the cumulative figure deliberately: this is the only sum-safe money
+        # column on the fact, and the gap between the two IS the retainage above. A reader
+        # who spots that has understood the table.
+        card(p, "b_period", "Billed This Period", 296, 262, 240, 100),
+        card(p, "b_draft", "Draft Billings", 552, 262, 240, 100),
+
+        # Billing over time uses the SUM-SAFE measure. A cumulative column on a trend chart
+        # would slope upward regardless of activity, which looks like progress and is not.
+        visual(p, "b_trend", "columnChart", 20, 382, 620, 300,
+               {"Category": [column("dim_Date", "MonthStart")],
+                "Y": [measure("Billed This Period")]},
+               title="Billed by month (period movement, not cumulative)"),
+
+        visual(p, "b_by_project", "barChart", 660, 382, 600, 300,
+               {"Category": [column("dim_Project", "ProjectName")],
+                "Y": [measure("Retainage Held Owner"),
+                      measure("Retainage Held Sub")]},
+               title="Retainage held by project"),
+    ]
+
+
+def page_costs_vendors() -> tuple[str, list[dict]]:
+    """Direct costs and the vendor list - deliverable D8, plus the ERP reconciliation gap.
+
+    Self-performed labour appears in no other feed: not in a commitment, not in a
+    requisition, not in the budget's committed column. A cost-to-date built without it
+    understates every job Affect's own crews work on, and understates it in the
+    comfortable direction - the job looks more profitable than it is.
+    """
+    p = "costsvendors"
+    return p, [
+        textbox(p, "title", "Direct Costs & Vendors", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Direct costs are discrete transactions, so unlike the billing balances "
+                "these totals are correct at any grouping. The vendor list is Procore's "
+                "prequalification record, which is not the same as current insurance.",
+                20, 56, 1240, 34, size=10, color=MUTED),
+
+        card(p, "c_direct", "Direct Costs", 20, 104, 250, 110),
+        card(p, "c_labour", "Self Performed Labour", 286, 104, 250, 110),
+        card(p, "c_unapproved", "Unapproved Direct Costs", 552, 104, 250, 110),
+        card(p, "c_vendors", "Vendors On Project", 818, 104, 220, 110),
+        # Half of Affect's vendors are not written back to Sage. That is a reconciliation
+        # gap - cost exists in one system and not the other - and nothing surfaced it
+        # before this card.
+        card(p, "c_missing", "Vendors Missing From ERP", 1054, 104, 206, 110),
+
+        visual(p, "c_by_type", "columnChart", 20, 232, 520, 290,
+               {"Category": [column("fct_DirectCost", "CostCategory")],
+                "Y": [measure("Direct Costs")]},
+               title="Direct cost by category"),
+
+        visual(p, "c_trend", "columnChart", 560, 232, 700, 290,
+               {"Category": [column("dim_Date", "MonthStart")],
+                "Y": [measure("Direct Costs")]},
+               title="Direct cost by month"),
+
+        # The D8 deliverable itself: the list somebody assembles by hand today.
+        visual(p, "c_vendorlist", "tableEx", 20, 542, 1240, 300,
+               {"Values": [column("bridge_ProjectVendor", "VendorName"),
+                           column("bridge_ProjectVendor", "TradeName"),
+                           column("bridge_ProjectVendor", "City"),
+                           column("bridge_ProjectVendor", "LicenseNumber"),
+                           column("bridge_ProjectVendor", "IsPrequalified"),
+                           column("bridge_ProjectVendor", "SyncedToErp")]},
+               title="Vendor list - prequalification and ERP sync"),
+    ]
+
+
 PAGES = [
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
     ("Schedule & Quality", page_schedule_quality, False),
     ("Safety & Quality", page_safety_quality, False),
+    ("Billing & Retainage", page_billing, False),
+    ("Direct Costs & Vendors", page_costs_vendors, False),
     ("Scorecard", page_scorecard, False),
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target

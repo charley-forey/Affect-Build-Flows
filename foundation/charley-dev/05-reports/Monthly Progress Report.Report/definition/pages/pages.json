@@ -5,6 +5,8 @@
     "financial",
     "schedule",
     "safetyquality",
+    "billing",
+    "costsvendors",
     "scorecard",
     "sourcecoverage",
     "dataquality"

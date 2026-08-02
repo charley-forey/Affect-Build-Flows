@@ -197,3 +197,33 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_incidents`;
 CREATE OR REPLACE TEMPORARY VIEW sv_manpower_daily AS
 SELECT project_id, log_date, total_hours, total_workers
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_manpower_daily`;
+
+
+-- ---------------------------------------------------------------------------
+-- PROGRESS BILLING, DIRECT COSTS, VENDOR BRIDGE
+-- ---------------------------------------------------------------------------
+--
+-- Live from our own Procore ingestion as of 2026-08-02: 607 billing periods (134 owner,
+-- 473 sub), 418 direct costs, 393 project-vendor pairs. None of it exists in the existing
+-- warehouse, and retainage exists nowhere else at all.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_billing AS
+SELECT billing_type, project_id, billing_id, invoice_number, period_number, status_label,
+       vendor_id, counterparty_name, contract_id, contract_name, contract_type,
+       billing_date, period_start, period_end, payment_date, percent_complete,
+       original_contract_sum, net_change_by_change_orders, contract_sum_to_date,
+       completed_to_date, previous_certificates, retainage_amount, retainage_percent,
+       stored_retainage_amount, total_retainage, earned_less_retainage,
+       current_payment_due, balance_to_finish
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_billing`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_direct_costs AS
+SELECT project_id, direct_cost_id, description, cost_type, status_label,
+       vendor_id, vendor_name, employee_name, cost_date, amount, grand_total
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_direct_costs`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_project_vendors AS
+SELECT project_id, vendor_id, vendor_name, trade_name, city, state_code, business_phone,
+       email_address, is_prequalified, is_active, is_union_member, license_number,
+       labor_union, synced_to_erp
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_project_vendors`;

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "42af668fb1318b8ed390",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1240,
+    "height": 34
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Every figure is the CURRENT balance from the latest issued billing per contract - not a total of every period, which would count the same retainage once per month. Drafts are excluded from balances and counted separately below.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

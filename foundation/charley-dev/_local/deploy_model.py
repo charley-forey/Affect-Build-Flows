@@ -53,7 +53,8 @@ MODEL_TABLES = [
     "dim_Date", "dim_Project", "dim_Vendor", "dim_CostCode", "dim_Trade", "dim_Status",
     "dim_Owner", "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
     "fct_BudgetLine", "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal",
-    "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem", "fct_SafetyMonthly",
+    "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem", "fct_SafetyMonthly", "fct_Billing", "fct_DirectCost",
+    "bridge_ProjectVendor",
     # The ~40% that lives nowhere but the spreadsheet. Empty today; bound now so the model
     # and the scorecard are complete in shape before a single row is entered.
     "man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
@@ -78,6 +79,11 @@ RELATIONSHIPS = [
     ("fct_QualityItem", "MonthStart", "dim_Date", "Date"),
     ("fct_SafetyMonthly", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_SafetyMonthly", "MonthStart", "dim_Date", "Date"),
+    ("fct_Billing", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_Billing", "MonthStart", "dim_Date", "Date"),
+    ("fct_DirectCost", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_DirectCost", "MonthStart", "dim_Date", "Date"),
+    ("bridge_ProjectVendor", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_RfiSubmittal", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_RfiSubmittal", "MonthStart", "dim_Date", "Date"),
     ("fct_Milestone", "ProjectKey", "dim_Project", "ProjectKey"),
@@ -107,14 +113,37 @@ RELATIONSHIPS = [
 # Measures. Each carries the workbook cell it replaces, so anyone reading the model can
 # trace a number back to the spreadsheet it came from.
 MEASURES = [
-    ("Original Contract", "SUM ( fct_FinancialPeriod[OriginalContract] )",
+    # BALANCES, NOT FLOWS. fct_FinancialPeriod is one row per project per MONTH, and
+    # OriginalContract on it is dim_Project's contract amount repeated on every one of
+    # those rows. SUM therefore multiplies each project's contract by its month count.
+    #
+    # Unfiltered, that made the Overview card read $355,059,734 against prime contracts
+    # totalling about $34M - one project with 19 monthly rows contributed $168M against a
+    # real $9.0M. It reconciles when filtered to one project and one month, which is
+    # exactly what the reconciliation gate does, and is why it survived this long.
+    #
+    # So: per project take the value at the last date in filter context, then add up
+    # across projects. One month selected gives that month; none gives the current
+    # position rather than a running total of history.
+    ("Original Contract",
+     "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
+     "\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n"
+     "\t\t\tSUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )",
      '"$#,0"', "FINANCIALS!C3"),
-    ("Current Contract", "SUM ( fct_FinancialPeriod[CurrentContract] )",
+    ("Current Contract",
+     "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
+     "\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n"
+     "\t\t\tSUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )",
      '"$#,0"', "FINANCIALS!C4"),
     ("Contract Growth %",
      "DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )",
      '"0.00%"', "DASHBOARD!AT11"),
-    ("Pending Change Orders", "SUM ( fct_FinancialPeriod[PendingChangeOrders] )",
+    # Also a balance. What is pending in a month is a standing amount, not that month's
+    # new change orders - adding twelve months of it counts the same open CO twelve times.
+    ("Pending Change Orders",
+     "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
+     "\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n"
+     "\t\t\tSUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )",
      '"$#,0"', "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"),
     ("Age Of Oldest Unapproved CO", "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
      '"#,0"', "FINANCIALS!C6 - typed by hand"),
@@ -134,6 +163,80 @@ MEASURES = [
      'V >= -0.05, "Watch", "Over Budget" )',
      None, "FINANCIALS!F19:F20 - derivable, but typed by hand today"),
     ("Percent Bought Out", "DIVIDE ( [Committed], [Budget] )", '"0.0%"', "FINANCIALS!D62"),
+
+    # ---- Progress billing ---------------------------------------------------
+    #
+    # RETAINAGE. The workbook has no figure for this at all, and neither does Sage - its
+    # invoice header is zero across all 940 rows. It lives in progress billing.
+    #
+    # Every measure below over a `ToDate` column or RetainageHeld filters to
+    # IsLatestPeriod, because those columns are RUNNING BALANCES restated each period.
+    # Without the filter, retainage held reads $9.0M against a true $823K. The filter is
+    # written out in full on each measure rather than hidden behind a helper: it is the
+    # correctness argument, and it has to be visible to whoever reads the measure next.
+    ("Retainage Held Owner",
+     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'fct_Billing[BillingType] = "Owner" )',
+     '"$#,0"', "no workbook equivalent - Sage holds no header retainage"),
+    ("Retainage Held Sub",
+     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'fct_Billing[BillingType] = "Subcontractor" )',
+     '"$#,0"', "no workbook equivalent"),
+    # Owner retainage is money owed TO Affect, sub retainage is money Affect holds FROM
+    # others. Netting them is the cash question a GC actually asks at month end.
+    ("Net Retainage Position", "[Retainage Held Owner] - [Retainage Held Sub]", '"$#,0"',
+     "derived - what Affect is owed, less what Affect holds"),
+
+    # Billed from the billing side, as opposed to [Total Billed] which comes from Sage
+    # invoices. Two independent paths to the same figure is the point: they are sourced
+    # from different systems, and a gap between them is a reconciliation finding rather
+    # than a rounding difference.
+    ("Owner Billed To Date",
+     'CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'fct_Billing[BillingType] = "Owner" )',
+     '"$#,0"', "FINANCIALS!C10, sourced from Procore instead of Sage"),
+    ("Owner Contract Sum",
+     'CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'fct_Billing[BillingType] = "Owner" )',
+     '"$#,0"', "FINANCIALS!C4, cross-check on [Current Contract]"),
+    ("Balance To Finish",
+     'CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'fct_Billing[BillingType] = "Owner" )',
+     '"$#,0"', "derived - contract sum less completed, including retainage"),
+    # The sum-safe column. This is a period movement, so it sums across periods and is the
+    # right measure for a trend chart - the cumulative ones are not.
+    ("Billed This Period",
+     'CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = "Owner", '
+     "fct_Billing[StatusLabel] <> \"DRAFT\" )",
+     '"$#,0"', "derived - safe to sum, unlike the cumulative columns"),
+    ("Billing Periods", "COALESCE ( COUNTROWS ( fct_Billing ), 0 )", '"#,0"', "derived"),
+    ("Draft Billings",
+     'COALESCE ( CALCULATE ( COUNTROWS ( fct_Billing ), '
+     'fct_Billing[StatusLabel] = "DRAFT" ), 0 )',
+     '"#,0"', "derived - what is sitting unissued at month end"),
+
+    # ---- Direct costs -------------------------------------------------------
+    #
+    # Discrete transactions, so these sum across any grouping with no latest-period guard.
+    ("Direct Costs", "SUM ( fct_DirectCost[GrandTotal] )", '"$#,0"',
+     "no workbook equivalent - self-performed cost was never captured"),
+    ("Self Performed Labour",
+     'CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[CostType] = "payroll" )',
+     '"$#,0"', "no workbook equivalent"),
+    ("Unapproved Direct Costs",
+     "CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[IsApproved] = FALSE () )",
+     '"$#,0"', "derived - cost committed but not yet approved"),
+
+    # ---- Vendors ------------------------------------------------------------
+    ("Vendors On Project",
+     "COALESCE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), 0 )", '"#,0"',
+     "D8 - the vendor list, assembled by hand from Procore today"),
+    # A vendor invoiced in Procore but never written back to Sage is a reconciliation gap
+    # that nothing today would surface.
+    ("Vendors Missing From ERP",
+     "COALESCE ( CALCULATE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), "
+     "bridge_ProjectVendor[IsMissingFromErp] = TRUE () ), 0 )",
+     '"#,0"', "derived"),
     ("Total Billed", "SUM ( fct_Invoice[Amount] )", '"$#,0"', "FINANCIALS!C10"),
     ("Total Paid", "SUM ( fct_Invoice[AmountPaid] )", '"$#,0"', "FINANCIALS!C12"),
     ("AR Outstanding", "SUM ( fct_Invoice[Balance] )", '"$#,0"', "FINANCIALS!F57"),

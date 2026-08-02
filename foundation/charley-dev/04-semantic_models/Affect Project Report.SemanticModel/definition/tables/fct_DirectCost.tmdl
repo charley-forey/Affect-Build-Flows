@@ -1,0 +1,85 @@
+table fct_DirectCost
+
+	column DirectCostKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: DirectCostKey
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column VendorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorName
+
+	column Description
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Description
+
+	column CostType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostType
+
+	column CostCategory
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCategory
+
+	column EmployeeName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: EmployeeName
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column CostDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CostDate
+		formatString: yyyy-mm-dd
+
+	column Amount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column GrandTotal
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: GrandTotal
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HasOutOfRangeDate
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasOutOfRangeDate
+
+	column IsApproved
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsApproved
+
+	partition fct_DirectCost = entity
+		mode: directLake
+		source
+			entityName: fct_directcost
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

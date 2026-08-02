@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -41,22 +42,37 @@ SILVER_DIR = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
 # The empty-stub trick used for the Procore tables does not work here: the manual parsers
 # read STRUCT columns (ProjectKey.Title, Editor.Title), and a stub of NULL scalars cannot
 # satisfy them. Add "30" below the day the lists exist.
-SILVER_FILES = sorted(p for p in SILVER_DIR.glob("*.sql") if p.name[:2] in ("10", "20"))
+# Deny-list, not allow-list: adding a silver parser should mean adding one file, not
+# also remembering to widen a filter in a deploy script. A forgotten widening fails
+# silently - the table simply never builds and every measure over it reads as zero.
+SILVER_FILES = sorted(p for p in SILVER_DIR.glob("*.sql")
+                      if p.name[:2] not in ("00", "01", "30"))
 
 NOTEBOOK_NAME = "cd_10_bronze_to_silver"
 
 # The bronze contract, exactly as procore_extract.to_bronze_row writes it. Declared here so
 # silver builds before ingestion has ever run - otherwise every statement fails with
 # "table not found", which looks like broken SQL rather than an empty pipeline.
-BRONZE_TABLES = [
-    "cd_bronze_procore_projects", "cd_bronze_procore_vendors",
-    "cd_bronze_procore_cost_codes", "cd_bronze_procore_prime_contracts",
-    "cd_bronze_procore_prime_change_orders", "cd_bronze_procore_budget_detail_rows",
-    "cd_bronze_procore_submittals", "cd_bronze_procore_rfis",
-    # Field operations - the quality and safety halves of the scorecard.
-    "cd_bronze_procore_observations", "cd_bronze_procore_punch_items",
-    "cd_bronze_procore_incidents", "cd_bronze_procore_manpower_logs",
-]
+def _scan(pattern: str) -> list[str]:
+    """Every name matching `pattern` across the silver SQL, deduped and sorted."""
+    found: set[str] = set()
+    for path in SILVER_FILES:
+        found.update(re.findall(pattern, path.read_text(encoding="utf-8")))
+    return sorted(found)
+
+
+# Read out of the SQL rather than listed by hand. A hand-kept list has to be edited in
+# lockstep with the parsers, and forgetting is not a loud failure: the bronze view is never
+# registered, the CREATE TABLE fails with TABLE_OR_VIEW_NOT_FOUND, and the only clue is a
+# generic "session cancelled" from the jobs API. Adding a parser should mean adding one
+# file and nothing else.
+# Anchored on FROM/JOIN so it reads real usage, not prose. An unanchored scan also picks
+# up the `cd_bronze_procore_*` written in a comment and tries to register a view for it.
+BRONZE_TABLES = _scan(r"(?:FROM|JOIN)\s+(cd_bronze_\w+)")
+# Same argument for what gets row-counted at the end. A silver table missing from a
+# hand-kept verification list is simply never checked, which is the quietest way for a
+# transform to be broken and look fine.
+SILVER_TABLES = _scan(r"CREATE OR REPLACE TABLE\s+(cd_silver_\w+)")
 BRONZE_SCHEMA = ("_key STRING, _project_id STRING, payload STRING, "
                  "_ingested_at TIMESTAMP, _batch_id STRING, _row_hash STRING")
 
@@ -169,13 +185,11 @@ for t in {BRONZE_TABLES!r}:
 
     cells.append(
         cell(
+            # Concatenated rather than interpolated: the rest of this cell is full of
+            # inner f-strings, and making the whole thing an f-string means escaping every
+            # one of them.
+            f"tables = {SILVER_TABLES!r}\n"
             """
-tables = ["cd_silver_projects", "cd_silver_vendors", "cd_silver_cost_codes",
-          "cd_silver_prime_contracts", "cd_silver_prime_change_orders",
-          "cd_silver_budgets", "cd_silver_submittals", "cd_silver_rfis",
-          "cd_silver_observations", "cd_silver_punch_items",
-          "cd_silver_incidents", "cd_silver_manpower_daily"]
-
 counts = {}
 for t in tables:
     counts[t] = spark.sql(f"SELECT COUNT(*) AS n FROM {t}").collect()[0]["n"]

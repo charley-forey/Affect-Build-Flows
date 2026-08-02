@@ -1,11 +1,17 @@
 table _Measures
 
 	/// Replaces FINANCIALS!C3
-	measure 'Original Contract' = SUM ( fct_FinancialPeriod[OriginalContract] )
+	measure 'Original Contract' =
+			SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
+			SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )
 		formatString: "$#,0"
 
 	/// Replaces FINANCIALS!C4
-	measure 'Current Contract' = SUM ( fct_FinancialPeriod[CurrentContract] )
+	measure 'Current Contract' =
+			SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
+			SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )
 		formatString: "$#,0"
 
 	/// Replaces DASHBOARD!AT11
@@ -13,7 +19,10 @@ table _Measures
 		formatString: "0.00%"
 
 	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell
-	measure 'Pending Change Orders' = SUM ( fct_FinancialPeriod[PendingChangeOrders] )
+	measure 'Pending Change Orders' =
+			SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
+			SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )
 		formatString: "$#,0"
 
 	/// Replaces FINANCIALS!C6 - typed by hand
@@ -56,6 +65,62 @@ table _Measures
 	/// Replaces FINANCIALS!D62
 	measure 'Percent Bought Out' = DIVIDE ( [Committed], [Budget] )
 		formatString: "0.0%"
+
+	/// Replaces no workbook equivalent - Sage holds no header retainage
+	measure 'Retainage Held Owner' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
+		formatString: "$#,0"
+
+	/// Replaces no workbook equivalent
+	measure 'Retainage Held Sub' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Subcontractor" )
+		formatString: "$#,0"
+
+	/// Replaces derived - what Affect is owed, less what Affect holds
+	measure 'Net Retainage Position' = [Retainage Held Owner] - [Retainage Held Sub]
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!C10, sourced from Procore instead of Sage
+	measure 'Owner Billed To Date' = CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!C4, cross-check on [Current Contract]
+	measure 'Owner Contract Sum' = CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
+		formatString: "$#,0"
+
+	/// Replaces derived - contract sum less completed, including retainage
+	measure 'Balance To Finish' = CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
+		formatString: "$#,0"
+
+	/// Replaces derived - safe to sum, unlike the cumulative columns
+	measure 'Billed This Period' = CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = "Owner", fct_Billing[StatusLabel] <> "DRAFT" )
+		formatString: "$#,0"
+
+	/// Replaces derived
+	measure 'Billing Periods' = COALESCE ( COUNTROWS ( fct_Billing ), 0 )
+		formatString: "#,0"
+
+	/// Replaces derived - what is sitting unissued at month end
+	measure 'Draft Billings' = COALESCE ( CALCULATE ( COUNTROWS ( fct_Billing ), fct_Billing[StatusLabel] = "DRAFT" ), 0 )
+		formatString: "#,0"
+
+	/// Replaces no workbook equivalent - self-performed cost was never captured
+	measure 'Direct Costs' = SUM ( fct_DirectCost[GrandTotal] )
+		formatString: "$#,0"
+
+	/// Replaces no workbook equivalent
+	measure 'Self Performed Labour' = CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[CostType] = "payroll" )
+		formatString: "$#,0"
+
+	/// Replaces derived - cost committed but not yet approved
+	measure 'Unapproved Direct Costs' = CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[IsApproved] = FALSE () )
+		formatString: "$#,0"
+
+	/// Replaces D8 - the vendor list, assembled by hand from Procore today
+	measure 'Vendors On Project' = COALESCE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces derived
+	measure 'Vendors Missing From ERP' = COALESCE ( CALCULATE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), bridge_ProjectVendor[IsMissingFromErp] = TRUE () ), 0 )
+		formatString: "#,0"
 
 	/// Replaces FINANCIALS!C10
 	measure 'Total Billed' = SUM ( fct_Invoice[Amount] )

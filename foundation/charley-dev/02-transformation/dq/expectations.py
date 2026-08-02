@@ -194,6 +194,99 @@ def build_suite() -> Suite:
         ),
     )
 
+    # ------------------------------------------------------- progress billing
+    #
+    # fct_Billing carries RUNNING BALANCES restated every period alongside one sum-safe
+    # period movement. Almost every way of getting this wrong produces a plausible number
+    # rather than an error, so the invariants are checked rather than trusted.
+    suite.add(
+        unique_key("fct_Billing", ["BillingKey"]),
+        not_null("fct_Billing", "ProjectKey"),
+        unique_key("bridge_ProjectVendor", ["ProjectKey", "VendorKey"]),
+        not_null("fct_DirectCost", "ProjectKey"),
+        referential("fct_Billing", "ProjectKey", "dim_Project", "ProjectKey"),
+        referential("fct_DirectCost", "ProjectKey", "dim_Project", "ProjectKey"),
+        referential("bridge_ProjectVendor", "ProjectKey", "dim_Project", "ProjectKey"),
+    )
+
+    suite.add(
+        # EXACTLY ONE latest period per contract per direction. Two would double every
+        # retainage balance; zero would drop a contract out of the totals entirely. Both
+        # read as an ordinary number on a card.
+        Expectation(
+            name="one latest billing period per contract",
+            table="fct_Billing",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT BillingType, ContractId, SUM(CASE WHEN IsLatestPeriod THEN 1 ELSE 0 END) AS n"
+                "  FROM fct_Billing GROUP BY BillingType, ContractId"
+                # A contract billed only in draft legitimately has no latest period, so
+                # zero is allowed and only two-or-more is a defect.
+                ") WHERE n > 1"),
+            severity=SEVERITY_ERROR,
+            description="a duplicate latest period double-counts that contract's retainage",
+        ),
+        # THE IDENTITY. Completed-to-date at the latest period, less the sum of every
+        # period's payment due, must equal the retainage withheld - because retainage is
+        # exactly the part of completed work not paid out. It is checked here per contract
+        # rather than only in aggregate, where offsetting errors could cancel.
+        Expectation(
+            name="billing balances reconcile to the sum of period movements",
+            table="fct_Billing",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT ContractId,"
+                "         MAX(CASE WHEN IsLatestPeriod THEN CompletedToDate END) AS completed,"
+                "         MAX(CASE WHEN IsLatestPeriod THEN RetainageHeld END)   AS retained,"
+                "         SUM(CASE WHEN StatusLabel <> 'DRAFT' THEN CurrentPaymentDue ELSE 0 END) AS paid"
+                "  FROM fct_Billing WHERE BillingType = 'Owner' GROUP BY ContractId"
+                ") WHERE completed IS NOT NULL"
+                "  AND ABS(completed - retained - paid) > GREATEST(1.0, completed * 0.01)"),
+            # WARN, not ERROR: a contract can be re-billed or credited in ways that break
+            # the identity legitimately, and blocking the whole pipeline for one contract
+            # would stop every other number reaching the report.
+            severity=SEVERITY_WARN,
+            description="cumulative and period-movement billing disagree by more than 1%",
+        ),
+        # Retainage above 20% is not a normal contract term; it usually means a percent was
+        # read as a fraction or an amount landed in a percent column.
+        Expectation(
+            name="retainage percent is plausible",
+            table="fct_Billing",
+            failing_sql=("SELECT * FROM fct_Billing "
+                         "WHERE RetainagePercent IS NOT NULL AND RetainagePercent > 20"),
+            severity=SEVERITY_WARN,
+            description="retainage above 20% suggests a percent/fraction mix-up",
+        ),
+        # This one was written as a blocking ERROR on the assumption that negative
+        # retainage meant an inverted sign. It fired on 3 rows, and the rows were right:
+        # Procore records a retainage RELEASE as a negative on the period. On
+        # PO-24-011-012 the retainage is -489.94 and the payment due is +489.94 - exactly
+        # offsetting, which is the release being paid out.
+        #
+        # So it is a WARN reporting a real event, not an error. Kept rather than deleted:
+        # a release is money leaving the balance, month-end should see it, and a *large*
+        # one appearing unexpectedly is worth a second look.
+        Expectation(
+            name="retainage released rather than withheld",
+            table="fct_Billing",
+            failing_sql=("SELECT * FROM fct_Billing "
+                         "WHERE IsLatestPeriod AND RetainageHeld < 0"),
+            severity=SEVERITY_WARN,
+            description="negative retainage is a release being paid out, not a defect",
+        ),
+        # GrandTotal includes tax and freight, so it should never be BELOW the line amount.
+        Expectation(
+            name="direct cost grand total is at least the line amount",
+            table="fct_DirectCost",
+            failing_sql=("SELECT * FROM fct_DirectCost "
+                         "WHERE Amount IS NOT NULL AND GrandTotal IS NOT NULL "
+                         "AND GrandTotal < Amount - 0.01"),
+            severity=SEVERITY_WARN,
+            description="grand total below the line amount means the two are transposed",
+        ),
+    )
+
     # ------------------------------------------------------ scorecard integrity
     #
     # ERROR, because this is the number leadership reads. The workbook's scorecard was

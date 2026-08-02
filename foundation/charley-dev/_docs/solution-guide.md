@@ -49,14 +49,14 @@ is not refreshed and the report keeps yesterday's numbers. A stale report beats 
 
 | Layer | State |
 |---|---|
-| Bronze | 24 tables from Affect's **production** Procore tenant |
-| Silver | 12 typed tables, **0 rejects** |
-| Gold | 21 tables — dimensions, facts, crosswalks, manual placeholders |
-| Model | 30 tables, 63 measures, 36 relationships, Direct Lake |
-| Report | **8 pages, 88 visuals**, drill-through, 3 bookmarks |
+| Bronze | 25 tables from Affect's **production** Procore tenant |
+| Silver | 15 typed tables, **0 rejects** |
+| Gold | 24 tables — dimensions, facts, crosswalks, manual placeholders |
+| Model | 34 tables, 75 measures, 41 relationships, Direct Lake |
+| Report | **10 pages, 112 visuals**, drill-through, 3 bookmarks |
 | Schedule | Pipeline 02:00 daily, model 04:00 daily (Eastern) |
 
-**Verification:** 11 offline suites, 9 live DAX checks, 35 DQ expectations — all passing,
+**Verification:** 11 offline suites, 13 live DAX checks, 47 DQ expectations — all passing,
 zero blocking violations.
 
 ### The data
@@ -65,6 +65,9 @@ zero blocking violations.
 |---|---:|---|
 | Cost codes | 5,433 | |
 | Submittals | 2,245 | |
+| Billing periods | 607 | **carries retainage — see below** |
+| Direct costs | 418 | self-performed labour, in no other feed |
+| Project–vendor pairs | 393 | 251 distinct vendors |
 | Punch items | 1,469 | **not in the existing warehouse** |
 | Vendors | 1,098 | |
 | Manpower (project-days) | 911 | 120,766 hours — **was reading as zero** |
@@ -93,6 +96,58 @@ Drill through opens that project's budget lines, change orders, RFIs and milesto
 Blocking failures stop the pipeline.
 
 ---
+
+## Retainage — an answer, not a blocker
+
+The workbook has no retainage figure anywhere, and Sage cannot supply one: `retain` on the
+invoice header is **zero across all 940 invoices**. The open question named three
+candidates — `arivln`, `actrec.retain`, or progress billing — and the first two need the
+on-prem gateway Affect has not bound.
+
+It is progress billing, and it was already in our bronze:
+
+| | |
+|---|---:|
+| Retainage held, owner (owed to Affect) | **$830,726** |
+| Retainage held, subcontractor (held by Affect) | **$486,030** |
+| **Net position** | **$344,696** |
+
+**This closes the question without the Sage gateway.**
+
+It also came with a trap worth stating plainly, because it is the most likely way for
+somebody to get a wrong number out of this platform later. Procore's AIA G702 columns are
+**running balances restated in full every period**, not period movements. Adding
+`RetainageHeld` across all 607 rows gives **$9,046,212** — a figure that looks like a
+plausible retainage number and is nearly **seven times** the real one. Nothing errors.
+
+Two guards, both in `fct_Billing`:
+
+- `IsLatestPeriod` marks the one row per contract carrying the current balance. Every
+  measure over a cumulative column filters to it.
+- `CurrentPaymentDue` is the only sum-safe money column, so the same answer is reachable a
+  second, independent way.
+
+That pair produces an identity the platform checks on every run: **completed-to-date minus
+the sum of period payments must equal the retainage withheld**, because retainage is
+exactly the completed work not paid out. Live, that is
+`28,028,868.93 − 27,198,143.06 = 830,725.87` — the retainage figure, to the cent. If the
+ranking ever picks the wrong row, this stops holding.
+
+### The same bug, found in our own front page
+
+Writing those guards prompted a check of every other balance in the model, and
+`[Current Contract]` had the identical defect. `fct_FinancialPeriod` is one row per project
+per **month**, and the contract amount is repeated on every one of those rows, so `SUM`
+multiplied each project's contract by its month count. Unfiltered, the Overview card read
+**$355,059,734** against prime contracts totalling about $34M — one project with 19 monthly
+rows contributed $168M against a real $9.0M.
+
+It reconciled perfectly when filtered to one project and one month, which is exactly what
+the reconciliation gate does. That is why it survived.
+
+Now **$30,254,551**, corroborated independently at $33.9M by the Procore billing side.
+`[Original Contract]` and `[Pending Change Orders]` had it too.
+
 
 ## The scorecard, and why it differs from the workbook
 
@@ -162,7 +217,7 @@ All four are access Affect grants, not work we can do. All the pipework is built
 |---|---|---|
 | **SharePoint lists** (10, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates | SharePoint admin |
 | **`OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere | Outbuild CS rep |
-| **Sage on-prem gateway binding** | AR/AP incl. `arivln`/`apivln`, where real retainage lives | Affect IT |
+| **Sage on-prem gateway binding** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage | Affect IT |
 | **Azure subscription** | Key Vault, so ingestion runs in Fabric on a schedule | Affect IT |
 
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
@@ -183,6 +238,10 @@ or a parse producing NULL:
   parsed blank and the model looked healthy while reporting nothing.
 - A company-level parent deduped on its id → **one project's budget** instead of nineteen.
 - `sv_cost_codes` exposing the name but not the code → **5,429 of 5,433** divisions unparsed.
+- `percent_complete` written as `"9.28%"` on one endpoint and `"25.07"` on the next → the
+  first casts to **NULL**, which on a card reads as a job that has not started.
+- A per-project balance summed across months → **$355M** on the front page instead of $30M,
+  and it reconciled perfectly whenever anyone filtered to one project to check it.
 
 None raised an error. This is why the platform prefers a loud failure to a plausible number,
 why rejects are recorded with reasons, and why the DQ gate blocks rather than warns.

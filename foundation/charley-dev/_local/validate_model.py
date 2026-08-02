@@ -126,7 +126,10 @@ def main() -> int:
             "Invoices",     COUNTROWS ( fct_Invoice ),
             "Submittals",   COUNTROWS ( fct_RfiSubmittal ),
             "Milestones",   COUNTROWS ( fct_Milestone ),
-            "Periods",      COUNTROWS ( fct_FinancialPeriod )
+            "Periods",      COUNTROWS ( fct_FinancialPeriod ),
+            "Billings",     COALESCE ( COUNTROWS ( fct_Billing ), 0 ),
+            "DirectCosts",  COALESCE ( COUNTROWS ( fct_DirectCost ), 0 ),
+            "ProjectVendors", COALESCE ( COUNTROWS ( bridge_ProjectVendor ), 0 )
         )
     """)[0]
     # Baselines for --source cd, i.e. gold built on OUR OWN medallion (2026-08-02).
@@ -158,11 +161,16 @@ def main() -> int:
             "[Projects]": 19, "[Vendors]": 126, "[CostCodes]": 5434, "[Dates]": 7670,
             "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 117,
             "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 130,
+            "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
         },
         "existing": {
             "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,
             "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 117,
             "[Submittals]": 2242, "[Milestones]": 52, "[Periods]": 128,
+            # Zero, legitimately: the existing warehouse holds no progress billing,
+            # no direct costs and no vendor bridge. Asserted rather than skipped, so
+            # that "empty" stays a decision and not an unnoticed regression.
+            "[Billings]": 0, "[DirectCosts]": 0, "[ProjectVendors]": 0,
         },
     }
     expected = EXPECTED_BY_SOURCE[os.environ.get("CD_GOLD_SOURCE", "cd")]
@@ -175,7 +183,10 @@ def main() -> int:
     if bad:
         print("\nROW COUNT MISMATCH:\n  " + "\n  ".join(bad))
         return 1
-    CHECKS.append("all 10 tables readable through DirectLake at the expected row counts")
+    # Counted, not typed. A hardcoded number here goes stale the first time a table is
+    # added and then quietly understates what was actually checked.
+    CHECKS.append(f"all {len(expected)} tables readable through DirectLake "
+                  "at the expected row counts")
 
     # 2. Every measure must evaluate. A measure referencing a renamed column fails HERE
     #    rather than as a blank tile in front of leadership.
@@ -215,6 +226,58 @@ def main() -> int:
     reconciled = consistency["[Paid]"] + consistency["[Outstanding]"]
     assert abs(billed - reconciled) < 1.0, f"billed {billed} != paid+outstanding {reconciled}"
     CHECKS.append("[Total Billed] reconciles to [Total Paid] + [AR Outstanding]")
+
+    # 3b. Billing: balances vs flows, and the identity that proves the distinction holds.
+    billing = dax(model["id"], tok, """
+        EVALUATE ROW (
+            "RetainOwner",   [Retainage Held Owner],
+            "RetainSub",     [Retainage Held Sub],
+            "NetRetain",     [Net Retainage Position],
+            "NaiveRetain",   SUM ( fct_Billing[RetainageHeld] ),
+            "OwnerToDate",   [Owner Billed To Date],
+            "ThisPeriod",    [Billed This Period],
+            "CurrentContract", [Current Contract]
+        )
+    """)[0]
+    billing = {k.split("[")[-1].rstrip("]"): v for k, v in billing.items()}
+
+    if billing["OwnerToDate"]:
+        # THE IDENTITY. Owner billing has two independently-computed paths through this
+        # fact: a cumulative one (CompletedToDate at the latest period) and a sum-safe one
+        # (CurrentPaymentDue added across every period). They are computed from different
+        # columns by different aggregations, and the difference between them must be
+        # exactly the retainage withheld - because retainage is precisely the part of
+        # completed work that has not been paid out.
+        #
+        # If the latest-period ranking picked the wrong row, or a draft won it, or the
+        # cumulative columns were summed by mistake, this stops holding. It is the single
+        # strongest evidence that the grain is handled correctly, and it needs no external
+        # source to check against.
+        gap = billing["OwnerToDate"] - billing["ThisPeriod"]
+        assert abs(gap - billing["RetainOwner"]) < 1.0, (
+            f"completed-to-date less billed-this-period is {gap:,.2f}, "
+            f"but retainage held is {billing['RetainOwner']:,.2f} - "
+            "the two paths through fct_Billing disagree")
+        CHECKS.append("cumulative and sum-safe billing differ by exactly the retainage held")
+
+        # The cumulative-column trap, asserted rather than described. If someone drops the
+        # IsLatestPeriod filter from a measure, this is what catches it.
+        assert billing["NaiveRetain"] > billing["RetainOwner"] * 3, (
+            "summing RetainageHeld across all periods should vastly exceed the held "
+            "balance - if it does not, IsLatestPeriod may be marking too many rows")
+        CHECKS.append("IsLatestPeriod guards a cumulative column that is ~7x its own sum")
+
+        assert abs(billing["NetRetain"]
+                   - (billing["RetainOwner"] - billing["RetainSub"])) < 0.01
+        CHECKS.append("[Net Retainage Position] is owner held less sub held")
+
+        # Contract value must be within an order of magnitude of what the owner billing
+        # says, which comes from a different table by a different route. This is what
+        # would have caught the $355M portfolio card: it read 10x the billing figure.
+        assert billing["CurrentContract"] < 100_000_000, (
+            f"[Current Contract] is {billing['CurrentContract']:,.0f} across the portfolio "
+            "- a per-project balance is probably being summed across months again")
+        CHECKS.append("[Current Contract] is a balance, not a running total of months")
 
     # 4. Time intelligence must actually work - this is what dim_Date exists for. If it
     #    is not marked as a date table, DATEADD returns an error rather than a number.

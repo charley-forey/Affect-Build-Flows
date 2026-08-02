@@ -343,13 +343,88 @@ def test_fct_safetymonthly(con) -> None:
     assert one(con, "SELECT TRIR FROM fct_SafetyMonthly WHERE ProjectKey='P2'") is None
     check("TRIR is NULL when there are no hours, never a misleading zero")
 
+
+def test_fct_billing(con) -> None:
+    """Progress billing - and the cumulative-balance trap it exists to prevent.
+
+    Every `ToDate` column plus RetainageHeld is a running balance restated in full on each
+    period. On the real data, summing RetainageHeld across all 607 rows gives $9,046,211.75
+    against a true $1,316,755.91 - a near-sevenfold overstatement that would look entirely
+    plausible on a card and that nobody could check without the source.
+    """
+    # Drafts stay in the table. They are real pending work, and dropping a row to make a
+    # flag behave is how you end up unable to answer "what is waiting to be billed?".
+    assert one(con, "SELECT COUNT(*) FROM fct_Billing") == 6
+    assert one(con, "SELECT COUNT(*) FROM fct_Billing WHERE IsLatestPeriod") == 2
+    check("every billing period is kept; exactly one per contract carries the balance")
+
+    # The trap, made a number. The naive sum multiplies one contract's retainage and adds
+    # a draft and an orphan on top; the guarded sum is the money actually held.
+    assert one(con, "SELECT SUM(RetainageHeld) FROM fct_Billing") == 179276.0
+    assert one(con, "SELECT SUM(RetainageHeld) FROM fct_Billing WHERE IsLatestPeriod") == 34000.0
+    check("summing a cumulative column overstates 5x here; IsLatestPeriod is the guard")
+
+    # B2 and B3 share a period_end, as three real periods on contract ...513836 do.
+    # Ordering on the date alone makes the winner arbitrary - and picks the wrong balance.
+    assert one(con, "SELECT BillingKey FROM fct_Billing "
+                    "WHERE IsLatestPeriod AND BillingType='Owner'") == "B3"
+    check("a tied period_end breaks on period_number, not arbitrarily")
+
+    # A draft has not been issued, so its retainage is not held by anyone. B4 has the
+    # latest date on its contract and must still lose.
+    assert one(con, "SELECT IsLatestPeriod FROM fct_Billing WHERE BillingKey='B4'") is False
+    # B6 is the only billing on its contract and is a draft, so that contract has no
+    # current balance at all rather than a speculative one.
+    assert one(con, "SELECT IsLatestPeriod FROM fct_Billing WHERE BillingKey='B6'") is False
+    check("a draft never wins the ranking, even when it is the only row")
+
+    # Owner contract C1 and subcontract C1 are different id spaces that happen to collide.
+    # Partitioning on contract alone would let one direction hide the other's balance.
+    assert one(con, "SELECT COUNT(*) FROM fct_Billing "
+                    "WHERE IsLatestPeriod AND ContractId='C1'") == 2
+    check("billing direction partitions the ranking, so colliding ids cannot merge")
+
+    # The independent cross-check: CurrentPaymentDue is the only period movement here, so
+    # it sums, and it must reach the same place the cumulative column reports.
+    assert one(con, "SELECT SUM(CurrentPaymentDue) FROM fct_Billing "
+                    "WHERE BillingType='Owner' AND StatusLabel<>'DRAFT'") == 570000.0
+    assert one(con, "SELECT CompletedToDate FROM fct_Billing WHERE BillingKey='B3'") == 600000.0
+    check("the sum-safe column reconciles against the cumulative one")
+
+
+def test_fct_directcost(con) -> None:
+    """Direct costs - the only self-performed labour anywhere in the platform."""
+    assert one(con, "SELECT COUNT(*) FROM fct_DirectCost") == 3
+    assert one(con, "SELECT SUM(GrandTotal) FROM fct_DirectCost") == 14000.0
+    check("direct costs are discrete transactions and sum across any grouping")
+
+    assert one(con, "SELECT CostCategory FROM fct_DirectCost WHERE DirectCostKey='D1'") \
+        == "Self-Performed Labour"
+    check("payroll is labelled as the self-performed labour it is")
+
+    # Unapproved spend stays visible. "What is sitting unapproved at month end?" is a real
+    # question, and filtering it away in the fact makes it unanswerable.
+    assert one(con, "SELECT COUNT(*) FROM fct_DirectCost WHERE NOT IsApproved") == 1
+    check("unapproved cost is flagged, not filtered away")
+
+
+def test_bridge_projectvendor(con) -> None:
+    """The vendor and insurance list - deliverable D8, from data already landed."""
+    assert one(con, "SELECT COUNT(*) FROM bridge_ProjectVendor") == 2
+    check("the bridge pairs vendors to the projects they are actually on")
+
+    # A vendor invoiced in Procore but never written back to Sage is a reconciliation gap
+    # that nothing today would surface.
+    assert one(con, "SELECT COUNT(*) FROM bridge_ProjectVendor WHERE IsMissingFromErp") == 1
+    check("vendors missing from the ERP are visible rather than assumed clean")
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly):
+        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

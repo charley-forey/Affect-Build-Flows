@@ -191,6 +191,62 @@ SOURCE_FIXTURES = (
            status_label, priority, trade, manager_name, cost_code_id,
            created_date, due_date, closed_date)""",
 
+    # Billing. Built to exercise the cumulative trap: B1..B3 are one owner contract whose
+    # retainage BALANCE grows each period, so summing the column multiplies the money. B2
+    # and B3 deliberately share a period_end - real data has three periods ending
+    # 2026-07-31 - so the tie must break on period_number or the winner is arbitrary.
+    """CREATE OR REPLACE VIEW sv_billing AS SELECT * FROM (VALUES
+        ('Owner','P1','B1','1',1,'APPROVED',NULL,'Client','C1','Prime','PrimeContract',
+         DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31', NULL, 25.0,
+         1000000.0, 0.0, 1000000.0, 250000.0, 0.0, 12500.0, 5.0, 0.0, 12500.0,
+         237500.0, 237500.0, 762500.0),
+        ('Owner','P1','B2','2',2,'APPROVED',NULL,'Client','C1','Prime','PrimeContract',
+         DATE '2025-06-30', DATE '2025-06-01', DATE '2025-06-30', NULL, 50.0,
+         1000000.0, 0.0, 1000000.0, 500000.0, 237500.0, 25000.0, 5.0, 0.0, 25000.0,
+         475000.0, 237500.0, 525000.0),
+        ('Owner','P1','B3','3',3,'APPROVED',NULL,'Client','C1','Prime','PrimeContract',
+         DATE '2025-06-30', DATE '2025-06-01', DATE '2025-06-30', NULL, 60.0,
+         1000000.0, 0.0, 1000000.0, 600000.0, 475000.0, 30000.0, 5.0, 0.0, 30000.0,
+         570000.0, 95000.0, 430000.0),
+        ('Owner','P1','B4','4',4,'DRAFT',NULL,'Client','C1','Prime','PrimeContract',
+         DATE '2025-07-31', DATE '2025-07-01', DATE '2025-07-31', NULL, 70.0,
+         1000000.0, 0.0, 1000000.0, 700000.0, 570000.0, 99999.0, 5.0, 0.0, 99999.0,
+         600001.0, 30001.0, 300000.0),
+        ('Subcontractor','P1','B5','1',1,'APPROVED','V1','Demar','C1','SC-1',
+         'WorkOrderContract', DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31',
+         NULL, 10.0, 390000.0, 0.0, 390000.0, 36185.0, 0.0, 4000.0, 5.0, 0.0, 4000.0,
+         32185.0, 32185.0, 353815.0),
+        ('Subcontractor','P2','B6','1',1,'DRAFT','V2','Orphan','C9','SC-9',
+         'WorkOrderContract', DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31',
+         NULL, 5.0, 100000.0, 0.0, 100000.0, 5000.0, 0.0, 7777.0, 5.0, 0.0, 7777.0,
+         0.0, 0.0, 95000.0)
+    ) AS t(billing_type, project_id, billing_id, invoice_number, period_number,
+           status_label, vendor_id, counterparty_name, contract_id, contract_name,
+           contract_type, billing_date, period_start, period_end, payment_date,
+           percent_complete, original_contract_sum, net_change_by_change_orders,
+           contract_sum_to_date, completed_to_date, previous_certificates,
+           retainage_amount, retainage_percent, stored_retainage_amount, total_retainage,
+           earned_less_retainage, current_payment_due, balance_to_finish)""",
+
+    """CREATE OR REPLACE VIEW sv_direct_costs AS SELECT * FROM (VALUES
+        ('P1','D1','PM Payroll','payroll','APPROVED','V1','Affect','A Foreman',
+         DATE '2025-05-31', 11275.5, 11400.0),
+        ('P1','D2','Lumber','expense','APPROVED','V2','Supplier',NULL,
+         DATE '2025-05-15', 2000.0, 2100.0),
+        ('P1','D3','Unapproved spend','expense','PENDING','V2','Supplier',NULL,
+         DATE '2025-05-20', 500.0, 500.0)
+    ) AS t(project_id, direct_cost_id, description, cost_type, status_label,
+           vendor_id, vendor_name, employee_name, cost_date, amount, grand_total)""",
+
+    """CREATE OR REPLACE VIEW sv_project_vendors AS SELECT * FROM (VALUES
+        ('P1','V1','Demar Plumbing','Demar LLC','New York','NY','212','a@b.com',
+         TRUE, TRUE, FALSE, NULL, NULL, TRUE),
+        ('P1','V2','Supplier Co',NULL,'Queens','NY',NULL,NULL,
+         FALSE, TRUE, FALSE, NULL, NULL, FALSE)
+    ) AS t(project_id, vendor_id, vendor_name, trade_name, city, state_code,
+           business_phone, email_address, is_prequalified, is_active, is_union_member,
+           license_number, labor_union, synced_to_erp)""",
+
     """CREATE OR REPLACE VIEW sv_manpower_daily AS SELECT * FROM (VALUES
         ('P1', DATE '2025-05-01', 800.0, 100.0),
         ('P1', DATE '2025-05-02', 200.0,  25.0)
