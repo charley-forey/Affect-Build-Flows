@@ -136,6 +136,19 @@ also asserts that the scorecard audit table sums to the headline score, that eve
 resolves a band label including the unmeasured ones, and that the S-curve ends at the total
 of period movement.
 
+**Deployed and verified in Fabric, 2026-08-02.** Seeds, model and report are live in
+`charley-dev`; `validate_model.py` reframes the deployed model and passes **16 checks**,
+including the three added in this pass. `[Last Refresh]` returns the real gold build time
+and the scorecard audit table sums to the headline score against live data.
+
+One thing the deployment caught that offline testing could not: relating the two scorecard
+config tables so the band table could show a category name made Power BI add a blank
+unknown-member row to `dim_ScorecardWeight`. It rendered as an empty row on the Scorecard
+page and an empty column on the Portfolio heatmap, and it nulled the "weights sum to 1.00"
+assertion. `dim_ScorecardBand` now carries `CategoryName` as its own column and the two
+tables stay unrelated. A blank member is invisible in a screenshot and wrong in a total -
+exactly the class of thing that only shows up against the real service.
+
 **What is not yet automated:** a reconciliation *page* in the report showing each measure
 against its known Excel value. The values are asserted in CI; they are not visible to
 Affect. That needs a seed table of expected values — worth doing, not done here.

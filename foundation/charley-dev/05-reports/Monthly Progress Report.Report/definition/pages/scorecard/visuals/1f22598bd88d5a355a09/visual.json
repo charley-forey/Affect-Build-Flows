@@ -20,13 +20,13 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_ScorecardWeight"
+                      "Entity": "dim_ScorecardBand"
                     }
                   },
                   "Property": "CategoryName"
                 }
               },
-              "queryRef": "dim_ScorecardWeight.CategoryName",
+              "queryRef": "dim_ScorecardBand.CategoryName",
               "nativeQueryRef": "CategoryName"
             },
             {

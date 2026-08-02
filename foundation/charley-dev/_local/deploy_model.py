@@ -67,13 +67,12 @@ MODEL_TABLES = [
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
 # ambiguity and hurt performance (powerbi/semantic-model.md:443).
 RELATIONSHIPS = [
-    # The two scorecard config tables were unrelated, so nothing could show a band beside
-    # the category it belongs to - the bands table had to render the raw CategoryKey
-    # surrogate. Many bands to one category.
-    #
-    # Safe against the scoring measures: every one of them wraps dim_ScorecardBand in
-    # ALL(), deliberately, so a relationship cannot narrow the band lookup.
-    ("dim_ScorecardBand", "CategoryKey", "dim_ScorecardWeight", "CategoryKey"),
+    # NOTE: the two scorecard config tables are deliberately NOT related. Relating them so
+    # the band table could show a category name made Power BI add a blank unknown-member
+    # row to dim_ScorecardWeight - which rendered as an empty row on the Scorecard page, an
+    # empty column on the Portfolio heatmap, and broke the "weights sum to 1.00" assertion
+    # because the blank row's weight is NULL. Verified against the deployed model, not
+    # guessed. dim_ScorecardBand carries CategoryName as a column instead.
     ("fct_BudgetLine", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_BudgetLine", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_BudgetLine", "MonthStart", "dim_Date", "Date"),

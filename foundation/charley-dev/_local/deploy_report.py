@@ -498,8 +498,10 @@ def page_scorecard() -> tuple[str, list[dict]]:
 
         # The band table stays, as the reference behind the Band column - but keyed by the
         # category NAME rather than the surrogate integer the previous version showed.
+        # The name is a column on the band table itself, not reached through a
+        # relationship; see the note in deploy_model.RELATIONSHIPS for why.
         visual(p, "bands", "tableEx", 840, 260, 420, 390,
-               {"Values": [column("dim_ScorecardWeight", "CategoryName"),
+               {"Values": [column("dim_ScorecardBand", "CategoryName"),
                            column("dim_ScorecardBand", "Score"),
                            column("dim_ScorecardBand", "BandLabel")]},
                title="Scoring bands - corrected (defects #1a-#1c)"),
