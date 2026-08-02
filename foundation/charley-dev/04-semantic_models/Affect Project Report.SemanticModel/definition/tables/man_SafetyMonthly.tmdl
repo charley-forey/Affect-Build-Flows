@@ -1,0 +1,39 @@
+table man_SafetyMonthly
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HoursWorked
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: HoursWorked
+
+	column RecordableIncidents
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: RecordableIncidents
+
+	column Orientations
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Orientations
+
+	column OtHours
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: OtHours
+
+	partition man_SafetyMonthly = entity
+		mode: directLake
+		source
+			entityName: man_safetymonthly
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -1,0 +1,49 @@
+table man_Risks
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column RiskNumber
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: RiskNumber
+
+	column Description
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Description
+
+	column ImpactCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ImpactCode
+
+	column Mitigation
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Mitigation
+
+	column OwnerRole
+		dataType: string
+		summarizeBy: none
+		sourceColumn: OwnerRole
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	partition man_Risks = entity
+		mode: directLake
+		source
+			entityName: man_risks
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

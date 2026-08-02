@@ -221,10 +221,43 @@ def page_data_quality() -> tuple[str, list[dict]]:
     ]
 
 
+def page_scorecard() -> tuple[str, list[dict]]:
+    """The nine-category weighted health score.
+
+    analysis/excel-tracker/README.md:174 calls the scorecard the most valuable thing in
+    the workbook - and partly broken. Coverage sits beside the score deliberately: the
+    Excel's 0.59 looked like a health score while 42% of its weight measured nothing, and
+    because a missing category scored 0 rather than blank, that was invisible.
+    """
+    p = "scorecard"
+    return p, [
+        textbox(p, "title", "Project Scorecard", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Weights and bands are data (dim_ScorecardWeight / dim_ScorecardBand) - "
+                "retune them without a code change. A category with no data scores BLANK, "
+                "never zero.",
+                20, 56, 1000, 30, size=10, color=MUTED),
+        card(p, "sc_total", "Project Scorecard", 20, 110, 240, 130),
+        card(p, "sc_cov", "Scorecard Coverage %", 276, 110, 240, 130),
+        card(p, "sc_measured", "Project Scorecard (Measured Only)", 532, 110, 300, 130),
+        card(p, "sc_client", "Client Satisfaction", 848, 110, 240, 130),
+        visual(p, "weights", "tableEx", 20, 260, 620, 390,
+               {"Values": [column("dim_ScorecardWeight", "CategoryName"),
+                           column("dim_ScorecardWeight", "Weight")]},
+               title="Category weights (sum to 1.00)"),
+        visual(p, "bands", "tableEx", 660, 260, 600, 390,
+               {"Values": [column("dim_ScorecardBand", "CategoryKey"),
+                           column("dim_ScorecardBand", "Score"),
+                           column("dim_ScorecardBand", "BandLabel")]},
+               title="Scoring bands - corrected (defects #1a-#1c)"),
+    ]
+
+
 PAGES = [
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
     ("Schedule & Quality", page_schedule_quality, False),
+    ("Scorecard", page_scorecard, False),
     ("Data Quality", page_data_quality, True),   # hidden
 ]
 

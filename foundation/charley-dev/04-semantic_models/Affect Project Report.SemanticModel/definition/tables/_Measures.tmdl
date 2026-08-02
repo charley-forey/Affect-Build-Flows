@@ -123,6 +123,269 @@ table _Measures
 	measure 'DQ Unmatched Invoices' = CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )
 		formatString: "#,0"
 
+	/// Replaces FINANCIALS!F56 - blocked: Sage AR header has no payment date
+	measure 'Avg Days To Payment' = BLANK ()
+		formatString: "#,0.0"
+
+	/// Replaces FINANCIALS!C8 - a human judgement the workbook could already have computed
+	measure 'Cash Position %' = DIVIDE ( [Total Paid] + [AR Outstanding], [Cost To Complete] )
+		formatString: "0.0%"
+
+	/// Replaces FINANCIALS!C7 - a genuine human judgement, stays manual
+	measure 'Profitability Code' = SELECTEDVALUE ( man_Flags[ProfitabilityCode] )
+
+	/// Replaces SAFETY!E - Procore /incidents, in the registry but not yet ingested
+	measure 'Recordable Incidents' = SUM ( man_SafetyMonthly[RecordableIncidents] )
+		formatString: "#,0"
+
+	/// Replaces SAFETY!D - Sage payroll / ADP / Procore timecards, undecided
+	measure 'Hours Worked' = SUM ( man_SafetyMonthly[HoursWorked] )
+		formatString: "#,0"
+
+	/// Replaces QUALITY!D - Procore /observations/items; fixes defect #2 on arrival
+	measure 'Observations' = SUM ( man_QualityMonthly[Observations] )
+		formatString: "#,0"
+
+	/// Replaces QUALITY!D39 - typed by hand today
+	measure 'Avg Observation Days Open' = AVERAGE ( man_QualityMonthly[AvgDaysToClose] )
+		formatString: "#,0.0"
+
+	/// Replaces SCORECARD CALC!E28 - Procore /daily_log_headers derives this
+	measure 'Daily Reports Missed' = SUM ( man_DailyLogCompliance[LogsMissedSameDay] )
+		formatString: "#,0"
+
+	/// Replaces DASHBOARD!M16 - which returned the TEXT "0 days" (defect #1b)
+	measure 'Completion Variance Days' =
+			VAR Baseline = MAX ( man_Milestones[BaselineFinish] )
+			VAR Forecast = MAX ( fct_Milestone[CurrentFinish] )
+			RETURN IF ( ISBLANK ( Baseline ) || ISBLANK ( Forecast ), BLANK (), DATEDIFF ( Baseline, Forecast, DAY ) )
+		formatString: "#,0"
+
+	/// Replaces SCORECARD CALC!C42
+	measure 'Client Satisfaction' = DIVIDE ( SUM ( man_Survey[Score] ), COUNTROWS ( man_Survey ) * 5 )
+		formatString: "0.0%"
+
+	/// Replaces SCORECARD CALC!E13 - FIX: driver is days to payment, not an aging balance (defect #1c)
+	measure 'Score - Accounts Receivable' =
+			VAR V = [Avg Days To Payment]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 1
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E7
+	measure 'Score - Profitability' =
+			VAR V = [Profitability Code]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 2
+			&& dim_ScorecardBand[MatchValue] = V
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E10 - now computed rather than picked from a dropdown
+	measure 'Score - Cash Position' =
+			VAR V = [Cash Position %]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 3
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E14
+	measure 'Score - Change Orders' =
+			VAR V = [Age Of Oldest Unapproved CO]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 4
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E16
+	measure 'Score - Safety Incidents' =
+			VAR V = [Recordable Incidents]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 5
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E19 - FIX: bands are fractions, so this stops always awarding 3/3 (defect #1a)
+	measure 'Score - Schedule Performance' =
+			VAR V = [Schedule Performance %]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 6
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E22 - FIX: numeric, so finishing on baseline scores 3 not 0 (defect #1b)
+	measure 'Score - Completion Variance' =
+			VAR V = [Completion Variance Days]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 7
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E25
+	measure 'Score - Observations' =
+			VAR V = [Avg Observation Days Open]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 8
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!E28
+	measure 'Score - Daily Reports' =
+			VAR V = [Daily Reports Missed]
+			RETURN
+			IF (
+			ISBLANK ( V ),
+			BLANK (),
+			MAXX (
+			FILTER (
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = 9
+			&& ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )
+			&& ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )
+			),
+			dim_ScorecardBand[Score]
+			)
+			)
+		formatString: "0"
+
+	/// Replaces SCORECARD CALC!G31
+	measure 'Project Scorecard' =
+			DIVIDE (
+			SUMX (
+			ALL ( dim_ScorecardWeight ),
+			VAR S =
+			SWITCH (
+			dim_ScorecardWeight[CategoryKey],
+			1, [Score - Accounts Receivable],
+			2, [Score - Profitability],
+			3, [Score - Cash Position],
+			4, [Score - Change Orders],
+			5, [Score - Safety Incidents],
+			6, [Score - Schedule Performance],
+			7, [Score - Completion Variance],
+			8, [Score - Observations],
+			9, [Score - Daily Reports],
+			BLANK ()
+			)
+			RETURN IF ( ISBLANK ( S ), 0, S * dim_ScorecardWeight[Weight] )
+			),
+			3
+			)
+		formatString: "0.00"
+
+	/// Replaces no equivalent - the workbook could not tell you this
+	measure 'Scorecard Coverage %' =
+			SUMX (
+			ALL ( dim_ScorecardWeight ),
+			VAR S =
+			SWITCH (
+			dim_ScorecardWeight[CategoryKey],
+			1, [Score - Accounts Receivable],
+			2, [Score - Profitability],
+			3, [Score - Cash Position],
+			4, [Score - Change Orders],
+			5, [Score - Safety Incidents],
+			6, [Score - Schedule Performance],
+			7, [Score - Completion Variance],
+			8, [Score - Observations],
+			9, [Score - Daily Reports],
+			BLANK ()
+			)
+			RETURN IF ( ISBLANK ( S ), 0, dim_ScorecardWeight[Weight] )
+			)
+		formatString: "0.0%"
+
+	/// Replaces derived - makes partial coverage comparable
+	measure 'Project Scorecard (Measured Only)' = DIVIDE ( [Project Scorecard], [Scorecard Coverage %] )
+		formatString: "0.00"
+
 	column _placeholder
 		isHidden
 		dataType: string

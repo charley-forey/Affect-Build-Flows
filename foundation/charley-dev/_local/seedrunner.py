@@ -38,7 +38,7 @@ SEED_DIRS = (
 )
 
 # Dimensions and facts, built after the seeds and over the sv_* fixtures.
-GOLD_GLOB = "[123]*.sql"
+GOLD_GLOB = "[1234]*.sql"
 
 # Spark -> DuckDB. Both are exact 1:1 mappings, which is why one .sql serves both.
 MACROS = (

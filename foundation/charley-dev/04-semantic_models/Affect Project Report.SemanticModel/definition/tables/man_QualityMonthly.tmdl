@@ -1,0 +1,39 @@
+table man_QualityMonthly
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column Observations
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Observations
+
+	column PunchlistItems
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: PunchlistItems
+
+	column AvgDaysPastDue
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: AvgDaysPastDue
+
+	column AvgDaysToClose
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: AvgDaysToClose
+
+	partition man_QualityMonthly = entity
+		mode: directLake
+		source
+			entityName: man_qualitymonthly
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

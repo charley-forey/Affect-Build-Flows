@@ -40,8 +40,8 @@ SILVER_ABFSS = (
     f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/{SILVER_SOURCE_ID}/Tables/dbo"
 )
 
-# Facts and dimensions only. The 0* seed files are built by cd_20_seed_gold.
-GOLD_PREFIXES = ("1", "2", "3")
+# Dimensions, facts and the manual tables. The 0* seed files are built by cd_20_seed_gold.
+GOLD_PREFIXES = ("1", "2", "3", "4")
 
 
 def statements(sql: str) -> list[str]:
@@ -140,6 +140,49 @@ def write_diag():
         )
         cells.append(cell(f'# --- {path.name} ---\n{body}'))
 
+    # Load whatever manual data exists. Affect has not decided where the ~40% manual data
+    # will live, so this is deliberately the lowest-friction mechanism that works TODAY:
+    # drop a CSV in Files/manual/, get a row in the model. It can be replaced by a
+    # SharePoint sync without touching a single gold file or measure.
+    cells.append(
+        cell(
+            """
+# --- manual input: Files/manual/<table>.csv -> man_<table> ---
+import os
+
+MANUAL_DIR = "/lakehouse/default/Files/manual"
+manual_tables = ["man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
+                 "man_SafetyMonthly", "man_QualityMonthly", "man_Milestones",
+                 "man_DailyLogCompliance"]
+
+os.makedirs(MANUAL_DIR, exist_ok=True)
+loaded = {}
+for t in manual_tables:
+    schema = spark.table(t).schema          # declared by 40_man_tables.sql
+    path = f"{MANUAL_DIR}/{t}.csv"
+
+    if os.path.exists(path):
+        # Read against the table's OWN schema rather than inferring. Inference would type
+        # an empty column as string and break the next load.
+        df = spark.read.option("header", True).schema(schema).csv(f"Files/manual/{t}.csv")
+    else:
+        # MATERIALISE AN EMPTY DELTA TABLE. `CREATE TABLE (cols)` registers a schema but
+        # writes no data files, and Direct Lake cannot bind to that - the model refresh
+        # fails with "source tables either do not exist or access was denied", which reads
+        # like a permissions problem and is not one. Writing an empty DataFrame produces a
+        # real Delta table with a real log, which Direct Lake reads happily as zero rows.
+        df = spark.createDataFrame([], schema)
+
+    df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(t)
+    loaded[t] = df.count()
+
+for t, n in loaded.items():
+    print(f"  {t:<26} {n:>5} rows" + ("" if n else "   (no CSV yet)"))
+print(f"manual rows loaded: {sum(loaded.values())}")
+"""
+        )
+    )
+
     # Assert, do not merely print. A notebook that builds empty tables still reports
     # Completed, so without this the job status would say success over an empty model.
     cells.append(
@@ -218,7 +261,7 @@ results.append({"step": "verification", "ok": not bad,
 schema = {}
 for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
-                   "measures_anchor"]:
+                   "measures_anchor"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 with open(f"{DIAG}/gold_schema.json", "w", encoding="utf-8") as fh:
     json.dump(schema, fh, indent=1)

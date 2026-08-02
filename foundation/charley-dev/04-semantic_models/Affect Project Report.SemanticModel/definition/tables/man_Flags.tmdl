@@ -1,0 +1,54 @@
+table man_Flags
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column ProfitabilityCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProfitabilityCode
+
+	column ContingencyRemaining
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ContingencyRemaining
+
+	column BaselineApproved
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: BaselineApproved
+
+	column BaselineRevision
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BaselineRevision
+
+	column MonthEndClosedOut
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: MonthEndClosedOut
+
+	column ForecastingInLine
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: ForecastingInLine
+
+	column ResourcesUpdated
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: ResourcesUpdated
+
+	partition man_Flags = entity
+		mode: directLake
+		source
+			entityName: man_flags
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

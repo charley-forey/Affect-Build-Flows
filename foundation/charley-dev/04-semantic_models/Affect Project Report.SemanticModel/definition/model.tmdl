@@ -23,3 +23,12 @@ ref table fct_Invoice
 ref table fct_RfiSubmittal
 ref table fct_Milestone
 ref table fct_FinancialPeriod
+ref table man_Wins
+ref table man_Risks
+ref table man_PriorityItems
+ref table man_Flags
+ref table man_Survey
+ref table man_SafetyMonthly
+ref table man_QualityMonthly
+ref table man_Milestones
+ref table man_DailyLogCompliance

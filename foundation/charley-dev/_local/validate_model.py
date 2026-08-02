@@ -212,6 +212,54 @@ def main() -> int:
     print(f"  AR invoices with no matching project : {dq['[Unmatched]']}")
     CHECKS.append("data-quality measures return real counts")
 
+    # 6. The scorecard. Every category must EVALUATE; a category with no data must be
+    #    BLANK, never 0 - scoring a missing input as zero is exactly how the workbook's
+    #    Completion Variance silently cost every project 15% of its score.
+    categories = [
+        "Accounts Receivable", "Profitability", "Cash Position", "Change Orders",
+        "Safety Incidents", "Schedule Performance", "Completion Variance",
+        "Observations", "Daily Reports",
+    ]
+    expr = ", ".join(f'"{c}", [Score - {c}]' for c in categories)
+    scores = dax(model["id"], tok, f"EVALUATE ROW({expr})")[0]
+
+    print("\nscorecard - score per category (BLANK = no data yet, NOT zero):")
+    measured, missing = [], []
+    for c in categories:
+        v = scores.get(f"[{c}]")
+        print(f"  {c:<24} {'-- no data' if v is None else v}")
+        (missing if v is None else measured).append(c)
+    CHECKS.append(f"all 9 scorecard categories evaluate ({len(measured)} scored, "
+                  f"{len(missing)} awaiting data)")
+
+    totals = dax(model["id"], tok, """
+        EVALUATE ROW(
+            "Scorecard", [Project Scorecard],
+            "Coverage",  [Scorecard Coverage %],
+            "Measured",  [Project Scorecard (Measured Only)]
+        )
+    """)[0]
+    cov = totals["[Coverage]"]
+    print(f"\n  [Project Scorecard]                 {totals['[Scorecard]']}")
+    print(f"  [Scorecard Coverage %]              {cov:.0%} of the agreed weight")
+    print(f"  [Project Scorecard (Measured Only)] {totals['[Measured]']}")
+
+    # Coverage must equal the summed weight of exactly the categories that scored - that
+    # is the whole claim the measure makes.
+    weights = dax(model["id"], tok, """
+        EVALUATE SUMMARIZECOLUMNS(
+            dim_ScorecardWeight[CategoryName], dim_ScorecardWeight[Weight] )
+    """)
+    lookup = {r["dim_ScorecardWeight[CategoryName]"]: r["dim_ScorecardWeight[Weight]"]
+              for r in weights}
+    expected_cov = sum(float(lookup[c]) for c in measured)
+    assert abs(cov - expected_cov) < 0.001, f"coverage {cov} != summed weights {expected_cov}"
+    CHECKS.append(f"[Scorecard Coverage %] = {cov:.0%}, matching the scored categories' weights")
+
+    # Weights must still total exactly 1.00, or every score is quietly wrong.
+    assert abs(sum(float(w) for w in lookup.values()) - 1.0) < 1e-9
+    CHECKS.append("scorecard weights still sum to exactly 1.00")
+
     print()
     for label in CHECKS:
         print(f"  ok  {label}")
