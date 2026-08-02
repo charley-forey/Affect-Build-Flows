@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "1f22598bd88d5a355a09",
   "position": {
-    "x": 660,
+    "x": 840,
     "y": 260,
     "z": 0,
-    "width": 600,
+    "width": 420,
     "height": 390,
     "tabOrder": 17
   },
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_ScorecardBand"
+                      "Entity": "dim_ScorecardWeight"
                     }
                   },
-                  "Property": "CategoryKey"
+                  "Property": "CategoryName"
                 }
               },
-              "queryRef": "dim_ScorecardBand.CategoryKey",
-              "nativeQueryRef": "CategoryKey"
+              "queryRef": "dim_ScorecardWeight.CategoryName",
+              "nativeQueryRef": "CategoryName"
             },
             {
               "field": {
@@ -69,7 +69,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Scoring bands - corrected (defects #1a-#1c). Shows CategoryKey, Score, BandLabel for the current selection.'"
+                  "Value": "'Table. Scoring bands - corrected (defects #1a-#1c). Shows CategoryName, Score, BandLabel for the current selection.'"
                 }
               }
             }

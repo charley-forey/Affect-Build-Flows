@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "9f462ec603556e7d6efa",
+  "name": "413f28b8cf3e15004c11",
   "position": {
-    "x": 20,
-    "y": 382,
+    "x": 820,
+    "y": 440,
     "z": 0,
-    "width": 620,
-    "height": 274,
-    "tabOrder": 22
+    "width": 440,
+    "height": 210,
+    "tabOrder": 19
   },
   "visual": {
-    "visualType": "columnChart",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
         "Category": {
@@ -23,11 +23,11 @@
                       "Entity": "dim_Date"
                     }
                   },
-                  "Property": "MonthStart"
+                  "Property": "MonthYear"
                 }
               },
-              "queryRef": "dim_Date.MonthStart",
-              "nativeQueryRef": "MonthStart"
+              "queryRef": "dim_Date.MonthYear",
+              "nativeQueryRef": "MonthYear"
             }
           ]
         },
@@ -41,11 +41,25 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Billed This Period"
+                  "Property": "Billed Cumulative"
                 }
               },
-              "queryRef": "_Measures.Billed This Period",
-              "nativeQueryRef": "Billed This Period"
+              "queryRef": "_Measures.Billed Cumulative",
+              "nativeQueryRef": "Billed Cumulative"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Current Contract"
+                }
+              },
+              "queryRef": "_Measures.Current Contract",
+              "nativeQueryRef": "Current Contract"
             }
           ]
         }
@@ -59,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Billed by month (period movement, not cumulative). Shows Billed This Period by MonthStart.'"
+                  "Value": "'Line chart. Cumulative amount billed by month against the current contract value, showing billing pace over the life of the job.'"
                 }
               }
             }
@@ -72,7 +86,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Billed by month (period movement, not cumulative)'"
+                  "Value": "'Billing S-curve vs contract'"
                 }
               }
             },

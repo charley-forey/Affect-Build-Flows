@@ -1,37 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "9f462ec603556e7d6efa",
+  "name": "92c0e7157d176fa81e21",
   "position": {
-    "x": 20,
-    "y": 382,
+    "x": 516,
+    "y": 100,
     "z": 0,
-    "width": 620,
-    "height": 274,
-    "tabOrder": 22
+    "width": 228,
+    "height": 100,
+    "tabOrder": 14
   },
   "visual": {
-    "visualType": "columnChart",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_Date"
-                    }
-                  },
-                  "Property": "MonthStart"
-                }
-              },
-              "queryRef": "dim_Date.MonthStart",
-              "nativeQueryRef": "MonthStart"
-            }
-          ]
-        },
-        "Y": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -41,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Billed This Period"
+                  "Property": "Total Billed %"
                 }
               },
-              "queryRef": "_Measures.Billed This Period",
-              "nativeQueryRef": "Billed This Period"
+              "queryRef": "_Measures.Total Billed %",
+              "nativeQueryRef": "Total Billed %"
             }
           ]
         }
@@ -59,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Billed by month (period movement, not cumulative). Shows Billed This Period by MonthStart.'"
+                  "Value": "'Card. Total Billed %. Shows Total Billed % for the current selection.'"
                 }
               }
             }
@@ -72,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Billed by month (period movement, not cumulative)'"
+                  "Value": "'Total Billed %'"
                 }
               }
             },

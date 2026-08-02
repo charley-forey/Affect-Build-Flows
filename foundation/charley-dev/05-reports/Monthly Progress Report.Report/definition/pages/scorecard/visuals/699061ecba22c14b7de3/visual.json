@@ -1,65 +1,33 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "a53e711fbab0e09bdd3e",
+  "name": "699061ecba22c14b7de3",
   "position": {
     "x": 20,
-    "y": 210,
+    "y": 260,
     "z": 0,
-    "width": 780,
-    "height": 440,
-    "tabOrder": 17
+    "width": 800,
+    "height": 390,
+    "tabOrder": 16
   },
   "visual": {
-    "visualType": "pivotTable",
+    "visualType": "tableEx",
     "query": {
       "queryState": {
-        "Rows": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_CostCode"
-                    }
-                  },
-                  "Property": "Division"
-                }
-              },
-              "queryRef": "dim_CostCode.Division",
-              "nativeQueryRef": "Division"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_CostCode"
-                    }
-                  },
-                  "Property": "CostCode"
-                }
-              },
-              "queryRef": "dim_CostCode.CostCode",
-              "nativeQueryRef": "CostCode"
-            }
-          ]
-        },
         "Values": {
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "dim_ScorecardWeight"
                     }
                   },
-                  "Property": "Budget"
+                  "Property": "CategoryName"
                 }
               },
-              "queryRef": "_Measures.Budget",
-              "nativeQueryRef": "Budget"
+              "queryRef": "dim_ScorecardWeight.CategoryName",
+              "nativeQueryRef": "CategoryName"
             },
             {
               "field": {
@@ -69,11 +37,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Spent To Date"
+                  "Property": "Category Score"
                 }
               },
-              "queryRef": "_Measures.Spent To Date",
-              "nativeQueryRef": "Spent To Date"
+              "queryRef": "_Measures.Category Score",
+              "nativeQueryRef": "Category Score"
             },
             {
               "field": {
@@ -83,11 +51,25 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget Variance"
+                  "Property": "Category Band"
                 }
               },
-              "queryRef": "_Measures.Budget Variance",
-              "nativeQueryRef": "Budget Variance"
+              "queryRef": "_Measures.Category Band",
+              "nativeQueryRef": "Category Band"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardWeight"
+                    }
+                  },
+                  "Property": "Weight"
+                }
+              },
+              "queryRef": "dim_ScorecardWeight.Weight",
+              "nativeQueryRef": "Weight"
             },
             {
               "field": {
@@ -97,25 +79,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget Variance %"
+                  "Property": "Category Weighted"
                 }
               },
-              "queryRef": "_Measures.Budget Variance %",
-              "nativeQueryRef": "Budget Variance %"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Budget Status"
-                }
-              },
-              "queryRef": "_Measures.Budget Status",
-              "nativeQueryRef": "Budget Status"
+              "queryRef": "_Measures.Category Weighted",
+              "nativeQueryRef": "Category Weighted"
             }
           ]
         }
@@ -129,7 +97,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Matrix. Budget, spent to date, variance and status by cost code, grouped by division and expandable to individual codes.'"
+                  "Value": "'Table. One row per scorecard category showing its score out of 3, the band the driver fell into, the category weight, and the weighted contribution to the total. Categories with no data read Not measured.'"
                 }
               }
             }
@@ -142,7 +110,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget by division and cost code'"
+                  "Value": "'How the score is built - category, score, band, weight, contribution'"
                 }
               }
             },

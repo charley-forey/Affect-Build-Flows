@@ -58,11 +58,33 @@ def test_report() -> None:
         else:
             assert {"project", "month"} <= syncs, f"{pid}: missing a synced slicer"
 
-        # 4. The footer, so an exported page states what it is a snapshot of.
+        # 4. Everything fits on the canvas. A visual running off the bottom is invisible in
+        #    a PDF export and silently clipped in the service - it does not error, it just
+        #    is not there. Page 1 of this report is meant to be printed and circulated.
+        for v in visuals:
+            pos = v["position"]
+            right, bottom = pos["x"] + pos["width"], pos["y"] + pos["height"]
+            assert right <= 1280 and bottom <= 720, (
+                f"{pid}: visual {v['name']} runs off canvas "
+                f"(to {right}x{bottom}, canvas is 1280x720)")
+
+        # 5. The footer, so an exported page states what it is a snapshot of - and nothing
+        #    sitting underneath it. The footer is new, so any visual already occupying that
+        #    corner would be silently covered rather than reported as a clash.
         refs = json.dumps(visuals)
         assert "Report Month Label" in refs and "Last Refresh" in refs, f"{pid}: no footer"
+        foot = next(v for v in visuals if "Report Month Label" in json.dumps(v))
+        fp = foot["position"]
+        for v in visuals:
+            if v is foot:
+                continue
+            pos = v["position"]
+            overlaps = (pos["x"] < fp["x"] + fp["width"] and pos["x"] + pos["width"] > fp["x"]
+                        and pos["y"] < fp["y"] + fp["height"]
+                        and pos["y"] + pos["height"] > fp["y"])
+            assert not overlaps, f"{pid}: visual {v['name']} sits under the footer"
 
-    # 5. The validated theme is registered, not just sitting in the repo unused.
+    # 6. The validated theme is registered, not just sitting in the repo unused.
     report = json.loads(files["definition/report.json"])
     assert report["themeCollection"]["customTheme"]["type"] == "RegisteredResources"
     theme_path = f"StaticResources/RegisteredResources/{dr.THEME_NAME}.json"
@@ -72,7 +94,7 @@ def test_report() -> None:
     assert (theme["good"], theme["neutral"], theme["bad"]) == ("#1B7F3B", "#B26A00", "#C62828")
     assert dr.AMBER == theme["neutral"], "generator amber drifted from the theme's"
 
-    # 6. Apostrophes survive. 'the Excel's defects' unescaped truncates the literal.
+    # 7. Apostrophes survive. 'the Excel's defects' unescaped truncates the literal.
     assert dr.lit("the Excel's")["expr"]["Literal"]["Value"] == "'the Excel''s'"
 
     print(f"  {len(pages)} pages, {total} visuals: alt text, tab order, slicers, footer, theme")

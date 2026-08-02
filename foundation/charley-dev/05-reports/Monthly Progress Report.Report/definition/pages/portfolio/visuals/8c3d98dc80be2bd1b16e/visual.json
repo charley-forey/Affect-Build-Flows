@@ -1,51 +1,37 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "a53e711fbab0e09bdd3e",
+  "name": "8c3d98dc80be2bd1b16e",
   "position": {
-    "x": 20,
-    "y": 210,
+    "x": 760,
+    "y": 216,
     "z": 0,
-    "width": 780,
-    "height": 440,
-    "tabOrder": 17
+    "width": 500,
+    "height": 300,
+    "tabOrder": 18
   },
   "visual": {
-    "visualType": "pivotTable",
+    "visualType": "clusteredColumnChart",
     "query": {
       "queryState": {
-        "Rows": {
+        "Category": {
           "projections": [
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_CostCode"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "Division"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "dim_CostCode.Division",
-              "nativeQueryRef": "Division"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_CostCode"
-                    }
-                  },
-                  "Property": "CostCode"
-                }
-              },
-              "queryRef": "dim_CostCode.CostCode",
-              "nativeQueryRef": "CostCode"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName"
             }
           ]
         },
-        "Values": {
+        "Y": {
           "projections": [
             {
               "field": {
@@ -55,11 +41,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget"
+                  "Property": "Current Contract"
                 }
               },
-              "queryRef": "_Measures.Budget",
-              "nativeQueryRef": "Budget"
+              "queryRef": "_Measures.Current Contract",
+              "nativeQueryRef": "Current Contract"
             },
             {
               "field": {
@@ -69,11 +55,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Spent To Date"
+                  "Property": "Total Billed"
                 }
               },
-              "queryRef": "_Measures.Spent To Date",
-              "nativeQueryRef": "Spent To Date"
+              "queryRef": "_Measures.Total Billed",
+              "nativeQueryRef": "Total Billed"
             },
             {
               "field": {
@@ -83,39 +69,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget Variance"
+                  "Property": "Total Paid"
                 }
               },
-              "queryRef": "_Measures.Budget Variance",
-              "nativeQueryRef": "Budget Variance"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Budget Variance %"
-                }
-              },
-              "queryRef": "_Measures.Budget Variance %",
-              "nativeQueryRef": "Budget Variance %"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Budget Status"
-                }
-              },
-              "queryRef": "_Measures.Budget Status",
-              "nativeQueryRef": "Budget Status"
+              "queryRef": "_Measures.Total Paid",
+              "nativeQueryRef": "Total Paid"
             }
           ]
         }
@@ -129,7 +87,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Matrix. Budget, spent to date, variance and status by cost code, grouped by division and expandable to individual codes.'"
+                  "Value": "'Clustered column chart. Contract, billed and paid by project. Shows Current Contract, Total Billed, Total Paid by ProjectName.'"
                 }
               }
             }
@@ -142,7 +100,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget by division and cost code'"
+                  "Value": "'Contract, billed and paid by project'"
                 }
               }
             },

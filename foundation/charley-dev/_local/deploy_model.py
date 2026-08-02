@@ -67,6 +67,13 @@ MODEL_TABLES = [
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
 # ambiguity and hurt performance (powerbi/semantic-model.md:443).
 RELATIONSHIPS = [
+    # The two scorecard config tables were unrelated, so nothing could show a band beside
+    # the category it belongs to - the bands table had to render the raw CategoryKey
+    # surrogate. Many bands to one category.
+    #
+    # Safe against the scoring measures: every one of them wraps dim_ScorecardBand in
+    # ALL(), deliberately, so a relationship cannot narrow the band lookup.
+    ("dim_ScorecardBand", "CategoryKey", "dim_ScorecardWeight", "CategoryKey"),
     ("fct_BudgetLine", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_BudgetLine", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_BudgetLine", "MonthStart", "dim_Date", "Date"),
@@ -321,6 +328,50 @@ MEASURES = [
      "CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )",
      '"#,0"', "diagnostics - AR rows whose Sage job resolves to no project"),
 
+    # ---- Trend and portfolio ------------------------------------------------
+    #
+    # dim_Date is 7,670 contiguous days, marked, and DATEADD over it is asserted in
+    # validate_model.py - and until now the report used it for exactly one chart. These are
+    # the measures that make it earn its place: the question is never "what is the number",
+    # it is "which way is it moving".
+    ("Billed Cumulative",
+     # The S-curve. Uses the SUM-SAFE period movement accumulated over time, NOT the
+     # running-balance column - summing a restated balance double-counts every period it
+     # was restated in, and slopes upward whether or not anything was billed.
+     "CALCULATE ( [Billed This Period], "
+     "FILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) )",
+     '"$#,0"', "no workbook equivalent - a single snapshot cannot draw a curve"),
+    ("Billed Cumulative % Of Contract",
+     "DIVIDE ( [Billed Cumulative], [Current Contract] )",
+     '"0.0%"', "the S-curve against the contract line"),
+    # Portfolio counts. Every page today is one project behind a slicer; leadership was
+    # never given a number that spans the jobs.
+    ("Projects Reporting", "COUNTROWS ( dim_Project )", '"#,0"', "portfolio scope"),
+    ("Projects At Risk",
+     # Below 0.60 on the measured-only score, so a project is not flagged merely for being
+     # under-instrumented - that is what [Scorecard Coverage %] is for.
+     "COUNTROWS ( FILTER ( dim_Project, "
+     "NOT ISBLANK ( [Project Scorecard (Measured Only)] ) "
+     "&& [Project Scorecard (Measured Only)] < 0.6 ) )",
+     '"#,0"', "no workbook equivalent - one workbook per project cannot rank them"),
+
+    # ---- Schedule geometry --------------------------------------------------
+    #
+    # Power BI has no native Gantt. A stacked bar draws one: an invisible bar to the
+    # milestone's start, then a visible bar for its duration. Both are day counts from the
+    # earliest start in the current filter, so the axis reads as a timeline.
+    #
+    # NOTE: fct_Milestone carries CurrentStart/CurrentFinish only. There is no baseline and
+    # no actual, so this shows the schedule AS IT STANDS - it cannot show drift against a
+    # baseline. That needs baseline dates Outbuild is not supplying today.
+    ("Milestone Offset Days",
+     "VAR Origin = CALCULATE ( MIN ( fct_Milestone[CurrentStart] ), ALLSELECTED ( fct_Milestone ) )\n"
+     "RETURN DATEDIFF ( Origin, MIN ( fct_Milestone[CurrentStart] ), DAY )",
+     '"#,0"', "Gantt geometry - the transparent leading bar"),
+    ("Milestone Duration Days",
+     "DATEDIFF ( MIN ( fct_Milestone[CurrentStart] ), MAX ( fct_Milestone[CurrentFinish] ), DAY )",
+     '"#,0"', "Gantt geometry - the visible bar"),
+
     # ---- Report context -----------------------------------------------------
     #
     # A page exported to PDF has to state what it is a snapshot OF. The workbook could not:
@@ -356,6 +407,9 @@ FOLDER_STARTS = [
     ("Punchlist Items", "08 Quality"),
     ("Projects Fully Mapped", "09 Source Coverage"),
     ("DQ Projects Without Crosswalk", "10 Data Quality"),
+    ("Billed Cumulative", "05 Cash & AR"),
+    ("Projects Reporting", "13 Portfolio"),
+    ("Milestone Offset Days", "07 Schedule"),
     ("Avg Days To Payment", "11 Scorecard drivers"),
     ("Score - Accounts Receivable", "12 Scorecard"),
     ("Last Refresh", "00 Report context"),

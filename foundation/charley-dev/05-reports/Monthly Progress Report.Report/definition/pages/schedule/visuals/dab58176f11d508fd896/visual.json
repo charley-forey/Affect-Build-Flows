@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "9f462ec603556e7d6efa",
+  "name": "dab58176f11d508fd896",
   "position": {
     "x": 20,
-    "y": 382,
+    "y": 210,
     "z": 0,
-    "width": 620,
-    "height": 274,
-    "tabOrder": 22
+    "width": 740,
+    "height": 300,
+    "tabOrder": 17
   },
   "visual": {
-    "visualType": "columnChart",
+    "visualType": "stackedBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_Date"
+                      "Entity": "fct_Milestone"
                     }
                   },
-                  "Property": "MonthStart"
+                  "Property": "MilestoneName"
                 }
               },
-              "queryRef": "dim_Date.MonthStart",
-              "nativeQueryRef": "MonthStart"
+              "queryRef": "fct_Milestone.MilestoneName",
+              "nativeQueryRef": "MilestoneName"
             }
           ]
         },
@@ -41,11 +41,25 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Billed This Period"
+                  "Property": "Milestone Offset Days"
                 }
               },
-              "queryRef": "_Measures.Billed This Period",
-              "nativeQueryRef": "Billed This Period"
+              "queryRef": "_Measures.Milestone Offset Days",
+              "nativeQueryRef": "Milestone Offset Days"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Milestone Duration Days"
+                }
+              },
+              "queryRef": "_Measures.Milestone Duration Days",
+              "nativeQueryRef": "Milestone Duration Days"
             }
           ]
         }
@@ -59,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Billed by month (period movement, not cumulative). Shows Billed This Period by MonthStart.'"
+                  "Value": "'Stacked bar timeline. One bar per milestone, positioned by its start date and sized by its duration in days, relative to the earliest milestone start currently shown.'"
                 }
               }
             }
@@ -72,7 +86,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Billed by month (period movement, not cumulative)'"
+                  "Value": "'Schedule timeline - current dates (set Offset series transparent)'"
                 }
               }
             },

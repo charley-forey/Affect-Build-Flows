@@ -1,163 +1,167 @@
-relationship rel_00_fct_BudgetLine_dim_Project_ProjectKey
+relationship rel_00_dim_ScorecardBand_dim_ScorecardWeight_CategoryKey
+	fromColumn: dim_ScorecardBand.CategoryKey
+	toColumn: dim_ScorecardWeight.CategoryKey
+
+relationship rel_01_fct_BudgetLine_dim_Project_ProjectKey
 	fromColumn: fct_BudgetLine.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_01_fct_BudgetLine_dim_CostCode_CostCodeKey
+relationship rel_02_fct_BudgetLine_dim_CostCode_CostCodeKey
 	fromColumn: fct_BudgetLine.CostCodeKey
 	toColumn: dim_CostCode.CostCodeKey
 
-relationship rel_02_fct_BudgetLine_dim_Date_MonthStart
+relationship rel_03_fct_BudgetLine_dim_Date_MonthStart
 	fromColumn: fct_BudgetLine.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_03_fct_ChangeOrder_dim_Project_ProjectKey
+relationship rel_04_fct_ChangeOrder_dim_Project_ProjectKey
 	fromColumn: fct_ChangeOrder.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_04_fct_ChangeOrder_dim_Date_MonthStart
+relationship rel_05_fct_ChangeOrder_dim_Date_MonthStart
 	fromColumn: fct_ChangeOrder.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_05_fct_Invoice_dim_Project_ProjectKey
+relationship rel_06_fct_Invoice_dim_Project_ProjectKey
 	fromColumn: fct_Invoice.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_06_fct_Invoice_dim_Date_MonthStart
+relationship rel_07_fct_Invoice_dim_Date_MonthStart
 	fromColumn: fct_Invoice.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_07_fct_RfiSubmittal_dim_Project_ProjectKey
+relationship rel_08_fct_RfiSubmittal_dim_Project_ProjectKey
 	fromColumn: fct_RfiSubmittal.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_08_fct_QualityItem_dim_Project_ProjectKey
+relationship rel_09_fct_QualityItem_dim_Project_ProjectKey
 	fromColumn: fct_QualityItem.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_09_fct_QualityItem_dim_Date_MonthStart
+relationship rel_10_fct_QualityItem_dim_Date_MonthStart
 	fromColumn: fct_QualityItem.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_10_fct_SafetyMonthly_dim_Project_ProjectKey
+relationship rel_11_fct_SafetyMonthly_dim_Project_ProjectKey
 	fromColumn: fct_SafetyMonthly.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_11_fct_SafetyMonthly_dim_Date_MonthStart
+relationship rel_12_fct_SafetyMonthly_dim_Date_MonthStart
 	fromColumn: fct_SafetyMonthly.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_12_fct_Billing_dim_Project_ProjectKey
+relationship rel_13_fct_Billing_dim_Project_ProjectKey
 	fromColumn: fct_Billing.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_13_fct_Billing_dim_Date_MonthStart
+relationship rel_14_fct_Billing_dim_Date_MonthStart
 	fromColumn: fct_Billing.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_14_fct_DirectCost_dim_Project_ProjectKey
+relationship rel_15_fct_DirectCost_dim_Project_ProjectKey
 	fromColumn: fct_DirectCost.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_15_fct_DirectCost_dim_Date_MonthStart
+relationship rel_16_fct_DirectCost_dim_Date_MonthStart
 	fromColumn: fct_DirectCost.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_16_bridge_ProjectVendor_dim_Project_ProjectKey
+relationship rel_17_bridge_ProjectVendor_dim_Project_ProjectKey
 	fromColumn: bridge_ProjectVendor.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_17_fct_RfiSubmittal_dim_CostCode_CostCodeKey
+relationship rel_18_fct_RfiSubmittal_dim_CostCode_CostCodeKey
 	fromColumn: fct_RfiSubmittal.CostCodeKey
 	toColumn: dim_CostCode.CostCodeKey
 
-relationship rel_18_fct_RfiSubmittal_dim_Date_MonthStart
+relationship rel_19_fct_RfiSubmittal_dim_Date_MonthStart
 	fromColumn: fct_RfiSubmittal.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_19_fct_Milestone_dim_Project_ProjectKey
+relationship rel_20_fct_Milestone_dim_Project_ProjectKey
 	fromColumn: fct_Milestone.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_20_fct_Milestone_dim_Date_MonthStart
+relationship rel_21_fct_Milestone_dim_Date_MonthStart
 	fromColumn: fct_Milestone.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_21_fct_FinancialPeriod_dim_Project_ProjectKey
+relationship rel_22_fct_FinancialPeriod_dim_Project_ProjectKey
 	fromColumn: fct_FinancialPeriod.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_22_fct_FinancialPeriod_dim_Date_MonthStart
+relationship rel_23_fct_FinancialPeriod_dim_Date_MonthStart
 	fromColumn: fct_FinancialPeriod.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_23_dim_ProjectCrosswalk_dim_Project_ProjectKey
+relationship rel_24_dim_ProjectCrosswalk_dim_Project_ProjectKey
 	fromColumn: dim_ProjectCrosswalk.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_24_man_Wins_dim_Project_ProjectKey
+relationship rel_25_man_Wins_dim_Project_ProjectKey
 	fromColumn: man_Wins.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_25_man_Wins_dim_Date_MonthStart
+relationship rel_26_man_Wins_dim_Date_MonthStart
 	fromColumn: man_Wins.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_26_man_Risks_dim_Project_ProjectKey
+relationship rel_27_man_Risks_dim_Project_ProjectKey
 	fromColumn: man_Risks.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_27_man_Risks_dim_Date_MonthStart
+relationship rel_28_man_Risks_dim_Date_MonthStart
 	fromColumn: man_Risks.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_28_man_PriorityItems_dim_Project_ProjectKey
+relationship rel_29_man_PriorityItems_dim_Project_ProjectKey
 	fromColumn: man_PriorityItems.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_29_man_PriorityItems_dim_Date_MonthStart
+relationship rel_30_man_PriorityItems_dim_Date_MonthStart
 	fromColumn: man_PriorityItems.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_30_man_Flags_dim_Project_ProjectKey
+relationship rel_31_man_Flags_dim_Project_ProjectKey
 	fromColumn: man_Flags.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_31_man_Flags_dim_Date_MonthStart
+relationship rel_32_man_Flags_dim_Date_MonthStart
 	fromColumn: man_Flags.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_32_man_Survey_dim_Project_ProjectKey
+relationship rel_33_man_Survey_dim_Project_ProjectKey
 	fromColumn: man_Survey.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_33_man_Survey_dim_Date_MonthStart
+relationship rel_34_man_Survey_dim_Date_MonthStart
 	fromColumn: man_Survey.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_34_man_SafetyMonthly_dim_Project_ProjectKey
+relationship rel_35_man_SafetyMonthly_dim_Project_ProjectKey
 	fromColumn: man_SafetyMonthly.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_35_man_SafetyMonthly_dim_Date_MonthStart
+relationship rel_36_man_SafetyMonthly_dim_Date_MonthStart
 	fromColumn: man_SafetyMonthly.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_36_man_QualityMonthly_dim_Project_ProjectKey
+relationship rel_37_man_QualityMonthly_dim_Project_ProjectKey
 	fromColumn: man_QualityMonthly.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_37_man_QualityMonthly_dim_Date_MonthStart
+relationship rel_38_man_QualityMonthly_dim_Date_MonthStart
 	fromColumn: man_QualityMonthly.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_38_man_DailyLogCompliance_dim_Project_ProjectKey
+relationship rel_39_man_DailyLogCompliance_dim_Project_ProjectKey
 	fromColumn: man_DailyLogCompliance.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
-relationship rel_39_man_DailyLogCompliance_dim_Date_MonthStart
+relationship rel_40_man_DailyLogCompliance_dim_Date_MonthStart
 	fromColumn: man_DailyLogCompliance.MonthStart
 	toColumn: dim_Date.Date
 
-relationship rel_40_man_Milestones_dim_Project_ProjectKey
+relationship rel_41_man_Milestones_dim_Project_ProjectKey
 	fromColumn: man_Milestones.ProjectKey
 	toColumn: dim_Project.ProjectKey

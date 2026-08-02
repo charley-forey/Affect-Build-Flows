@@ -277,6 +277,38 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 10 Data Quality
 
+	/// Replaces no workbook equivalent - a single snapshot cannot draw a curve
+	measure 'Billed Cumulative' = CALCULATE ( [Billed This Period], FILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) )
+		formatString: "$#,0"
+		displayFolder: 05 Cash & AR
+
+	/// Replaces the S-curve against the contract line
+	measure 'Billed Cumulative % Of Contract' = DIVIDE ( [Billed Cumulative], [Current Contract] )
+		formatString: "0.0%"
+		displayFolder: 05 Cash & AR
+
+	/// Replaces portfolio scope
+	measure 'Projects Reporting' = COUNTROWS ( dim_Project )
+		formatString: "#,0"
+		displayFolder: 13 Portfolio
+
+	/// Replaces no workbook equivalent - one workbook per project cannot rank them
+	measure 'Projects At Risk' = COUNTROWS ( FILTER ( dim_Project, NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )
+		formatString: "#,0"
+		displayFolder: 13 Portfolio
+
+	/// Replaces Gantt geometry - the transparent leading bar
+	measure 'Milestone Offset Days' =
+			VAR Origin = CALCULATE ( MIN ( fct_Milestone[CurrentStart] ), ALLSELECTED ( fct_Milestone ) )
+			RETURN DATEDIFF ( Origin, MIN ( fct_Milestone[CurrentStart] ), DAY )
+		formatString: "#,0"
+		displayFolder: 07 Schedule
+
+	/// Replaces Gantt geometry - the visible bar
+	measure 'Milestone Duration Days' = DATEDIFF ( MIN ( fct_Milestone[CurrentStart] ), MAX ( fct_Milestone[CurrentFinish] ), DAY )
+		formatString: "#,0"
+		displayFolder: 07 Schedule
+
 	/// Replaces no workbook equivalent - the Excel could not say when its numbers were true
 	measure 'Last Refresh' = MAX ( _Measures[_built_at] )
 		formatString: "yyyy-mm-dd hh:nn"
@@ -572,6 +604,51 @@ table _Measures
 	/// Replaces derived - makes partial coverage comparable
 	measure 'Project Scorecard (Measured Only)' = DIVIDE ( [Project Scorecard], [Scorecard Coverage %] )
 		formatString: "0.00"
+		displayFolder: 12 Scorecard
+
+	/// Replaces SCORECARD CALC!E23:E31 - the per-category score, never displayed in the Excel
+	measure 'Category Score' =
+			VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )
+			RETURN
+			SWITCH (
+			K,
+			1, [Score - Accounts Receivable],
+			2, [Score - Profitability],
+			3, [Score - Cash Position],
+			4, [Score - Change Orders],
+			5, [Score - Safety Incidents],
+			6, [Score - Schedule Performance],
+			7, [Score - Completion Variance],
+			8, [Score - Observations],
+			9, [Score - Daily Reports],
+			BLANK ()
+			)
+		formatString: "0"
+		displayFolder: 12 Scorecard
+
+	/// Replaces SCORECARD CALC!G23:G31 - ((E*F)/3), the workbook's own normalisation
+	measure 'Category Weighted' =
+			VAR S = [Category Score]
+			VAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )
+			RETURN IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) )
+		formatString: "0.000"
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - the band the driver fell in, in the seed table's own words
+	measure 'Category Band' =
+			VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )
+			VAR S = [Category Score]
+			RETURN
+			IF (
+			ISBLANK ( S ),
+			"Not measured",
+			CALCULATE (
+			MAX ( dim_ScorecardBand[BandLabel] ),
+			ALL ( dim_ScorecardBand ),
+			dim_ScorecardBand[CategoryKey] = K,
+			dim_ScorecardBand[Score] = S
+			)
+			)
 		displayFolder: 12 Scorecard
 
 	column _placeholder

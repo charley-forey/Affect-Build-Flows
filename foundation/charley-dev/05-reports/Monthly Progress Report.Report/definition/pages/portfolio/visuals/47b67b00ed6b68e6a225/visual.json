@@ -1,19 +1,37 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "254caa62edb4616048ef",
+  "name": "47b67b00ed6b68e6a225",
   "position": {
     "x": 20,
-    "y": 260,
+    "y": 216,
     "z": 0,
-    "width": 620,
-    "height": 390,
-    "tabOrder": 16
+    "width": 720,
+    "height": 300,
+    "tabOrder": 17
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "pivotTable",
     "query": {
       "queryState": {
-        "Values": {
+        "Rows": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_Project"
+                    }
+                  },
+                  "Property": "ProjectName"
+                }
+              },
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName"
+            }
+          ]
+        },
+        "Columns": {
           "projections": [
             {
               "field": {
@@ -28,20 +46,24 @@
               },
               "queryRef": "dim_ScorecardWeight.CategoryName",
               "nativeQueryRef": "CategoryName"
-            },
+            }
+          ]
+        },
+        "Values": {
+          "projections": [
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_ScorecardWeight"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "Weight"
+                  "Property": "Category Score"
                 }
               },
-              "queryRef": "dim_ScorecardWeight.Weight",
-              "nativeQueryRef": "Weight"
+              "queryRef": "_Measures.Category Score",
+              "nativeQueryRef": "Category Score"
             }
           ]
         }
@@ -55,7 +77,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Category weights (sum to 1.00). Shows CategoryName, Weight for the current selection.'"
+                  "Value": "'Matrix. One row per project, one column per scorecard category, showing each category score out of 3. Blank cells are categories with no data rather than a score of zero.'"
                 }
               }
             }
@@ -68,7 +90,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Category weights (sum to 1.00)'"
+                  "Value": "'Scorecard by project and category (0-3, blank = not measured)'"
                 }
               }
             },

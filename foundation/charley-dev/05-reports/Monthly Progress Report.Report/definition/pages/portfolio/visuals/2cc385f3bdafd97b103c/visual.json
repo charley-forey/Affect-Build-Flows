@@ -1,65 +1,33 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "9bef6b35b7d0ebc14a29",
+  "name": "2cc385f3bdafd97b103c",
   "position": {
-    "x": 820,
-    "y": 440,
+    "x": 768,
+    "y": 14,
     "z": 0,
-    "width": 440,
-    "height": 210,
-    "tabOrder": 19
+    "width": 240,
+    "height": 58,
+    "tabOrder": 1
   },
   "visual": {
-    "visualType": "lineChart",
+    "visualType": "slicer",
     "query": {
       "queryState": {
-        "Category": {
+        "Values": {
           "projections": [
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_Date"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "MonthYear"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "dim_Date.MonthYear",
-              "nativeQueryRef": "MonthYear"
-            }
-          ]
-        },
-        "Y": {
-          "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Total Billed"
-                }
-              },
-              "queryRef": "_Measures.Total Billed",
-              "nativeQueryRef": "Total Billed"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Total Paid"
-                }
-              },
-              "queryRef": "_Measures.Total Paid",
-              "nativeQueryRef": "Total Paid"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName"
             }
           ]
         }
@@ -73,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Line chart. Billed vs paid. Shows Total Billed, Total Paid by MonthYear.'"
+                  "Value": "'Slicer. Filters the report by ProjectName.'"
                 }
               }
             }
@@ -86,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Billed vs paid'"
+                  "Value": "'Project'"
                 }
               }
             },
@@ -111,6 +79,11 @@
           }
         }
       ]
+    },
+    "syncGroup": {
+      "groupName": "project",
+      "fieldChanges": false,
+      "filterChanges": true
     }
   }
 }
