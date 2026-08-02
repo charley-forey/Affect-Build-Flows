@@ -139,3 +139,26 @@ SELECT
     CAST(activity_type        AS STRING)  AS activity_type,
     CAST(Status               AS STRING)  AS status
 FROM delta.`{SILVER_ABFSS}/Outbuild_activities`;
+
+-- sv_rfis: EMPTY BY CONSTRUCTION under this source. There is no RFI table anywhere in the
+-- existing warehouse - RFIs arrived with our own Procore ingestion, and 01_source_views_cd
+-- is where they are real (616 rows).
+--
+-- It is declared rather than omitted so gold/23_fct_rfisubmittal.sql can UNION both arms
+-- unconditionally and stay source-agnostic. The alternative - two versions of that file, or
+-- a conditional inside it - is how a fact table quietly diverges between sources.
+--
+-- WHERE 1=0 keeps the column types without reading anything.
+CREATE OR REPLACE TEMPORARY VIEW sv_rfis AS
+SELECT
+    CAST(NULL AS STRING) AS project_id,
+    CAST(NULL AS STRING) AS item_id,
+    CAST(NULL AS STRING) AS item_number,
+    CAST(NULL AS STRING) AS subject,
+    CAST(NULL AS STRING) AS status_label,
+    CAST(NULL AS STRING) AS priority,
+    CAST(NULL AS STRING) AS cost_code_id,
+    CAST(NULL AS DATE)   AS created_date,
+    CAST(NULL AS DATE)   AS due_date,
+    CAST(NULL AS DATE)   AS responded_date
+WHERE 1=0;

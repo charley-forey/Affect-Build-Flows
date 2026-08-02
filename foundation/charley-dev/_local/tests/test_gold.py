@@ -126,9 +126,25 @@ def test_fct_invoice(con) -> None:
 
 
 def test_fct_rfisubmittal(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 3
-    assert one(con, "SELECT DISTINCT ItemType FROM fct_RfiSubmittal") == "Submittal"
-    check("fct_RfiSubmittal is shaped for the RFI union that has not been ingested yet")
+    # BOTH arms, as of 2026-08-02. RFIs are the half of the workbook's only chart that has
+    # never been automated anywhere - no RFI table exists in the existing warehouse - so
+    # asserting the union is asserting the new capability, not just the row count.
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 5
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 3
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='RFI'") == 2
+    check("fct_RfiSubmittal unions submittals AND RFIs, split by ItemType")
+
+    # ItemKey is only unique WITHIN an arm - Procore numbers RFIs and submittals
+    # independently, so the model keys on the pair.
+    assert one(con, "SELECT COUNT(*) FROM (SELECT DISTINCT ItemType, ItemKey "
+                    "FROM fct_RfiSubmittal)") == 5
+    check("ItemType + ItemKey is unique across both arms")
+
+    # The RFI arm must behave identically to the submittal arm - same derivations, not a
+    # near-copy that drifts.
+    assert one(con, "SELECT IsOpen FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R1'") is True
+    assert one(con, "SELECT IsOpen FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") is False
+    check("the RFI arm derives IsOpen the same way the submittal arm does")
 
     # Open is derived from the data (no response yet), not from status text, which varies
     # by Procore configuration.

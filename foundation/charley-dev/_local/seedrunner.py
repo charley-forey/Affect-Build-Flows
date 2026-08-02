@@ -123,6 +123,15 @@ SOURCE_FIXTURES = (
     ) AS t(project_id, item_id, item_number, subject, status_label, cost_code_id,
            created_date, due_date, responded_date)""",
 
+    # RFIs are the second arm of fct_RfiSubmittal. Fixtures mirror the submittal shapes -
+    # one open, one answered - plus the priority column that only RFIs carry, so the union
+    # is exercised on both arms rather than only on the one that existed first.
+    """CREATE OR REPLACE VIEW sv_rfis AS SELECT * FROM (VALUES
+        ('P1','R1','RFI-1','Slab edge detail','Open',  'High',  'CC1', DATE '2025-05-03', DATE '2025-05-17', NULL),
+        ('P1','R2','RFI-2','Closed one',      'Closed','Normal', NULL, DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-10')
+    ) AS t(project_id, item_id, item_number, subject, status_label, priority, cost_code_id,
+           created_date, due_date, responded_date)""",
+
     """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
         ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress'),
         ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress'),
