@@ -1,145 +1,145 @@
 # Build status
 
-Where charley-dev actually is. Updated as phases land — the roadmap lives in the approved
-plan; this is what exists on disk and what has been verified.
-
-## Verified about the environment (2026-08-01)
-
-Checked directly against the Fabric REST API with the `az` token, not assumed:
-
-| Check | Result |
-|---|---|
-| `az` login | Live — `cforey-c@affect-group.com` (Affect tenant) |
-| Workspace `Build` | `1f7caed6-f88a-4e52-bc83-9a498a165301`, on capacity |
-| Folder `charley-dev` | `25dd1e34-bd57-43ca-aa29-c8fd33013101` — exists, **0 items** |
-| `Bronze_Lakehouse` | `4256b1ed-3884-4e26-96b5-aac4d8e6281f`, schema-enabled (`dbo`) |
-| `Silver_Lakehouse` | `2e05dca7-ff80-4646-b711-6681dd4993e1` |
-| SQL endpoint | `lmrkfmsojpwefossy7q4fxvfqa-22xhyh4k7bje5pedtjeyufstae.datawarehouse.fabric.microsoft.com` |
-
-> **`dashboard.md` lists "Fabric workspace access provisioned" as an open blocker. It is
-> not.** That should be ticked, and the Phase 0 plan re-read in that light — several items
-> were sequenced behind it.
-
-## Built and verified
-
-| Area | What exists | Verified by |
-|---|---|---|
-| Platform library | `merge_delta` (idempotent Delta MERGE), watermarks, DQ expectations, parent-scope resolution | 4 self-checks |
-| Procore registry | 36 endpoints, every path cited to the cheatsheet; 7 incremental | 7 compatibility checks |
-| Gold seeds | `dim_Date`, `dim_Owner`, `dim_ActivityCategory`, `dim_ScorecardWeight`, `dim_ScorecardBand` (+ `dim_Trade`/`dim_Status` reused from `src/procore/sql`) | 33 assertions |
-| Ingestion notebook | `cd_01_extract_procore.ipynb` — generated, compiles, no stored outputs | generator asserts |
-| Lakehouses | `CD_Bronze` / `CD_Silver` / `CD_Gold` `.platform` definitions | JSON validated |
-| D1 deliverable | `_docs/endpoint-inventory.md`, generated from the registry | regenerates clean |
-
-Run everything: `python foundation/charley-dev/_local/run_tests.py` → **6 suites, 40 checks.**
-
-The seed assertions are mutation-tested: five deliberate regressions (unsummed weights,
-integer schedule bands, a re-opened band gap, an untrimmed trade name, a missing calendar
-day) are each caught. A check that cannot fail is decoration.
-
-## Defects fixed so far, and how
-
-| Excel defect | Fix | Where |
-|---|---|---|
-| #1a Schedule Performance always scores 3/3 | Bands are fractions (0.05 / 0.10), not integers | `06_dim_scorecardband.sql` |
-| #1b Completion Variance always scores 0 | 0 days now falls in the 3-point band | `06_dim_scorecardband.sql` |
-| #4 Three different month anchors | One contiguous `dim_Date`, 2,922 days, no gaps | `00_dim_date.sql` |
-| #5 `TODAY()` makes reports non-reproducible | `MonthOffset` relative to a real calendar | `00_dim_date.sql` |
-| #9 Twelve trade names carry trailing whitespace | Seeded pre-trimmed, asserted | `src/procore/sql/20_gold_dim_trade.sql` |
-| Full-reload ingestion | `merge_delta` upserts on the natural key | `fabric_common.py` |
-| Hard-coded credentials | `get_secret()` — Key Vault in Fabric, env var locally | `fabric_common.py` |
-
-### Two new findings
-
-Both surfaced while seeding the scorecard, neither previously recorded:
-
-1. **The Observations bands leave the value 5 unscored** — the workbook reads `< 5`,
-   `6–10`, `>= 11`.
-2. **The Daily Reports bands leave the value 2 unscored** — `< 2`, `3–4`, `>= 5`.
-
-Closed here so the bands tile the number line with no hole, and asserted. Worth confirming
-Affect intended `<= 5` and `<= 2`.
-
-## Not built yet
-
-Stated plainly so nobody plans around something that does not exist:
-
-| Area | Status |
-|---|---|
-| Silver transforms (`cd_10_bronze_to_silver`) | Not started |
-| Fact tables — `fct_RfiSubmittal` onward | Not started (`src/procore/sql/30_gold_fct_rfisubmittal.sql` is the slice-1 prototype to adapt) |
-| Sage dataflow (`CD_Sage_Ingest`) | Not started — needs the on-prem gateway confirmed |
-| Outbuild + SharePoint ingestion | Not started |
-| Semantic model TMDL | Not started |
-| Reports (Monthly Progress, Vendor & Insurance) | Not started |
-| Orchestration pipeline | Not started |
+What exists, what is verified, and what is not built yet.
 
 ## Live in Fabric
 
-Workspace `Build`, folder `charley-dev`. **62 items in the workspace; nothing outside
-`charley-dev` touched.**
+Workspace `Build`, folder `charley-dev` (`25dd1e34-…`). **65 items in the workspace;
+nothing outside `charley-dev` has been touched.**
 
-| Item | Type | Note |
+| Item | Type | Contents |
 |---|---|---|
-| `CD_Bronze_Lakehouse` | Lakehouse | schema-enabled (`dbo`) |
-| `CD_Silver_Lakehouse` | Lakehouse | schema-enabled (`dbo`) |
-| `CD_Gold_Lakehouse` | Lakehouse | schema-enabled (`dbo`) — holds the 7 seeded dimensions |
-| `cd_20_seed_gold` | Notebook | generated from the `.sql`, asserts its own row counts |
+| `CD_Bronze_Lakehouse` | Lakehouse | schema-enabled, awaiting Procore credentials |
+| `CD_Silver_Lakehouse` | Lakehouse | schema-enabled, awaiting our own ingestion |
+| `CD_Gold_Lakehouse` | Lakehouse | **16 tables, populated with real data** |
+| `cd_20_seed_gold` | Notebook | 7 seed dimensions; asserts its own row counts |
+| `cd_30_build_gold` | Notebook | 9 dimensions/facts + integrity checks; publishes the schema |
+| `Affect Project Report` | SemanticModel | Direct Lake, 17 tables, 30 measures, 14 relationships |
+| `Monthly Progress Report` | Report | 4 pages, 42 visuals |
 
-Deploy and verify:
+### The gold model, with real data
+
+| Table | Rows | | Table | Rows |
+|---|---|---|---|---|
+| `dim_Date` | 7,670 | | `fct_BudgetLine` | 404 |
+| `dim_Project` | 17 | | `fct_ChangeOrder` | 1,812 |
+| `dim_Vendor` | 126 | | `fct_Invoice` | 117 |
+| `dim_CostCode` | 4,837 | | `fct_RfiSubmittal` | 2,242 |
+| `dim_Trade` | 29 | | `fct_Milestone` | 52 |
+| `dim_Status` | 32 | | `fct_FinancialPeriod` | 128 |
+| `dim_Owner` | 10 | | `dim_ScorecardWeight` | 9 |
+| `dim_ActivityCategory` | 28 | | `dim_ScorecardBand` | 27 |
+
+Source is the existing `Silver_Lakehouse`, **read-only**, so the model could be validated
+against real numbers before Procore credentials land. When our own ingestion populates
+`CD_Silver`, only `sql/silver/00_source_views.sql` changes — no gold file moves.
+
+## How to run it
 
 ```bash
-python foundation/charley-dev/_local/deploy.py --verify        # items + schema check
-python foundation/charley-dev/_local/deploy_seeds.py --apply   # rebuild + rerun the seeds
+python foundation/charley-dev/_local/run_tests.py         # 7 suites, offline, no Fabric
+python foundation/charley-dev/_local/deploy.py --verify   # items + schema check
+python foundation/charley-dev/_local/deploy_seeds.py --apply
+python foundation/charley-dev/_local/deploy_gold.py --apply
+python foundation/charley-dev/_local/deploy_model.py --apply
+python foundation/charley-dev/_local/deploy_report.py --apply
+python foundation/charley-dev/_local/validate_model.py    # reframe + DAX assertions
+python foundation/charley-dev/_local/deploy_gold.py --diag # last run's diagnostics
 ```
 
-Both are idempotent, dry-run by default, and refuse to write outside the `charley-dev`
-folder.
+Every deploy script is idempotent, dry-run by default, and refuses to write outside the
+`charley-dev` folder.
 
-**The seed run verifies itself.** A notebook that prints "0 rows" still reports
-Completed, so the final cell asserts the exact row counts the offline suite checked, plus
-the weights summing to 1.00. Proven by injecting a wrong expected count and confirming the
-run fails — so `Completed` means the tables exist at the right size, not merely that the
-SQL parsed.
+## Verification
 
-### Found only by running it in Fabric
+**Offline — 7 suites, no network, no Fabric.** The `.sql` runs through DuckDB via three
+macros, so the tests exercise the *production* Spark SQL rather than a re-implementation.
+33 seed assertions, 29 gold assertions (two reproducing the reconciliation gate exactly:
+Current Contract 9,116,960.48 and Contract Growth 3.60%), 7 extractor-contract checks, and
+4 library self-checks. Mutation-tested: five deliberate regressions are each caught.
 
-Exactly the class of problem the plan said offline testing could not cover:
+**In Fabric — the runs assert themselves.** A notebook that builds empty tables still
+reports Completed, so both notebooks check their own output and fail the run otherwise.
+Currently: expected row counts, zero orphans, every `MonthStart` resolving to `dim_Date`,
+no sentinel dates surviving. Proven by injecting a wrong expected count and confirming the
+run fails.
 
-1. **Bare `VARCHAR` is invalid in Spark** — it wants `STRING`. 36 casts affected. DuckDB
-   accepts `STRING` too, so one spelling now serves both engines.
-2. **Long-running-operation `Location` headers are absolute** and point at a different
-   host (a regional `wabi-*` redirect); they must be followed as given.
-3. **`enableSchemas` is creation-only** — the first three lakehouses came out without
-   schemas and had to be dropped and recreated.
-4. **Deleting an item does not release its name** — Fabric returns a retriable 409 for
-   some minutes, so `deploy.py` retries on it.
+**Live DAX — 6 checks.** `validate_model.py` reframes the model and queries it: all tables
+readable at expected counts, all 26 queried measures evaluate, `[Budget Variance]` equals
+Budget − Spent, `[Total Billed]` reconciles to Paid + Outstanding, and `DATEADD` over
+`dim_Date` works — the real proof that `dim_Date` replaced the workbook's `AU4`
+`INDEX/MATCH` mechanic.
 
-## First-run checks, once anything is pushed to Fabric
+**Isolation.** `git status` shows nothing modified outside `charley-dev/`; every deploy
+asserts the target folder before writing.
 
-The offline suite verifies logic. These need a live tenant and cannot be done here:
+## Findings for Affect
 
-1. **Spark dialect.** The `.sql` runs through DuckDB with two macros; Spark edge cases
-   surface on first execution.
-2. **Live Procore field names.** Paths are verified against the cheatsheet; the JSON field
-   names inside each payload have never been checked against Affect's tenant.
-3. **Row-count parity** against the existing lakehouses (Bronze 29,307 / Silver 29,917 as
-   of 2026-08-01) for the 13 endpoints that overlap. A gap means one of the two
-   extractions is wrong — either is worth knowing.
-4. **Isolation gate.** Re-run `foundation/fabric_backup.py` to a scratch directory and
-   diff. Expect zero changes outside `charley-dev/`.
+### Excel defects now fixed
 
-## Environment gaps to close
+| Defect | Fix |
+|---|---|
+| #1a Schedule Performance always scored 3/3 | Bands are fractions (`0.05`/`0.10`), not integers |
+| #1b Completion Variance always scored 0 | 0 days now falls in the 3-point band |
+| #4 Three different month anchors | One contiguous `dim_Date`, 7,670 days, no gaps |
+| #5 `TODAY()` non-reproducibility | `MonthOffset` against a real calendar |
+| #6 Inverted milestone dates never flagged | `HasDateInversion`, surfaced on the DQ page |
+| #7 `"NA"` string sentinels in date columns | Floored to real NULLs at the silver boundary |
+| #9 Trailing whitespace on 12 trades | Seeded pre-trimmed, asserted |
+| Full-reload ingestion | `merge_delta` upserts on the natural key |
+| Hard-coded credentials | `get_secret()` — Key Vault in Fabric, env var locally |
 
-- `pyodbc` + Microsoft ODBC Driver 18 — needed for local SQL-endpoint verification.
-- **Fabric MCP server is healthy but its tools bind at session start.**
-  `claude mcp list` reports `fabric: ✔ Connected`, and the server runs fine
-  (`uvx --from ms-fabric-mcp-server[sql] ms-fabric-mcp-server --help` works). A session
-  that starts *before* it finishes connecting never gets the tool schemas — restart
-  Claude Code and the ~57 tools appear. Nothing is wrong with the `az` login.
+### New findings — none previously recorded
 
-  Worth knowing regardless: the REST path in `deploy.py` is the better mechanism for
-  *creating* items, because it is committed, idempotent, reviewable in a diff, and
-  refuses to write outside `charley-dev`. The MCP tools are more useful for
-  *exploration* — `execute_sql_query` against the SQL endpoint, `execute_dax_query`
-  against a model — which is exactly what the reconciliation gate will need.
+1. **Sentinel dates in the submittals data.** Dates before 1582-10-15, which Spark refuses
+   to read from Parquet at all. Placeholders for "unknown", now floored to NULL.
+2. **2 projects have no Sage crosswalk entry** — they cannot join to any financial data
+   until the crosswalk is extended.
+3. **70 cost codes are absent from master data.**
+4. **23 AR invoices reference a Sage job that resolves to no project.**
+5. **The scorecard bands have holes** — Observations leaves the value 5 unscored, Daily
+   Reports leaves 2. Closed so the bands tile; worth confirming intent.
+
+Findings 2–4 are visible on the hidden Data Quality page. All would have been invisible in
+the Excel — 22 facts referencing unmastered keys would simply have been dropped from a
+join, understating budgets and change orders with no error anywhere.
+
+## Not built yet
+
+| Area | Status |
+|---|---|
+| Procore ingestion **run** | Notebook and 36-endpoint registry are built and tested; needs `PROCORE_CLIENT_ID`/`SECRET` in Key Vault to execute |
+| Silver transforms (`cd_10_bronze_to_silver`) | Not needed until our own bronze is populated |
+| RFIs | In the registry, never ingested — no RFI data exists anywhere in the warehouse yet |
+| Sage dataflow (`CD_Sage_Ingest`) | Needs the on-prem gateway confirmed |
+| Outbuild + SharePoint ingestion | Not started; Outbuild data reached gold via the existing Silver |
+| `man_*` manual tables | Blocked on the SharePoint decision (~40% of the report) |
+| Orchestration pipeline | Not started; notebooks run in documented order |
+| Scorecard measures | Bands and weights are seeded; the 9 category measures are not written |
+
+## Environment notes
+
+- **Fabric MCP server is healthy** (`claude mcp list` → `✔ Connected`) but its tools bind
+  at session start. The committed REST path in `deploy.py` is the better mechanism for
+  *creating* items anyway — idempotent, reviewable as a diff, and folder-scoped. MCP earns
+  its keep on exploration (`execute_sql_query`, `execute_dax_query`).
+- `pyodbc` + ODBC Driver 18 would allow local SQL-endpoint queries; not required, since
+  `validate_model.py` covers the same ground through DAX.
+
+## Fabric behaviours worth knowing
+
+Each of these failed silently or misleadingly, and cost real time:
+
+1. **Direct Lake does not support calculated tables.** The model deploys, reports success,
+   and loads *no tables at all*. Every DAX query returns "Failed to resolve name".
+2. **`entityName` binds to the physical table, and Spark lowercases table names on write.**
+   Fails only at reframe.
+3. **A deployed model is not loaded until it is reframed.** A correct definition is not the
+   same as a working model.
+4. **Partition type cannot change in place** — calculated ↔ Direct Lake requires recreation.
+5. **`enableSchemas` is creation-only** on a lakehouse.
+6. **A deleted item's name is held for minutes** — retriable 409.
+7. **Long-running-operation `Location` headers are absolute** and point at a different host.
+8. **Bare `VARCHAR` is invalid in Spark** — it wants `STRING`.
+9. **The jobs API reports statement failures with no cell detail** — hence the diagnostics
+   written to `Files/_diag/` and downloaded over the OneLake DFS API.
