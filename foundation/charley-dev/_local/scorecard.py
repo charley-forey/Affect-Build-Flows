@@ -139,13 +139,21 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Observations",
-            "SUM ( man_QualityMonthly[Observations] )",
+            # NOW FROM THE FACT, not the hand-typed table. This is defect #2 retired:
+            # QUALITY!D5:D6 read SAFETY orientations onto the quality tab, and a count
+            # sourced from the observation records cannot make that mistake.
+            "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), "
+            "fct_QualityItem[ItemType] = \"Observation\" ), 0 )",
             '"#,0"',
-            "QUALITY!D - Procore /observations/items; fixes defect #2 on arrival",
+            "Procore /observations/items - was QUALITY!D, typed by hand",
         ),
         (
             "Avg Observation Days Open",
-            "AVERAGE ( man_QualityMonthly[AvgDaysToClose] )",
+            # Averaged over CLOSED items only. Mixing open and closed would blend "how long
+            # has this been outstanding" with "how long did that take to close" - two
+            # different questions with one misleading answer.
+            "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), "
+            "fct_QualityItem[DaysOpen] )",
             '"#,0.0"',
             "QUALITY!D39 - typed by hand today",
         ),

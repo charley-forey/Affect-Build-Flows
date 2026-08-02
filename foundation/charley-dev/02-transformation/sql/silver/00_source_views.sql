@@ -200,3 +200,32 @@ SELECT
     CAST(`Vendor ID`   AS STRING) AS sage_vendor_id,
     CAST(`Vendor Name` AS STRING) AS sage_vendor_name
 FROM delta.`{SILVER_ABFSS}/Dim_Sage_Vendors`;
+
+
+-- ---------------------------------------------------------------------------
+-- FIELD OPERATIONS - EMPTY under this source
+-- ---------------------------------------------------------------------------
+--
+-- No observation or punch-item data exists anywhere in the existing warehouse; it arrived
+-- with our own Procore ingestion (850 and 1,469 rows). Declared with the right column types
+-- rather than omitted, so gold/25_fct_qualityitem.sql runs unchanged under both sources -
+-- a missing view is a hard failure, an empty one is an empty fact.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_observations AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS observation_id,
+       CAST(NULL AS STRING) AS observation_number, CAST(NULL AS STRING) AS title,
+       CAST(NULL AS STRING) AS observation_type, CAST(NULL AS STRING) AS status_label,
+       CAST(NULL AS STRING) AS priority, CAST(NULL AS STRING) AS trade,
+       CAST(NULL AS STRING) AS assignee_name, CAST(NULL AS DATE) AS created_date,
+       CAST(NULL AS DATE) AS due_date, CAST(NULL AS DATE) AS closed_date
+WHERE 1=0;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_punch_items AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS punch_item_id,
+       CAST(NULL AS STRING) AS punch_item_number, CAST(NULL AS STRING) AS title,
+       CAST(NULL AS STRING) AS punch_item_type, CAST(NULL AS STRING) AS status_label,
+       CAST(NULL AS STRING) AS priority, CAST(NULL AS STRING) AS trade,
+       CAST(NULL AS STRING) AS manager_name, CAST(NULL AS STRING) AS cost_code_id,
+       CAST(NULL AS DATE) AS created_date, CAST(NULL AS DATE) AS due_date,
+       CAST(NULL AS DATE) AS closed_date
+WHERE 1=0;

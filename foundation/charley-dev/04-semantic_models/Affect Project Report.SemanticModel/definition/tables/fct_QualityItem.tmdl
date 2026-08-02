@@ -1,0 +1,112 @@
+table fct_QualityItem
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ItemType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemType
+
+	column ItemKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemKey
+
+	column ItemNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemNumber
+
+	column Title
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Title
+
+	column ItemCategory
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemCategory
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column Priority
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Priority
+
+	column Trade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Trade
+
+	column AssignedTo
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AssignedTo
+
+	column CostCodeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCodeKey
+
+	column CreatedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CreatedDate
+		formatString: yyyy-mm-dd
+
+	column DueDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: DueDate
+		formatString: yyyy-mm-dd
+
+	column ClosedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ClosedDate
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HasOutOfRangeDate
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasOutOfRangeDate
+
+	column IsOpen
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsOpen
+
+	column DaysOpen
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysOpen
+
+	column IsPastDue
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsPastDue
+
+	column DaysPastDue
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysPastDue
+
+	partition fct_QualityItem = entity
+		mode: directLake
+		source
+			entityName: fct_qualityitem
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -27,7 +27,21 @@ from make_notebooks import cell, notebook  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
-SILVER_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "silver" / "10_procore_silver.sql"
+SILVER_DIR = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
+# Every silver transform, in filename order. Prefixes carry meaning (naming-standards.md):
+# 10_ is the Procore core, 20_ field operations. 00_/01_ are the gold SOURCE views and
+# belong to deploy_gold, not here - globbing the whole folder would pull them in and fail
+# on placeholders this notebook never substitutes.
+#
+# 30_manual_silver.sql is DELIBERATELY EXCLUDED. It reads cd_bronze_man_*, which comes from
+# ten SharePoint lists that live in Affect's tenant and need SharePoint admin rights to
+# create (_docs/sharepoint-lists.md). Including it fails all eleven statements with
+# TABLE_OR_VIEW_NOT_FOUND, which would bury a real failure in expected noise.
+#
+# The empty-stub trick used for the Procore tables does not work here: the manual parsers
+# read STRUCT columns (ProjectKey.Title, Editor.Title), and a stub of NULL scalars cannot
+# satisfy them. Add "30" below the day the lists exist.
+SILVER_FILES = sorted(p for p in SILVER_DIR.glob("*.sql") if p.name[:2] in ("10", "20"))
 
 NOTEBOOK_NAME = "cd_10_bronze_to_silver"
 
@@ -39,6 +53,9 @@ BRONZE_TABLES = [
     "cd_bronze_procore_cost_codes", "cd_bronze_procore_prime_contracts",
     "cd_bronze_procore_prime_change_orders", "cd_bronze_procore_budget_detail_rows",
     "cd_bronze_procore_submittals", "cd_bronze_procore_rfis",
+    # Field operations - the quality and safety halves of the scorecard.
+    "cd_bronze_procore_observations", "cd_bronze_procore_punch_items",
+    "cd_bronze_procore_incidents", "cd_bronze_procore_manpower_daily_totals",
 ]
 BRONZE_SCHEMA = ("_key STRING, _project_id STRING, payload STRING, "
                  "_ingested_at TIMESTAMP, _batch_id STRING, _row_hash STRING")
@@ -140,18 +157,24 @@ for t in {BRONZE_TABLES!r}:
         ),
     ]
 
-    body = "\n".join(
-        f"run_sql({json.dumps('silver:' + str(i))}, {json.dumps(s)})\n"
-        for i, s in enumerate(statements(SILVER_SQL.read_text(encoding="utf-8")))
-    )
-    cells.append(cell(body))
+    # One cell per .sql file, labelled with its filename. Labels matter: the run diag
+    # records the failing step, and 'silver:7' says far less than
+    # '20_fieldops_silver.sql:2' when a statement fails at 6am.
+    for path in SILVER_FILES:
+        body = "\n".join(
+            f"run_sql({json.dumps(path.name + ':' + str(i))}, {json.dumps(s)})\n"
+            for i, s in enumerate(statements(path.read_text(encoding="utf-8")))
+        )
+        cells.append(cell(f"# --- {path.name} ---\n{body}"))
 
     cells.append(
         cell(
             """
 tables = ["cd_silver_projects", "cd_silver_vendors", "cd_silver_cost_codes",
           "cd_silver_prime_contracts", "cd_silver_prime_change_orders",
-          "cd_silver_budgets", "cd_silver_submittals", "cd_silver_rfis"]
+          "cd_silver_budgets", "cd_silver_submittals", "cd_silver_rfis",
+          "cd_silver_observations", "cd_silver_punch_items",
+          "cd_silver_incidents", "cd_silver_manpower_daily"]
 
 counts = {}
 for t in tables:
@@ -191,9 +214,9 @@ def main() -> int:
 
     tok = dp.token()
     lh = silver_lakehouse()
-    stmts = statements(SILVER_SQL.read_text(encoding="utf-8"))
     print(f"silver lakehouse {lh['id']}")
-    print(f"{len(stmts)} statement(s) from {SILVER_SQL.name}")
+    for path in SILVER_FILES:
+        print(f"  {path.name:<28} {len(statements(path.read_text(encoding='utf-8')))} statement(s)")
 
     nb = ds.attach(build_notebook(), lh, dp.WORKSPACE_ID)
     nb["metadata"]["dependencies"]["lakehouse"]["default_lakehouse_name"] = "CD_Silver_Lakehouse"

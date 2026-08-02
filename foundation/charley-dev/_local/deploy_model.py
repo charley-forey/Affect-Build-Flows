@@ -53,7 +53,7 @@ MODEL_TABLES = [
     "dim_Date", "dim_Project", "dim_Vendor", "dim_CostCode", "dim_Trade", "dim_Status",
     "dim_Owner", "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
     "fct_BudgetLine", "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal",
-    "fct_Milestone", "fct_FinancialPeriod",
+    "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem",
     # The ~40% that lives nowhere but the spreadsheet. Empty today; bound now so the model
     # and the scorecard are complete in shape before a single row is entered.
     "man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
@@ -74,6 +74,8 @@ RELATIONSHIPS = [
     ("fct_Invoice", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_Invoice", "MonthStart", "dim_Date", "Date"),
     ("fct_RfiSubmittal", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_QualityItem", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_QualityItem", "MonthStart", "dim_Date", "Date"),
     ("fct_RfiSubmittal", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_RfiSubmittal", "MonthStart", "dim_Date", "Date"),
     ("fct_Milestone", "ProjectKey", "dim_Project", "ProjectKey"),
@@ -161,6 +163,28 @@ MEASURES = [
     # Data-quality measures. These drive the hidden diagnostics page - surfacing bad data
     # rather than letting it flow silently into a leadership rollup, which is exactly how
     # the workbook's defects survived.
+    # Quality detail. `Observations` and `Avg Observation Days Open` are NOT here - they
+    # already exist in scorecard.py and were repointed at this same fact. Defining them in
+    # both places is what the TMDL merge rejects, and rightly: the model would have had a
+    # scorecard reading zero from the manual table while a page read 850 from the fact.
+    ("Punchlist Items",
+     "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), "
+     "fct_QualityItem[ItemType] = \"PunchItem\" ), 0 )",
+     '"#,0"', "QUALITY!Table18 - typed by hand today"),
+    ("Open Quality Items",
+     "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), "
+     "fct_QualityItem[IsOpen] = TRUE ), 0 )",
+     '"#,0"', "observations and punch items still outstanding"),
+    ("Quality Items Past Due",
+     "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), "
+     "fct_QualityItem[IsPastDue] = TRUE ), 0 )",
+     '"#,0"', "open AND past their due date"),
+    # Over past-due items only - averaging across everything would dilute the number with
+    # items that are not late at all.
+    ("Avg Days Past Due",
+     "AVERAGEX ( FILTER ( fct_QualityItem, fct_QualityItem[IsPastDue] = TRUE ), "
+     "fct_QualityItem[DaysPastDue] )",
+     '"0.0"', "QUALITY!D38:E38 - hand-computed today"),
     # Cross-source coverage. These count integration GAPS, not data-entry errors, and each
     # one has a financial consequence: a project missing from Sage contributes zero revenue
     # to every measure on every other page without erroring.

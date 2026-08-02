@@ -171,6 +171,26 @@ SOURCE_FIXTURES = (
         ('SV1', 'ACME CONCRETE LLC')
     ) AS t(sage_vendor_id, sage_vendor_name)""",
 
+    # Field ops. Values exercise the paths that matter: one open and past due, one closed
+    # (so IsPastDue must be FALSE even though its due date has gone), and a punch item with
+    # no cost code.
+    """CREATE OR REPLACE VIEW sv_observations AS SELECT * FROM (VALUES
+        ('P1','OB1','1','Site walk finding','Safety','OPEN','High','Concrete','Alex R',
+         DATE '2025-05-01', DATE '2025-05-10', NULL),
+        ('P1','OB2','2','Closed finding',    'Quality','CLOSED','Normal','Metals','Sam T',
+         DATE '2025-04-01', DATE '2025-04-05', DATE '2025-04-04')
+    ) AS t(project_id, observation_id, observation_number, title, observation_type,
+           status_label, priority, trade, assignee_name, created_date, due_date, closed_date)""",
+
+    """CREATE OR REPLACE VIEW sv_punch_items AS SELECT * FROM (VALUES
+        ('P1','PI1','1','Fix grid','Punch','OPEN','High','Concrete','Pat M','CC1',
+         DATE '2025-05-02', DATE '2025-05-09', NULL),
+        ('P1','PI2','2','No cost code','Punch','CLOSED','Low','Metals','Pat M',NULL,
+         DATE '2025-04-02', DATE '2025-04-08', DATE '2025-04-07')
+    ) AS t(project_id, punch_item_id, punch_item_number, title, punch_item_type,
+           status_label, priority, trade, manager_name, cost_code_id,
+           created_date, due_date, closed_date)""",
+
     """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
         ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress'),
         ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress'),

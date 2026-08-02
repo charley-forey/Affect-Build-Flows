@@ -285,13 +285,44 @@ def test_crosswalks(con) -> None:
     assert one(con, "SELECT SageMatchMethod FROM dim_CostCodeCrosswalk LIMIT 1") == "PENDING_SAGE_INGEST"
     check("dim_CostCodeCrosswalk parses the CSI division and flags codes that do not")
 
+
+def test_fct_qualityitem(con) -> None:
+    """Observations + punch items, the quality half of the scorecard.
+
+    Neither exists anywhere in the existing warehouse, so this fact is entirely new
+    capability - and it retires workbook defect #2, where QUALITY!D5:D6 read SAFETY
+    orientations. Sourcing the counts from the item records makes that class of mistake
+    impossible rather than merely corrected.
+    """
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem") == 4
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='Observation'") == 2
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='PunchItem'") == 2
+    check("fct_QualityItem unions observations and punch items, split by ItemType")
+
+    # Open is derived from ClosedDate, not from status text - Procore's status vocabulary
+    # is configurable per company, so a rule keyed to the word "closed" breaks on a rename.
+    assert one(con, "SELECT IsOpen FROM fct_QualityItem WHERE ItemKey='OB1'") is True
+    assert one(con, "SELECT IsOpen FROM fct_QualityItem WHERE ItemKey='PI2'") is False
+    check("fct_QualityItem[IsOpen] derives from ClosedDate, not status text")
+
+    # A late-but-closed item is not outstanding. Getting this wrong inflates every
+    # past-due count with work that is already finished.
+    assert one(con, "SELECT IsPastDue FROM fct_QualityItem WHERE ItemKey='OB2'") is False
+    assert one(con, "SELECT IsPastDue FROM fct_QualityItem WHERE ItemKey='PI1'") is True
+    check("IsPastDue counts only items still open")
+
+    # A punch item with no cost code must survive - dropping it would quietly shrink
+    # every quality count on projects that do not code their punch list.
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE CostCodeKey IS NULL") == 3
+    check("items without a cost code are kept, not dropped")
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity, test_crosswalks):
+        test_referential_integrity, test_crosswalks, test_fct_qualityitem):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

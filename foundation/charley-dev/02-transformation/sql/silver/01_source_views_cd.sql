@@ -170,3 +170,22 @@ SELECT
     CAST(`Vendor ID`   AS STRING) AS sage_vendor_id,
     CAST(`Vendor Name` AS STRING) AS sage_vendor_name
 FROM delta.`{SILVER_ABFSS}/Dim_Sage_Vendors`;
+
+
+-- ---------------------------------------------------------------------------
+-- FIELD OPERATIONS - the quality and safety halves of the scorecard
+-- ---------------------------------------------------------------------------
+--
+-- Live from our own Procore ingestion as of 2026-08-02: 850 observations, 1,469 punch
+-- items, 3 incidents. None of this exists in the existing warehouse.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_observations AS
+SELECT project_id, observation_id, observation_number, title, observation_type,
+       status_label, priority, trade, assignee_name, created_date, due_date, closed_date
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_observations`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_punch_items AS
+SELECT project_id, punch_item_id, punch_item_number, title, punch_item_type,
+       status_label, priority, trade, manager_name, cost_code_id,
+       created_date, due_date, closed_date
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_punch_items`;

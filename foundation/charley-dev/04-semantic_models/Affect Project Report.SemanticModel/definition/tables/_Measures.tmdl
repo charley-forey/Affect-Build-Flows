@@ -107,6 +107,22 @@ table _Measures
 	measure 'Avg Milestone Progress' = AVERAGE ( fct_Milestone[PercentComplete] )
 		formatString: "0.0%"
 
+	/// Replaces QUALITY!Table18 - typed by hand today
+	measure 'Punchlist Items' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[ItemType] = "PunchItem" ), 0 )
+		formatString: "#,0"
+
+	/// Replaces observations and punch items still outstanding
+	measure 'Open Quality Items' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsOpen] = TRUE ), 0 )
+		formatString: "#,0"
+
+	/// Replaces open AND past their due date
+	measure 'Quality Items Past Due' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsPastDue] = TRUE ), 0 )
+		formatString: "#,0"
+
+	/// Replaces QUALITY!D38:E38 - hand-computed today
+	measure 'Avg Days Past Due' = AVERAGEX ( FILTER ( fct_QualityItem, fct_QualityItem[IsPastDue] = TRUE ), fct_QualityItem[DaysPastDue] )
+		formatString: "0.0"
+
 	/// Replaces present in Procore AND Sage AND Outbuild
 	measure 'Projects Fully Mapped' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[SystemCount] = 3 ), 0 )
 		formatString: "#,0"
@@ -162,12 +178,12 @@ table _Measures
 	measure 'Hours Worked' = SUM ( man_SafetyMonthly[HoursWorked] )
 		formatString: "#,0"
 
-	/// Replaces QUALITY!D - Procore /observations/items; fixes defect #2 on arrival
-	measure 'Observations' = SUM ( man_QualityMonthly[Observations] )
+	/// Replaces Procore /observations/items - was QUALITY!D, typed by hand
+	measure 'Observations' = COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[ItemType] = "Observation" ), 0 )
 		formatString: "#,0"
 
 	/// Replaces QUALITY!D39 - typed by hand today
-	measure 'Avg Observation Days Open' = AVERAGE ( man_QualityMonthly[AvgDaysToClose] )
+	measure 'Avg Observation Days Open' = AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), fct_QualityItem[DaysOpen] )
 		formatString: "#,0.0"
 
 	/// Replaces SCORECARD CALC!E28 - Procore /daily_log_headers derives this

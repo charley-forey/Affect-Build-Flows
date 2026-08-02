@@ -234,7 +234,7 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           # The crosswalks are how "integrated across three systems" becomes verifiable
           # rather than asserted, so they are checked like any other gold table.
           "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
-          "fct_BudgetLine",
+          "fct_BudgetLine", "fct_QualityItem",
           "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal", "fct_Milestone",
           "fct_FinancialPeriod"]
 
