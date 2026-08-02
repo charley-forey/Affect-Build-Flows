@@ -45,10 +45,13 @@ The design work was already done. It had just never been applied.
 - **Two synced slicers on every page** — project and month. There was no month slicer
   anywhere, so the report could not be set to a reporting period; and each page carried its
   own project slicer or none, so a selection did not survive a page change.
-- **A footer on every page** naming the reporting period and the time gold was built. The
-  build time is stamped into the anchor table, not read from `NOW()` — `NOW()` is when the
-  report was *viewed*, which is the workbook's `TODAY()` defect in a new place.
-- **Alt text on all 154 visuals**, generated from what each visual is bound to, so it
+- **A footer on every page** naming the reporting period, the time gold was built, and
+  whether the pipeline that built it has run recently enough to trust. The build time is
+  stamped into the anchor table, not read from `NOW()` — `NOW()` is when the report was
+  *viewed*, which is the workbook's `TODAY()` defect in a new place. The pipeline status is
+  text, never colour alone, and it reads "STALE" rather than going quiet: the nightly
+  pipeline once failed every night for a month while reporting itself as enabled.
+- **Alt text on all 180 visuals**, generated from what each visual is bound to, so it
   cannot drift when a field changes.
 - **Tab order on every visual**, assigned in reading order. Setting it on *some* visuals is
   worse than none: the rest fall back to z-order and a keyboard user jumps around.
@@ -65,6 +68,16 @@ The design work was already done. It had just never been applied.
 - **Schedule timeline** — a stacked-bar Gantt. See the limitation below.
 - **Budget as a matrix** rolling up by division, instead of a flat table over 4,837 cost
   codes.
+- **Vendor Insurance page**, and vendor spend sliced by cost code — a linkage that exists
+  in no single Procore object. The insurance page leads with the bad news deliberately:
+  all 105 certificates in Procore are past expiry and only 23 of 268 vendors have one on
+  file at all. Coverage ("is there a certificate") and currency ("is it in date") are
+  counted separately throughout, because a missing document and a lapsed one need
+  different follow-up. That is far more likely an abandoned module than 245 uninsured
+  subcontractors — but a compliance page that renders it as a green tick is worse than no
+  page.
+- **Insurance exposure on the Portfolio page**, so "which jobs are running subs with no
+  certificate on file" is one screen rather than seventeen.
 
 ### The scorecard shows its working
 
@@ -137,10 +150,19 @@ also asserts that the scorecard audit table sums to the headline score, that eve
 resolves a band label including the unmeasured ones, and that the S-curve ends at the total
 of period movement.
 
-**Deployed and verified in Fabric, 2026-08-02.** Seeds, model and report are live in
-`charley-dev`; `validate_model.py` reframes the deployed model and passes **16 checks**,
-including the three added in this pass. `[Last Refresh]` returns the real gold build time
-and the scorecard audit table sums to the headline score against live data.
+**Deployed and verified in Fabric, 2026-08-02.** Silver, gold, seeds, the DQ gate, the
+model and the report are all live in `charley-dev`: **37 tables, 99 measures, 12 pages, 180
+visuals**. `validate_model.py` reframes the deployed model and passes **17 checks**.
+`[Last Refresh]` returns the real gold build time and the scorecard audit table sums to the
+headline score against live data.
+
+One deployment trap worth writing down, because it cost a rebuild: `deploy_gold.py` defaults
+to `--source existing`, which reads the legacy warehouse. Under that source the direct-cost
+line, insurance and commitment views are deliberately **empty typed stubs** — the legacy
+warehouse does not hold those objects. Running the default against a lakehouse fed by our
+own ingestion silently empties seven gold tables. The verification step inside the notebook
+caught it and failed the run, which is exactly what it is for, but the correct invocation is
+`--source cd`.
 
 One thing the deployment caught that offline testing could not: relating the two scorecard
 config tables so the band table could show a category name made Power BI add a blank
