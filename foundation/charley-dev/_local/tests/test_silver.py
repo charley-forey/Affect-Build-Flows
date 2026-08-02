@@ -191,11 +191,18 @@ def test_column_contract(con) -> None:
     contract, switching gold's source breaks nine gold files at once - and it would break
     in Fabric, not here.
     """
+    # The switch file reads through abfss, not bare table names - gold's notebook runs with
+    # CD_Gold_Lakehouse as its default catalog, so an unqualified cd_silver_projects does
+    # not resolve. Match the table name wherever it appears in the FROM clause:
+    #     FROM delta.`{CD_SILVER_ABFSS}/cd_silver_projects`
+    import re
+
     required = {}
     for statement in split_statements(SWITCH_SQL.read_text(encoding="utf-8")):
-        if "FROM cd_silver_" not in statement:
-            continue
-        table = statement.split("FROM cd_silver_")[1].split()[0].strip().rstrip(";")
+        match = re.search(r"FROM\s+\S*?(cd_silver_\w+)", statement)
+        if not match:
+            continue                     # a view still sourced from the existing warehouse
+        table = match.group(1).removeprefix("cd_silver_")
         body = statement.split("SELECT", 1)[1].split("FROM")[0]
         cols = {
             part.split(" AS ")[-1].strip() if " AS " in part else part.strip()
