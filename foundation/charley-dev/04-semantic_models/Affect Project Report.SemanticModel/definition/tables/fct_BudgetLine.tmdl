@@ -1,0 +1,85 @@
+table fct_BudgetLine
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column CostCodeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCodeKey
+
+	column SnapshotDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: SnapshotDate
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column CostCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCode
+
+	column Category
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Category
+
+	column OriginalBudget
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: OriginalBudget
+
+	column BudgetModifications
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BudgetModifications
+
+	column BudgetAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BudgetAmount
+
+	column ForecastAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ForecastAmount
+
+	column CommittedAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CommittedAmount
+
+	column DirectCosts
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: DirectCosts
+
+	column SpentToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: SpentToDate
+
+	column CostToComplete
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CostToComplete
+
+	column BudgetVariance
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BudgetVariance
+
+	partition fct_BudgetLine = entity
+		mode: directLake
+		source
+			entityName: fct_budgetline
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

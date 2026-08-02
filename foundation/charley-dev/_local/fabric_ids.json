@@ -1,0 +1,21 @@
+{
+  "CD_Bronze_Lakehouse": {
+    "id": "fa946636-e143-417b-b598-5cbd31ed9990",
+    "defaultSchema": "dbo",
+    "sqlEndpoint": "lmrkfmsojpwefossy7q4fxvfqa-22xhyh4k7bje5pedtjeyufstae.datawarehouse.fabric.microsoft.com"
+  },
+  "CD_Silver_Lakehouse": {
+    "id": "8735633a-3f98-4d96-8666-abf57a1c0454",
+    "defaultSchema": "dbo",
+    "sqlEndpoint": "lmrkfmsojpwefossy7q4fxvfqa-22xhyh4k7bje5pedtjeyufstae.datawarehouse.fabric.microsoft.com"
+  },
+  "CD_Gold_Lakehouse": {
+    "id": "812ec953-5517-447e-95aa-062f7cf89b28",
+    "defaultSchema": "dbo",
+    "sqlEndpoint": "lmrkfmsojpwefossy7q4fxvfqa-22xhyh4k7bje5pedtjeyufstae.datawarehouse.fabric.microsoft.com"
+  },
+  "_workspace": {
+    "id": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+    "folder": "25dd1e34-bd57-43ca-aa29-c8fd33013101"
+  }
+}

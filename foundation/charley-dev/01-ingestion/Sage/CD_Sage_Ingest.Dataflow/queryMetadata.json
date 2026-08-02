@@ -1,0 +1,53 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "CD_Sage_Ingest",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "gatewayObjectId": "1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e",
+  "queriesMetadata": {
+    "cd_bronze_sage_acrinv": {
+      "queryId": "c9a98bf1-df4a-4daa-87fc-bfdd51774028",
+      "queryName": "cd_bronze_sage_acrinv",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_arivln": {
+      "queryId": "16d83067-113e-4310-97b9-94d9f44fbfcd",
+      "queryName": "cd_bronze_sage_arivln",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_acrpmt": {
+      "queryId": "1ed15208-c8c9-4418-95a6-63a288fe264d",
+      "queryName": "cd_bronze_sage_acrpmt",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_acpinv": {
+      "queryId": "0b19202b-32f1-4154-91a0-ebb81a54b363",
+      "queryName": "cd_bronze_sage_acpinv",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_apivln": {
+      "queryId": "b6857971-0026-4c8c-9c02-f32cbf800f73",
+      "queryName": "cd_bronze_sage_apivln",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_acppmt": {
+      "queryId": "c671ba1d-37b8-4b41-861e-3dcbe4f976e8",
+      "queryName": "cd_bronze_sage_acppmt",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_actrec": {
+      "queryId": "af31cfbe-0108-4b8c-a08f-66b70e44b5cc",
+      "queryName": "cd_bronze_sage_actrec",
+      "loadEnabled": true
+    },
+    "cd_bronze_sage_actpay": {
+      "queryId": "fc68da5a-4011-4afe-885a-454319e3eaa4",
+      "queryName": "cd_bronze_sage_actpay",
+      "loadEnabled": true
+    }
+  },
+  "connections": []
+}

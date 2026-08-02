@@ -1,0 +1,140 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "a9a74f12201a54fabac3",
+  "position": {
+    "x": 20,
+    "y": 882,
+    "z": 0,
+    "width": 1240,
+    "height": 280
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_ProjectVendor"
+                    }
+                  },
+                  "Property": "VendorName"
+                }
+              },
+              "queryRef": "bridge_ProjectVendor.VendorName",
+              "nativeQueryRef": "VendorName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_ProjectVendor"
+                    }
+                  },
+                  "Property": "TradeName"
+                }
+              },
+              "queryRef": "bridge_ProjectVendor.TradeName",
+              "nativeQueryRef": "TradeName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_ProjectVendor"
+                    }
+                  },
+                  "Property": "City"
+                }
+              },
+              "queryRef": "bridge_ProjectVendor.City",
+              "nativeQueryRef": "City"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_ProjectVendor"
+                    }
+                  },
+                  "Property": "LicenseNumber"
+                }
+              },
+              "queryRef": "bridge_ProjectVendor.LicenseNumber",
+              "nativeQueryRef": "LicenseNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_ProjectVendor"
+                    }
+                  },
+                  "Property": "IsPrequalified"
+                }
+              },
+              "queryRef": "bridge_ProjectVendor.IsPrequalified",
+              "nativeQueryRef": "IsPrequalified"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "bridge_ProjectVendor"
+                    }
+                  },
+                  "Property": "SyncedToErp"
+                }
+              },
+              "queryRef": "bridge_ProjectVendor.SyncedToErp",
+              "nativeQueryRef": "SyncedToErp"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Vendor list - prequalification and ERP sync'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

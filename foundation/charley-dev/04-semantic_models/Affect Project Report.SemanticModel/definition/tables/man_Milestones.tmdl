@@ -1,0 +1,52 @@
+table man_Milestones
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ActivityKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityKey
+
+	column MilestoneName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MilestoneName
+
+	column ContractStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ContractStart
+		formatString: yyyy-mm-dd
+
+	column ContractFinish
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ContractFinish
+		formatString: yyyy-mm-dd
+
+	column BaselineStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BaselineStart
+		formatString: yyyy-mm-dd
+
+	column BaselineFinish
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BaselineFinish
+		formatString: yyyy-mm-dd
+
+	column IsSubstantialCompletion
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsSubstantialCompletion
+
+	partition man_Milestones = entity
+		mode: directLake
+		source
+			entityName: man_milestones
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

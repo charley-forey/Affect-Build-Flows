@@ -1,0 +1,112 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "40388f6f6ef86d50e5fc",
+  "position": {
+    "x": 580,
+    "y": 252,
+    "z": 0,
+    "width": 700,
+    "height": 300
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ProjectCrosswalk"
+                    }
+                  },
+                  "Property": "ProjectName"
+                }
+              },
+              "queryRef": "dim_ProjectCrosswalk.ProjectName",
+              "nativeQueryRef": "ProjectName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ProjectCrosswalk"
+                    }
+                  },
+                  "Property": "CoverageStatus"
+                }
+              },
+              "queryRef": "dim_ProjectCrosswalk.CoverageStatus",
+              "nativeQueryRef": "CoverageStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ProjectCrosswalk"
+                    }
+                  },
+                  "Property": "SageProjectId"
+                }
+              },
+              "queryRef": "dim_ProjectCrosswalk.SageProjectId",
+              "nativeQueryRef": "SageProjectId"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ProjectCrosswalk"
+                    }
+                  },
+                  "Property": "OutbuildProjectId"
+                }
+              },
+              "queryRef": "dim_ProjectCrosswalk.OutbuildProjectId",
+              "nativeQueryRef": "OutbuildProjectId"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Every project, and what it is missing'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "e5968d63fcb972290c4e",
+  "position": {
+    "x": 20,
+    "y": 710,
+    "z": 0,
+    "width": 1240,
+    "height": 320
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "VendorKey"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.VendorKey",
+              "nativeQueryRef": "VendorKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "InsuranceType"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.InsuranceType",
+              "nativeQueryRef": "InsuranceType"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "Provider"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.Provider",
+              "nativeQueryRef": "Provider"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "PolicyNumber"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.PolicyNumber",
+              "nativeQueryRef": "PolicyNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "ExpirationDate"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.ExpirationDate",
+              "nativeQueryRef": "ExpirationDate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "ExpiryStatus"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.ExpiryStatus",
+              "nativeQueryRef": "ExpiryStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "DaysUntilExpiry"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.DaysUntilExpiry",
+              "nativeQueryRef": "DaysUntilExpiry"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Certificates - what to chase, and how overdue'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

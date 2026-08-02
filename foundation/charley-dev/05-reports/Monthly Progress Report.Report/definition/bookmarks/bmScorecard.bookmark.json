@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/1.0.0/schema.json",
+  "name": "bmScorecard",
+  "displayName": "Scorecard and how it is scored",
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "scorecard",
+    "sections": {
+      "scorecard": {
+        "visualContainers": {}
+      }
+    }
+  }
+}

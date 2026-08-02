@@ -1,0 +1,43 @@
+table dim_ScorecardBand
+
+	column CategoryKey
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: CategoryKey
+
+	column Score
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Score
+
+	column MinValue
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: MinValue
+
+	column MaxValue
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: MaxValue
+
+	column MatchValue
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MatchValue
+
+	column BandLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BandLabel
+
+	column CategoryName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CategoryName
+
+	partition dim_ScorecardBand = entity
+		mode: directLake
+		source
+			entityName: dim_scorecardband
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

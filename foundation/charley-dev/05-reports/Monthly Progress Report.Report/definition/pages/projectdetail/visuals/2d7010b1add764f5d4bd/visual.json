@@ -1,0 +1,112 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "2d7010b1add764f5d4bd",
+  "position": {
+    "x": 20,
+    "y": 544,
+    "z": 0,
+    "width": 620,
+    "height": 260
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_RfiSubmittal"
+                    }
+                  },
+                  "Property": "ItemType"
+                }
+              },
+              "queryRef": "fct_RfiSubmittal.ItemType",
+              "nativeQueryRef": "ItemType"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_RfiSubmittal"
+                    }
+                  },
+                  "Property": "ItemNumber"
+                }
+              },
+              "queryRef": "fct_RfiSubmittal.ItemNumber",
+              "nativeQueryRef": "ItemNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_RfiSubmittal"
+                    }
+                  },
+                  "Property": "Subject"
+                }
+              },
+              "queryRef": "fct_RfiSubmittal.Subject",
+              "nativeQueryRef": "Subject"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_RfiSubmittal"
+                    }
+                  },
+                  "Property": "StatusLabel"
+                }
+              },
+              "queryRef": "fct_RfiSubmittal.StatusLabel",
+              "nativeQueryRef": "StatusLabel"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'RFIs and submittals'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

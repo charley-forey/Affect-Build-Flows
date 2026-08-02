@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "7ef184aa63a4da5d76bc",
+  "position": {
+    "x": 660,
+    "y": 600,
+    "z": 0,
+    "width": 620,
+    "height": 260
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_CostCodeCrosswalk"
+                    }
+                  },
+                  "Property": "DivisionCode"
+                }
+              },
+              "queryRef": "dim_CostCodeCrosswalk.DivisionCode",
+              "nativeQueryRef": "DivisionCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_CostCodeCrosswalk"
+                    }
+                  },
+                  "Property": "CostCode"
+                }
+              },
+              "queryRef": "dim_CostCodeCrosswalk.CostCode",
+              "nativeQueryRef": "CostCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_CostCodeCrosswalk"
+                    }
+                  },
+                  "Property": "HasUnparseableCode"
+                }
+              },
+              "queryRef": "dim_CostCodeCrosswalk.HasUnparseableCode",
+              "nativeQueryRef": "HasUnparseableCode"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Cost codes - CSI division parse'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

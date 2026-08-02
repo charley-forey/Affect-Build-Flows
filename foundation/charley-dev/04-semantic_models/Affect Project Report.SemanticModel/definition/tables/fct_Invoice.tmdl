@@ -1,0 +1,76 @@
+table fct_Invoice
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column SageJobNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageJobNumber
+
+	column SentDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: SentDate
+		formatString: yyyy-mm-dd
+
+	column DueDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: DueDate
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column Description
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Description
+
+	column BillingPeriod
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BillingPeriod
+
+	column Amount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column AmountPaid
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: AmountPaid
+
+	column Balance
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Balance
+
+	column IsPaid
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsPaid
+
+	column DaysToDue
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysToDue
+
+	column HasUnmatchedProject
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasUnmatchedProject
+
+	partition fct_Invoice = entity
+		mode: directLake
+		source
+			entityName: fct_invoice
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

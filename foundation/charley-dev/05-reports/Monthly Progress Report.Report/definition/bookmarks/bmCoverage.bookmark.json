@@ -1,0 +1,14 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/bookmark/1.0.0/schema.json",
+  "name": "bmCoverage",
+  "displayName": "Where the data is missing",
+  "explorationState": {
+    "version": "1.0",
+    "activeSection": "sourcecoverage",
+    "sections": {
+      "sourcecoverage": {
+        "visualContainers": {}
+      }
+    }
+  }
+}

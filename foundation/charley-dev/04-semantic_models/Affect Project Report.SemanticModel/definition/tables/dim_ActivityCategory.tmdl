@@ -1,0 +1,33 @@
+table dim_ActivityCategory
+
+	column CategoryKey
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: CategoryKey
+
+	column Domain
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Domain
+
+	column CategoryType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CategoryType
+
+	column CategoryQualifier
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CategoryQualifier
+
+	column FullLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: FullLabel
+
+	partition dim_ActivityCategory = entity
+		mode: directLake
+		source
+			entityName: dim_activitycategory
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

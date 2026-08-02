@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "4dca4d18dc9573df9f8b",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1240,
+    "height": 34
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Direct costs are discrete transactions, so unlike the billing balances these totals are correct at any grouping. The vendor list is Procore's prequalification record, which is not the same as current insurance.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

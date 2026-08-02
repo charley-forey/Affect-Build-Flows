@@ -1,0 +1,28 @@
+table dim_Vendor
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column VendorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorName
+
+	column SageVendorId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageVendorId
+
+	column HasSageMatch
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasSageMatch
+
+	partition dim_Vendor = entity
+		mode: directLake
+		source
+			entityName: dim_vendor
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

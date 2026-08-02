@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "1f22598bd88d5a355a09",
+  "position": {
+    "x": 660,
+    "y": 260,
+    "z": 0,
+    "width": 600,
+    "height": 390
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardBand"
+                    }
+                  },
+                  "Property": "CategoryKey"
+                }
+              },
+              "queryRef": "dim_ScorecardBand.CategoryKey",
+              "nativeQueryRef": "CategoryKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardBand"
+                    }
+                  },
+                  "Property": "Score"
+                }
+              },
+              "queryRef": "dim_ScorecardBand.Score",
+              "nativeQueryRef": "Score"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardBand"
+                    }
+                  },
+                  "Property": "BandLabel"
+                }
+              },
+              "queryRef": "dim_ScorecardBand.BandLabel",
+              "nativeQueryRef": "BandLabel"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Scoring bands - corrected (defects #1a-#1c)'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "formatVersion": "202502",
+  "computeEngineSettings": {
+    "allowModernEvaluationEngine": true
+  },
+  "name": "CD_Manual_Ingest",
+  "queryGroups": [],
+  "documentLocale": "en-US",
+  "queriesMetadata": {
+    "cd_bronze_man_projects": {
+      "queryId": "d726ef8d-ef9c-4740-86bd-687b49c14fc1",
+      "queryName": "cd_bronze_man_projects",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_wins": {
+      "queryId": "64ce0fce-3cb2-4240-bf8c-6ed7974fd6a3",
+      "queryName": "cd_bronze_man_wins",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_risks": {
+      "queryId": "ce247deb-cb93-4daf-8ad5-08bed01bf480",
+      "queryName": "cd_bronze_man_risks",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_priority_items": {
+      "queryId": "44b4ec97-0122-448c-a1fd-a46da3f1bc9e",
+      "queryName": "cd_bronze_man_priority_items",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_flags": {
+      "queryId": "732bd892-76d0-4d3a-8366-9aadc51af49f",
+      "queryName": "cd_bronze_man_flags",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_survey": {
+      "queryId": "2f722c62-4a18-4463-8937-b5af594823ea",
+      "queryName": "cd_bronze_man_survey",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_safety_monthly": {
+      "queryId": "91e0526f-4f2d-482e-85b3-0958de028714",
+      "queryName": "cd_bronze_man_safety_monthly",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_quality_monthly": {
+      "queryId": "8723244c-a8f4-4d6d-907b-e9183491d94c",
+      "queryName": "cd_bronze_man_quality_monthly",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_milestones": {
+      "queryId": "83315e32-9912-4f57-9ced-40da220335f0",
+      "queryName": "cd_bronze_man_milestones",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_daily_log_compliance": {
+      "queryId": "d3363c36-380c-45fa-8368-c8dc0825879d",
+      "queryName": "cd_bronze_man_daily_log_compliance",
+      "loadEnabled": true
+    }
+  },
+  "connections": []
+}
