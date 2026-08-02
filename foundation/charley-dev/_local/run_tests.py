@@ -23,6 +23,7 @@ SUITES = [
     ("dq self-check", LIB / "dq.py"),
     ("watermark self-check", LIB / "watermark.py"),
     ("procore_scope self-check", LIB / "procore_scope.py"),
+    ("ratelimit self-check", LIB / "ratelimit.py"),
     # The agent gates guard autonomous Fabric deploys, so they are harness-critical: if a
     # gate stops firing, everything downstream of it is running unprotected.
     ("agent gates", AGENTS / "tools.py"),

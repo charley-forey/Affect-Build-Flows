@@ -100,8 +100,9 @@ def import_extractor():
     sys.path.insert(0, str(CHARLEY_DEV / "00-platform" / "lib"))
     import procore_extract  # type: ignore[import-not-found]
     import procore_scope  # type: ignore[import-not-found]
+    import ratelimit  # type: ignore[import-not-found]
 
-    return procore_extract, procore_scope
+    return procore_extract, procore_scope, ratelimit
 
 
 # ------------------------------------------------------------------ OneLake landing
@@ -140,6 +141,42 @@ def put_file(lakehouse_id: str, rel_path: str, content: bytes, tok: str) -> None
     if content:
         _dfs("PATCH", f"{base}?action=append&position=0", tok, content)
     _dfs("PATCH", f"{base}?action=flush&position={len(content)}", tok)
+
+
+# ------------------------------------------------------------------ upload without extracting
+
+def upload_only(source: Path) -> int:
+    """Land a directory of already-extracted .jsonl files. Makes zero Procore calls.
+
+    Extraction and landing are separate failures. Running out of quota after a successful
+    pull should not mean re-spending the quota to store what is already on disk - and with a
+    600/hour limit, a re-pull may not even be possible for another 35 minutes.
+    """
+    if not source.is_dir():
+        print(f"{source} is not a directory")
+        return 1
+    manifest_path = source / "_manifest.json"
+    if not manifest_path.is_file():
+        print(f"no _manifest.json in {source} - it is not an extraction output directory")
+        return 1
+
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    batch = manifest["batch"]
+    lakehouse_id = json.loads((HERE / "fabric_ids.json").read_text())["CD_Bronze_Lakehouse"]["id"]
+    tok = storage_token()
+
+    files = sorted(source.glob("*.jsonl")) + [manifest_path]
+    print(f"batch {batch}: uploading {len(files)} file(s) to Files/_landing/{batch}/")
+
+    for path in files:
+        body = path.read_bytes()
+        put_file(lakehouse_id, f"Files/_landing/{batch}/{path.name}", body, tok)
+        print(f"  {path.name:<48} {len(body) / 1024:>9.1f} KB")
+
+    print(f"\nlanded {manifest['total_rows']} row(s) across "
+          f"{len(manifest['endpoints'])} endpoint(s)")
+    print("Next: python deploy_landing.py --apply")
+    return 0
 
 
 # ------------------------------------------------------------------ pull one endpoint
@@ -193,10 +230,17 @@ def main() -> int:
     parser.add_argument("--probe", action="store_true", help="auth + project count only")
     parser.add_argument("--only", default="", help="comma-separated endpoint names")
     parser.add_argument("--out", default="", help="also write the .jsonl files to this dir")
+    parser.add_argument("--no-wait", action="store_true",
+                        help="on quota exhaustion, stop and land what you have")
+    parser.add_argument("--upload", default="",
+                        help="land an EXISTING directory of .jsonl files - no API calls")
     args = parser.parse_args()
 
+    if args.upload:
+        return upload_only(Path(args.upload))
+
     load_env()
-    px, ps = import_extractor()
+    px, ps, rl = import_extractor()
     endpoints = ps.load_registry(str(ENDPOINTS_YML))
     ps.validate_registry(endpoints)          # duplicate names, missing parents, cycles
     endpoints = ps.resolution_order(endpoints)   # parents before the children that need them
@@ -220,7 +264,9 @@ def main() -> int:
     import requests
 
     settings = px.load_settings()
-    session = requests.Session()
+    # Procore allows 600 requests/hour and a full portfolio pull needs more than that, so
+    # the session gates on the quota headers rather than discovering the wall mid-run.
+    session = rl.RateLimitedSession(requests.Session(), wait=not args.no_wait)
     print(f"host {settings.base_url}  company {settings.company_id}")
 
     token = px.fetch_token(settings, session)
@@ -258,6 +304,14 @@ def main() -> int:
                              project_ids, harvested)
             if endpoint.name in needed_as_parent:
                 harvested[endpoint.name] = raw
+        except rl.QuotaExhausted as exc:
+            # Stop cleanly and land everything already fetched. A partial batch is
+            # re-runnable and useful; a crash discards a working pull.
+            print(f"\n  {exc}")
+            print(f"  stopping after {len(manifest)} endpoint(s) - "
+                  f"re-run to continue from here")
+            failures.append({"endpoint": endpoint.name, "error": str(exc)})
+            break
         except Exception as exc:                                    # noqa: BLE001
             # One endpoint failing must not abandon the other 35 - a partial landing is
             # useful and re-runnable; an aborted run is neither.
