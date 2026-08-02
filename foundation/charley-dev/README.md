@@ -33,7 +33,7 @@ Rebecca's reporting keeps running untouched while this is built alongside it.
 05-reports/        Monthly Progress Report, Vendor & Insurance List
 06-orchestration/  the pipeline DAG + schedules
 _local/            offline harness: fixtures, DuckDB runner, tests
-_docs/             endpoint inventory, data dictionary, runbook
+_docs/             solution-guide.md first; assessment.md is the audit of what is live
 ```
 
 Folder numbering mirrors `foundation/` so the workspace reads the same way.

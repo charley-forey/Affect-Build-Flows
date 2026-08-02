@@ -47,17 +47,25 @@ is not refreshed and the report keeps yesterday's numbers. A stale report beats 
 
 ## What is live right now
 
+Measured out of Fabric on 2026-08-02.
+
 | Layer | State |
 |---|---|
-| Bronze | 27 tables from Affect's **production** Procore tenant |
-| Silver | 17 typed tables, **0 rejects** |
-| Gold | 26 tables — dimensions, facts, crosswalks, manual placeholders |
-| Model | 35 tables, 83 measures, 45 relationships, Direct Lake |
-| Report | **11 pages, 128 visuals**, drill-through, 3 bookmarks |
+| Bronze | 40 tables from Affect's **production** Procore tenant |
+| Silver | 15 typed tables, 14,791 rows, **0 rejects** |
+| Gold | 40 tables — dimensions, facts, crosswalks, bridges, manual placeholders |
+| Model | 37 tables, 99 measures, 45 relationships, Direct Lake |
+| Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
 | Schedule | Pipeline 02:00 daily, model 04:00 daily (Eastern) |
 
-**Verification:** 11 offline suites, 14 live DAX checks, 62 DQ expectations — all passing,
-zero blocking violations. The pipeline has run end to end, all five stages green.
+**Verification:** 12 offline suites, 14 live DAX checks, 63 DQ expectations — all passing,
+zero blocking violations. The pipeline has run end to end, all five stages green; last run
+2026-08-02 22:06.
+
+**What the pipeline does not do:** it never calls the Procore API. Extraction runs on a
+laptop and lands NDJSON; the nightly run merges whatever was last landed. Until the Key
+Vault blocker clears, "the pipeline ran green" means the transforms are healthy — it does
+not mean the data is fresh.
 
 ### The data
 
