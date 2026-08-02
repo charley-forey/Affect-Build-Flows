@@ -191,6 +191,35 @@ SOURCE_FIXTURES = (
            status_label, priority, trade, manager_name, cost_code_id,
            created_date, due_date, closed_date)""",
 
+    # The vendor <-> cost-code bridge. D1 belongs to vendor V1 (see sv_direct_costs), so
+    # two lines against CC1 must roll into ONE bridge row, and the Commitment::Item line
+    # must not be attributed to V1 at all.
+    """CREATE OR REPLACE VIEW sv_direct_cost_lines AS SELECT * FROM (VALUES
+        ('P1','L1','D1','DirectCost::Item','CC1','03-100','03-100 - CONCRETE',
+         'Slab pour','Material', 1000.0, 1100.0, 1.0, 1000.0, 'ls'),
+        ('P1','L2','D1','DirectCost::Item','CC1','03-100','03-100 - CONCRETE',
+         'Slab pour 2','Material', 500.0, 500.0, 1.0, 500.0, 'ls'),
+        ('P1','L4','D2','DirectCost::Item','CC2','06-100','06-100 - CARPENTRY',
+         'Lumber','Material', 2000.0, 2100.0, 1.0, 2000.0, 'ls'),
+        ('P1','L3','D1','Commitment::Item','CC1','03-100','03-100 - CONCRETE',
+         'Not a direct cost','Material', 9999.0, 9999.0, 1.0, 9999.0, 'ls')
+    ) AS t(project_id, line_item_id, direct_cost_id, holder_type, cost_code_id, cost_code,
+           cost_code_name, description, line_item_type, amount, total_amount, quantity,
+           unit_cost, unit_of_measure)""",
+
+    # Insurance: one lapsed, one current, one exempt. The three states that must not
+    # collapse into a single "compliant" flag.
+    """CREATE OR REPLACE VIEW sv_vendor_insurance AS SELECT * FROM (VALUES
+        ('I1','V1','GL','Farm Family','PN-1','NON_COMPLIANT',
+         DATE '2022-08-26', DATE '2023-08-26', 24.0, FALSE, TRUE, TRUE, NULL),
+        ('I2','V2','Auto','Acme Ins','PN-2','COMPLIANT',
+         DATE '2024-01-01', DATE '2032-01-01', 1000000.0, FALSE, TRUE, TRUE, NULL),
+        ('I3','V2','Umbrella','Acme Ins',NULL,'COMPLIANT',
+         DATE '2024-01-01', DATE '2032-01-01', 5000000.0, TRUE, TRUE, FALSE, NULL)
+    ) AS t(insurance_id, vendor_id, insurance_type, provider, policy_number, status_label,
+           effective_date, expiration_date, coverage_limit_raw, is_exempt, info_received,
+           additional_insured, notes)""",
+
     # Billing. Built to exercise the cumulative trap: B1..B3 are one owner contract whose
     # retainage BALANCE grows each period, so summing the column multiplies the money. B2
     # and B3 deliberately share a period_end - real data has three periods ending

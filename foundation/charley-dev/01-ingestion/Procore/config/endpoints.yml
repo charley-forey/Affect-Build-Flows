@@ -51,6 +51,21 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_project_vendors   # cheatsheet:32
 
+
+  # D8: the insurance half of "vendor list with insurance and contract info". Company
+  # scope, so this is a handful of calls rather than one per vendor - the per-vendor form
+  # (/companies/{id}/vendors/{vendor_id}/insurances) would be 251 calls against a
+  # 600/hour limit, for the same rows.
+  #
+  # Carries expiration_date, which is the entire point: an expired certificate is the
+  # thing a vendor list is checked for, and it is the one field a hand-maintained
+  # spreadsheet gets wrong by simply not being re-read.
+  - name: company_insurances
+    path: /rest/v1.0/companies/{company_id}/insurances
+    scope: company
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_company_insurances
+
   - name: cost_codes
     path: /rest/v1.0/cost_codes?project_id={project_id}
     scope: project
@@ -177,6 +192,23 @@ endpoints:
     scope: project
     api_version: "1.1"
     bronze_table: cd_bronze_procore_direct_costs           # cheatsheet:164
+
+
+  # PHASE 0 ITEM 3 - the vendor <-> cost-code linkage, "invoice as the bridge".
+  #
+  # The direct cost HEADER carries vendor_id; its LINE ITEMS carry cost_code. Neither
+  # alone lets the model slice spend by vendor AND cost code, which is the linkage the
+  # engagement was scoped to resolve. The line item is the join, and it is the honest one:
+  # it is what was actually spent, not what was budgeted or committed.
+  #
+  # Project-scoped and NOT nested per direct cost - Procore exposes a project-level
+  # collection, so this is 19 calls rather than 418.
+  - name: direct_cost_line_items
+    path: /rest/v1.0/projects/{project_id}/direct_costs/line_items
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_direct_cost_line_items
+    incremental: filters[updated_at]
 
   # -- Change orders ---------------------------------------------------------
   # Feeds [AgeOfOldestUnapprovedCO], typed by hand in FINANCIALS!C6 today.

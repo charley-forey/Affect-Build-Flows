@@ -188,6 +188,32 @@ def main() -> int:
     CHECKS.append(f"all {len(expected)} tables readable through DirectLake "
                   "at the expected row counts")
 
+    # 1b. EVERY table in the model must resolve, not just the ones with a row-count
+    #     baseline. This exists because of a failure that cost an hour:
+    #
+    #     A brand-new gold table is written to the lakehouse, deploy_model generates its
+    #     TMDL correctly, the model deploys with no error at all - and Direct Lake still
+    #     cannot bind it, because the SQL endpoint has not yet discovered the new Delta
+    #     table. The model then contains a table reference that resolves to nothing, and
+    #     every measure over it deploys perfectly and fails only when a visual renders,
+    #     with "the value cannot be determined". Nothing before this point says a word.
+    #
+    #     Checking COUNTROWS on all of them turns a render-time mystery into a deploy-time
+    #     failure. It costs one cheap query per table.
+    from deploy_model import MODEL_TABLES  # noqa: PLC0415
+
+    unresolved = []
+    for table in MODEL_TABLES:
+        try:
+            dax(model["id"], tok, f'EVALUATE ROW ( "n", COUNTROWS ( {table} ) )')
+        except Exception as exc:  # noqa: BLE001 - the message is what matters
+            unresolved.append(f"{table}: {str(exc)[:120]}")
+    assert not unresolved, (
+        f"{len(unresolved)} model table(s) do not resolve - Direct Lake has not bound "
+        "them. New tables can need a minute for the SQL endpoint to discover them; "
+        "re-run deploy_model.py --apply.\n  " + "\n  ".join(unresolved[:5]))
+    CHECKS.append(f"all {len(MODEL_TABLES)} model tables resolve through DirectLake")
+
     # 2. Every measure must evaluate. A measure referencing a renamed column fails HERE
     #    rather than as a blank tile in front of leadership.
     measures = [
@@ -346,8 +372,15 @@ def main() -> int:
         EVALUATE SUMMARIZECOLUMNS(
             dim_ScorecardWeight[CategoryName], dim_ScorecardWeight[Weight] )
     """)
+    # SUMMARIZECOLUMNS can return an extra all-null row - DAX's blank row, not a row in
+    # the table. Verified directly: COUNTROWS(dim_ScorecardWeight) is 9 and EVALUATE over
+    # the table returns 9 clean rows. Dropping it here rather than letting float(None)
+    # blow up, and pinning the count below so a genuinely missing category still fails.
     lookup = {r["dim_ScorecardWeight[CategoryName]"]: r["dim_ScorecardWeight[Weight]"]
-              for r in weights}
+              for r in weights
+              if r["dim_ScorecardWeight[CategoryName]"] is not None
+              and r["dim_ScorecardWeight[Weight]"] is not None}
+    assert len(lookup) == 9, f"expected 9 scorecard categories, found {len(lookup)}"
     expected_cov = sum(float(lookup[c]) for c in measured)
     assert abs(cov - expected_cov) < 0.001, f"coverage {cov} != summed weights {expected_cov}"
     CHECKS.append(f"[Scorecard Coverage %] = {cov:.0%}, matching the scored categories' weights")

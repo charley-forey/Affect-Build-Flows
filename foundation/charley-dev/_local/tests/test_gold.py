@@ -418,13 +418,69 @@ def test_bridge_projectvendor(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM bridge_ProjectVendor WHERE IsMissingFromErp") == 1
     check("vendors missing from the ERP are visible rather than assumed clean")
 
+
+def test_bridge_vendorcostcode(con) -> None:
+    """Phase 0 item 3 - the vendor <-> cost-code linkage, "invoice as the bridge".
+
+    It exists in no single Procore object: the direct cost header has the vendor and no
+    cost code, the line items have the cost code and no vendor. The line's `holder` is
+    what joins them.
+    """
+    # 4 fixture lines -> 2 bridge rows. L1+L2 share (P1, V1, CC1) and roll up; L4 is a
+    # different cost code; L3 is excluded because its holder is a commitment, not a
+    # direct cost.
+    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode") == 2
+    check("lines roll up to one row per project, vendor and cost code")
+
+    assert one(con, "SELECT SpendAmount FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1'") == 1600.0
+    assert one(con, "SELECT LineItemCount FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1'") == 2
+    check("spend sums the lines, using the tax-inclusive total that hit the job")
+
+    # THE ONE THAT MATTERS. Procore reuses `holder` across object types; a Commitment::Item
+    # line joined on id alone would attribute 9,999 of subcontract spend to the wrong
+    # vendor, and nothing would error.
+    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode WHERE SpendAmount > 9000") == 0
+    check("a non-direct-cost holder is never attributed to a direct cost's vendor")
+
+    # The bridge exists so dim_Vendor and dim_CostCode can filter each other - neither can
+    # do that directly, since a vendor spans codes and a code spans vendors.
+    assert one(con, "SELECT COUNT(DISTINCT CostCodeKey) FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1'") == 1
+    assert one(con, "SELECT COUNT(DISTINCT VendorKey) FROM bridge_VendorCostCode") == 2
+    check("the model can now slice spend by vendor AND cost code")
+
+
+def test_fct_vendorinsurance(con) -> None:
+    """D8 - the insurance half of the vendor list."""
+    assert one(con, "SELECT COUNT(*) FROM fct_VendorInsurance") == 3
+    check("every certificate on file is kept")
+
+    # Lapsed, in date and exempt are three different states needing three different
+    # actions. A single "compliant" boolean merges them and the report becomes a list
+    # nobody works from.
+    assert one(con, "SELECT ExpiryStatus FROM fct_VendorInsurance WHERE InsuranceKey='I1'") \
+        == "Expired"
+    assert one(con, "SELECT ExpiryStatus FROM fct_VendorInsurance WHERE InsuranceKey='I2'") \
+        == "Current"
+    assert one(con, "SELECT ComplianceState FROM fct_VendorInsurance WHERE InsuranceKey='I1'") \
+        == "Lapsed"
+    assert one(con, "SELECT ComplianceState FROM fct_VendorInsurance WHERE InsuranceKey='I3'") \
+        == "Exempt"
+    check("lapsed, in date and exempt stay distinguishable")
+
+    assert one(con, "SELECT IsExpired FROM fct_VendorInsurance WHERE InsuranceKey='I1'") is True
+    assert one(con, "SELECT IsExpired FROM fct_VendorInsurance WHERE InsuranceKey='I2'") is False
+    check("expiry is evaluated at load time and stored, not recomputed per render")
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor):
+        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

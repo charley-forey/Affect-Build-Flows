@@ -227,3 +227,23 @@ SELECT project_id, vendor_id, vendor_name, trade_name, city, state_code, busines
        email_address, is_prequalified, is_active, is_union_member, license_number,
        labor_union, synced_to_erp
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_project_vendors`;
+
+
+-- ---------------------------------------------------------------------------
+-- VENDOR <-> COST CODE, AND INSURANCE
+-- ---------------------------------------------------------------------------
+--
+-- Phase 0 items 3 and 4. Live as of 2026-08-02: 509 direct cost line items (all with a
+-- cost code) and 105 insurance certificates across 23 vendors.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_direct_cost_lines AS
+SELECT project_id, line_item_id, direct_cost_id, holder_type, cost_code_id, cost_code,
+       cost_code_name, description, line_item_type, amount, total_amount,
+       quantity, unit_cost, unit_of_measure
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_direct_cost_lines`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_vendor_insurance AS
+SELECT insurance_id, vendor_id, insurance_type, provider, policy_number, status_label,
+       effective_date, expiration_date, coverage_limit_raw, is_exempt, info_received,
+       additional_insured, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_vendor_insurance`;

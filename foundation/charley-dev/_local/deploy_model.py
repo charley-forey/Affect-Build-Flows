@@ -54,7 +54,7 @@ MODEL_TABLES = [
     "dim_Owner", "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
     "fct_BudgetLine", "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal",
     "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem", "fct_SafetyMonthly", "fct_Billing", "fct_DirectCost",
-    "bridge_ProjectVendor",
+    "bridge_ProjectVendor", "bridge_VendorCostCode", "fct_VendorInsurance",
     # The ~40% that lives nowhere but the spreadsheet. Empty today; bound now so the model
     # and the scorecard are complete in shape before a single row is entered.
     "man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
@@ -84,6 +84,10 @@ RELATIONSHIPS = [
     ("fct_DirectCost", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_DirectCost", "MonthStart", "dim_Date", "Date"),
     ("bridge_ProjectVendor", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("bridge_VendorCostCode", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("bridge_VendorCostCode", "VendorKey", "dim_Vendor", "VendorKey"),
+    ("bridge_VendorCostCode", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
+    ("fct_VendorInsurance", "VendorKey", "dim_Vendor", "VendorKey"),
     ("fct_RfiSubmittal", "CostCodeKey", "dim_CostCode", "CostCodeKey"),
     ("fct_RfiSubmittal", "MonthStart", "dim_Date", "Date"),
     ("fct_Milestone", "ProjectKey", "dim_Project", "ProjectKey"),
@@ -164,6 +168,46 @@ MEASURES = [
      None, "FINANCIALS!F19:F20 - derivable, but typed by hand today"),
     ("Percent Bought Out", "DIVIDE ( [Committed], [Budget] )", '"0.0%"', "FINANCIALS!D62"),
 
+
+    # ---- Vendor <-> cost code (Phase 0 item 3) ------------------------------
+    ("Vendor Spend", "SUM ( bridge_VendorCostCode[SpendAmount] )", '"$#,0"',
+     "no workbook equivalent - vendor spend could not be sliced by cost code"),
+    ("Cost Codes Per Vendor",
+     "COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[CostCodeKey] ), 0 )", '"#,0"',
+     "derived"),
+    ("Vendors Per Cost Code",
+     "COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[VendorKey] ), 0 )", '"#,0"',
+     "derived"),
+
+    # ---- Insurance (D8) -----------------------------------------------------
+    #
+    # COVERAGE and CURRENCY are counted separately on purpose. A vendor with no
+    # certificate and a vendor with a lapsed one both fail a single "compliant" flag, and
+    # they need completely different follow-up.
+    ("Certificates On File", "COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )", '"#,0"',
+     "D8"),
+    ("Vendors With Insurance",
+     "COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )", '"#,0"', "D8"),
+    ("Expired Certificates",
+     'COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
+     'fct_VendorInsurance[ExpiryStatus] = "Expired" ), 0 )', '"#,0"', "D8"),
+    ("Certificates Expiring Soon",
+     'COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
+     'fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" ), 0 )', '"#,0"',
+     "D8 - the renewals to chase this month"),
+    # The gap the vendor list is really for: vendors on a project with NO certificate at
+    # all. Counted from the bridge rather than the insurance table, because a vendor with
+    # no record does not appear in the insurance table to be counted.
+    # EXCEPT over the two key lists, not RELATEDTABLE. There is no relationship from
+    # bridge_ProjectVendor to fct_VendorInsurance - both hang off dim_Vendor - so
+    # RELATEDTABLE has no path and the measure fails at RENDER while deploying perfectly
+    # cleanly. Set difference needs no relationship and states the question directly:
+    # which vendors on a project appear nowhere in the certificate list.
+    ("Vendors Without Insurance",
+     "VAR Insured = VALUES ( fct_VendorInsurance[VendorKey] )\n"
+     "\t\t\tRETURN COALESCE ( COUNTROWS ( EXCEPT (\n"
+     "\t\t\tVALUES ( bridge_ProjectVendor[VendorKey] ), Insured ) ), 0 )",
+     '"#,0"', "D8 - a vendor with no certificate never appears in the insurance table"),
     # ---- Progress billing ---------------------------------------------------
     #
     # RETAINAGE. The workbook has no figure for this at all, and neither does Sage - its

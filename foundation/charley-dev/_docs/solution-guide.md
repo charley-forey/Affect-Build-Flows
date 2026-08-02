@@ -49,15 +49,15 @@ is not refreshed and the report keeps yesterday's numbers. A stale report beats 
 
 | Layer | State |
 |---|---|
-| Bronze | 25 tables from Affect's **production** Procore tenant |
-| Silver | 15 typed tables, **0 rejects** |
-| Gold | 24 tables — dimensions, facts, crosswalks, manual placeholders |
-| Model | 34 tables, 75 measures, 41 relationships, Direct Lake |
-| Report | **10 pages, 112 visuals**, drill-through, 3 bookmarks |
+| Bronze | 27 tables from Affect's **production** Procore tenant |
+| Silver | 17 typed tables, **0 rejects** |
+| Gold | 26 tables — dimensions, facts, crosswalks, manual placeholders |
+| Model | 35 tables, 83 measures, 45 relationships, Direct Lake |
+| Report | **11 pages, 128 visuals**, drill-through, 3 bookmarks |
 | Schedule | Pipeline 02:00 daily, model 04:00 daily (Eastern) |
 
-**Verification:** 11 offline suites, 13 live DAX checks, 47 DQ expectations — all passing,
-zero blocking violations.
+**Verification:** 11 offline suites, 14 live DAX checks, 62 DQ expectations — all passing,
+zero blocking violations. The pipeline has run end to end, all five stages green.
 
 ### The data
 
@@ -67,7 +67,10 @@ zero blocking violations.
 | Submittals | 2,245 | |
 | Billing periods | 607 | **carries retainage — see below** |
 | Direct costs | 418 | self-performed labour, in no other feed |
+| Direct cost lines | 509 | **the vendor ↔ cost-code bridge** |
 | Project–vendor pairs | 393 | 251 distinct vendors |
+| Vendor↔cost-code pairs | 114 | $1.47M of spend, sliceable both ways |
+| Insurance certificates | 105 | **every one expired — see below** |
 | Punch items | 1,469 | **not in the existing warehouse** |
 | Vendors | 1,098 | |
 | Manpower (project-days) | 911 | 120,766 hours — **was reading as zero** |
@@ -96,6 +99,79 @@ Drill through opens that project's budget lines, change orders, RFIs and milesto
 Blocking failures stop the pipeline.
 
 ---
+
+## The scheduled pipeline had never once succeeded
+
+Worth stating first, because everything else was downstream of it.
+
+`CD_Master_Pipeline` was scheduled, enabled, and reported itself as configured. It had run
+once and **failed**, and it would have failed every night. `cd_01_extract_procore` was its
+first stage and gated every other stage on `Succeeded` — and that notebook cannot
+authenticate, because it needs a Procore secret and Key Vault needs an Azure subscription
+this tenant does not have. It had failed **4 runs out of 4**.
+
+So silver, gold and the DQ gate had only ever run when somebody triggered them by hand. The
+04:00 model refresh then republished unchanged data with nothing saying so.
+
+That is precisely the failure this platform exists to refuse: a schedule that exists, is
+enabled, looks configured, and produces nothing.
+
+**Fixed.** Extraction is out of the DAG until it can actually authenticate; in its place is
+`cd_05_land_to_bronze`, which merges the landed files and needs no credential (8 runs, 8
+successes). The pipeline has now completed end to end for the first time.
+
+Leaving extraction in with a `Completed` condition would have been worse — the run would
+still be marked Failed nightly, so the alert that is supposed to mean something would fire
+every day and stop meaning anything.
+
+**The honest consequence, which belongs in front of the client rather than in a footnote:**
+the report is fresh to the last **landing**, not to the last Procore change. Until Key Vault
+exists, somebody runs `extract_procore_local.py` to refresh the landing files. The nightly
+run still earns its place — it re-applies every transform, rebuilds gold and re-runs the
+62-expectation gate — but it does not fetch new data. Three freshness expectations now warn
+when the newest billing, cost or field-ops record goes stale, so "nobody has run the
+extractor in two months" is visible instead of silent.
+
+---
+
+## Vendor ↔ cost code, and insurance
+
+These were the two Phase 0 scope items still open.
+
+**Item 3 — "resolve the vendor ↔ cost-code linkage (invoice as the bridge)".** The linkage
+exists in no single Procore object: the direct cost *header* carries the vendor and no cost
+code; its *line items* carry the cost code and no vendor. `bridge_VendorCostCode` joins them
+on the line's `holder`. **114 vendor↔cost-code pairs covering $1.47M**, and the model can now
+slice spend by vendor and cost code together, which nothing could before.
+
+It covers direct costs only — subcontract spend flows through commitment line items, which
+are a per-contract nested pull (hundreds of calls against a 600/hour limit) and are not yet
+extracted. Every row carries `IsDirectCostOnly` so that limit is on the data, not in a
+footnote.
+
+**Item 4 — the vendor list "with insurance and contract info".** The list shipped without
+insurance because nothing carried it. It does now, and what it says needs saying plainly:
+
+| | |
+|---|---:|
+| Certificates on file | 105 |
+| Certificates **not expired** | **0** |
+| Most recent expiry | **2025-04-01** (16 months ago) |
+| Vendors with any certificate | 23 of 251 |
+| …of those, actually on a current project | **6** |
+
+**This is not proof that Affect's subcontractors are uninsured.** The likelier reading is
+that the Procore insurance module was populated once and abandoned, with current
+certificates living in email or a shared drive. But "we stopped tracking it here" and "our
+subs are uninsured" have very different consequences for a general contractor, and nothing
+in the current reporting distinguishes them — or raises the question at all.
+
+So the model keeps **coverage** (is there a certificate?) separate from **currency** (is it
+in date?), and exempt separate from lapsed. A vendor with no record and a vendor with a
+lapsed record both fail a single "compliant" flag and need completely different follow-up.
+
+**This is a question for Affect, not a conclusion from us.**
+
 
 ## Retainage — an answer, not a blocker
 
@@ -242,6 +318,11 @@ or a parse producing NULL:
   first casts to **NULL**, which on a card reads as a job that has not started.
 - A per-project balance summed across months → **$355M** on the front page instead of $30M,
   and it reconciled perfectly whenever anyone filtered to one project to check it.
+- A scheduled pipeline whose first stage could never authenticate → **4 failed runs out of
+  4**, no medallion on any schedule, and a status page that said "enabled".
+- A brand-new gold table that Direct Lake had not yet bound → the model deploys with no
+  error, and every measure over it fails only when a visual renders. `validate_model.py`
+  now COUNTROWS all 35 model tables for exactly this reason.
 
 None raised an error. This is why the platform prefers a loud failure to a plausible number,
 why rejects are recorded with reasons, and why the DQ gate blocks rather than warns.

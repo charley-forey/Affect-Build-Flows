@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "5bfa6850f17563a6c349",
+  "position": {
+    "x": 20,
+    "y": 112,
+    "z": 0,
+    "width": 300,
+    "height": 28
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Coverage",
+                    "textStyle": {
+                      "fontSize": "13pt",
+                      "color": "#252423",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,12 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "a9a74f12201a54fabac3",
+  "name": "e5968d63fcb972290c4e",
   "position": {
     "x": 20,
-    "y": 882,
+    "y": 710,
     "z": 0,
     "width": 1240,
-    "height": 280
+    "height": 320
   },
   "visual": {
     "visualType": "tableEx",
@@ -19,84 +19,98 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "VendorName"
+                  "Property": "VendorKey"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.VendorName",
-              "nativeQueryRef": "VendorName"
+              "queryRef": "fct_VendorInsurance.VendorKey",
+              "nativeQueryRef": "VendorKey"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "TradeName"
+                  "Property": "InsuranceType"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.TradeName",
-              "nativeQueryRef": "TradeName"
+              "queryRef": "fct_VendorInsurance.InsuranceType",
+              "nativeQueryRef": "InsuranceType"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "City"
+                  "Property": "Provider"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.City",
-              "nativeQueryRef": "City"
+              "queryRef": "fct_VendorInsurance.Provider",
+              "nativeQueryRef": "Provider"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "LicenseNumber"
+                  "Property": "PolicyNumber"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.LicenseNumber",
-              "nativeQueryRef": "LicenseNumber"
+              "queryRef": "fct_VendorInsurance.PolicyNumber",
+              "nativeQueryRef": "PolicyNumber"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "IsPrequalified"
+                  "Property": "ExpirationDate"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.IsPrequalified",
-              "nativeQueryRef": "IsPrequalified"
+              "queryRef": "fct_VendorInsurance.ExpirationDate",
+              "nativeQueryRef": "ExpirationDate"
             },
             {
               "field": {
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "SyncedToErp"
+                  "Property": "ExpiryStatus"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.SyncedToErp",
-              "nativeQueryRef": "SyncedToErp"
+              "queryRef": "fct_VendorInsurance.ExpiryStatus",
+              "nativeQueryRef": "ExpiryStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_VendorInsurance"
+                    }
+                  },
+                  "Property": "DaysUntilExpiry"
+                }
+              },
+              "queryRef": "fct_VendorInsurance.DaysUntilExpiry",
+              "nativeQueryRef": "DaysUntilExpiry"
             }
           ]
         }
@@ -110,7 +124,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Vendor list - prequalification and ERP sync'"
+                  "Value": "'Certificates - what to chase, and how overdue'"
                 }
               }
             },

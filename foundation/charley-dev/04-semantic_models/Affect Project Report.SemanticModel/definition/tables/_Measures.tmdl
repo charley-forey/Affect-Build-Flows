@@ -66,6 +66,41 @@ table _Measures
 	measure 'Percent Bought Out' = DIVIDE ( [Committed], [Budget] )
 		formatString: "0.0%"
 
+	/// Replaces no workbook equivalent - vendor spend could not be sliced by cost code
+	measure 'Vendor Spend' = SUM ( bridge_VendorCostCode[SpendAmount] )
+		formatString: "$#,0"
+
+	/// Replaces derived
+	measure 'Cost Codes Per Vendor' = COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[CostCodeKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces derived
+	measure 'Vendors Per Cost Code' = COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[VendorKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8
+	measure 'Certificates On File' = COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8
+	measure 'Vendors With Insurance' = COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8
+	measure 'Expired Certificates' = COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = "Expired" ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8 - the renewals to chase this month
+	measure 'Certificates Expiring Soon' = COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" ), 0 )
+		formatString: "#,0"
+
+	/// Replaces D8 - a vendor with no certificate never appears in the insurance table
+	measure 'Vendors Without Insurance' =
+			VAR Insured = VALUES ( fct_VendorInsurance[VendorKey] )
+			RETURN COALESCE ( COUNTROWS ( EXCEPT (
+			VALUES ( bridge_ProjectVendor[VendorKey] ), Insured ) ), 0 )
+		formatString: "#,0"
+
 	/// Replaces no workbook equivalent - Sage holds no header retainage
 	measure 'Retainage Held Owner' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = "Owner" )
 		formatString: "$#,0"

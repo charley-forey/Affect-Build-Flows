@@ -286,3 +286,26 @@ SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS vendor_id,
        CAST(NULL AS BOOLEAN) AS is_union_member, CAST(NULL AS STRING) AS license_number,
        CAST(NULL AS STRING) AS labor_union, CAST(NULL AS BOOLEAN) AS synced_to_erp
 WHERE 1=0;
+
+
+-- Empty under this source: the existing warehouse has neither direct cost line items nor
+-- insurance. Typed so gold/31-32 run unchanged under both sources.
+CREATE OR REPLACE TEMPORARY VIEW sv_direct_cost_lines AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS line_item_id,
+       CAST(NULL AS STRING) AS direct_cost_id, CAST(NULL AS STRING) AS holder_type,
+       CAST(NULL AS STRING) AS cost_code_id, CAST(NULL AS STRING) AS cost_code,
+       CAST(NULL AS STRING) AS cost_code_name, CAST(NULL AS STRING) AS description,
+       CAST(NULL AS STRING) AS line_item_type, CAST(NULL AS DOUBLE) AS amount,
+       CAST(NULL AS DOUBLE) AS total_amount, CAST(NULL AS DOUBLE) AS quantity,
+       CAST(NULL AS DOUBLE) AS unit_cost, CAST(NULL AS STRING) AS unit_of_measure
+WHERE 1=0;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_vendor_insurance AS
+SELECT CAST(NULL AS STRING) AS insurance_id, CAST(NULL AS STRING) AS vendor_id,
+       CAST(NULL AS STRING) AS insurance_type, CAST(NULL AS STRING) AS provider,
+       CAST(NULL AS STRING) AS policy_number, CAST(NULL AS STRING) AS status_label,
+       CAST(NULL AS DATE) AS effective_date, CAST(NULL AS DATE) AS expiration_date,
+       CAST(NULL AS DOUBLE) AS coverage_limit_raw, CAST(NULL AS BOOLEAN) AS is_exempt,
+       CAST(NULL AS BOOLEAN) AS info_received, CAST(NULL AS BOOLEAN) AS additional_insured,
+       CAST(NULL AS STRING) AS notes
+WHERE 1=0;

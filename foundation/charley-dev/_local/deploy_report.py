@@ -543,8 +543,21 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by month"),
 
+        # PHASE 0 ITEM 3. Spend by vendor AND cost code - the linkage that exists in no
+        # single Procore object, and that nothing in the current reporting can slice.
+        visual(p, "c_matrix", "matrix", 20, 542, 620, 320,
+               {"Rows": [column("bridge_VendorCostCode", "VendorName")],
+                "Columns": [column("bridge_VendorCostCode", "CostCode")],
+                "Values": [measure("Vendor Spend")]},
+               title="Direct spend by vendor and cost code"),
+
+        visual(p, "c_topcodes", "barChart", 660, 542, 600, 320,
+               {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
+                "Y": [measure("Vendor Spend")]},
+               title="Direct spend by cost code"),
+
         # The D8 deliverable itself: the list somebody assembles by hand today.
-        visual(p, "c_vendorlist", "tableEx", 20, 542, 1240, 300,
+        visual(p, "c_vendorlist", "tableEx", 20, 882, 1240, 280,
                {"Values": [column("bridge_ProjectVendor", "VendorName"),
                            column("bridge_ProjectVendor", "TradeName"),
                            column("bridge_ProjectVendor", "City"),
@@ -555,6 +568,71 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
     ]
 
 
+def page_insurance() -> tuple[str, list[dict]]:
+    """D8's other half: certificates of insurance.
+
+    THE PAGE LEADS WITH THE BAD NEWS ON PURPOSE. Live, every one of the 105 certificates
+    in Procore is past its expiry date, the most recent lapsed 2025-04-01, and only 23 of
+    251 vendors have a certificate on file at all.
+
+    That is not proof the subcontractors are uninsured - far more likely the module was
+    populated once and abandoned, with current certificates living in email. But a
+    compliance page that renders that as a green tick is worse than no page, and the two
+    readings have very different consequences for a general contractor.
+
+    Coverage and currency are shown as separate numbers throughout, because "no
+    certificate on file" and "certificate lapsed" need different follow-up: chase the
+    document, or chase the renewal.
+    """
+    p = "insurance"
+    return p, [
+        textbox(p, "title", "Vendor Insurance", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Sourced from Procore's insurance records. COVERAGE (is there a "
+                "certificate at all) and CURRENCY (is it in date) are counted separately - "
+                "a vendor with no record and a vendor with a lapsed record both fail a "
+                "single compliance flag and need different follow-up. Exempt vendors are "
+                "counted apart from lapsed ones.",
+                20, 56, 1240, 46, size=10, color=MUTED),
+
+        textbox(p, "cov_h", "Coverage", 20, 112, 300, 28, size=13),
+        card(p, "i_vendors", "Vendors On Project", 20, 144, 240, 110),
+        card(p, "i_insured", "Vendors With Insurance", 276, 144, 240, 110),
+        card(p, "i_missing", "Vendors Without Insurance", 532, 144, 250, 110),
+
+        textbox(p, "cur_h", "Currency", 810, 112, 300, 28, size=13),
+        card(p, "i_certs", "Certificates On File", 810, 144, 210, 110),
+        card(p, "i_expired", "Expired Certificates", 1036, 144, 224, 110),
+        card(p, "i_soon", "Certificates Expiring Soon", 20, 270, 250, 100),
+
+        visual(p, "i_by_status", "columnChart", 20, 390, 520, 300,
+               {"Category": [column("fct_VendorInsurance", "ExpiryStatus")],
+                "Y": [measure("Certificates On File")]},
+               title="Certificates by expiry status"),
+
+        visual(p, "i_by_type", "barChart", 560, 390, 340, 300,
+               {"Category": [column("fct_VendorInsurance", "InsuranceType")],
+                "Y": [measure("Certificates On File")]},
+               title="Certificates by type (Procore's free-text values, untidied)"),
+
+        visual(p, "i_state", "columnChart", 920, 390, 340, 300,
+               {"Category": [column("fct_VendorInsurance", "ComplianceState")],
+                "Y": [measure("Certificates On File")]},
+               title="Lapsed vs in date vs exempt"),
+
+        # The working list: who to chase, for what, and how overdue.
+        visual(p, "i_list", "tableEx", 20, 710, 1240, 320,
+               {"Values": [column("fct_VendorInsurance", "VendorKey"),
+                           column("fct_VendorInsurance", "InsuranceType"),
+                           column("fct_VendorInsurance", "Provider"),
+                           column("fct_VendorInsurance", "PolicyNumber"),
+                           column("fct_VendorInsurance", "ExpirationDate"),
+                           column("fct_VendorInsurance", "ExpiryStatus"),
+                           column("fct_VendorInsurance", "DaysUntilExpiry")]},
+               title="Certificates - what to chase, and how overdue"),
+    ]
+
+
 PAGES = [
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
@@ -562,6 +640,7 @@ PAGES = [
     ("Safety & Quality", page_safety_quality, False),
     ("Billing & Retainage", page_billing, False),
     ("Direct Costs & Vendors", page_costs_vendors, False),
+    ("Vendor Insurance", page_insurance, False),
     ("Scorecard", page_scorecard, False),
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target
