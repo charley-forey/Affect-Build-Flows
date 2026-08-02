@@ -6,7 +6,8 @@
     "y": 382,
     "z": 0,
     "width": 340,
-    "height": 300
+    "height": 300,
+    "tabOrder": 23
   },
   "visual": {
     "visualType": "barChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bar chart. Open items by trade. Shows Open Quality Items by Trade.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

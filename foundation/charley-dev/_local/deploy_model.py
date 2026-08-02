@@ -320,7 +320,57 @@ MEASURES = [
     ("DQ Unmatched Invoices",
      "CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )",
      '"#,0"', "diagnostics - AR rows whose Sage job resolves to no project"),
+
+    # ---- Report context -----------------------------------------------------
+    #
+    # A page exported to PDF has to state what it is a snapshot OF. The workbook could not:
+    # DASHBOARD used TODAY(), so a saved file silently re-reported itself every time it was
+    # opened (defect #5). These two put the answer on the page instead.
+    #
+    # Last Refresh reads a real timestamp stamped into the anchor table when gold is built,
+    # not NOW() - NOW() is when the report was VIEWED, which is the same lie in a new place.
+    ("Last Refresh", "MAX ( _Measures[_built_at] )", '"yyyy-mm-dd hh:nn"',
+     "no workbook equivalent - the Excel could not say when its numbers were true"),
+    # Follows the slicer. With no month selected it names the full span rather than
+    # inventing a single month, because that IS what the reader is looking at.
+    ("Report Month Label",
+     'VAR L = MIN ( dim_Date[MonthStart] )\n'
+     'VAR H = MAX ( dim_Date[MonthStart] )\n'
+     'RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), '
+     'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )',
+     None, "DASHBOARD!AU4 - the month anchor, now driven by the slicer"),
 ] + scorecard.measures()
+
+
+# Field-list folders. Forward-filled: a measure inherits the folder of the last section
+# opened above it, so inserting a measure into a section needs no change here. The section
+# names mirror the comment headings the MEASURES list is already organised by.
+FOLDER_STARTS = [
+    ("Original Contract", "01 Contract & Change"),
+    ("Budget", "02 Budget & Cost"),
+    ("Retainage Held Owner", "03 Billing & Retainage"),
+    ("Direct Costs", "04 Direct Costs & Vendors"),
+    ("Total Billed", "05 Cash & AR"),
+    ("Open Submittals", "06 Submittals & RFIs"),
+    ("Critical Milestones", "07 Schedule"),
+    ("Punchlist Items", "08 Quality"),
+    ("Projects Fully Mapped", "09 Source Coverage"),
+    ("DQ Projects Without Crosswalk", "10 Data Quality"),
+    ("Avg Days To Payment", "11 Scorecard drivers"),
+    ("Score - Accounts Receivable", "12 Scorecard"),
+    ("Last Refresh", "00 Report context"),
+]
+
+
+def folder_for(name: str, _cache: dict = {}) -> str:
+    """Which display folder a measure belongs in, by forward-fill over FOLDER_STARTS."""
+    if not _cache:
+        starts = dict(FOLDER_STARTS)
+        current = "00 Report context"
+        for measure_name, *_ in MEASURES:
+            current = starts.get(measure_name, current)
+            _cache[measure_name] = current
+    return _cache[name]
 
 
 def introspect() -> dict[str, list[tuple[str, str]]]:
@@ -413,6 +463,9 @@ def measures_tmdl() -> str:
             lines.append(f"\tmeasure '{measure_name}' = {expression}")
         if fmt:
             lines.append(f"\t\tformatString: {fmt}")
+        # 75 measures in one flat list is a wall. Folders are the only grouping the field
+        # list offers, and they cost one line each.
+        lines.append(f'\t\tdisplayFolder: {folder_for(measure_name)}')
         lines.append("")
     # Direct Lake over a real one-row table, NOT a calculated table. Calculated tables are
     # unsupported in Direct Lake and do not fail loudly: the model deploys, reports
@@ -424,6 +477,15 @@ def measures_tmdl() -> str:
         "\t\tdataType: string",
         "\t\tsummarizeBy: none",
         "\t\tsourceColumn: _placeholder",
+        "",
+        # Stamped when gold is built, so [Last Refresh] reports when the DATA became true
+        # rather than when someone opened the report.
+        "\tcolumn _built_at",
+        "\t\tisHidden",
+        "\t\tdataType: dateTime",
+        "\t\tformatString: yyyy-mm-dd hh:nn:ss",
+        "\t\tsummarizeBy: none",
+        "\t\tsourceColumn: _built_at",
         "",
         "\tpartition _Measures = entity",
         "\t\tmode: directLake",

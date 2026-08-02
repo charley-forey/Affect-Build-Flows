@@ -35,7 +35,21 @@ REPORT_DIR = CHARLEY_DEV / "05-reports" / "Monthly Progress Report.Report"
 REPORT_NAME = "Monthly Progress Report"
 MODEL_NAME = "Affect Project Report"
 
-GREEN, AMBER, RED, INK, MUTED = "#01AF00", "#FFD800", "#DB1918", "#252423", "#605E5C"
+# RAG steps, contrast-corrected. The workbook's own font colours were #01AF00 / #FFD800 /
+# #DB1918; two of the three fail against a light surface and were re-stepped in
+# powerbi/report-spec.md after measuring, not by eye:
+#   green  #01AF00 -> 2.87:1, below the 3:1 floor
+#   amber  #FFD800 -> 1.36:1, effectively invisible on white
+# The amber is worth raising with Affect directly - it is a plausible reason "Watch" status
+# gets overlooked in the spreadsheet today.
+#
+# Colour is never the only channel: every status in this report carries its text label too,
+# because red/green cannot be made colourblind-safe as colour alone (measured deuteranopia
+# separation is dE 7.1, below the dE 8 floor, and no re-stepping fixes the hue pair).
+GREEN, AMBER, RED, INK, MUTED = "#1B7F3B", "#B26A00", "#C62828", "#252423", "#605E5C"
+
+THEME_SRC = CHARLEY_DEV.parent.parent / "powerbi" / "theme.json"
+THEME_NAME = "AffectGroupProjectReport"
 
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
 
@@ -62,12 +76,54 @@ def column(table: str, col: str) -> dict:
     }
 
 
+def lit(value: str) -> dict:
+    """A string literal expression. Embedded quotes are doubled, not dropped.
+
+    Several of the notes on these pages contain apostrophes ("the Excel's defects"). An
+    unescaped one terminates the literal early and the property silently becomes garbage.
+    """
+    return {"expr": {"Literal": {"Value": "'" + value.replace("'", "''") + "'"}}}
+
+
+# What a visual type is, in words, for the alt text sentence.
+_SHAPE = {
+    "card": "Card", "tableEx": "Table", "slicer": "Slicer", "barChart": "Bar chart",
+    "columnChart": "Column chart", "clusteredColumnChart": "Clustered column chart",
+    "lineChart": "Line chart", "multiRowCard": "Card",
+}
+
+
+def describe(vtype: str, title: str | None, projections: dict) -> str:
+    """Alt text, generated from what the visual is actually bound to.
+
+    Screen-reader users get the same information sighted readers get from the title and
+    axes. Deriving it from the projections rather than hand-writing 101 strings means it
+    cannot drift out of date when a field changes - a hand-written one silently would.
+    """
+    shape = _SHAPE.get(vtype, vtype)
+    names = {role: [p.get("nativeQueryRef", "?") for p in items]
+             for role, items in projections.items()}
+    values = names.get("Values") or names.get("Y") or []
+    category = names.get("Category") or []
+    if vtype == "slicer":
+        return f"Slicer. Filters the report by {', '.join(values) or 'a field'}."
+    parts = [f"{shape}. {title}." if title else f"{shape}."]
+    if values:
+        parts.append(f"Shows {', '.join(values)}")
+        parts.append(f"by {', '.join(category)}." if category else "for the current selection.")
+    return " ".join(parts)
+
+
 def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
-           title: str | None = None) -> dict:
+           title: str | None = None, tab: int | None = None,
+           alt: str | None = None, sync: str | None = None) -> dict:
+    position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
+    if tab is not None:
+        position["tabOrder"] = tab
     v = {
         "$schema": f"{SCHEMA}/visualContainer/1.0.0/schema.json",
         "name": oid(page, key),
-        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h},
+        "position": position,
         "visual": {
             "visualType": vtype,
             "query": {"queryState": {
@@ -76,29 +132,42 @@ def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
             "drillFilterOtherVisuals": True,
         },
     }
+    container: dict = {"general": [{"properties": {
+        "altText": lit(alt or describe(vtype, title, projections)),
+    }}]}
     if title:
-        v["visual"]["visualContainerObjects"] = {
-            "title": [{"properties": {
-                "text": {"expr": {"Literal": {"Value": f"'{title}'"}}},
-                "fontColor": {"solid": {"color": {"expr": {"Literal": {"Value": f"'{INK}'"}}}}},
-                "fontSize": {"expr": {"Literal": {"Value": "12D"}}},
-            }}]
-        }
+        container["title"] = [{"properties": {
+            "text": lit(title),
+            "fontColor": {"solid": {"color": lit(INK)}},
+            "fontSize": {"expr": {"Literal": {"Value": "12D"}}},
+        }}]
+    v["visual"]["visualContainerObjects"] = container
+    # Slicers only. Keeps project and month selection together across every page, so a
+    # reader who picks a job on Overview does not land on Financial showing all of them.
+    if sync:
+        v["visual"]["syncGroup"] = {"groupName": sync, "fieldChanges": False,
+                                    "filterChanges": True}
     return v
 
 
 def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
-            color: str = INK) -> dict:
+            color: str = INK, tab: int | None = None) -> dict:
+    position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
+    if tab is not None:
+        position["tabOrder"] = tab
     return {
         "$schema": f"{SCHEMA}/visualContainer/1.0.0/schema.json",
         "name": oid(page, key),
-        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h},
+        "position": position,
         "visual": {
             "visualType": "textbox",
             "objects": {"general": [{"properties": {"paragraphs": [{
                 "textRuns": [{"value": text, "textStyle": {
                     "fontSize": f"{size}pt", "color": color, "fontWeight": "bold"}}]
             }]}}]},
+            # Textboxes carry their own words, so the alt text IS the text. Repeating it
+            # is what a screen reader needs; leaving it blank drops the sentence entirely.
+            "visualContainerObjects": {"general": [{"properties": {"altText": lit(text)}}]},
         },
     }
 
@@ -107,40 +176,74 @@ def card(page: str, key: str, name: str, x, y, w=180, h=110) -> dict:
     return visual(page, key, "card", x, y, w, h, {"Values": [measure(name)]}, title=name)
 
 
+def chrome(page: str, slicers: bool = True) -> list[dict]:
+    """Slicers and footer, identical on every page.
+
+    Two things the report did not have. There was no month slicer ANYWHERE, so a report
+    called "Monthly" could not be set to a month - it always showed all of time. And each
+    page carried its own project slicer or none at all, so a selection did not survive a
+    page change.
+
+    The footer states the reporting period and when the data was built, so a page printed
+    to PDF says what it is a snapshot of. The workbook could not: it used TODAY(), and a
+    saved copy silently re-dated itself every time anyone opened it.
+    """
+    items = [
+        visual(page, "footer", "multiRowCard", 960, 664, 300, 44,
+               {"Values": [measure("Report Month Label"), measure("Last Refresh")]},
+               tab=99,
+               alt="Report footer. States the reporting period shown and the time the "
+                   "underlying data was last built."),
+    ]
+    # A drill-through page receives its project from the caller. Putting a project slicer
+    # on it would let a reader change that selection out from under the filter they
+    # arrived by, so the page would answer a different question than the one asked.
+    if slicers:
+        items = [
+            visual(page, "slicer_project", "slicer", 768, 14, 240, 58,
+                   {"Values": [column("dim_Project", "ProjectName")]},
+                   title="Project", tab=1, sync="project"),
+            visual(page, "slicer_month", "slicer", 1020, 14, 240, 58,
+                   {"Values": [column("dim_Date", "MonthYear")]},
+                   title="Month", tab=2, sync="month"),
+        ] + items
+    return items
+
+
 # --------------------------------------------------------------------------
 # Pages
 # --------------------------------------------------------------------------
 
 
 def page_overview() -> tuple[str, list[dict]]:
+    """The one-page replacement, and the page that gets exported to PDF and circulated.
+
+    The project slicer that used to sit at (20,80) has moved into the shared chrome with
+    the new month slicer, which frees the whole left column - so the card grid is five
+    across instead of four squeezed to the right.
+    """
     p = "overview"
-    slicer = visual(p, "slicer_project", "slicer", 20, 80, 260, 90,
-                    {"Values": [column("dim_Project", "ProjectName")]}, title="Project")
-    cards = [
-        card(p, "c_contract", "Current Contract", 300, 80),
-        card(p, "c_billed", "Total Billed", 496, 80),
-        card(p, "c_billedpct", "Total Billed %", 692, 80),
-        card(p, "c_paid", "Total Paid", 888, 80),
-        card(p, "c_ar", "AR Outstanding", 1084, 80),
-        card(p, "c_growth", "Contract Growth %", 300, 206),
-        card(p, "c_bought", "Percent Bought Out", 496, 206),
-        card(p, "c_pending", "Pending Change Orders", 692, 206),
-        card(p, "c_open", "Open Submittals", 888, 206),
-        card(p, "c_milestones", "Critical Milestones", 1084, 206),
-    ]
-    trend = visual(p, "billed_trend", "columnChart", 20, 340, 640, 300,
+    # Five columns, 228 wide on a 248 pitch: 20 .. 1240. Two rows.
+    xs = [20, 268, 516, 764, 1012]
+    row1 = ["Current Contract", "Total Billed", "Total Billed %", "Total Paid",
+            "AR Outstanding"]
+    row2 = ["Contract Growth %", "Percent Bought Out", "Pending Change Orders",
+            "Open Submittals", "Critical Milestones"]
+    cards = [card(p, f"c_r1_{i}", name, xs[i], 90, w=228) for i, name in enumerate(row1)]
+    cards += [card(p, f"c_r2_{i}", name, xs[i], 216, w=228) for i, name in enumerate(row2)]
+    trend = visual(p, "billed_trend", "columnChart", 20, 346, 640, 296,
                    {"Category": [column("dim_Date", "MonthYear")],
                     "Y": [measure("Total Billed")]},
                    title="Billed by month")
-    budget = visual(p, "budget_by_code", "barChart", 680, 340, 580, 300,
+    budget = visual(p, "budget_by_code", "barChart", 680, 346, 580, 296,
                     {"Category": [column("dim_CostCode", "Division")],
                      "Y": [measure("Budget"), measure("Spent To Date")]},
                     title="Budget vs spent by division")
     return p, [
-        textbox(p, "title", "Monthly Progress Report", 20, 16, 700, 50),
-        textbox(p, "sub", "Replaces the Excel Monthly Progress Report", 20, 56, 700, 24,
+        textbox(p, "title", "Monthly Progress Report", 20, 16, 700, 44),
+        textbox(p, "sub", "Replaces the Excel Monthly Progress Report", 20, 58, 700, 24,
                 size=10, color=MUTED),
-        slicer, *cards, trend, budget,
+        *cards, trend, budget,
     ]
 
 
@@ -569,6 +672,24 @@ PAGES = [
 ]
 
 
+def assign_tab_order(visuals: list[dict]) -> list[dict]:
+    """Give every visual on a page an explicit keyboard tab position, in reading order.
+
+    Power BI falls back to z-order for any visual without one, so setting tabOrder on SOME
+    visuals is worse than setting it on none: the reader tabs through the few that are
+    ordered, then jumps around the rest. Assigning here rather than at each call site means
+    a page cannot be added with the accessibility half-done.
+
+    Anything that set its own tab (the slicers at 1-2, the footer at 99) keeps it; the rest
+    are numbered top-to-bottom, left-to-right from 10.
+    """
+    auto = sorted((v for v in visuals if "tabOrder" not in v["position"]),
+                  key=lambda v: (v["position"]["y"], v["position"]["x"]))
+    for i, v in enumerate(auto, start=10):
+        v["position"]["tabOrder"] = i
+    return visuals
+
+
 def build(model_id: str) -> dict[str, str]:
     files: dict[str, str] = {
         ".platform": json.dumps({
@@ -594,16 +715,47 @@ def build(model_id: str) -> dict[str, str]:
         "definition/version.json": json.dumps(
             {"$schema": f"{SCHEMA}/versionMetadata/1.0.0/schema.json", "version": "2.0.0"},
             indent=2),
+        # The theme. Until now the report ran bare Power BI defaults while a validated
+        # theme sat unused in powerbi/theme.json - eight categorical slots checked for
+        # colour-vision separation and contrast in both light and dark, plus the corrected
+        # RAG steps. Registering it is one file and one reference, and it is the single
+        # largest visual change in this pass.
+        f"StaticResources/RegisteredResources/{THEME_NAME}.json":
+            THEME_SRC.read_text(encoding="utf-8"),
         "definition/report.json": json.dumps({
             "$schema": f"{SCHEMA}/report/2.0.0/schema.json",
-            "themeCollection": {"baseTheme": {"name": "CY24SU10", "reportVersionAtImport": "5.55",
-                                              "type": "SharedResources"}},
+            "themeCollection": {
+                "baseTheme": {"name": "CY24SU10", "reportVersionAtImport": "5.55",
+                              "type": "SharedResources"},
+                # Layered OVER the base theme, so anything the custom theme does not
+                # specify still falls back to a supported Microsoft base rather than to
+                # nothing.
+                "customTheme": {"name": f"{THEME_NAME}.json", "reportVersionAtImport": "5.55",
+                                "type": "RegisteredResources"},
+            },
+            "resourcePackages": [{
+                "name": "RegisteredResources",
+                "type": "RegisteredResources",
+                "items": [{"name": f"{THEME_NAME}.json", "path": f"{THEME_NAME}.json",
+                           "type": "CustomTheme"}],
+            }],
+            "settings": {
+                "useStylableVisualContainerHeader": True,
+                # Summarized only. The detail behind a visual is a lakehouse query, not a
+                # spreadsheet to re-download and re-key - which is the habit this whole
+                # report exists to retire.
+                "exportDataMode": "AllowSummarized",
+                "defaultDrillFilterOtherVisuals": True,
+                "useEnhancedTooltips": True,
+                "allowChangeFilterTypes": True,
+            },
         }, indent=2),
     }
 
     page_names = []
     for display, builder, hidden in PAGES:
         pid, visuals = builder()
+        visuals = assign_tab_order(visuals + chrome(pid, slicers=pid not in DRILLTHROUGH))
         page_names.append(pid)
         page: dict = {
             "$schema": f"{SCHEMA}/page/2.0.0/schema.json",

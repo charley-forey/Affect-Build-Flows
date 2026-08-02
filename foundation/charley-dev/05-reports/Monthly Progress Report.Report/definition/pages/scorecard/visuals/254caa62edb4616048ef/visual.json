@@ -6,7 +6,8 @@
     "y": 260,
     "z": 0,
     "width": 620,
-    "height": 390
+    "height": 390,
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "tableEx",
@@ -48,6 +49,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Category weights (sum to 1.00). Shows CategoryName, Weight for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -6,7 +6,8 @@
     "y": 260,
     "z": 0,
     "width": 620,
-    "height": 390
+    "height": 390,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "tableEx",
@@ -62,6 +63,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. AR invoices by Sage job. Shows SageJobNumber, Description, Total Billed for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

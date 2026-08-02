@@ -1,0 +1,67 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "1a77605b6a4646eaa836",
+  "position": {
+    "x": 960,
+    "y": 664,
+    "z": 0,
+    "width": 300,
+    "height": 44,
+    "tabOrder": 99
+  },
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Report Month Label"
+                }
+              },
+              "queryRef": "_Measures.Report Month Label",
+              "nativeQueryRef": "Report Month Label"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Last Refresh"
+                }
+              },
+              "queryRef": "_Measures.Last Refresh",
+              "nativeQueryRef": "Last Refresh"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Report footer. States the reporting period shown and the time the underlying data was last built.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

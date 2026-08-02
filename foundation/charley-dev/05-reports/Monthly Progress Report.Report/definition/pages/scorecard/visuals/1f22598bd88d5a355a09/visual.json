@@ -6,7 +6,8 @@
     "y": 260,
     "z": 0,
     "width": 600,
-    "height": 390
+    "height": 390,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "tableEx",
@@ -62,6 +63,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Scoring bands - corrected (defects #1a-#1c). Shows CategoryKey, Score, BandLabel for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

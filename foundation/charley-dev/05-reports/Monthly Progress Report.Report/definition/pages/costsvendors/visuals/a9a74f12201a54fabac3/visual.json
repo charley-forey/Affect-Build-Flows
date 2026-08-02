@@ -6,7 +6,8 @@
     "y": 542,
     "z": 0,
     "width": 1240,
-    "height": 300
+    "height": 300,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "tableEx",
@@ -104,6 +105,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Vendor list - prequalification and ERP sync. Shows VendorName, TradeName, City, LicenseNumber, IsPrequalified, SyncedToErp for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

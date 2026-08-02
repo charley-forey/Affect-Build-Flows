@@ -6,7 +6,8 @@
     "y": 116,
     "z": 0,
     "width": 260,
-    "height": 120
+    "height": 120,
+    "tabOrder": 14
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Projects Missing From Outbuild. Shows Projects Missing From Outbuild for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -6,7 +6,8 @@
     "y": 210,
     "z": 0,
     "width": 480,
-    "height": 440
+    "height": 440,
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "barChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bar chart. Open submittals by status. Shows Open Submittals by StatusLabel.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

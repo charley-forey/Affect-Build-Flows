@@ -6,7 +6,8 @@
     "y": 252,
     "z": 0,
     "width": 540,
-    "height": 300
+    "height": 300,
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Projects by coverage status. Shows Projects Fully Mapped by CoverageStatus.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

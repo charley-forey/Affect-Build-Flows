@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1000,
-    "height": 30
+    "height": 30,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Weights and bands are data (dim_ScorecardWeight / dim_ScorecardBand) - retune them without a code change. A category with no data scores BLANK, never zero.'"
+                }
+              }
+            }
           }
         }
       ]

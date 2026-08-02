@@ -3,10 +3,11 @@
   "name": "185eacf0aafc5ea44231",
   "position": {
     "x": 20,
-    "y": 340,
+    "y": 346,
     "z": 0,
     "width": 640,
-    "height": 300
+    "height": 296,
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Billed by month. Shows Total Billed by MonthYear.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

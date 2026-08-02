@@ -6,7 +6,8 @@
     "y": 544,
     "z": 0,
     "width": 600,
-    "height": 260
+    "height": 260,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "tableEx",
@@ -76,6 +77,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Milestones. Shows MilestoneName, CurrentStart, CurrentFinish, IsOverdue for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

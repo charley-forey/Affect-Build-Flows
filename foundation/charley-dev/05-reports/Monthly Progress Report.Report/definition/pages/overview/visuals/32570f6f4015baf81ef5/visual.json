@@ -3,10 +3,11 @@
   "name": "32570f6f4015baf81ef5",
   "position": {
     "x": 680,
-    "y": 340,
+    "y": 346,
     "z": 0,
     "width": 580,
-    "height": 300
+    "height": 296,
+    "tabOrder": 23
   },
   "visual": {
     "visualType": "barChart",
@@ -66,6 +67,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bar chart. Budget vs spent by division. Shows Budget, Spent To Date by Division.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

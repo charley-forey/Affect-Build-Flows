@@ -6,7 +6,8 @@
     "y": 600,
     "z": 0,
     "width": 620,
-    "height": 260
+    "height": 260,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "tableEx",
@@ -62,6 +63,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Cost codes - CSI division parse. Shows DivisionCode, CostCode, HasUnparseableCode for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

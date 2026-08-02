@@ -6,7 +6,8 @@
     "y": 16,
     "z": 0,
     "width": 600,
-    "height": 44
+    "height": 44,
+    "tabOrder": 10
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Billing & Retainage'"
+                }
+              }
+            }
           }
         }
       ]

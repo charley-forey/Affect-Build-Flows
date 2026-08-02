@@ -6,7 +6,8 @@
     "y": 382,
     "z": 0,
     "width": 620,
-    "height": 300
+    "height": 300,
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Billed by month (period movement, not cumulative). Shows Billed This Period by MonthStart.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -6,7 +6,8 @@
     "y": 382,
     "z": 0,
     "width": 340,
-    "height": 300
+    "height": 300,
+    "tabOrder": 24
   },
   "visual": {
     "visualType": "tableEx",
@@ -62,6 +63,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Past due, by days late. Shows Title, AssignedTo, DaysPastDue for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -6,7 +6,8 @@
     "y": 382,
     "z": 0,
     "width": 520,
-    "height": 300
+    "height": 300,
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Open items by type. Shows Open Quality Items by ItemType.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

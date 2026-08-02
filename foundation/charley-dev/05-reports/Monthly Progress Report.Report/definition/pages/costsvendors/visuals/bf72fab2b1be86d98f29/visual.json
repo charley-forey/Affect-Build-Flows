@@ -6,7 +6,8 @@
     "y": 232,
     "z": 0,
     "width": 520,
-    "height": 290
+    "height": 290,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Direct cost by category. Shows Direct Costs by CostCategory.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

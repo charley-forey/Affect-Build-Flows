@@ -6,7 +6,8 @@
     "y": 228,
     "z": 0,
     "width": 600,
-    "height": 300
+    "height": 300,
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "tableEx",
@@ -62,6 +63,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Change orders. Shows ChangeOrderNumber, Status, Approved Change Orders for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {
