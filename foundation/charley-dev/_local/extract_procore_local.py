@@ -193,6 +193,19 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
     if endpoint.scope == "company":
         params = {**params, "company_id": settings.company_id}
 
+    # A declared window. Without it these endpoints return 200 and no rows, which reads as
+    # "this project has no daily logs" - the most expensive kind of wrong, because nothing
+    # errors and the absence looks like data.
+    if getattr(endpoint, "date_range_days", None):
+        from datetime import timedelta
+
+        end = datetime.now(timezone.utc).date()
+        start = end - timedelta(days=endpoint.date_range_days)
+        prefix = getattr(endpoint, "date_param_prefix", "") or ""
+        lo = f"{prefix}start_date" if not prefix else f"{prefix}[start_date]"
+        hi = f"{prefix}end_date" if not prefix else f"{prefix}[end_date]"
+        params = {**params, lo: start.isoformat(), hi: end.isoformat()}
+
     parent_ids = None
     if endpoint.parent:
         # Pair form: Procore's nested endpoints 400 without the project as well as the

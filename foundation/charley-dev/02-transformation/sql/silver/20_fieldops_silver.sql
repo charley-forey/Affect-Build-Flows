@@ -102,10 +102,25 @@ WHERE get_json_object(payload, '$.id') IS NOT NULL;
 
 CREATE OR REPLACE TABLE cd_silver_manpower_daily AS
 SELECT
-    CAST(_project_id                                        AS STRING) AS project_id,
-    CAST(get_json_object(payload, '$.date')                 AS DATE)   AS log_date,
-    CAST(get_json_object(payload, '$.total_hours')          AS DOUBLE) AS total_hours,
-    CAST(get_json_object(payload, '$.total_workers')        AS DOUBLE) AS total_workers,
-    _ingested_at, _batch_id
-FROM cd_bronze_procore_manpower_daily_totals
-WHERE get_json_object(payload, '$.date') IS NOT NULL;
+    project_id,
+    log_date,
+    SUM(man_hours)   AS total_hours,
+    SUM(num_workers) AS total_workers,
+    COUNT(*)         AS vendor_entries,
+    MAX(_ingested_at) AS _ingested_at,
+    MAX(_batch_id)    AS _batch_id
+FROM (
+    SELECT
+        CAST(_project_id                                    AS STRING) AS project_id,
+        CAST(get_json_object(payload, '$.date')             AS DATE)   AS log_date,
+        -- man_hours arrives as a STRING ("24.0"). Cast explicitly: an uncast SUM over
+        -- strings is the kind of thing that concatenates quietly rather than failing.
+        CAST(get_json_object(payload, '$.man_hours')        AS DOUBLE) AS man_hours,
+        CAST(get_json_object(payload, '$.num_workers')      AS DOUBLE) AS num_workers,
+        _ingested_at, _batch_id
+    FROM cd_bronze_procore_manpower_logs
+    WHERE get_json_object(payload, '$.date') IS NOT NULL
+)
+-- One row PER VENDOR PER DAY in the source; the safety rate needs hours per project per
+-- day, so it is summed here rather than left for every downstream measure to remember.
+GROUP BY project_id, log_date;

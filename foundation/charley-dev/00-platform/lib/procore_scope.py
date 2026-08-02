@@ -56,6 +56,17 @@ class Endpoint:
     key: str = "id"
     parent: ParentRef | None = None
 
+    # Some endpoints require start_date/end_date and return 200 WITH ZERO ROWS without
+    # them - see the module docstring on manpower_logs. A number here means "always send a
+    # window this many days back from today".
+    date_range_days: int | None = None
+
+    # What the window parameters are CALLED. Procore is inconsistent even within one
+    # family: manpower_logs wants start_date/end_date, daily_logs wants
+    # filters[start_date]/filters[end_date] and returns 400 "parameters are required"
+    # while you are sending the other spelling.
+    date_param_prefix: str = ""
+
     def __post_init__(self) -> None:
         if self.scope not in VALID_SCOPES:
             raise ValueError(f"{self.name}: unknown scope {self.scope!r}")

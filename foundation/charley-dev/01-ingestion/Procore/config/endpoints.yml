@@ -298,6 +298,9 @@ endpoints:
   # Computes SCHEDULE!Table14 "Avg Daily over past 30 days" exactly, at daily grain -
   # which also removes the workbook's hard cap of 5 subcontractors.
   - name: manpower_daily_totals
+    # 365-day window. Without start_date/end_date this returns 200 with zero rows - a
+    # silent empty that reads as "no manpower logged" rather than "parameter missing".
+    date_range_days: 365
     path: /rest/v1.0/projects/{project_id}/manpower_logs/daily_totals
     scope: project
     api_version: "1.0"
@@ -305,6 +308,9 @@ endpoints:
     key: date
 
   - name: manpower_logs
+    # Same silent-empty behaviour: 0 rows without a window, 238 with one.
+    # This is HOURS WORKED - the denominator of every safety rate on the scorecard.
+    date_range_days: 365
     path: /rest/v1.0/projects/{project_id}/manpower_logs
     scope: project
     api_version: "1.0"
@@ -312,7 +318,20 @@ endpoints:
 
   # Derives SCORECARD CALC!E28 ("Daily Reports"), typed by hand today.
   - name: daily_log_headers
-    path: /rest/v1.0/projects/{project_id}/daily_log_headers
+    # /daily_log_headers does not exist on this tenant (404). The real endpoint is
+    # /daily_logs, and it needs the window under filters[] - sending plain start_date
+    # returns 400 "The Start Date and End Date parameters are required" WHILE YOU ARE
+    # SENDING THEM, because it is looking for a different name.
+    # 30 days, because /daily_logs caps the window - a 365-day range returns the same
+    # misleading 400 as a missing parameter. 30 also happens to be the right grain: this
+    # feeds "Daily Reports Missed", which the workbook reports per month.
+    #
+    # LIMITATION, stated rather than hidden: a 30-day rolling window means only the last
+    # month of daily logs is ever loaded. Backfilling history needs a loop over successive
+    # windows, which is worth building when someone asks for a trend rather than now.
+    date_range_days: 30
+    date_param_prefix: filters
+    path: /rest/v1.0/projects/{project_id}/daily_logs
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_daily_log_headers      # cheatsheet:51

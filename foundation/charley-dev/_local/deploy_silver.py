@@ -55,7 +55,7 @@ BRONZE_TABLES = [
     "cd_bronze_procore_submittals", "cd_bronze_procore_rfis",
     # Field operations - the quality and safety halves of the scorecard.
     "cd_bronze_procore_observations", "cd_bronze_procore_punch_items",
-    "cd_bronze_procore_incidents", "cd_bronze_procore_manpower_daily_totals",
+    "cd_bronze_procore_incidents", "cd_bronze_procore_manpower_logs",
 ]
 BRONZE_SCHEMA = ("_key STRING, _project_id STRING, payload STRING, "
                  "_ingested_at TIMESTAMP, _batch_id STRING, _row_hash STRING")
