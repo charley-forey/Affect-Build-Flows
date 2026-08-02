@@ -124,6 +124,39 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_work_order_contracts   # cheatsheet:142
 
+
+  # SUBCONTRACT SPEND, the half of the vendor <-> cost-code bridge that direct costs cannot
+  # reach. A commitment (work order = subcontract, purchase order = supply) carries the
+  # VENDOR on its header and the COST CODE on its line items, exactly like direct costs.
+  #
+  # These are nested pulls - one call per contract - so they are the expensive endpoints in
+  # this registry. Roughly 160 commitments across 19 projects, against a 600/hour limit.
+  # lib/ratelimit.py handles the pacing; do not add these to a run that also needs quota
+  # for something time-critical.
+  - name: purchase_order_contracts
+    path: /rest/v1.0/purchase_order_contracts?project_id={project_id}
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_purchase_order_contracts
+
+  - name: work_order_contract_line_items
+    path: /rest/v1.0/work_order_contracts/{parent_id}/line_items
+    scope: parent
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_work_order_contract_line_items
+    parent:
+      endpoint: work_order_contracts
+      field: id
+
+  - name: purchase_order_contract_line_items
+    path: /rest/v1.0/purchase_order_contracts/{parent_id}/line_items
+    scope: parent
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_purchase_order_contract_line_items
+    parent:
+      endpoint: purchase_order_contracts
+      field: id
+
   - name: commitments
     path: /rest/v1.0/commitments?project_id={project_id}
     scope: project

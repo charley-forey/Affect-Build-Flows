@@ -1,36 +1,18 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "02a63ede24a009be7a78",
+  "name": "e55665bfcbc0f8f8f150",
   "position": {
-    "x": 660,
-    "y": 542,
+    "x": 20,
+    "y": 232,
     "z": 0,
-    "width": 600,
-    "height": 320
+    "width": 250,
+    "height": 100
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "bridge_VendorCostCode"
-                    }
-                  },
-                  "Property": "CostCodeName"
-                }
-              },
-              "queryRef": "bridge_VendorCostCode.CostCodeName",
-              "nativeQueryRef": "CostCodeName"
-            }
-          ]
-        },
-        "Y": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -45,20 +27,6 @@
               },
               "queryRef": "_Measures.Vendor Committed",
               "nativeQueryRef": "Vendor Committed"
-            },
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Vendor Spend"
-                }
-              },
-              "queryRef": "_Measures.Vendor Spend",
-              "nativeQueryRef": "Vendor Spend"
             }
           ]
         }
@@ -72,7 +40,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Committed and actual by cost code'"
+                  "Value": "'Vendor Committed'"
                 }
               }
             },

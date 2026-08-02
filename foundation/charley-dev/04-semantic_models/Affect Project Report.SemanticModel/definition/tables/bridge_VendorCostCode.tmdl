@@ -35,25 +35,35 @@ table bridge_VendorCostCode
 		summarizeBy: none
 		sourceColumn: CostCodeName
 
-	column SpendAmount
+	column AmountType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AmountType
+
+	column SourceLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceLabel
+
+	column Amount
 		dataType: double
 		summarizeBy: sum
-		sourceColumn: SpendAmount
+		sourceColumn: Amount
 
 	column LineItemCount
 		dataType: int64
 		summarizeBy: sum
 		sourceColumn: LineItemCount
 
-	column DirectCostCount
+	column ParentCount
 		dataType: int64
 		summarizeBy: sum
-		sourceColumn: DirectCostCount
+		sourceColumn: ParentCount
 
-	column IsDirectCostOnly
+	column IsActual
 		dataType: boolean
 		summarizeBy: none
-		sourceColumn: IsDirectCostOnly
+		sourceColumn: IsActual
 
 	partition bridge_VendorCostCode = entity
 		mode: directLake

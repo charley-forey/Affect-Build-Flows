@@ -40,11 +40,11 @@
                       "Entity": "bridge_VendorCostCode"
                     }
                   },
-                  "Property": "CostCode"
+                  "Property": "AmountType"
                 }
               },
-              "queryRef": "bridge_VendorCostCode.CostCode",
-              "nativeQueryRef": "CostCode"
+              "queryRef": "bridge_VendorCostCode.AmountType",
+              "nativeQueryRef": "AmountType"
             }
           ]
         },
@@ -63,6 +63,20 @@
               },
               "queryRef": "_Measures.Vendor Spend",
               "nativeQueryRef": "Vendor Spend"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Vendor Committed"
+                }
+              },
+              "queryRef": "_Measures.Vendor Committed",
+              "nativeQueryRef": "Vendor Committed"
             }
           ]
         }
@@ -76,7 +90,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Direct spend by vendor and cost code'"
+                  "Value": "'Vendor: committed vs actual'"
                 }
               }
             },

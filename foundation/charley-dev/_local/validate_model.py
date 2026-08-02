@@ -148,12 +148,29 @@ def main() -> int:
     #                                 silver keeps one per (project, cost code) at the
     #                                 latest snapshot, and two pairs were duplicated. That
     #                                 is the dedup working, not data lost.
-    #   ChangeOrders   307 vs 1,812   LOWER - OPEN. Prime COs come from
-    #                                 change_order_packages in this tenant; the warehouse's
-    #                                 1,812 probably also counts commitment COs, which are
-    #                                 a different grain. Must be resolved before this report
-    #                                 replaces theirs - a lower number that is not explained
-    #                                 is indistinguishable from a lost one.
+    #   ChangeOrders   307 vs 1,812   LOWER - RESOLVED 2026-08-02, and the resolution is
+    #                                 that THEIR number is wrong.
+    #
+    #                                 procore_prime_change_orders holds 1,812 rows for 454
+    #                                 distinct Change Order IDs - each one repeated EXACTLY
+    #                                 four times. The pattern is uniform within every
+    #                                 batch_id group (4 rows per CO, 12 for 3, 52 for 13),
+    #                                 which is a fan-out from an un-deduplicated join, not
+    #                                 an ingestion artifact.
+    #
+    #                                 Summing CO Value $ off that table gives $20,152,671.
+    #                                 Deduplicated it is $5,056,742. Ours is $4,907,551 -
+    #                                 within 3%.
+    #
+    #                                 So nothing was lost. The residual 454 vs 307 is grain:
+    #                                 change_order_packages groups change orders, and their
+    #                                 table carries statuses ours does not (not_proceeding,
+    #                                 no_charge, rejected, pricing). Package grain is
+    #                                 accepted here because the money agrees; if CO-level
+    #                                 detail is needed later it is a different endpoint, not
+    #                                 a correction.
+    #
+    #                                 Reported to Affect, NOT fixed - it is Rebecca's table.
     #
     # Periods is derived from the fact date range, so it moves with the two above.
     EXPECTED_BY_SOURCE = {

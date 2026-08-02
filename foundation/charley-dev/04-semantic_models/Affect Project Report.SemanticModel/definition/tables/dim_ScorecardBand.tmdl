@@ -30,6 +30,11 @@ table dim_ScorecardBand
 		summarizeBy: none
 		sourceColumn: BandLabel
 
+	column CategoryName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CategoryName
+
 	partition dim_ScorecardBand = entity
 		mode: directLake
 		source

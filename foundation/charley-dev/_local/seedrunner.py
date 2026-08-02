@@ -191,6 +191,31 @@ SOURCE_FIXTURES = (
            status_label, priority, trade, manager_name, cost_code_id,
            created_date, due_date, closed_date)""",
 
+    # Commitments. V1 has BOTH a direct cost and a subcontract against CC1 - the case
+    # that must produce two rows (actual, committed) and never one summed row.
+    """CREATE OR REPLACE VIEW sv_commitments AS SELECT * FROM (VALUES
+        ('Subcontract','P1','SC1','SC-1','HVAC','APPROVED','V1','Demar Plumbing',
+         390000.0, 30485.0, 30485.0, TRUE),
+        ('Purchase Order','P1','PO1','PO-1','Equipment','APPROVED','V3','Daikin',
+         28000.0, 0.0, 0.0, TRUE)
+    ) AS t(commitment_type, project_id, commitment_id, commitment_number, title,
+           status_label, vendor_id, vendor_name, grand_total, total_payments,
+           total_requisitioned, is_executed)""",
+
+    """CREATE OR REPLACE VIEW sv_commitment_lines AS SELECT * FROM (VALUES
+        ('P1','CL1','SC1','WorkOrderContract','WorkOrderContract','CC1','03-100',
+         '03-100 - CONCRETE','HVAC','Material', 390000.0, 390000.0, 0.0, 0.0),
+        ('P1','CL2','PO1','PurchaseOrderContract','PurchaseOrderContract','CC2','06-100',
+         '06-100 - CARPENTRY','Equipment','Material', 28000.0, 28000.0, 1.0, 28000.0),
+        -- A work order LINE pointing at a purchase order id. Different id spaces can
+        -- collide, and joining without checking holder_type attaches this to the wrong
+        -- contract - and so to the wrong vendor.
+        ('P1','CL3','PO1','WorkOrderContract','WorkOrderContract','CC1','03-100',
+         '03-100 - CONCRETE','Mismatched','Material', 7777.0, 7777.0, 0.0, 0.0)
+    ) AS t(project_id, line_item_id, commitment_id, holder_type, source_endpoint,
+           cost_code_id, cost_code, cost_code_name, description, line_item_type,
+           amount, total_amount, quantity, unit_cost)""",
+
     # The vendor <-> cost-code bridge. D1 belongs to vendor V1 (see sv_direct_costs), so
     # two lines against CC1 must roll into ONE bridge row, and the Commitment::Item line
     # must not be attributed to V1 at all.

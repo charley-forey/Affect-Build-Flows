@@ -426,29 +426,35 @@ def test_bridge_vendorcostcode(con) -> None:
     cost code, the line items have the cost code and no vendor. The line's `holder` is
     what joins them.
     """
-    # 4 fixture lines -> 2 bridge rows. L1+L2 share (P1, V1, CC1) and roll up; L4 is a
-    # different cost code; L3 is excluded because its holder is a commitment, not a
-    # direct cost.
-    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode") == 2
-    check("lines roll up to one row per project, vendor and cost code")
+    # Direct: L1+L2 share (P1, V1, CC1) and roll up to one ACTUAL row; L4 is a different
+    # cost code. L3 is excluded (its holder is a commitment, not a direct cost).
+    # Commitments: CL1 gives V1/CC1 a COMMITTED row, CL2 gives V3/CC2 one. CL3 is excluded.
+    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode") == 4
+    check("lines roll up per project, vendor, cost code AND amount type")
 
-    assert one(con, "SELECT SpendAmount FROM bridge_VendorCostCode "
-                    "WHERE VendorKey='V1' AND CostCodeKey='CC1'") == 1600.0
+    assert one(con, "SELECT Amount FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1' AND AmountType='Actual'") == 1600.0
     assert one(con, "SELECT LineItemCount FROM bridge_VendorCostCode "
-                    "WHERE VendorKey='V1' AND CostCodeKey='CC1'") == 2
-    check("spend sums the lines, using the tax-inclusive total that hit the job")
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1' AND AmountType='Actual'") == 2
+    check("actual spend sums the lines, using the total that hit the job")
 
-    # THE ONE THAT MATTERS. Procore reuses `holder` across object types; a Commitment::Item
-    # line joined on id alone would attribute 9,999 of subcontract spend to the wrong
-    # vendor, and nothing would error.
-    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode WHERE SpendAmount > 9000") == 0
-    check("a non-direct-cost holder is never attributed to a direct cost's vendor")
+    # COMMITTED IS NOT SPENT. V1/CC1 has both, and they must stay two rows - summing them
+    # counts the same work once when committed and again when paid.
+    assert one(con, "SELECT Amount FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1' AND AmountType='Committed'") == 390000.0
+    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1'") == 2
+    check("actual and committed are separate rows, never a blended total")
+
+    # Procore reuses `holder` across object types and the id spaces can collide. L3 (a
+    # Commitment::Item among direct cost lines) and CL3 (a WorkOrderContract line pointing
+    # at a purchase order id) are both traps - neither may reach the bridge.
+    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode WHERE Amount IN (9999.0, 7777.0)") == 0
+    check("a mismatched holder type is never attributed to the wrong contract or vendor")
 
     # The bridge exists so dim_Vendor and dim_CostCode can filter each other - neither can
     # do that directly, since a vendor spans codes and a code spans vendors.
-    assert one(con, "SELECT COUNT(DISTINCT CostCodeKey) FROM bridge_VendorCostCode "
-                    "WHERE VendorKey='V1'") == 1
-    assert one(con, "SELECT COUNT(DISTINCT VendorKey) FROM bridge_VendorCostCode") == 2
+    assert one(con, "SELECT COUNT(DISTINCT VendorKey) FROM bridge_VendorCostCode") == 3
     check("the model can now slice spend by vendor AND cost code")
 
 

@@ -314,7 +314,8 @@ def build_suite() -> Suite:
             table="bridge_VendorCostCode",
             failing_sql=(
                 "SELECT * FROM ("
-                "  SELECT (SELECT COALESCE(SUM(SpendAmount), 0) FROM bridge_VendorCostCode) AS bridge,"
+                "  SELECT (SELECT COALESCE(SUM(Amount), 0) FROM bridge_VendorCostCode"
+                "          WHERE AmountType = 'Actual') AS bridge,"
                 "         (SELECT COALESCE(SUM(GrandTotal), 0) FROM fct_DirectCost) AS direct"
                 ") WHERE direct > 0 AND bridge < direct * 0.5"),
             severity=SEVERITY_WARN,
@@ -323,16 +324,31 @@ def build_suite() -> Suite:
         # Spend on the bridge must not exceed what fct_DirectCost says was spent. If it
         # does, lines have been double-counted - the classic fan-out when a join key is
         # not as unique as assumed.
+        # ACTUAL only. The committed half is legitimately far larger than direct cost
+        # spend - $25.5M committed against $1.5M spent - so comparing the unfiltered total
+        # would fire on every run and teach everyone to ignore it.
         Expectation(
-            name="bridge spend does not exceed direct cost spend",
+            name="bridge actual spend does not exceed direct cost spend",
             table="bridge_VendorCostCode",
             failing_sql=(
                 "SELECT * FROM ("
-                "  SELECT (SELECT COALESCE(SUM(SpendAmount), 0) FROM bridge_VendorCostCode) AS bridge,"
+                "  SELECT (SELECT COALESCE(SUM(Amount), 0) FROM bridge_VendorCostCode"
+                "          WHERE AmountType = 'Actual') AS bridge,"
                 "         (SELECT COALESCE(SUM(GrandTotal), 0) FROM fct_DirectCost) AS direct"
                 ") WHERE bridge > direct * 1.01"),
             severity=SEVERITY_ERROR,
             description="bridge spend above direct cost spend means lines fanned out",
+        ),
+        # A negative committed line is a credit against a subcontract - real, but rare
+        # enough to be worth a look, and indistinguishable from an inverted sign without
+        # one. Per row, not in aggregate, where a credit and an error cancel.
+        Expectation(
+            name="committed lines are not negative",
+            table="bridge_VendorCostCode",
+            failing_sql=("SELECT * FROM bridge_VendorCostCode "
+                         "WHERE AmountType = 'Committed' AND Amount < 0"),
+            severity=SEVERITY_WARN,
+            description="a negative committed line is a credit, or an inverted sign",
         ),
         # COVERAGE, reported as a number rather than assumed. Live this fires on ~228 of
         # 251 vendors, and that IS the finding: the vendor list was never checkable before.

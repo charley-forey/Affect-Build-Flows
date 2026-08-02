@@ -134,6 +134,37 @@ extractor in two months" is visible instead of silent.
 
 ---
 
+## The change-order gap, resolved
+
+Our gold reported **307** change orders where the existing warehouse reports **1,812**. A
+lower number that nobody can explain is indistinguishable from a lost one, so this was the
+highest-priority open risk.
+
+It is resolved, and the resolution is that **their number is wrong**.
+
+`procore_prime_change_orders` holds 1,812 rows for **454 distinct change orders** — each one
+repeated **exactly four times**. The pattern is uniform inside every `batch_id` group: 4 rows
+for 1 change order, 12 for 3, 52 for 13. That is a fan-out from a join that never
+deduplicated, not an ingestion glitch.
+
+| | Rows | Distinct COs | Total value |
+|---|---:|---:|---:|
+| Existing warehouse, as stored | 1,812 | 454 | **$20,152,671** |
+| Existing warehouse, deduplicated | 454 | 454 | **$5,056,742** |
+| charley-dev (`change_order_packages`) | 307 | 307 | **$4,907,551** |
+
+**Nothing was lost.** Any measure summing `CO Value $` from that table overstates change
+order value by roughly **4×**. Deduplicated, the two sources agree within **3%**.
+
+The residual 454 vs 307 is grain, not error: `change_order_packages` groups change orders
+into packages, and their table also carries statuses ours does not (`not_proceeding`,
+`no_charge`, `rejected`, `pricing`). Package grain is accepted because the money agrees; if
+change-order-level detail is wanted later that is a different endpoint, not a correction.
+
+**Reported, not fixed** — it is a table in the existing warehouse, and this engagement does
+not modify what is already there.
+
+
 ## Vendor ↔ cost code, and insurance
 
 These were the two Phase 0 scope items still open.
@@ -284,6 +315,31 @@ merges them in Fabric with no credential at all. **A bridge, not the destination
 subscription lands, `setup_keyvault.py --apply` and the notebook takes over.
 
 ---
+
+## Manual input can start today
+
+The ~40% of the report that lives in no system was blocked on a SharePoint administrator.
+It is not any more.
+
+`cd_06_land_manual` reads CSVs from `Files/_manual/` and writes exactly the bronze tables
+the SharePoint dataflow would have — same names, same shapes, same parsers downstream. Nine
+templates with worked examples are generated on every run at
+`Files/_manual/_templates/`. Fill one in, upload it, re-run.
+
+When the lists are eventually provisioned, the dataflow takes over and nothing downstream
+changes. Neither path is a workaround; they are two writers into one contract.
+
+This matters because the slow part was never the plumbing — it is people typing a month of
+history they have only ever kept in a spreadsheet, and that no longer waits on a ticket.
+
+**One thing is still missing, and it needs Affect rather than us.** There is no silver →
+gold link for the manual tables yet, because the gold schema and the silver parsers
+disagree on four of them — whether daily-log compliance means "submitted" or "submitted the
+same day", whether a milestone is a date or a span, which attestations are captured
+monthly, and whether the client survey is anonymous. Each is a real question about what the
+scorecard should measure, and guessing would produce an authoritative-looking number
+measuring the wrong thing. `manual-input.md` lists them for the next call.
+
 
 ## What blocks the remaining 41% of coverage
 

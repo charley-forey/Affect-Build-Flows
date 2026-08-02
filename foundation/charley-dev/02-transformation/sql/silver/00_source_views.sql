@@ -309,3 +309,25 @@ SELECT CAST(NULL AS STRING) AS insurance_id, CAST(NULL AS STRING) AS vendor_id,
        CAST(NULL AS BOOLEAN) AS info_received, CAST(NULL AS BOOLEAN) AS additional_insured,
        CAST(NULL AS STRING) AS notes
 WHERE 1=0;
+
+
+-- Empty under this source: the existing warehouse has commitment headers but no line
+-- items, so the vendor <-> cost-code join cannot be made from it at all.
+CREATE OR REPLACE TEMPORARY VIEW sv_commitments AS
+SELECT CAST(NULL AS STRING) AS commitment_type, CAST(NULL AS STRING) AS project_id,
+       CAST(NULL AS STRING) AS commitment_id, CAST(NULL AS STRING) AS commitment_number,
+       CAST(NULL AS STRING) AS title, CAST(NULL AS STRING) AS status_label,
+       CAST(NULL AS STRING) AS vendor_id, CAST(NULL AS STRING) AS vendor_name,
+       CAST(NULL AS DOUBLE) AS grand_total, CAST(NULL AS DOUBLE) AS total_payments,
+       CAST(NULL AS DOUBLE) AS total_requisitioned, CAST(NULL AS BOOLEAN) AS is_executed
+WHERE 1=0;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_commitment_lines AS
+SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS line_item_id,
+       CAST(NULL AS STRING) AS commitment_id, CAST(NULL AS STRING) AS holder_type,
+       CAST(NULL AS STRING) AS source_endpoint, CAST(NULL AS STRING) AS cost_code_id,
+       CAST(NULL AS STRING) AS cost_code, CAST(NULL AS STRING) AS cost_code_name,
+       CAST(NULL AS STRING) AS description, CAST(NULL AS STRING) AS line_item_type,
+       CAST(NULL AS DOUBLE) AS amount, CAST(NULL AS DOUBLE) AS total_amount,
+       CAST(NULL AS DOUBLE) AS quantity, CAST(NULL AS DOUBLE) AS unit_cost
+WHERE 1=0;

@@ -62,6 +62,9 @@ MODEL_TABLES = [
     # Cross-source coverage. These answer "is this project actually in Sage and Outbuild,
     # or is it silently reading as zero revenue?" - which nothing else in the model can.
     "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
+    # The pipeline heartbeat. Not project data - it is how the report answers
+    # "are these numbers from last night, or from three weeks ago?".
+    "meta_PipelineRun",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -169,9 +172,45 @@ MEASURES = [
     ("Percent Bought Out", "DIVIDE ( [Committed], [Budget] )", '"0.0%"', "FINANCIALS!D62"),
 
 
+
+    # ---- Pipeline liveness --------------------------------------------------
+    #
+    # ALERTING, for a platform that has no credentialed connector to send email or post to
+    # Teams. The DQ gate writes one row per completed run; if any stage fails the gate
+    # never runs, no row is written, and this number climbs. Absence of a heartbeat is the
+    # signal - which is exactly the failure mode that went unnoticed for a month, when the
+    # nightly pipeline failed every night while reporting itself as enabled.
+    ("Last Checked Run", "MAX ( meta_PipelineRun[RunAt] )", '"yyyy-mm-dd hh:nn"',
+     "no workbook equivalent - the spreadsheet cannot say when it was last correct"),
+    ("Hours Since Last Checked Run",
+     "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
+     "\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+     '"#,0"', "derived"),
+    # Text, not a colour. A stale pipeline has to be readable in greyscale and by the 8% of
+    # men who are colour-blind - the same rule the theme applies to every RAG status.
+    ("Pipeline Status",
+     "VAR Hrs = [Hours Since Last Checked Run]\n"
+     '\t\t\tRETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", '
+     'Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", '
+     '"STALE - these numbers may be weeks old" )',
+     None, "derived"),
+    ("Blocking Violations Last Run",
+     "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
+     "\t\t\tRETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),\n"
+     "\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 )",
+     '"#,0"', "derived"),
     # ---- Vendor <-> cost code (Phase 0 item 3) ------------------------------
-    ("Vendor Spend", "SUM ( bridge_VendorCostCode[SpendAmount] )", '"$#,0"',
+    # ACTUAL only. bridge_VendorCostCode holds actual and committed as separate
+    # rows, and an unfiltered SUM over Amount blends the two - counting the same
+    # work once when it was committed and again when it was paid.
+    ("Vendor Spend",
+     'CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), '
+     'bridge_VendorCostCode[AmountType] = "Actual" )', '"$#,0"',
      "no workbook equivalent - vendor spend could not be sliced by cost code"),
+    ("Vendor Committed",
+     'CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), '
+     'bridge_VendorCostCode[AmountType] = "Committed" )', '"$#,0"',
+     "FINANCIALS!D61 - committed by vendor and cost code, which the workbook cannot slice"),
     ("Cost Codes Per Vendor",
      "COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[CostCodeKey] ), 0 )", '"#,0"',
      "derived"),

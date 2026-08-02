@@ -1,66 +1,99 @@
--- gold: bridge_VendorCostCode - which vendors are spent with against which cost codes.
+-- gold: bridge_VendorCostCode - what each vendor is spent with, and committed to, per cost
+-- code.
 --
 -- PHASE 0 ITEM 3, the linkage the engagement was scoped to resolve: "resolve the vendor
 -- <-> cost-code linkage (invoice as the bridge) so the model slices by both".
 --
--- It exists in no single Procore object. The direct cost header carries the vendor and no
--- cost code; the line items carry the cost code and no vendor. This joins them on the
--- line's `holder`, which is the header that owns it.
+-- It exists in no single Procore object. Both halves have the same shape:
 --
--- GRAIN: one row per (project, vendor, cost code). Line items are rolled up, because the
+--   DIRECT COSTS   header carries the vendor, line items carry the cost code
+--   COMMITMENTS    header carries the vendor, line items carry the cost code
+--
+-- so both are joined on the line's `holder`, which is the header that owns it.
+--
+-- ===========================================================================
+-- COMMITTED IS NOT SPENT. THE TWO ARE NEVER ADDED TOGETHER.
+-- ===========================================================================
+--
+-- A direct cost line is money that has gone out. A commitment line is money that has been
+-- promised. They are both "vendor money against a cost code", which is what makes it
+-- tempting to sum them into one number - and that number would be nonsense: it counts the
+-- same work once when it was committed and again when it was paid, and it flatters every
+-- vendor total by roughly the amount of work in progress.
+--
+-- So AmountType is part of the GRAIN, not a label bolted on afterwards. A row is either
+-- actual or committed, never a blend, and [Vendor Spend] and [Vendor Committed] each
+-- filter to one of them. Anyone who writes SUM(Amount) without a filter gets a number that
+-- is obviously too big rather than one that is quietly wrong.
+--
+-- GRAIN: (project, vendor, cost code, amount type). Line items are rolled up - the
 -- question this answers is "what have we spent with this vendor on this code", not "what
--- was on line 3 of that invoice" - fct_DirectCost still holds the transactions.
---
--- WHY THIS IS A BRIDGE AND NOT A FACT. It has an additive measure on it (SpendAmount) and
--- could be read as a fact, but its job is to let dim_Vendor and dim_CostCode filter each
--- other, which neither can do directly - a vendor works across many codes and a code is
--- used by many vendors. Named `bridge_` so nobody points another fact at it.
---
--- WHAT IT DOES NOT COVER, stated because a partial bridge that looks total is worse than
--- an obviously partial one: this is DIRECT costs only. Subcontract spend flows through
--- commitments, whose line items also carry cost codes and are not yet extracted (that is a
--- per-contract nested pull, hundreds of calls against a 600/hour limit). So this answers
--- "what have we spent DIRECTLY with this vendor on this code" completely, and the
--- subcontract half is still to come. IsDirectCostOnly makes that explicit on every row
--- rather than in a footnote nobody reads.
+-- was on line 3"; fct_DirectCost still holds the transactions.
 
 CREATE OR REPLACE TABLE bridge_VendorCostCode AS
-WITH lines AS (
+WITH direct_lines AS (
     SELECT
         l.project_id,
+        d.vendor_id,
+        d.vendor_name,
         l.cost_code_id,
         l.cost_code,
         l.cost_code_name,
-        l.direct_cost_id,
-        -- total_amount includes tax and freight where the line carries them; amount is the
-        -- bare line. Spend should be what actually hit the job.
-        COALESCE(l.total_amount, l.amount) AS line_amount
+        'Actual'                            AS amount_type,
+        'Direct cost'                       AS source_label,
+        l.direct_cost_id                    AS parent_id,
+        COALESCE(l.total_amount, l.amount)  AS line_amount
     FROM sv_direct_cost_lines l
-    -- Only lines whose holder really is a direct cost. Today every row says
-    -- "DirectCost::Item", but Procore reuses `holder` across object types and a new one
-    -- appearing would otherwise join silently to the wrong header.
+    -- Only lines whose holder really is a direct cost. Procore reuses `holder` across
+    -- object types, and a Commitment::Item joined on id alone would be attributed to
+    -- whichever direct cost happened to share that id.
+    JOIN sv_direct_costs d ON d.direct_cost_id = l.direct_cost_id
     WHERE l.holder_type = 'DirectCost::Item'
       AND l.cost_code_id IS NOT NULL
+      AND d.vendor_id IS NOT NULL
+),
+commitment_lines AS (
+    SELECT
+        c.project_id,
+        c.vendor_id,
+        c.vendor_name,
+        l.cost_code_id,
+        l.cost_code,
+        l.cost_code_name,
+        'Committed'                         AS amount_type,
+        c.commitment_type                   AS source_label,
+        l.commitment_id                     AS parent_id,
+        COALESCE(l.total_amount, l.amount)  AS line_amount
+    FROM sv_commitment_lines l
+    JOIN sv_commitments c ON c.commitment_id = l.commitment_id
+    WHERE l.cost_code_id IS NOT NULL
+      AND c.vendor_id IS NOT NULL
+      -- The holder_type must match the endpoint the line came from. A work order id and a
+      -- purchase order id are different id spaces that can collide, so joining without
+      -- this can attach a subcontract line to an unrelated purchase order.
+      AND ((l.holder_type = 'WorkOrderContract'     AND c.commitment_type = 'Subcontract')
+        OR (l.holder_type = 'PurchaseOrderContract' AND c.commitment_type = 'Purchase Order'))
+),
+combined AS (
+    SELECT * FROM direct_lines
+    UNION ALL
+    SELECT * FROM commitment_lines
 )
 SELECT
-    CONCAT_WS('|', l.project_id, d.vendor_id, l.cost_code_id) AS VendorCostCodeKey,
-    l.project_id                     AS ProjectKey,
-    d.vendor_id                      AS VendorKey,
-    d.vendor_name                    AS VendorName,
-    l.cost_code_id                   AS CostCodeKey,
-    l.cost_code                       AS CostCode,
-    l.cost_code_name                 AS CostCodeName,
-    SUM(l.line_amount)               AS SpendAmount,
+    CONCAT_WS('|', project_id, vendor_id, cost_code_id, amount_type) AS VendorCostCodeKey,
+    project_id                       AS ProjectKey,
+    vendor_id                        AS VendorKey,
+    MAX(vendor_name)                 AS VendorName,
+    cost_code_id                     AS CostCodeKey,
+    MAX(cost_code)                   AS CostCode,
+    MAX(cost_code_name)              AS CostCodeName,
+    amount_type                      AS AmountType,
+    -- Direct cost / Subcontract / Purchase Order, kept beside AmountType so the report can
+    -- separate subcontract from supply without re-deriving it.
+    MAX(source_label)                AS SourceLabel,
+    SUM(line_amount)                 AS Amount,
     COUNT(*)                         AS LineItemCount,
-    COUNT(DISTINCT l.direct_cost_id) AS DirectCostCount,
-    TRUE                             AS IsDirectCostOnly
-FROM lines l
--- INNER JOIN, deliberately. A line whose header we do not have cannot be attributed to a
--- vendor, and a bridge row with a NULL vendor would quietly become an "unallocated"
--- bucket that every vendor-filtered view excludes without saying so. Lines that fail to
--- join are counted by the DQ suite instead, where the number is visible.
-JOIN sv_direct_costs d
-  ON d.direct_cost_id = l.direct_cost_id
-WHERE d.vendor_id IS NOT NULL
-GROUP BY l.project_id, d.vendor_id, d.vendor_name,
-         l.cost_code_id, l.cost_code, l.cost_code_name;
+    COUNT(DISTINCT parent_id)        AS ParentCount,
+    (amount_type = 'Actual')         AS IsActual
+FROM combined
+GROUP BY project_id, vendor_id, cost_code_id, amount_type;

@@ -247,3 +247,16 @@ SELECT insurance_id, vendor_id, insurance_type, provider, policy_number, status_
        effective_date, expiration_date, coverage_limit_raw, is_exempt, info_received,
        additional_insured, notes
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_vendor_insurance`;
+
+
+-- Commitments: 189 subcontracts + 109 purchase orders, 431 line items, all cost-coded.
+CREATE OR REPLACE TEMPORARY VIEW sv_commitments AS
+SELECT commitment_type, project_id, commitment_id, commitment_number, title, status_label,
+       vendor_id, vendor_name, grand_total, total_payments, total_requisitioned, is_executed
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_commitments`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_commitment_lines AS
+SELECT project_id, line_item_id, commitment_id, holder_type, source_endpoint, cost_code_id,
+       cost_code, cost_code_name, description, line_item_type, amount, total_amount,
+       quantity, unit_cost
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_commitment_lines`;

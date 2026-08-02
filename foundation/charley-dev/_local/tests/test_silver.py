@@ -135,6 +135,40 @@ BRONZE = {
         bronze_row("M2", {"date": "2025-05-01", "man_hours": "16.0",
                           "num_workers": "2"}, project_id="7"),
     ],
+    # Commitments: a subcontract and a purchase order, with their line items. Procore
+    # spells the vendor NAME as vendor.company on these endpoints, not vendor.name.
+    "cd_bronze_procore_work_order_contracts": [
+        bronze_row("SC1", {"id": "SC1", "number": "SC-1", "title": "  HVAC  ",
+                           "status": "approved", "grand_total": "390000.0",
+                           "total_payments": "30485.0",
+                           "total_requisitions_amount": "30485.0", "executed": True,
+                           "vendor": {"id": "V1", "company": "  Demar Plumbing  "}},
+                   project_id="7"),
+    ],
+    "cd_bronze_procore_purchase_order_contracts": [
+        bronze_row("PO1", {"id": "PO1", "number": "PO-1", "title": "Equipment",
+                           "status": "approved", "grand_total": "28000.0",
+                           "executed": True,
+                           "vendor": {"id": "V3", "company": "Daikin"}}, project_id="7"),
+    ],
+    "cd_bronze_procore_work_order_contract_line_items": [
+        bronze_row("CL1", {"id": "CL1",
+                           "holder": {"id": "SC1", "holder_type": "WorkOrderContract"},
+                           "cost_code": {"id": "CC1", "full_code": "03-100",
+                                         "name": "03-100 - CONCRETE"},
+                           "description": "HVAC", "line_item_type": {"name": "Material"},
+                           "amount": "390000.0", "total_amount": "390000.0"},
+                   project_id="7"),
+    ],
+    "cd_bronze_procore_purchase_order_contract_line_items": [
+        bronze_row("CL2", {"id": "CL2",
+                           "holder": {"id": "PO1", "holder_type": "PurchaseOrderContract"},
+                           "cost_code": {"id": "CC2", "full_code": "06-100",
+                                         "name": "06-100 - CARPENTRY"},
+                           "description": "DAIKIN", "line_item_type": {"name": "Material"},
+                           "amount": "28000.0", "total_amount": "28000.0",
+                           "quantity": "1.0", "unit_cost": "28000.0"}, project_id="7"),
+    ],
     # Phase 0 items 3 and 4: the vendor <-> cost-code bridge, and insurance.
     "cd_bronze_procore_direct_cost_line_items": [
         bronze_row("L1", {"id": "L1", "holder": {"id": "D1", "holder_type": "DirectCost::Item"},
@@ -467,10 +501,43 @@ def test_vendor_costcode_and_insurance(con) -> None:
                     "WHERE insurance_id='I2'") is None
     check("blank policy numbers become real nulls, not empty strings")
 
+
+def test_commitments(con) -> None:
+    """Subcontracts and purchase orders - the committed half of the bridge."""
+    # Two endpoints, one table, same reason requisitions and payment applications union.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_commitments") == 2
+    assert one(con, "SELECT commitment_type FROM cd_silver_commitments "
+                    "WHERE commitment_id='SC1'") == "Subcontract"
+    assert one(con, "SELECT commitment_type FROM cd_silver_commitments "
+                    "WHERE commitment_id='PO1'") == "Purchase Order"
+    check("work orders and purchase orders union into one commitment table")
+
+    # vendor.company, not vendor.name. Procore uses "company" for the vendor's name on
+    # these endpoints and for a nested object elsewhere - assuming rather than reading it
+    # is how a column silently becomes NULL.
+    assert one(con, "SELECT vendor_name FROM cd_silver_commitments "
+                    "WHERE commitment_id='SC1'") == "Demar Plumbing"
+    assert one(con, "SELECT vendor_id FROM cd_silver_commitments "
+                    "WHERE commitment_id='SC1'") == "V1"
+    check("the vendor resolves from vendor.company, trimmed")
+
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_commitment_lines") == 2
+    assert one(con, "SELECT cost_code FROM cd_silver_commitment_lines "
+                    "WHERE line_item_id='CL1'") == "03-100"
+    assert one(con, "SELECT commitment_id FROM cd_silver_commitment_lines "
+                    "WHERE line_item_id='CL1'") == "SC1"
+    check("commitment lines carry the cost code and the contract that owns them")
+
+    # holder_type distinguishes the two id spaces. Without it a work order line can be
+    # joined to a purchase order that happens to share the id.
+    assert one(con, "SELECT holder_type FROM cd_silver_commitment_lines "
+                    "WHERE line_item_id='CL2'") == "PurchaseOrderContract"
+    check("holder_type is kept so colliding contract ids cannot cross-join")
+
 def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
-               test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance):
+               test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

@@ -66,8 +66,34 @@ table _Measures
 	measure 'Percent Bought Out' = DIVIDE ( [Committed], [Budget] )
 		formatString: "0.0%"
 
+	/// Replaces no workbook equivalent - the spreadsheet cannot say when it was last correct
+	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
+		formatString: "yyyy-mm-dd hh:nn"
+
+	/// Replaces derived
+	measure 'Hours Since Last Checked Run' =
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )
+		formatString: "#,0"
+
+	/// Replaces derived
+	measure 'Pipeline Status' =
+			VAR Hrs = [Hours Since Last Checked Run]
+			RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", "STALE - these numbers may be weeks old" )
+
+	/// Replaces derived
+	measure 'Blocking Violations Last Run' =
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			RETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),
+			meta_PipelineRun[RunAt] = Last ), 0 )
+		formatString: "#,0"
+
 	/// Replaces no workbook equivalent - vendor spend could not be sliced by cost code
-	measure 'Vendor Spend' = SUM ( bridge_VendorCostCode[SpendAmount] )
+	measure 'Vendor Spend' = CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = "Actual" )
+		formatString: "$#,0"
+
+	/// Replaces FINANCIALS!D61 - committed by vendor and cost code, which the workbook cannot slice
+	measure 'Vendor Committed' = CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = "Committed" )
 		formatString: "$#,0"
 
 	/// Replaces derived

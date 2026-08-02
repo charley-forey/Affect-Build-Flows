@@ -198,6 +198,15 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
 def page_data_quality() -> tuple[str, list[dict]]:
     p = "dataquality"
     return p, [
+        # FIRST on the page, deliberately. Every other number here describes the data; this
+        # one says whether the data arrived at all. A DQ page full of green checks on
+        # three-week-old numbers is worse than no DQ page.
+        textbox(p, "hb_h", "Pipeline", 20, 96, 300, 28, size=13),
+        card(p, "dq_hb_status", "Pipeline Status", 20, 128, 300, 110),
+        card(p, "dq_hb_hours", "Hours Since Last Checked Run", 336, 128, 260, 110),
+        card(p, "dq_hb_last", "Last Checked Run", 612, 128, 260, 110),
+        card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 128, 260, 110),
+
         textbox(p, "title", "Data Quality", 20, 16, 600, 44),
         textbox(p, "note",
                 "Surfacing bad data rather than letting it flow silently into a rollup. "
@@ -545,16 +554,21 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
 
         # PHASE 0 ITEM 3. Spend by vendor AND cost code - the linkage that exists in no
         # single Procore object, and that nothing in the current reporting can slice.
+        # PHASE 0 ITEM 3. Committed and actual side by side, never summed: committed is
+        # what was promised, actual is what has gone out, and adding them counts the same
+        # work twice. The gap between the two columns is work in progress.
+        card(p, "c_committed", "Vendor Committed", 20, 232, 250, 100),
+
         visual(p, "c_matrix", "matrix", 20, 542, 620, 320,
                {"Rows": [column("bridge_VendorCostCode", "VendorName")],
-                "Columns": [column("bridge_VendorCostCode", "CostCode")],
-                "Values": [measure("Vendor Spend")]},
-               title="Direct spend by vendor and cost code"),
+                "Columns": [column("bridge_VendorCostCode", "AmountType")],
+                "Values": [measure("Vendor Spend"), measure("Vendor Committed")]},
+               title="Vendor: committed vs actual"),
 
         visual(p, "c_topcodes", "barChart", 660, 542, 600, 320,
                {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
-                "Y": [measure("Vendor Spend")]},
-               title="Direct spend by cost code"),
+                "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
+               title="Committed and actual by cost code"),
 
         # The D8 deliverable itself: the list somebody assembles by hand today.
         visual(p, "c_vendorlist", "tableEx", 20, 882, 1240, 280,
