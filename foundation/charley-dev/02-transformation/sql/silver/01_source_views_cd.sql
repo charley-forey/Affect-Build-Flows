@@ -134,3 +134,39 @@ SELECT
     CAST(activity_type        AS STRING)  AS activity_type,
     CAST(Status               AS STRING)  AS status
 FROM delta.`{SILVER_ABFSS}/Outbuild_activities`;
+
+
+-- ---------------------------------------------------------------------------
+-- CROSSWALK SOURCES
+-- ---------------------------------------------------------------------------
+--
+-- These three feed dim_ProjectCrosswalk / dim_VendorCrosswalk. All read the EXISTING
+-- warehouse, under both --source settings, because neither Sage nor Outbuild ingestion can
+-- run yet (gateway binding and OUTBUILD_API_TOKEN, both Affect's to grant). When they do,
+-- only these views move - the crosswalk gold files and every measure stay as they are.
+
+-- Procore project id <-> Sage project id. Per resources/sage-100-contractor/schema, Sage
+-- `jobnum` on an invoice is a foreign key to actrec.recnum, NOT a readable job code - so
+-- this table IS the join between the two systems, not a convenience lookup.
+CREATE OR REPLACE TEMPORARY VIEW sv_project_crosswalk AS
+SELECT
+    CAST(`Project ID`      AS STRING) AS procore_project_id,
+    CAST(`Sage Project ID` AS STRING) AS sage_project_id,
+    CAST(`Project Name`    AS STRING) AS project_name
+FROM delta.`{SILVER_ABFSS}/dim_projects_procoreXsage`;
+
+-- Outbuild carries its OWN Procore project id, so it joins to the hub directly rather than
+-- needing a third mapping. One row per Outbuild project.
+CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_projects AS
+SELECT DISTINCT
+    CAST(`Outbuild Project ID` AS STRING) AS outbuild_project_id,
+    CAST(`Procore Project ID`  AS STRING) AS procore_project_id
+FROM delta.`{SILVER_ABFSS}/Outbuild_activities`
+WHERE `Outbuild Project ID` IS NOT NULL;
+
+-- Sage's own vendor master, for names on the Sage side of the vendor crosswalk.
+CREATE OR REPLACE TEMPORARY VIEW sv_sage_vendors AS
+SELECT
+    CAST(`Vendor ID`   AS STRING) AS sage_vendor_id,
+    CAST(`Vendor Name` AS STRING) AS sage_vendor_name
+FROM delta.`{SILVER_ABFSS}/Dim_Sage_Vendors`;

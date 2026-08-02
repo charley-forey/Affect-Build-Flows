@@ -111,6 +111,13 @@ SILVER = "{SILVER_ABFSS}"
 # to NULL so they cannot reach a report.
 spark.conf.set("spark.sql.parquet.datetimeRebaseModeInRead", "CORRECTED")
 spark.conf.set("spark.sql.parquet.int96RebaseModeInRead", "CORRECTED")
+
+# rlike_(s, p) - regex match as a FUNCTION. Spark spells it as an infix operator
+# (x RLIKE 'p'), which DuckDB has no equivalent for and which a macro cannot bridge -
+# macros define functions, not operators. The function form keeps ONE .sql file running
+# on both engines. dim_CostCodeCrosswalk uses it to find CSI division prefixes.
+import re as _re
+spark.udf.register("rlike_", lambda s, p: bool(_re.match(p, s)) if s else False, "boolean")
 '''
         ),
     ]
@@ -223,7 +230,11 @@ if failed:
         + "\\n  ".join(f"{r['step']}: {r['error'][:200]}" for r in failed[:5])
     )
 
-tables = ["dim_Project", "dim_Vendor", "dim_CostCode", "fct_BudgetLine",
+tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
+          # The crosswalks are how "integrated across three systems" becomes verifiable
+          # rather than asserted, so they are checked like any other gold table.
+          "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
+          "fct_BudgetLine",
           "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal", "fct_Milestone",
           "fct_FinancialPeriod"]
 

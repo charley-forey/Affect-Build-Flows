@@ -245,14 +245,53 @@ def test_referential_integrity(con) -> None:
     check("every fact MonthStart resolves to dim_Date")
 
 
+
+def test_crosswalks(con) -> None:
+    """The crosswalk is what makes "integrated across three systems" a fact rather than a
+    claim - and its job is to make GAPS visible, not to hide them behind an inner join."""
+
+    # Every Procore project appears, including the one in no other system. An INNER JOIN
+    # here is the failure mode: a project missing from Sage contributes zero revenue to
+    # every financial measure WITHOUT erroring, so it reads as a project that never billed.
+    assert one(con, "SELECT COUNT(*) FROM dim_ProjectCrosswalk") == 2
+    assert one(con, "SELECT CoverageStatus FROM dim_ProjectCrosswalk WHERE ProjectKey='P2'")         == "Procore only - no financials, no schedule"
+    assert one(con, "SELECT SystemCount FROM dim_ProjectCrosswalk WHERE ProjectKey='P2'") == 1
+    check("dim_ProjectCrosswalk keeps unmatched projects and names the gap")
+
+    assert one(con, "SELECT SystemCount FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'") == 3
+    assert one(con, "SELECT IsInSage FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'") is True
+    assert one(con, "SELECT IsInOutbuild FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'") is True
+    check("a project present in all three systems reports SystemCount 3")
+
+    # The match METHOD is recorded, so a fuzzy match can never be mistaken for a certain one
+    # once name-similarity fallbacks exist. Today everything is an exact key join.
+    assert one(con, "SELECT SageMatchMethod FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'")         == "CROSSWALK_TABLE"
+    assert one(con, "SELECT OutbuildMatchMethod FROM dim_ProjectCrosswalk WHERE ProjectKey='P2'")         == "UNMATCHED"
+    check("every match records HOW it was made, not just that it was")
+
+    # A vendor with no Sage id is normal (invited to bid, never paid) and must not be
+    # dropped; the name mismatch flag is the early warning that a mapping has drifted.
+    assert one(con, "SELECT COUNT(*) FROM dim_VendorCrosswalk") == 2
+    assert one(con, "SELECT IsInSage FROM dim_VendorCrosswalk WHERE VendorKey='V2'") is False
+    assert one(con, "SELECT HasNameMismatch FROM dim_VendorCrosswalk WHERE VendorKey='V1'") is True
+    check("dim_VendorCrosswalk keeps unmatched vendors and flags name drift")
+
+    # The CSI division is a substring nobody had extracted; parsing it once here is what
+    # lets every visual group the same way.
+    assert one(con, "SELECT DivisionCode FROM dim_CostCodeCrosswalk WHERE CostCode='03-100'") == "03"
+    # A code that does not parse still appears - flagged, not silently dropped from a subtotal.
+    assert one(con, "SELECT HasUnparseableCode FROM dim_CostCodeCrosswalk "
+                    "WHERE CostCodeName='General'") is True
+    assert one(con, "SELECT SageMatchMethod FROM dim_CostCodeCrosswalk LIMIT 1") == "PENDING_SAGE_INGEST"
+    check("dim_CostCodeCrosswalk parses the CSI division and flags codes that do not")
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity,
-    ):
+        test_referential_integrity, test_crosswalks):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

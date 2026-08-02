@@ -48,6 +48,11 @@ MACROS = (
     "CREATE OR REPLACE MACRO explode(l) AS unnest(l)",
     # Used by dim_Status to read Procore's raw payloads. Same macro src/procore uses.
     "CREATE OR REPLACE MACRO get_json_object(j, p) AS json_extract_string(j, p)",
+    # Spark spells regex matching as an infix operator (x RLIKE 'p'); DuckDB has only the
+    # function regexp_matches(x, p) and cannot macro an operator. The SQL uses a function
+    # form both engines understand, defined here for DuckDB and as a Spark UDF in the gold
+    # notebook. Used by dim_CostCodeCrosswalk to find codes that start with a CSI division.
+    "CREATE OR REPLACE MACRO rlike_(s, p) AS regexp_matches(COALESCE(s, ''), p)",
     # json_field(payload, 'KEY') - look a key up by NAME rather than by JSON path.
     #
     # Spark's get_json_object uses a simplified JSONPath that silently returns NULL for
@@ -95,8 +100,11 @@ SOURCE_FIXTURES = (
         ('V2', NULL,  'Bright Electric')
     ) AS t(procore_vendor_id, sage_vendor_id, vendor_name)""",
 
+    # The REAL Procore shape, verified against Affect's tenant: "01-00-00 - GENERAL
+    # REQUIREMENTS". CC2 deliberately does not follow it, so the unparseable path is
+    # exercised rather than assumed.
     """CREATE OR REPLACE VIEW sv_cost_codes AS SELECT * FROM (VALUES
-        ('CC1', '03-100 Concrete'),
+        ('CC1', '03-100 - CONCRETE'),
         ('CC2', 'General')
     ) AS t(cost_code_id, cost_code_name)""",
 
@@ -141,6 +149,24 @@ SOURCE_FIXTURES = (
         ('P1','R2','RFI-2','Closed one',      'Closed','Normal', NULL, DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-10')
     ) AS t(project_id, item_id, item_number, subject, status_label, priority, cost_code_id,
            created_date, due_date, responded_date)""",
+
+    # Crosswalk fixtures. P1 is in all three systems, P2 is Procore-only (the dangerous
+    # case - it reads as zero revenue everywhere without erroring), P3 maps to TWO Sage
+    # projects, which is a data problem the crosswalk must surface rather than resolve.
+    """CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM (VALUES
+        ('P1', 'S100', 'Tower A'),
+        ('P3', 'S300', 'Ambiguous'),
+        ('P3', 'S301', 'Ambiguous')
+    ) AS t(procore_project_id, sage_project_id, project_name)""",
+
+    """CREATE OR REPLACE VIEW sv_outbuild_projects AS SELECT * FROM (VALUES
+        ('OB1', 'P1'),
+        ('OB9', NULL)
+    ) AS t(outbuild_project_id, procore_project_id)""",
+
+    """CREATE OR REPLACE VIEW sv_sage_vendors AS SELECT * FROM (VALUES
+        ('SV1', 'ACME CONCRETE LLC')
+    ) AS t(sage_vendor_id, sage_vendor_name)""",
 
     """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
         ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress'),
