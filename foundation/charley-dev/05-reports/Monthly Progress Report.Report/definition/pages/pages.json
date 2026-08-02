@@ -5,6 +5,7 @@
     "financial",
     "schedule",
     "scorecard",
+    "sourcecoverage",
     "dataquality"
   ],
   "activePageName": "overview"

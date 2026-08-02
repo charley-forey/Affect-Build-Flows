@@ -58,6 +58,9 @@ MODEL_TABLES = [
     # and the scorecard are complete in shape before a single row is entered.
     "man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
     "man_SafetyMonthly", "man_QualityMonthly", "man_Milestones", "man_DailyLogCompliance",
+    # Cross-source coverage. These answer "is this project actually in Sage and Outbuild,
+    # or is it silently reading as zero revenue?" - which nothing else in the model can.
+    "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -77,6 +80,7 @@ RELATIONSHIPS = [
     ("fct_Milestone", "MonthStart", "dim_Date", "Date"),
     ("fct_FinancialPeriod", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_FinancialPeriod", "MonthStart", "dim_Date", "Date"),
+    ("dim_ProjectCrosswalk", "ProjectKey", "dim_Project", "ProjectKey"),
     ("man_Wins", "ProjectKey", "dim_Project", "ProjectKey"),
     ("man_Wins", "MonthStart", "dim_Date", "Date"),
     ("man_Risks", "ProjectKey", "dim_Project", "ProjectKey"),
@@ -157,6 +161,24 @@ MEASURES = [
     # Data-quality measures. These drive the hidden diagnostics page - surfacing bad data
     # rather than letting it flow silently into a leadership rollup, which is exactly how
     # the workbook's defects survived.
+    # Cross-source coverage. These count integration GAPS, not data-entry errors, and each
+    # one has a financial consequence: a project missing from Sage contributes zero revenue
+    # to every measure on every other page without erroring.
+    ("Projects Fully Mapped",
+     "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[SystemCount] = 3 ), 0 )",
+     '"#,0"', "present in Procore AND Sage AND Outbuild"),
+    ("Projects Missing From Sage",
+     "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInSage] = FALSE ), 0 )",
+     '"#,0"', "these read as ZERO revenue everywhere - the most dangerous gap"),
+    ("Projects Missing From Outbuild",
+     "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInOutbuild] = FALSE ), 0 )",
+     '"#,0"', "no milestones - Outbuild is the only milestone source that exists"),
+    ("Source Coverage %",
+     "DIVIDE ( [Projects Fully Mapped], COUNTROWS ( dim_ProjectCrosswalk ) )",
+     '"0.0%"', "share of projects present in all three systems"),
+    ("Vendors Missing From Sage",
+     "COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )",
+     '"#,0"', "mostly expected - a vendor invited to bid is not a vendor who was paid"),
     ("DQ Projects Without Crosswalk",
      "CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )",
      '"#,0"', "diagnostics - cannot join to Sage until fixed"),

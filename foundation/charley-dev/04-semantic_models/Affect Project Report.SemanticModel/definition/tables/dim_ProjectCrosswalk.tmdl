@@ -1,0 +1,78 @@
+table dim_ProjectCrosswalk
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ProjectName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectName
+
+	column ProcoreProjectId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProcoreProjectId
+
+	column SageProjectId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageProjectId
+
+	column OutbuildProjectId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: OutbuildProjectId
+
+	column IsInProcore
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInProcore
+
+	column IsInSage
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInSage
+
+	column IsInOutbuild
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInOutbuild
+
+	column SystemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SystemCount
+
+	column SageMatchMethod
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageMatchMethod
+
+	column OutbuildMatchMethod
+		dataType: string
+		summarizeBy: none
+		sourceColumn: OutbuildMatchMethod
+
+	column HasAmbiguousSageMatch
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasAmbiguousSageMatch
+
+	column HasAmbiguousOutbuildMatch
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasAmbiguousOutbuildMatch
+
+	column CoverageStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CoverageStatus
+
+	partition dim_ProjectCrosswalk = entity
+		mode: directLake
+		source
+			entityName: dim_projectcrosswalk
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

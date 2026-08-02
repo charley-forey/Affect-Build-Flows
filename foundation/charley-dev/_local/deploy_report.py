@@ -253,11 +253,71 @@ def page_scorecard() -> tuple[str, list[dict]]:
     ]
 
 
+
+def page_source_coverage() -> tuple[str, list[dict]]:
+    """Which projects actually exist in all three systems - and which silently do not.
+
+    This is the page that would have caught the platform's most dangerous failure mode. A
+    project present in Procore but missing from Sage contributes ZERO revenue to every
+    financial measure without erroring: no blank, no warning, just a project that appears
+    never to have billed. Across Affect's 19 projects that is 4 of them today.
+
+    It is visible (not hidden like Data Quality) because these are not data-entry typos to
+    be cleaned up quietly - they are integration gaps someone has to act on, and the
+    financial numbers on every other page are wrong until they are.
+    """
+    p = "sourcecoverage"
+    return p, [
+        textbox(p, "title", "Source Coverage", 20, 16, 700, 44),
+        textbox(p, "note",
+                "A project missing from Sage reads as ZERO revenue everywhere - it does not "
+                "error, it just looks like a project that never billed. Every project below "
+                "appears exactly once; the status says what is missing.",
+                20, 56, 1100, 44, size=10, color=MUTED),
+
+        # Counts first, so the shape of the problem is legible before the detail.
+        card(p, "cov_full", "Projects Fully Mapped", 20, 116, 260, 120),
+        card(p, "cov_nosage", "Projects Missing From Sage", 296, 116, 260, 120),
+        card(p, "cov_nooutbuild", "Projects Missing From Outbuild", 572, 116, 260, 120),
+        card(p, "cov_pct", "Source Coverage %", 848, 116, 260, 120),
+
+        visual(p, "cov_status", "columnChart", 20, 252, 540, 300,
+               {"Category": [column("dim_ProjectCrosswalk", "CoverageStatus")],
+                "Y": [measure("Projects Fully Mapped")]},
+               title="Projects by coverage status"),
+
+        # The list is the actionable artifact: it names the projects to go fix.
+        visual(p, "cov_detail", "tableEx", 580, 252, 700, 300,
+               {"Values": [column("dim_ProjectCrosswalk", "ProjectName"),
+                           column("dim_ProjectCrosswalk", "CoverageStatus"),
+                           column("dim_ProjectCrosswalk", "SageProjectId"),
+                           column("dim_ProjectCrosswalk", "OutbuildProjectId")]},
+               title="Every project, and what it is missing"),
+
+        textbox(p, "vendornote",
+                "Vendors below are expected to be mostly unmatched - a vendor invited to bid "
+                "is not a vendor who was paid. What matters is a vendor WITH commitments and "
+                "no Sage id.",
+                20, 566, 1100, 30, size=10, color=MUTED),
+        visual(p, "vendor_cov", "tableEx", 20, 600, 620, 260,
+               {"Values": [column("dim_VendorCrosswalk", "VendorName"),
+                           column("dim_VendorCrosswalk", "IsInSage"),
+                           column("dim_VendorCrosswalk", "HasNameMismatch")]},
+               title="Vendor mapping - Procore to Sage"),
+        visual(p, "costcode_cov", "tableEx", 660, 600, 620, 260,
+               {"Values": [column("dim_CostCodeCrosswalk", "DivisionCode"),
+                           column("dim_CostCodeCrosswalk", "CostCode"),
+                           column("dim_CostCodeCrosswalk", "HasUnparseableCode")]},
+               title="Cost codes - CSI division parse"),
+    ]
+
+
 PAGES = [
     ("Overview", page_overview, False),
     ("Financial", page_financial, False),
     ("Schedule & Quality", page_schedule_quality, False),
     ("Scorecard", page_scorecard, False),
+    ("Source Coverage", page_source_coverage, False),
     ("Data Quality", page_data_quality, True),   # hidden
 ]
 

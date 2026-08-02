@@ -107,6 +107,26 @@ table _Measures
 	measure 'Avg Milestone Progress' = AVERAGE ( fct_Milestone[PercentComplete] )
 		formatString: "0.0%"
 
+	/// Replaces present in Procore AND Sage AND Outbuild
+	measure 'Projects Fully Mapped' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[SystemCount] = 3 ), 0 )
+		formatString: "#,0"
+
+	/// Replaces these read as ZERO revenue everywhere - the most dangerous gap
+	measure 'Projects Missing From Sage' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInSage] = FALSE ), 0 )
+		formatString: "#,0"
+
+	/// Replaces no milestones - Outbuild is the only milestone source that exists
+	measure 'Projects Missing From Outbuild' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInOutbuild] = FALSE ), 0 )
+		formatString: "#,0"
+
+	/// Replaces share of projects present in all three systems
+	measure 'Source Coverage %' = DIVIDE ( [Projects Fully Mapped], COUNTROWS ( dim_ProjectCrosswalk ) )
+		formatString: "0.0%"
+
+	/// Replaces mostly expected - a vendor invited to bid is not a vendor who was paid
+	measure 'Vendors Missing From Sage' = COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )
+		formatString: "#,0"
+
 	/// Replaces diagnostics - cannot join to Sage until fixed
 	measure 'DQ Projects Without Crosswalk' = CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )
 		formatString: "#,0"

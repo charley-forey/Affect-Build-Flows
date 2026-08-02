@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "eb83c351fbe4e88de650",
+  "position": {
+    "x": 20,
+    "y": 600,
+    "z": 0,
+    "width": 620,
+    "height": 260
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_VendorCrosswalk"
+                    }
+                  },
+                  "Property": "VendorName"
+                }
+              },
+              "queryRef": "dim_VendorCrosswalk.VendorName",
+              "nativeQueryRef": "VendorName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_VendorCrosswalk"
+                    }
+                  },
+                  "Property": "IsInSage"
+                }
+              },
+              "queryRef": "dim_VendorCrosswalk.IsInSage",
+              "nativeQueryRef": "IsInSage"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_VendorCrosswalk"
+                    }
+                  },
+                  "Property": "HasNameMismatch"
+                }
+              },
+              "queryRef": "dim_VendorCrosswalk.HasNameMismatch",
+              "nativeQueryRef": "HasNameMismatch"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Vendor mapping - Procore to Sage'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,58 @@
+table dim_CostCodeCrosswalk
+
+	column CostCodeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCodeKey
+
+	column ProcoreCostCodeId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProcoreCostCodeId
+
+	column CostCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCode
+
+	column CostCodeName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCodeName
+
+	column DivisionCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: DivisionCode
+
+	column SageCostCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageCostCode
+
+	column IsInSage
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInSage
+
+	column SageMatchMethod
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageMatchMethod
+
+	column IsInProcore
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInProcore
+
+	column HasUnparseableCode
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasUnparseableCode
+
+	partition dim_CostCodeCrosswalk = entity
+		mode: directLake
+		source
+			entityName: dim_costcodecrosswalk
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'
