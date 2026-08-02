@@ -22,6 +22,9 @@ CREATE OR REPLACE TABLE dim_CostCodeCrosswalk AS
 WITH procore AS (
     SELECT
         cost_code_id,
+        -- The CODE ("03-100"), not the name ("Concrete"). Parsing the name for a division
+        -- is what made 5,429 of 5,433 codes look unparseable - a name has no division in it.
+        TRIM(cost_code)      AS cost_code_raw,
         TRIM(cost_code_name) AS cost_code_name
     FROM sv_cost_codes
     WHERE cost_code_id IS NOT NULL
@@ -33,12 +36,12 @@ parsed AS (
         -- Everything before the first space-hyphen-space is the code; the rest is the name.
         -- Codes that do not follow the pattern keep the whole string as the code and get
         -- flagged, rather than being silently truncated into something that looks valid.
-        CASE WHEN cost_code_name LIKE '% - %'
-             THEN TRIM(SUBSTRING(cost_code_name, 1, INSTR(cost_code_name, ' - ') - 1))
-             ELSE cost_code_name END AS code_part,
-        CASE WHEN cost_code_name LIKE '% - %'
-             THEN TRIM(SUBSTRING(cost_code_name, INSTR(cost_code_name, ' - ') + 3))
-             ELSE NULL END           AS name_part
+        -- Procore returns the code two ways depending on endpoint: "03-100" from
+        -- /cost_codes, and "03-100 - CONCRETE" from a budget view. Handle both.
+        CASE WHEN cost_code_raw LIKE '% - %'
+             THEN TRIM(SUBSTRING(cost_code_raw, 1, INSTR(cost_code_raw, ' - ') - 1))
+             ELSE cost_code_raw END  AS code_part,
+        cost_code_name              AS name_part
     FROM procore
 )
 SELECT

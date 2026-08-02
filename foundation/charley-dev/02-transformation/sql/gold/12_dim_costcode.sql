@@ -39,9 +39,13 @@ SELECT
     COALESCE(TRIM(s.cost_code_name), 'Code ' || a.cost_code_id) AS Description,
     -- Leading numeric segment, e.g. "03-100 Concrete" -> "03". NULL when the code does not
     -- follow that shape, rather than a silently wrong division.
+    -- Parse the CODE, not the NAME. These are separate Procore fields and the name has no
+    -- division in it - "Concrete" cannot yield "03". Parsing the name left 5,429 of 5,433
+    -- codes with a NULL division, which the DQ suite reported as unparseable codes; the
+    -- defect was one level upstream, in what sv_cost_codes exposed.
     CASE
-        WHEN TRIM(s.cost_code_name) LIKE '%-%'
-        THEN TRIM(SUBSTRING(TRIM(s.cost_code_name), 1, POSITION('-' IN TRIM(s.cost_code_name)) - 1))
+        WHEN TRIM(s.cost_code) LIKE '%-%'
+        THEN TRIM(SUBSTRING(TRIM(s.cost_code), 1, POSITION('-' IN TRIM(s.cost_code)) - 1))
     END AS Division,
     CASE WHEN s.cost_code_id IS NULL THEN FALSE ELSE TRUE END AS IsInSource
 FROM all_codes a

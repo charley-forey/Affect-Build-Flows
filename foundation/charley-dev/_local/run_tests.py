@@ -14,7 +14,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-LIB = HERE.parent / "00-platform" / "lib"
+CHARLEY_DEV = HERE.parent
+LIB = CHARLEY_DEV / "00-platform" / "lib"
 TESTS = HERE / "tests"
 AGENTS = HERE / "agents"
 
@@ -24,6 +25,7 @@ SUITES = [
     ("watermark self-check", LIB / "watermark.py"),
     ("procore_scope self-check", LIB / "procore_scope.py"),
     ("ratelimit self-check", LIB / "ratelimit.py"),
+    ("dq expectation suite", CHARLEY_DEV / "02-transformation" / "dq" / "expectations.py"),
     # The agent gates guard autonomous Fabric deploys, so they are harness-critical: if a
     # gate stops firing, everything downstream of it is running unprotected.
     ("agent gates", AGENTS / "tools.py"),

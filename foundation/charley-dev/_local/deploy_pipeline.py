@@ -45,6 +45,11 @@ STAGES = [
     ("Seed Gold Dimensions", "cd_20_seed_gold", []),
     ("Bronze To Silver", "cd_10_bronze_to_silver", ["Extract Procore"]),
     ("Build Gold", "cd_30_build_gold", ["Bronze To Silver", "Seed Gold Dimensions"]),
+    # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
+    # means the numbers were checked - not merely that the tables were written. Anything
+    # downstream (a model refresh, a subscription) hangs off this rather than off Build
+    # Gold, which is the difference between "published" and "published and correct".
+    ("Data Quality Gate", "cd_40_dq_checks", ["Build Gold"]),
 ]
 
 # Extraction is the long pole - 36 endpoints across every active project. The others are

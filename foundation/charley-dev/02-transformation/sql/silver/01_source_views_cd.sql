@@ -60,7 +60,7 @@ SELECT
 FROM delta.`{SILVER_ABFSS}/dim_procore_project_vendor`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_cost_codes AS
-SELECT cost_code_id, cost_code_name
+SELECT cost_code_id, cost_code, cost_code_name
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_cost_codes`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_prime_contracts AS

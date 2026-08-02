@@ -40,6 +40,8 @@ FROM delta.`{SILVER_ABFSS}/dim_procore_project_vendor`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_cost_codes AS
 SELECT
+    -- The existing warehouse holds no separate full_code, so the name doubles as it.
+    CAST(`Cost Code _Name_` AS STRING) AS cost_code,
     CAST(`Cost Code ID`     AS STRING) AS cost_code_id,
     CAST(`Cost Code _Name_` AS STRING) AS cost_code_name
 FROM delta.`{SILVER_ABFSS}/dim_procore_cost_codes`;

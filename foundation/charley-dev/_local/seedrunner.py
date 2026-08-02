@@ -103,10 +103,13 @@ SOURCE_FIXTURES = (
     # The REAL Procore shape, verified against Affect's tenant: "01-00-00 - GENERAL
     # REQUIREMENTS". CC2 deliberately does not follow it, so the unparseable path is
     # exercised rather than assumed.
+    # Procore returns the CODE and the NAME as separate fields. Parsing a division out of
+    # the name is meaningless - "Concrete" has no division in it - so the code is carried
+    # separately. CC2 has no parseable code, exercising that path.
     """CREATE OR REPLACE VIEW sv_cost_codes AS SELECT * FROM (VALUES
-        ('CC1', '03-100 - CONCRETE'),
-        ('CC2', 'General')
-    ) AS t(cost_code_id, cost_code_name)""",
+        ('CC1', '03-100', 'Concrete'),
+        ('CC2', 'General', 'General')
+    ) AS t(cost_code_id, cost_code, cost_code_name)""",
 
     """CREATE OR REPLACE VIEW sv_budgets AS SELECT * FROM (VALUES
         ('P1','CC1','03-100','Materials', DATE '2025-05-01',
