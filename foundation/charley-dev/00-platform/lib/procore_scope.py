@@ -59,11 +59,26 @@ class Endpoint:
 
     @property
     def needs_company_header(self) -> bool:
-        """v2.0+ requires Procore-Company-Id; v1.x takes it in path/query.
+        """ALWAYS send Procore-Company-Id. Verified against Affect's tenant 2026-08-02.
 
-        Mixing the two is the most common cause of an unexplained 403.
+        The documented rule - and what the cheatsheet says at line 41 - is that only v2.0+
+        needs this header, because v1.x takes the company in the path or query. That is not
+        what Affect's tenant does. Measured, same token, same project, v1.0 RFIs:
+
+            header + per_page=1000   -> 200, 32 rows
+            header, no params        -> 200, 32 rows
+            NO header + per_page     -> 404
+            NO header, no params     -> 404
+
+        Same pattern on v1.1 submittals, v1.0 incidents and v1.0 manpower_logs. The failure
+        is a 404, not a 403 - it reads as "this project has no RFI tool", not "you forgot a
+        header", which is why 28 of 36 endpoints looked like a permissions problem on the
+        first full run and were not.
+
+        Sending the header on a v1.x endpoint that does not need it is harmless; omitting it
+        where it is needed costs a day of chasing the wrong cause. So it always goes.
         """
-        return self.major_version >= 2
+        return True
 
 
 def load_registry(path: str) -> list[Endpoint]:
@@ -206,10 +221,14 @@ def _selftest() -> None:
     assert expand_paths(project, "42", []) == []
     assert expand_paths(child, "42", parent_ids=[]) == []
 
-    # v2.0 needs the company header, v1.x must not send it.
+    # EVERY version sends the company header. Affect's tenant 404s v1.x project endpoints
+    # without it - measured 2026-08-02, see the property docstring. This assertion is the
+    # regression guard: reverting to the documented "v2.0+ only" rule silently loses 28 of
+    # 36 endpoints, and loses them as 404s that look like missing project tools.
     assert _ep("c", "/rest/v2.0/x", SCOPE_COMPANY, api_version="2.0").needs_company_header
-    assert not project.needs_company_header
-    assert not _ep("s", "/rest/v1.1/x", SCOPE_COMPANY, api_version="1.1").needs_company_header
+    assert project.needs_company_header
+    assert _ep("s", "/rest/v1.1/x", SCOPE_COMPANY, api_version="1.1").needs_company_header
+    assert _ep("t", "/rest/v1.0/x", SCOPE_COMPANY, api_version="1.0").needs_company_header
 
     # Parents are always emitted before their children.
     order = [e.name for e in resolution_order([child, contracts, project])]

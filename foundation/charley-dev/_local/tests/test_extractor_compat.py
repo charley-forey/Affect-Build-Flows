@@ -50,25 +50,43 @@ def test_attribute_contract() -> None:
     assert hasattr(ep, "needs_company_header") and hasattr(ep, "major_version")
     check("procore_scope.Endpoint exposes every field procore_extract reads")
 
-    # Both classes must agree on the header rule, or v2.0 calls 403 in one path only.
-    for version in ("1.0", "1.1", "2.0", "2.1"):
+    # DELIBERATE DIVERGENCE, measured against Affect's tenant on 2026-08-02.
+    #
+    # procore_extract follows the documented rule: only v2.0+ sends Procore-Company-Id.
+    # Affect's tenant 404s v1.x PROJECT endpoints without it - same token, same project,
+    # header alone flips 404 -> 200 on v1.0 rfis, v1.1 submittals, v1.0 incidents and
+    # v1.0 manpower_logs. On the first full run that cost 28 of 36 endpoints, and it looked
+    # like missing project tools rather than a missing header, because the failure is a 404.
+    #
+    # procore_scope.Endpoint therefore always returns True, and since build_headers reads
+    # the property off whichever Endpoint it is handed, our loader drives the behaviour.
+    # This test now pins the divergence in place rather than forbidding it: agreement on
+    # v2.0+, and OUR rule winning below that.
+    for version in ("2.0", "2.1"):
         mine = make(api_version=version).needs_company_header
         theirs = px.Endpoint(
             name="x", path="/x", scope="company", api_version=version, bronze_table="t"
         ).needs_company_header
-        assert mine == theirs, f"header rule diverges at v{version}: {mine} vs {theirs}"
-    check("both Endpoint classes agree on the v2.0 company-header rule")
+        assert mine == theirs is True, f"v{version} should send the header in both"
+
+    for version in ("1.0", "1.1"):
+        assert make(api_version=version).needs_company_header, (
+            f"v{version} must send the company header - without it Affect's tenant 404s"
+        )
+    check("company header is sent at every API version (measured, not documented)")
 
 
 def test_build_headers() -> None:
-    v1 = px.build_headers("tok", "562949953444705", make(api_version="1.0"))
-    assert v1["Authorization"] == "Bearer tok"
-    # Sending the company header to a v1.x endpoint is a documented cause of 403s.
-    assert "Procore-Company-Id" not in v1
-
-    v2 = px.build_headers("tok", "562949953444705", make(api_version="2.0"))
-    assert v2["Procore-Company-Id"] == "562949953444705"
-    check("build_headers accepts procore_scope.Endpoint and applies the header rule")
+    """build_headers is procore_extract's, but the RULE is ours - it reads the property off
+    whichever Endpoint it is handed. This is what makes the divergence above take effect in
+    Fabric as well as locally, without forking the shared extractor."""
+    for version in ("1.0", "1.1", "2.0"):
+        headers = px.build_headers("tok", "562949953444705", make(api_version=version))
+        assert headers["Authorization"] == "Bearer tok"
+        assert headers["Procore-Company-Id"] == "562949953444705", (
+            f"v{version} lost the company header - Affect's tenant 404s without it"
+        )
+    check("build_headers applies OUR header rule at every version, via duck typing")
 
 
 def test_watermark_params() -> None:

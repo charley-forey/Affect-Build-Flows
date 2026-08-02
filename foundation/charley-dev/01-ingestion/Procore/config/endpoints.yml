@@ -52,8 +52,8 @@ endpoints:
     bronze_table: cd_bronze_procore_project_vendors   # cheatsheet:32
 
   - name: cost_codes
-    path: /rest/v1.0/cost_codes
-    scope: company
+    path: /rest/v1.0/cost_codes?project_id={project_id}
+    scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_cost_codes        # cheatsheet:33
 
@@ -68,7 +68,7 @@ endpoints:
   # ==========================================================================
 
   - name: prime_contracts
-    path: /rest/v1.0/prime_contracts
+    path: /rest/v1.0/prime_contracts?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_prime_contracts
@@ -98,19 +98,19 @@ endpoints:
 
   # Subcontractor invoices.
   - name: requisitions
-    path: /rest/v1.1/requisitions
+    path: /rest/v1.1/requisitions?project_id={project_id}
     scope: project
     api_version: "1.1"
     bronze_table: cd_bronze_procore_requisitions           # cheatsheet:141
 
   - name: work_order_contracts
-    path: /rest/v1.0/work_order_contracts
+    path: /rest/v1.0/work_order_contracts?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_work_order_contracts   # cheatsheet:142
 
   - name: commitments
-    path: /rest/v1.0/commitments
+    path: /rest/v1.0/commitments?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_commitments            # cheatsheet:162
@@ -130,7 +130,7 @@ endpoints:
     bronze_table: cd_bronze_procore_budget                 # cheatsheet:157
 
   - name: budget_views
-    path: /rest/v1.0/budget_views
+    path: /rest/v1.0/budget_views?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_budget_views           # cheatsheet:158
@@ -155,14 +155,14 @@ endpoints:
   # Feeds [AgeOfOldestUnapprovedCO], typed by hand in FINANCIALS!C6 today.
 
   - name: potential_change_orders
-    path: /rest/v1.0/potential_change_orders
+    path: /rest/v1.0/potential_change_orders?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_potential_change_orders
     incremental: filters[updated_at]        # cheatsheet:178
 
   - name: change_order_requests
-    path: /rest/v1.0/change_order_requests
+    path: /rest/v1.0/change_order_requests?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_change_order_requests
@@ -209,7 +209,7 @@ endpoints:
 
   # Fixes Excel defect #2: QUALITY!D5:D6 currently read SAFETY orientations instead.
   - name: observations
-    path: /rest/v1.0/observations/items
+    path: /rest/v1.0/observations/items?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_observations           # cheatsheet:89
@@ -221,7 +221,7 @@ endpoints:
     bronze_table: cd_bronze_procore_observation_types      # cheatsheet:90
 
   - name: punch_items
-    path: /rest/v1.0/punch_items
+    path: /rest/v1.0/punch_items?project_id={project_id}
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_punch_items            # cheatsheet:92
