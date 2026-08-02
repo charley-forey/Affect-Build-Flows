@@ -144,6 +144,13 @@ endpoints:
     parent:
       endpoint: budget_views
       field: id
+      # ONLY Affect's own budget view. Procore returns a different column set per view:
+      # "Procore Standard Forecast" has 2 money columns, this one has 16 in Affect's
+      # lettered scheme (COMMITTED COSTS (G), INVOICED TO DATE (P), COST TO COMPLETE
+      # (Q=K-P)...) - the same shape as procore_budgets_silver in the existing warehouse.
+      # Pulling all five views would mix incompatible shapes into one bronze table.
+      where_field: name
+      where_value: STANDARD BUDGET VIEW - CM
 
   # Prime contract change orders. THREE paths were tried against Affect's tenant before
   # this one, and the two obvious ones both fail silently or loudly:

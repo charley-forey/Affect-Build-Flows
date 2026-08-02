@@ -101,24 +101,84 @@ WHERE get_json_object(payload, '$.id') IS NOT NULL;
 -- Budget detail rows are the per-cost-code budget numbers. Procore's budget view exposes
 -- these as generic columns, so the mapping to named amounts is confirmed against a live
 -- tenant before this is trusted - see _docs/procore-ingestion.md.
+-- The budget grid, from Affect's OWN budget view ("STANDARD BUDGET VIEW - CM").
+--
+-- THE COLUMN NAMES ARE THE CONFIGURED VIEW'S, NOT AN API SCHEMA. Procore returns a
+-- different column set per budget view - "Procore Standard Forecast" carries two money
+-- columns, this one carries sixteen under Affect's lettered scheme. The registry pins the
+-- view by name (endpoints.yml -> budget_detail_rows.parent.where_value) so bronze holds one
+-- consistent shape; this parser reads that shape.
+--
+-- The first version of this file was written against the EXISTING warehouse's already-shaped
+-- procore_budgets_silver ($.revised_budget_amount, $.committed_costs, $.cost_code.id). None
+-- of those exist in the raw payload, so every money column silently parsed to NULL and the
+-- budget measures returned blank in a model that otherwise looked healthy. Reading the raw
+-- payload means reading the raw names.
+--
+-- Bracket notation is required: these names contain spaces, parentheses, apostrophes and
+-- "=". get_json_object supports $['...'] for exactly this.
 CREATE OR REPLACE TABLE cd_silver_budgets AS
+WITH ranked AS (
 SELECT
     CAST(_project_id                                    AS STRING) AS project_id,
-    CAST(get_json_object(payload, '$.cost_code.id')     AS STRING) AS cost_code_id,
-    TRIM(get_json_object(payload, '$.cost_code.full_code'))        AS cost_code,
-    TRIM(get_json_object(payload, '$.category.name'))              AS category,
+    -- Flat cost_code_id, not a nested object. cost_code is the readable "01-00-00 - NAME".
+    CAST(get_json_object(payload, '$.cost_code_id')     AS STRING) AS cost_code_id,
+    TRIM(get_json_object(payload, '$.cost_code'))                  AS cost_code,
+    TRIM(get_json_object(payload, '$.category'))                   AS category,
     CAST(get_json_object(payload, '$.original_budget_amount') AS DOUBLE) AS original_budget,
     CAST(get_json_object(payload, '$.budget_modifications')   AS DOUBLE) AS budget_modifications,
-    CAST(get_json_object(payload, '$.revised_budget_amount')  AS DOUBLE) AS updated_budget,
-    CAST(get_json_object(payload, '$.forecast_to_complete')   AS DOUBLE) AS forecast_budget,
-    CAST(get_json_object(payload, '$.committed_costs')        AS DOUBLE) AS committed_to_date,
-    CAST(get_json_object(payload, '$.direct_costs')           AS DOUBLE) AS direct_costs,
-    CAST(get_json_object(payload, '$.job_to_date_costs')      AS DOUBLE) AS invoiced_to_date,
-    CAST(get_json_object(payload, '$.estimated_cost_at_completion') AS DOUBLE) AS cost_to_complete,
+    -- D = A+B+C: original + modifications + approved prime contract COs.
+    CAST(json_field(payload, 'UPDATED PRIME CONTRACT BUDGET (D = A+B+C)') AS DOUBLE)
+                                                                   AS updated_budget,
+    -- F = D+E: updated budget plus PENDING prime contract COs. This is the forecast.
+    CAST(json_field(payload, 'PROJECTED PRIME CONTRACT BUDGET (F=D+E)') AS DOUBLE)
+                                                                   AS forecast_budget,
+    -- K = G+H+I+J: commitments + commitment COs + other + direct costs.
+    CAST(json_field(payload, 'TOTAL COMMITTED TO DATE (K=G+H+I+J)') AS DOUBLE)
+                                                                   AS committed_to_date,
+    CAST(json_field(payload, 'DIRECT COSTS (J)')     AS DOUBLE) AS direct_costs,
+    CAST(json_field(payload, 'INVOICED TO DATE (P)') AS DOUBLE) AS invoiced_to_date,
+    -- Q = K-P: committed but not yet invoiced.
+    CAST(json_field(payload, 'COST TO COMPLETE (Q=K-P)') AS DOUBLE)
+                                                                   AS cost_to_complete,
     CAST(_ingested_at AS DATE)                                     AS snapshot_date,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_budget_detail_rows
-WHERE _project_id IS NOT NULL;
+WHERE _project_id IS NOT NULL
+  -- REQUIRE THE CM VIEW'S SIGNATURE. Bronze is append-and-merge, so rows pulled before the
+  -- registry pinned the view are still there - 76 of them, from "Procore Standard
+  -- Forecast", which has none of these money columns. They merge in with NULL budgets and
+  -- inflate the fact (480 rows where 404 are real) while dragging every budget measure
+  -- toward zero.
+  --
+  -- Filtering on a signature column rather than cleaning bronze is deliberate: bronze is
+  -- meant to be an append-only record of what the API returned, including supersededed
+  -- shapes. Silver is where a shape is chosen. This also stays correct if a second view is
+  -- ever added to the registry by mistake.
+  AND json_field(payload, 'UPDATED PRIME CONTRACT BUDGET (D = A+B+C)') IS NOT NULL
+)
+-- ONE ROW PER PROJECT + COST CODE, LATEST SNAPSHOT WINS.
+--
+-- Bronze is append-and-merge and keeps every shape the API ever returned - including rows
+-- pulled before the registry pinned the budget view. Those merge in under different row
+-- ids and inflate the fact (480 rows where 404 are real), dragging every budget measure
+-- toward zero without failing anything.
+--
+-- Deduping here rather than cleaning bronze is deliberate on both counts: bronze is meant
+-- to be an append-only record of what the API said, and "one budget row per cost code, as
+-- of the latest snapshot" is what this table means anyway. It is the correct semantic, not
+-- a workaround that happens to fix a count.
+SELECT project_id, cost_code_id, cost_code, category,
+       original_budget, budget_modifications, updated_budget, forecast_budget,
+       committed_to_date, direct_costs, invoiced_to_date, cost_to_complete,
+       snapshot_date, _ingested_at, _batch_id
+FROM (
+    SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY project_id, cost_code_id ORDER BY _ingested_at DESC
+    ) AS _rn
+    FROM ranked
+)
+WHERE _rn = 1;
 
 -- ---------------------------------------------------------------------------
 -- Project management

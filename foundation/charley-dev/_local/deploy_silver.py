@@ -101,6 +101,29 @@ def run_sql(label, sql):
 # through the default catalog. CREATE IF NOT EXISTS declares the contract so silver builds
 # cleanly before ingestion has ever run - an empty table is a valid state, a missing one
 # looks like broken SQL.
+# json_field(payload, 'KEY') - look a JSON key up by NAME, not by path.
+#
+# get_json_object uses a simplified JSONPath that silently returns NULL for bracket keys
+# containing '(', ')' or '='. Affect's budget view names its columns
+# "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)", so every money column parsed to NULL and
+# cd_silver_budgets came out empty - which reads as "Procore has no budget data" rather
+# than "the path syntax lost". A dict lookup has no grammar to trip over.
+#
+# ponytail: a Python UDF, so one interpreter call per row. It is used on ONE table
+# (404 budget rows), where that is unmeasurable next to the dialect risk it removes.
+# Reach for from_json(payload,'map<string,string>')['KEY'] if it ever spreads to a
+# million-row table.
+def _json_field(payload, key):
+    if not payload:
+        return None
+    try:
+        value = json.loads(payload).get(key)
+    except Exception:
+        return None
+    return None if value is None else str(value)
+
+spark.udf.register("json_field", _json_field, "string")
+
 BRONZE = "{bronze_abfss}"
 for t in {BRONZE_TABLES!r}:
     try:

@@ -67,16 +67,23 @@ BRONZE = {
                            "created_at": "2025-05-02", "status": "Approved"},
                    project_id="7"),
     ],
+    # The REAL shape of Procore's budget_views/{id}/detail_rows under Affect's own
+    # "STANDARD BUDGET VIEW - CM": flat cost_code_id, plain-string category, and money
+    # columns named by the configured view rather than by an API schema. The first version
+    # of this fixture used the existing warehouse's already-shaped names, which is exactly
+    # how the parser came to return NULL for every money column against live data.
     "cd_bronze_procore_budget_detail_rows": [
-        bronze_row("B1", {"cost_code": {"id": "CC1", "full_code": "03-100"},
-                          "category": {"name": "Materials"},
+        bronze_row("B1", {"cost_code_id": "CC1",
+                          "cost_code": "03-100 - CONCRETE",
+                          "category": "Hard Costs",
                           "original_budget_amount": 1000000.0,
                           "budget_modifications": 50000.0,
-                          "revised_budget_amount": 1050000.0,
-                          "forecast_to_complete": 1100000.0,
-                          "committed_costs": 900000.0, "direct_costs": 400000.0,
-                          "job_to_date_costs": 350000.0,
-                          "estimated_cost_at_completion": 550000.0}, project_id="7"),
+                          "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)": 1050000.0,
+                          "PROJECTED PRIME CONTRACT BUDGET (F=D+E)": 1100000.0,
+                          "TOTAL COMMITTED TO DATE (K=G+H+I+J)": 900000.0,
+                          "DIRECT COSTS (J)": 400000.0,
+                          "INVOICED TO DATE (P)": 350000.0,
+                          "COST TO COMPLETE (Q=K-P)": 550000.0}, project_id="7"),
     ],
     "cd_bronze_procore_submittals": [
         bronze_row("SB1", {"id": "SB1", "number": "001", "title": "  Rebar  ",
@@ -140,9 +147,23 @@ def test_parsing(con) -> None:
 
     # Nested JSON must resolve, not come back NULL.
     assert one(con, "SELECT cost_code_id FROM cd_silver_budgets") == "CC1"
-    assert one(con, "SELECT category FROM cd_silver_budgets") == "Materials"
+    assert one(con, "SELECT category FROM cd_silver_budgets") == "Hard Costs"
     assert one(con, "SELECT status_label FROM cd_silver_submittals WHERE item_id='SB1'") == "Open"
     check("nested JSON (cost_code.id, category.name, status.name) resolves")
+
+    # EVERY money column on the budget grid must be non-NULL. This is the regression guard
+    # for the defect that made this remap necessary: the parser read the existing
+    # warehouse's already-shaped names, none of which exist in Procore's raw payload, so
+    # all eight silently parsed to NULL and the budget measures went blank in a model that
+    # otherwise looked healthy. A NULL here is indistinguishable from a zero budget.
+    money = ["original_budget", "budget_modifications", "updated_budget", "forecast_budget",
+             "committed_to_date", "direct_costs", "invoiced_to_date", "cost_to_complete"]
+    for column in money:
+        value = one(con, f"SELECT {column} FROM cd_silver_budgets")
+        assert value is not None, f"{column} parsed to NULL - check the view's column name"
+    assert one(con, "SELECT updated_budget FROM cd_silver_budgets") == 1050000.0
+    assert one(con, "SELECT invoiced_to_date FROM cd_silver_budgets") == 350000.0
+    check(f"all {len(money)} budget money columns parse from the view's own column names")
 
     assert one(con, "SELECT contract_value FROM cd_silver_prime_contracts") == 8800000.0
     assert one(con, "SELECT amount FROM cd_silver_prime_change_orders") == 316960.48

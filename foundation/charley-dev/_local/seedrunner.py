@@ -48,6 +48,16 @@ MACROS = (
     "CREATE OR REPLACE MACRO explode(l) AS unnest(l)",
     # Used by dim_Status to read Procore's raw payloads. Same macro src/procore uses.
     "CREATE OR REPLACE MACRO get_json_object(j, p) AS json_extract_string(j, p)",
+    # json_field(payload, 'KEY') - look a key up by NAME rather than by JSON path.
+    #
+    # Spark's get_json_object uses a simplified JSONPath that silently returns NULL for
+    # bracket keys containing '(', ')' or '='. Affect's budget view names its columns
+    # "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)", so every money column parsed to NULL and
+    # silver produced 0 rows - a failure that looks like "Procore has no budget data".
+    #
+    # In Fabric this is a map lookup: from_json(payload,'map<string,string>')['KEY'].
+    # There is no path grammar involved, so no key name can break it.
+    "CREATE OR REPLACE MACRO json_field(j, k) AS json_extract_string(j, '$.\"' || k || '\"')",
     # Spark's datediff(end, start) is 2-arg; DuckDB ships only the 3-arg date_diff(part,
     # start, end). Overloading by arity is allowed, so the Spark spelling works here too.
     "CREATE OR REPLACE MACRO datediff(e, s) AS date_diff('day', CAST(s AS DATE), CAST(e AS DATE))",

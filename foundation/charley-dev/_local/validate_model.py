@@ -141,7 +141,10 @@ def main() -> int:
     #   Projects        19 vs 17      HIGHER: Procore reports 19 active projects.
     #   CostCodes    5,434 vs 4,837   HIGHER: 5,433 from Procore + the UNASSIGNED member.
     #
-    #   BudgetLines    160 vs 404     LOWER - OPEN, see _docs/procore-ingestion.md.
+    #   BudgetLines    402 vs 404     Two rows apart. Procore returns 404 detail rows;
+    #                                 silver keeps one per (project, cost code) at the
+    #                                 latest snapshot, and two pairs were duplicated. That
+    #                                 is the dedup working, not data lost.
     #   ChangeOrders   307 vs 1,812   LOWER - OPEN. Prime COs come from
     #                                 change_order_packages in this tenant; the warehouse's
     #                                 1,812 probably also counts commitment COs, which are
@@ -153,8 +156,8 @@ def main() -> int:
     EXPECTED_BY_SOURCE = {
         "cd": {
             "[Projects]": 19, "[Vendors]": 126, "[CostCodes]": 5434, "[Dates]": 7670,
-            "[BudgetLines]": 160, "[ChangeOrders]": 307, "[Invoices]": 117,
-            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 118,
+            "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 117,
+            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 130,
         },
         "existing": {
             "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,

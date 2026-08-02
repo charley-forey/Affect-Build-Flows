@@ -31,6 +31,19 @@ class ParentRef:
     endpoint: str  # logical name of the endpoint supplying the ids
     field: str = "id"  # which field on those records holds the id
 
+    # Only spawn children for parents whose `where_field` equals `where_value`.
+    #
+    # This exists for budget_detail_rows. Procore returns a DIFFERENT COLUMN SET per budget
+    # view - "Procore Standard Forecast" carries 2 money columns, Affect's own "STANDARD
+    # BUDGET VIEW - CM" carries 16 with their lettered scheme (COMMITTED COSTS (G),
+    # INVOICED TO DATE (P), ...). Pulling every view mixes incompatible shapes into one
+    # bronze table and the parser silently produces NULLs from whichever it did not expect.
+    #
+    # Filtering also cuts the request count from ~100 to ~19, which matters against a
+    # 600/hour quota.
+    where_field: str | None = None
+    where_value: str | None = None
+
 
 @dataclass(frozen=True)
 class Endpoint:
@@ -206,6 +219,11 @@ def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef,
     """
     seen: dict[Any, Any] = {}
     for record in records:
+        # Skip parents that do not match the filter, when one is declared. Compared as
+        # strings so a YAML value does not have to match the payload's JSON type.
+        if ref.where_field is not None:
+            if str(record.get(ref.where_field)) != str(ref.where_value):
+                continue
         value = record.get(ref.field)
         if value is None:
             continue
@@ -215,10 +233,15 @@ def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef,
         project = record.get("project_id")
         if project is None and isinstance(record.get("project"), dict):
             project = record["project"].get("id")
-        seen.setdefault(value, project)
+        # DEDUP ON THE PAIR, not on the parent id. Some Procore parents are COMPANY-level
+        # definitions applied to every project, so the same id comes back once per project:
+        # budget view "STANDARD BUDGET VIEW - CM" is one id shared across all 19 projects.
+        # Keying on the id alone collapsed 19 (view, project) pairs into 1 and returned one
+        # project's budget instead of the portfolio's - 19 rows where 361 were expected.
+        seen.setdefault((value, project), None)
     if not with_project:
         return list(seen)
-    return [(parent, project) for parent, project in seen.items()]
+    return list(seen)
 
 
 # --------------------------------------------------------------------------
@@ -277,6 +300,24 @@ def _selftest() -> None:
         [{"id": 1, "project_id": 7}, {"id": 2, "project": {"id": 8}}, {"id": 3}],
         ParentRef("x", "id"), with_project=True)
     assert pairs == [(1, 7), (2, 8), (3, None)], pairs
+
+    # where_field/where_value: only matching parents spawn children. Budget views are the
+    # reason - each view exposes a different column set, and mixing them into one bronze
+    # table makes the parser produce NULLs from whichever shape it did not expect.
+    views = [{"id": 1, "name": "Procore Standard Forecast", "project_id": 7},
+             {"id": 2, "name": "STANDARD BUDGET VIEW - CM", "project_id": 7},
+             {"id": 3, "name": "MTM COMPARISON", "project_id": 8}]
+    only_cm = ParentRef("budget_views", "id",
+                        where_field="name", where_value="STANDARD BUDGET VIEW - CM")
+    assert collect_parent_ids(views, only_cm, with_project=True) == [(2, 7)]
+
+    # A company-level parent appears once per project under the SAME id. Deduping on the id
+    # alone returns one project's data and looks like a small portfolio rather than a bug.
+    shared = [{"id": 99, "name": "CM", "project_id": p} for p in (7, 8, 9)]
+    ref = ParentRef("budget_views", "id", where_field="name", where_value="CM")
+    assert collect_parent_ids(shared, ref, with_project=True) == [(99, 7), (99, 8), (99, 9)]
+    # No filter means every parent, as before.
+    assert len(collect_parent_ids(views, ParentRef("budget_views", "id"))) == 3
 
     paired = _ep("li", "/rest/v1.0/prime_contracts/{parent_id}/line_items",
                  SCOPE_PARENT, ParentRef("contracts", "id"))
