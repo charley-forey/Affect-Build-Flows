@@ -104,9 +104,35 @@ for scope in ("company", "project", "parent"):
     ),
     cell(
         """
-settings = px.load_settings()
+# Capture WHY this fails. The Fabric jobs API reports "statement execution failures" with
+# no cell detail, so without this a missing credential and a genuine bug look identical.
+import os, traceback, json as _json
+
+DIAG = "/lakehouse/default/Files/_diag"
+os.makedirs(DIAG, exist_ok=True)
+
+def fail(stage, exc):
+    detail = {"stage": stage, "error": f"{type(exc).__name__}: {exc}"[:1500],
+              "trace": traceback.format_exc()[-1500:],
+              "secrets_present": {k: bool(os.environ.get(k)) for k in
+                                  ("PROCORE_CLIENT_ID", "PROCORE_CLIENT_SECRET",
+                                   "PROCORE_COMPANY_ID", "PROCORE_KEYVAULT_URL",
+                                   "PROCORE_BASE_URL")}}
+    with open(f"{DIAG}/ingest_run.json", "w", encoding="utf-8") as fh:
+        _json.dump(detail, fh, indent=1)
+    print(f"FAILED at {stage}: {type(exc).__name__}: {str(exc)[:400]}")
+    raise
+
+try:
+    settings = px.load_settings()
+except Exception as exc:
+    fail("load_settings (credentials)", exc)
+
 session = requests.Session()
-token = px.fetch_token(settings, session)
+try:
+    token = px.fetch_token(settings, session)
+except Exception as exc:
+    fail("fetch_token (Procore OAuth)", exc)
 print("authenticated")
 
 # Active projects only. The existing notebooks loop EVERY project on every run; most are
