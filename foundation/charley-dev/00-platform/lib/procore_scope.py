@@ -171,20 +171,54 @@ def expand_paths(
 
     # scope == parent. No parent ids means the parent pull returned nothing - an empty
     # list, not an error: a company with no prime contracts has no line items either.
-    return [
-        (endpoint.path.format(company_id=company_id, parent_id=pid), None)
-        for pid in (parent_ids or [])
-    ]
+    #
+    # Parent ids may arrive as bare ids or as (parent_id, project_id) pairs. The pair form
+    # exists because Procore's nested endpoints need the project as well as the parent:
+    #
+    #     /prime_contracts/{id}/line_items                 -> 400
+    #     /prime_contracts/{id}/line_items?project_id=N    -> 200, 15 rows
+    #
+    # Same for budget_views/{id}/detail_rows and prime_contracts/{id}/payment_applications
+    # (verified 2026-08-02). Without the pair, budget_detail_rows returns nothing and
+    # fct_BudgetLine is empty - so the project has to travel with the parent id, not be
+    # rediscovered later.
+    out = []
+    for entry in (parent_ids or []):
+        parent_id, project_id = entry if isinstance(entry, tuple) else (entry, None)
+        path = endpoint.path.format(company_id=company_id, parent_id=parent_id)
+        if project_id is not None and "project_id=" not in path:
+            path += ("&" if "?" in path else "?") + f"project_id={project_id}"
+        out.append((path, project_id))
+    return out
 
 
-def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef) -> list[Any]:
-    """Distinct, order-preserving ids from a parent endpoint's records."""
-    seen: dict[Any, None] = {}
+def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef,
+                       with_project: bool = False) -> list[Any]:
+    """Distinct, order-preserving ids from a parent endpoint's records.
+
+    with_project=True returns (parent_id, project_id) pairs instead of bare ids, for the
+    nested endpoints that 400 without a project (see expand_paths). The project is read
+    from the parent record itself - `project_id`, or `project.id` when Procore nests it -
+    so it never has to be guessed downstream.
+
+    Kept as a flag rather than a second function because the two differ only in what they
+    carry, and callers pass the result straight into expand_paths either way.
+    """
+    seen: dict[Any, Any] = {}
     for record in records:
         value = record.get(ref.field)
-        if value is not None:
+        if value is None:
+            continue
+        if not with_project:
             seen.setdefault(value, None)
-    return list(seen)
+            continue
+        project = record.get("project_id")
+        if project is None and isinstance(record.get("project"), dict):
+            project = record["project"].get("id")
+        seen.setdefault(value, project)
+    if not with_project:
+        return list(seen)
+    return [(parent, project) for parent, project in seen.items()]
 
 
 # --------------------------------------------------------------------------
@@ -235,6 +269,26 @@ def _selftest() -> None:
     assert order.index("contracts") < order.index("lines"), order
 
     assert collect_parent_ids([{"id": 1}, {"id": 2}, {"id": 1}, {}], ParentRef("x", "id")) == [1, 2]
+
+    # Pair form: the project travels WITH the parent id, read from either shape Procore
+    # uses. Without it, /prime_contracts/{id}/line_items and budget_views/{id}/detail_rows
+    # both 400 - and an empty budget_detail_rows means an empty fct_BudgetLine.
+    pairs = collect_parent_ids(
+        [{"id": 1, "project_id": 7}, {"id": 2, "project": {"id": 8}}, {"id": 3}],
+        ParentRef("x", "id"), with_project=True)
+    assert pairs == [(1, 7), (2, 8), (3, None)], pairs
+
+    paired = _ep("li", "/rest/v1.0/prime_contracts/{parent_id}/line_items",
+                 SCOPE_PARENT, ParentRef("contracts", "id"))
+    assert expand_paths(paired, "42", parent_ids=[(1, 7), (3, None)]) == [
+        ("/rest/v1.0/prime_contracts/1/line_items?project_id=7", 7),
+        ("/rest/v1.0/prime_contracts/3/line_items", None),
+    ]
+
+    # A path that already carries the project must not gain a second copy of it.
+    dup = _ep("d", "/rest/v1.0/x/{parent_id}/y?project_id={company_id}",
+              SCOPE_PARENT, ParentRef("p", "id"))
+    assert expand_paths(dup, "42", parent_ids=[(1, 7)])[0][0].count("project_id=") == 1
 
     # -- registry mistakes must fail loudly at load time, not silently at run time --
     def expect_error(fn: Any, label: str) -> None:

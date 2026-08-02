@@ -195,8 +195,10 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
 
     parent_ids = None
     if endpoint.parent:
+        # Pair form: Procore's nested endpoints 400 without the project as well as the
+        # parent, so the project has to travel with the id rather than be looked up later.
         parent_ids = ps.collect_parent_ids(
-            harvested.get(endpoint.parent.endpoint, []), endpoint.parent)
+            harvested.get(endpoint.parent.endpoint, []), endpoint.parent, with_project=True)
 
     ingested_at = datetime.now(timezone.utc)
     rows, raw, skipped = [], [], 0
@@ -205,6 +207,12 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
         try:
             for record in px.iter_records(session, settings.base_url, path, headers,
                                           params=params):
+                # Stamp the project we FETCHED this record under. Procore's project-scoped
+                # list endpoints do not reliably echo project_id back in the payload, and a
+                # child endpoint needs it (see collect_parent_ids / expand_paths). Reading
+                # it off the payload finds nothing; the caller already knows it.
+                if project_id is not None and record.get("project_id") is None:
+                    record = {**record, "project_id": project_id}
                 raw.append(record)
                 rows.append(px.to_bronze_row(record, endpoint, project_id, ingested_at))
         except Exception as exc:                                    # noqa: BLE001

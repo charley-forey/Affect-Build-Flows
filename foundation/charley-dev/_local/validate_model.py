@@ -12,6 +12,7 @@ Fabric API (analysis.windows.net/powerbi/api rather than api.fabric.microsoft.co
 
 from __future__ import annotations
 
+import os
 import json
 import subprocess
 import sys
@@ -128,11 +129,40 @@ def main() -> int:
             "Periods",      COUNTROWS ( fct_FinancialPeriod )
         )
     """)[0]
-    expected = {
-        "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,
-        "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 117,
-        "[Submittals]": 2242, "[Milestones]": 52, "[Periods]": 128,
+    # Baselines for --source cd, i.e. gold built on OUR OWN medallion (2026-08-02).
+    #
+    # The second number is what the same table held under --source existing (Rebecca's
+    # Silver). Both are kept because the DIFFERENCE is the L2 parity check, and three of
+    # these differences are findings rather than noise:
+    #
+    #   Submittals   2,861 vs 2,242   HIGHER, and expected: the fact now unions submittals
+    #                                 (2,245) with RFIs (616). No RFI data exists anywhere
+    #                                 in the existing warehouse.
+    #   Projects        19 vs 17      HIGHER: Procore reports 19 active projects.
+    #   CostCodes    5,434 vs 4,837   HIGHER: 5,433 from Procore + the UNASSIGNED member.
+    #
+    #   BudgetLines    160 vs 404     LOWER - OPEN, see _docs/procore-ingestion.md.
+    #   ChangeOrders   307 vs 1,812   LOWER - OPEN. Prime COs come from
+    #                                 change_order_packages in this tenant; the warehouse's
+    #                                 1,812 probably also counts commitment COs, which are
+    #                                 a different grain. Must be resolved before this report
+    #                                 replaces theirs - a lower number that is not explained
+    #                                 is indistinguishable from a lost one.
+    #
+    # Periods is derived from the fact date range, so it moves with the two above.
+    EXPECTED_BY_SOURCE = {
+        "cd": {
+            "[Projects]": 19, "[Vendors]": 126, "[CostCodes]": 5434, "[Dates]": 7670,
+            "[BudgetLines]": 160, "[ChangeOrders]": 307, "[Invoices]": 117,
+            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 118,
+        },
+        "existing": {
+            "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,
+            "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 117,
+            "[Submittals]": 2242, "[Milestones]": 52, "[Periods]": 128,
+        },
     }
+    expected = EXPECTED_BY_SOURCE[os.environ.get("CD_GOLD_SOURCE", "cd")]
     bad = []
     for key, want in expected.items():
         got = rows.get(key)

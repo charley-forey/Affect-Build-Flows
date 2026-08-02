@@ -145,18 +145,25 @@ endpoints:
       endpoint: budget_views
       field: id
 
-  # Prime contract change orders. Procore exposes these as a CHILD of the prime contract,
-  # not as a project-level list - which is why a project-scoped guess 404s. This is the
-  # 1,812-row fact behind fct_ChangeOrder and [Contract Growth %]; silver reads
-  # cd_bronze_procore_prime_change_orders and produced 0 rows until this existed.
+  # Prime contract change orders. THREE paths were tried against Affect's tenant before
+  # this one, and the two obvious ones both fail silently or loudly:
+  #
+  #   /prime_contracts/{id}/change_orders            200, but 0 rows on every contract
+  #   /rest/v1.0/change_orders?project_id=N          404
+  #   /rest/v2.0/.../prime_change_orders             404
+  #   /rest/v1.0/change_order_packages?project_id=N  200, 24 rows on one project
+  #
+  # The first is the dangerous one: a valid path returning an empty list reads as "this
+  # company has no change orders" rather than "wrong endpoint", and the existing warehouse
+  # has 1,812 of them. In this tenant prime COs are modelled as change order PACKAGES.
+  #
+  # This is the fact behind fct_ChangeOrder and [Contract Growth %], which the workbook
+  # reports at 3.60%.
   - name: prime_change_orders
-    path: /rest/v1.0/prime_contracts/{parent_id}/change_orders
-    scope: parent
+    path: /rest/v1.0/change_order_packages?project_id={project_id}
+    scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_prime_change_orders
-    parent:
-      endpoint: prime_contracts
-      field: id
 
   - name: direct_costs
     path: /rest/v1.1/projects/{project_id}/direct_costs
