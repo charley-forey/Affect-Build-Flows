@@ -4,11 +4,39 @@
 # Do not edit by hand - the column names must stay identical to the man_* tables,
 # and CD_Manual_Ingest maps them 1:1 with no translation layer.
 #
-# Run once, as someone with permission to create lists on the target site:
+# ---------------------------------------------------------------------------
+# HOW TO RUN THIS  (about five minutes, once)
 #
-#     Install-Module PnP.PowerShell -Scope CurrentUser
-#     Connect-PnPOnline -Url https://<tenant>.sharepoint.com/sites/<site> -Interactive
-#     ./provision-sharepoint.ps1
+# 0. The SITE must already exist. Create it in SharePoint first if it does not:
+#    SharePoint -> Create site -> Team site -> name it 'Affect Project Reporting'.
+#    Note its URL; that is the -Url below.
+#
+# 1. Install the module:
+#
+#        Install-Module PnP.PowerShell -Scope CurrentUser -Force
+#
+# 2. Register an Entra app for sign-in. PnP.PowerShell 2.x REMOVED the built-in
+#    multi-tenant app, so `Connect-PnPOnline -Interactive` on its own now fails
+#    with 'ClientId is required'. This is the step people get stuck on. Run it
+#    ONCE per tenant - it prints a ClientId, keep that:
+#
+#        Register-PnPEntraIDAppForInteractiveLogin -ApplicationName 'PnP Rocks' -Tenant <tenant>.onmicrosoft.com -Interactive
+#
+#    It asks a tenant admin to consent. If you are not one, someone who is has to
+#    approve it - that is the only admin step in this whole file.
+#
+# 3. Connect and run. Run it from THIS folder, so it finds cd-projects.csv:
+#
+#        Connect-PnPOnline -Url https://<tenant>.sharepoint.com/sites/<site> -Interactive -ClientId <the id from step 2>
+#        ./provision-sharepoint.ps1
+#
+#    (Commands are on one line each on purpose - a copied backslash is not a
+#    PowerShell line continuation and fails with a confusing parse error.)
+#
+# 4. Nothing. CD Projects populates itself from cd-projects.csv, and the nine
+#    lists are ready to type into. Point CD_Manual_Ingest at the site when you
+#    want the rows flowing through to the report.
+# ---------------------------------------------------------------------------
 #
 # Idempotent: an existing list is left alone and its missing columns are added, so
 # re-running after a schema change is safe and is the intended way to apply one.
@@ -39,8 +67,26 @@ $projectsList = Ensure-List "CD Projects"
 Add-PnPField -List "CD Projects" -DisplayName "ProjectName" -InternalName "ProjectName" -Type Text -AddToDefaultView -ErrorAction SilentlyContinue | Out-Null
 Add-PnPField -List "CD Projects" -DisplayName "IsActive" -InternalName "IsActive" -Type Boolean -AddToDefaultView -ErrorAction SilentlyContinue | Out-Null
 
-# Title holds the Procore project id, e.g. 562949955001573. Populate from
-# dim_Project - 19 active projects today.
+# Title holds the Procore project id, e.g. 562949955001573.
+#
+# Populated from cd-projects.csv sitting next to this script, exported from
+# dim_Project. Typing 19 project ids by hand is 19 chances to transpose a digit,
+# and a wrong id here does not error - it creates a lookup entry that no fact row
+# ever joins to, so the project silently reports zeros.
+$csv = Join-Path $PSScriptRoot 'cd-projects.csv'
+if (Test-Path $csv) {
+    $existing = (Get-PnPListItem -List "CD Projects" -PageSize 500).FieldValues.Title
+    foreach ($row in Import-Csv $csv) {
+        if ($existing -contains $row.ProjectKey) { continue }
+        Add-PnPListItem -List "CD Projects" -Values @{
+            Title = $row.ProjectKey; ProjectName = $row.ProjectName
+            IsActive = ($row.IsActive -eq 'TRUE')
+        } | Out-Null
+        Write-Host "  + $($row.ProjectName)"
+    }
+} else {
+    Write-Host "cd-projects.csv not found - populate CD Projects by hand"
+}
 
 # --------------------------------------------------------------------------
 # CD Wins  ->  man_Wins

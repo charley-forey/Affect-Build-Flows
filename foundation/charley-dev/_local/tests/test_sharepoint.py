@@ -89,12 +89,41 @@ def test_versioning_is_on() -> None:
     check("versioning is enabled on every list")
 
 
+def test_script_parses_as_powershell() -> None:
+    """The script is assembled from strings, so a stray quote produces a file that looks
+    fine in review and fails at the console with a parse error - in front of whoever we
+    handed it to. PowerShell's own parser settles it.
+
+    Skipped where powershell is not on PATH, so the suite still runs on a non-Windows box.
+    """
+    import shutil
+    import subprocess
+
+    exe = shutil.which("powershell") or shutil.which("pwsh")
+    if not exe:
+        check("powershell not available - parse check skipped")
+        return
+
+    script = str(ms.OUT).replace("'", "''")
+    probe = (
+        "$e=$null; "
+        f"[System.Management.Automation.Language.Parser]::ParseFile('{script}',"
+        "[ref]$null,[ref]$e) | Out-Null; "
+        "if ($e.Count) { $e | ForEach-Object { $_.Message }; exit 1 } else { exit 0 }"
+    )
+    result = subprocess.run([exe, "-NoProfile", "-Command", probe],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, f"provision-sharepoint.ps1 does not parse:\n{result.stdout}"
+    check("provision-sharepoint.ps1 parses as valid PowerShell")
+
+
 def main() -> int:
     test_committed_script_is_current()
     test_every_column_is_provisioned()
     test_project_key_is_a_lookup_everywhere()
     test_choice_values_match_the_dimensions()
     test_versioning_is_on()
+    test_script_parses_as_powershell()
     for c in CHECKS:
         print(f"  ok  {c}")
     print(f"\ntest_sharepoint: {len(CHECKS)} checks passed")
