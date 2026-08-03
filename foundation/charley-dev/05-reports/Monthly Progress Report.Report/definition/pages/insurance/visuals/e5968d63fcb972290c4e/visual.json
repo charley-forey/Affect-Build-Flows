@@ -3,10 +3,11 @@
   "name": "e5968d63fcb972290c4e",
   "position": {
     "x": 20,
-    "y": 710,
+    "y": 464,
     "z": 0,
     "width": 1240,
-    "height": 320
+    "height": 192,
+    "tabOrder": 23
   },
   "visual": {
     "visualType": "tableEx",
@@ -118,6 +119,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Certificates - what to chase, and how overdue. Shows VendorKey, InsuranceType, Provider, PolicyNumber, ExpirationDate, ExpiryStatus, DaysUntilExpiry for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

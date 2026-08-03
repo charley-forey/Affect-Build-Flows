@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "fa55e68ea67efbf39fac",
   "position": {
-    "x": 286,
+    "x": 229,
     "y": 104,
     "z": 0,
-    "width": 250,
-    "height": 110
+    "width": 195,
+    "height": 92,
+    "tabOrder": 13
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Self Performed Labour. Shows Self Performed Labour for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

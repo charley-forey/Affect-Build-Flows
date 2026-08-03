@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "a9a74f12201a54fabac3",
   "position": {
-    "x": 20,
-    "y": 882,
+    "x": 646,
+    "y": 436,
     "z": 0,
-    "width": 1240,
-    "height": 280
+    "width": 614,
+    "height": 220,
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "tableEx",
@@ -104,6 +105,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Vendor list - prequalification and ERP sync. Shows VendorName, TradeName, City, LicenseNumber, IsPrequalified, SyncedToErp for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

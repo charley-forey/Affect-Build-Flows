@@ -99,7 +99,7 @@ def test_fct_budgetline(con) -> None:
 
 
 def test_fct_changeorder(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 3
+    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 4
     # Approved is settled; Pending AND Draft are both still outstanding.
     assert one(con, "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO1'") is False
     assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder WHERE IsPending") == 2
@@ -182,11 +182,13 @@ def test_fct_milestone(con) -> None:
 
 
 def test_fct_financialperiod(con) -> None:
+    # Pinned to May: the gate is a single month's numbers from the workbook, and P1 now
+    # spans two months so that the cumulative check below has something to bite on.
     row = q(
         con,
         "SELECT ROUND(OriginalContract,2), ROUND(CurrentContract,2), "
         "ROUND(PendingChangeOrders,2), ROUND(PercentBoughtOut,4) "
-        "FROM fct_FinancialPeriod WHERE ProjectKey='P1'",
+        "FROM fct_FinancialPeriod WHERE ProjectKey='P1' AND MonthStart = DATE '2025-05-01'",
     )
     assert len(row) == 1, row
     original, current, pending, bought_out = (float(v) for v in row[0])
@@ -207,6 +209,46 @@ def test_fct_financialperiod(con) -> None:
     # committed 1,380,000 / budget 1,550,000
     assert bought_out == 0.8903, bought_out
     check("fct_FinancialPeriod[PercentBoughtOut] = committed / budgeted")
+
+    # === CHANGE ORDERS ACCUMULATE ===
+    # The regression this file did not catch. CO4 is a 100,000 approved CO in June; June's
+    # contract must be May's PLUS that, not June's activity alone. Until 2026-08-02 this
+    # read 8,900,000 - May's 316,960.48 approved CO silently dropped out of the contract
+    # the moment a later month existed, and the DAX reads the LAST month per project, so
+    # the portfolio understated by $4.85M and Contract Growth showed 0.00%.
+    june = q(
+        con,
+        "SELECT ROUND(CurrentContract,2), ROUND(PendingChangeOrders,2) "
+        "FROM fct_FinancialPeriod WHERE ProjectKey='P1' AND MonthStart = DATE '2025-06-01'",
+    )
+    assert len(june) == 1, june
+    june_current, june_pending = (float(v) for v in june[0])
+    assert june_current == round(current + 100000.0, 2), (june_current, current)
+    check("fct_FinancialPeriod[CurrentContract] carries prior months' approved COs forward")
+
+    # Pending is a running total for the same reason: a CO still unapproved in June was
+    # already unapproved in May, and must not drop off because June added no new ones.
+    assert june_pending == pending, (june_pending, pending)
+    check("fct_FinancialPeriod[PendingChangeOrders] accumulates rather than resetting")
+
+    # A contract only shrinks when a change order was itself negative. Asserting plain
+    # monotonicity would be wrong - production has five genuine credits, and the first
+    # version of this check called all five a bug. So the invariant is that every decrease
+    # is ACCOUNTED FOR by that month's approved COs, which still catches a roll-up that
+    # resets while allowing a credit through.
+    assert one(
+        con,
+        "SELECT COUNT(*) FROM ("
+        "  SELECT f.ProjectKey, f.MonthStart,"
+        "         f.CurrentContract - LAG(f.CurrentContract) OVER "
+        "           (PARTITION BY f.ProjectKey ORDER BY f.MonthStart) AS d,"
+        "         (SELECT COALESCE(SUM(c.Amount), 0) FROM fct_ChangeOrder c"
+        "           WHERE c.ProjectKey = f.ProjectKey AND c.MonthStart = f.MonthStart"
+        "             AND NOT c.IsPending) AS approved"
+        "  FROM fct_FinancialPeriod f"
+        ") WHERE d < -0.005 AND ABS(d - approved) > 0.005",
+    ) == 0
+    check("fct_FinancialPeriod[CurrentContract] only falls by that month's credit COs")
 
     # The unmatched AR row still produces a period row, so the money is visible somewhere
     # rather than silently vanishing from the portfolio total.

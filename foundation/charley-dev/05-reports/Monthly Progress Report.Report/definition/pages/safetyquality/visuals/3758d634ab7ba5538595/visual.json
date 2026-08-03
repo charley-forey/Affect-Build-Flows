@@ -6,7 +6,8 @@
     "y": 132,
     "z": 0,
     "width": 230,
-    "height": 110
+    "height": 110,
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Observations. Shows Observations for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

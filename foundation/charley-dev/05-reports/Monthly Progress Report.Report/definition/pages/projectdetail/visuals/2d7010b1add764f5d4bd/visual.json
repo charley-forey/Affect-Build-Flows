@@ -3,10 +3,11 @@
   "name": "2d7010b1add764f5d4bd",
   "position": {
     "x": 20,
-    "y": 544,
+    "y": 474,
     "z": 0,
     "width": 620,
-    "height": 260
+    "height": 182,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "tableEx",
@@ -76,6 +77,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. RFIs and submittals. Shows ItemType, ItemNumber, Subject, StatusLabel for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1100,
-    "height": 30
+    "height": 30,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Every figure is counted from Procore records - observations, punch items, incidents and manpower logs - rather than typed each month. Status is shown as text, never colour alone.'"
+                }
+              }
+            }
           }
         }
       ]

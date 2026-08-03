@@ -49,5 +49,16 @@
       "loadEnabled": true
     }
   },
-  "connections": []
+  "connections": [
+    {
+      "path": "nc-affect-1\\sage100con;Affect Group",
+      "kind": "SQL",
+      "connectionId": "{\"ClusterId\":\"1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e\",\"DatasourceId\":\"835e72c8-7995-4171-91cb-2a32fbd2050a\"}"
+    },
+    {
+      "path": "Lakehouse",
+      "kind": "Lakehouse",
+      "connectionId": "{\"ClusterId\":\"e1e7d5c7-3440-4dbe-8eec-b19ed40d1cd1\",\"DatasourceId\":\"44379bed-e62c-42c4-9166-ad233992586a\"}"
+    }
+  ]
 }

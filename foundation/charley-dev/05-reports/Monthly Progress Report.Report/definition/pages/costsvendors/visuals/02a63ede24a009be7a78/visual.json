@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "02a63ede24a009be7a78",
   "position": {
-    "x": 660,
-    "y": 542,
+    "x": 852,
+    "y": 208,
     "z": 0,
-    "width": 600,
-    "height": 320
+    "width": 408,
+    "height": 216,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "barChart",
@@ -66,6 +67,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bar chart. Committed and actual by cost code. Shows Vendor Committed, Vendor Spend by CostCodeName.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

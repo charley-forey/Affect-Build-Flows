@@ -3,10 +3,11 @@
   "name": "eb83c351fbe4e88de650",
   "position": {
     "x": 20,
-    "y": 600,
+    "y": 528,
     "z": 0,
     "width": 620,
-    "height": 260
+    "height": 128,
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "tableEx",
@@ -62,6 +63,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Vendor mapping - Procore to Sage. Shows VendorName, IsInSage, HasNameMismatch for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

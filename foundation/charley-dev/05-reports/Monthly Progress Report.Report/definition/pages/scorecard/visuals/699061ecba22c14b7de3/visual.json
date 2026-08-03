@@ -1,0 +1,140 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "699061ecba22c14b7de3",
+  "position": {
+    "x": 20,
+    "y": 260,
+    "z": 0,
+    "width": 800,
+    "height": 320,
+    "tabOrder": 16
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardWeight"
+                    }
+                  },
+                  "Property": "CategoryName"
+                }
+              },
+              "queryRef": "dim_ScorecardWeight.CategoryName",
+              "nativeQueryRef": "CategoryName"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Category Score"
+                }
+              },
+              "queryRef": "_Measures.Category Score",
+              "nativeQueryRef": "Category Score"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Category Band"
+                }
+              },
+              "queryRef": "_Measures.Category Band",
+              "nativeQueryRef": "Category Band"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardWeight"
+                    }
+                  },
+                  "Property": "Weight"
+                }
+              },
+              "queryRef": "dim_ScorecardWeight.Weight",
+              "nativeQueryRef": "Weight"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Category Weighted"
+                }
+              },
+              "queryRef": "_Measures.Category Weighted",
+              "nativeQueryRef": "Category Weighted"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. One row per scorecard category showing its score out of 3, the band the driver fell into, the category weight, and the weighted contribution to the total. Categories with no data read Not measured.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'How the score is built - category, score, band, weight, contribution'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

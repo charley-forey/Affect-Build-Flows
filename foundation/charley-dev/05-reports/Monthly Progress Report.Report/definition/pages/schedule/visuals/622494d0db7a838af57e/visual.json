@@ -3,10 +3,11 @@
   "name": "622494d0db7a838af57e",
   "position": {
     "x": 20,
-    "y": 210,
+    "y": 520,
     "z": 0,
     "width": 740,
-    "height": 440
+    "height": 130,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "tableEx",
@@ -90,6 +91,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Critical path milestones (Outbuild). Shows MilestoneName, CurrentStart, CurrentFinish, PercentComplete, StatusLabel for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

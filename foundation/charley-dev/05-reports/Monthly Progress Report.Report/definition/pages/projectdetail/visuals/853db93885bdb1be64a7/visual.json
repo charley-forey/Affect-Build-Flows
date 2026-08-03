@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1000,
-    "height": 30
+    "height": 30,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Reached by right-clicking a project on any page and choosing Drill through. Every figure here is for the single project you came from.'"
+                }
+              }
+            }
           }
         }
       ]

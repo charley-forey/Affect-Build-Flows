@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "a0aa4906a21a10ff6b2d",
   "position": {
-    "x": 810,
+    "x": 647,
     "y": 112,
     "z": 0,
-    "width": 300,
-    "height": 28
+    "width": 400,
+    "height": 28,
+    "tabOrder": 13
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Currency'"
+                }
+              }
+            }
           }
         }
       ]

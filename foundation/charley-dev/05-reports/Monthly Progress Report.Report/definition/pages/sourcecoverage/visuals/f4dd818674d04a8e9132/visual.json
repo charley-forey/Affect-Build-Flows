@@ -6,7 +6,8 @@
     "y": 56,
     "z": 0,
     "width": 1100,
-    "height": 44
+    "height": 44,
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'A project missing from Sage reads as ZERO revenue everywhere - it does not error, it just looks like a project that never billed. Every project below appears exactly once; the status says what is missing.'"
+                }
+              }
+            }
           }
         }
       ]

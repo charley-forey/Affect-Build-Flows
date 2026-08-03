@@ -3,10 +3,11 @@
   "name": "d24d93a058886ccacc36",
   "position": {
     "x": 612,
-    "y": 128,
+    "y": 132,
     "z": 0,
     "width": 260,
-    "height": 110
+    "height": 100,
+    "tabOrder": 15
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Last Checked Run. Shows Last Checked Run for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

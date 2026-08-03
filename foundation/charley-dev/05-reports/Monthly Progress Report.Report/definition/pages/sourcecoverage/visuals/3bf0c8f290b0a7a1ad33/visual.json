@@ -6,7 +6,8 @@
     "y": 116,
     "z": 0,
     "width": 260,
-    "height": 120
+    "height": 120,
+    "tabOrder": 15
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Source Coverage %. Shows Source Coverage % for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -3,10 +3,11 @@
   "name": "9ed265496e293118d2e8",
   "position": {
     "x": 572,
-    "y": 110,
+    "y": 244,
     "z": 0,
     "width": 260,
-    "height": 130
+    "height": 100,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. DQ Milestones With Inverted Dates. Shows DQ Milestones With Inverted Dates for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

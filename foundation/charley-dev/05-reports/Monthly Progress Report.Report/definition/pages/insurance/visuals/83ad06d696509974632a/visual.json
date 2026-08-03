@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "83ad06d696509974632a",
   "position": {
-    "x": 20,
-    "y": 270,
+    "x": 1065,
+    "y": 144,
     "z": 0,
-    "width": 250,
-    "height": 100
+    "width": 195,
+    "height": 100,
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Certificates Expiring Soon. Shows Certificates Expiring Soon for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

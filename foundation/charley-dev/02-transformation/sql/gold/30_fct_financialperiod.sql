@@ -43,20 +43,51 @@ billing AS (
            COUNT(*)         AS InvoiceCount
     FROM fct_Invoice GROUP BY ProjectKey, MonthStart
 ),
-change_orders AS (
+co_monthly AS (
     SELECT ProjectKey, MonthStart,
            CAST(SUM(Amount) AS DOUBLE)                                          AS ChangeOrderValue,
            CAST(SUM(CASE WHEN IsPending THEN Amount ELSE 0 END) AS DOUBLE)      AS PendingChangeOrders,
            CAST(MAX(CASE WHEN IsPending THEN DaysOpen END) AS BIGINT)           AS AgeOfOldestUnapprovedCO,
            COUNT(*)                                             AS ChangeOrderCount
     FROM fct_ChangeOrder GROUP BY ProjectKey, MonthStart
+),
+-- Change orders ACCUMULATE. A CO approved in March is still in the contract in December,
+-- so every column below is a running total to that month, not that month's activity.
+--
+-- This was per-month until 2026-08-02, and it silently understated the portfolio by
+-- $4.85M. The DAX reads this table with LASTNONBLANKVALUE - the latest row per project -
+-- so a per-month CurrentContract meant the dashboard showed only the FINAL month's change
+-- orders and dropped every approved CO before it. Contract Growth read 0.00% against 307
+-- change orders. The fixture that guarded this had one month of COs per project, where
+-- per-month and cumulative are identical, so the gate passed on both.
+--
+-- Rolled over the `months` spine rather than over co_monthly, so a month with no change
+-- order still carries the contract as it stood, instead of falling back to original.
+change_orders AS (
+    SELECT m.ProjectKey, m.MonthStart,
+           CAST(SUM(COALESCE(c.ChangeOrderValue, 0)) OVER (
+                PARTITION BY m.ProjectKey ORDER BY m.MonthStart
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE)    AS ChangeOrderValue,
+           CAST(SUM(COALESCE(c.PendingChangeOrders, 0)) OVER (
+                PARTITION BY m.ProjectKey ORDER BY m.MonthStart
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE)    AS PendingChangeOrders,
+           CAST(MAX(c.AgeOfOldestUnapprovedCO) OVER (
+                PARTITION BY m.ProjectKey ORDER BY m.MonthStart
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS BIGINT)    AS AgeOfOldestUnapprovedCO,
+           CAST(SUM(COALESCE(c.ChangeOrderCount, 0)) OVER (
+                PARTITION BY m.ProjectKey ORDER BY m.MonthStart
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS BIGINT)    AS ChangeOrderCount
+    FROM months m
+    LEFT JOIN co_monthly c ON m.ProjectKey = c.ProjectKey AND m.MonthStart = c.MonthStart
 )
 SELECT
     m.ProjectKey,
     m.MonthStart,
     p.OriginalContractAmount                          AS OriginalContract,
-    -- Current contract = original + approved change orders, which is what
-    -- FINANCIALS!C4 holds and what every "% of contract" tile divides by.
+    -- Current contract = original + approved change orders TO DATE, which is what
+    -- FINANCIALS!C4 holds and what every "% of contract" tile divides by. Both CO terms
+    -- are running totals (see change_orders above), so this row is the contract as it
+    -- stood that month - it never goes down unless a CO was itself negative.
     CAST(COALESCE(p.OriginalContractAmount, 0)
          + COALESCE(c.ChangeOrderValue, 0)
          - COALESCE(c.PendingChangeOrders, 0) AS DOUBLE) AS CurrentContract,

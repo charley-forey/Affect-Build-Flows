@@ -3,10 +3,11 @@
   "name": "cc2e806e882ae74802db",
   "position": {
     "x": 660,
-    "y": 544,
+    "y": 474,
     "z": 0,
     "width": 600,
-    "height": 260
+    "height": 182,
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "tableEx",
@@ -76,6 +77,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Milestones. Shows MilestoneName, CurrentStart, CurrentFinish, IsOverdue for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

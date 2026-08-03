@@ -5,8 +5,9 @@
     "x": 20,
     "y": 112,
     "z": 0,
-    "width": 300,
-    "height": 28
+    "width": 400,
+    "height": 28,
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "textbox",
@@ -28,6 +29,21 @@
                 ]
               }
             ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Coverage'"
+                }
+              }
+            }
           }
         }
       ]

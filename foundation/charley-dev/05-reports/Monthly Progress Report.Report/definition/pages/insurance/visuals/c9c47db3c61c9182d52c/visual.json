@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "c9c47db3c61c9182d52c",
   "position": {
-    "x": 560,
-    "y": 390,
+    "x": 436,
+    "y": 256,
     "z": 0,
-    "width": 340,
-    "height": 300
+    "width": 400,
+    "height": 196,
+    "tabOrder": 21
   },
   "visual": {
     "visualType": "barChart",
@@ -52,13 +53,26 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Bar chart. Certificates by type (Procore''s free-text values, untidied). Shows Certificates On File by InsuranceType.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Certificates by type (Procore's free-text values, untidied)'"
+                  "Value": "'Certificates by type (Procore''s free-text values, untidied)'"
                 }
               }
             },

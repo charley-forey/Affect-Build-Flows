@@ -6,7 +6,8 @@
     "y": 100,
     "z": 0,
     "width": 216,
-    "height": 110
+    "height": 110,
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Project Scorecard. Shows Project Scorecard for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -5,8 +5,9 @@
     "x": 580,
     "y": 252,
     "z": 0,
-    "width": 700,
-    "height": 300
+    "width": 680,
+    "height": 232,
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "tableEx",
@@ -76,6 +77,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Every project, and what it is missing. Shows ProjectName, CoverageStatus, SageProjectId, OutbuildProjectId for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

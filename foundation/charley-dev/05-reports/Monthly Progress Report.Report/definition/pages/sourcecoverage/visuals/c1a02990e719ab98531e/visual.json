@@ -6,7 +6,8 @@
     "y": 116,
     "z": 0,
     "width": 260,
-    "height": 120
+    "height": 120,
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "card",
@@ -34,6 +35,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Card. Projects Fully Mapped. Shows Projects Fully Mapped for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

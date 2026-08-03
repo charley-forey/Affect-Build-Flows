@@ -3,10 +3,11 @@
   "name": "43a5448912a9f8e7b8d3",
   "position": {
     "x": 20,
-    "y": 542,
+    "y": 436,
     "z": 0,
-    "width": 620,
-    "height": 320
+    "width": 610,
+    "height": 220,
+    "tabOrder": 21
   },
   "visual": {
     "visualType": "matrix",
@@ -84,6 +85,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'matrix. Vendor: committed vs actual. Shows Vendor Spend, Vendor Committed for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

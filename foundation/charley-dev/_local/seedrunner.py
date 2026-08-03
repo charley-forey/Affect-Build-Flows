@@ -127,7 +127,11 @@ SOURCE_FIXTURES = (
     """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
         ('P1','CO1','C1', DATE '2025-05-02', 316960.48, '1', 'Approved'),
         ('P1','CO2','C1', DATE '2025-05-10',   3158.46, '2', 'Pending'),
-        ('P1','CO3','C1', DATE '2025-05-20',  11550.0,  '3', 'Draft')
+        ('P1','CO3','C1', DATE '2025-05-20',  11550.0,  '3', 'Draft'),
+        -- A SECOND MONTH, deliberately. Every CO used to sit in May, which made per-month
+        -- and cumulative roll-ups identical and let a $4.85M understatement pass the gate
+        -- (see 30_fct_financialperiod.sql). June's row must carry May's approved CO too.
+        ('P1','CO4','C1', DATE '2025-06-11', 100000.0,  '4', 'Approved')
     ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES

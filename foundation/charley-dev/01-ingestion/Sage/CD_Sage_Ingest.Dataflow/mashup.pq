@@ -29,9 +29,17 @@ section Section1;
 // Procore side follows: never drop a column at the boundary, because a transform bug should
 // be a re-run and not a re-extract.
 //
-// NOT YET BOUND TO THE GATEWAY. The connection is Affect's to authorise - see
-// _docs/sage-ingestion.md. Everything else is complete, so binding is the only step left.
+// BOUND TO THE EXISTING GATEWAY. No new credential and no Key Vault: Sage 100 is on-prem,
+// so the credential lives in the gateway's connection configuration, and this dataflow
+// reuses the SAME gateway cluster and datasource the existing Build_Sage_Test already uses
+// (see queryMetadata.json:connections). That is why Sage was never actually blocked on the
+// Azure subscription - it was blocked on binding, and the binding was already there.
 // ============================================================================
+
+// Where every query below lands. Referenced by DefaultOutputDestinationSettings at the top
+// of this file; without it the dataflow parses and then fails at run with an unresolved
+// reference. Points at CD_Bronze, never at the existing Silver lakehouse.
+shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){[workspaceId = "1f7caed6-f88a-4e52-bc83-9a498a165301"]}[Data]{[lakehouseId = "fa946636-e143-417b-b598-5cbd31ed9990"]}[Data];
 
 // ---------------------------------------------------------------- AR (revenue)
 

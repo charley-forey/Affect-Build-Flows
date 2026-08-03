@@ -2,11 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "c1f0e4228ce028f6be50",
   "position": {
-    "x": 920,
-    "y": 390,
+    "x": 852,
+    "y": 256,
     "z": 0,
-    "width": 340,
-    "height": 300
+    "width": 408,
+    "height": 196,
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "columnChart",
@@ -52,6 +53,19 @@
     },
     "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Column chart. Lapsed vs in date vs exempt. Shows Certificates On File by ComplianceState.'"
+                }
+              }
+            }
+          }
+        }
+      ],
       "title": [
         {
           "properties": {

@@ -243,6 +243,14 @@ def test_scorecard_bands(con) -> None:
     assert not orphans, f"bands with no matching weight: {orphans}"
     check("every dim_ScorecardBand category resolves to a weight")
 
+    # The denormalised name must actually resolve. It exists so the Scorecard page can show
+    # a category name without a relationship between the two config tables - relating them
+    # makes Power BI add a blank unknown-member row to the weight table, which renders as an
+    # empty row on the page and nulls out the "weights sum to 1.00" check.
+    unnamed = q(con, "SELECT CategoryKey FROM dim_ScorecardBand WHERE CategoryName IS NULL")
+    assert not unnamed, f"bands with no category name: {unnamed}"
+    check("every dim_ScorecardBand row carries its CategoryName")
+
     # --- defect #1a: Schedule Performance must use FRACTIONS, not integers ---
     # The workbook compared a 0.4 fraction against 5/9/10, so it always scored 3/3.
     bounds = q(

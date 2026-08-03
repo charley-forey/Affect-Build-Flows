@@ -33,8 +33,17 @@
 -- Corrected values per powerbi/semantic-model.md:411-423. Rows marked FIX differ from
 -- the workbook.
 
+-- CategoryName is carried here rather than reached through a relationship. Relating the
+-- band table to dim_ScorecardWeight makes Power BI add a blank "unknown member" row to the
+-- weight table, which then renders as an empty row on the Scorecard page and an empty
+-- column on the Portfolio heatmap - and quietly breaks the "weights sum to 1.00" assertion,
+-- because the blank row's weight is NULL. Confirmed against the deployed model.
+--
+-- A 27-row config table carrying its own category name costs nothing and needs no join.
+-- 05_dim_scorecardweight.sql runs before this file, so the lookup is available.
 CREATE OR REPLACE TABLE dim_ScorecardBand AS
-SELECT * FROM (VALUES
+SELECT t.*, w.CategoryName
+FROM (VALUES
     -- 1 Accounts Receivable - FIX: driver becomes avg days to payment, not aging balance
     (1, 3, CAST(NULL AS DOUBLE), CAST(45.0 AS DOUBLE), CAST(NULL AS STRING), '< 45 days'),
     (1, 2, CAST(45.0 AS DOUBLE), CAST(61.0 AS DOUBLE), CAST(NULL AS STRING), '45-60 days'),
@@ -91,4 +100,5 @@ SELECT * FROM (VALUES
     (9, 3, CAST(NULL AS DOUBLE), CAST(2.0 AS DOUBLE),  CAST(NULL AS STRING), '< 2'),
     (9, 2, CAST(2.0 AS DOUBLE),  CAST(5.0 AS DOUBLE),  CAST(NULL AS STRING), '2-4'),
     (9, 0, CAST(5.0 AS DOUBLE),  CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '>= 5')
-) AS t(CategoryKey, Score, MinValue, MaxValue, MatchValue, BandLabel);
+) AS t(CategoryKey, Score, MinValue, MaxValue, MatchValue, BandLabel)
+LEFT JOIN dim_ScorecardWeight w ON w.CategoryKey = t.CategoryKey;

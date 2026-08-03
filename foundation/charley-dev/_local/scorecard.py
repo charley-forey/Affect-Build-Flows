@@ -300,4 +300,57 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             '"0.00"',
             "derived - makes partial coverage comparable",
         ),
+
+        # -- per-category, for the audit table and the portfolio heatmap ----------
+        #
+        # [Project Scorecard] iterates ALL(dim_ScorecardWeight) internally and returns one
+        # number, which is correct for a tile and useless for showing the WORKING. These
+        # three resolve one category at a time, so the same switch drives a table with a
+        # row per category and a matrix with a row per project.
+        #
+        # Same _SWITCH as the total. Sharing it is the point: the audit table cannot
+        # disagree with the headline score, because there is only one definition.
+        (
+            "Category Score",
+            "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\n"
+            "RETURN\n"
+            "SWITCH (\n"
+            "    K,\n"
+            f"{_SWITCH}\n"
+            "    BLANK ()\n"
+            ")",
+            '"0"',
+            "SCORECARD CALC!E23:E31 - the per-category score, never displayed in the Excel",
+        ),
+        (
+            "Category Weighted",
+            # What this category actually contributes to the 0-1 headline. The column that
+            # makes the score auditable: these sum to [Project Scorecard] exactly.
+            "VAR S = [Category Score]\n"
+            "VAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )\n"
+            "RETURN IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) )",
+            '"0.000"',
+            "SCORECARD CALC!G23:G31 - ((E*F)/3), the workbook's own normalisation",
+        ),
+        (
+            "Category Band",
+            # Which band the driver landed in, in the seed table's own words. Without this
+            # a reader can see a category scored 0 but not why, which is how three dead
+            # bands survived in the workbook for as long as they did.
+            "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\n"
+            "VAR S = [Category Score]\n"
+            "RETURN\n"
+            "IF (\n"
+            "    ISBLANK ( S ),\n"
+            '    "Not measured",\n'
+            "    CALCULATE (\n"
+            "        MAX ( dim_ScorecardBand[BandLabel] ),\n"
+            "        ALL ( dim_ScorecardBand ),\n"
+            "        dim_ScorecardBand[CategoryKey] = K,\n"
+            "        dim_ScorecardBand[Score] = S\n"
+            "    )\n"
+            ")",
+            None,
+            "derived - the band the driver fell in, in the seed table's own words",
+        ),
     ]
