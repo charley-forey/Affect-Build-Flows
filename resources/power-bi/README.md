@@ -3,6 +3,17 @@
 Reporting layer. **Integration status: in use — currently running live SQL queries against
 Sage 100 Contractor.**
 
+## The report as built
+
+[`monthly-progress-report/`](monthly-progress-report/) — **the finished dashboard, one
+screenshot per page**, split out of the PDF export (2026-08-03). Ten pages: Portfolio,
+Overview, Financial, Schedule & Quality, Safety & Quality, Billing & Retainage, Direct Costs
+& Vendors, Vendor Insurance, Project Scorecard, Source Coverage. Start there if you want to
+see what the Excel replacement actually looks like before reading the build assets below.
+
+Source of truth is the report definition in
+[`../../foundation/charley-dev/05-reports/`](../../foundation/charley-dev/05-reports/).
+
 ## Documentation
 
 All links verified to resolve, Jul 2026.

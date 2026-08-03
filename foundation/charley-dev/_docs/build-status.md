@@ -26,7 +26,7 @@ a promise.
 | `cd_40_dq_checks` | Notebook | the DQ gate — 63 expectations |
 | `CD_Master_Pipeline` | DataPipeline | 5 activities, the nightly DAG |
 | `Affect Project Report` | SemanticModel | Direct Lake, **37 tables, 99 measures, 45 relationships** |
-| `Monthly Progress Report` | Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
+| `Monthly Progress Report` | Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks — [screenshots of the 10 visible pages](../../../resources/power-bi/monthly-progress-report/) |
 
 ### Silver, from our own ingestion
 

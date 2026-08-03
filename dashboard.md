@@ -12,7 +12,7 @@ Single-page rollup of the engagement. Detail lives in `deliverables/` (one file 
 | D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🟡 Reference pipeline built (slice 1) | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
 | D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | — (post Phase 0) | D1 | [D3](deliverables/03-sage100-ingestion.md) |
 | D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | 4 | D2, D3 | [D4](deliverables/04-project-data-model.md) |
-| D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Spec + DAX + theme drafted | — (post Phase 0) | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
+| D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Report built in `charley-dev` — [**see all 10 pages**](resources/power-bi/monthly-progress-report/) | — (post Phase 0) | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
 | D6 | Power Automate — Payments Workflow | 3 — Automation | 🔴 Not started | — | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
 | D7 | Power Automate — Lien Waiver Workflow | 3 — Automation | 🔴 Not started | — | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
 | D8 | Quick-win automation — vendor / insurance / contract list | 1 — Foundation | 🔴 Not started | 3 | Fabric access | [D8](deliverables/08-vendor-list-automation.md) |

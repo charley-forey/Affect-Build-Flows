@@ -31,6 +31,7 @@ Rebecca's reporting keeps running untouched while this is built alongside it.
 03-lakehouses/     the three lakehouse definitions
 04-semantic_models/ Affect Project Report (DirectLake over gold)
 05-reports/        Monthly Progress Report, Vendor & Insurance List
+                   (screenshots: ../../resources/power-bi/monthly-progress-report/)
 06-orchestration/  the pipeline DAG + schedules
 _local/            offline harness: fixtures, DuckDB runner, tests
 _docs/             solution-guide.md first; assessment.md is the audit of what is live
