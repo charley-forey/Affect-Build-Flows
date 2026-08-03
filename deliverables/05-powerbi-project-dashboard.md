@@ -1,6 +1,10 @@
 # D5 — Power BI Project Dashboard (Excel Replacement)
 
-**Status:** 🔴 Not started | **Phase:** 2 — Project Intelligence | **Billing:** Scoped project (quote after D1) | **Target:** TBD
+**Status:** 🟡 **Built and live — coverage gated on source data** | **Phase:** 2 — Project Intelligence | **Billing:** ~5 hrs in Phase 0 | **Target:** Iteration with leadership next
+
+> **The Excel replacement exists and is running.** `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable — over a Direct Lake semantic model of **37 tables, 99 measures, 45 relationships**. Refreshes nightly. **It has already paid for itself:** a $4.85M understatement of portfolio contract value was found here and fixed (Current Contract $30.25M → $35.10M, growth 0.00% → 16.03%).
+>
+> **Scorecard coverage is 59%.** Four of nine categories cannot be scored — AR (Sage), Completion Variance (Outbuild), Daily Reports (SharePoint), and Profitability (human judgement, manual by design). **Quote `Project Scorecard (Measured Only)` = 0.44**, or absent data reads as poor performance. Detail: [`_docs/dashboard-assessment.md`](../foundation/charley-dev/_docs/dashboard-assessment.md).
 
 ## Objective
 Replace the manually-maintained Excel project tracker with a Power BI report fed from the curated Lakehouse model — real-time visibility into budget, cost, schedule, and risk across all projects, reusable per project with no manual data entry.

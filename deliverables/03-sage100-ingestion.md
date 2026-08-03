@@ -1,6 +1,10 @@
 # D3 — Sage 100 Ingestion Pipeline
 
-**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review (per-solution block) | **Target:** TBD
+**Status:** 🔵 **Built & deployed — blocked on one permission grant** | **Phase:** 1 — Foundation | **Billing:** ~2 hrs in Phase 0; silver transforms to follow | **Target:** Unblocks same day the grant lands
+
+> **`CD_Sage_Ingest` is live in the `charley-dev` folder**, wired to the on-prem gateway Affect already uses, writing to `CD_Bronze`. It pulls 8 tables — including `arivln` and `apivln`, the AR/AP **line** tables the existing dataflow explicitly discards, which is where cost codes and the real retainage live. (Header `retain` is **$0 across all 940 invoices**; a header-sourced report shows zero retainage silently.)
+>
+> **The one remaining ask:** grant `cforey-c@affect-group.com` **"Can use"** on connection `nc-affect-1\sage100con;Affect Group`. The identity currently cannot see any gateway in the tenant, so the first run failed in 5 seconds before reaching Sage. No subscription, no vault, no code change. Detail: [`_docs/sage-ingestion.md`](../foundation/charley-dev/_docs/sage-ingestion.md).
 
 ## Objective
 Sage 100 Contractor data lands in the Fabric Lakehouse on a schedule, replacing the current live SQL queries from Power BI, so accounting data joins the warehouse alongside Procore.
