@@ -111,7 +111,27 @@ read.
 Steps 2–6 below are ours. **Step 1 needs Affect** — the lists live in their tenant and
 need SharePoint admin rights. `sharepoint-lists.md` is written to hand over directly.
 
-1. Create the nine lists per `sharepoint-lists.md`, plus `CD Projects` as the lookup source.
+1. Create the nine lists plus `CD Projects`. **This is now a script, not a build sheet** —
+   `01-ingestion/Manual/provision-sharepoint.ps1`, generated from `40_man_tables.sql` by
+   `_local/make_sharepoint.py`. Whoever has SharePoint admin runs:
+
+   ```powershell
+   Install-Module PnP.PowerShell -Scope CurrentUser
+   Connect-PnPOnline -Url https://<tenant>.sharepoint.com/sites/<site> -Interactive
+   ./provision-sharepoint.ps1
+   ```
+
+   9 lists, 61 columns, versioning on, `ProjectKey` a lookup everywhere. It is idempotent —
+   an existing list keeps its data and gains any missing columns, so re-running after a
+   schema change is how you apply one.
+
+   The script is **generated**, not hand-written, because SharePoint column names and
+   `man_*` column names have to be identical and `CD_Manual_Ingest` maps them 1:1 with no
+   translation layer. A name differing by one character does not error: the column stops
+   arriving and the report shows a blank tile indistinguishable from "nobody filled this
+   in". `test_sharepoint.py` fails the build if the two drift.
+
+   `sharepoint-lists.md` remains the human-readable spec for review.
 2. `CD_Manual_Ingest.Dataflow` — one query per list into `cd_bronze_man_*`.
 3. `sql/silver/30_manual_silver.sql` — type, validate, reject duplicates and unknown projects.
 4. Point `40_man_tables.sql` at silver instead of the empty declarations.
