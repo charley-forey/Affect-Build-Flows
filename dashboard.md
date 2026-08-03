@@ -2,21 +2,30 @@
 
 Single-page rollup of the engagement. Detail lives in `deliverables/` (one file per deliverable) and `hours-log.md` (time ledger). Update this page whenever a deliverable changes status.
 
+**Current as of 2026-08-02.** For the team-facing narrative — what was built, what it found, what we need from Affect — see [`status-update.md`](status-update.md). For the measured engineering state, [`foundation/charley-dev/_docs/build-status.md`](foundation/charley-dev/_docs/build-status.md).
+
 **Status key:** 🔴 Not started · 🟡 In progress · 🔵 Blocked/waiting · 🟢 Complete
 
 ## Deliverables
 
-| ID | Deliverable | Phase | Status | Phase 0 hours | Depends on | Detail |
-|----|-------------|-------|--------|---------------|------------|--------|
-| D1 | Discovery & Architecture Review | 1 — Foundation | 🟡 In progress | 4 (endpoint inventory) | NDA, Fabric access | [D1](deliverables/01-discovery-architecture-review.md) |
-| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🟡 Reference pipeline built (slice 1) | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
-| D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔴 Not started | — (post Phase 0) | D1 | [D3](deliverables/03-sage100-ingestion.md) |
-| D4 | Core Project Data Model | 1 — Foundation | 🟡 Model designed, pending key resolution | 4 | D2, D3 | [D4](deliverables/04-project-data-model.md) |
-| D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 Spec + DAX + theme drafted | — (post Phase 0) | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
+| ID | Deliverable | Phase | Status | Phase 0 hrs | Depends on | Detail |
+|----|-------------|-------|--------|-------------|------------|--------|
+| D1 | Discovery & Architecture Review | 1 — Foundation | 🟢 **Complete** — 36-endpoint inventory built, workspace audited, security findings reported | 4 | — | [D1](deliverables/01-discovery-architecture-review.md) |
+| D2 | Procore ETL Validation & Hardening | 1 — Foundation | 🟢 **Complete** — 36 endpoints live, registry-driven, incremental, tested | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
+| D3 | Sage 100 Ingestion Pipeline | 1 — Foundation | 🔵 **Built & deployed, blocked** — `CD_Sage_Ingest` live and gateway-wired; needs one connection permission grant | 2 | Gateway grant | [D3](deliverables/03-sage100-ingestion.md) |
+| D4 | Core Project Data Model | 1 — Foundation | 🟢 **Complete** — 40 gold tables, Direct Lake star schema, crosswalks resolve project/vendor/cost code | 4 | D2 | [D4](deliverables/04-project-data-model.md) |
+| D5 | Power BI Project Dashboard (Excel replacement) | 2 — Project Intelligence | 🟡 **Built and live** — 12 pages, 180 visuals, 99 measures. Scorecard coverage 59%, gated on source data | 5 | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
 | D6 | Power Automate — Payments Workflow | 3 — Automation | 🔴 Not started | — | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
 | D7 | Power Automate — Lien Waiver Workflow | 3 — Automation | 🔴 Not started | — | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
-| D8 | Quick-win automation — vendor / insurance / contract list | 1 — Foundation | 🔴 Not started | 3 | Fabric access | [D8](deliverables/08-vendor-list-automation.md) |
-| — | Mentoring & recorded walkthroughs (Rebecca) | All | 🟡 Ongoing | 3 | — | Tracked in `hours-log.md` |
+| D8 | Quick-win automation — vendor / insurance / contract list | 1 — Foundation | 🟡 **Delivered inside D5** — vendor and insurance data reaches the Monthly Progress Report; the standalone report was never built | 1 | — | [D8](deliverables/08-vendor-list-automation.md) |
+| — | Mentoring & recorded walkthroughs (Rebecca) | All | 🔴 **Not yet started** — the one Phase 0 line item still outstanding | 0 of 3 | Scheduling | Tracked in `hours-log.md` |
+
+Two additions that were not in the original Phase 0 scope and were built anyway:
+
+| Item | Status |
+|---|---|
+| **Outbuild ingestion** — 16 endpoints, registry-driven | 🔵 Built and verified, cannot run — no API token |
+| **Manual-input capture** — the ~40% that lives in no system | 🟡 Both paths built: 10-list SharePoint provisioning script, **and** a CSV path that works today with no admin ticket |
 
 ## Commercial terms
 
@@ -36,39 +45,51 @@ see [`meeting-notes/2026-07-24-cathal-scope-call.md`](meeting-notes/2026-07-24-c
 - **Mentorship is core scope, not a freebie.** Sessions with Rebecca are billable work and
   are **video-recorded** so they become a durable internal asset.
 - **Ad-hoc access is free.** Rebecca's questions by text/call/email aren't metered.
-- **Pre-agreement work stays non-billable.** The 12.0 hrs already delivered (tracker
-  assessment, Power BI build kit, resource library, warehouse review) is goodwill — it
-  shrinks Phase 0 rather than adding to it.
+- **Pre-agreement work stays non-billable.** The **16.0 hrs** delivered before Aug 1 (tracker
+  assessment, Power BI build kit, resource library, warehouse review, scope call) is goodwill
+  — it shrinks Phase 0 rather than adding to it.
 - **Billed on hours actually worked.** No projected total — scope is committed a block at a
   time, starting with Phase 0's twenty hours.
 
 ## Phase 0 — the initial 20 hours (~1 month)
 
-Drawn straight from the Jul 23 warehouse review's agreed ingestion-first sequence. Starts
-when NDA + Fabric access land.
+Drawn from the Jul 23 warehouse review's agreed ingestion-first sequence. **Delivered Aug 1–2,
+2026**, once Fabric access landed.
 
-| # | Work | Deliverable | Hrs |
-|---|---|---|---|
-| 1 | **Endpoint inventory** — every Procore (then Sage) endpoint needed to reproduce the Excel report, mapped field by field | D1 | 4 |
-| 2 | **Notebook & transformation review** — confirm every required column/ID is pulled and not dropped; move hard-coded credentials to secure storage; design incremental refresh | D2 | 6 |
-| 3 | **Relational bridging** — resolve the vendor ↔ cost-code linkage (invoice as the bridge) so the model slices by both | D4 | 4 |
-| 4 | **Quick-win automation** — vendor list with insurance and contract info, to demonstrate value early | D8 | 3 |
-| 5 | **Mentoring + recorded walkthroughs** — working sessions with Rebecca on everything above | — | 3 |
-| | | **Total** | **20** |
-
-Exit criteria: Procore ingestion trusted and hardened, the vendor/cost-code model resolved,
-one automation live, and Rebecca able to extend the pattern to a new endpoint herself.
-
-## Integration status (data → Fabric Lakehouse)
-
-| Source | Method | Status | Owner | Deliverable |
+| # | Work | Deliverable | Budget | Status |
 |---|---|---|---|---|
-| Procore | API → ETL script → Lakehouse | 🟡 Built by Rebecca, needs review. **Reference pipeline for the RFI/submittal slice built and running** — [`src/procore/`](src/procore/) | Rebecca / Charley | D2 |
-| Sage 100 Contractor | Read-only SQL (currently live-queried from Power BI) | 🔴 Ingestion to Lakehouse not built | Charley | D3 |
-| Excel project tracker | Manual today; every field mapped to a source | 🟢 **Analysis complete** — see `analysis/excel-tracker/` | Charley | D4/D5 |
-| Manual-only fields (~40% of the report) | SharePoint input workbook → Fabric (proposed) | 🔴 Awaiting Affect decision | Charley | D4 |
-| Outbuild | API unverified | 🔵 **May be blocking** — Procore API has no `milestone` endpoint | — | D5 |
+| 1 | **Endpoint inventory** — every Procore (then Sage) endpoint needed to reproduce the Excel report, mapped field by field | D1 | 4 | 🟢 Done — 36 endpoints live, 42 in the registry |
+| 2 | **Notebook & transformation review** — confirm every required column/ID is pulled and not dropped; move hard-coded credentials to secure storage; design incremental refresh | D2 | 6 | 🟢 Done — and went further: the ETL was rebuilt registry-driven with a test harness, rather than patched |
+| 3 | **Relational bridging** — resolve the vendor ↔ cost-code linkage (invoice as the bridge) so the model slices by both | D4 | 4 | 🟢 Done — `bridge_VendorCostCode` (407 rows), plus project and vendor crosswalks |
+| 4 | **Quick-win automation** — vendor list with insurance and contract info, to demonstrate value early | D8 | 3 | 🟡 Data delivered inside the Monthly Progress Report; standalone report not built |
+| 5 | **Mentoring + recorded walkthroughs** — working sessions with Rebecca on everything above | — | 3 | 🔴 **Not started — the one open Phase 0 item** |
+| | | **Total** | **20** | **~22.0 consumed** |
+
+**Exit criteria — met, with one exception.** Procore ingestion is trusted and hardened, the
+vendor/cost-code model is resolved, and the platform is live end to end. What is not yet
+true: *"Rebecca able to extend the pattern to a new endpoint herself."* No mentoring session
+has happened. That is the gap to close first in the ongoing cadence.
+
+**Scope note.** Phase 0 delivered materially more than the five lines above — a complete
+medallion, a Direct Lake semantic model, a 12-page report, a nightly pipeline, a DQ gate,
+Outbuild and Sage ingestion, and the manual-input path. The ~2 hour overrun bought all of
+that, and the fixed $4.85M understatement pays for the block several times over. Flagging it
+rather than absorbing it silently.
+
+## Integration status (data → `CD_Bronze_Lakehouse`)
+
+| Source | Method | Status | Blocked on | Deliverable |
+|---|---|---|---|---|
+| Procore | API → registry-driven extractor → bronze | 🟡 **36 endpoints live**, production tenant, 40 bronze tables. Extraction runs **locally** and lands files; the Fabric notebook merges them | Azure subscription → Key Vault, to move extraction into Fabric | D2 |
+| Sage 100 Contractor | Dataflow Gen2 over the existing on-prem gateway → bronze | 🔵 **`CD_Sage_Ingest` deployed and gateway-wired**, 8 tables incl. the AR/AP line tables the current dataflow discards. First run failed in 5s — the identity cannot see any gateway in the tenant | **One "Can use" grant** on connection `nc-affect-1\sage100con;Affect Group` | D3 |
+| Excel project tracker | Manual today; every field mapped to a source | 🟢 **Replaced** — 12-page Power BI report live over the gold model | — | D4/D5 |
+| Manual-only fields (~40% of the report) | SharePoint lists **or** CSV upload → bronze (two writers, one contract) | 🟡 **Both paths built.** 9 `man_*` tables deployed and empty. CSV path needs no admin ticket and works today | SharePoint provisioning, **or** somebody filling in a template. Plus 4 definition questions | D4 |
+| Outbuild | API → registry-driven extractor, 16 endpoints | 🔵 **Built and verified, cannot run.** The **only** milestone source anywhere; 17 of 19 projects have none | `OUTBUILD_API_TOKEN` not issued | D5 |
 | Ramp / ADP / Bluebeam / Navisworks / Outlook / OneDrive | — | 🔴 Future / backlog | — | Future |
+
+**Source coverage is 5.26%** — 1 of 19 projects present in all three systems. This is the
+single biggest limit on the report, and every part of it is an access grant rather than a
+build task.
 
 ## Excel tracker assessment — headline findings
 
@@ -81,33 +102,82 @@ Full detail in [`analysis/excel-tracker/`](analysis/excel-tracker/).
 | **Defects found** | **14 verified** — 3 change reported numbers |
 | **Biggest issue** | **42% of the scorecard weight is disconnected from reality** — Schedule Performance always scores 3/3, Completion Variance always 0/3, Accounts Receivable reads a dollar balance against day-count bands. The first two errors cancel, which is why it went unnoticed |
 | **Cleanest win** | `SUBMITTALS & RFI` — one table, fully derivable from 4 Procore endpoints, feeds the only chart |
-| **Linchpin unknown** | ⚠️ The shared project identifier across Procore / Sage / the tracker. **Nothing joins without it** |
+| **Linchpin unknown** | 🟢 **Resolved** — `dim_ProjectCrosswalk`, `dim_VendorCrosswalk` and `dim_CostCodeCrosswalk` are built and populated. 2 projects still have no Sage entry |
+
+Of the 14 defects, **7 are structurally fixed** in the platform. See
+[`status-update.md`](status-update.md) for the table.
 
 ## Hours summary
 
-See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** — billable time starts at NDA + Fabric access. Non-billable pre-agreement: **12.0 hrs**, delivered as goodwill (tracker assessment, Power BI build kit, resource library, warehouse review).
+See [`hours-log.md`](hours-log.md) for the ledger.
 
 | | Hours | @ $125 |
 |---|---|---|
-| Phase 0 budget | 20 | $2,500 |
-| Consumed | 0 | $0 |
-| Remaining | 20 | $2,500 |
+| Phase 0 budget | 20.0 | $2,500 |
+| Consumed (Aug 1–2 build) | 22.0 | $2,750 |
+| **Remaining** | **−2.0** | **−$250** |
+
+Non-billable pre-agreement goodwill: **16.0 hrs** (tracker assessment, Power BI build kit,
+resource library, warehouse review, scope call).
+
+⚠️ **Two things to confirm before invoicing** — see the note in `hours-log.md`:
+1. **NDA status.** Terms said billable time starts at NDA *and* Fabric access. Fabric access
+   landed and the work is delivered; the NDA has not been confirmed signed in this repo.
+2. **The ~2 hour overrun**, and whether Affect wants it billed or absorbed.
 
 ## Blockers & waiting on
 
-- [ ] ⚠️ **The shared project key** across Procore / Sage / the tracker — blocks D4 and everything downstream
-- [ ] NDA from Affect — sign and return
-- [ ] Fabric workspace access provisioned
-- [ ] Sage 100 Contractor read-only SQL access (+ gateway if on-prem)
-- [ ] Decision: where the ~40% manual data lives (SharePoint input workbook proposed)
-- [ ] Decision: build the Sage job-cost pull now, or wait for the Procore↔Sage connector rollout?
-- [ ] Where critical-path milestones live — Procore, Outbuild, or spreadsheet-only
-- [ ] 2–3 **real** completed project reports (the file received is a template with demo data)
-- [ ] The six client-satisfaction survey questions (only scores are stored in the workbook)
-- [x] Data warehouse review with Rebecca held — **Thu Jul 23** (`meeting-notes/2026-07-23-warehouse-review.md`)
-- [x] **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (`meeting-notes/2026-07-24-cathal-scope-call.md`)
+**Access — all Affect's to grant, all pipework already built:**
+
+- [ ] 🔴 **Grant `cforey-c@affect-group.com` "Can use"** on connection `nc-affect-1\sage100con;Affect Group` — **highest value per unit of effort.** One grant, one refresh
+- [ ] 🔴 **`OUTBUILD_API_TOKEN`** — the only milestone source anywhere; 17 of 19 projects have none
+- [ ] 🟡 **SharePoint lists provisioned** (script is written) — *or* somebody fills in a CSV template, which needs no ticket
+- [ ] 🟡 **Azure subscription** → Key Vault, so Procore ingestion runs in Fabric rather than on a laptop
+- [ ] 🟡 Procore permissions: `punch_item_types` and `schedule` both return **403**
+
+**Decisions & information:**
+
+- [ ] 🔴 **Four manual-input definition questions** — daily-log compliance, milestone as date or span, which attestations are monthly, survey anonymity. Blocks the manual silver → gold link. Needs one 30-minute call
+- [ ] 🟡 `Expired Certificates` reads 105 of 105 — a question for Affect, not a metric
+- [ ] 🟡 `Vendors Missing From ERP` = 125 of 251 — half the vendor master is unmatched
+- [ ] 🟡 Scorecard band holes (Observations value 5, Daily Reports value 2) — closed so bands tile; confirm intent
+- [ ] 🟡 The six client-satisfaction survey questions (only scores are stored in the workbook)
+- [ ] 🟡 2–3 **real** completed project reports (the file received is a template with demo data)
+- [ ] 🟡 Payments + lien waiver SOPs finalized (Chris) — blocks D6/D7
+
+**Action items for Affect (not blockers on us):**
+
+- [ ] 🔴 **Rotate the Procore OAuth credential pair.** Live secrets are in plaintext in a workspace notebook. Rotate first, edit second — [`security-findings.md`](foundation/charley-dev/_docs/security-findings.md)
+- [ ] 🔴 **Check whether the existing reporting is stale.** Rebecca's Sage data stops 2026-07-20, Outbuild 2026-07-14 — possibly the same gateway issue
+
+**Closed:**
+
+- [x] Fabric workspace access provisioned — **Aug 1**
+- [x] The shared project key across Procore / Sage / the tracker — **crosswalks built and populated**
+- [x] Sage ingestion approach decided and built (not waiting on the Procore↔Sage connector)
+- [x] Where critical-path milestones live — **Outbuild, confirmed as the only source**
+- [x] Where the ~40% manual data lives — **decided: SharePoint lists, with a CSV path that works today**
+- [x] Data warehouse review with Rebecca — **Thu Jul 23** (`meeting-notes/2026-07-23-warehouse-review.md`)
+- [x] Scope, terms & engagement agreed with Cathal — **Fri Jul 24** (`meeting-notes/2026-07-24-cathal-scope-call.md`)
 - [x] Excel project tracker shared (Jul 22) and assessed
-- [ ] Payments + lien waiver SOPs finalized (Chris, ~50% complete)
+
+## Roadmap
+
+Phase 0 is delivered. What follows, in value order. Nothing in Phase 1 is gated on build
+time — it is gated on access and one conversation.
+
+| Phase | Work | Gate | Rough size |
+|---|---|---|---|
+| **1 — Close the coverage gap** | Sage silver + retainage question settled; AR views repointed to our medallion | Gateway grant | 4–6 hrs |
+| | Outbuild milestones landed; Completion Variance scored | `OUTBUILD_API_TOKEN` | 2–3 hrs |
+| | Manual input wired silver → gold; Daily Reports scored | 4 definition answers | 3–4 hrs |
+| | **Target: scorecard coverage 59% → ~100%, source coverage 5% → meaningful** | | |
+| **1 — Harden** | DQ persist gap fixed; `deploy_gold.py` default changed; billed-vs-billed gap explained on the report | Nothing | 2 hrs |
+| | Retire the local extraction bridge — ingestion moves into Fabric on a schedule | Azure subscription | 2 hrs |
+| **1 — Transfer** | **Mentoring with Rebecca, recorded.** Extractor registry pattern first, then the deploy scripts, then the DQ gate | Scheduling | 3 hrs to start, then ongoing |
+| **2 — Project intelligence** | Report iteration with leadership; real completed-project validation; standalone Vendor & Insurance list if still wanted | Real project data | TBD |
+| **3 — Automation** | D6 payments, D7 lien waivers | SOPs from Chris | Quote per SOP |
+| **Backlog** | Ramp, ADP, Bluebeam / Navisworks, Outlook / OneDrive | — | — |
 
 ## Reporting cadence
 
@@ -131,5 +201,7 @@ See `hours-log.md` for the ledger. **Billable to date: 0.0 hrs / $0** — billab
 - New deliverable → copy `deliverables/_template.md`, assign next ID, add a row here
 - New data source → add a row to the integration table; when work starts, it becomes a deliverable
 - Meeting → new file in `meeting-notes/` + hours entry pointing to it
-- Code/scripts → keep in this repo where possible (`src/<source-system>/`, e.g. [`src/procore/`](src/procore/)), so commits become billing evidence. New sources copy the Procore shape: config-driven extractor + `.sql` transforms + a local runner
+- **New Procore endpoint → a YAML entry in `foundation/charley-dev/01-ingestion/Procore/config/endpoints.yml`.** Not a new notebook. Auth, pagination, the v2.0 header rule, retry and watermarking are implemented once in the shared extractor — that is the pattern worth teaching Rebecca first
+- New *source system* → copy the Procore shape: registry-driven extractor + `.sql` transforms + offline DuckDB tests. Outbuild and Sage both followed it
+- Everything reaches Fabric through a committed deploy script, so every change is a diff and a mis-deploy is fixed by re-running
 - Later, if the ledger gets big: the hours table converts cleanly to CSV → Power BI for engagement-level reporting

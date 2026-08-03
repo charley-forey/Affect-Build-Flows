@@ -1,6 +1,10 @@
 # D8 — Quick-Win Automation: Vendor / Insurance / Contract List
 
-**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** $125/hr — 3 hrs in Phase 0 | **Target:** Within the initial 20-hour month
+**Status:** 🟡 **Data delivered inside D5; standalone report not built** | **Phase:** 1 — Foundation | **Billing:** ~1 of 3 hrs in Phase 0 | **Target:** Build the standalone view if still wanted
+
+> **Partially delivered, differently than scoped.** The vendor and insurance data landed in the Monthly Progress Report rather than as a separate report — `dim_Vendor` (126), `fct_VendorInsurance` (105), `bridge_ProjectVendor` (393). A standalone `Vendor & Insurance List` report was named in the plan and never built; the ~2 unspent hours cover it if Affect still wants it as its own artifact.
+>
+> **Two findings that need a human, not a fix:** `Expired Certificates` reads **105 of 105**, and `Vendors Missing From ERP` reads **125 of 251** — half the vendor master is unmatched. Both are questions for Affect rather than metrics to publish.
 
 > Proposed by Rebecca on the Jul 23 warehouse review as a fast, visible win to run alongside
 > the ingestion review. Deliberately small: it proves the pipeline pattern end to end and

@@ -1,8 +1,8 @@
 # D1 — Discovery & Architecture Review
 
-**Status:** 🟡 In progress | **Phase:** 1 — Foundation | **Billing:** $125/hr — 4 hrs allocated in Phase 0 (endpoint inventory); prior assessment work at no charge | **Target:** Within the initial 20-hour month
+**Status:** 🟢 **Complete** (2026-08-02) | **Phase:** 1 — Foundation | **Billing:** $125/hr — 4 hrs in Phase 0; prior assessment work at no charge | **Target:** ✅ Met
 
-> Most of this review is already done and given at no charge (`analysis/excel-tracker/`, `powerbi/`, the Jul 23 warehouse walkthrough). What remains inside Phase 0 is the **endpoint inventory** — every Procore and Sage endpoint needed to reproduce the Excel report. See `dashboard.md` → Phase 0.
+> **Delivered.** The endpoint inventory is built — 36 Procore endpoints live, 42 in the registry, mapped to the Excel report field by field ([`_docs/endpoint-inventory.md`](../foundation/charley-dev/_docs/endpoint-inventory.md)). The whole Fabric workspace was backed up read-only and audited, producing [`_docs/security-findings.md`](../foundation/charley-dev/_docs/security-findings.md) — **live Procore and Outbuild credentials in plaintext in five notebooks**, reported for Affect to rotate. Current-state assessment and roadmap: [`status-update.md`](../status-update.md) and [`dashboard.md`](../dashboard.md).
 
 ## Objective
 Understand and document Affect's current data environment well enough to validate the Procore ETL, scope the Sage 100 ingestion, and define the first Power BI deliverable — producing a written current-state assessment and prioritized roadmap.
