@@ -1,6 +1,8 @@
 # D2 — Procore ETL Validation & Hardening
 
-**Status:** 🟡 Reference pipeline built (slice 1) | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review | **Target:** TBD
+**Status:** 🟢 **Complete** (2026-08-02) | **Phase:** 1 — Foundation | **Billing:** 6 hrs in Phase 0 | **Target:** ✅ Met
+
+> **Delivered, and rebuilt rather than patched.** 36 endpoints live against Affect's production tenant, driven by one shared extractor and a YAML registry — adding an endpoint is a config entry, not a new notebook. Incremental (`updated_at` watermark, upsert on natural key), quota-aware, credentials via a secret helper. 12 offline test suites run the production Spark SQL through DuckDB with no Fabric and no network. **One limitation:** extraction runs locally and lands files pending an Azure subscription for Key Vault — the nightly pipeline merges what was last landed and does not call the API. Detail: [`_docs/procore-ingestion.md`](../foundation/charley-dev/_docs/procore-ingestion.md).
 
 ## Objective
 Rebecca's existing Procore → Lakehouse ETL is reviewed, corrected where needed, and hardened into a reliable production pipeline with a known refresh cadence.

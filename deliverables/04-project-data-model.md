@@ -1,6 +1,10 @@
 # D4 — Core Project Data Model
 
-**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review | **Target:** TBD
+**Status:** 🟢 **Complete** (2026-08-02) | **Phase:** 1 — Foundation | **Billing:** 4 hrs in Phase 0 | **Target:** ✅ Met
+
+> **The linchpin is resolved.** `dim_ProjectCrosswalk`, `dim_VendorCrosswalk` and `dim_CostCodeCrosswalk` are built and populated, and `bridge_VendorCostCode` (407 rows) gives the vendor ↔ cost-code slice via the invoice. 40 gold tables — conformed dimensions, facts, crosswalks, bridges, and 9 `man_*` tables for the manual half. Dimensions UNION in the keys observed in the facts, so referential integrity holds by construction. **What it found:** 2 projects with no Sage entry, 70 cost codes absent from master data, 23 AR invoices pointing at a job that resolves to no project — all of which would have vanished silently from an Excel join.
+>
+> **Open:** the manual silver → gold link waits on four definition questions ([`_docs/manual-input.md`](../foundation/charley-dev/_docs/manual-input.md)).
 
 ## Objective
 A curated, relationally-mapped set of Lakehouse tables that unify Procore + Sage 100 (+ Excel-only fields) into a single project-centric model — the semantic foundation every report and automation builds on.
