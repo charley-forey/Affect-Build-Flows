@@ -35,8 +35,8 @@ insurance certificates expired. Both are explained below — do not "fix" either
 
 | Area | Method | Result |
 |---|---|---|
-| Repo ↔ GitHub | `git` against `origin` | **Out of sync** — see *Source control* |
-| Items deployed | `list_items` / `list_folders` on workspace `Build` | 12 of 14 present |
+| Repo ↔ GitHub | `git` against `origin` | Consolidated onto `main` 2026-08-03 |
+| Items deployed | `list_items` / `list_folders` on workspace `Build` | 13 of 14 — see below |
 | Bronze / silver / gold populated | `execute_sql_query` row counts | Populated, verified |
 | Gold ↔ repo SQL | Table list vs `sql/gold/*.sql` | Matches |
 | Semantic model ↔ repo | Deployed TMSL vs `*.tmdl` | Matches — 37 tables |
@@ -241,21 +241,57 @@ under *Scorecard coverage* and *Data quality* below, and they are access problem
 
 ---
 
-## Source control: three branches, none merged to main
+## Source control: consolidated — `main` is the only branch
 
-| Branch | State |
+Resolved 2026-08-03. Everything is on `main`; the feature branches are gone.
+
+| Was | Now |
 |---|---|
-| `origin/main` | Missing **8 commits** — all the Power BI enhancement work |
-| `origin/worktree-charley-dev-build` | The real tip. 8 ahead of main |
-| `origin/worktree-pbi-enhance` | Merged into charley-dev-build via PR #9 |
-| local `main` | **39 commits behind** `origin/main` |
+| `origin/main` missing 8 commits of Power BI work | contains everything, PRs #8–#12 merged |
+| `origin/worktree-charley-dev-build` | **deleted** — fully merged |
+| `origin/worktree-pbi-enhance` | **deleted** — fully merged |
+| local `main`, 39 behind | fast-forwarded to `origin/main` |
 
-PR #9 merged the dashboard work into `worktree-charley-dev-build`, not into `main`. So
-`main` does not have the theme, the navigation, the portfolio page, the staleness footer,
-or the scorecard visuals — even though all of it is **deployed and live in Fabric**. The
-workspace is ahead of the default branch.
+The two branches were deleted with `git branch -d`, which refuses on anything unmerged, and
+each key commit was confirmed reachable from `main` first. The only commits **not** in
+`main` were the merge commits of PRs #10 and #11 — those merged into
+`worktree-charley-dev-build`, and their content reached `main` by a different route via
+PR #12. The only content unique to that branch was the *older, broken* state: the unbound
+Sage dataflow (`"connections": []`) and the `fct_ChangeOrder[Status]` reference that had
+never resolved. Nothing of value was lost.
 
-**Action:** open `worktree-charley-dev-build` → `main`, and `git pull` locally.
+Three orphaned worktree directories remain under `.claude/worktrees/` (`pbi-enhance`,
+`cathal-scope-call`, `outbuild-api-docs`). Git no longer tracks them — Windows file locks
+prevented deletion. They are inert; remove them by hand whenever convenient.
+
+---
+
+## Repo ↔ Fabric parity, verified 2026-08-03
+
+Every item `main` defines, checked against the live workspace after consolidation.
+
+| Item | In `main` | In Fabric | Verified by |
+|---|---|---|---|
+| `CD_Bronze` / `CD_Silver` / `CD_Gold` | yes | yes | `deploy.py --verify`, schema `dbo` |
+| 8 notebooks (`cd_01`…`cd_90`) | yes | yes | `deploy.py --verify` |
+| `CD_Master_Pipeline` | yes | yes | DAG compared activity-for-activity |
+| `CD_Sage_Ingest` | yes | yes | deployed; **run blocked on gateway permission** |
+| `Affect Project Report` model | yes | yes | 37 tables, **100 measures**, 45 relationships |
+| `Monthly Progress Report` | yes | yes | 12 pages, 180 visuals, all 138 refs resolve |
+| `CD_Manual_Ingest` | yes | **no** | deliberate — see below |
+
+The semantic model was compared name-by-name against `deploy_model.MEASURES`: **zero drift
+in either direction.** Not "the counts match" — the actual sets are identical, so a measure
+renamed on one side would show up.
+
+`CD_Manual_Ingest` is **correctly not deployed.** Its mashup carries
+`SITE = "https://REPLACE-ME.sharepoint.com/..."`, so deploying it would create an item that
+cannot run and would sit in the workspace looking like working ingestion. It goes in once
+the SharePoint site exists and the URL is real.
+
+**Verification run:** 13 offline suites and 17 live DAX checks, all passing, including
+`[Current Contract] is a balance, not a running total of months` — the assertion that guards
+the $4.85M defect.
 
 ---
 
