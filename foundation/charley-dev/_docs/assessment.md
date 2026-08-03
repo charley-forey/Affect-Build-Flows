@@ -170,6 +170,37 @@ Which means:
 > permission to bind `CD_Sage_Ingest` to a gateway connection that **already exists and
 > already works**, because `Build_Sage_Test` uses it every time it runs.
 
+### Deployed 2026-08-03, and the blocker is now one line
+
+`CD_Sage_Ingest` is **live in the `charley-dev` folder** (`9d1dc6db-…`), wired to gateway
+`1e798beb` and datasource `835e72c8`, writing to `CD_Bronze`. The definition reads back from
+Fabric exactly as committed — gateway, both connections, all 8 queries, `DefaultDestination`.
+
+The first run **failed in 5 seconds**, which is too fast to be a query. The cause is not our
+code:
+
+| Call as `cforey-c@affect-group.com` | Result |
+|---|---|
+| `GET /v1/gateways` | `{"value": []}` |
+| `GET /v1/connections` | `{"value": []}` |
+| `GET /v1/gateways/1e798beb-…` | **404 `EntityNotFound`** |
+
+The gateway demonstrably exists — `Build_Sage_Test` references it — but **this identity
+cannot see any gateway or connection in the tenant.** The dataflow asks to run through a
+gateway its runner has no rights on, and fails before reaching Sage.
+
+**The ask, precisely:** whoever administers the on-premises data gateway grants
+`cforey-c@affect-group.com` the **"Can use"** permission on the connection
+`nc-affect-1\sage100con;Affect Group`. That is a single grant in *Manage connections and
+gateways*. No subscription, no vault, no code change — the dataflow runs the moment it lands.
+
+Leaving the failed dataflow deployed is deliberate: it is correct, it is inert until run,
+and it turns the remaining work into one permission grant plus one refresh.
+
+**Worth raising on the same call:** Rebecca's Sage data stopped at 2026-07-20 and Outbuild
+at 2026-07-14. If those dataflows are failing too, the cause may be the same gateway — in
+which case the existing reporting is also quietly running on two-week-old numbers.
+
 Key Vault is needed to move *Procore* extraction off a laptop and into Fabric. Sage needs a
 connection binding. They are separate asks with separate owners, and conflating them has been
 costing us the one that could have been done weeks ago.
