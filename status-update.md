@@ -37,7 +37,7 @@ Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been mo
 | **Silver** | 15 typed tables, **14,791 rows, 0 rejects** |
 | **Gold** | 40 tables — dimensions, facts, crosswalks, bridges, manual placeholders |
 | **Semantic model** | `Affect Project Report` — Direct Lake, **37 tables, 99 measures, 45 relationships** |
-| **Report** | `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable |
+| **Report** | `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable. [**See every page**](resources/power-bi/monthly-progress-report/) without opening Fabric |
 | **Orchestration** | `CD_Master_Pipeline`, 5 activities. Pipeline 02:00 daily, model refresh 04:00 daily (Eastern) |
 | **Data quality** | 63 expectations, gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
 

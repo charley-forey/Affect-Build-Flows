@@ -13,7 +13,7 @@ circulated link is wrong for Affect's situation, that is called out explicitly.
 | **Procore** | Project management & costing — ETL built, needs review | [`procore/`](procore/) |
 | **Sage 100 Contractor** | Accounting, AR/AP, payroll — read-only SQL, queried live from Power BI | [`sage-100-contractor/`](sage-100-contractor/) |
 | **Microsoft Fabric** | Data warehouse (Lakehouse) — live, built by Rebecca | [`microsoft-fabric/`](microsoft-fabric/) |
-| **Power BI** | Reporting — in use | [`power-bi/`](power-bi/) |
+| **Power BI** | Reporting — in use. **The built report, page by page:** [`power-bi/monthly-progress-report/`](power-bi/monthly-progress-report/) | [`power-bi/`](power-bi/) |
 | **Power Automate** | Workflow automation — planned (D6 payments, D7 lien waivers) | [`power-automate/`](power-automate/) |
 | **Outbuild** | Scheduling — not integrated | [`outbuild/`](outbuild/) |
 | **Ramp** | Vendor payments — not integrated | [`ramp/`](ramp/) |
@@ -45,4 +45,6 @@ each README says how. Extracted cheatsheets are committed because they are small
 what actually gets read.
 
 Related: [`../analysis/excel-tracker/`](../analysis/excel-tracker/) (assessment of the
-current reporting template) · [`../powerbi/`](../powerbi/) (the build kit).
+current reporting template) · [`../powerbi/`](../powerbi/) (the build kit) ·
+[`power-bi/monthly-progress-report/`](power-bi/monthly-progress-report/) (**what the finished
+dashboard looks like** — all ten pages as screenshots).

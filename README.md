@@ -110,7 +110,7 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 - `analysis/excel-tracker/` — full teardown of the client's Monthly Progress Report workbook: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and the 14 verified defects
 - `src/procore/` — the original RFI/submittal reference pipeline (Jul 26). Superseded by `foundation/charley-dev/` but kept: it is the smallest complete example of the pattern, and a good teaching artifact
 - `powerbi/` — the design kit that preceded the build: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan
-- `resources/` — vendored documentation, one folder per solution. Includes the **full Sage 100 Contractor and Outbuild API doc sets** as markdown, and a Procore endpoint cheatsheet verified against the 2,111-path OAS
+- `resources/` — vendored documentation, one folder per solution. Includes the **full Sage 100 Contractor and Outbuild API doc sets** as markdown, a Procore endpoint cheatsheet verified against the 2,111-path OAS, and [`resources/power-bi/monthly-progress-report/`](resources/power-bi/monthly-progress-report/) — **the built dashboard, page by page**, if you want to see the deliverable before reading how it was built
 - `.mcp.json` — Fabric MCP server config for Claude Code (live workspace exploration; see `resources/microsoft-fabric/`)
 - `meeting-notes/` — notes from calls and meetings (discovery Jul 21, warehouse review Jul 23, scope & terms Jul 24)
 - `call-prep/` — agendas and information requests prepared for calls
