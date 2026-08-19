@@ -14,7 +14,7 @@ carried forward from a previous update. The engineering detail behind each claim
 The Excel Monthly Progress Report has been replaced by a working Microsoft Fabric platform.
 It ingests Affect's **production** Procore tenant, types and validates the data through a
 bronze → silver → gold medallion, and serves a 12-page Power BI report off a Direct Lake
-star schema with 99 measures. It runs on a nightly schedule, it checks its own work with 103
+star schema with 99 measures. It runs on a nightly schedule, it checks its own work with 104
 data-quality expectations, and it found a **$4.85M understatement** of portfolio contract
 value that the existing reporting had been carrying silently. None of it touches Rebecca's
 existing warehouse — it was built alongside, in its own folder, and her reporting has run
@@ -39,11 +39,11 @@ Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been mo
 |---|---|
 | **Bronze** | 40 tables landing from Procore, plus 17 manual-input tables (9 original + 8 for the Quality Plan) |
 | **Silver** | 15 typed tables. The last full row/reject count — **14,791 rows, 0 rejects** — was measured on 2026-08-02 and has not been re-read since the quality tables landed |
-| **Gold** | **53 tables published** to the semantic-model contract — dimensions, facts, crosswalks, bridges, quality tables, manual placeholders |
+| **Gold** | **54 tables published** to the semantic-model contract — dimensions, facts, crosswalks, bridges, quality tables, manual placeholders |
 | **Semantic models** | **Two.** `Affect Project Report` — Direct Lake, **37 tables, 99 measures**. `Project Quality Plan` — **19 tables plus a measure table, 42 measures, 23 relationships** |
 | **Reports** | **Two.** `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable ([**see every page**](resources/power-bi/monthly-progress-report/) without opening Fabric). `Project Quality Plan` — **7 pages, 95 visuals** |
 | **Orchestration** | `CD_Master_Pipeline`, 5 activities. Pipeline 02:00 daily, model refresh 04:00 daily (Eastern) |
-| **Data quality** | **103 expectations** — 80 blocking, 23 warning — gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
+| **Data quality** | **104 expectations** — 81 blocking, 23 warning — gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
 
 ### The ingestion
 
@@ -117,7 +117,7 @@ Both were invisible from the report. Neither raised an error anywhere.
 a hardcoded list of tables to row-check and publish, and the new quality tables had never been
 added to it. A gold table missing from the published `gold_schema.json` **silently cannot
 appear in any semantic model** — the table exists, holds correct data, and is simply
-unreachable. Fixed; published tables went from **45 to 53**.
+unreachable. Fixed; published tables went from **45 to 54**.
 
 **2. Raw JSON was being shown as a trade name on the live report.** The silver transform read
 the Procore `trade` field as a whole object instead of `trade.name`, so the column held
@@ -126,11 +126,54 @@ the Procore `trade` field as a whole object instead of `trade.name`, so the colu
 into the `Trade` column of the live Monthly Progress Report**. Fixed by reading `trade.name`;
 unmapped records fell from **631 to 459** and the report now reads e.g. `Windows`.
 
-The remaining **459** are a genuine vocabulary difference, not a bug: Procore says `HVAC` and
-`Sprinkler` where the workbook says `HVAC_DUCTWORK` and `FIRE_SPRINKLER`. **We have
-deliberately not guessed** — attributing a defect to the wrong trade is worse than leaving it
-unattributed. It is an open question for Affect and it is shown on the Quality Plan's Data
-Quality page rather than hidden.
+The remaining **459** were a genuine vocabulary difference rather than a bug — and have since
+been largely closed. See below.
+
+### Four more defects — found, fixed, verified against the live workspace
+
+Three of the four had been sitting on the Data Quality page as findings *about Affect's
+data*. They were our code being wrong about Affect's conventions. That distinction matters:
+a data-quality flag is a claim about the client, and it has to survive being checked.
+
+**1. A tenth of the submittal register was invisible. 223 → 0.** Procore sends the status
+`For Record`; our transform only recognised the workbook's wording, `For Record Only`, and
+did not recognise `Not Reviewed` at all. **222 of 2,245 submittals** carried a status that
+matched nothing, so they dropped out of every status slicer — not shown wrong, not shown at
+all. A spelling mismatch, not a vocabulary problem. Fixed.
+
+**2. The trade vocabulary is now largely mapped. 970 → 506 unmapped.** A 16-row alias table
+(`qc_seed_TradeAlias`) maps the Procore spellings to the workbook's controlled keys —
+`HVAC` → `HVAC_DUCTWORK`, `Sprinkler` → `FIRE_SPRINKLER`, and so on — applied only after the
+exact match fails. **464 records recovered.** Unmapped non-conformances fell **459 → 215**
+and punch items **511 → 291**.
+
+Only unambiguous pairs were mapped. Three labels are deliberately still unmapped because
+only Affect can settle them: **`Drywall/Carpentry` (255 records)**, **`Concrete
+Superstructure` (110)** and **`Concrete` (64)** — framing vs board vs millwork, and
+cast-in-place vs formwork vs slab-on-deck. Attributing a defect to the wrong trade is worse
+than leaving it unattributed.
+
+Separately, and this is a **scope** question rather than a mapping one: Roofing, Glazing,
+Windows, Structural Steel, Low Voltage, Demolition, Housekeeping, Light Fixtures, Window
+Treatments and others appear in Affect's Procore trade list and have **no equivalent trade
+in the 26-sheet checklist library at all**. Affect's Procore vocabulary is broader than the
+workbook's. Worth a decision about whether the library should cover them.
+
+**3. 807 cost codes — 15% of the master — were missing from every by-division rollup.
+807 → 0.** Our parser required a two-digit CSI division. Affect writes divisions 1 through 9
+**without the leading zero**: `1-1000 GENERAL REQUIREMENTS` is Division 01, not a malformed
+code. Every one of the 807 was parseable once the parser zero-padded; **not one was
+genuinely bad data**. Divisions 01–09 now hold 2,941 codes, 1,540 of them in Division 01
+alone. Until today, every cost in those divisions was silently absent from any budget or
+cost view grouped by division.
+
+**4. A new blocking check, so the alias table cannot rot quietly.** An alias pointing at a
+trade key that does not exist would resolve to nothing and read as "unmapped" — a typo would
+look identical to a trade nobody has mapped yet. That is now an error-severity check rather
+than a warning.
+
+The gate is at **104 expectations**, 8 warnings and **0 blocking**. The cost-code
+expectation, which used to be the largest warning on the page, now passes.
 
 ### The 14 Excel defects — 7 structurally fixed, plus 2 structural issues
 
@@ -184,12 +227,17 @@ because it looks fixed when read from git.
 Full detail and remediation steps:
 [`security-findings.md`](foundation/charley-dev/_docs/security-findings.md).
 
-### ⚠️ The existing reporting may be running on two-week-old data
+### ⚠️ The existing reporting is running behind — by less than we first recorded
 
-Rebecca's Sage data stops at **2026-07-20** and Outbuild at **2026-07-14**. If those
-dataflows are failing on the same gateway permission issue described below, the current
-reporting is serving stale numbers and nothing has surfaced it. Worth ten minutes of
-someone's time to confirm either way.
+Re-measured live on **2026-08-19**: Rebecca's Sage data now runs to **2026-07-31**, up from
+the **2026-07-20** we recorded on 2026-08-02. Her feed refreshed at some point in between —
+it did not stop dead in July. It is still **~19 days behind today**, so the concern is *lag*,
+not a dead feed. Outbuild's **2026-07-14** is as measured on 2026-08-02 and has **not been
+re-verified since**; we are not claiming it moved, and we are not claiming it did not.
+
+If those dataflows are lagging on the same gateway permission issue described below, the
+current reporting is serving numbers nearly three weeks old and nothing has surfaced it.
+Worth ten minutes of someone's time to confirm either way.
 
 ---
 
@@ -201,7 +249,7 @@ Honest separation between "built" and "proven correct against reality".
 |---|---|---|
 | **The nightly pipeline does not call Procore** | Known limitation | `cd_01_extract_procore` is not in the nightly run. Extraction runs on a laptop and lands files; the pipeline merges whatever was last landed. "Ran green" means the transforms are healthy, **not** that the data is fresh. Resolved by the Key Vault role assignment |
 | **The nightly pipeline does not refresh manual input either** | Known limitation | `cd_06_land_manual` is not in `CD_Master_Pipeline`, so the nightly run rebuilds silver and gold without refreshing manual bronze. Harmless while every manual table is empty; a silent staleness bug the day somebody enters data. **Must land before SharePoint goes live** |
-| **459 of 850 non-conformance records have no trade** | Needs a decision, not a fix | Procore's trade vocabulary and the workbook's do not match (`HVAC` vs `HVAC_DUCTWORK`). Guessing a mapping would attribute defects to the wrong trades. One vocabulary decision from Affect settles it |
+| **215 of 850 non-conformance records still have no trade** (was 459) | Needs a decision, not a fix | The alias table closed 464 records across the quality facts. What is left is three ambiguous labels — `Drywall/Carpentry`, `Concrete Superstructure`, `Concrete` — and a set of Procore trades with no equivalent in the checklist library at all, which is a scope question rather than a mapping one |
 | **DQ reject detail is stale** | Diagnosed, not yet fixed | The gate reports success while silently failing to write reject detail, so the Data Quality page shows rows from an older run. **Counts are trustworthy; drill-through is not.** Two small fixes identified |
 | **Source coverage is 5.26%** | Measured | Only 1 of 19 projects is present in all three systems. This is the single biggest limit on the report, and it is an access problem, not a build problem |
 | **Scorecard coverage is 59%** | Measured | 4 of 9 categories cannot be scored — AR (Sage), Profitability (human judgement, stays manual by design), Completion Variance (Outbuild), Daily Reports (SharePoint). **Quote "Project Scorecard (Measured Only)" — 0.44** — or absent data reads as poor performance |
@@ -229,7 +277,7 @@ Plus two Procore permissions worth asking for in the same conversation: `punch_i
 and `schedule` both return **403**.
 
 **If only one thing gets done this week, make it #1.** It is the highest value per unit of
-effort by a wide margin, and it may also explain the stale-data finding above.
+effort by a wide margin, and it may also explain the data-lag finding above.
 
 ---
 

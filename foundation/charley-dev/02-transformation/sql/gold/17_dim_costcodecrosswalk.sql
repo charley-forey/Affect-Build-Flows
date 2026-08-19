@@ -50,10 +50,18 @@ SELECT
     code_part                                      AS CostCode,
     COALESCE(name_part, cost_code_name)            AS CostCodeName,
 
-    -- CSI division: the first two characters of the code. This is what the budget page and
-    -- every cost rollup group by.
+    -- CSI division: the leading digits, ZERO-PADDED to two. This is what the budget page
+    -- and every cost rollup group by.
+    --
+    -- Affect writes divisions 1-9 without the leading zero - "1-1000 GENERAL REQUIREMENTS"
+    -- is CSI Division 01, not an unparseable code. Requiring two digits marked all 807 of
+    -- them unparseable (780 as `N-`, 27 as a bare `N`), so every Division 1-9 cost silently
+    -- left the by-division rollup and surfaced as a data-quality problem rather than the
+    -- parsing bug it was. Measured 2026-08-19: zero codes fail for any other reason.
     CASE WHEN rlike_(code_part, '^[0-9]{2}')
-         THEN SUBSTRING(code_part, 1, 2) END       AS DivisionCode,
+         THEN SUBSTRING(code_part, 1, 2)
+         WHEN rlike_(code_part, '^[0-9]($|[^0-9])')
+         THEN LPAD(SUBSTRING(code_part, 1, 1), 2, '0') END AS DivisionCode,
 
     -- Blocked on the gateway. Declared so the model does not change shape when it arrives.
     CAST(NULL AS STRING)                           AS SageCostCode,
@@ -64,5 +72,7 @@ SELECT
     -- A code that does not parse still appears - it just cannot be rolled up by division,
     -- and this flag is how that shows on the DQ page instead of quietly falling out of a
     -- subtotal.
-    (code_part IS NULL OR NOT rlike_(code_part, '^[0-9]{2}')) AS HasUnparseableCode
+    (code_part IS NULL
+     OR NOT (rlike_(code_part, '^[0-9]{2}')
+             OR rlike_(code_part, '^[0-9]($|[^0-9])')))       AS HasUnparseableCode
 FROM parsed;

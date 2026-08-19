@@ -57,7 +57,7 @@ insurance certificates expired. Both are explained below — do not "fix" either
 | Measures compute | All 99 evaluated via `execute_dax_query` | All evaluate |
 | Numbers are *correct* | Recomputed independently in SQL | **One defect found** |
 | Pipeline freshness | `meta_PipelineRun` | Ran 2026-08-02 22:06, 0 blocking |
-| DQ gate | `cd_dq_rejects` + heartbeat | 63 expectations at this audit, 6 failing, 0 blocking. The suite is now **103** (80 blocking, 23 warning) |
+| DQ gate | `cd_dq_rejects` + heartbeat | 63 expectations at this audit, 6 failing, 0 blocking. The suite is now **104** (81 blocking, 23 warning) |
 
 ---
 
@@ -143,24 +143,38 @@ two halves: **Sage data is on the dashboard, and we are not the ones pulling it.
 | Source | Who pulls it | Into | Latest data | Ours? |
 |---|---|---|---|---|
 | **Procore** | **us** — the endpoint registry (42 at this audit, 44 since the PQP work), run locally, landed as NDJSON | `CD_Bronze` → `CD_Silver` | 2026-08-02 04:44 | **yes** |
-| **Sage 100** | Rebecca's `Build_Sage_Test` dataflow | existing `Silver_Lakehouse` | invoice 2026-07-20 | no |
-| **Outbuild** | Rebecca's `Outbuild_activities` dataflow | existing `Silver_Lakehouse` | updated 2026-07-14 | no |
+| **Sage 100** | Rebecca's `Build_Sage_Test` dataflow | existing `Silver_Lakehouse` | invoice **2026-07-31** (re-measured 2026-08-19; was 2026-07-20 on 2026-08-02) | no |
+| **Outbuild** | Rebecca's `Outbuild_activities` dataflow | existing `Silver_Lakehouse` | updated 2026-07-14 *(as measured 2026-08-02, not re-verified)* | no |
 
 `01_source_views_cd.sql` points 18 of its views at our own `CD_Silver` and leaves 8 reading
 the existing warehouse — deliberately, per-view rather than all-or-nothing, because a view
 pointing at the old source is a smaller problem than one pointing at an empty new one. The
 three that matter:
 
-- `sv_ar_invoices` → Sage AR. **All 117 rows of `fct_Invoice` come from here.**
+- `sv_ar_invoices` → Sage AR. **All 122 rows of `fct_Invoice` come from here.**
 - `sv_outbuild_activities` → Outbuild. **All 52 rows of `fct_Milestone` come from here.**
 - `sv_vendors` → carries `sage_vendor_id`, which Procore does not put on a vendor record.
 
 **So if Rebecca's dataflows stop, our dashboard's financial and schedule data stops with
 them** — and it would not error, it would just quietly stop moving. Nothing currently alerts
-on that. The Sage data is already ~2 weeks old and Outbuild ~3 weeks old; neither dataflow
-appears to have run since mid-July.
+on that. Sage is running **~19 days behind** as re-measured on 2026-08-19: max `SentDate`
+reached **2026-07-31**, up from the **2026-07-20** recorded on 2026-08-02, so her feed did
+refresh at some point in between rather than stopping dead in July. The Outbuild figure of
+**2026-07-14** is as measured on 2026-08-02 and has **not been re-verified since** —
+`fct_Milestone` is unchanged at 52 rows, and the only date the table carries
+(`CurrentFinish`, max 2026-11-09) is a *forecast* finish and says nothing about freshness.
+Lag rather than a dead feed, but the concern stands, and it is still a reason to fix the
+gateway.
 
-There is also not much of it. 117 revenue invoices and **13 open AR rows** for a $35M
+**How we noticed:** `validate_model.py` asserts *exact* row counts against this live external
+source. `[Invoices]` failed at 117 when the model returned 122, and `[Periods]` moved 130 →
+142 alongside it — `Periods` is derived from the fact date range, so eleven more days of Sage
+AR widened it by twelve project-months. Both expectations are updated. Asserting an exact
+count against somebody else's warehouse is fragile by design — it moves whenever Rebecca's
+dataflow runs — and that fragility is exactly what surfaced the change; nothing else would
+have.
+
+There is also not much of it. 122 revenue invoices and **13 open AR rows** for a $35M
 portfolio is thin — worth asking Affect whether that is the real shape of their AR or whether
 the existing dataflow is filtering most of it away. It does filter: `Invoice Balance <> 0`.
 
@@ -209,9 +223,11 @@ gateways*. No subscription, no vault, no code change — the dataflow runs the m
 Leaving the failed dataflow deployed is deliberate: it is correct, it is inert until run,
 and it turns the remaining work into one permission grant plus one refresh.
 
-**Worth raising on the same call:** Rebecca's Sage data stopped at 2026-07-20 and Outbuild
-at 2026-07-14. If those dataflows are failing too, the cause may be the same gateway — in
-which case the existing reporting is also quietly running on two-week-old numbers.
+**Worth raising on the same call:** Rebecca's Sage data reached 2026-07-31 when re-measured
+on 2026-08-19 — it moved on from the 2026-07-20 recorded on 2026-08-02, so it is lagging
+~19 days rather than dead. Outbuild's 2026-07-14 is as measured on 2026-08-02 and has not
+been re-verified. If those dataflows are lagging on the same gateway, the existing reporting
+is quietly running on numbers nearly three weeks old.
 
 Key Vault is needed to move *Procore* extraction off a laptop and into Fabric. Sage needs a
 connection binding. They are separate asks with separate owners, and conflating them has been
@@ -325,6 +341,15 @@ correct for coverage gaps as opposed to corruption.
 | cost codes parse to a CSI division | 1,000 | Procore free-text codes (`FINAL CLEAN`, `CONTINGENCY`); cannot roll up by division |
 | every project is in Outbuild | 17 of 19 | No `OUTBUILD_API_TOKEN`. Outbuild is the **only** milestone source |
 | every project is in Sage | 4 | 2 are test/template projects; 2 are real and read as zero revenue |
+
+> **Superseded 2026-08-19 for the first row.** The cost-code explanation above was wrong, and
+> in the direction that mattered: the codes were not Procore free text. Our parser required a
+> two-digit CSI division and Affect writes divisions 1–9 **without** the leading zero, so
+> `1-1000 GENERAL REQUIREMENTS` — Division **01** — read as unparseable. Of the 807 flagged at
+> the 2026-08-19 re-read, **all 807 were fixable and none was genuinely malformed**; the
+> expectation now returns **0**. This is the shape worth remembering: a data-quality finding
+> that was our code being wrong about the client's conventions. See
+> [`build-status.md`](build-status.md).
 
 ### The reject detail is stale, and the gate does not say so — ROOT CAUSE FOUND
 
@@ -466,10 +491,13 @@ regression is back.
    function decides a list name and `test_sharepoint.py` fails the build if the four writers
    drift. Detail in [`sharepoint-lists.md`](sharepoint-lists.md).
 
-8. **Ask Affect for the Procore trade → workbook `TradeKey` alias mapping.** 459 of 850 NCRs
-   resolve to no trade, and the residue is a genuine vocabulary difference (Procore `HVAC` vs
-   the workbook's `HVAC_DUCTWORK`) rather than a bug — it is deliberately not guessed. One
-   alias table closes it. See [`build-status.md`](build-status.md).
+8. ~~**Ask Affect for the Procore trade → workbook `TradeKey` alias mapping.**~~ **Largely done
+   2026-08-19.** `qc_seed_TradeAlias` (16 unambiguous pairs) recovered 464 rows: unmapped NCRs
+   **459 → 215**, punch items **511 → 291**. Two narrower things still need Affect — three
+   ambiguous labels (`Drywall/Carpentry` 255, `Concrete Superstructure` 110, `Concrete` 64), and
+   a **scope** question rather than a mapping one: Roofing, Glazing, Windows, Structural Steel,
+   Low Voltage and others have no equivalent trade in the 26-sheet library at all. See
+   [`build-status.md`](build-status.md).
 
 9. **Add `cd_06_land_manual` to `CD_Master_Pipeline`,** ahead of `Bronze To Silver`. The
    nightly run currently rebuilds silver and gold without refreshing manual bronze — harmless

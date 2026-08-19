@@ -36,12 +36,16 @@ SELECT
     -- this resolves what it can and leaves the rest NULL next to a flag. A fuzzy match
     -- would attach an NCR to the wrong trade, which is worse than attaching it to none.
     --
-    -- ponytail: exact match on the normalised label only. Upgrade path is a
-    -- qc_seed_TradeAlias table the moment the unmapped count is worth the row - the flag
-    -- below is what tells you when that is.
-    t.TradeKey                          AS TradeKey,
-    CASE WHEN n.trade IS NOT NULL AND t.TradeKey IS NULL THEN TRUE ELSE FALSE END
-                                        AS HasUnmappedTrade,
+    -- Resolved 2026-08-19. Exact match first, then qc_seed_TradeAlias for the labels
+    -- Procore spells differently ("HVAC" -> HVAC_DUCTWORK, "Sprinkler" -> FIRE_SPRINKLER).
+    -- The alias table carries ONLY unambiguous pairs. "Drywall/Carpentry", "Concrete
+    -- Superstructure" and "Concrete" are deliberately absent - they need Affect to say
+    -- which trade they mean - and a further group (Roofing, Glazing, Structural Steel,
+    -- Low Voltage, ...) has no equivalent in the 26-sheet library at all. Both keep
+    -- surfacing through the flag below rather than being guessed into a wrong trade.
+    COALESCE(t.TradeKey, x.TradeKey)    AS TradeKey,
+    CASE WHEN n.trade IS NOT NULL AND COALESCE(t.TradeKey, x.TradeKey) IS NULL
+         THEN TRUE ELSE FALSE END       AS HasUnmappedTrade,
     n.assignee_name                     AS AssignedTo,
     n.priority                          AS Priority,
     n.source_status                     AS SourceStatus,
@@ -68,6 +72,10 @@ SELECT
 FROM sv_qc_ncr n
 LEFT JOIN qc_seed_Trade t
        ON t.TradeKey = UPPER(REPLACE(TRIM(COALESCE(n.trade, '')), ' ', '_'))
+-- Joined on the RAW label, not the normalised key: an alias exists precisely
+-- because the label does not normalise to a key.
+LEFT JOIN qc_seed_TradeAlias x
+       ON UPPER(TRIM(x.ProcoreTrade)) = UPPER(TRIM(COALESCE(n.trade, '')))
 WHERE n.project_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
@@ -82,9 +90,9 @@ SELECT
     p.title                             AS Title,
     p.punch_item_type                   AS PunchItemType,
     p.trade                             AS TradeLabel,
-    t.TradeKey                          AS TradeKey,
-    CASE WHEN p.trade IS NOT NULL AND t.TradeKey IS NULL THEN TRUE ELSE FALSE END
-                                        AS HasUnmappedTrade,
+    COALESCE(t.TradeKey, x.TradeKey)    AS TradeKey,
+    CASE WHEN p.trade IS NOT NULL AND COALESCE(t.TradeKey, x.TradeKey) IS NULL
+         THEN TRUE ELSE FALSE END       AS HasUnmappedTrade,
     p.manager_name                      AS AssignedTo,
     p.cost_code_id                      AS CostCodeKey,
     p.priority                          AS Priority,
@@ -109,6 +117,10 @@ SELECT
 FROM sv_qc_punch p
 LEFT JOIN qc_seed_Trade t
        ON t.TradeKey = UPPER(REPLACE(TRIM(COALESCE(p.trade, '')), ' ', '_'))
+-- Joined on the RAW label, not the normalised key: an alias exists precisely
+-- because the label does not normalise to a key.
+LEFT JOIN qc_seed_TradeAlias x
+       ON UPPER(TRIM(x.ProcoreTrade)) = UPPER(TRIM(COALESCE(p.trade, '')))
 WHERE p.project_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------

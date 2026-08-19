@@ -593,6 +593,13 @@ def build_suite() -> Suite:
             severity=SEVERITY_WARN,
             description="an unmapped trade cannot roll up by trade - alias it or fix Procore",
         ),
+        # ERROR, not warn, and the distinction is the point. An unmapped trade is a fact
+        # about Procore's vocabulary; an alias pointing at a TradeKey that does not exist
+        # is a typo in a CSV we control. It would resolve to NULL and read as "unmapped",
+        # so the alias would look like it was never written rather than like it was
+        # written wrong - the failure mode this whole engagement keeps meeting.
+        referential("qc_seed_TradeAlias", "TradeKey", "qc_seed_Trade", "TradeKey",
+                    severity=SEVERITY_ERROR),
     )
 
     # ------------------------------------------------------ scorecard integrity

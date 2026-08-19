@@ -416,7 +416,14 @@ SOURCE_FIXTURES = (
          'OPEN','OPEN','NCR', DATE '2025-05-01', DATE '2025-05-10', CAST(NULL AS DATE)),
         ('P1','OB2','2','Closed finding','Corrected on the day','Corrective Action',
          'Quality','Metals','Sam T','Normal','CLOSED','CLOSED','COR',
-         DATE '2025-04-01', DATE '2025-04-05', DATE '2025-04-04')
+         DATE '2025-04-01', DATE '2025-04-05', DATE '2025-04-04'),
+        -- OB3 resolves ONLY through qc_seed_TradeAlias: Procore says 'HVAC', the workbook
+        -- key is HVAC_DUCTWORK, and no amount of normalising the label gets from one to
+        -- the other. Without this row the suite passes whether the alias join works or
+        -- not, which is exactly how a broken alias reached the lakehouse once already.
+        ('P1','OB3','3','Duct hanger spacing','Hangers over-spaced in corridor',
+         'Non-Conformance','Mechanical','HVAC','Jo N','Normal',
+         'OPEN','OPEN','NCR', DATE '2025-05-03', DATE '2025-05-12', CAST(NULL AS DATE))
     ) AS t(project_id, ncr_id, ncr_number, title, description, observation_type, category,
            trade, assignee_name, priority, source_status, status_code, item_class_code,
            created_date, due_date, closed_date)""",

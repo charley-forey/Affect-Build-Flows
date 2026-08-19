@@ -323,8 +323,8 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    # PQP seeds. Built by cd_20_seed_gold, which runs before this notebook,
                    # so they are readable here - but they are not in `tables`, because the
                    # seed runner already asserts their row counts.
-                   "qc_seed_Trade", "qc_seed_ChecklistItem", "qc_seed_Gate",
-                   "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
+                   "qc_seed_Trade", "qc_seed_TradeAlias", "qc_seed_ChecklistItem",
+                   "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 
 # meta_PipelineRun is written by the DQ GATE, which runs after this notebook - so on a

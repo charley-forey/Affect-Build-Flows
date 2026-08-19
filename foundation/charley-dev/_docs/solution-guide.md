@@ -55,7 +55,7 @@ both.
 |---|---|
 | Bronze | 40 tables from Affect's **production** Procore tenant |
 | Silver | 15 typed tables, 14,791 rows, **0 rejects** |
-| Gold | 40 tables at the 2026-08-02 read plus the PQP tables landed 2026-08-19; `gold_schema.json` publishes **53** table schemas |
+| Gold | 40 tables at the 2026-08-02 read plus the PQP tables landed 2026-08-19; `gold_schema.json` publishes **54** table schemas |
 | Model A — `Affect Project Report` | 37 tables, 99 measures, 45 relationships, Direct Lake |
 | Report A — `Monthly Progress Report` | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
 | Model B — `Project Quality Plan` | **19 tables plus `_Measures`, 42 measures, 23 relationships**, Direct Lake. New 2026-08-19 |
@@ -64,7 +64,7 @@ both.
 | Sage | `CD_Sage_Ingest` **deployed** and inert — one gateway connection grant away from running |
 | PQP (Project Quality Plan) | **Deployed end to end 2026-08-19** — the client's 44-sheet QA/QC tracker as seeds, silver, gold, a DQ gate, its own model and its own report. [`pqp-solution.md`](pqp-solution.md) |
 
-**Verification:** 14 offline suites, 14 live DAX checks, **103 DQ expectations** (80 blocking,
+**Verification:** 14 offline suites, 14 live DAX checks, **104 DQ expectations** (81 blocking,
 23 warning) — all passing, zero blocking violations. The pipeline has run end to end, all five
 stages green; last run 2026-08-02 22:06.
 
@@ -171,8 +171,8 @@ looking.
 that looks wrong can only be checked by asking whoever typed it. Right-click any project →
 Drill through opens that project's budget lines, change orders, RFIs and milestones.
 
-**3. It refuses to publish bad numbers.** 103 expectations run between gold and the report —
-80 blocking, 23 warning. Blocking failures stop the pipeline.
+**3. It refuses to publish bad numbers.** 104 expectations run between gold and the report —
+81 blocking, 23 warning. Blocking failures stop the pipeline.
 
 ---
 
@@ -204,7 +204,7 @@ every day and stop meaning anything.
 the report is fresh to the last **landing**, not to the last Procore change. Until Key Vault
 exists, somebody runs `extract_procore_local.py` to refresh the landing files. The nightly
 run still earns its place — it re-applies every transform, rebuilds gold and re-runs the
-103-expectation gate — but it does not fetch new data. Three freshness expectations now warn
+104-expectation gate — but it does not fetch new data. Three freshness expectations now warn
 when the newest billing, cost or field-ops record goes stale, so "nobody has run the
 extractor in two months" is visible instead of silent.
 
@@ -367,7 +367,7 @@ python deploy_seeds.py --apply                   # seed dimensions + the PQP see
 python deploy_manual.py --apply                  # MUST run before deploy_silver.py
 python deploy_silver.py --apply                  # bronze -> silver
 python deploy_gold.py --apply                    # silver -> gold star schema
-python deploy_dq.py --apply                      # the 103-expectation gate
+python deploy_dq.py --apply                      # the 104-expectation gate
 python deploy_model.py --apply                   # Model A  (TMDL)
 python deploy_report.py --apply                  # Report A (PBIR)
 python deploy_model_qc.py --apply                # Model B  (PQP)
@@ -497,6 +497,15 @@ or a parse producing NULL:
   850 NCRs), and `fct_QualityItem.Trade` on the **live** Monthly Progress Report showed raw
   JSON. It parses, it is not NULL, and no test that only checks for NULL would have caught
   it.
+- A submittal status `CASE` written against the **workbook's** wording rather than Procore's
+  → `'FOR RECORD ONLY'` matched, Procore's actual `'For Record'` did not, and a `CASE` with no
+  `ELSE` returns NULL. **222 of 2,245 submittals** — a tenth of the register — carried no
+  status and left every status slicer. Not shown wrong: not shown.
+- A CSI division parse requiring **two** leading digits, against a client who writes divisions
+  1–9 without the leading zero → `1-1000 GENERAL REQUIREMENTS` is Division 01 and read as
+  unparseable. **807 cost codes, 15% of the 5,433-code master**, silently absent from every
+  by-division rollup — and every one of them was fixable, so the "data quality problem" was
+  ours the whole time.
 
 None raised an error. This is why the platform prefers a loud failure to a plausible number,
 why rejects are recorded with reasons, and why the DQ gate blocks rather than warns.

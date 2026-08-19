@@ -115,13 +115,12 @@ Honest list. Most of it is other people's turnaround, not build effort.
 
 | Missing | What it blocks | Owner |
 |---|---|---|
-| **RFIs** — 616 rows sit in `cd_silver_rfis`, never promoted to gold | `fct_RfiSubmittal` is submittals-only | **Us** — a gold SQL change |
 | **Milestone baselines** | The Gantt shows the schedule as it stands and **cannot show drift**. `fct_Milestone` has `CurrentStart`/`CurrentFinish` only — no baseline, no actual | Affect — Outbuild |
 | **Outbuild token** | Milestones cannot refresh at all. Outbuild is the only milestone source that exists anywhere. **In transit** — offered by email Aug 11 | Affect — via Outbuild CS |
 | **Manual / narrative tables** (wins, risks, priority items, survey, flags) | ~40% of the report | Affect — the SharePoint decision |
 | **Safety**: incidents, hours, orientations, violations | The whole safety domain; `[TRIR]` is not computable | Affect — Procore credentials |
 | **Quality**: observations, punch items | Both now land — 850 and 1,469 rows, as `fct_QcNcr` and `fct_QcPunch` on the PQP model. `punch_item_types` still 403s, but silver derives the punch class from the item itself so nothing downstream depends on it | Affect — Procore permissions, for completeness |
-| **Quality by trade** | 459 of 850 NCRs resolve to no trade — Procore's trade vocabulary (`HVAC`, `Sprinkler`) and the workbook's controlled keys (`HVAC_DUCTWORK`, `FIRE_SPRINKLER`) are different vocabularies. Deliberately not guessed; the count is on the PQP Data Quality page rather than charted | Affect — confirm the alias mapping |
+| **Quality by trade** | Largely resolved 2026-08-19 — `qc_seed_TradeAlias` (16 pairs) recovered 464 rows; **215 of 850** NCRs and **291 of 1,469** punch items still resolve to no trade. Two things left: three ambiguous labels deliberately not guessed (`Drywall/Carpentry` 255, `Concrete Superstructure` 110, `Concrete` 64), and a **scope** question — Roofing, Glazing, Windows, Structural Steel, Low Voltage and others have no equivalent trade in the 26-sheet library at all. Counts sit on the PQP Data Quality page rather than being charted | Affect — one mapping decision, one scope decision |
 | **Daily logs** | `Score - Daily Reports`; Procore 403 on `schedule` | Affect — Procore permissions |
 | **Sage AP/AR, retainage, aging, job cost** | Cash position, aging, cost-to-complete | Affect — one *Can use* grant on the gateway connection; `CD_Sage_Ingest` is deployed and inert |
 | **Payment dates in Sage AR** | `[Avg Days To Payment]` returns BLANK by design — the AR header carries the amount paid but not the date | Affect — confirm whether it exists elsewhere in Sage |
@@ -187,7 +186,7 @@ A second trap, closed in the same pass and worth more attention because nothing 
 `gold_schema.json`. A gold table missing from that file cannot be typed by `deploy_model.py`,
 so it **silently cannot appear in any semantic model** — the SQL runs, the table holds rows,
 the model deploys and reports success, and the table is simply absent. Cost the three
-`fct_Qc*` tables until 2026-08-19. **45 → 53 tables published.**
+`fct_Qc*` tables until 2026-08-19. **45 → 54 tables published.**
 
 One thing the deployment caught that offline testing could not: relating the two scorecard
 config tables so the band table could show a category name made Power BI add a blank
@@ -205,8 +204,11 @@ Affect. That needs a seed table of expected values — worth doing, not done her
 
 ## What I would do next, ranked
 
-1. **Promote RFIs to gold.** Ours to fix, one SQL change, and it completes the one chart
-   the workbook already had.
+1. ~~**Promote RFIs to gold.**~~ **Already done — this entry was stale.** `sv_rfis` is defined
+   in `01_source_views_cd.sql` and `23_fct_rfisubmittal.sql` reads it; verified live,
+   `fct_RfiSubmittal` holds **2,861** rows = 2,245 submittals + **616 RFIs**, so the chart the
+   workbook had is complete. It was only ever missing under the old `--source existing`
+   default, where `sv_rfis` does not exist; that default is now `cd`.
 2. **Take the four unblocking items to the next Affect call.** Highest ratio of report
    unlocked to effort spent, by a wide margin.
 3. **Reconciliation page**, so the numbers Affect can check are on screen rather than in CI.

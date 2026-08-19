@@ -176,18 +176,34 @@ def main() -> int:
     EXPECTED_BY_SOURCE = {
         "cd": {
             "[Projects]": 19, "[Vendors]": 126, "[CostCodes]": 5434, "[Dates]": 7670,
+            # [Invoices] 117 -> 122 on 2026-08-19, and NOT because of anything we changed.
+            # fct_Invoice reads Sage AR from Rebecca's Silver_Lakehouse, which is a live
+            # external source: it moves when her dataflow runs. The max SentDate went
+            # 2026-07-20 -> 2026-07-31 at the same time, so her Sage feed refreshed some
+            # time after our 2026-08-02 measurement. Still 19 days behind today, so the
+            # staleness warning stands - but "stopped dead on Jul 20" no longer does.
+            #
+            # Asserting an exact count against someone else's warehouse is fragile by
+            # design. That fragility is the point: this assertion is what noticed.
             "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 122,
-            # Periods moved 130 -> 142 when the dim_Project Sage join was repaired
-            # (2026-08-19). fct_FinancialPeriod unions DISTINCT (ProjectKey, MonthStart);
-            # while every invoice carried ProjectKey='UNMATCHED' all AR months collapsed
-            # onto one fake project, so 130 was an UNDERCOUNT caused by the defect. 142 is
-            # the corrected grain, not a regression.
+            # [Periods] 130 -> 142 landed the same day but is NOT the same cause, and the
+            # difference matters because one story is checkable and the other is not.
+            # Measured both ways against the SAME 122 invoices: with the dim_Project Sage
+            # join broken fct_FinancialPeriod computes 130, with it repaired it computes
+            # 142. Eleven more days of Sage AR cannot produce twelve project-months - they
+            # fall inside ONE month (Jul 2026), and while every invoice carried
+            # ProjectKey='UNMATCHED' a month contributed at most ONE (ProjectKey,
+            # MonthStart) pair however many invoices it held. Repairing the join fans those
+            # invoices across 15 real projects, and that is where the twelve come from.
             "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 142,
             "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
         },
         "existing": {
             "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,
-            "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 117,
+            # Same live Sage AR source as the cd block above, so the same 117 -> 122 move.
+            # Not re-measured under --source existing today; corrected for consistency
+            # rather than verified, and flagged here rather than quietly assumed.
+            "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 122,
             "[Submittals]": 2242, "[Milestones]": 52, "[Periods]": 128,
             # Zero, legitimately: the existing warehouse holds no progress billing,
             # no direct costs and no vendor bridge. Asserted rather than skipped, so
@@ -197,20 +213,12 @@ def main() -> int:
     }
     expected = EXPECTED_BY_SOURCE[os.environ.get("CD_GOLD_SOURCE", "cd")]
 
-    # Sage AR accrues: fct_Invoice was 117 on 2026-08-02 and 122 on 2026-08-19, with no
-    # defect in between. An exact count on an append-only table fails every time the client
-    # bills someone, and a check that cries wolf weekly gets muted - which is the argument
-    # expectations.py makes about ERROR severity, and it applies here too. Floor, not equal.
-    # A shrinking invoice table is still caught; a growing one is not a regression.
-    GROWS = {"[Invoices]"}
-
     bad = []
     for key, want in expected.items():
         got = rows.get(key)
-        rel = ">=" if key in GROWS else " ="
-        print(f"  {key[1:-1]:<14} {got:>7}  (expected {rel}{want})")
-        if (got < want) if key in GROWS else (got != want):
-            bad.append(f"{key}: got {got}, expected {rel}{want}")
+        print(f"  {key[1:-1]:<14} {got:>7}  (expected {want})")
+        if got != want:
+            bad.append(f"{key}: got {got}, expected {want}")
     if bad:
         print("\nROW COUNT MISMATCH:\n  " + "\n  ".join(bad))
         return 1
