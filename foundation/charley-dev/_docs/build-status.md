@@ -223,8 +223,46 @@ listed as "not deployed" for two weeks after it was deployed. Corrected below.
 | Orchestration pipeline | **Built and running** — `CD_Master_Pipeline`, 5 activities, last green run 2026-08-02 22:06 |
 | Scorecard measures | **Written** — 9 category measures live. **Scorecard coverage is 59%** (`[Scorecard Coverage %]`, live): 5 of 9 categories score from real data, 4 return BLANK for want of source data. This is the canonical figure — other documents reference it rather than restate it. Coverage read 35% before field ops landed and went 35% → 45% → 59%; filling the `man_*` tables is projected to take it to 88%, which is a projection, not a measurement |
 | `Vendor & Insurance List` report | **Never built, and no longer planned.** The insurance data reached the Monthly Progress Report instead, as `fct_VendorInsurance` (105 rows) plus a Vendor Insurance page. The stale reference has been removed from `README.md` |
-| PQP (Project Quality Plan) subject area | **In progress, 2026-08-19.** Seed data extracted from the client's 44-sheet `026-025 SAUNA LOUNGE QA - QC TRACKER` workbook into `02-transformation/seed/` — 26 trades, 625 checklist items, 93 statutory gates, 101 DOH items, 143 status-vocabulary rows. A second semantic model and report will be built over it |
-| Power Automate flows (Estimating Setup, Convert to Bidding) | **In progress, 2026-08-19.** Being built alongside the PQP work |
+| PQP (Project Quality Plan) subject area | **Deployed and running, 2026-08-19.** Seeds, silver, gold and the DQ gate all ran to Completed against `CD_Gold_Lakehouse`. Counts below were read back out of Fabric with `query_fabric.py`, not carried forward from the build. Semantic model and report not yet built |
+| Power Automate flows (Estimating Setup, Convert to Bidding) | **Built locally, not deployed, 2026-08-19.** `power-automate/` holds both flow definitions, the PnP provisioning script and 14 passing offline checks. Nothing exists in the client's SharePoint or Power Automate yet — the site URL is still a `REPLACE-ME` placeholder |
+
+### PQP tables, measured out of Fabric 2026-08-19
+
+Seeds match the offline expectation exactly, which is the point of the extractor asserting its
+own counts.
+
+| Table | Rows | Note |
+|---|---:|---|
+| `qc_seed_ChecklistItem` | 625 | 26 trade sheets collapsed to one table |
+| `qc_seed_Gate` | 93 | 46 TCO + 23 Fire Alarm + 24 Statutory |
+| `dim_QcStatus` | 141 | 25 workbook dropdowns, deduplicated |
+| `qc_seed_DohItem` | 101 | |
+| `qc_seed_Trade` | 26 | |
+| **`fct_QcSubmittal`** | **2,245** | live, from the production Procore tenant |
+| **`fct_QcPunch`** | **1,469** | live |
+| **`fct_QcNcr`** | **850** | live, from Procore Observations |
+| `man_Qc*` (8 tables) | 0 | correct — typed and empty until the SharePoint lists exist |
+
+The three `fct_Qc*` tables carry real production data because the client's workbook names
+Procore as the system of record for quality, so NCRs, punch items and submittals are read from
+the API rather than retyped. **4,564 quality records reached the platform without anyone
+entering anything.**
+
+The regression check also passed: `dim_Project` 19 rows and `fct_BudgetLine` 402 rows are
+unchanged, and the nine pre-existing `man_*` tables are now genuinely reachable from silver
+rather than orphaned placeholders.
+
+**Deploy order: `deploy_manual.py` must run before `deploy_silver.py`.** Silver now parses
+`cd_bronze_man_*`, and those tables are created by `cd_06_land_manual` — typed and empty when
+there is no CSV. Running silver first fails the whole notebook with
+`System_Cancelled_Session_Statements_Failed`, which names no table and reads like a Spark
+problem rather than a missing input. Hit on the 2026-08-19 deploy; the fix is one earlier step,
+not a code change.
+
+Related and still open: **`cd_06_land_manual` is not in `CD_Master_Pipeline`.** The nightly run
+rebuilds silver and gold without refreshing manual bronze first. Harmless while every `man_*`
+is empty, and a real staleness bug the day somebody starts entering data — it should join the
+DAG ahead of `Bronze To Silver` before the SharePoint lists go live.
 
 ## Environment notes
 
