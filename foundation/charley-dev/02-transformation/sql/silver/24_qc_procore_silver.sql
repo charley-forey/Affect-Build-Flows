@@ -140,6 +140,14 @@ SELECT
          WHEN 'REVISE AND RESUBMIT'  THEN 'REVISE_RESUBMIT'
          WHEN 'REJECTED'             THEN 'REJECTED'
          WHEN 'FOR RECORD ONLY'      THEN 'FOR_RECORD_ONLY'
+         -- Procore's actual value is 'For Record'; the workbook's dropdown says 'For
+         -- Record Only'. Both spellings map here. Measured 2026-08-19: 222 of Affect's
+         -- 2,245 submittals carry it, and every one of them was falling out of the status
+         -- slicer entirely - a tenth of the register, invisible rather than wrong.
+         WHEN 'FOR RECORD'           THEN 'FOR_RECORD_ONLY'
+         -- Procore's pre-review state. The workbook has no separate word for it and calls
+         -- everything awaiting a reviewer 'Pending'.
+         WHEN 'NOT REVIEWED'         THEN 'PENDING'
          WHEN 'CLOSED'               THEN 'CLOSED'
     END                                                     AS status_code,
     -- -> dim_QcStatus Domain='SUBMITTALSMOCKUPS_9'

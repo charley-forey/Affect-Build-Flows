@@ -16,7 +16,7 @@ silently.
 | `cd_06_land_manual` | `deploy_manual.py` | Manual/SharePoint CSV → bronze; added after this doc's first draft |
 | `cd_10_bronze_to_silver` | `deploy_silver.py` | Runs clean; silver is empty while bronze is |
 | `cd_20_seed_gold` | `deploy_seeds.py` | Populated |
-| `cd_30_build_gold` | `deploy_gold.py` | Builds gold; `gold_schema.json` publishes 53 table schemas |
+| `cd_30_build_gold` | `deploy_gold.py` | Builds gold; `gold_schema.json` publishes 54 table schemas |
 | `cd_40_dq_checks` | `deploy_dq.py` | Runs the DQ suite and writes `cd_dq_results` |
 | `cd_90_query` | `query_fabric.py` | Ad-hoc query surface, not part of the pipeline |
 

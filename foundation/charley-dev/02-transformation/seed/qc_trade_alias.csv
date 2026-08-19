@@ -1,0 +1,17 @@
+ProcoreTrade,TradeKey,Rationale
+HVAC,HVAC_DUCTWORK,Same trade; the workbook name carries the ductwork scope with it
+Sprinkler,FIRE_SPRINKLER,Same trade; the workbook qualifies it as fire
+Fire Protection,FIRE_SPRINKLER,Procore's umbrella for the sprinkler/standpipe scope
+Millwork,MILLWORK_CASEWORK,Same trade; the workbook name adds casework
+Cabinetry,MILLWORK_CASEWORK,Casework by another name; the workbook has no separate cabinetry trade
+Ceramic Tile,TILE_STONE,Tile scope; the workbook groups tile and stone
+Stone/Tile,TILE_STONE,Same grouping the workbook uses
+Masonry,UNIT_MASONRY,Same trade; the workbook qualifies it as unit masonry
+Masonry/Stucco,UNIT_MASONRY,Masonry dominates this label; the workbook has no stucco trade
+"Doors, Frames & Hardware",DOORS_HARDWARE,Same scope
+Doors & Frames (Hardware),DOORS_HARDWARE,Same scope; a second Procore spelling
+Doors,DOORS_HARDWARE,The workbook keeps doors and hardware together
+Flooring,RESILIENT_FLOORING,The only flooring trade in the library
+Flooring (Self Levelling),RESILIENT_FLOORING,Substrate prep within the flooring scope
+Carpet,RESILIENT_FLOORING,The library has no carpet trade; flooring is the only home
+Drywall,DRYWALL_BOARD,Board unless the label says framing; framing is a separate trade

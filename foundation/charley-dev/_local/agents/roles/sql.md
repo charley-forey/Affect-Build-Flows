@@ -31,6 +31,12 @@ it (`_local/tests/test_seeds.py`, `test_silver.py`, `test_gold.py`).
   carried with `IsInCrosswalk` / `IsInSource` flags, not dropped.
 - **Rows that fail validation go to `cd_dq_rejects` with a reason.** Never a silent drop —
   silent drops are how the workbook's defects survived for months.
+- **Check the client's conventions before writing a data-quality flag.** A flag is a claim
+  about the client's data. Three of the four defects fixed 2026-08-19 were ours, not theirs:
+  Affect writes CSI divisions 1–9 **without a leading zero** (`1-1000` is Division 01, and
+  requiring two digits marked 807 codes unparseable), and Procore sends the submittal status
+  `For Record` where the workbook's dropdown says `For Record Only` (223 submittals matched
+  no `CASE` branch). Both looked like bad client data and were bad parsing.
 - **Dates**: submittals contain values before 1582-10-15. Anything before 1990 is floored to
   NULL. Facts outside `dim_Date`'s 2015–2035 range set `HasOutOfRangeDate` rather than
   producing a broken relationship.
@@ -41,8 +47,8 @@ A new gold table ships with its assertions in the matching `_local/tests/test_*.
 same turn. `run_tests.py` currently has **14** suites passing; leaving it green is the deploy gate,
 not a nicety.
 
-The DQ suite (`sql/dq/*.sql` → `cd_dq_results`) is built: **103 expectations, 80 blocking
+The DQ suite (`sql/dq/*.sql` → `cd_dq_results`) is built: **104 expectations, 81 blocking
 and 23 warning**, run by `cd_40_dq_checks` through `lib/dq.py` with `SEVERITY_ERROR` /
-`assert_no_blocking()`. `cd_dq_results` holds 103 rows. It wrote nothing at all until
+`assert_no_blocking()`. `cd_dq_results` holds 104 rows. It wrote nothing at all until
 2026-08-19 because `_persist_results` used a relative import that fails in the flat
 `Files/lib` context and the error was swallowed by a `try`/`except`.

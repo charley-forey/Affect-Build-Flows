@@ -11,9 +11,9 @@ The Project Quality Plan you walked me through on the 13th is built, running aga
 production Procore data, and now readable in Power BI. It went from a 44-sheet spreadsheet to
 nine tables, a semantic model and a seven-page report — without anyone retyping a row.
 
-Building it also turned up **two defects in the reporting you already have**, both of the
-same silent kind as the $4.85M change-order error: things that produced clean-looking output
-while being wrong. Both are fixed.
+Building it also turned up **defects in the reporting you already have**, all of the same
+silent kind as the $4.85M change-order error: things that produced clean-looking output while
+being wrong. All are fixed, and all are verified against your live data rather than assumed.
 
 Of the six items that sat with Affect on the 13th, one is closed, one is in transit, and the
 largest — the Azure subscription — has shrunk to a single permission grant that takes about
@@ -59,6 +59,25 @@ the audit trail was missing, which is the harder of the two to notice. Fixed, an
 immediately surfaced nine things worth knowing — including 376 vendors on live projects with
 no insurance certificate on file, and 105 certificates that are on file but out of date.
 
+**807 of your cost codes were missing from every cost-by-division view.** Your cost codes
+carry CSI division numbers, and for divisions 1 through 9 Affect writes them without a
+leading zero — `1-1000 GENERAL REQUIREMENTS` is Division 01. Our parser expected two digits,
+so it read every one of those as unreadable. The effect: **807 cost codes, 15% of your
+5,433-code master, absent from any report that groups cost by division** — quietly, with no
+error and no visible gap. Every one of them turned out to be perfectly good data. Fixed;
+those divisions now carry 2,941 codes, 1,540 of them in Division 01 alone.
+
+Worth saying plainly: that looked like a data-quality problem on your side and it was our
+code being wrong about how you write your codes. Same shape as the trade column showing raw
+text, and exactly why each of these is checked against your live data rather than assumed.
+
+**A tenth of the submittal register was invisible.** Procore records some submittals with the
+status "For Record" where your QA/QC workbook's dropdown says "For Record Only" — a
+difference in spelling, not in meaning — and our transform only recognised the workbook's
+wording. **222 of your 2,245 submittals** were therefore dropping out of every status filter.
+Not showing the wrong status: not appearing at all. Both spellings are now recognised, and
+the count of submittals with an unrecognised status is **zero**.
+
 **Five defects in the QA/QC workbook itself.** The most consequential: on four of the
 registers, the dashboard counts completions over a shorter range of rows than it counts
 totals. Special Inspections totals 74 rows but only ever counts 39 of them as closed. Add a
@@ -84,13 +103,27 @@ Down from six items to four, and none of them is a purchasing decision any more.
 | 3 | The Outbuild API token | Offered by email on the 11th and not yet received. It is the only source of schedule milestones anywhere; 17 of 19 projects currently have none | One email |
 | 4 | A SharePoint site, and what belongs in the two folder templates | The estimating/bidding workflows are built and tested. Your SOP names `02 E26-000 BOILER PLATE` and `YY-000 STANDARD PROJECT TEMPLATE` but never says what is inside them | One decision |
 
-**Two questions rather than blockers.** Procore's trade names and the workbook's trade codes
-are different vocabularies — Procore says "HVAC" and "Sprinkler" where the workbook says
-`HVAC_DUCTWORK` and `FIRE_SPRINKLER`. 459 of 850 observations therefore attach to no trade.
-I have deliberately not guessed the mapping: deciding whether "Concrete Superstructure" means
-cast-in-place concrete or slab-on-deck attaches a defect to a trade, and getting that wrong is
-worse than leaving it unattached. The same applies to 223 status values. Both need about
-twenty minutes with someone who knows the trade breakdown.
+**Two narrower questions rather than blockers.** Both of the items flagged here earlier today
+have since been worked through, and what is left for Affect is smaller than it was.
+
+The status mismatch is **fixed outright** — described above. The trade mapping is **largely
+fixed**: where the meaning was unambiguous, Procore's trade names are now mapped to the
+workbook's codes — "HVAC" to `HVAC_DUCTWORK`, "Sprinkler" to `FIRE_SPRINKLER`, and fourteen
+more. That recovered **464 records**; unattached observations fell from 459 to **215**, and
+unattached punch items from 511 to **291**.
+
+Two things I still will not decide without you:
+
+1. **Three trade labels that could mean more than one thing.** "Drywall/Carpentry" (255
+   records), "Concrete Superstructure" (110) and "Concrete" (64). Framing or board or
+   millwork; cast-in-place or formwork or slab-on-deck. Attaching a defect to the wrong trade
+   is worse than leaving it unattached, so these stay unattached until someone who knows the
+   trade breakdown says which is which. About twenty minutes.
+2. **Trades in Procore that your QA/QC library has no sheet for.** Roofing, Glazing, Windows,
+   Structural Steel, Low Voltage, Demolition, Housekeeping, Light Fixtures, Window Treatments
+   and others. This is not a mapping gap — your Procore trade list is simply broader than the
+   26-trade checklist library in the SaunaLounge tracker. The question is whether the library
+   should cover them, which is a scope decision rather than a translation.
 
 ## One commercial item
 
@@ -113,7 +146,7 @@ assembly, and the scorecard's four unscored categories get real data. The qualit
 supplies exactly the signal those categories were meant to measure — non-conformance ageing,
 punch closure, hold-point compliance.
 
-The nightly pipeline runs six stages and validates 103 expectations before anything publishes.
+The nightly pipeline runs six stages and validates 104 expectations before anything publishes.
 Everything is deployed from version-controlled scripts, so the repository is the source of
 truth rather than the workspace, and any of it can be rebuilt or rolled back.
 

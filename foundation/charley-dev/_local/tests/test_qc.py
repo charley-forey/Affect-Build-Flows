@@ -300,7 +300,7 @@ def test_status_codes_resolve(con) -> None:
 
 def test_procore_facts(con) -> None:
     """NCRs, punch items and submittals come from the API, not from a list."""
-    assert one(con, "SELECT COUNT(*) FROM fct_QcNcr") == 2
+    assert one(con, "SELECT COUNT(*) FROM fct_QcNcr") == 3
     assert one(con, "SELECT COUNT(*) FROM fct_QcPunch") == 2
     assert one(con, "SELECT COUNT(*) FROM fct_QcSubmittal") == 3
     for table, key in (("fct_QcNcr", "NcrKey"), ("fct_QcPunch", "PunchKey"),
@@ -318,6 +318,17 @@ def test_procore_facts(con) -> None:
     assert one(con, "SELECT TradeKey FROM fct_QcNcr WHERE NcrKey='OB2'") is None
     assert one(con, "SELECT HasUnmappedTrade FROM fct_QcNcr WHERE NcrKey='OB2'") is True
     assert one(con, "SELECT HasUnmappedTrade FROM fct_QcNcr WHERE NcrKey='OB1'") is False
+    # OB3 is the alias path, and it is the only thing that tests it. 'HVAC' does not
+    # normalise to HVAC_DUCTWORK by any string rule - it resolves through
+    # qc_seed_TradeAlias or not at all, so this assertion fails the moment that join
+    # breaks. Live, the alias recovered 464 of 970 unmapped rows.
+    assert one(con, "SELECT TradeKey FROM fct_QcNcr WHERE NcrKey='OB3'") == "HVAC_DUCTWORK"
+    assert one(con, "SELECT HasUnmappedTrade FROM fct_QcNcr WHERE NcrKey='OB3'") is False
+    # And the alias must not invent a trade that is not seeded - every TradeKey it emits
+    # has to exist in qc_seed_Trade, or a CSV typo reads as "unmapped" instead of "wrong".
+    assert one(con, "SELECT COUNT(*) FROM qc_seed_TradeAlias a "
+                    "LEFT JOIN qc_seed_Trade t ON t.TradeKey = a.TradeKey "
+                    "WHERE t.TradeKey IS NULL") == 0
     check("an unmatched Procore trade is flagged, never guessed into a seeded one")
 
     # Open comes from the DATA. Procore's status vocabulary is configurable per company, so
