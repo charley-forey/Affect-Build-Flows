@@ -186,10 +186,15 @@ def main() -> int:
             # Asserting an exact count against someone else's warehouse is fragile by
             # design. That fragility is the point: this assertion is what noticed.
             "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 122,
-            # 130 -> 142 for the same reason, exactly as the note above predicts: Periods
-            # is derived from the fact date range, so eleven more days of Sage AR widened
-            # it by twelve project-months. Two assertions moving together from one external
-            # refresh is the expected shape - had only one moved, that would be the alarm.
+            # [Periods] 130 -> 142 landed the same day but is NOT the same cause, and the
+            # difference matters because one story is checkable and the other is not.
+            # Measured both ways against the SAME 122 invoices: with the dim_Project Sage
+            # join broken fct_FinancialPeriod computes 130, with it repaired it computes
+            # 142. Eleven more days of Sage AR cannot produce twelve project-months - they
+            # fall inside ONE month (Jul 2026), and while every invoice carried
+            # ProjectKey='UNMATCHED' a month contributed at most ONE (ProjectKey,
+            # MonthStart) pair however many invoices it held. Repairing the join fans those
+            # invoices across 15 real projects, and that is where the twelve come from.
             "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 142,
             "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
         },
@@ -207,6 +212,7 @@ def main() -> int:
         },
     }
     expected = EXPECTED_BY_SOURCE[os.environ.get("CD_GOLD_SOURCE", "cd")]
+
     bad = []
     for key, want in expected.items():
         got = rows.get(key)

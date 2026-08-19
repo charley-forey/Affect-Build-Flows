@@ -89,9 +89,14 @@ MACROS = (
 # an AR invoice whose job does not resolve, a responded vs still-open submittal, a
 # non-critical activity that must be excluded, and a milestone with inverted dates.
 SOURCE_FIXTURES = (
+    # sage_project_id is NULL on BOTH rows because that is what production does:
+    # 01_source_views_cd.sql:43 hardcodes CAST(NULL AS STRING) - the Procore project record
+    # carries no Sage id. This fixture used to supply 'S100' here, which made the offline
+    # suite exercise a path that cannot exist live and hid a dead Sage join for weeks.
+    # The Sage id must reach dim_Project via sv_project_crosswalk. Do not repopulate this.
     """CREATE OR REPLACE VIEW sv_projects AS SELECT * FROM (VALUES
-        ('P1', 'Tower A', 'S100', 'PROCORE'),
-        ('P2', 'Depot B', NULL,   'PROCORE')
+        ('P1', 'Tower A', NULL, 'PROCORE'),
+        ('P2', 'Depot B', NULL, 'PROCORE')
     ) AS t(project_id, project_name, sage_project_id, origin_code)""",
 
     # 8,800,000 is FINANCIALS!C3 verbatim. Combined with the approved change order below,

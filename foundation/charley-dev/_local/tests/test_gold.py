@@ -58,6 +58,19 @@ def test_dim_project(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM dim_Project WHERE ProjectNumber IS NOT NULL") == 0
     check("dim_Project[ProjectNumber] left NULL rather than guessed")
 
+    # THE SAGE JOIN. sv_projects.sage_project_id is a hardcoded NULL in production
+    # (01_source_views_cd.sql:43), so SageJobNumber has to come from sv_project_crosswalk.
+    # When it came from sv_projects instead, every AR invoice resolved to UNMATCHED - no
+    # error, no row-count change, $23.7M of receivables attached to no project.
+    assert one(con, "SELECT SageJobNumber FROM dim_Project WHERE ProjectKey='P1'") == "S100"
+    check("dim_Project[SageJobNumber] resolves through the crosswalk, not sv_projects")
+
+    # IsInCrosswalk was derived from the same wrong source, so it read TRUE for every
+    # project and the flag meant to catch this could never fire.
+    assert one(con, "SELECT IsInCrosswalk FROM dim_Project WHERE ProjectKey='P1'") is True
+    assert one(con, "SELECT IsInCrosswalk FROM dim_Project WHERE ProjectKey='P2'") is False
+    check("dim_Project[IsInCrosswalk] is FALSE for a project with no Sage mapping")
+
 
 def test_dim_vendor(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM dim_Vendor") == 3  # 2 + Unassigned
@@ -119,6 +132,11 @@ def test_fct_invoice(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_Invoice WHERE HasUnmatchedProject") == 1
     assert one(con, "SELECT ProjectKey FROM fct_Invoice WHERE HasUnmatchedProject") == "UNMATCHED"
     check("fct_Invoice keeps unmatched AR rows, flagged rather than dropped")
+
+    # The regression guard: if the Sage join dies, EVERY invoice reads UNMATCHED and the
+    # count above still passes. This asserts the join actually resolves something.
+    assert one(con, "SELECT COUNT(*) FROM fct_Invoice WHERE NOT HasUnmatchedProject") == 2
+    check("fct_Invoice matches AR rows to projects - the Sage join is live")
 
     assert one(con, "SELECT COUNT(*) FROM fct_Invoice WHERE IsPaid") == 1
     assert one(con, "SELECT ROUND(SUM(Balance), 2) FROM fct_Invoice WHERE ProjectKey='P1'") == 300000.0

@@ -79,6 +79,29 @@ def build_suite() -> Suite:
         referential("fct_Milestone", "ProjectKey", "dim_Project", "ProjectKey"),
     )
 
+    # ------------------------------------------------- the Sage join is alive
+    #
+    # A project genuinely missing from Sage is a WARN and always has been. EVERY project
+    # missing from Sage is a different animal: it means the join itself is dead, not that
+    # the data is incomplete. That is what happened when dim_Project took SageJobNumber
+    # from sv_projects (a hardcoded NULL under --source cd) instead of from
+    # sv_project_crosswalk - all 122 AR invoices resolved to UNMATCHED, $23.7M attached to
+    # no project, and nothing errored because a LEFT JOIN keeps the row count identical.
+    #
+    # ERROR, not WARN: it makes every project-filtered financial number wrong rather than
+    # incomplete. The check is structural - it fires only when NOT ONE project maps, which
+    # real data gaps cannot produce while the crosswalk holds anything at all.
+    suite.add(Expectation(
+        name="dim_Project.SageJobNumber resolves for at least one project",
+        table="dim_Project",
+        failing_sql=(
+            "SELECT * FROM dim_Project "
+            "WHERE NOT EXISTS (SELECT 1 FROM dim_Project WHERE SageJobNumber IS NOT NULL)"
+        ),
+        severity=SEVERITY_ERROR,
+        description="no project maps to Sage - the crosswalk join is broken, not sparse",
+    ))
+
     # ------------------------------------------------------------ dates
     #
     # MonthStart is the dim_Date join. A value outside the calendar matches nothing, and a

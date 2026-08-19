@@ -37,9 +37,9 @@ model rather than 19 more tables in the first.
 | `cd_10_bronze_to_silver` | Notebook | runs clean against real bronze |
 | `cd_20_seed_gold` | Notebook | seed dimensions; asserts its own row counts |
 | `cd_30_build_gold` | Notebook | 20 gold files + integrity checks; publishes the schema |
-| `cd_40_dq_checks` | Notebook | the DQ gate — **104 expectations** (81 blocking, 23 warning) |
+| `cd_40_dq_checks` | Notebook | the DQ gate — **105 expectations** (82 blocking, 23 warning) |
 | `cd_90_query` | Notebook | ad-hoc query scratchpad against the medallion |
-| `CD_Master_Pipeline` | DataPipeline | 5 activities, the nightly DAG |
+| `CD_Master_Pipeline` | DataPipeline | 6 activities, the nightly DAG |
 | `CD_Sage_Ingest` | Dataflow | **deployed**, bound to the on-prem gateway, inert until the connection grant lands |
 | `Affect Project Report` | SemanticModel | Model A — Direct Lake, **37 tables, 99 measures, 45 relationships** |
 | `Project Quality Plan` | SemanticModel | Model B — Direct Lake, **19 tables plus `_Measures`, 42 measures, 23 relationships**. New 2026-08-19 |
@@ -104,10 +104,10 @@ ran.** Read a number back out of the lakehouse that the change should have moved
 compare it. Every figure on this page follows that rule, which is why the regression was
 caught within the hour rather than shipping into a report.
 
-### Two structural gotchas found on the 2026-08-19 deploy
+### Three structural gotchas found on the 2026-08-19 deploys
 
-Both are fixed. Both are written down because each will bite the next person, and neither
-raised an error when it was wrong.
+All three are fixed. Each is written down because each will bite the next person, and none of
+them raised an error when it was wrong.
 
 **1. A gold table missing from `gold_schema.json` cannot appear in any semantic model.**
 `deploy_gold.py` carries a **hardcoded `tables` list** — it drives the empty-table guard and
@@ -131,6 +131,52 @@ unmapped NCRs **631 → 459**, and `fct_QualityItem.Trade` now reads e.g. `"Wind
 The residual **459** was a vocabulary difference rather than a bug, and is now largely
 closed — see the trade-vocabulary fix below.
 
+**3. `dim_Project` took the Sage id from a view that hardcodes it to NULL.** Found and fixed
+2026-08-19 (second deploy). `10_dim_project.sql` read `SageJobNumber` from `sv_projects`, but
+under `--source cd` that view is `SELECT ... CAST(NULL AS STRING) AS sage_project_id`
+(`01_source_views_cd.sql:43`) — the Procore project record carries no Sage id. So the column was
+NULL for all 19 projects, `fct_Invoice`'s `LEFT JOIN dim_Project ON i.sage_project_id =
+p.SageJobNumber` matched nothing, and **all 122 AR invoices — $23,695,760.48 — resolved to
+`UNMATCHED`.**
+
+Nothing errored, and this is the instructive part:
+
+- It is a `LEFT JOIN`, so the **row count never changed**. `fct_Invoice` held 117 rows before
+  the switch and 117 after, which is exactly the check that was run to prove the switch was
+  safe (`01_source_views_cd.sql:38` records it). The rows survived; the *join* did not.
+- `IsInCrosswalk` — the flag whose entire job is to catch this — was derived from
+  `x.project_id IS NULL` against the same wrong view, so it read **TRUE for every project**. A
+  broken join reported itself as fully mapped.
+- No DQ expectation covered it. The gate checks invoice dates and `MonthStart` resolution, and
+  had nothing asserting the Sage join resolves anything at all.
+
+**Why it regressed:** the legacy `sv_projects` (`00_source_views.sql:25`) reads
+`FROM dim_projects_procoreXsage` — under `--source existing`, `sv_projects` *was* the crosswalk,
+so both columns were right by accident. Moving to `--source cd` repointed it at the real Procore
+project list and silently broke both.
+
+**Fixed** — `10_dim_project.sql` now joins `sv_project_crosswalk` explicitly (deduped with
+`MAX`/`GROUP BY`, because a duplicate would fan out the project spine itself), so it is correct
+under either source. Measured after the rebuild: projects with a Sage job **0 → 15**,
+`IsInCrosswalk` TRUE **19 → 15**, unmatched invoices **122 → 24**, and **$22,548,861.96 of AR is
+attributed to a project again**. `fct_FinancialPeriod` went **130 → 142** rows — not a
+regression: while every invoice carried `UNMATCHED`, all AR months collapsed onto one fake
+project key, so 130 was an undercount.
+
+Three guards were added, because the offline suite passed throughout:
+
+1. The `sv_projects` fixture in `seedrunner.py` supplied `'S100'` for `sage_project_id` where
+   production supplies NULL. **The fixture disagreed with production**, so the suite exercised a
+   path that cannot exist live. It is now NULL on both rows, matching the real view.
+2. `test_gold.py` asserts `SageJobNumber` resolves through the crosswalk, that `IsInCrosswalk` is
+   FALSE for an unmapped project, and that `fct_Invoice` matches at least one row to a project —
+   the last is the guard that fails when the join dies but the row count does not. Mutation-tested:
+   reintroducing the bug fails the suite.
+3. A new **ERROR** expectation, `dim_Project.SageJobNumber resolves for at least one project`. A
+   project missing from Sage stays a WARN; *every* project missing means the join is dead, not
+   sparse, and that is structural enough to block.
+
+*A row count surviving a source change proves the rows survived. It says nothing about whether
 ### Four data-quality defects fixed 2026-08-19 — all verified live
 
 Three of the four presented as findings about Affect's data and turned out to be our code
@@ -199,6 +245,8 @@ each stands after the fixes:
 
 Every remaining row is a coverage gap or a question for Affect, not corruption — which is
 why they warn rather than block.
+
+the joins did.*
 
 ### External blockers — re-checked 2026-08-19
 
@@ -347,7 +395,8 @@ asserts the target folder before writing.
 2. **2 projects have no Sage crosswalk entry** — they cannot join to any financial data
    until the crosswalk is extended.
 3. **70 cost codes are absent from master data.**
-4. **23 AR invoices reference a Sage job that resolves to no project.**
+4. **24 AR invoices reference a Sage job that resolves to no project** ($1,146,898.52).
+   Was briefly *every* invoice — see gotcha 3 above.
 5. **The scorecard bands have holes** — Observations leaves the value 5 unscored, Daily
    Reports leaves 2. Closed so the bands tile; worth confirming intent.
 
@@ -369,7 +418,7 @@ listed as "not deployed" for two weeks after it was deployed. Corrected below.
 | Manual dataflow (`CD_Manual_Ingest`) | Defined in the repo, **not deployed** to the workspace — `SITE` in `mashup.pq` is still a `REPLACE-ME` placeholder, so deploying it would create an item that cannot run. The list-name defect it used to carry is **fixed at the source**: `_local/make_sharepoint.py` now generates the PS1, the mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so one function decides a list name and `test_sharepoint.py` fails the build if the four writers drift. See [`sharepoint-lists.md`](sharepoint-lists.md) |
 | Outbuild ingestion | Built and verified, cannot run — `OUTBUILD_API_TOKEN` not issued. Outbuild is the only milestone source, and 17 of 19 projects are missing from it |
 | `man_*` manual tables | **Built and deployed** — 9 tables live in gold, currently empty. The silver → gold `INSERT`s are now written, so the chain runs end to end; the tables stay empty because nobody has entered a row, not because the join is missing. Four column-spec questions still need Affect — [`manual-input.md`](manual-input.md) |
-| Orchestration pipeline | **Built and running** — `CD_Master_Pipeline`, 5 activities, last green run 2026-08-02 22:06 |
+| Orchestration pipeline | **Built and running** — `CD_Master_Pipeline`, 6 activities. Read out of the live pipeline definition 2026-08-19; a pipeline-triggered run of the DQ gate completed 2026-08-19 06:16 UTC |
 | Scorecard measures | **Written** — 9 category measures live. **Scorecard coverage is 59%** (`[Scorecard Coverage %]`, live): 5 of 9 categories score from real data, 4 return BLANK for want of source data. This is the canonical figure — other documents reference it rather than restate it. Coverage read 35% before field ops landed and went 35% → 45% → 59%; filling the `man_*` tables is projected to take it to 88%, which is a projection, not a measurement |
 | `Vendor & Insurance List` report | **Never built, and no longer planned.** The insurance data reached the Monthly Progress Report instead, as `fct_VendorInsurance` (105 rows) plus a Vendor Insurance page. The stale reference has been removed from `README.md` |
 | PQP (Project Quality Plan) subject area | **Deployed and running end to end, 2026-08-19.** Seeds, silver, gold and the DQ gate all ran to Completed against `CD_Gold_Lakehouse`, and the semantic model (`Project Quality Plan`, 19 tables plus `_Measures` / 42 measures / 23 relationships) and its 7-page, 95-visual report are live. Counts below were read back out of Fabric with `query_fabric.py`, not carried forward from the build. [`pqp-solution.md`](pqp-solution.md) |
@@ -409,10 +458,11 @@ there is no CSV. Running silver first fails the whole notebook with
 problem rather than a missing input. Hit on the 2026-08-19 deploy; the fix is one earlier step,
 not a code change.
 
-Related and still open: **`cd_06_land_manual` is not in `CD_Master_Pipeline`.** The nightly run
-rebuilds silver and gold without refreshing manual bronze first. Harmless while every `man_*`
-is empty, and a real staleness bug the day somebody starts entering data — it should join the
-DAG ahead of `Bronze To Silver` before the SharePoint lists go live.
+Related, and **now closed**: `cd_06_land_manual` *is* in `CD_Master_Pipeline`. The live
+pipeline definition read on 2026-08-19 has six activities — `Land Manual Input` runs alongside
+`Land To Bronze`, and `Bronze To Silver` depends on both. The staleness bug this section used to
+describe cannot occur: manual bronze is refreshed before silver reads it. This page recorded the
+issue as open for longer than it actually was.
 
 ## Environment notes
 

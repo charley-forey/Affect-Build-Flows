@@ -45,6 +45,20 @@ all_projects AS (
     UNION
     SELECT project_id FROM observed
 ),
+crosswalk AS (
+    -- THE SAGE ID COMES FROM HERE, NOT FROM sv_projects. sv_projects.sage_project_id is a
+    -- hardcoded CAST(NULL AS STRING) (01_source_views_cd.sql:43) because the Procore
+    -- project record simply does not carry a Sage id. Taking SageJobNumber from that view
+    -- makes the fct_Invoice join match nothing and every AR row read as UNMATCHED - with
+    -- no error, because it is a LEFT JOIN and the row count survives unchanged.
+    --
+    -- Collapsed to one row per project: a duplicate would fan out the project spine
+    -- itself, which is the same guard 15_dim_projectcrosswalk.sql applies.
+    SELECT procore_project_id, MAX(sage_project_id) AS sage_project_id
+    FROM sv_project_crosswalk
+    WHERE sage_project_id IS NOT NULL
+    GROUP BY procore_project_id
+),
 contracts AS (
     -- A project can hold several prime contracts; sum them so OriginalContractAmount is
     -- the project's total rather than whichever row happened to sort first.
@@ -63,7 +77,7 @@ contracts AS (
 SELECT
     a.project_id                                  AS ProjectKey,
     a.project_id                                  AS ProcoreProjectId,
-    x.sage_project_id                             AS SageJobNumber,
+    xw.sage_project_id                            AS SageJobNumber,
     CAST(NULL AS STRING)                          AS ProjectNumber,
     COALESCE(x.project_name, 'Project ' || a.project_id) AS ProjectName,
     x.origin_code                                 AS OriginCode,
@@ -76,7 +90,8 @@ SELECT
     CASE WHEN c.project_id IS NULL THEN FALSE ELSE TRUE END AS HasPrimeContract,
     -- FALSE means no Sage mapping exists: this project cannot join to any Sage financial
     -- data until the crosswalk is extended. Surfaced on the diagnostics page.
-    CASE WHEN x.project_id IS NULL THEN FALSE ELSE TRUE END AS IsInCrosswalk
+    CASE WHEN xw.procore_project_id IS NULL THEN FALSE ELSE TRUE END AS IsInCrosswalk
 FROM all_projects a
-LEFT JOIN sv_projects x ON a.project_id = x.project_id
-LEFT JOIN contracts   c ON a.project_id = c.project_id;
+LEFT JOIN sv_projects x  ON a.project_id = x.project_id
+LEFT JOIN crosswalk   xw ON a.project_id = xw.procore_project_id
+LEFT JOIN contracts   c  ON a.project_id = c.project_id;
