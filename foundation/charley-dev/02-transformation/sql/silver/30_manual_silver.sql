@@ -15,6 +15,11 @@
 --      double-counted into a total that nobody can reconcile.
 --   3. MONTHSTART IS FLOORED TO THE 1st. The report groups by month; 2025-05-14 and
 --      2025-05-01 are different rows and would split one project's month in two.
+--      Spelled date_trunc('MONTH', ...) rather than Spark's trunc(d, 'MM'): both engines
+--      have date_trunc with the same argument order, whereas bridging trunc() with a
+--      DuckDB macro shadows the builtin 1-arg trunc that its own date functions call, and
+--      dim_Date stops building. The outer CAST is because both engines return a TIMESTAMP,
+--      and a MonthStart that is silently a timestamp does not equal dim_Date[Date].
 --
 -- SharePoint shapes worth knowing:
 --   - A lookup column arrives as a STRUCT. ProjectKey.Title carries the Procore project id.
@@ -39,14 +44,14 @@ CREATE OR REPLACE TABLE cd_silver_man_wins AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(WinNumber AS INT)                              AS win_number,
         TRIM(Description)                                   AS description,
         UPPER(TRIM(WinType))                                AS win_type,
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM'),
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
                                         CAST(WinNumber AS INT)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_wins
@@ -64,7 +69,7 @@ CREATE OR REPLACE TABLE cd_silver_man_risks AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(RiskNumber AS INT)                             AS risk_number,
         TRIM(Description)                                   AS description,
         UPPER(TRIM(ImpactCode))                             AS impact_code,
@@ -74,7 +79,7 @@ SELECT * FROM (
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM'),
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
                                         CAST(RiskNumber AS INT)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_risks
@@ -92,7 +97,7 @@ CREATE OR REPLACE TABLE cd_silver_man_priority_items AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(ItemNumber AS INT)                             AS item_number,
         TRIM(ScheduleItem)                                  AS schedule_item,
         UPPER(TRIM(StatusCode))                             AS status_code,
@@ -103,7 +108,7 @@ SELECT * FROM (
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM'),
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
                                         CAST(ItemNumber AS INT)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_priority_items
@@ -116,19 +121,31 @@ WHERE _rn = 1
 -- Flags (one row per project-month)
 -- ---------------------------------------------------------------------------
 
+-- COLUMNS COME FROM sql/gold/40_man_tables.sql, not from an independent judgement here.
+-- This parser used to read CostMgmtFlag / ScheduleFlag / Notes, which gold has never had
+-- and the semantic model has never bound to; the three attestations gold DOES expect
+-- (MonthEndClosedOut, ForecastingInLine, ResourcesUpdated) were simply never parsed. The
+-- disagreement read as an open design question and was actually just drift on the input
+-- side - the gold DDL and man_Flags.tmdl have agreed with each other all along.
+--
+-- ProfitabilityCode is NOT upper-cased: it matches dim_ScorecardBand[MatchValue], which
+-- holds LABELS ("Out of Range, but has a plan"). Upper-casing it matches nothing.
 CREATE OR REPLACE TABLE cd_silver_man_flags AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
-        UPPER(TRIM(ProfitabilityCode))                      AS profitability_code,
-        UPPER(TRIM(CostMgmtFlag))                           AS cost_mgmt_flag,
-        UPPER(TRIM(ScheduleFlag))                           AS schedule_flag,
-        TRIM(Notes)                                         AS notes,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
+        TRIM(ProfitabilityCode)                             AS profitability_code,
+        CAST(ContingencyRemaining AS DOUBLE)                AS contingency_remaining,
+        CAST(BaselineApproved AS BOOLEAN)                   AS baseline_approved,
+        TRIM(BaselineRevision)                              AS baseline_revision,
+        CAST(MonthEndClosedOut AS BOOLEAN)                  AS month_end_closed_out,
+        CAST(ForecastingInLine AS BOOLEAN)                  AS forecasting_in_line,
+        CAST(ResourcesUpdated AS BOOLEAN)                   AS resources_updated,
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM')
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_flags
     WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
@@ -144,17 +161,21 @@ CREATE OR REPLACE TABLE cd_silver_man_survey AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(QuestionNumber AS INT)                         AS question_number,
         -- The workbook stores the six scores but NOT the question text, so nobody now
         -- knows what question 3 asked (open question 6). Capturing it here fixes that
         -- permanently, which is why it is carried even though no measure reads it yet.
         TRIM(QuestionText)                                  AS question_text,
-        CAST(Score AS DOUBLE)                               AS score,
+        CAST(Score AS INT)                                  AS score,
+        -- 'ANONYMOUS' in the workbook today (SCORECARD CALC!C34). Captured rather than
+        -- assumed: an attributed survey and an anonymous one are different instruments,
+        -- and gold has always had the column.
+        TRIM(SurveyedParty)                                 AS surveyed_party,
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM'),
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
                                         CAST(QuestionNumber AS INT)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_survey
@@ -172,7 +193,7 @@ CREATE OR REPLACE TABLE cd_silver_man_safety_monthly AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(HoursWorked AS DOUBLE)                         AS hours_worked,
         CAST(RecordableIncidents AS INT)                    AS recordable_incidents,
         CAST(Orientations AS INT)                           AS orientations,
@@ -180,7 +201,7 @@ SELECT * FROM (
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM')
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_safety_monthly
     WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
@@ -192,7 +213,7 @@ CREATE OR REPLACE TABLE cd_silver_man_quality_monthly AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(Observations AS INT)                           AS observations,
         CAST(PunchlistItems AS INT)                         AS punchlist_items,
         CAST(AvgDaysPastDue AS DOUBLE)                      AS avg_days_past_due,
@@ -200,7 +221,7 @@ SELECT * FROM (
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM')
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_quality_monthly
     WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
@@ -212,15 +233,25 @@ WHERE _rn = 1
 -- Milestones (project x milestone - NOT monthly)
 -- ---------------------------------------------------------------------------
 
+-- A milestone is a SPAN, not a date. gold and the semantic model have always said so
+-- (ContractStart/ContractFinish, BaselineStart/BaselineFinish); this parser read four
+-- single dates and so could never fill them. Completion variance needs the pair - a
+-- milestone that started late and finished on time is a different story from one that did
+-- neither, and one date cannot tell them apart.
+--
+-- ActivityKey is what joins to fct_Milestone (Outbuild's activity id). Without it the
+-- contract dates sit next to the schedule rather than against it.
 CREATE OR REPLACE TABLE cd_silver_man_milestones AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
+        TRIM(ActivityKey)                                   AS activity_key,
         TRIM(MilestoneName)                                 AS milestone_name,
-        CAST(ContractDate AS DATE)                          AS contract_date,
-        CAST(BaselineDate AS DATE)                          AS baseline_date,
-        CAST(ForecastDate AS DATE)                          AS forecast_date,
-        CAST(ActualDate AS DATE)                            AS actual_date,
+        CAST(ContractStart AS DATE)                         AS contract_start,
+        CAST(ContractFinish AS DATE)                        AS contract_finish,
+        CAST(BaselineStart AS DATE)                         AS baseline_start,
+        CAST(BaselineFinish AS DATE)                        AS baseline_finish,
+        CAST(IsSubstantialCompletion AS BOOLEAN)            AS is_substantial_completion,
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title), TRIM(MilestoneName)
@@ -239,13 +270,18 @@ CREATE OR REPLACE TABLE cd_silver_man_daily_log_compliance AS
 SELECT * FROM (
     SELECT
         TRIM(ProjectKey.Title)                              AS project_id,
-        trunc(CAST(MonthStart AS DATE), 'MM')               AS month_start,
+        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
         CAST(LogsExpected AS INT)                           AS logs_expected,
-        CAST(LogsSubmitted AS INT)                          AS logs_submitted,
+        -- MISSED SAME DAY, not submitted. SCORECARD CALC!E28 scores whether the log went
+        -- in on the day of the work; a log typed up three days later is submitted and is
+        -- still a miss. This parser used to read LogsSubmitted, which measures a different
+        -- and easier thing - and gold, the model and the scorecard have always asked for
+        -- the harder one.
+        CAST(LogsMissedSameDay AS INT)                      AS logs_missed_same_day,
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
         TRIM(Editor.Title)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        trunc(CAST(MonthStart AS DATE), 'MM')
+                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_daily_log_compliance
     WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
@@ -299,4 +335,4 @@ SELECT 'cd_silver_man_risks', TRIM(ProjectKey.Title), CAST(MonthStart AS DATE),
        CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
 FROM cd_bronze_man_risks
 WHERE MonthStart IS NOT NULL
-  AND CAST(MonthStart AS DATE) <> trunc(CAST(MonthStart AS DATE), 'MM');
+  AND CAST(MonthStart AS DATE) <> CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE);

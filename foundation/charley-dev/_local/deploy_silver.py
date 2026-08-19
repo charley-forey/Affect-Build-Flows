@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import deploy as dp  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
+from seedrunner import split_statements  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
@@ -34,19 +35,23 @@ SILVER_DIR = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
 # belong to deploy_gold, not here - globbing the whole folder would pull them in and fail
 # on placeholders this notebook never substitutes.
 #
-# 30_manual_silver.sql is DELIBERATELY EXCLUDED. It reads cd_bronze_man_*, which comes from
-# ten SharePoint lists that live in Affect's tenant and need SharePoint admin rights to
-# create (_docs/sharepoint-lists.md). Including it fails all eleven statements with
-# TABLE_OR_VIEW_NOT_FOUND, which would bury a real failure in expected noise.
+# 30_manual_silver.sql WAS excluded, because it reads cd_bronze_man_*, which needed ten
+# SharePoint lists that live in Affect's tenant. The note here said "add 30 the day the
+# lists exist". They effectively do: `cd_06_land_manual` (deploy_manual.py) creates every
+# cd_bronze_man_* table from CSV - empty and correctly typed when nobody has uploaded
+# anything, with ProjectKey/Editor already wrapped in the {Title: ...} struct the parsers
+# read. The empty-stub objection is answered by that notebook, not by this filter.
 #
-# The empty-stub trick used for the Procore tables does not work here: the manual parsers
-# read STRUCT columns (ProjectKey.Title, Editor.Title), and a stub of NULL scalars cannot
-# satisfy them. Add "30" below the day the lists exist.
+# Keeping 30 out was the ROOT CAUSE of the manual pipeline being permanently empty: with no
+# cd_silver_man_*, the gold man_* tables had nothing to read and stayed placeholders. The
+# run order (cd_06_land_manual before cd_10_bronze_to_silver) is what makes including it
+# safe, and it is the order 06-orchestration already runs.
+#
 # Deny-list, not allow-list: adding a silver parser should mean adding one file, not
 # also remembering to widen a filter in a deploy script. A forgotten widening fails
 # silently - the table simply never builds and every measure over it reads as zero.
 SILVER_FILES = sorted(p for p in SILVER_DIR.glob("*.sql")
-                      if p.name[:2] not in ("00", "01", "30"))
+                      if p.name[:2] not in ("00", "01"))
 
 NOTEBOOK_NAME = "cd_10_bronze_to_silver"
 
@@ -77,9 +82,9 @@ BRONZE_SCHEMA = ("_key STRING, _project_id STRING, payload STRING, "
                  "_ingested_at TIMESTAMP, _batch_id STRING, _row_hash STRING")
 
 
-def statements(sql: str) -> list[str]:
-    body = "\n".join(line.split("--", 1)[0] for line in sql.splitlines())
-    return [s.strip() for s in body.split(";") if s.strip()]
+# One splitter, shared with the offline runner - see seedrunner.split_statements. The
+# local copy this replaces split on every `;`, including the ones inside string literals.
+statements = split_statements
 
 
 def silver_lakehouse() -> dict:

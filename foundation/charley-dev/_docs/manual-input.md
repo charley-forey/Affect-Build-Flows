@@ -11,10 +11,18 @@ numbers in front of leadership that nobody entered, indistinguishable from real 
 
 ## How to put data in, today
 
-Drop a CSV in the lakehouse at `Files/manual/<TableName>.csv` and re-run
-`cd_30_build_gold`. The header row must match the column names below exactly; the file is
-read against the table's declared schema, not inferred, so a typo fails loudly instead of
-silently creating a string column.
+Drop a CSV in the lakehouse at `Files/_manual/<list>.csv` and re-run **`cd_06_land_manual`**.
+Templates with a worked example row are regenerated at `Files/_manual/_templates/` on every
+run. The header row must match the column names exactly; the file is read against the
+table's declared schema, not inferred, so a typo fails loudly instead of silently creating
+a string column.
+
+> **Two stale paths, now corrected in code.** `02-transformation/sql/gold/40_man_tables.sql`
+> used to name `cd_40_load_manual` and `Files/manual/*.csv` as the loader and its input.
+> Neither ever existed — the notebook is `cd_06_land_manual` and the directory is
+> `Files/_manual/`. The header comment has since been rewritten to describe the real chain.
+> Recorded here because the wrong names sat in the DDL for weeks and anyone reading an older
+> checkout will still find them.
 
 This is deliberately the lowest-friction thing that works **for one person loading a file**.
 It is not the answer for a team, which is what the next section is.
@@ -45,9 +53,29 @@ changes nothing downstream.
 
 ### One list per table, columns identical
 
-Nine lists, named `CD Wins`, `CD Risks`, … matching the nine `man_*` tables column for
-column. The 1:1 mapping is the point: a column added in SharePoint is a column in the
-report, with no translation layer to keep in sync.
+**Ten lists in total: nine data lists, one per `man_*` table, 61 columns between them, plus
+`CD Projects` — a lookup list holding no report data.** Named `CD Wins`, `CD Risks`, …
+matching the nine `man_*` tables column for column. The 1:1 mapping is the point: a column
+added in SharePoint is a column in the report, with no translation layer to keep in sync.
+
+> ⚠️ **The 1:1 mapping is currently broken in two places, and both are runtime breaks
+> rather than errors.** Fixes are in progress in the ingestion code; the full write-up with
+> the exact name and column tables is in
+> [`sharepoint-lists.md`](sharepoint-lists.md#-two-known-defects--read-before-running-the-provisioning-script).
+>
+> 1. **List names disagree.** `provision-sharepoint.ps1` creates `CD PriorityItems`,
+>    `CD SafetyMonthly`, `CD QualityMonthly`, `CD DailyLogCompliance`; `mashup.pq` reads
+>    `CD Priority Items`, `CD Safety Monthly`, `CD Quality Monthly`,
+>    `CD Daily Log Compliance`. Four of nine queries would navigate to a list that does not
+>    exist, return nothing, and render as blank tiles — indistinguishable from "nobody has
+>    filled this in".
+> 2. **Column specs disagree** on `man_Flags`, `man_Milestones`, `man_Survey` and
+>    `man_DailyLogCompliance`. The **gold DDL (`40_man_tables.sql`) and
+>    `provision-sharepoint.ps1` are the authoritative pair** — the script is generated from
+>    the DDL. `sharepoint-lists.md` and `_local/deploy_manual.py` carry the other spec.
+>    These are the same four tables listed under *What is NOT built* below, and the
+>    disagreement is not a typo — each one is a real question about what the scorecard
+>    should measure.
 
 ### The single most important design choice
 
@@ -111,7 +139,8 @@ read.
 Steps 2–6 below are ours. **Step 1 needs Affect** — the lists live in their tenant and
 need SharePoint admin rights. `sharepoint-lists.md` is written to hand over directly.
 
-1. Create the nine lists plus `CD Projects`. **This is now a script, not a build sheet** —
+1. Create the nine data lists plus `CD Projects` (ten in total). **This is now a script,
+   not a build sheet** —
    `01-ingestion/Manual/provision-sharepoint.ps1`, generated from `40_man_tables.sql` by
    `_local/make_sharepoint.py`. Whoever has SharePoint admin runs:
 
@@ -179,14 +208,14 @@ silently zeroed a 12%-weighted category.
 
 ## Example
 
-`Files/manual/man_Flags.csv`
+`Files/_manual/man_Flags.csv`
 
 ```csv
 ProjectKey,MonthStart,ProfitabilityCode,ContingencyRemaining,BaselineApproved,BaselineRevision,MonthEndClosedOut,ForecastingInLine,ResourcesUpdated
 12345,2025-05-01,Within Range,150000,true,Rev#3,true,true,false
 ```
 
-`Files/manual/man_Risks.csv`
+`Files/_manual/man_Risks.csv`
 
 ```csv
 ProjectKey,MonthStart,RiskNumber,Description,ImpactCode,Mitigation,OwnerRole,StatusCode
@@ -195,9 +224,16 @@ ProjectKey,MonthStart,RiskNumber,Description,ImpactCode,Mitigation,OwnerRole,Sta
 
 ## What this unblocks
 
-The scorecard currently measures **35% of its own agreed weight** — `[Scorecard
-Coverage %]` reports this live. Six of nine categories return BLANK because their inputs
-do not exist yet. Filling these tables is most of what closes that gap:
+**Scorecard coverage is 59%** — the canonical figure, its history and its provenance are in
+[`build-status.md`](build-status.md#not-built-yet); do not restate it, link to it. (An
+earlier edition of this page said 35%. That was the reading *before* field-ops data landed;
+coverage went 35% → 45% → 59%.)
+
+Four of nine categories return BLANK because their inputs do not exist yet: Accounts
+Receivable, Profitability, Completion Variance and Daily Reports. Filling these tables is
+most of what closes that gap. Six rows are listed below because two of them — Safety
+Incidents and Observations — have since been covered by Procore field-ops ingestion rather
+than by `man_*`, which is what moved coverage to 59%:
 
 | Category | Weight | Needs |
 |---|---|---|
@@ -208,9 +244,10 @@ do not exist yet. Filling these tables is most of what closes that gap:
 | Daily Reports | 0.02 | `man_DailyLogCompliance` — or Procore ingestion |
 | Accounts Receivable | 0.12 | **blocked** — the Sage AR header has no payment date |
 
-Filling the manual tables takes coverage from 35% to 88%. Accounts Receivable needs the
-Sage line tables (`arivln`) or progress billing, not a manual entry — see
-`_docs/build-status.md`.
+Filling the manual tables is **projected** to take coverage from 59% to 88%. That 88% is a
+projection from the category weights, not a measurement — the measured figure stays 59%
+until rows actually land. Accounts Receivable needs the Sage line tables (`arivln`) or
+progress billing, not a manual entry — see [`build-status.md`](build-status.md).
 
 Four of these six have a real system of record identified and move out of `man_*` when
 that ingestion runs. They are manual because the pipe is not connected, not because the
@@ -264,3 +301,26 @@ remove. So they are questions for the next client call, not decisions to take he
 **Until they are answered, `[Scorecard Coverage %]` stays at 59%** and the four unscored
 categories return BLANK rather than zero. That is the honest reading, and it is visible on
 the Scorecard page rather than buried.
+
+### Status, 2026-08-19 — the join is written; the questions are still open
+
+**The root cause named above has been addressed in code.** `40_man_tables.sql` no longer
+stops at nine empty typed placeholders — it now `INSERT`s from `sv_man_*` over
+`cd_silver_man_*`, so the chain runs end to end: CSV or SharePoint list →
+`cd_bronze_man_*` → `cd_silver_man_*` → `man_*` → model. With no input the inserts move
+zero rows and the tables stay empty, exactly as before, which is the correct behaviour —
+the platform never invents a row.
+
+**That does not close this page.** Two things are unchanged:
+
+1. **The four column-spec questions above still need Affect.** A written join does not
+   decide whether daily-log compliance means "submitted" or "submitted the same day", or
+   whether a milestone is a date or a span. Until they are answered the two specs stay
+   divergent and whichever one the join implements is a guess with a schema.
+2. **Nobody has typed a row yet.** The slow part was never the plumbing. `[Scorecard
+   Coverage %]` stays at **59%** and the four unscored categories return BLANK rather than
+   zero until real data lands.
+
+The remaining code defect is the SharePoint one: **the list names the provisioning script
+creates do not match the names the dataflow reads** — see the top of this page. That one is
+still open and is a runtime break rather than a question.

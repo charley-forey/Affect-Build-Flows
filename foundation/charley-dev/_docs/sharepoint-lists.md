@@ -1,10 +1,83 @@
 # SharePoint lists — build sheet
 
 Hand this to whoever has SharePoint admin on Affect's tenant. It is the complete spec for
-the ten lists that replace the spreadsheet's manual half.
+the lists that replace the spreadsheet's manual half.
+
+**How many lists.** **Ten in total: nine data lists — one per `man_*` table, 61 columns
+between them — plus `CD Projects`, a lookup list that holds no report data and exists only
+so `ProjectKey` cannot be mistyped.** Both counts you may have seen elsewhere are the same
+thing: "ten lists" counts `CD Projects`, "9 lists, 61 columns" does not. This is the
+sentence to quote.
 
 **Site:** one SharePoint site, suggested name `Affect Project Reporting`.
 **Naming:** every list is prefixed `CD ` so it is obvious which lists the report depends on.
+
+---
+
+## ⚠️ Two known defects — read before running the provisioning script
+
+Both are in code, both are being fixed by separate work in progress, and neither is fixed
+by editing this document. They are recorded here because this is the page somebody reads
+immediately before creating the lists, and either one produces a report that looks filled
+in and is empty.
+
+### Defect 1 — the list names do not match what reads them (runtime break)
+
+`01-ingestion/Manual/provision-sharepoint.ps1` creates lists whose names have **no spaces**
+inside the noun. `01-ingestion/Manual/CD_Manual_Ingest.Dataflow/mashup.pq` navigates to
+names **with** spaces. Four of the nine do not match:
+
+| Created by `provision-sharepoint.ps1` | Read by `mashup.pq` | Match? |
+|---|---|---|
+| `CD Wins` | `CD Wins` | yes |
+| `CD Risks` | `CD Risks` | yes |
+| **`CD PriorityItems`** | **`CD Priority Items`** | **NO** |
+| `CD Flags` | `CD Flags` | yes |
+| `CD Survey` | `CD Survey` | yes |
+| **`CD SafetyMonthly`** | **`CD Safety Monthly`** | **NO** |
+| **`CD QualityMonthly`** | **`CD Quality Monthly`** | **NO** |
+| `CD Milestones` | `CD Milestones` | yes |
+| **`CD DailyLogCompliance`** | **`CD Daily Log Compliance`** | **NO** |
+
+The headings in this document use the spaced form. **Treat neither as settled until the
+code is reconciled** — a fix is in progress on the ingestion side.
+
+Why it matters more than a typo: a SharePoint navigation to a list that does not exist does
+not fail the way a missing table does. It produces an empty query, which produces an empty
+bronze table, which produces a blank tile on the report — and a blank tile is
+indistinguishable from "nobody filled this in yet". Priority items, safety, quality and
+daily-log compliance would all read as un-entered forever, and the scorecard categories over
+them would score BLANK rather than error.
+
+### Defect 2 — two column specs disagree on four tables
+
+There are two descriptions of what the `man_*` columns are, and they do not match:
+
+| | Files |
+|---|---|
+| **Authoritative** | `02-transformation/sql/gold/40_man_tables.sql` and `01-ingestion/Manual/provision-sharepoint.ps1` — the script is *generated* from the DDL, so these two agree by construction |
+| Not authoritative | this document and `_local/deploy_manual.py` (the CSV path), which agree with each other and with the silver parsers |
+
+They disagree on four tables — the same four listed in
+[`manual-input.md`](manual-input.md), where each disagreement is written up as the real
+question it is:
+
+| Table | Authoritative (gold DDL + PS1) | This document / CSV path |
+|---|---|---|
+| `man_Flags` | `ProfitabilityCode`, `ContingencyRemaining`, `BaselineApproved`, `BaselineRevision`, `MonthEndClosedOut`, `ForecastingInLine`, `ResourcesUpdated` | `ProfitabilityCode`, `CostMgmtFlag`, `ScheduleFlag`, `Notes` |
+| `man_Milestones` | `ActivityKey`, `MilestoneName`, `ContractStart`, `ContractFinish`, `BaselineStart`, `BaselineFinish`, `IsSubstantialCompletion` | `MilestoneName`, `ContractDate`, `BaselineDate`, `ForecastDate`, `ActualDate` |
+| `man_Survey` | adds `SurveyedParty` | no `SurveyedParty` |
+| `man_DailyLogCompliance` | `LogsExpected`, `LogsMissedSameDay` | `LogsExpected`, `LogsSubmitted` |
+
+The choice codes differ too: the script writes `NOT_STARTED`/`PLANNED`/`IN_PROGRESS`/
+`COMPLETE` for `CD Risks.StatusCode` and `ON_TRACK`/`BEHIND`/`AT_RISK` for
+`CD PriorityItems.StatusCode`, where the tables below say `OPEN`/`MONITORING`/`CLOSED` and
+`ON_TRACK`/`AT_RISK`/`DELAYED`/`COMPLETE`.
+
+**If you are creating the lists today, the script is what runs — take its columns and its
+codes.** The tables below stay as the human-readable review copy and will be reconciled
+when the four questions in `manual-input.md` are answered, because answering them is what
+decides which spec is right.
 
 Before creating any of them, turn on for each list: **Settings → Versioning settings →
 Create a version each time you edit an item = Yes.** That is what gives every field change a
@@ -185,5 +258,7 @@ silently fixes one in a way you cannot see:
 
 ## After the lists exist
 
-Send back the **site URL and the ten list names**. That is everything needed to build
-`CD_Manual_Ingest.Dataflow` and finish the path to the report.
+Send back the **site URL and the ten list names exactly as SharePoint shows them** — nine
+data lists plus `CD Projects`. The exact strings matter: `CD_Manual_Ingest.Dataflow`
+navigates by list title, and defect 1 above is precisely what happens when the string is
+close but not identical.

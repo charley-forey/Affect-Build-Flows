@@ -1,6 +1,14 @@
 # D4 — Core Project Data Model
 
-**Status:** 🔴 Not started | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review | **Target:** TBD
+**Status:** 🟢 Live | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review — 4 hrs in Phase 0 | **Target:** Delivered
+
+> **Live.** **40 gold tables** in `CD_Gold_Lakehouse` — dimensions, facts, crosswalks, bridges and the nine `man_*` placeholders — behind a Direct Lake semantic model of 37 tables, 99 measures and 45 relationships, with no bidirectional filters anywhere.
+>
+> **The linchpin is resolved.** `dim_ProjectCrosswalk` (19 rows) maps every project across Procore, Sage and Outbuild; `dim_VendorCrosswalk` and `dim_CostCodeCrosswalk` do the same for vendors and cost codes. `bridge_VendorCostCode` joins the direct-cost header (vendor, no cost code) to its line items (cost code, no vendor) — 114 vendor↔cost-code pairs covering $1.47M, a linkage that exists in no single Procore object.
+>
+> **One material defect found and fixed here:** change orders were rolled up per month rather than cumulatively, understating portfolio contract value by **$4,848,379.90** — 16%. Fixed, deployed and regression-tested. Detail: [`assessment.md`](../foundation/charley-dev/_docs/assessment.md).
+>
+> **Still open:** the nine `man_*` tables are typed and empty, and there is no silver → gold link for them yet — four column-spec questions have to be answered by Affect first ([`manual-input.md`](../foundation/charley-dev/_docs/manual-input.md)).
 
 ## Objective
 A curated, relationally-mapped set of Lakehouse tables that unify Procore + Sage 100 (+ Excel-only fields) into a single project-centric model — the semantic foundation every report and automation builds on.
@@ -19,13 +27,16 @@ A curated, relationally-mapped set of Lakehouse tables that unify Procore + Sage
 Raw Lakehouse tables (D2, D3) → curated/gold tables via Fabric notebooks or SQL, star-schema style, with documented lineage. Change tracking via snapshot or SCD approach where history matters (budget vs actual over time).
 
 ## Tasks
-- [ ] Design dimensional model from D1 findings (ERD)
-- [ ] Build Project/Vendor/Cost Code mapping tables
-- [ ] Build curated fact/dimension tables
-- [ ] Implement history tracking where needed
-- [ ] Data quality checks + reconciliation against source totals
-- [ ] Solve the Excel-only fields (input table / Power App / SharePoint list)
-- [ ] Model documentation + walkthrough with Rebecca
+- [x] Design dimensional model from D1 findings — [`semantic-model.md`](../powerbi/semantic-model.md)
+- [x] Build Project/Vendor/Cost Code mapping tables — `dim_ProjectCrosswalk`, `dim_VendorCrosswalk`, `dim_CostCodeCrosswalk`
+- [x] Build curated fact/dimension tables — 40 gold tables, star schema
+- [x] Implement history tracking where needed — `fct_FinancialPeriod` over a 7,670-day `dim_Date`; `snapshot_date` through the medallion
+- [x] Data quality checks + reconciliation against source totals — 63 expectations, blocking gate; 66 gold assertions offline
+- [x] Solve the Excel-only fields — nine `man_*` tables, deployed and typed, with two writers (CSV drop today, SharePoint dataflow later) into one bronze contract
+- [ ] **Populate `man_*`** — the silver → gold link is not written; four column-spec questions need Affect
+- [ ] Promote RFIs to gold — 616 rows sit in `cd_silver_rfis` and never reach `fct_RfiSubmittal`
+- [ ] Extend `dim_ProjectCrosswalk` — 2 projects still have no Sage entry
+- [ ] Model documentation + recorded walkthrough with Rebecca
 
 ## Acceptance criteria
 - Every field on the Excel tracker is answerable from the curated model (or has a managed input home)
@@ -42,4 +53,6 @@ Raw Lakehouse tables (D2, D3) → curated/gold tables via Fabric notebooks or SQ
 ## Log
 | Date | Note |
 |---|---|
+| 2026-08-02 | **Live.** 40 gold tables, Direct Lake model of 37 tables / 99 measures / 45 relationships, all 99 measures evaluated against real data. `bridge_VendorCostCode` resolves Phase 0 item 3. The $4.85M change-order defect found, fixed, deployed and covered by three new regression assertions — the original fixture put all three change orders in one month, where a per-month and a cumulative roll-up are arithmetically identical, so the gate had been watching the right number through a fixture that could not express the bug. |
+| 2026-08-19 | Model and gold tables unchanged and live. The `man_*` gap is unchanged and remains blocked on four questions for Affect rather than on effort. A **second** subject area is in progress — PQP (Project Quality Plan), seeded from the client's 44-sheet QA/QC tracker into `foundation/charley-dev/02-transformation/seed/`: 26 trades, 625 checklist items, 93 statutory gates, 101 DOH items, 143 status-vocabulary rows. It gets its own semantic model rather than extending this one. |
 | 2026-07-23 | Vendor / cost-code linkage confirmed as the central modeling problem (`meeting-notes/2026-07-23-warehouse-review.md`). Coverage is uneven — some tables carry cost-code ID, some vendor ID, some neither. Resolution approach: **bridge via the tables that carry both** — e.g. commitments have no vendor ID, but invoices reference both commitment ID and vendor ID, so the invoice bridges vendor → commitment. Same pattern for cost-code vs vendor on requisition/invoice lines. Prerequisite: confirm the ID columns survive transformation (see D2 finding 5). Project↔Sage link exists today via project ID + Sage project ID on the Project dimension. |

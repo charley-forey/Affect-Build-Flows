@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deploy as dp  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
-from seedrunner import seed_files  # noqa: E402
+from seedrunner import seed_files, split_statements  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 NOTEBOOK_NAME = "cd_20_seed_gold"
@@ -71,13 +71,10 @@ built = []
     ]
 
     for path in seed_files():
-        statements = [
-            s.strip()
-            for s in "\n".join(
-                line.split("--", 1)[0] for line in path.read_text(encoding="utf-8").splitlines()
-            ).split(";")
-            if s.strip()
-        ]
+        # Shared with the offline runner, so the seeds Fabric runs are split exactly the
+        # way test_seeds.py / test_qc.py verified. The naive version this replaces split on
+        # every `;` - including the 43 inside 08_qc_seeds.sql's workbook prose.
+        statements = split_statements(path.read_text(encoding="utf-8"))
         body = "\n".join(
             f"spark.sql({json.dumps(s)})\n" for s in statements
         )
@@ -87,9 +84,14 @@ built = []
     # Completed, so the job status would say success while the gold layer was empty.
     # Asserting the exact counts the offline suite verified makes the run status mean
     # something: Completed == the same tables, the same sizes, as test_seeds.py checked.
+    # The PQP seeds carry the workbook's own numbers, so a wrong count here is a sheet that
+    # did not extract rather than an arbitrary threshold: 625 checklist items across 26
+    # trades, 46 + 23 + 24 = 93 gates, 101 DOH requirements, 141 status codes.
     expected = {
         "dim_Date": 7670, "dim_Trade": 29, "dim_Status": 32, "dim_Owner": 10,
         "dim_ActivityCategory": 28, "dim_ScorecardWeight": 9, "dim_ScorecardBand": 27,
+        "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
+        "qc_seed_DohItem": 101, "dim_QcStatus": 141,
     }
     cells.append(
         cell(

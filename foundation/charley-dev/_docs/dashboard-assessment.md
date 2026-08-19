@@ -6,6 +6,12 @@ is holding each missing piece. Written 2026-08-02.
 Companion to [`build-status.md`](build-status.md), which covers the pipeline. This one is
 about the report.
 
+**Blockers re-checked 2026-08-19** and corrected below; the report measurements are
+unchanged from 2026-08-02. A second report is now in progress over the PQP (Project Quality
+Plan) subject area — the client's 44-sheet QA/QC tracker, seeded into
+`02-transformation/seed/` — with its own semantic model. It is a separate model and report,
+not a change to this one.
+
 ---
 
 ## The finding
@@ -103,27 +109,29 @@ Honest list. Most of it is other people's turnaround, not build effort.
 |---|---|---|
 | **RFIs** — 616 rows sit in `cd_silver_rfis`, never promoted to gold | `fct_RfiSubmittal` is submittals-only | **Us** — a gold SQL change |
 | **Milestone baselines** | The Gantt shows the schedule as it stands and **cannot show drift**. `fct_Milestone` has `CurrentStart`/`CurrentFinish` only — no baseline, no actual | Affect — Outbuild |
-| **Outbuild token** | Milestones cannot refresh at all. Outbuild is the only milestone source that exists anywhere | Affect — via Outbuild CS |
+| **Outbuild token** | Milestones cannot refresh at all. Outbuild is the only milestone source that exists anywhere. **In transit** — offered by email Aug 11 | Affect — via Outbuild CS |
 | **Manual / narrative tables** (wins, risks, priority items, survey, flags) | ~40% of the report | Affect — the SharePoint decision |
 | **Safety**: incidents, hours, orientations, violations | The whole safety domain; `[TRIR]` is not computable | Affect — Procore credentials |
 | **Quality**: observations, punch items | Procore 403s on `punch_item_types` | Affect — Procore permissions |
 | **Daily logs** | `Score - Daily Reports`; Procore 403 on `schedule` | Affect — Procore permissions |
-| **Sage AP/AR, retainage, aging, job cost** | Cash position, aging, cost-to-complete | Affect — on-prem gateway binding |
+| **Sage AP/AR, retainage, aging, job cost** | Cash position, aging, cost-to-complete | Affect — one *Can use* grant on the gateway connection; `CD_Sage_Ingest` is deployed and inert |
 | **Payment dates in Sage AR** | `[Avg Days To Payment]` returns BLANK by design — the AR header carries the amount paid but not the date | Affect — confirm whether it exists elsewhere in Sage |
 | **The six client-satisfaction questions** | Satisfaction breakdown; not stored anywhere | Affect |
 | **Manpower daily** | Manpower trend by vendor | Us, once ingestion runs |
-| **Key Vault** (no Azure subscription on the tenant) | Extraction runs locally as a bridge | Affect |
+| **Key Vault role assignment** — the subscription and the vault (`OneLake`) both exist as of 2026-08-19; the vault is RBAC-mode and our identity holds only resource-group Contributor, which cannot read or write secrets | Extraction runs locally as a bridge. One role: **Key Vault Secrets Officer on `OneLake`** | Affect |
 
-**Scorecard coverage is 59%.** Four of nine categories score BLANK — deliberately, never
-zero, because scoring a missing input as zero is exactly how the workbook silently cost
-every project 15% of its score. Coverage rises toward 100% as safety, quality, daily logs
+**Scorecard coverage is 59%** — maintained in [`build-status.md`](build-status.md), quoted
+here. Four of nine categories score BLANK — deliberately, never zero, because scoring a
+missing input as zero is exactly how the workbook silently cost every project 15% of its
+score. Coverage rises toward 100% as safety, quality, daily logs
 and Sage land. The categories are independent, so this is incremental.
 
-### Four of these are one email each
+### Four of these are one grant each
 
-Outbuild token · Procore permissions for `punch_item_types` and `schedule` · the Sage
-gateway binding · the SharePoint decision. Those four unlock roughly half the missing
-report.
+Outbuild token (sent, awaiting arrival) · Procore permissions for `punch_item_types` and
+`schedule` · the *Can use* grant on the Sage gateway connection · the SharePoint decision.
+Those four unlock roughly half the missing report. A fifth, new and equally small, is the
+Key Vault Secrets Officer role that moves Procore extraction off a laptop.
 
 ---
 

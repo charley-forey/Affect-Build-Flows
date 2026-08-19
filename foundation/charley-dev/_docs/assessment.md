@@ -1,7 +1,12 @@
-# Full assessment — 2026-08-02
+# Full assessment — 2026-08-02, blockers re-checked 2026-08-19
 
 An independent read of everything in `charley-dev`: what is built, whether it is actually
 live in Fabric, whether the numbers on the dashboard are right, and what is left.
+
+**Refreshed 2026-08-19.** The audit of the build stands as written; the *external blocker*
+picture underneath it has changed and is corrected throughout. An Azure subscription and a
+Key Vault now exist, and `CD_Sage_Ingest` is deployed. Row counts, measure values and the
+defect analysis are unchanged from the 2026-08-02 measurement.
 
 Every claim here was checked against the running Fabric workspace rather than against the
 repo's own documentation. Where the two disagreed, the docs were wrong and have been
@@ -205,21 +210,27 @@ Key Vault is needed to move *Procore* extraction off a laptop and into Fabric. S
 connection binding. They are separate asks with separate owners, and conflating them has been
 costing us the one that could have been done weeks ago.
 
-**Outbuild is the genuine blocker** — `OUTBUILD_API_TOKEN` has never been issued, and no
-workaround exists. It is also the highest-value gap: 17 of 19 projects have no milestones, and
-Outbuild is the only milestone source anywhere.
+**Outbuild was the genuine blocker** — `OUTBUILD_API_TOKEN` had never been issued and no
+workaround exists. As of Aug 11 Rebecca has offered to send it by email, so it is now
+pending a transfer rather than a decision. It remains the highest-value gap until it
+arrives: 17 of 19 projects have no milestones, and Outbuild is the only milestone source
+anywhere.
 
 ### What to ask for on the call
 
 1. **Bind `CD_Sage_Ingest` to the existing gateway connection.** Needs someone with
    permission on that connection — not a subscription. This is the single highest-value ask
    and it can be done the same day.
-2. **Issue `OUTBUILD_API_TOKEN`.** Unblocks milestones for 17 projects.
-3. **Rotate the Procore credential** (F1) and put the new pair in Key Vault once the
-   subscription lands. Rotation should not wait for the vault — the old pair has been
-   readable by anyone with Viewer on the workspace.
-4. Confirm the gateway account is **read-only** on the Sage database.
-5. Ask whether 13 open AR rows is real, or a filter artefact.
+2. **Send `OUTBUILD_API_TOKEN`.** Offered by email Aug 11 and still to arrive. Unblocks
+   milestones for 17 projects.
+3. **Grant Key Vault Secrets Officer on vault `OneLake`** to `cforey-c@affect-group.com`.
+   The subscription and the vault both exist as of 2026-08-19; the vault is RBAC-mode and
+   Contributor on the resource group cannot read or write a secret. One role assignment.
+4. **Rotate the Procore credential** (F1), then edit the notebook — in that order. Rotation
+   should not wait for the vault: the old pair has been readable by anyone with Viewer on
+   the workspace, so editing the literal out first changes nothing about the exposure.
+5. Confirm the gateway account is **read-only** on the Sage database.
+6. Ask whether 13 open AR rows is real, or a filter artefact.
 
 ---
 
@@ -310,9 +321,11 @@ single biggest limit on the report, and it is an access problem, not a build pro
 
 ---
 
-## Scorecard coverage: 59%
+## Scorecard coverage
 
-Four of nine categories cannot be scored, and all four are blocked on data rather than code:
+**59%** — the canonical figure and its history live in
+[`build-status.md`](build-status.md); this section explains *why*. Four of nine categories
+cannot be scored, and all four are blocked on data rather than code:
 
 | Category | Blocked on |
 |---|---|
@@ -373,10 +386,12 @@ regression is back.
 
 | Blocker | Effect | Owner |
 |---|---|---|
-| No Azure subscription → no Key Vault | Procore extraction runs on a laptop and lands files. **The nightly pipeline does not call the Procore API** — it re-processes whatever was last landed. Landing files were last written 04:44 on 2026-08-02 | Affect |
-| `OUTBUILD_API_TOKEN` not issued | No milestones for 17 of 19 projects. Outbuild is the only source | Affect / Outbuild CS |
-| On-prem gateway for Sage | `CD_Sage_Ingest` is defined in the repo but **not deployed** | Affect |
-| SharePoint decision | Nine `man_*` tables are deployed and empty; ~40% of the report | Affect |
+| **Key Vault role assignment** — the vault exists (`OneLake`, RG `Affect_KeyVault`) but is RBAC-mode and `cforey-c@affect-group.com` has only Contributor on the resource group, which cannot read or write secrets | Procore extraction runs on a laptop and lands files. **The nightly pipeline does not call the Procore API** — it re-processes whatever was last landed. Landing files were last written 04:44 on 2026-08-02. The ask is one role: **Key Vault Secrets Officer on vault `OneLake`** | Affect |
+| On-prem gateway grant for Sage | `CD_Sage_Ingest` is **deployed** and inert — one *Can use* grant on `nc-affect-1\sage100con;Affect Group` away from running | Affect / their Sage consultant |
+| Procore 403s on `punch_item_types` and `schedule` | Two report sections cannot be sourced | Affect |
+| SharePoint decision | Nine `man_*` tables are deployed and empty; ~40% of the report. The CSV path in `Files/_manual/` works today, so this gates the *team* mechanism, not data entry | Affect |
+| ~~No Azure subscription~~ | **RESOLVED 2026-08-19** — "Azure subscription 1" `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` on tenant "Affect Build LLC" `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` | — |
+| ~~`OUTBUILD_API_TOKEN` not issued~~ | **In transit** — Rebecca offered to send the token by email on Aug 11. Once it lands, milestones for 17 of 19 projects follow | Affect (in transit) |
 
 ---
 
@@ -393,6 +408,12 @@ regression is back.
 3. Merge `worktree-charley-dev-build` → `main`. The default branch is still 9 commits behind
    what is deployed, and does not contain this fix.
 4. Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the source.
-5. Chase the Outbuild token. It is the largest single coverage gain available — 17 of 19
-   projects have no milestones.
+5. Chase the Outbuild token to completion. Offered Aug 11, not yet received. It is the
+   largest single coverage gain available — 17 of 19 projects have no milestones.
 6. Put the insurance finding in front of Affect as a question, not a metric.
+7. **Fix the SharePoint list-name mismatch** before anyone runs the provisioning script:
+   `provision-sharepoint.ps1` creates `CD PriorityItems`, `CD SafetyMonthly`,
+   `CD QualityMonthly` and `CD DailyLogCompliance`, while `CD_Manual_Ingest`'s `mashup.pq`
+   reads `CD Priority Items`, `CD Safety Monthly`, `CD Quality Monthly` and
+   `CD Daily Log Compliance`. Four of nine queries would silently return nothing. Detail in
+   [`sharepoint-lists.md`](sharepoint-lists.md).

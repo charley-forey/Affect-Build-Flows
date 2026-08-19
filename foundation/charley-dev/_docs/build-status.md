@@ -2,9 +2,16 @@
 
 What exists, what is verified, and what is not built yet.
 
-**Every number on this page was read back out of Fabric on 2026-08-02**, not carried
-forward from the last edit. Where a figure here disagrees with an older doc, this one is
-the measured value — see [`assessment.md`](assessment.md) for how each was obtained.
+**Every number on this page was read back out of Fabric**, not carried forward from the
+last edit. Row counts and model figures were measured 2026-08-02; the item inventory,
+blockers and Azure position were re-checked live on **2026-08-19**. Where a figure here
+disagrees with an older doc, this one is the measured value — see
+[`assessment.md`](assessment.md) for how each was obtained.
+
+**This page is the single source for two numbers that get restated elsewhere:** the
+endpoint-registry count (**42**, generated into
+[`endpoint-inventory.md`](endpoint-inventory.md)) and **scorecard coverage (59%)**. Other
+documents should link here rather than repeat them.
 
 ## Live in Fabric
 
@@ -12,19 +19,25 @@ Workspace `Build`, folder `charley-dev` (`25dd1e34-…`). **Nothing outside `cha
 been touched** — `fabric_backup.py` diffed to a scratch directory is the acceptance gate, not
 a promise.
 
+Re-read on 2026-08-19: the folder holds the three lakehouses and their SQL endpoints, the
+semantic model, the report, `CD_Master_Pipeline`, the `CD_Sage_Ingest` dataflow, and eight
+notebooks.
+
 | Item | Type | Contents |
 |---|---|---|
 | `CD_Bronze_Lakehouse` | Lakehouse | 40 tables, from Affect's **production** Procore tenant |
 | `CD_Silver_Lakehouse` | Lakehouse | 15 typed tables, **14,791 rows, 0 rejects** |
 | `CD_Gold_Lakehouse` | Lakehouse | 40 tables — dimensions, facts, crosswalks, bridges, `man_*` |
-| `cd_01_extract_procore` | Notebook | deployed; blocked on Key Vault (see below) |
+| `cd_01_extract_procore` | Notebook | deployed; blocked on the Key Vault role assignment (see below) |
 | `cd_05_land_to_bronze` | Notebook | merges landed NDJSON into bronze Delta, no credentials |
 | `cd_06_land_manual` | Notebook | manual-input capture path |
 | `cd_10_bronze_to_silver` | Notebook | runs clean against real bronze |
 | `cd_20_seed_gold` | Notebook | seed dimensions; asserts its own row counts |
 | `cd_30_build_gold` | Notebook | 20 gold files + integrity checks; publishes the schema |
 | `cd_40_dq_checks` | Notebook | the DQ gate — 63 expectations |
+| `cd_90_query` | Notebook | ad-hoc query scratchpad against the medallion |
 | `CD_Master_Pipeline` | DataPipeline | 5 activities, the nightly DAG |
+| `CD_Sage_Ingest` | Dataflow | **deployed**, bound to the on-prem gateway, inert until the connection grant lands |
 | `Affect Project Report` | SemanticModel | Direct Lake, **37 tables, 99 measures, 45 relationships** |
 | `Monthly Progress Report` | Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
 
@@ -55,15 +68,26 @@ the deployed notebook and counting lakehouse GUIDs, because `deploy_gold.py` sti
 to `--source existing`: **re-deploying without `--source cd` silently reverts the medallion
 to the legacy warehouse.** That default is a live foot-gun, not a preference.
 
-### Two blockers, both external
+### External blockers — re-checked 2026-08-19
+
+Two of the four blockers standing at the last edit have moved. The Azure subscription
+exists, a Key Vault exists, and the Outbuild token is in transit. What is left is smaller
+and more specific than what it replaced.
 
 | Blocker | Effect | Owner |
 |---|---|---|
-| **No Azure subscription** on this tenant (`az account list` returns a tenant-level account only) | Key Vault cannot be created, so `cd_01_extract_procore` cannot hold a credential. Extraction runs locally instead and lands files; `cd_05_land_to_bronze` merges them in Fabric with no secret. A bridge, not the destination — `procore-ingestion.md` has the steps to retire it. | Affect |
-| **`OUTBUILD_API_TOKEN` not issued** | Outbuild ingestion is built and verified but cannot run. Outbuild is the only milestone source anywhere. | Affect (via Outbuild CS) |
+| **Key Vault role assignment** — vault `OneLake` exists (`https://onelake.vault.azure.net/`, RG `Affect_KeyVault`, East US) but is **RBAC-mode**, and `cforey-c@affect-group.com` holds only **Contributor on the resource group**. Contributor on an RBAC vault can neither read nor write secrets, and cannot grant itself the right to. | No secret can be written, so `cd_01_extract_procore` still cannot hold a credential. Extraction keeps running locally and landing files; `cd_05_land_to_bronze` merges them in Fabric with no secret. **The ask is one role assignment: "Key Vault Secrets Officer" on vault `OneLake` for `cforey-c@affect-group.com`.** | Affect |
+| **Sage gateway connection grant** | `CD_Sage_Ingest` is deployed and correct but its runner has no rights on the gateway, so it fails in ~5 seconds before reaching Sage. One grant: *Can use* on `nc-affect-1\sage100con;Affect Group`. | Affect / their Sage consultant |
+| **Procore 403s** on `punch_item_types` and `schedule` | Two report sections cannot be sourced. | Affect — Procore role permissions |
+| ~~**No Azure subscription** on this tenant~~ | **RESOLVED 2026-08-19.** "Azure subscription 1" (`0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6`) exists on tenant "Affect Build LLC" (`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`). | — |
+| ~~**`OUTBUILD_API_TOKEN` not issued**~~ | **Effectively unblocked** — Rebecca offered to send the token by email on Aug 11. Pending transfer, not pending a decision. | Affect (in transit) |
 
-Plus three access items worth raising on the same call: Procore 403s on `punch_item_types`
-and `schedule`, and the on-prem gateway binding for `CD_Sage_Ingest`.
+Step-by-step for whoever grants it: [`keyvault-runbook.md`](keyvault-runbook.md).
+
+**Key Vault `OneLake`, as provisioned:** RBAC authorization on, soft-delete on with a
+90-day retention, **purge protection disabled**. Purge protection is worth turning on
+before the vault holds anything that matters — without it a deleted vault can be purged
+inside the retention window, which defeats the recovery the soft-delete is there to give.
 
 ### The gold model, with real data
 
@@ -186,18 +210,21 @@ join, understating budgets and change orders with no error anywhere.
 
 Six rows of this table were stale on 2026-08-02 — silver transforms, RFIs, the `man_*`
 tables, the orchestration pipeline and the scorecard measures had all shipped but were
-still listed as not started. Corrected below.
+still listed as not started. A seventh was stale on 2026-08-19: `CD_Sage_Ingest` was
+listed as "not deployed" for two weeks after it was deployed. Corrected below.
 
 | Area | Status |
 |---|---|
 | Procore ingestion **run inside Fabric** | Notebook and 42-endpoint registry built and tested; still needs `PROCORE_CLIENT_ID`/`SECRET` in Key Vault. Extraction runs **locally** and lands files; `cd_05_land_to_bronze` merges them. The nightly pipeline therefore re-processes whatever was last landed — **it does not call the Procore API.** |
-| Sage dataflow (`CD_Sage_Ingest`) | Defined in the repo, **not deployed** to the workspace — needs the on-prem gateway confirmed |
-| Manual dataflow (`CD_Manual_Ingest`) | Defined in the repo, **not deployed** to the workspace |
+| Sage dataflow (`CD_Sage_Ingest`) | **Built and deployed** — live in the `charley-dev` folder, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze`. Inert until `cforey-c@affect-group.com` is granted *Can use* on `nc-affect-1\sage100con;Affect Group`. Deployed-and-inert is deliberate: it turns the remaining work into one grant plus one refresh |
+| Manual dataflow (`CD_Manual_Ingest`) | Defined in the repo, **not deployed** to the workspace. It also carries a known defect — its query list names disagree with the names `provision-sharepoint.ps1` creates, so four of its nine queries would return nothing. See [`sharepoint-lists.md`](sharepoint-lists.md) |
 | Outbuild ingestion | Built and verified, cannot run — `OUTBUILD_API_TOKEN` not issued. Outbuild is the only milestone source, and 17 of 19 projects are missing from it |
-| `man_*` manual tables | **Built and deployed** — 9 tables live in gold, currently empty pending the SharePoint decision |
+| `man_*` manual tables | **Built and deployed** — 9 tables live in gold, currently empty. The silver → gold `INSERT`s are now written, so the chain runs end to end; the tables stay empty because nobody has entered a row, not because the join is missing. Four column-spec questions still need Affect — [`manual-input.md`](manual-input.md) |
 | Orchestration pipeline | **Built and running** — `CD_Master_Pipeline`, 5 activities, last green run 2026-08-02 22:06 |
-| Scorecard measures | **Written** — 9 category measures live; coverage 59%, 4 of 9 categories still unscored for want of source data |
-| `Vendor & Insurance List` report | Named in `README.md`, never built. The insurance data reached the Monthly Progress Report instead |
+| Scorecard measures | **Written** — 9 category measures live. **Scorecard coverage is 59%** (`[Scorecard Coverage %]`, live): 5 of 9 categories score from real data, 4 return BLANK for want of source data. This is the canonical figure — other documents reference it rather than restate it. Coverage read 35% before field ops landed and went 35% → 45% → 59%; filling the `man_*` tables is projected to take it to 88%, which is a projection, not a measurement |
+| `Vendor & Insurance List` report | **Never built, and no longer planned.** The insurance data reached the Monthly Progress Report instead, as `fct_VendorInsurance` (105 rows) plus a Vendor Insurance page. The stale reference has been removed from `README.md` |
+| PQP (Project Quality Plan) subject area | **In progress, 2026-08-19.** Seed data extracted from the client's 44-sheet `026-025 SAUNA LOUNGE QA - QC TRACKER` workbook into `02-transformation/seed/` — 26 trades, 625 checklist items, 93 statutory gates, 101 DOH items, 143 status-vocabulary rows. A second semantic model and report will be built over it |
+| Power Automate flows (Estimating Setup, Convert to Bidding) | **In progress, 2026-08-19.** Being built alongside the PQP work |
 
 ## Environment notes
 

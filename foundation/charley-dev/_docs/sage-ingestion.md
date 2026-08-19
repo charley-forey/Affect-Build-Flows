@@ -1,7 +1,19 @@
 # Sage ingestion
 
-`01-ingestion/Sage/CD_Sage_Ingest.Dataflow` — built and committed, **not yet bound to the
-gateway**. Binding is Affect's to authorise; everything else is done.
+`01-ingestion/Sage/CD_Sage_Ingest.Dataflow` — **built, committed and deployed.** It is live
+in the Fabric workspace `Build`, folder `charley-dev`, bound to gateway `1e798beb` and
+datasource `835e72c8`, writing to `CD_Bronze_Lakehouse`. Verified live 2026-08-19.
+
+It is **inert**, not missing. The definition reads back from Fabric exactly as committed —
+gateway, both connections, all 8 queries, `DefaultDestination` — and the first run failed in
+about five seconds, too fast to be a query: `cforey-c@affect-group.com` cannot see any
+gateway or connection in the tenant, so the dataflow asks to run through a gateway its
+runner has no rights on.
+
+**The remaining work is one permission grant**, not a build: whoever administers the
+on-premises data gateway grants `cforey-c@affect-group.com` the **"Can use"** permission on
+the connection `nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*.
+No subscription, no vault, no code change — it runs on the next refresh.
 
 ## What it pulls
 
@@ -63,9 +75,12 @@ optional here.
 
 ## What is left
 
-1. **Bind the dataflow to the on-prem gateway** (`1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e`,
-   carried in `queryMetadata.json` so it is a field to confirm rather than one to discover).
-   This needs Affect — the gateway connection and its credential are theirs.
+1. **Grant *Can use* on the gateway connection.** The dataflow is already bound to
+   `1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e` (carried in `queryMetadata.json`, so it was a
+   field to confirm rather than one to discover). What is missing is the permission for our
+   identity to run through it. This needs Affect — the gateway connection and its
+   credential are theirs, and the Sage database is administered by an outside consultant, so
+   the ask may route through them.
 2. Run it, then write `sql/silver/20_sage_silver.sql` to type and validate the eight tables.
 3. Settle open question 4 with the line data in hand, and point `sv_ar_invoices` at
    `cd_silver_*` — it currently still reads the existing warehouse

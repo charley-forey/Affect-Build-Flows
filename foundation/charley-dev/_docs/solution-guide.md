@@ -47,7 +47,9 @@ is not refreshed and the report keeps yesterday's numbers. A stale report beats 
 
 ## What is live right now
 
-Measured out of Fabric on 2026-08-02.
+Row counts and model figures measured out of Fabric on 2026-08-02; the item inventory and
+blocker position re-checked **2026-08-19**. `build-status.md` is the canonical page for
+both.
 
 | Layer | State |
 |---|---|
@@ -57,6 +59,8 @@ Measured out of Fabric on 2026-08-02.
 | Model | 37 tables, 99 measures, 45 relationships, Direct Lake |
 | Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
 | Schedule | Pipeline 02:00 daily, model 04:00 daily (Eastern) |
+| Sage | `CD_Sage_Ingest` **deployed** and inert — one gateway connection grant away from running |
+| PQP (Project Quality Plan) | **In progress** — seed data extracted from the client's 44-sheet QA/QC tracker into `02-transformation/seed/`; a second semantic model and report follow |
 
 **Verification:** 12 offline suites, 14 live DAX checks, 63 DQ expectations — all passing,
 zero blocking violations. The pipeline has run end to end, all five stages green; last run
@@ -65,7 +69,9 @@ zero blocking violations. The pipeline has run end to end, all five stages green
 **What the pipeline does not do:** it never calls the Procore API. Extraction runs on a
 laptop and lands NDJSON; the nightly run merges whatever was last landed. Until the Key
 Vault blocker clears, "the pipeline ran green" means the transforms are healthy — it does
-not mean the data is fresh.
+not mean the data is fresh. As of 2026-08-19 that blocker is one role assignment rather
+than a purchasing decision: the subscription and the vault both exist, and the vault is
+RBAC-mode where our identity holds only resource-group Contributor.
 
 ### The data
 
@@ -279,7 +285,8 @@ The Scorecard page shows this arithmetic in full. **Affect decides when to switc
 they report** — that is their call, not ours.
 
 `[Scorecard Coverage %]` is currently **59%**: five of nine categories score from real data.
-It went 35% → 45% → 59% as field ops landed. The measure exists because the workbook's 0.59
+It went 35% → 45% → 59% as field ops landed. [`build-status.md`](build-status.md) is the
+single place that figure is maintained. The measure exists because the workbook's 0.59
 looked like a health score while 42% of its weight measured nothing — and because a missing
 category scored 0 rather than blank, that was invisible.
 
@@ -341,7 +348,8 @@ This matters because the slow part was never the plumbing — it is people typin
 history they have only ever kept in a spreadsheet, and that no longer waits on a ticket.
 
 **One thing is still missing, and it needs Affect rather than us.** There is no silver →
-gold link for the manual tables yet, because the gold schema and the silver parsers
+gold link for the manual tables yet — `40_man_tables.sql` creates them as empty typed
+placeholders and nothing populates them — because the gold schema and the silver parsers
 disagree on four of them — whether daily-log compliance means "submitted" or "submitted the
 same day", whether a milestone is a date or a span, which attestations are captured
 monthly, and whether the client survey is anonymous. Each is a real question about what the
@@ -355,13 +363,17 @@ All four are access Affect grants, not work we can do. All the pipework is built
 
 | Blocker | Unlocks | Owner |
 |---|---|---|
-| **SharePoint lists** (10, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates | SharePoint admin |
-| **`OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere | Outbuild CS rep |
-| **Sage on-prem gateway binding** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage | Affect IT |
-| **Azure subscription** | Key Vault, so ingestion runs in Fabric on a schedule | Affect IT |
+| **SharePoint lists** (nine data lists plus the `CD Projects` lookup — ten in total, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates | SharePoint admin |
+| **`OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere. Offered by email Aug 11; **in transit** | Outbuild CS rep / Affect |
+| **Sage gateway connection grant** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage. The dataflow is deployed and inert | Affect IT |
+| **Key Vault role assignment** — "Key Vault Secrets Officer" on vault `OneLake` | Key Vault, so ingestion runs in Fabric on a schedule. The subscription and the vault now exist; the vault is RBAC-mode and resource-group Contributor cannot read or write secrets | Affect IT |
 
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
 and `schedule` both return **403**.
+
+Two of these have moved since the last edit. **The Azure subscription is no longer a
+blocker** — "Azure subscription 1" exists on tenant "Affect Build LLC" as of 2026-08-19, and
+a vault with it. What replaced it is smaller: one role assignment.
 
 ---
 
@@ -371,7 +383,7 @@ Almost every defect found here failed **silently** — a valid-looking call retu
 or a parse producing NULL:
 
 - `Procore-Company-Id` missing → **404**, reading as "this project has no RFI tool". Cost 28
-  of 36 endpoints.
+  of the 36 endpoints the registry held at the time (it now holds 42).
 - `manpower_logs` without a date range → **200 with zero rows**, reading as "no manpower
   logged". Cost 120,766 hours.
 - `get_json_object` on a key containing `(` or `=` → **NULL**, so every budget money column
@@ -398,7 +410,7 @@ why rejects are recorded with reasons, and why the DQ gate blocks rather than wa
 | Document | Covers |
 |---|---|
 | `build-status.md` | What exists in Fabric right now |
-| `procore-ingestion.md` | The 36 endpoints, the split pipeline, the defects found |
+| `procore-ingestion.md` | The endpoint registry, the split pipeline, the defects found |
 | `sage-ingestion.md` | The dataflow and why `arivln`/`apivln` matter |
 | `manual-input.md` | The design for the ~40% that lives in no system |
 | `sharepoint-lists.md` | Build sheet to hand to a SharePoint admin |

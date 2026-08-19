@@ -6,10 +6,32 @@ remediation below has been applied — these are for Affect to action, and the f
 not wait.
 
 Verified 2026-08-02 against the live workspace `1f7caed6-f88a-4e52-bc83-9a498a165301`.
+Re-checked 2026-08-19: **F1 is still open**, and is now actionable for the first time.
 
 ---
 
-## F1 — Procore API credentials are hardcoded in a live notebook (high)
+## F1 — Procore API credentials are hardcoded in a live notebook (high) — OPEN
+
+> **Status 2026-08-19 — still open, and the fix is now unblocked.**
+>
+> The **repo** copies are clean. All five `foundation/` notebooks previously flagged for
+> hardcoded Procore secrets were re-read on 2026-08-19: they use `get_secret()` throughout,
+> carry no literal credentials, and hold no saved token output in their cell results.
+>
+> The **workspace** copy is not. Rebecca's `procore_auth` notebook running in Fabric still
+> assigns the client id and secret as string literals. That is the copy that matters — a
+> scrubbed file in git next to an unscrubbed notebook in the service is the most dangerous
+> shape this finding can take, because the exposure reads as fixed and is not.
+>
+> What changed is that the remediation is now possible. An Azure subscription and the Key
+> Vault `OneLake` both exist as of 2026-08-19, so there is somewhere for the new pair to
+> go. One thing is still missing: `cforey-c@affect-group.com` has only **Contributor on the
+> resource group**, and the vault is RBAC-mode, so no secret can be written or read yet.
+> **The ask is one role assignment — "Key Vault Secrets Officer" on vault `OneLake`.**
+>
+> **Order matters: rotate first, then edit the notebook.** Editing the literal out does not
+> un-expose a credential that has already been readable; only revoking it does. See the
+> numbered remediation below, which is unchanged.
 
 **What.** The notebook `procore_auth` (workspace `Build`, folder
 `594bfe88-1c54-4530-8b3d-67677407b43d`) assigns the Procore OAuth client id and client secret
@@ -44,8 +66,10 @@ git, and is not fixed in the service.
 1. **Rotate first, edit second.** Issue a new client id/secret pair in Procore's Developer
    Portal and revoke the old one. Editing the notebook does not un-expose a credential that
    has already been readable — assume it is compromised and treat rotation as the fix.
-2. Store the new pair in Azure Key Vault (`_local/setup_keyvault.py` in this folder does this
-   for charley-dev's own copy and can be pointed at the same vault).
+2. Store the new pair in Azure Key Vault — the vault now exists (`OneLake`, RG
+   `Affect_KeyVault`, `https://onelake.vault.azure.net/`). This step is gated on the one
+   role assignment above; `_local/setup_keyvault.py` in this folder writes charley-dev's own
+   copy and can be pointed at the same vault.
 3. Replace the literals with a lookup. charley-dev's
    `00-platform/lib/fabric_common.get_secret()` already has the right contract — Key Vault
    inside Fabric, environment variable locally — and can be imported rather than rewritten:
@@ -65,10 +89,20 @@ spend a rotation on it.
 
 ## F2 — No secret management for the existing pipelines (medium)
 
-F1 is the instance; this is the pattern. There is no Key Vault, no workspace-level secret
+F1 is the instance; this is the pattern. There was no Key Vault, no workspace-level secret
 store, and no convention for the existing ingestion notebooks — so the only place a
-credential *can* go today is a notebook cell. The next integration will reproduce F1 unless
-the pattern changes with it.
+credential *could* go was a notebook cell. The next integration reproduces F1 unless the
+pattern changes with it.
+
+**Half of this is now fixed.** As of 2026-08-19 the vault exists. What has not changed is
+the *convention*: nothing yet reads from it, because nobody has the role that lets them
+write to it. The finding stays open until `get_secret()` is the accessor the existing
+notebooks actually use.
+
+Two vault settings worth deciding while it is empty: it is **RBAC-mode** (so access is role
+assignments, not access policies — this is the better default, and it is why Contributor is
+not enough) and **purge protection is disabled**. Turning purge protection on is a one-way
+door, which is a reason to think about it now rather than after it holds live credentials.
 
 **Remediation.** Stand up one vault for the workspace and adopt `get_secret()` as the single
 accessor. charley-dev does this for its own notebooks

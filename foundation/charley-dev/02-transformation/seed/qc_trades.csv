@@ -1,0 +1,27 @@
+TradeKey,TradeName,SheetName,CsiCode,DfowRef,RiskTier,SortOrder
+EXCAVATION,Excavation,Excavation,31 20 00,D-08,3,1
+CONCRETE_FORMWORK,Concrete Formwork,Concrete Formwork,03 10 00,D-07,3,2
+CONC_REINFORCEMENT,Conc Reinforcement,Conc Reinforcement,03 20 00,D-07,3,3
+CIP_CONCRETE,CIP Concrete,CIP Concrete,03 30 00,D-07,3,4
+PRECAST_CONCRETE,Precast Concrete,Precast Concrete,03 40 00,D-07,3,5
+UNIT_MASONRY,Unit Masonry,Unit Masonry,04 20 00,D-19,2,6
+METAL_DECK,Metal Deck,Metal Deck,05 31 00,D-18,2,7
+SLAB_ON_GRADE,Slab on Grade,Slab on Grade,03 30 00,D-07,3,8
+SLAB_ON_DECK,Slab on Deck,Slab on Deck,03 30 00,D-07,3,9
+WATERPROOFING,Waterproofing,Waterproofing,07 10 00,D-01 / D-02,4,10
+DRYWALL_FRAMING,Drywall Framing,Drywall Framing,09 22 00,D-18,2,11
+DRYWALL_BOARD,Drywall Board,Drywall Board,09 29 00,D-20,2,12
+FIRESTOPPING,Firestopping,Firestopping,07 84 00,D-15,3,13
+METAL_FRAMES,Metal Frames,Metal Frames,08 11 13,D-21,2,14
+METAL_DOORS,Metal Doors,Metal Doors,08 11 13,D-21,2,15
+DOORS_HARDWARE,Doors & Hardware,Doors & Hardware,08 71 00,D-21,2,16
+TILE_STONE,Tile & Stone,Tile & Stone,09 30 00,D-14,3,17
+RESILIENT_FLOORING,Resilient Flooring,Resilient Flooring,09 65 00,D-27,2,18
+ACT_CEILINGS,ACT Ceilings,ACT Ceilings,09 51 00,D-25,2,19
+MILLWORK_CASEWORK,Millwork & Casework,Millwork & Casework,06 40 00,D-16,3,20
+PAINTING,Painting,Painting,09 90 00,D-28,1,21
+ELECTRICAL,Electrical,Electrical,26 00 00,D-05,4,22
+PLUMBING,Plumbing,Plumbing,22 00 00,D-06 / D-13,4,23
+HVAC_DUCTWORK,HVAC & Ductwork,HVAC & Ductwork,23 00 00,D-10 / D-11,3,24
+FIRE_SPRINKLER,Fire Sprinkler,Fire Sprinkler,21 13 00,D-04,4,25
+FIRE_ALARM,Fire Alarm,Fire Alarm,28 31 00,D-03,4,26

@@ -331,3 +331,28 @@ SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS line_item_id,
        CAST(NULL AS DOUBLE) AS amount, CAST(NULL AS DOUBLE) AS total_amount,
        CAST(NULL AS DOUBLE) AS quantity, CAST(NULL AS DOUBLE) AS unit_cost
 WHERE 1=0;
+
+
+-- ---------------------------------------------------------------------------
+-- WHAT IS DELIBERATELY ABSENT FROM THIS FILE
+-- ---------------------------------------------------------------------------
+--
+-- sv_man_*, sv_man_qc_* and sv_qc_* have NO definition here, and that is the honest
+-- answer rather than an omission.
+--
+-- The existing Silver_Lakehouse holds none of it. The manual inputs (wins, risks, the
+-- client survey, contract milestone dates) and the whole PQP subject area (the DFOW
+-- register, the ITP, the TCO / fire-alarm / statutory gates, the trade checklists, the DOH
+-- checklist) were invented as part of THIS build. They live only in cd_bronze_man_* and
+-- cd_silver_man_*, which is why 01_source_views_cd.sql is where they are defined.
+--
+-- The tempting alternative - declare them here as empty typed views so `--source existing`
+-- keeps building every gold file - would be faking a source. The gold tables would build,
+-- report zero rows, and look exactly like a manual pipeline nobody has typed into yet.
+-- That is the failure mode this platform exists to remove, so it is not reproduced to keep
+-- a flag tidy.
+--
+-- Instead deploy_gold.py skips the gold files that read these under `--source existing`
+-- (GOLD_CD_ONLY). `--source existing` is the pre-credentials validation path and has been
+-- superseded by `cd` since 2026-08-02; it still builds every dimension and fact that the
+-- existing warehouse can actually source.

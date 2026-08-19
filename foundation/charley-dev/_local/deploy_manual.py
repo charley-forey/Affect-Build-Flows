@@ -4,7 +4,7 @@
     python deploy_manual.py --apply    # deploy cd_06_land_manual and run it
 
 WHY THIS EXISTS. About 40% of the monthly report lives in nobody's system - wins, risks,
-priority items, the client survey, contract milestone dates. The design for it is ten
+priority items, the client survey, contract milestone dates. The design for it is a set of
 SharePoint lists (`_docs/sharepoint-lists.md`), and it is a good design: versioned,
 multi-user, permissioned, with an audit trail.
 
@@ -26,7 +26,7 @@ provisioned, the dataflow takes over and nothing downstream changes. Neither pat
 A MISSING CSV IS NOT AN ERROR. Every list that has no file is created as an empty table
 with the right schema, so silver and gold run to completion from day one and the report
 shows honest blanks rather than failing. Partially-entered data is the normal state here
-for months, and a pipeline that only works once all ten lists are complete would never run.
+for months, and a pipeline that only works once every list is complete would never run.
 """
 
 from __future__ import annotations
@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deploy as dp  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
+import make_sharepoint as ms  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -47,56 +48,26 @@ CHARLEY_DEV = HERE.parent
 
 NOTEBOOK_NAME = "cd_06_land_manual"
 
-# Column names are the SharePoint list column names from _docs/sharepoint-lists.md, because
-# the whole point is that both writers produce the same bronze. `ProjectKey` and `Editor`
-# arrive as plain text in a CSV and are wrapped into the {Title: ...} shape SharePoint
-# lookup and person columns produce, since that is what 30_manual_silver.sql reads.
+# THE LIST SPEC IS NOT WRITTEN HERE ANY MORE. It is derived from the man_* DDL in
+# sql/gold/40_man_tables.sql and 41_man_qc_tables.sql, via make_sharepoint - the same
+# source the provisioning script and the dataflow are generated from.
+#
+# It used to be a hand-kept dict, and it had drifted from gold on four of the nine tables:
+# man_Flags collected CostMgmtFlag / ScheduleFlag that gold has never had while missing the
+# three attestations it does, man_Milestones collected four single dates where gold wants
+# two spans, man_Survey never collected SurveyedParty, and man_DailyLogCompliance collected
+# LogsSubmitted where the scorecard scores LogsMissedSameDay. None of that errored. It
+# simply meant the CSV a person filled in could not fill the table the report reads.
 #
 # Types are what the CSV is CAST to. Anything unparseable becomes NULL and is caught by the
-# reject rules in 30_manual_silver.sql rather than failing the load - a typo in one cell of
-# one row must not stop the other nine lists.
+# reject rules in 30/31_*_silver.sql rather than failing the load - a typo in one cell of
+# one row must not stop the other sixteen lists.
+SQL_TO_SPARK = {"STRING": "string", "INT": "int", "DOUBLE": "double",
+                "DATE": "date", "BOOLEAN": "boolean"}
+
 LISTS: dict[str, list[tuple[str, str]]] = {
-    "wins": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("WinNumber", "int"),
-        ("Description", "string"), ("WinType", "string"),
-    ],
-    "risks": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("RiskNumber", "int"),
-        ("Description", "string"), ("ImpactCode", "string"), ("Mitigation", "string"),
-        ("OwnerRole", "string"), ("StatusCode", "string"),
-    ],
-    "priority_items": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("ItemNumber", "int"),
-        ("ScheduleItem", "string"), ("StatusCode", "string"), ("CriticalDelays", "string"),
-        ("RecoveryPlan", "string"), ("ForecastImpact", "string"), ("Notes", "string"),
-    ],
-    "flags": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("ProfitabilityCode", "string"),
-        ("CostMgmtFlag", "string"), ("ScheduleFlag", "string"), ("Notes", "string"),
-    ],
-    "survey": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("QuestionNumber", "int"),
-        # The workbook stores the six SCORES and not the question TEXT, so nobody now knows
-        # what was asked. This column is why the next survey will not have that problem.
-        ("QuestionText", "string"), ("Score", "int"),
-    ],
-    "safety_monthly": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("HoursWorked", "double"),
-        ("RecordableIncidents", "int"), ("Orientations", "int"), ("OtHours", "double"),
-    ],
-    "quality_monthly": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("Observations", "int"),
-        ("PunchlistItems", "int"), ("AvgDaysPastDue", "double"),
-        ("AvgDaysToClose", "double"),
-    ],
-    "milestones": [
-        ("ProjectKey", "string"), ("MilestoneName", "string"), ("ContractDate", "date"),
-        ("BaselineDate", "date"), ("ForecastDate", "date"), ("ActualDate", "date"),
-    ],
-    "daily_log_compliance": [
-        ("ProjectKey", "string"), ("MonthStart", "date"), ("LogsExpected", "int"),
-        ("LogsSubmitted", "int"),
-    ],
+    ms.csv_name(table): [(col, SQL_TO_SPARK[sql_type]) for col, sql_type in cols]
+    for table, cols in ms.tables().items()
 }
 
 # One example row per list, written into the template. A blank template gets filled in
@@ -105,18 +76,44 @@ LISTS: dict[str, list[tuple[str, str]]] = {
 EXAMPLES: dict[str, list[str]] = {
     "wins": ["26-001", "2026-07-01", "1", "Topped out two weeks early", "Realized"],
     "risks": ["26-001", "2026-07-01", "1", "Curtain wall lead time",
-              "High", "Expedite fabrication; weekly vendor call", "PM", "Open"],
-    "priority_items": ["26-001", "2026-07-01", "1", "Level 3 slab pour", "At Risk",
+              "HIGH", "Expedite fabrication; weekly vendor call", "PM", "IN_PROGRESS"],
+    "priority_items": ["26-001", "2026-07-01", "1", "Level 3 slab pour", "AT_RISK",
                        "Concrete delivery delayed 3 days", "Saturday pour",
                        "No impact to substantial completion", ""],
-    "flags": ["26-001", "2026-07-01", "On Target", "Yes", "Yes", ""],
+    "flags": ["26-001", "2026-07-01", "Within Range", "125000.0", "TRUE", "Rev 3",
+              "TRUE", "TRUE", "FALSE"],
     "survey": ["26-001", "2026-07-01", "1",
-               "How satisfied are you with communication?", "4"],
+               "How satisfied are you with communication?", "4", "ANONYMOUS"],
     "safety_monthly": ["26-001", "2026-07-01", "12500.0", "0", "18", "310.5"],
     "quality_monthly": ["26-001", "2026-07-01", "42", "17", "3.5", "9.2"],
-    "milestones": ["26-001", "Substantial Completion", "2027-03-31", "2027-03-31",
-                   "2027-04-14", ""],
-    "daily_log_compliance": ["26-001", "2026-07-01", "22", "21"],
+    "milestones": ["26-001", "A1042", "Substantial Completion", "2027-03-01",
+                   "2027-03-31", "2027-03-01", "2027-03-31", "TRUE"],
+    "daily_log_compliance": ["26-001", "2026-07-01", "22", "3"],
+
+    # PQP. Every code below is a real value from seed/qc_status_vocab.csv, and every key a
+    # real value from seed/qc_trades.csv or qc_gate_template.csv - because the example row
+    # is what people copy, and an example carrying a plausible-but-wrong code teaches the
+    # wrong vocabulary on day one.
+    "qc_dfow": ["26-001", "D-07", "Cast-in-place concrete frame", "CONCRETE_FORMWORK",
+                "3", "Pre-pour checklist and third-party survey", "Superintendent",
+                "IN_PROGRESS", ""],
+    "qc_itp": ["26-001", "ITP-014", "CONCRETE_FORMWORK", "Slab on grade pour",
+               "Compressive strength test", "28-day break >= 4000 psi", "Hold",
+               "QA Manager", "2026-07-14", "2026-07-14", "PASS", "COMPLETE", ""],
+    "qc_gate": ["26-001", "TCO-A2", "TCO", "SUBMITTED", "I. Aguire (PM)", "2026-09-01",
+                "2026-08-20", "", "", "Awaiting DOB NOW acceptance"],
+    "qc_special_inspection": ["26-001", "SI-006", "Structural steel welding", "SIA",
+                              "R. Patel", "YES", "YES", "2026-07-02", "2026-07-02",
+                              "2026-07-09", "CLOSED", ""],
+    "qc_commissioning": ["26-001", "CX-003", "Smoke purge fans", "HVAC", "MEP Manager",
+                         "2026-10-01", "", "NOT_STARTED", ""],
+    "qc_inspector_sign_in": ["26-001", "SI-2026-041", "2026-07-16", "T. Nguyen",
+                             "NYC_DOB", "Facade progress inspection", "Levels 4-6",
+                             "OBSERVATION_ONLY", "FALSE", ""],
+    "qc_checklist_result": ["26-001", "EXCAVATION", "EXCAVATION-001",
+                            "1_PREPARATORY", "PASS", "2026-07-08", "J. Alvarez", ""],
+    "qc_doh_result": ["26-001", "H-01", "OWNER_DOH_CONSULTANT", "VERIFIED", "2026-07-20",
+                      "QA Manager", "", ""],
 }
 
 
@@ -133,7 +130,7 @@ Generated by _local/deploy_manual.py - edit that, not this.
 import json
 from pyspark.sql import functions as F
 from pyspark.sql.types import (StructType, StructField, StringType, IntegerType,
-                               DoubleType, DateType, TimestampType)
+                               DoubleType, DateType, BooleanType, TimestampType)
 
 SPEC = {json.dumps(spec, indent=1)}
 EXAMPLES = {json.dumps(examples, indent=1)}
@@ -141,8 +138,8 @@ EXAMPLES = {json.dumps(examples, indent=1)}
 MANUAL_DIR = "Files/_manual"
 TEMPLATE_DIR = f"{{MANUAL_DIR}}/_templates"
 
-TYPES = {{"string": StringType(), "int": IntegerType(),
-          "double": DoubleType(), "date": DateType()}}
+TYPES = {{"string": StringType(), "int": IntegerType(), "double": DoubleType(),
+          "date": DateType(), "boolean": BooleanType()}}
 '''),
 
         cell('''
@@ -189,7 +186,7 @@ for name, cols in SPEC.items():
         source = "csv"
     else:
         # Empty but correctly typed. Silver and gold then run to completion and the report
-        # shows an honest blank - rather than the pipeline failing until all ten lists are
+        # shows an honest blank - rather than the pipeline failing until every list is
         # populated, which would mean it never runs at all.
         df = spark.createDataFrame([], schema)
         source = "empty"

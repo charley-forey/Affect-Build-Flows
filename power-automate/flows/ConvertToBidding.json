@@ -1,0 +1,1053 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "description": "Convert Job from Estimating to Bidding. Fires when a Job Register row is set to Stage = Bidding, finds the estimating folder by job number, creates 00 PROJECTS/YY-###-Project Name from the standard project template, then copies the estimating folder into 01-BIDDING/02-ESTIMATING underneath it. Trigger concurrency is pinned to 1.",
+  "parameters": {
+    "$connections": {
+      "defaultValue": {},
+      "type": "Object"
+    },
+    "$authentication": {
+      "defaultValue": {},
+      "type": "SecureObject"
+    },
+    "SiteUrl": {
+      "type": "String",
+      "defaultValue": "https://REPLACE-ME.sharepoint.com/sites/BUILD",
+      "metadata": {
+        "description": "PLACEHOLDER. The BUILD site. Must match provision-sharepoint-build.ps1. No trailing slash."
+      }
+    },
+    "EstimatingLibrary": {
+      "type": "String",
+      "defaultValue": "01 ESTIMATING"
+    },
+    "ProjectsLibrary": {
+      "type": "String",
+      "defaultValue": "00 PROJECTS"
+    },
+    "ProjectTemplate": {
+      "type": "String",
+      "defaultValue": "YY-000 STANDARD PROJECT TEMPLATE",
+      "metadata": {
+        "description": "OPEN QUESTION. The SOP writes this name with a literal 'YY'. If the real folder is '26-000 STANDARD PROJECT TEMPLATE' it has to be changed here every January, which is a footgun - confirm with the client and prefer a name with no year in it."
+      }
+    },
+    "BiddingEstimatingPath": {
+      "type": "String",
+      "defaultValue": "01-BIDDING/02-ESTIMATING",
+      "metadata": {
+        "description": "Where inside the new project folder the estimating tree lands. Straight from the SOP."
+      }
+    },
+    "JobRegisterList": {
+      "type": "String",
+      "defaultValue": "Job Register"
+    },
+    "TemplateDepthAllowance": {
+      "type": "Int",
+      "defaultValue": 200
+    }
+  },
+  "triggers": {
+    "When_a_job_is_marked_for_bidding": {
+      "type": "OpenApiConnection",
+      "description": "Existing row modified. Concurrency 1 for the same reason as the sibling flow, plus it stops a second edit racing a copy job that is still running.",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "runtimeConfiguration": {
+        "concurrency": {
+          "runs": 1
+        }
+      },
+      "inputs": {
+        "host": {
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnUpdatedItems",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+        },
+        "parameters": {
+          "dataset": "@parameters('SiteUrl')",
+          "table": "@parameters('JobRegisterList')"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "Main": {
+      "type": "Scope",
+      "runAfter": {},
+      "actions": {
+        "Site_Relative_Path": {
+          "type": "Compose",
+          "runAfter": {},
+          "inputs": "@concat('/', join(skip(split(parameters('SiteUrl'), '/'), 3), '/'))"
+        },
+        "Site_Origin": {
+          "type": "Compose",
+          "runAfter": {
+            "Site_Relative_Path": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(split(parameters('SiteUrl'), '/')[0], '//', split(parameters('SiteUrl'), '/')[2])"
+        },
+        "Only_Unconverted_Bidding_Rows": {
+          "type": "If",
+          "description": "THE LOOP GUARD. This flow writes ProjectFolderUrl back to the row it was triggered by, which re-fires the trigger. Requiring ProjectFolderUrl to be empty is what makes that second pass a no-op instead of an infinite loop.",
+          "runAfter": {
+            "Site_Origin": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "not": {
+                  "equals": [
+                    "@triggerOutputs()?['body/Stage']?['Value']",
+                    "Bidding"
+                  ]
+                }
+              },
+              {
+                "not": {
+                  "equals": [
+                    "@empty(coalesce(triggerOutputs()?['body/ProjectFolderUrl']?['Url'], ''))",
+                    true
+                  ]
+                }
+              },
+              {
+                "equals": [
+                  "@empty(coalesce(triggerOutputs()?['body/JobNumber'], ''))",
+                  true
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Exit_Not_Applicable": {
+              "type": "Terminate",
+              "runAfter": {},
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "List_Estimating_Library": {
+          "type": "OpenApiConnection",
+          "description": "The SOP converts by NUMBER, so the folder is found by its E-YY-###- prefix rather than by rebuilding the name from the project title. A title edited after setup would otherwise stop matching.",
+          "runAfter": {
+            "Only_Unconverted_Bidding_Rows": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', concat(outputs('Site_Relative_Path'), '/', parameters('EstimatingLibrary')), ''')?$expand=Folders&$select=Folders/Name,Folders/ServerRelativeUrl')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Matching_Estimating_Folder": {
+          "type": "Compose",
+          "runAfter": {
+            "List_Estimating_Library": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@first(filter(coalesce(body('List_Estimating_Library')?['d']?['Folders']?['results'], json('[]')), startsWith(item()?['Name'], concat('E-', triggerOutputs()?['body/JobNumber'], '-'))))"
+        },
+        "No_Estimating_Folder": {
+          "type": "If",
+          "description": "Nothing to convert. Fail loudly before anything is created in 00 PROJECTS.",
+          "runAfter": {
+            "Matching_Estimating_Folder": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@empty(coalesce(outputs('Matching_Estimating_Folder')?['Name'], ''))",
+              true
+            ]
+          },
+          "actions": {
+            "Record_No_Estimating_Folder": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/CopyJobStatus": "Not attempted",
+                  "item/ErrorDetail": "@{concat('No folder in ', parameters('EstimatingLibrary'), ' starts with E-', triggerOutputs()?['body/JobNumber'], '-. Either the estimating setup never completed for this job, or the folder was renamed by hand.')}"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_No_Estimating_Folder": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_No_Estimating_Folder": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "EstimatingFolderNotFound",
+                  "message": "@{concat('No estimating folder for job ', triggerOutputs()?['body/JobNumber'])}"
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Project_Folder_Name": {
+          "type": "Compose",
+          "description": "Drop the leading 'E-'. E-26-025-Riverside Depot becomes 26-025-Riverside Depot. The name is already sanitised - it came out of the estimating flow - so nothing is stripped again here.",
+          "runAfter": {
+            "No_Estimating_Folder": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@substring(outputs('Matching_Estimating_Folder')?['Name'], 2)"
+        },
+        "Validate_Prefix": {
+          "type": "If",
+          "description": "substring(name, 2) is only correct if the name really starts with 'E-'. Check rather than assume, or a hand-renamed folder silently loses two real characters.",
+          "runAfter": {
+            "Project_Folder_Name": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "not": {
+                  "equals": [
+                    "@startsWith(outputs('Matching_Estimating_Folder')?['Name'], 'E-')",
+                    true
+                  ]
+                }
+              },
+              {
+                "greaterOrEquals": [
+                  "@add(length(concat(parameters('SiteUrl'), '/', parameters('ProjectsLibrary'), '/', outputs('Project_Folder_Name'), '/', parameters('BiddingEstimatingPath'))), parameters('TemplateDepthAllowance'))",
+                  400
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Record_Bad_Prefix": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/CopyJobStatus": "Not attempted",
+                  "item/ErrorDetail": "@{concat('Estimating folder \"', outputs('Matching_Estimating_Folder')?['Name'], '\" either does not start with E- or the resulting project path would breach SharePoint''s 400-character URL limit once 01-BIDDING/02-ESTIMATING is created under it.')}"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Bad_Prefix": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Bad_Prefix": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "InvalidEstimatingFolderName",
+                  "message": "Estimating folder name is not in the E-YY-###-Project Name form, or the derived project path is too long."
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Project_Folder_Server_Relative": {
+          "type": "Compose",
+          "runAfter": {
+            "Validate_Prefix": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(outputs('Site_Relative_Path'), '/', parameters('ProjectsLibrary'), '/', outputs('Project_Folder_Name'))"
+        },
+        "Project_Folder_Absolute": {
+          "type": "Compose",
+          "runAfter": {
+            "Project_Folder_Server_Relative": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(outputs('Site_Origin'), outputs('Project_Folder_Server_Relative'))"
+        },
+        "Check_Project_Folder_Exists": {
+          "type": "OpenApiConnection",
+          "description": "Idempotency probe. 404 is the normal path, so the next action runs after Failed too.",
+          "runAfter": {
+            "Project_Folder_Absolute": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', replace(outputs('Project_Folder_Server_Relative'), '''', ''''''), ''')')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Project_Folder_Already_Exists": {
+          "type": "If",
+          "runAfter": {
+            "Check_Project_Folder_Exists": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Check_Project_Folder_Exists')?['statusCode']",
+              200
+            ]
+          },
+          "actions": {
+            "Record_Project_Folder_Exists": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
+                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/CompletedAt": "@{utcNow()}",
+                  "item/CopyJobStatus": "Skipped - project folder already existed, nothing copied"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Project_Folder_Exists": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Project_Folder_Exists": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Create_Project_Folder": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Project_Folder_Already_Exists": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "POST",
+              "parameters/uri": "_api/web/folders",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose",
+                "Content-Type": "application/json;odata=verbose"
+              },
+              "parameters/body": {
+                "__metadata": {
+                  "type": "SP.Folder"
+                },
+                "ServerRelativeUrl": "@{outputs('Project_Folder_Server_Relative')}"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "List_Project_Template_Children": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Create_Project_Folder": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', replace(concat(outputs('Site_Relative_Path'), '/', parameters('ProjectsLibrary'), '/', parameters('ProjectTemplate')), '''', ''''''), ''')?$expand=Folders,Files&$select=Folders/ServerRelativeUrl,Files/ServerRelativeUrl')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Build_Template_Uris": {
+          "type": "Compose",
+          "runAfter": {
+            "List_Project_Template_Children": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@union(select(coalesce(body('List_Project_Template_Children')?['d']?['Folders']?['results'], json('[]')), concat(outputs('Site_Origin'), item()?['ServerRelativeUrl'])), select(coalesce(body('List_Project_Template_Children')?['d']?['Files']?['results'], json('[]')), concat(outputs('Site_Origin'), item()?['ServerRelativeUrl'])))"
+        },
+        "Copy_Project_Template": {
+          "type": "OpenApiConnection",
+          "description": "CreateCopyJobs, not the connector's Copy folder action. The standard project template is the deepest tree in this solution and is exactly where the connector action throttles.",
+          "runAfter": {
+            "Build_Template_Uris": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "POST",
+              "parameters/uri": "_api/site/CreateCopyJobs",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose",
+                "Content-Type": "application/json;odata=verbose"
+              },
+              "parameters/body": {
+                "exportObjectUris": "@outputs('Build_Template_Uris')",
+                "destinationUri": "@{outputs('Project_Folder_Absolute')}",
+                "options": {
+                  "IgnoreVersionHistory": true,
+                  "IsMoveMode": false,
+                  "AllowSchemaMismatch": true,
+                  "AllowSmallerVersionLimitOnDestination": true,
+                  "NameConflictBehavior": 0
+                }
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Template_Copy_Info": {
+          "type": "Compose",
+          "runAfter": {
+            "Copy_Project_Template": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@first(body('Copy_Project_Template')?['d']?['CreateCopyJobs']?['results'])"
+        },
+        "Wait_For_Template_Copy": {
+          "type": "Until",
+          "description": "JobState 2 = queued, 4 = processing, 0 = finished.",
+          "runAfter": {
+            "Template_Copy_Info": [
+              "Succeeded"
+            ]
+          },
+          "expression": "@equals(coalesce(body('Get_Template_Copy_Progress')?['d']?['GetCopyJobProgress']?['JobState'], 4), 0)",
+          "limit": {
+            "count": 120,
+            "timeout": "PT1H"
+          },
+          "actions": {
+            "Template_Poll_Delay": {
+              "type": "Wait",
+              "runAfter": {},
+              "inputs": {
+                "interval": {
+                  "count": 20,
+                  "unit": "Second"
+                }
+              }
+            },
+            "Get_Template_Copy_Progress": {
+              "type": "OpenApiConnection",
+              "runAfter": {
+                "Template_Poll_Delay": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "parameters/method": "POST",
+                  "parameters/uri": "_api/site/GetCopyJobProgress",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=verbose",
+                    "Content-Type": "application/json;odata=verbose"
+                  },
+                  "parameters/body": {
+                    "copyJobInfo": "@outputs('Template_Copy_Info')"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          }
+        },
+        "Template_Copy_Logs": {
+          "type": "Compose",
+          "runAfter": {
+            "Wait_For_Template_Copy": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@coalesce(body('Get_Template_Copy_Progress')?['d']?['GetCopyJobProgress']?['Logs'], json('[]'))"
+        },
+        "Template_Copy_Failed": {
+          "type": "If",
+          "runAfter": {
+            "Template_Copy_Logs": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "equals": [
+                  "@contains(toLower(string(outputs('Template_Copy_Logs'))), 'jobfatalerror')",
+                  true
+                ]
+              },
+              {
+                "equals": [
+                  "@contains(toLower(string(outputs('Template_Copy_Logs'))), 'joberror')",
+                  true
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Record_Template_Copy_Error": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
+                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/CopyJobStatus": "JobError - standard project template copy",
+                  "item/ErrorDetail": "@{substring(string(outputs('Template_Copy_Logs')), 0, min(8000, length(string(outputs('Template_Copy_Logs')))))}"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Template_Copy_Error": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Template_Copy_Error": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "TemplateCopyJobError",
+                  "message": "The standard project template copy finished with errors - see ErrorDetail on the Job Register row."
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Bidding_Estimating_Server_Relative": {
+          "type": "Compose",
+          "runAfter": {
+            "Template_Copy_Failed": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(outputs('Project_Folder_Server_Relative'), '/', parameters('BiddingEstimatingPath'))"
+        },
+        "Check_Bidding_Estimating_Exists": {
+          "type": "OpenApiConnection",
+          "description": "It should have arrived with the template. Probing instead of assuming means a template missing 01-BIDDING/02-ESTIMATING costs one extra folder create, not a failed run.",
+          "runAfter": {
+            "Bidding_Estimating_Server_Relative": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', replace(outputs('Bidding_Estimating_Server_Relative'), '''', ''''''), ''')')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Create_Bidding_Estimating_If_Missing": {
+          "type": "If",
+          "runAfter": {
+            "Check_Bidding_Estimating_Exists": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "expression": {
+            "not": {
+              "equals": [
+                "@outputs('Check_Bidding_Estimating_Exists')?['statusCode']",
+                200
+              ]
+            }
+          },
+          "actions": {
+            "Create_Bidding_Folder": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "parameters/method": "POST",
+                  "parameters/uri": "@{concat('_api/web/folders/AddUsingPath(DecodedUrl=@u)?@u=''', replace(outputs('Bidding_Estimating_Server_Relative'), '''', ''''''), '''')}",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=verbose",
+                    "Content-Type": "application/json;odata=verbose"
+                  },
+                  "parameters/body": {}
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "List_Estimating_Job_Children": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Create_Bidding_Estimating_If_Missing": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', replace(outputs('Matching_Estimating_Folder')?['ServerRelativeUrl'], '''', ''''''), ''')?$expand=Folders,Files&$select=Folders/ServerRelativeUrl,Files/ServerRelativeUrl')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Build_Estimating_Uris": {
+          "type": "Compose",
+          "runAfter": {
+            "List_Estimating_Job_Children": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@union(select(coalesce(body('List_Estimating_Job_Children')?['d']?['Folders']?['results'], json('[]')), concat(outputs('Site_Origin'), item()?['ServerRelativeUrl'])), select(coalesce(body('List_Estimating_Job_Children')?['d']?['Files']?['results'], json('[]')), concat(outputs('Site_Origin'), item()?['ServerRelativeUrl'])))"
+        },
+        "Estimating_Job_Is_Empty": {
+          "type": "If",
+          "description": "An empty estimating folder is legal - nobody had to put anything in it. Record it and finish, rather than sending CreateCopyJobs an empty array, which 400s.",
+          "runAfter": {
+            "Build_Estimating_Uris": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@empty(outputs('Build_Estimating_Uris'))",
+              true
+            ]
+          },
+          "actions": {
+            "Record_Empty_Estimating": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
+                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/CompletedAt": "@{utcNow()}",
+                  "item/CopyJobStatus": "Completed - project template copied, estimating folder was empty"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Empty_Estimating": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Empty_Estimating": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Copy_Estimating_Into_Bidding": {
+          "type": "OpenApiConnection",
+          "description": "Second CreateCopyJobs. Destination is 01-BIDDING/02-ESTIMATING inside the new project folder, straight from the SOP.",
+          "runAfter": {
+            "Estimating_Job_Is_Empty": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "POST",
+              "parameters/uri": "_api/site/CreateCopyJobs",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose",
+                "Content-Type": "application/json;odata=verbose"
+              },
+              "parameters/body": {
+                "exportObjectUris": "@outputs('Build_Estimating_Uris')",
+                "destinationUri": "@{concat(outputs('Site_Origin'), outputs('Bidding_Estimating_Server_Relative'))}",
+                "options": {
+                  "IgnoreVersionHistory": true,
+                  "IsMoveMode": false,
+                  "AllowSchemaMismatch": true,
+                  "AllowSmallerVersionLimitOnDestination": true,
+                  "NameConflictBehavior": 0
+                }
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Estimating_Copy_Info": {
+          "type": "Compose",
+          "runAfter": {
+            "Copy_Estimating_Into_Bidding": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@first(body('Copy_Estimating_Into_Bidding')?['d']?['CreateCopyJobs']?['results'])"
+        },
+        "Wait_For_Estimating_Copy": {
+          "type": "Until",
+          "runAfter": {
+            "Estimating_Copy_Info": [
+              "Succeeded"
+            ]
+          },
+          "expression": "@equals(coalesce(body('Get_Estimating_Copy_Progress')?['d']?['GetCopyJobProgress']?['JobState'], 4), 0)",
+          "limit": {
+            "count": 120,
+            "timeout": "PT1H"
+          },
+          "actions": {
+            "Estimating_Poll_Delay": {
+              "type": "Wait",
+              "runAfter": {},
+              "inputs": {
+                "interval": {
+                  "count": 20,
+                  "unit": "Second"
+                }
+              }
+            },
+            "Get_Estimating_Copy_Progress": {
+              "type": "OpenApiConnection",
+              "runAfter": {
+                "Estimating_Poll_Delay": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "parameters/method": "POST",
+                  "parameters/uri": "_api/site/GetCopyJobProgress",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=verbose",
+                    "Content-Type": "application/json;odata=verbose"
+                  },
+                  "parameters/body": {
+                    "copyJobInfo": "@outputs('Estimating_Copy_Info')"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          }
+        },
+        "Estimating_Copy_Logs": {
+          "type": "Compose",
+          "runAfter": {
+            "Wait_For_Estimating_Copy": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@coalesce(body('Get_Estimating_Copy_Progress')?['d']?['GetCopyJobProgress']?['Logs'], json('[]'))"
+        },
+        "Estimating_Copy_Failed": {
+          "type": "If",
+          "runAfter": {
+            "Estimating_Copy_Logs": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "equals": [
+                  "@contains(toLower(string(outputs('Estimating_Copy_Logs'))), 'jobfatalerror')",
+                  true
+                ]
+              },
+              {
+                "equals": [
+                  "@contains(toLower(string(outputs('Estimating_Copy_Logs'))), 'joberror')",
+                  true
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Record_Estimating_Copy_Error": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
+                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/CopyJobStatus": "JobError - estimating folder copy",
+                  "item/ErrorDetail": "@{substring(string(outputs('Estimating_Copy_Logs')), 0, min(8000, length(string(outputs('Estimating_Copy_Logs')))))}"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Estimating_Copy_Error": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Estimating_Copy_Error": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "EstimatingCopyJobError",
+                  "message": "The estimating folder copy finished with errors - see ErrorDetail on the Job Register row."
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Update_Job_Register": {
+          "type": "OpenApiConnection",
+          "description": "Writing ProjectFolderUrl is both the audit record and the idempotency flag - it is what Only_Unconverted_Bidding_Rows tests on the re-trigger this very write causes.",
+          "runAfter": {
+            "Estimating_Copy_Failed": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PatchItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "table": "@parameters('JobRegisterList')",
+              "id": "@triggerOutputs()?['body/ID']",
+              "item/Stage/Value": "Bidding",
+              "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
+              "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+              "item/CompletedAt": "@{utcNow()}",
+              "item/CopyJobStatus": "@{concat('Completed - ', string(length(outputs('Build_Template_Uris'))), ' template items and ', string(length(outputs('Build_Estimating_Uris'))), ' estimating items copied')}",
+              "item/ErrorDetail": ""
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "Handle_Failure": {
+      "type": "Scope",
+      "description": "Catches throttling, 500s and the Until loops timing out. Note it does NOT write ProjectFolderUrl, so a fixed problem can be retried by setting Stage back to Bidding.",
+      "runAfter": {
+        "Main": [
+          "Failed",
+          "TimedOut",
+          "Skipped"
+        ]
+      },
+      "actions": {
+        "Record_Failure": {
+          "type": "OpenApiConnection",
+          "runAfter": {},
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PatchItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "table": "@parameters('JobRegisterList')",
+              "id": "@triggerOutputs()?['body/ID']",
+              "item/Stage/Value": "Failed",
+              "item/CopyJobStatus": "Failed",
+              "item/ErrorDetail": "@{substring(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))), 0, min(8000, length(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))))))}"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    }
+  },
+  "outputs": {
+    "ProjectFolderUrl": {
+      "type": "String",
+      "value": "@{outputs('Project_Folder_Absolute')}"
+    }
+  }
+}

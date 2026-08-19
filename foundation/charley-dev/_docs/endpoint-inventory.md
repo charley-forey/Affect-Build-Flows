@@ -15,11 +15,11 @@ lakehouses, and which are **genuinely missing**.
 
 | | Count |
 |---|---|
-| Endpoints in the registry | **36** |
+| Endpoints in the registry | **42** |
 | Already landing in Bronze/Silver today | 13 |
-| **New — the actual gap this build closes** | **23** |
-| Incremental (verified `filters[updated_at]`) | 7 |
-| Requiring the `Procore-Company-Id` header (v2.0+) | 1 |
+| **New — the actual gap this build closes** | **29** |
+| Incremental (verified `filters[updated_at]`) | 8 |
+| Requiring the `Procore-Company-Id` header (v2.0+) | 42 |
 
 ## The gap — what does not exist today
 
@@ -44,11 +44,12 @@ warehouse. Each one is a section of the workbook that is hand-typed.
 
 ## Incremental loading
 
-Only 7 endpoints declare a watermark filter, and only where the
+Only 8 endpoints declare a watermark filter, and only where the
 cheatsheet confirms the endpoint accepts `filters[updated_at]`:
 
 - `projects`
 - `prime_contracts`
+- `direct_cost_line_items`
 - `potential_change_orders`
 - `change_order_requests`
 - `incidents`
@@ -68,26 +69,30 @@ load is a `MERGE` on the natural key, not an append.
 | `projects` | `/rest/v1.0/projects` | company | 1.0 | incremental | Bronze.procore_projects_raw (18) |
 | `vendors` | `/rest/v1.0/vendors` | company | 1.0 | full | Bronze.procore_vendors_raw (1,075) |
 | `project_vendors` | `/rest/v1.0/projects/{project_id}/vendors` | project | 1.0 | full | Bronze.procore_project_vendors_raw (1,086) |
-| `cost_codes` | `/rest/v1.0/cost_codes` | company | 1.0 | full | Bronze.procore_cost_codes_raw (4,765) |
+| `company_insurances` | `/rest/v1.0/companies/{company_id}/insurances` | company | 1.0 | full | **new** |
+| `cost_codes` | `/rest/v1.0/cost_codes?project_id={project_id}` | project | 1.0 | full | Bronze.procore_cost_codes_raw (4,765) |
 | `standard_cost_codes` | `/rest/v1.0/standard_cost_codes` | company | 1.0 | full | **new** |
-| `prime_contracts` | `/rest/v1.0/prime_contracts` | project | 1.0 | incremental | Bronze.procore_prime_contracts_raw (20) |
-| `requisitions` | `/rest/v1.1/requisitions` | project | 1.1 | full | Bronze.procore_requisitions_raw (556) |
-| `work_order_contracts` | `/rest/v1.0/work_order_contracts` | project | 1.0 | full | Bronze.procore_work_order_line_items (241) |
-| `commitments` | `/rest/v1.0/commitments` | project | 1.0 | full | Bronze.procore_commitments_raw (264) |
+| `prime_contracts` | `/rest/v1.0/prime_contracts?project_id={project_id}` | project | 1.0 | incremental | Bronze.procore_prime_contracts_raw (20) |
+| `requisitions` | `/rest/v1.1/requisitions?project_id={project_id}` | project | 1.1 | full | Bronze.procore_requisitions_raw (556) |
+| `work_order_contracts` | `/rest/v1.0/work_order_contracts?project_id={project_id}` | project | 1.0 | full | Bronze.procore_work_order_line_items (241) |
+| `purchase_order_contracts` | `/rest/v1.0/purchase_order_contracts?project_id={project_id}` | project | 1.0 | full | **new** |
+| `commitments` | `/rest/v1.0/commitments?project_id={project_id}` | project | 1.0 | full | Bronze.procore_commitments_raw (264) |
 | `commitment_contracts` | `/rest/v2.0/companies/{company_id}/projects/{project_id}/commitment_contracts` | project | 2.0 | full | **new** |
 | `budget` | `/rest/v1.0/projects/{project_id}/budget` | project | 1.0 | full | Bronze.procore_budgets_raw (808) |
-| `budget_views` | `/rest/v1.0/budget_views` | project | 1.0 | full | **new** |
+| `budget_views` | `/rest/v1.0/budget_views?project_id={project_id}` | project | 1.0 | full | **new** |
+| `prime_change_orders` | `/rest/v1.0/change_order_packages?project_id={project_id}` | project | 1.0 | full | **new** |
 | `direct_costs` | `/rest/v1.1/projects/{project_id}/direct_costs` | project | 1.1 | full | **new** |
-| `potential_change_orders` | `/rest/v1.0/potential_change_orders` | project | 1.0 | incremental | Bronze.procore_prime_change_orders (2,270) |
-| `change_order_requests` | `/rest/v1.0/change_order_requests` | project | 1.0 | incremental | **new** |
+| `direct_cost_line_items` | `/rest/v1.0/projects/{project_id}/direct_costs/line_items` | project | 1.0 | incremental | **new** |
+| `potential_change_orders` | `/rest/v1.0/potential_change_orders?project_id={project_id}` | project | 1.0 | incremental | Bronze.procore_prime_change_orders (2,270) |
+| `change_order_requests` | `/rest/v1.0/change_order_requests?project_id={project_id}` | project | 1.0 | incremental | **new** |
 | `change_order_statuses` | `/rest/v1.0/change_order/statuses` | company | 1.0 | full | **new** |
 | `rfis` | `/rest/v1.0/projects/{project_id}/rfis` | project | 1.0 | full | **new** |
 | `rfi_statuses` | `/rest/v1.0/projects/{project_id}/rfis/filter_options/status` | project | 1.0 | full | **new** |
 | `rfi_priorities` | `/rest/v1.0/projects/{project_id}/rfis/filter_options/priority` | project | 1.0 | full | **new** |
 | `submittals` | `/rest/v1.1/projects/{project_id}/submittals` | project | 1.1 | full | Bronze.procore_submittals_raw (2,242) |
-| `observations` | `/rest/v1.0/observations/items` | project | 1.0 | full | **new** |
+| `observations` | `/rest/v1.0/observations/items?project_id={project_id}` | project | 1.0 | full | **new** |
 | `observation_types` | `/rest/v1.0/observations/types` | company | 1.0 | full | **new** |
-| `punch_items` | `/rest/v1.0/punch_items` | project | 1.0 | full | **new** |
+| `punch_items` | `/rest/v1.0/punch_items?project_id={project_id}` | project | 1.0 | full | **new** |
 | `punch_item_types` | `/rest/v1.0/punch_item_types` | company | 1.0 | full | **new** |
 | `inspection_logs` | `/rest/v1.0/projects/{project_id}/inspection_logs` | project | 1.0 | full | **new** |
 | `incidents` | `/rest/v1.0/projects/{project_id}/incidents` | project | 1.0 | incremental | **new** |
@@ -96,10 +101,12 @@ load is a `MERGE` on the natural key, not an append.
 | `incident_severity_levels` | `/rest/v1.0/companies/{company_id}/incidents/severity_levels` | company | 1.0 | incremental | **new** |
 | `manpower_daily_totals` | `/rest/v1.0/projects/{project_id}/manpower_logs/daily_totals` | project | 1.0 | full | **new** |
 | `manpower_logs` | `/rest/v1.0/projects/{project_id}/manpower_logs` | project | 1.0 | full | **new** |
-| `daily_log_headers` | `/rest/v1.0/projects/{project_id}/daily_log_headers` | project | 1.0 | full | **new** |
+| `daily_log_headers` | `/rest/v1.0/projects/{project_id}/daily_logs` | project | 1.0 | full | **new** |
 | `schedule` | `/rest/v1.0/projects/{project_id}/schedule` | project | 1.0 | full | **new** |
 | `prime_contract_line_items` | `/rest/v1.0/prime_contracts/{parent_id}/line_items` | parent | 1.0 | incremental | Bronze.procore_prime_contract_line_items (317) |
 | `payment_applications` | `/rest/v1.0/prime_contracts/{parent_id}/payment_applications` | parent | 1.0 | full | Bronze.procore_payment_applications_raw (108) |
+| `work_order_contract_line_items` | `/rest/v1.0/work_order_contracts/{parent_id}/line_items` | parent | 1.0 | full | **new** |
+| `purchase_order_contract_line_items` | `/rest/v1.0/purchase_order_contracts/{parent_id}/line_items` | parent | 1.0 | full | **new** |
 | `budget_detail_rows` | `/rest/v1.0/budget_views/{parent_id}/detail_rows` | parent | 1.0 | full | **new** |
 
 ## Notes
@@ -111,7 +118,7 @@ load is a `MERGE` on the natural key, not an append.
   v1.x takes the company in the path or query. Sending it to the wrong version is the
   most common cause of an unexplained 403, so the rule is implemented once and asserted
   in `_local/tests/test_extractor_compat.py`.
-- **Parent-scoped endpoints** (`prime_contract_line_items, payment_applications, budget_detail_rows`) need
+- **Parent-scoped endpoints** (`prime_contract_line_items, payment_applications, work_order_contract_line_items, purchase_order_contract_line_items, budget_detail_rows`) need
   an id from a prior call. The registry declares the dependency and the runner
   topologically orders it, so a parent is always fetched first.
 - **Active projects only.** The existing notebooks loop every project on every run; most

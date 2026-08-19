@@ -318,6 +318,17 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_punch_items            # cheatsheet:92
 
+  # KNOWN 403 ON THIS TENANT, kept deliberately rather than deleted.
+  #
+  # /punch_item_types returns 403 for our service account today. It is a company-scope
+  # reference list, so the failure costs one lookup table and nothing downstream: silver
+  # derives the Punch & RCL class from punch_item_type.name on the item itself
+  # (24_qc_procore_silver.sql), not from this list.
+  #
+  # It stays in the registry because deleting it turns a known permission gap into an
+  # invisible one - the next person to want punch types would re-derive the endpoint, hit
+  # the same 403 and start debugging their auth. When the tool permission is granted this
+  # starts working with no code change, which is the point of a registry.
   - name: punch_item_types
     path: /rest/v1.0/punch_item_types
     scope: company
@@ -329,6 +340,40 @@ endpoints:
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_inspection_logs        # cheatsheet:95
+
+  # ==========================================================================
+  # PQP - the Project Quality Plan subject area
+  # ==========================================================================
+  #
+  # Procore is the client's MANDATORY system of record for quality; their own QA/QC
+  # workbook says so. So NCRs, punch items and submittals are read from the API and are not
+  # SharePoint lists - `observations`, `punch_items` and `submittals` above already land
+  # them, and 24_qc_procore_silver.sql maps their statuses onto the workbook's vocabulary.
+  # Nothing new is needed for those, which is the registry paying off.
+  #
+  # This is what the PQP work ADDS: Procore Inspections. A checklist list IS a per-project
+  # instance of a checklist template, which is exactly what the workbook's 26 trade sheets
+  # are - so this is the endpoint that could eventually retire man_QcChecklistResult
+  # altogether. Landed now so that comparison is made against real data rather than argued
+  # about. See _docs/pqp-solution.md.
+  - name: checklist_lists
+    path: /rest/v1.0/checklist/lists?project_id={project_id}
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_checklist_lists        # cheatsheet:96
+
+  # The checklist's individual line items - the per-item pass/fail the trade sheets record
+  # by hand. Parent-scoped on checklist_lists, so it costs one call per inspection rather
+  # than one per project; against a 600/hour limit that is the difference between running
+  # nightly and not running.
+  - name: checklist_list_items
+    path: /rest/v1.0/checklist/lists/{parent_id}/items
+    scope: parent
+    api_version: "1.0"
+    parent:
+      endpoint: checklist_lists
+      field: id
+    bronze_table: cd_bronze_procore_checklist_list_items
 
   # ==========================================================================
   # Field ops - the current gap. Feeds fct_SafetyMonthly, fct_ManpowerDaily, fct_DailyLog.

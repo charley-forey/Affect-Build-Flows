@@ -28,7 +28,10 @@ CHECKS: list[str] = []
 # hand-named file while the deploy runs six is not testing the deploy. 20_fieldops_silver
 # and 21_financial_silver were both invisible here until this became a glob.
 SILVER_DIR = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
-SILVER_SQL = sorted(p for p in SILVER_DIR.glob("*.sql") if p.name[:2] not in ("00", "01", "30"))
+# 30_manual_silver.sql and 31_qc_manual_silver.sql are IN now, matching deploy_silver.py.
+# They were excluded while the manual bronze tables did not exist; cd_06_land_manual
+# creates them, so the parsers are deployed and must be tested.
+SILVER_SQL = sorted(p for p in SILVER_DIR.glob("*.sql") if p.name[:2] not in ("00", "01"))
 SWITCH_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "silver" / "01_source_views_cd.sql"
 
 
@@ -243,6 +246,20 @@ BRONZE = {
                           "license_number": "", "labor_union": "",
                           "project_ids": ["7", "999"]}, project_id="7"),
     ],
+    # Procore Inspections. The one genuinely new payload the PQP work landed, and the
+    # candidate that could eventually retire the 26 hand-kept trade checklist sheets -
+    # it IS a per-project instance of a checklist template.
+    "cd_bronze_procore_checklist_lists": [
+        bronze_row("IN1", {"id": "IN1", "number": "1", "name": "  Slab pour pre-check  ",
+                           "inspection_type": {"name": "Quality"},
+                           "list_template": {"name": "Concrete Pre-Pour"},
+                           "trade": {"name": "  Concrete Formwork  "},
+                           "inspector": {"name": "J. Alvarez"}, "status": "closed",
+                           "inspection_date": "2025-05-08", "due_date": "2025-05-08",
+                           "percent_complete": "100.0"}, project_id="7"),
+        # No id: REJECTED by the WHERE, not silently typed into a NULL-keyed row.
+        bronze_row("", {"name": "Broken inspection"}, project_id="7"),
+    ],
     "cd_bronze_procore_rfis": [
         bronze_row("R1", {"id": "R1", "number": "RFI-1", "subject": "  Slab edge  ",
                           "status": "Open", "priority": "High",
@@ -258,6 +275,68 @@ BRONZE = {
 COLUMNS = "_key, _project_id, payload, _ingested_at, _batch_id"
 
 
+# --------------------------------------------------------------------------
+# Manual bronze - a DIFFERENT shape, which is exactly why it needs its own fixtures.
+#
+# The Procore tables above hold one JSON string. The manual tables hold one typed column
+# per list column, with ProjectKey and Editor as SharePoint's {Title: ...} struct. A stub
+# of NULL scalars cannot satisfy `ProjectKey.Title`, which is why these parsers went
+# untested for as long as they did.
+#
+# GENERATED from the same two sources the pipeline uses - make_sharepoint.tables() for the
+# columns and deploy_manual.EXAMPLES for the values - rather than hand-written. Seventeen
+# hand-kept fixtures is seventeen more things to forget when a column is added, and the
+# failure would be silent: the parser would still run, just not over the new column.
+#
+# TWO ROWS PER LIST. Project '7' exists in cd_silver_projects and must survive; '26-001'
+# does not and must be rejected. That pair is the whole point of the silver layer here.
+# --------------------------------------------------------------------------
+GOOD_PROJECT = "7"
+BAD_PROJECT = "26-001"
+
+
+NULL_AS = {"STRING": "VARCHAR", "INT": "INTEGER", "DOUBLE": "DOUBLE",
+           "DATE": "DATE", "BOOLEAN": "BOOLEAN"}
+
+
+def _literal(value: str, sql_type: str) -> str:
+    value = (value or "").strip()
+    if value == "":
+        # A bare NULL comes out INTEGER, and TRIM(INTEGER) is a binder error rather than
+        # the empty column it is meant to stand for.
+        return f"CAST(NULL AS {NULL_AS[sql_type]})"
+    if sql_type == "STRING":
+        return "'" + value.replace("'", "''") + "'"
+    if sql_type == "DATE":
+        return f"DATE '{value}'"
+    if sql_type == "BOOLEAN":
+        return value.upper()
+    return f"CAST('{value}' AS {'INT' if sql_type == 'INT' else 'DOUBLE'})"
+
+
+def manual_bronze() -> dict[str, str]:
+    """cd_bronze_man_* table name -> the CREATE statement that fixtures it."""
+    import deploy_manual as dm
+    import make_sharepoint as ms
+
+    out: dict[str, str] = {}
+    for table, cols in ms.tables().items():
+        example = dm.EXAMPLES[ms.csv_name(table)]
+        names = ", ".join(c for c, _ in cols) + ", Modified, Editor"
+        rows = []
+        for project in (GOOD_PROJECT, BAD_PROJECT):
+            values = [f"{{'Title': '{project}'}}"]
+            values += [_literal(v, t) for (c, t), v in zip(cols, example) if c != "ProjectKey"]
+            values.append("TIMESTAMP '2026-08-01 12:00:00'")
+            values.append("{'Title': 'csv:fixture'}")
+            rows.append("(" + ", ".join(values) + ")")
+        out[ms.bronze_table(table)] = (
+            f"CREATE OR REPLACE TABLE {ms.bronze_table(table)} AS "
+            f"SELECT * FROM (VALUES {', '.join(rows)}) AS t({names})"
+        )
+    return out
+
+
 def build():
     import duckdb
 
@@ -269,6 +348,8 @@ def build():
             f"CREATE OR REPLACE TABLE {table} AS "
             f"SELECT * FROM (VALUES {', '.join(rows)}) AS t({COLUMNS})"
         )
+    for statement in manual_bronze().values():
+        con.execute(statement)
     for path in SILVER_SQL:
         for statement in split_statements(path.read_text(encoding="utf-8")):
             try:
@@ -534,10 +615,90 @@ def test_commitments(con) -> None:
                     "WHERE line_item_id='CL2'") == "PurchaseOrderContract"
     check("holder_type is kept so colliding contract ids cannot cross-join")
 
+def test_manual_parsers(con) -> None:
+    """30_manual_silver.sql and 31_qc_manual_silver.sql - the parsers that were never run.
+
+    Both were excluded from the deploy and from this suite while the manual bronze tables
+    did not exist. They exist (cd_06_land_manual creates them), so these run now, and the
+    thing worth asserting is that a hand-typed row survives the trip and a bad one does not.
+    """
+    import make_sharepoint as ms
+
+    # Every list produces exactly ONE silver row: the '7' row survives, the '26-001' row
+    # is rejected for pointing at a project that does not exist.
+    for table in ms.tables():
+        silver = "cd_silver_man_" + ms.bronze_table(table)[len("cd_bronze_man_"):]
+        n = one(con, f"SELECT COUNT(*) FROM {silver}")
+        assert n == 1, f"{silver}: {n} row(s), expected 1 (the unknown project must reject)"
+        assert one(con, f"SELECT project_id FROM {silver}") == GOOD_PROJECT
+    check(f"all {len(ms.tables())} manual lists parse, and an unknown project is rejected")
+
+    # The four columns that used to disagree with gold. Each one is why man_* could not be
+    # populated: the parser simply did not produce what the DDL asked for.
+    assert one(con, "SELECT logs_missed_same_day FROM cd_silver_man_daily_log_compliance") == 3
+    assert one(con, "SELECT surveyed_party FROM cd_silver_man_survey") == "ANONYMOUS"
+    assert one(con, "SELECT month_end_closed_out FROM cd_silver_man_flags") is True
+    assert one(con, "SELECT contract_finish FROM cd_silver_man_milestones") == date(2027, 3, 31)
+    check("the four columns that had drifted from the gold DDL now parse")
+
+    # ProfitabilityCode matches dim_ScorecardBand[MatchValue], which holds LABELS.
+    # Upper-casing it would match nothing, silently.
+    assert one(con, "SELECT profitability_code FROM cd_silver_man_flags") == "Within Range"
+    check("ProfitabilityCode keeps its label casing, so the band join still resolves")
+
+    # MonthStart floored to the 1st - the dim_Date join. The example rows are already the
+    # 1st, so this asserts the floor did not MOVE them, which a wrong trunc() would.
+    assert one(con, "SELECT month_start FROM cd_silver_man_wins") == date(2026, 7, 1)
+    check("MonthStart is floored to the 1st of the reporting month")
+
+    # An unknown project is REJECTED WITH A REASON, not dropped. Two of the eight PQP
+    # lists log it, plus the gate collapse's own new failure mode.
+    assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_qc "
+                    "WHERE reason LIKE 'unknown project%'") == 3
+    check("PQP rows for an unknown project land in cd_dq_rejects_qc with a reason")
+
+
+def test_qc_procore_parser(con) -> None:
+    """24_qc_procore_silver.sql - Procore's status text mapped to the workbook's codes."""
+    # One row in, one row out - no filtering to "quality" observations. The workbook's NCR
+    # log and Procore's observation list are the same population viewed differently, and
+    # filtering here would make the two counts disagree by an amount nobody can reconcile.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_qc_ncr") == 1
+    assert one(con, "SELECT status_code FROM cd_silver_qc_ncr WHERE ncr_id='O1'") == "CLOSED"
+    check("Procore observation status maps to the workbook's NCR vocabulary")
+
+    # Procore's own text is KEPT alongside the mapped code. Without it an unmapped value is
+    # a NULL with nothing to look at, and the mapping cannot be corrected from the data.
+    assert one(con, "SELECT source_status FROM cd_silver_qc_ncr WHERE ncr_id='O1'") == "CLOSED"
+    check("the raw Procore status is carried next to the mapped code")
+
+    # Observation type 'Safety' says nothing about COR/NCR/WIP, so the class is NULL rather
+    # than defaulted to 'NCR'. A default here would report every safety observation as a
+    # non-conformance, which is a number leadership would act on.
+    assert one(con, "SELECT item_class_code FROM cd_silver_qc_ncr WHERE ncr_id='O1'") is None
+    check("an observation type that implies no NCR class stays NULL, not defaulted")
+
+    assert one(con, "SELECT status_code FROM cd_silver_qc_punch "
+                    "WHERE punch_id='PI1'") == "CLOSED"
+    assert one(con, "SELECT item_class_code FROM cd_silver_qc_punch "
+                    "WHERE punch_id='PI1'") == "PUNCH_ITEM"
+    check("punch items classify into the Punch & RCL vocabulary")
+
+    assert one(con, "SELECT status_code FROM cd_silver_qc_submittal "
+                    "WHERE submittal_id='SB1'") == "OPEN"
+    check("submittal disposition maps to the Submittals & Mockups vocabulary")
+
+    # The new endpoint parses, and a payload with no id is rejected by the WHERE.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_qc_inspection") == 1
+    assert one(con, "SELECT trade FROM cd_silver_qc_inspection") == "Concrete Formwork"
+    check("Procore Inspections (checklist/lists) parses, trimmed, keyless rows dropped")
+
+
 def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
-               test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments):
+               test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
+               test_manual_parsers, test_qc_procore_parser):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

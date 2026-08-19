@@ -26,6 +26,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import deploy as dp  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
+from make_sharepoint import tables as man_tables  # noqa: E402
+from seedrunner import split_statements  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
@@ -47,7 +49,10 @@ SOURCES = {
     "existing": SILVER_SQL / "00_source_views.sql",
     "cd": SILVER_SQL / "01_source_views_cd.sql",
 }
-DEFAULT_SOURCE = "existing"
+# `cd` since 2026-08-02: our own Procore ingestion is live and is the only source that
+# carries the manual and PQP halves at all. `existing` remains as the pre-credentials
+# validation path and builds the subset the old warehouse can source.
+DEFAULT_SOURCE = "cd"
 
 NOTEBOOK_NAME = "cd_30_build_gold"
 
@@ -69,16 +74,29 @@ CD_SILVER_ABFSS = (
 GOLD_PREFIXES = ("1", "2", "3", "4")
 
 
-def statements(sql: str) -> list[str]:
-    body = "\n".join(line.split("--", 1)[0] for line in sql.splitlines())
-    return [s.strip() for s in body.split(";") if s.strip()]
+# One splitter, shared with the offline runner - see seedrunner.split_statements. The
+# local copy this replaces split on every `;`, including the ones inside string literals
+# that 08_qc_seeds.sql is full of.
+statements = split_statements
 
 
-def gold_files() -> list[Path]:
-    return sorted(p for p in GOLD_SQL.glob("*.sql") if p.name[0] in GOLD_PREFIXES)
+# Gold files whose sv_* sources exist ONLY in 01_source_views_cd.sql. The manual inputs and
+# the whole PQP subject area were invented as part of this build and have no counterpart in
+# the existing warehouse, so `--source existing` skips them rather than being handed empty
+# views that pretend a source exists - see the note at the end of 00_source_views.sql.
+#
+# The gold SQL stays byte-identical across both sources. Only the SELECTION differs, which
+# is what --source has always been for.
+GOLD_CD_ONLY = ("33_fct_qc.sql", "40_man_tables.sql", "41_man_qc_tables.sql")
 
 
-def build_notebook(source_views: Path) -> dict:
+def gold_files(source: str = "cd") -> list[Path]:
+    return sorted(p for p in GOLD_SQL.glob("*.sql")
+                  if p.name[0] in GOLD_PREFIXES
+                  and not (source == "existing" and p.name in GOLD_CD_ONLY))
+
+
+def build_notebook(source_views: Path, source: str = "cd") -> dict:
     cells = [
         cell(
             f"""
@@ -167,52 +185,47 @@ def write_diag():
     )
     cells.append(cell(f'{body}\nprint("source views done")'))
 
-    for path in gold_files():
+    for path in gold_files(source):
         stmts = statements(path.read_text(encoding="utf-8"))
         body = "\n".join(
             f"run_sql({json.dumps(path.name)}, {json.dumps(s)})\n" for s in stmts
         )
         cells.append(cell(f'# --- {path.name} ---\n{body}'))
 
-    # Load whatever manual data exists. Affect has not decided where the ~40% manual data
-    # will live, so this is deliberately the lowest-friction mechanism that works TODAY:
-    # drop a CSV in Files/manual/, get a row in the model. It can be replaced by a
-    # SharePoint sync without touching a single gold file or measure.
+    # MATERIALISE the manual tables. They are built by 40/41_man_*.sql from sv_man_*, and
+    # this rewrites each one as a real Delta table afterwards.
+    #
+    # WHAT THIS REPLACED, AND WHY IT HAD TO GO. This cell used to load man_* from
+    # Files/manual/<table>.csv with mode("overwrite") - a third manual-input path, separate
+    # from cd_06_land_manual's Files/_manual/ and from the SharePoint dataflow. It ran
+    # AFTER 40_man_tables.sql, so the moment gold started populating man_* from silver this
+    # would have overwritten every row with an empty frame. One input mechanism, not three.
+    #
+    # The materialise itself stays, because the reason for it is still true: `CREATE TABLE
+    # (cols)` registers a schema but writes no data files, and Direct Lake cannot bind to
+    # that - the model refresh fails with "source tables either do not exist or access was
+    # denied", which reads like a permissions problem and is not one.
+    #
+    # cache() + count() before the overwrite is not optional: writing a table while reading
+    # it is a self-overwrite, and without forcing materialisation first the read side is
+    # re-evaluated against the truncated target and every row is lost.
     cells.append(
         cell(
-            """
-# --- manual input: Files/manual/<table>.csv -> man_<table> ---
-import os
+            f"""
+# --- materialise man_* as real Delta tables (Direct Lake needs data files) ---
+manual_tables = {sorted(man_tables())!r}
 
-MANUAL_DIR = "/lakehouse/default/Files/manual"
-manual_tables = ["man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
-                 "man_SafetyMonthly", "man_QualityMonthly", "man_Milestones",
-                 "man_DailyLogCompliance"]
-
-os.makedirs(MANUAL_DIR, exist_ok=True)
-loaded = {}
+loaded = {{}}
 for t in manual_tables:
-    schema = spark.table(t).schema          # declared by 40_man_tables.sql
-    path = f"{MANUAL_DIR}/{t}.csv"
-
-    if os.path.exists(path):
-        # Read against the table's OWN schema rather than inferring. Inference would type
-        # an empty column as string and break the next load.
-        df = spark.read.option("header", True).schema(schema).csv(f"Files/manual/{t}.csv")
-    else:
-        # MATERIALISE AN EMPTY DELTA TABLE. `CREATE TABLE (cols)` registers a schema but
-        # writes no data files, and Direct Lake cannot bind to that - the model refresh
-        # fails with "source tables either do not exist or access was denied", which reads
-        # like a permissions problem and is not one. Writing an empty DataFrame produces a
-        # real Delta table with a real log, which Direct Lake reads happily as zero rows.
-        df = spark.createDataFrame([], schema)
-
-    df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(t)
+    df = spark.table(t).cache()
     loaded[t] = df.count()
+    df.write.format("delta").mode("overwrite").option("overwriteSchema", "true") \
+      .saveAsTable(t)
+    df.unpersist()
 
 for t, n in loaded.items():
-    print(f"  {t:<26} {n:>5} rows" + ("" if n else "   (no CSV yet)"))
-print(f"manual rows loaded: {sum(loaded.values())}")
+    print(f"  {{t:<26}} {{n:>5}} rows" + ("" if n else "   (nobody has typed into this yet)"))
+print(f"manual rows: {{sum(loaded.values())}} across {{len(loaded)}} table(s)")
 """
         )
     )
@@ -389,12 +402,12 @@ def main() -> int:
 
     tok = dp.token()
     lh = ds.lakehouse()
-    files = gold_files()
+    files = gold_files(args.source)
     print(f"gold lakehouse {lh['id']}")
     print(f"reading source: Silver_Lakehouse {SILVER_SOURCE_ID} (read-only)")
     print(f"{len(files)} gold file(s): {', '.join(p.name for p in files)}")
 
-    nb = ds.attach(build_notebook(source_views), lh, dp.WORKSPACE_ID)
+    nb = ds.attach(build_notebook(source_views, args.source), lh, dp.WORKSPACE_ID)
     existing = ds.find_item(tok, NOTEBOOK_NAME, "Notebook")
     print(f"would {'update' if existing else 'create'} {NOTEBOOK_NAME} ({len(nb['cells'])} cells) and run it")
 

@@ -260,3 +260,144 @@ SELECT project_id, line_item_id, commitment_id, holder_type, source_endpoint, co
        cost_code, cost_code_name, description, line_item_type, amount, total_amount,
        quantity, unit_cost
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_commitment_lines`;
+
+
+-- ---------------------------------------------------------------------------
+-- MANUAL INPUT - the ~40% that exists in no system of record
+-- ---------------------------------------------------------------------------
+--
+-- These are the views that were MISSING, and their absence is why gold's nine man_* tables
+-- were permanently empty: 40_man_tables.sql had nothing to select from, so it declared the
+-- schema and stopped. The whole manual chain - CSV template, cd_06_land_manual, the silver
+-- parsers, the reject log, the semantic model bindings - ran end to end and delivered
+-- nothing, with no error anywhere to say so.
+--
+-- CD-ONLY. There is no counterpart in 00_source_views.sql, because the existing warehouse
+-- holds none of this: the manual data was invented as part of THIS build and lives only in
+-- cd_bronze_man_* / cd_silver_man_*. deploy_gold.py --source existing therefore skips the
+-- gold files that read these (see GOLD_CD_ONLY there) rather than being handed empty views
+-- that pretend a source exists.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_wins AS
+SELECT project_id, month_start, win_number, description, win_type
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_wins`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_risks AS
+SELECT project_id, month_start, risk_number, description, impact_code, mitigation,
+       owner_role, status_code
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_risks`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_priority_items AS
+SELECT project_id, month_start, item_number, schedule_item, status_code, critical_delays,
+       recovery_plan, forecast_impact, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_priority_items`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_flags AS
+SELECT project_id, month_start, profitability_code, contingency_remaining,
+       baseline_approved, baseline_revision, month_end_closed_out, forecasting_in_line,
+       resources_updated
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_flags`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_survey AS
+SELECT project_id, month_start, question_number, question_text, score, surveyed_party
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_survey`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_safety_monthly AS
+SELECT project_id, month_start, hours_worked, recordable_incidents, orientations, ot_hours
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_safety_monthly`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_quality_monthly AS
+SELECT project_id, month_start, observations, punchlist_items, avg_days_past_due,
+       avg_days_to_close
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_quality_monthly`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_milestones AS
+SELECT project_id, activity_key, milestone_name, contract_start, contract_finish,
+       baseline_start, baseline_finish, is_substantial_completion
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_milestones`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_daily_log_compliance AS
+SELECT project_id, month_start, logs_expected, logs_missed_same_day
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_daily_log_compliance`;
+
+
+-- ---------------------------------------------------------------------------
+-- PQP - the Project Quality Plan subject area
+-- ---------------------------------------------------------------------------
+--
+-- Two halves, and which half a thing lands in is the design:
+--
+--   sv_qc_*      PROCORE. NCRs, punch items, submittals, inspections. Procore is the
+--                client's mandatory system of record for quality, so these are read from
+--                the API and never typed.
+--   sv_man_qc_*  SHAREPOINT. The DFOW register, the ITP, gate progress, special
+--                inspections, commissioning, the inspector sign-in log, and the per-project
+--                answers against the checklist and DOH templates. No system holds these.
+--
+-- The TEMPLATES (26 trade checklists, 93 gates, 101 DOH items) are neither: they are seeds
+-- in gold (08_qc_seeds.sql), identical on every project, so they never travel through
+-- silver at all.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_qc_ncr AS
+SELECT project_id, ncr_id, ncr_number, title, description, observation_type, category,
+       trade, assignee_name, priority, source_status, status_code, item_class_code,
+       created_date, due_date, closed_date
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_ncr`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_qc_punch AS
+SELECT project_id, punch_id, punch_number, title, punch_item_type, trade, manager_name,
+       cost_code_id, priority, source_status, status_code, item_class_code,
+       created_date, due_date, closed_date
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_punch`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_qc_submittal AS
+SELECT project_id, submittal_id, submittal_number, subject, cost_code_id, source_status,
+       status_code, submittal_type_code, created_date, due_date, responded_date
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_submittal`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_qc_inspection AS
+SELECT project_id, inspection_id, inspection_number, name, inspection_type, template_name,
+       trade, inspector_name, source_status, inspection_date, due_date, percent_complete
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_inspection`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_dfow AS
+SELECT project_id, dfow_ref, dfow_description, trade_key, risk_tier, control_measure,
+       owner_role, status_code, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_dfow`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_itp AS
+SELECT project_id, itp_ref, trade_key, activity, inspection_type, acceptance_criteria,
+       hold_point_type, responsible, planned_date, actual_date, result_code, status_code,
+       notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_itp`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_gate AS
+SELECT project_id, gate_key, gate_type, status_code, responsible, target_date,
+       submitted_date, completed_date, evidence_link, blocker_note
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_gate`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_special_inspection AS
+SELECT project_id, inspection_ref, category, agency, inspector_name, required_code,
+       performed_code, scheduled_date, performed_date, report_received_date, status_code,
+       notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_special_inspection`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_commissioning AS
+SELECT project_id, system_ref, system_name, trade_key, responsible, planned_date,
+       actual_date, status_code, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_commissioning`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_inspector_sign_in AS
+SELECT project_id, sign_in_ref, visit_date, inspector_name, agency_code, purpose,
+       area_inspected, outcome_code, follow_up_required, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_inspector_sign_in`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_checklist_result AS
+SELECT project_id, trade_key, item_key, stage_code, result_code, inspected_date,
+       inspected_by, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_checklist_result`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_doh_result AS
+SELECT project_id, item_key, responsibility_code, status_code, verified_date, verified_by,
+       evidence_link, notes
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_doh_result`;
