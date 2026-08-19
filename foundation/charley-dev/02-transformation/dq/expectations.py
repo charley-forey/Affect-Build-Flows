@@ -517,6 +517,62 @@ def build_suite() -> Suite:
                   "man_QcInspectorSignIn", "man_QcChecklistResult", "man_QcDohResult"):
         suite.add(referential(table, "ProjectKey", "dim_Project", "ProjectKey"))
 
+    # ------------------------------------------------------------------ dim_Job
+    # THE POWER AUTOMATE FLOWS' ONE REAL PRODUCTION RISK, made visible.
+    #
+    # The two job flows issue sequential numbers by reading max(JobSeq), adding one and
+    # writing it back. That is safe only because both triggers carry
+    # `runtimeConfiguration.concurrency.runs = 1`. It is a SETTING, not code - the Power
+    # Automate designer exposes it under trigger -> Settings -> Concurrency Control, and
+    # anyone editing the flow can switch it off without touching a definition file.
+    #
+    # When it is off, two overlapping runs both read 24, both compute 25, and two different
+    # projects are called 26-025. Nothing throws. No copy job fails. The flows report
+    # success. It surfaces weeks later when somebody opens the wrong folder and both trees
+    # already hold real documents - by which point neither can simply be deleted.
+    #
+    # power-automate/test_flows.py asserts the setting is present, so removing it shows up
+    # in a diff. This is the half that catches it when it is switched off in the LIVE flow,
+    # where no diff exists. Blocking, because the numbers are already wrong by then and a
+    # stale report beats a report that confidently double-counts a job.
+    # Spelled out rather than built with unique_key()/not_null(), because both need to
+    # ignore rows that have not been issued a number YET. A person adds a row with just a
+    # project name and leaves everything else blank; the flow fills in JobNumber a minute
+    # later. Those rows are the normal state of a healthy register, and a check that fires
+    # on them is a check that gets muted inside a week - taking the real one with it.
+    #
+    # unique_key() would also group the NULLs together and report several pending jobs as a
+    # collision, which is the same wrong answer arrived at twice.
+    suite.add(
+        Expectation(
+            name="dim_Job.JobNumber.unique",
+            table="dim_Job",
+            failing_sql=(
+                "SELECT JobNumber, COUNT(*) AS n FROM dim_Job "
+                "WHERE JobNumber IS NOT NULL AND TRIM(JobNumber) <> '' "
+                "GROUP BY JobNumber HAVING COUNT(*) > 1"
+            ),
+            severity=SEVERITY_ERROR,
+            description=("two jobs issued the same number - trigger concurrency is off on "
+                         "the Power Automate flows"),
+        ),
+        # The other half: a row that reached Estimating or Bidding WITHOUT a number is a
+        # flow that half-ran. Warning, not blocking - the numbers already in the report are
+        # not wrong, one job is just missing from them, and silver has already written the
+        # row to the reject log with the reason so it is visible on the DQ page.
+        Expectation(
+            name="dim_Job.JobNumber.issued_past_requested",
+            table="dim_Job",
+            failing_sql=(
+                "SELECT * FROM dim_Job "
+                "WHERE Stage IN ('ESTIMATING', 'BIDDING') "
+                "AND (JobNumber IS NULL OR TRIM(JobNumber) = '')"
+            ),
+            severity=SEVERITY_WARN,
+            description="a job past Requested with no number - the flow did not finish",
+        ),
+    )
+
     # TradeKey is the controlled key people get wrong - "Concrete Formwork" instead of
     # CONCRETE_FORMWORK. The SharePoint choice column is generated from qc_seed_Trade to
     # make that impossible; these prove it stayed impossible.

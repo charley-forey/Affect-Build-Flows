@@ -401,3 +401,11 @@ CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_doh_result AS
 SELECT project_id, item_key, responsibility_code, status_code, verified_date, verified_by,
        evidence_link, notes
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_qc_doh_result`;
+
+-- The job register off the BUILD site. Unlike every view above it carries no project_id -
+-- a job exists before it is a Procore project, and plenty never become one.
+CREATE OR REPLACE TEMPORARY VIEW sv_man_job_register AS
+SELECT register_id, project_name, job_year, job_seq, job_number, stage,
+       estimating_folder_url, project_folder_url, requested_by, requested_at, completed_at,
+       copy_job_status, error_detail, last_modified, last_modified_by
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_job_register`;

@@ -173,10 +173,11 @@ need SharePoint admin rights. `sharepoint-lists.md` is written to hand over dire
    now `INSERT`s from `sv_man_*`, and `01_source_views_cd.sql` defines all 17 `sv_man_*`
    views that had never existed.
 5. ~~DQ expectations~~ **Done** — the gate is at 104 expectations (81 blocking, 23 warning).
-6. **Still open:** add `cd_06_land_manual` (and later the dataflow) to `CD_Master_Pipeline`,
-   ahead of `Bronze To Silver`. The nightly run currently rebuilds silver and gold without
-   refreshing manual bronze first — harmless while every table is empty, a staleness bug the
-   day somebody enters a row.
+6. ~~Add `cd_06_land_manual` to `CD_Master_Pipeline`, ahead of `Bronze To Silver`.~~ **Done**
+   — it runs as the `Land Manual Input` activity and `Bronze To Silver` depends on it, so
+   manual bronze is refreshed before silver rebuilds. Verified against the live pipeline
+   definition, not just the committed JSON. Adding the *dataflow* to the pipeline is still
+   open, and waits on the dataflow being published at all.
 
 Until step 1 happens, the CSV path above keeps working — and the switch from CSV to
 SharePoint changes one notebook cell. **No gold file, no measure, no report visual.**
@@ -358,5 +359,12 @@ So the live spec is, unambiguously: `man_DailyLogCompliance.LogsMissedSameDay`;
 2. **The SharePoint site does not exist**, so `provision-sharepoint.ps1` has not been run and
    `CD_Manual_Ingest` cannot be bound. That gates the *team* mechanism, not data entry — the
    CSV path works today and needs nobody.
-3. **`cd_06_land_manual` is not in `CD_Master_Pipeline`.** Harmless while every table is
-   empty; a staleness bug the day somebody enters a row.
+3. ~~**`cd_06_land_manual` is not in `CD_Master_Pipeline`.**~~ **It is** — as the `Land
+   Manual Input` activity, with `Bronze To Silver` depending on it. This entry was stale;
+   `build-status.md` had already recorded the correction and this page had not. What remains
+   is adding the `CD_Manual_Ingest` *dataflow* to the same pipeline, which cannot happen
+   until the dataflow is published.
+4. **The Job Register reaches gold now.** `dim_Job` (`sql/gold/13_dim_job.sql`) lands the
+   two Power Automate job flows' register through the same medallion, with a blocking DQ
+   expectation on `JobNumber` uniqueness — the guard on the flows' concurrency setting.
+   See [`power-automate/RUNBOOK.md`](../../../power-automate/RUNBOOK.md).
