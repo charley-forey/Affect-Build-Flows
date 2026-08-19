@@ -15,11 +15,11 @@ lakehouses, and which are **genuinely missing**.
 
 | | Count |
 |---|---|
-| Endpoints in the registry | **42** |
+| Endpoints in the registry | **44** |
 | Already landing in Bronze/Silver today | 13 |
-| **New — the actual gap this build closes** | **29** |
+| **New — the actual gap this build closes** | **31** |
 | Incremental (verified `filters[updated_at]`) | 8 |
-| Requiring the `Procore-Company-Id` header (v2.0+) | 42 |
+| Requiring the `Procore-Company-Id` header (v2.0+) | 44 |
 
 ## The gap — what does not exist today
 
@@ -95,6 +95,7 @@ load is a `MERGE` on the natural key, not an append.
 | `punch_items` | `/rest/v1.0/punch_items?project_id={project_id}` | project | 1.0 | full | **new** |
 | `punch_item_types` | `/rest/v1.0/punch_item_types` | company | 1.0 | full | **new** |
 | `inspection_logs` | `/rest/v1.0/projects/{project_id}/inspection_logs` | project | 1.0 | full | **new** |
+| `checklist_lists` | `/rest/v1.0/checklist/lists?project_id={project_id}` | project | 1.0 | full | **new** |
 | `incidents` | `/rest/v1.0/projects/{project_id}/incidents` | project | 1.0 | incremental | **new** |
 | `incident_injuries` | `/rest/v1.0/projects/{project_id}/incidents/injuries` | project | 1.0 | full | **new** |
 | `incident_near_misses` | `/rest/v1.0/projects/{project_id}/incidents/near_misses` | project | 1.0 | full | **new** |
@@ -108,6 +109,7 @@ load is a `MERGE` on the natural key, not an append.
 | `work_order_contract_line_items` | `/rest/v1.0/work_order_contracts/{parent_id}/line_items` | parent | 1.0 | full | **new** |
 | `purchase_order_contract_line_items` | `/rest/v1.0/purchase_order_contracts/{parent_id}/line_items` | parent | 1.0 | full | **new** |
 | `budget_detail_rows` | `/rest/v1.0/budget_views/{parent_id}/detail_rows` | parent | 1.0 | full | **new** |
+| `checklist_list_items` | `/rest/v1.0/checklist/lists/{parent_id}/items` | parent | 1.0 | full | **new** |
 
 ## Notes
 
@@ -118,7 +120,7 @@ load is a `MERGE` on the natural key, not an append.
   v1.x takes the company in the path or query. Sending it to the wrong version is the
   most common cause of an unexplained 403, so the rule is implemented once and asserted
   in `_local/tests/test_extractor_compat.py`.
-- **Parent-scoped endpoints** (`prime_contract_line_items, payment_applications, work_order_contract_line_items, purchase_order_contract_line_items, budget_detail_rows`) need
+- **Parent-scoped endpoints** (`prime_contract_line_items, payment_applications, work_order_contract_line_items, purchase_order_contract_line_items, budget_detail_rows, checklist_list_items`) need
   an id from a prior call. The registry declares the dependency and the runner
   topologically orders it, so a parent is always fetched first.
 - **Active projects only.** The existing notebooks loop every project on every run; most

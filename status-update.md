@@ -1,8 +1,8 @@
 # Status Update — Affect Group
 
-**As of 2026-08-02.** Written to be handed to the team as-is.
+**As of 2026-08-19.** Written to be handed to the team as-is.
 
-Every figure on this page was read out of the live Fabric workspace on 2026-08-02, not
+Every figure on this page was read out of the live Fabric workspace on 2026-08-19, not
 carried forward from a previous update. The engineering detail behind each claim is in
 [`foundation/charley-dev/_docs/`](foundation/charley-dev/_docs/) — start with
 [`solution-guide.md`](foundation/charley-dev/_docs/solution-guide.md).
@@ -14,11 +14,15 @@ carried forward from a previous update. The engineering detail behind each claim
 The Excel Monthly Progress Report has been replaced by a working Microsoft Fabric platform.
 It ingests Affect's **production** Procore tenant, types and validates the data through a
 bronze → silver → gold medallion, and serves a 12-page Power BI report off a Direct Lake
-star schema with 99 measures. It runs on a nightly schedule, it checks its own work with 63
+star schema with 99 measures. It runs on a nightly schedule, it checks its own work with 103
 data-quality expectations, and it found a **$4.85M understatement** of portfolio contract
 value that the existing reporting had been carrying silently. None of it touches Rebecca's
 existing warehouse — it was built alongside, in its own folder, and her reporting has run
 untouched throughout.
+
+Since then a **second subject area has been delivered: the Project Quality Plan**. The
+client's 44-sheet QA/QC tracker is now a modelled part of the platform with its own semantic
+model and its own 7-page report, joined to 4,564 live quality records read out of Procore.
 
 The build is not the bottleneck any more. **Four access grants are**, and they are worth
 about 41% of the report's coverage between them.
@@ -31,24 +35,43 @@ about 41% of the report's coverage between them.
 
 Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been modified.
 
-| Layer | State on 2026-08-02 |
+| Layer | State on 2026-08-19 |
 |---|---|
-| **Bronze** | 40 tables, raw payload from Affect's production Procore tenant |
-| **Silver** | 15 typed tables, **14,791 rows, 0 rejects** |
-| **Gold** | 40 tables — dimensions, facts, crosswalks, bridges, manual placeholders |
-| **Semantic model** | `Affect Project Report` — Direct Lake, **37 tables, 99 measures, 45 relationships** |
-| **Report** | `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable. [**See every page**](resources/power-bi/monthly-progress-report/) without opening Fabric |
+| **Bronze** | 40 tables landing from Procore, plus 17 manual-input tables (9 original + 8 for the Quality Plan) |
+| **Silver** | 15 typed tables. The last full row/reject count — **14,791 rows, 0 rejects** — was measured on 2026-08-02 and has not been re-read since the quality tables landed |
+| **Gold** | **53 tables published** to the semantic-model contract — dimensions, facts, crosswalks, bridges, quality tables, manual placeholders |
+| **Semantic models** | **Two.** `Affect Project Report` — Direct Lake, **37 tables, 99 measures**. `Project Quality Plan` — **19 tables plus a measure table, 42 measures, 23 relationships** |
+| **Reports** | **Two.** `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable ([**see every page**](resources/power-bi/monthly-progress-report/) without opening Fabric). `Project Quality Plan` — **7 pages, 95 visuals** |
 | **Orchestration** | `CD_Master_Pipeline`, 5 activities. Pipeline 02:00 daily, model refresh 04:00 daily (Eastern) |
-| **Data quality** | 63 expectations, gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
+| **Data quality** | **103 expectations** — 80 blocking, 23 warning — gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
 
 ### The ingestion
 
 | Source | State |
 |---|---|
-| **Procore** | **36 endpoints** live, registry-driven — one shared extractor, not 25 near-identical notebooks. Adding an endpoint is a YAML entry |
+| **Procore** | **44 endpoints registered, 40 landing bronze tables**, registry-driven — one shared extractor, not 25 near-identical notebooks. Adding an endpoint is a YAML entry. Two endpoints (`punch_item_types`, `schedule`) are blocked by Procore **403s** and are a permissions ask, not a build gap |
 | **Sage 100** | `CD_Sage_Ingest` **deployed** to the workspace, wired to the existing gateway, 8 tables including the two AR/AP **line** tables the current dataflow explicitly discards. Blocked on one permission grant — see below |
 | **Outbuild** | Built and verified across 16 endpoints. Cannot run — no API token issued |
-| **Manual (~40% of the report)** | Two writers into one contract: a SharePoint path (10 lists, provisioning script written and runnable) **and** a CSV path that works today with no admin ticket. Nine templates with worked examples generate on every run |
+| **Manual (~40% of the report)** | Two writers into one contract: a SharePoint path (provisioning script written and runnable) **and** a CSV path that works today with no admin ticket. **17** manual tables are now created and typed — the original 9, plus 8 for the Quality Plan's intake |
+
+### The Project Quality Plan — new, and now visible
+
+Affect's 44-sheet QA/QC tracker was the second-largest spreadsheet in the business. It is now
+a modelled subject area with its own semantic model and its own report, so quality is
+readable next to cost and schedule rather than in a separate workbook.
+
+| | |
+|---|---|
+| **From the workbook** | 26 trades · **625 checklist items** · **93 statutory gates** (46 TCO, 23 Fire Alarm, 24 Statutory) · 101 DOH items · 141 status-vocabulary rows |
+| **From production Procore** | **`fct_QcSubmittal` 2,245** · **`fct_QcPunch` 1,469** · **`fct_QcNcr` 850** |
+| **Model** | `Project Quality Plan` — 19 tables plus a measure table, 42 measures, 23 relationships. Deliberately its own model, not an extension of the project model |
+| **Report** | `Project Quality Plan` — 7 pages: Quality Portfolio, Non-Conformance, Punch & Completion, Submittals & Mock-Ups, Statutory Gates, Trade Checklists & DFOW, and a hidden Data Quality page |
+| **Intake** | 8 `man_Qc*` tables typed and empty, waiting on the same SharePoint/CSV path as the rest of the manual data |
+
+Five verified defects were found in the client's workbook along the way — most importantly
+four register roll-ups whose `% Complete` can never reach 100%, and two CSI codes Excel
+destroyed on the only Tier 4 Critical DFOWs. They are written up in
+[`analysis/pqp-workbook/defects-and-questions.md`](analysis/pqp-workbook/defects-and-questions.md).
 
 ### The engineering discipline behind it
 
@@ -58,7 +81,7 @@ trustworthy rather than merely present:
 - **Everything deploys from git.** Every item in Fabric got there through a committed,
   idempotent, dry-run-by-default script that refuses to write outside `charley-dev`. A
   mis-deploy is fixed by re-running, not by clicking.
-- **12 offline test suites, no Fabric, no network.** The production Spark SQL is executed
+- **14 offline test suites, all passing, no Fabric, no network.** The production Spark SQL is executed
   through DuckDB, so the tests exercise the real transforms rather than a re-implementation.
   66 gold assertions. Mutation-tested: five deliberate regressions are each caught.
 - **The runs assert themselves.** A notebook that builds empty tables still reports
@@ -85,6 +108,29 @@ Worth noting *why* it survived: the reconciliation gate passed, because the test
 all three change orders in a single month — which makes a per-month roll-up and a cumulative
 one arithmetically identical. A passing gate is not the same as a watching gate. The fixture
 now spans two months and three assertions cover the difference.
+
+### Two more silent defects — found, fixed, deployed
+
+Both were invisible from the report. Neither raised an error anywhere.
+
+**1. Quality data could not reach any report, and nothing said so.** `deploy_gold.py` carried
+a hardcoded list of tables to row-check and publish, and the new quality tables had never been
+added to it. A gold table missing from the published `gold_schema.json` **silently cannot
+appear in any semantic model** — the table exists, holds correct data, and is simply
+unreachable. Fixed; published tables went from **45 to 53**.
+
+**2. Raw JSON was being shown as a trade name on the live report.** The silver transform read
+the Procore `trade` field as a whole object instead of `trade.name`, so the column held
+`{"id":…,"name":"Electrical",…}` rather than `Electrical`. That broke every quality trade join
+— **631 of 850 non-conformance records** resolved to no trade — **and it was putting raw JSON
+into the `Trade` column of the live Monthly Progress Report**. Fixed by reading `trade.name`;
+unmapped records fell from **631 to 459** and the report now reads e.g. `Windows`.
+
+The remaining **459** are a genuine vocabulary difference, not a bug: Procore says `HVAC` and
+`Sprinkler` where the workbook says `HVAC_DUCTWORK` and `FIRE_SPRINKLER`. **We have
+deliberately not guessed** — attributing a defect to the wrong trade is worse than leaving it
+unattributed. It is an open question for Affect and it is shown on the Quality Plan's Data
+Quality page rather than hidden.
 
 ### The 14 Excel defects — 7 structurally fixed, plus 2 structural issues
 
@@ -153,7 +199,9 @@ Honest separation between "built" and "proven correct against reality".
 
 | Item | Status | What would settle it |
 |---|---|---|
-| **The nightly pipeline does not call Procore** | Known limitation | Extraction runs on a laptop and lands files; the pipeline merges whatever was last landed. "Ran green" means the transforms are healthy, **not** that the data is fresh. Resolved by the Azure subscription → Key Vault |
+| **The nightly pipeline does not call Procore** | Known limitation | `cd_01_extract_procore` is not in the nightly run. Extraction runs on a laptop and lands files; the pipeline merges whatever was last landed. "Ran green" means the transforms are healthy, **not** that the data is fresh. Resolved by the Key Vault role assignment |
+| **The nightly pipeline does not refresh manual input either** | Known limitation | `cd_06_land_manual` is not in `CD_Master_Pipeline`, so the nightly run rebuilds silver and gold without refreshing manual bronze. Harmless while every manual table is empty; a silent staleness bug the day somebody enters data. **Must land before SharePoint goes live** |
+| **459 of 850 non-conformance records have no trade** | Needs a decision, not a fix | Procore's trade vocabulary and the workbook's do not match (`HVAC` vs `HVAC_DUCTWORK`). Guessing a mapping would attribute defects to the wrong trades. One vocabulary decision from Affect settles it |
 | **DQ reject detail is stale** | Diagnosed, not yet fixed | The gate reports success while silently failing to write reject detail, so the Data Quality page shows rows from an older run. **Counts are trustworthy; drill-through is not.** Two small fixes identified |
 | **Source coverage is 5.26%** | Measured | Only 1 of 19 projects is present in all three systems. This is the single biggest limit on the report, and it is an access problem, not a build problem |
 | **Scorecard coverage is 59%** | Measured | 4 of 9 categories cannot be scored — AR (Sage), Profitability (human judgement, stays manual by design), Completion Variance (Outbuild), Daily Reports (SharePoint). **Quote "Project Scorecard (Measured Only)" — 0.44** — or absent data reads as poor performance |
@@ -174,8 +222,8 @@ waiting on engineering.
 |---|---|---|---|---|
 | 1 | **Grant `cforey-c@affect-group.com` "Can use" on the connection `nc-affect-1\sage100con;Affect Group`** | Sage AR/AP detail, retainage, actual-cost-by-cost-code, AR scorecard category | Whoever administers the on-prem data gateway | **One grant, one refresh.** No subscription, no code change |
 | 2 | **Issue `OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere. 17 of 19 projects currently have none. Largest single coverage gain available | Affect via Outbuild CS rep | One token |
-| 3 | **Provision the 10 SharePoint lists** (or start with the CSV path today) | The ~40% of the report that lives in no system — wins, risks, priority items, client survey, milestone dates | SharePoint admin | Provisioning script is written and runnable. **The CSV path works today with no ticket at all** |
-| 4 | **An Azure subscription on the tenant** | Key Vault, so Procore ingestion runs *inside* Fabric on a schedule instead of on a laptop | Affect IT | Subscription, then one script |
+| 3 | **Provision the SharePoint lists** (or start with the CSV path today) | The ~40% of the report that lives in no system — wins, risks, priority items, client survey, milestone dates — plus the 8 Quality Plan intake lists and the `Job Register` | SharePoint admin | Provisioning script is written and runnable, but **no site exists yet**. **The CSV path works today with no ticket at all** |
+| 4 | **One role assignment: "Key Vault Secrets Officer" on vault `OneLake`** for `cforey-c@affect-group.com` | Key Vault, so Procore ingestion runs *inside* Fabric on a schedule instead of on a laptop | Whoever owns the Azure subscription | **The subscription and the vault now both exist.** Our identity holds only *Contributor on the resource group*, which on an RBAC vault can neither read nor write a secret nor grant itself the right to. One role, then one script — [`keyvault-runbook.md`](foundation/charley-dev/_docs/keyvault-runbook.md) |
 
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
 and `schedule` both return **403**.
@@ -192,15 +240,16 @@ Ordered by value per unit of effort, engineering side.
 | # | Work | Depends on |
 |---|---|---|
 | 1 | Fix the DQ persist gap — create the results table, move reject persistence out of the shared exception handler, record the outcome on the heartbeat | Nothing |
-| 2 | Change `deploy_gold.py`'s default source to `cd` | Nothing. Current default silently reverts gold to the legacy warehouse on a bare re-deploy — a live foot-gun |
-| 3 | Explain the `Total Billed` / `Owner Billed To Date` gap on the report itself | Nothing |
-| 4 | Land Sage silver, settle the retainage question, repoint the AR views at our own medallion | Blocker #1 |
-| 5 | Land Outbuild milestones, close Completion Variance | Blocker #2 |
-| 6 | Answer the four manual-input questions, then wire manual silver → gold | A 30-minute call |
-| 7 | Retire the local extraction bridge; ingestion moves into Fabric | Blocker #4 |
-| 8 | Mentoring sessions with Rebecca — recorded, on the extractor registry pattern first | Scheduling |
+| 2 | ✅ **Done.** `deploy_gold.py`'s default source is now `cd`, so a bare re-deploy no longer silently reverts gold to the legacy warehouse, and its hardcoded publish list is gone | — |
+| 3 | Add `cd_06_land_manual` (and, once the vault role lands, `cd_01_extract_procore`) to `CD_Master_Pipeline` | Nothing / Blocker #4 |
+| 4 | Explain the `Total Billed` / `Owner Billed To Date` gap on the report itself | Nothing |
+| 5 | Land Sage silver, settle the retainage question, repoint the AR views at our own medallion | Blocker #1 |
+| 6 | Land Outbuild milestones, close Completion Variance | Blocker #2 |
+| 7 | Answer the four manual-input questions and the quality trade vocabulary, then wire manual silver → gold | A 30-minute call |
+| 8 | Retire the local extraction bridge; ingestion moves into Fabric | Blocker #4 |
+| 9 | Mentoring sessions with Rebecca — recorded, on the extractor registry pattern first | Scheduling |
 
-Reaching ~100% scorecard coverage needs items 4, 5 and 6. All three are gated on access or a
+Reaching ~100% scorecard coverage needs items 5, 6 and 7. All three are gated on access or a
 conversation, not on build time.
 
 ---
@@ -240,3 +289,4 @@ why "the report looks fine" was never sufficient evidence that it was.
 | [`sharepoint-lists.md`](foundation/charley-dev/_docs/sharepoint-lists.md) | Build sheet to hand to a SharePoint admin |
 | [`manual-input.md`](foundation/charley-dev/_docs/manual-input.md) | The design for the ~40% that lives in no system |
 | [`analysis/excel-tracker/`](analysis/excel-tracker/) | The original workbook teardown and its 14 defects |
+| [`analysis/pqp-workbook/`](analysis/pqp-workbook/) | The QA/QC tracker teardown — 5 verified defects and the open questions for Affect |

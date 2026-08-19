@@ -8,6 +8,13 @@ picture underneath it has changed and is corrected throughout. An Azure subscrip
 Key Vault now exist, and `CD_Sage_Ingest` is deployed. Row counts, measure values and the
 defect analysis are unchanged from the 2026-08-02 measurement.
 
+**Also 2026-08-19: the PQP subject area shipped**, taking the folder to **20 items** — a
+second semantic model and a second report over the same gold lakehouse. Three of this
+document's own recommendations were closed at the same time: `deploy_gold.py`'s default is
+now `cd` (#4), the SharePoint list-name mismatch is fixed at the source (#7), and the branch
+consolidation (#3) was done on 2026-08-03. See [`pqp-solution.md`](pqp-solution.md) and
+[`build-status.md`](build-status.md).
+
 Every claim here was checked against the running Fabric workspace rather than against the
 repo's own documentation. Where the two disagreed, the docs were wrong and have been
 corrected — [`build-status.md`](build-status.md) had drifted six rows out of date.
@@ -41,7 +48,7 @@ insurance certificates expired. Both are explained below — do not "fix" either
 | Area | Method | Result |
 |---|---|---|
 | Repo ↔ GitHub | `git` against `origin` | Consolidated onto `main` 2026-08-03 |
-| Items deployed | `list_items` / `list_folders` on workspace `Build` | 13 of 14 — see below |
+| Items deployed | `list_items` / `list_folders` on workspace `Build` | 13 of 14 at this audit; **20 items** on the 2026-08-19 re-read, after the PQP model and report |
 | Bronze / silver / gold populated | `execute_sql_query` row counts | Populated, verified |
 | Gold ↔ repo SQL | Table list vs `sql/gold/*.sql` | Matches |
 | Semantic model ↔ repo | Deployed TMSL vs `*.tmdl` | Matches — 37 tables |
@@ -50,7 +57,7 @@ insurance certificates expired. Both are explained below — do not "fix" either
 | Measures compute | All 99 evaluated via `execute_dax_query` | All evaluate |
 | Numbers are *correct* | Recomputed independently in SQL | **One defect found** |
 | Pipeline freshness | `meta_PipelineRun` | Ran 2026-08-02 22:06, 0 blocking |
-| DQ gate | `cd_dq_rejects` + heartbeat | 63 expectations, 6 failing, 0 blocking |
+| DQ gate | `cd_dq_rejects` + heartbeat | 63 expectations at this audit, 6 failing, 0 blocking. The suite is now **103** (80 blocking, 23 warning) |
 
 ---
 
@@ -135,7 +142,7 @@ two halves: **Sage data is on the dashboard, and we are not the ones pulling it.
 
 | Source | Who pulls it | Into | Latest data | Ours? |
 |---|---|---|---|---|
-| **Procore** | **us** — 42-endpoint registry, run locally, landed as NDJSON | `CD_Bronze` → `CD_Silver` | 2026-08-02 04:44 | **yes** |
+| **Procore** | **us** — the endpoint registry (42 at this audit, 44 since the PQP work), run locally, landed as NDJSON | `CD_Bronze` → `CD_Silver` | 2026-08-02 04:44 | **yes** |
 | **Sage 100** | Rebecca's `Build_Sage_Test` dataflow | existing `Silver_Lakehouse` | invoice 2026-07-20 | no |
 | **Outbuild** | Rebecca's `Outbuild_activities` dataflow | existing `Silver_Lakehouse` | updated 2026-07-14 | no |
 
@@ -289,6 +296,8 @@ Every item `main` defines, checked against the live workspace after consolidatio
 | `CD_Sage_Ingest` | yes | yes | deployed; **run blocked on gateway permission** |
 | `Affect Project Report` model | yes | yes | 37 tables, **100 measures**, 45 relationships |
 | `Monthly Progress Report` | yes | yes | 12 pages, 180 visuals, all 138 refs resolve |
+| `Project Quality Plan` model | yes | yes | added 2026-08-19 — 19 tables plus `_Measures`, 42 measures, 23 relationships |
+| `Project Quality Plan` report | yes | yes | added 2026-08-19 — 7 pages, 95 visuals |
 | `CD_Manual_Ingest` | yes | **no** | deliberate — see below |
 
 The semantic model was compared name-by-name against `deploy_model.MEASURES`: **zero drift
@@ -302,7 +311,7 @@ the SharePoint site exists and the URL is real.
 
 **Verification run:** 13 offline suites and 17 live DAX checks, all passing, including
 `[Current Contract] is a balance, not a running total of months` — the assertion that guards
-the $4.85M defect.
+the $4.85M defect. The offline suite is now **14** (`test_qc.py` added with the PQP work).
 
 ---
 
@@ -395,17 +404,20 @@ Not defects, but they do not reconcile at face value and someone will ask:
 The full sequence, in order. This is what was run on 2026-08-02:
 
 ```bash
-python foundation/charley-dev/_local/run_tests.py                        # 12 suites offline
-python foundation/charley-dev/_local/deploy_gold.py --source cd --apply  # rebuild gold
+python foundation/charley-dev/_local/run_tests.py                        # 14 suites offline
+python foundation/charley-dev/_local/deploy_gold.py --apply              # rebuild gold
 python foundation/charley-dev/_local/validate_model.py                   # reframe + 17 DAX checks
 ```
 
-Then re-run `cd_40_dq_checks` to refresh the gate and heartbeat.
+Then re-run `cd_40_dq_checks` to refresh the gate and heartbeat. The full sequence, including
+the **`deploy_manual.py` before `deploy_silver.py`** ordering, is in
+[`build-status.md`](build-status.md#how-to-run-it).
 
-**`--source cd` is not optional.** `deploy_gold.py` defaults to `--source existing`, and a
-bare `--apply` silently reverts gold to reading the legacy `Silver_Lakehouse` instead of our
-own medallion. **That default should be changed** — it is the easiest way to quietly undo
-the source migration.
+**The `--source existing` foot-gun is closed.** `deploy_gold.py` used to default to
+`--source existing`, so a bare `--apply` silently reverted gold to reading the legacy
+`Silver_Lakehouse` instead of our own medallion — recommendation 4 below. `DEFAULT_SOURCE` is
+now `cd`. Passing `--source cd` explicitly still works and is now redundant rather than
+mandatory.
 
 Confirm any gold rebuild landed:
 
@@ -425,7 +437,7 @@ regression is back.
 | **Key Vault role assignment** — the vault exists (`OneLake`, RG `Affect_KeyVault`) but is RBAC-mode and `cforey-c@affect-group.com` has only Contributor on the resource group, which cannot read or write secrets | Procore extraction runs on a laptop and lands files. **The nightly pipeline does not call the Procore API** — it re-processes whatever was last landed. Landing files were last written 04:44 on 2026-08-02. The ask is one role: **Key Vault Secrets Officer on vault `OneLake`** | Affect |
 | On-prem gateway grant for Sage | `CD_Sage_Ingest` is **deployed** and inert — one *Can use* grant on `nc-affect-1\sage100con;Affect Group` away from running | Affect / their Sage consultant |
 | Procore 403s on `punch_item_types` and `schedule` | Two report sections cannot be sourced | Affect |
-| SharePoint decision | Nine `man_*` tables are deployed and empty; ~40% of the report. The CSV path in `Files/_manual/` works today, so this gates the *team* mechanism, not data entry | Affect |
+| SharePoint decision | **17** `man_*` tables are deployed and empty (9 original plus 8 PQP registers); ~40% of the Monthly Progress Report and most of the Project Quality Plan. The CSV path in `Files/_manual/` works today, so this gates the *team* mechanism, not data entry | Affect |
 | ~~No Azure subscription~~ | **RESOLVED 2026-08-19** — "Azure subscription 1" `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` on tenant "Affect Build LLC" `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` | — |
 | ~~`OUTBUILD_API_TOKEN` not issued~~ | **In transit** — Rebecca offered to send the token by email on Aug 11. Once it lands, milestones for 17 of 19 projects follow | Affect (in transit) |
 
@@ -443,13 +455,22 @@ regression is back.
    mean the Data Quality page is current.
 3. Merge `worktree-charley-dev-build` → `main`. The default branch is still 9 commits behind
    what is deployed, and does not contain this fix.
-4. Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the source.
+4. ~~Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the
+   source.~~ **Done 2026-08-19** — `DEFAULT_SOURCE = "cd"`.
 5. Chase the Outbuild token to completion. Offered Aug 11, not yet received. It is the
    largest single coverage gain available — 17 of 19 projects have no milestones.
 6. Put the insurance finding in front of Affect as a question, not a metric.
-7. **Fix the SharePoint list-name mismatch** before anyone runs the provisioning script:
-   `provision-sharepoint.ps1` creates `CD PriorityItems`, `CD SafetyMonthly`,
-   `CD QualityMonthly` and `CD DailyLogCompliance`, while `CD_Manual_Ingest`'s `mashup.pq`
-   reads `CD Priority Items`, `CD Safety Monthly`, `CD Quality Monthly` and
-   `CD Daily Log Compliance`. Four of nine queries would silently return nothing. Detail in
-   [`sharepoint-lists.md`](sharepoint-lists.md).
+7. ~~**Fix the SharePoint list-name mismatch** before anyone runs the provisioning script.~~
+   **Done 2026-08-19, at the source.** `_local/make_sharepoint.py` now generates the PS1, the
+   mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so one
+   function decides a list name and `test_sharepoint.py` fails the build if the four writers
+   drift. Detail in [`sharepoint-lists.md`](sharepoint-lists.md).
+
+8. **Ask Affect for the Procore trade → workbook `TradeKey` alias mapping.** 459 of 850 NCRs
+   resolve to no trade, and the residue is a genuine vocabulary difference (Procore `HVAC` vs
+   the workbook's `HVAC_DUCTWORK`) rather than a bug — it is deliberately not guessed. One
+   alias table closes it. See [`build-status.md`](build-status.md).
+
+9. **Add `cd_06_land_manual` to `CD_Master_Pipeline`,** ahead of `Bronze To Silver`. The
+   nightly run currently rebuilds silver and gold without refreshing manual bronze — harmless
+   while every `man_*` table is empty, a staleness bug the day somebody enters a row.

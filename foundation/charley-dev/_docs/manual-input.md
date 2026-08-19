@@ -5,9 +5,11 @@ entire risk register, recovery-plan narratives, the client survey, cost-manageme
 the profitability judgement. No amount of Procore or Sage integration produces these
 (`analysis/excel-tracker/field-inventory.md:348`).
 
-The nine `man_*` tables are live in `CD_Gold_Lakehouse` and bound to the semantic model.
-**They are empty**, and deliberately so — seeding them with plausible values would put
-numbers in front of leadership that nobody entered, indistinguishable from real ones.
+There are now **17** `man_*` tables live in `CD_Gold_Lakehouse` and bound to a semantic
+model: the 9 original registers for the Monthly Progress Report, plus 8 PQP intake registers
+for the Project Quality Plan ([`pqp-solution.md`](pqp-solution.md)). **They are empty**, and
+deliberately so — seeding them with plausible values would put numbers in front of leadership
+that nobody entered, indistinguishable from real ones.
 
 ## How to put data in, today
 
@@ -17,7 +19,7 @@ run. The header row must match the column names exactly; the file is read agains
 table's declared schema, not inferred, so a typo fails loudly instead of silently creating
 a string column.
 
-> **Two stale paths, now corrected in code.** `02-transformation/sql/gold/40_man_tables.sql`
+> **Two stale paths, corrected in code.** `02-transformation/sql/gold/40_man_tables.sql`
 > used to name `cd_40_load_manual` and `Files/manual/*.csv` as the loader and its input.
 > Neither ever existed — the notebook is `cd_06_land_manual` and the directory is
 > `Files/_manual/`. The header comment has since been rewritten to describe the real chain.
@@ -53,29 +55,29 @@ changes nothing downstream.
 
 ### One list per table, columns identical
 
-**Ten lists in total: nine data lists, one per `man_*` table, 61 columns between them, plus
-`CD Projects` — a lookup list holding no report data.** Named `CD Wins`, `CD Risks`, …
-matching the nine `man_*` tables column for column. The 1:1 mapping is the point: a column
-added in SharePoint is a column in the report, with no translation layer to keep in sync.
+**Eighteen lists in total: 17 data lists, one per `man_*` table, 140 columns between them,
+plus `CD Projects` — a lookup list holding no report data.** Named `CD Wins`, `CD Risks`, …
+`CD QC Gate`, matching the 17 `man_*` tables column for column. The 1:1 mapping is the point:
+a column added in SharePoint is a column in the report, with no translation layer to keep in
+sync. It is enforced rather than intended — the list names and columns are **generated** from
+the gold DDL, and `test_sharepoint.py` fails the build if any writer drifts.
 
-> ⚠️ **The 1:1 mapping is currently broken in two places, and both are runtime breaks
-> rather than errors.** Fixes are in progress in the ingestion code; the full write-up with
-> the exact name and column tables is in
-> [`sharepoint-lists.md`](sharepoint-lists.md#-two-known-defects--read-before-running-the-provisioning-script).
+> ✅ **Both of the defects this section used to warn about are fixed at the source, 2026-08-19.**
 >
-> 1. **List names disagree.** `provision-sharepoint.ps1` creates `CD PriorityItems`,
->    `CD SafetyMonthly`, `CD QualityMonthly`, `CD DailyLogCompliance`; `mashup.pq` reads
->    `CD Priority Items`, `CD Safety Monthly`, `CD Quality Monthly`,
->    `CD Daily Log Compliance`. Four of nine queries would navigate to a list that does not
->    exist, return nothing, and render as blank tiles — indistinguishable from "nobody has
->    filled this in".
-> 2. **Column specs disagree** on `man_Flags`, `man_Milestones`, `man_Survey` and
->    `man_DailyLogCompliance`. The **gold DDL (`40_man_tables.sql`) and
->    `provision-sharepoint.ps1` are the authoritative pair** — the script is generated from
->    the DDL. `sharepoint-lists.md` and `_local/deploy_manual.py` carry the other spec.
->    These are the same four tables listed under *What is NOT built* below, and the
->    disagreement is not a typo — each one is a real question about what the scorecard
->    should measure.
+> 1. **List names used to disagree.** `provision-sharepoint.ps1` created `CD PriorityItems`
+>    where `mashup.pq` read `CD Priority Items` — four of nine queries navigating to a list
+>    that does not exist, returning nothing, and rendering as blank tiles indistinguishable
+>    from "nobody has filled this in". `_local/make_sharepoint.py` now generates the PS1, the
+>    mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so
+>    `list_name()` is the only place a list name is decided and `bronze_table()` the only
+>    place a bronze table name is. `test_sharepoint.py` asserts all four writers agree, and
+>    `make_sharepoint.py --check` fails on a stale artefact.
+> 2. **The column specs no longer disagree, and it was never a design question.** The gold
+>    DDL and the semantic model TMDL had agreed with each other all along; the *input* side
+>    had drifted from both. The gold DDL is the contract the DAX reads by name, so the input
+>    side was corrected to match it, and `deploy_manual.py` no longer keeps its own column
+>    list — it derives it from the DDL. Full write-up in
+>    [`pqp-solution.md`](pqp-solution.md#part-1--the-root-cause-that-had-to-be-fixed-first).
 
 ### The single most important design choice
 
@@ -139,10 +141,10 @@ read.
 Steps 2–6 below are ours. **Step 1 needs Affect** — the lists live in their tenant and
 need SharePoint admin rights. `sharepoint-lists.md` is written to hand over directly.
 
-1. Create the nine data lists plus `CD Projects` (ten in total). **This is now a script,
+1. Create the 17 data lists plus `CD Projects` (18 in total). **This is now a script,
    not a build sheet** —
-   `01-ingestion/Manual/provision-sharepoint.ps1`, generated from `40_man_tables.sql` by
-   `_local/make_sharepoint.py`. Whoever has SharePoint admin runs:
+   `01-ingestion/Manual/provision-sharepoint.ps1`, generated from `40_man_tables.sql` and
+   `41_man_qc_tables.sql` by `_local/make_sharepoint.py`. Whoever has SharePoint admin runs:
 
    ```powershell
    Install-Module PnP.PowerShell -Scope CurrentUser
@@ -150,7 +152,7 @@ need SharePoint admin rights. `sharepoint-lists.md` is written to hand over dire
    ./provision-sharepoint.ps1
    ```
 
-   9 lists, 61 columns, versioning on, `ProjectKey` a lookup everywhere. It is idempotent —
+   17 lists, 140 columns, versioning on, `ProjectKey` a lookup everywhere. It is idempotent —
    an existing list keeps its data and gains any missing columns, so re-running after a
    schema change is how you apply one.
 
@@ -161,11 +163,20 @@ need SharePoint admin rights. `sharepoint-lists.md` is written to hand over dire
    in". `test_sharepoint.py` fails the build if the two drift.
 
    `sharepoint-lists.md` remains the human-readable spec for review.
-2. `CD_Manual_Ingest.Dataflow` — one query per list into `cd_bronze_man_*`.
-3. `sql/silver/30_manual_silver.sql` — type, validate, reject duplicates and unknown projects.
-4. Point `40_man_tables.sql` at silver instead of the empty declarations.
-5. DQ expectations: duplicate key, unknown project, month outside `dim_Date`.
-6. Add the dataflow to `CD_Master_Pipeline`, upstream of silver.
+2. ~~`CD_Manual_Ingest.Dataflow` — one query per list into `cd_bronze_man_*`.~~ **Generated.**
+   It cannot be *deployed* until the site exists, because `SITE` is still a `REPLACE-ME`
+   placeholder — binding it is replacing one constant.
+3. ~~`sql/silver/30_manual_silver.sql`~~ **Done**, plus `31_qc_manual_silver.sql`, and both
+   are now actually deployed — `deploy_silver.py` used to skip prefix `30` entirely, so
+   `cd_silver_man_*` was never built at all.
+4. ~~Point `40_man_tables.sql` at silver instead of the empty declarations.~~ **Done** — gold
+   now `INSERT`s from `sv_man_*`, and `01_source_views_cd.sql` defines all 17 `sv_man_*`
+   views that had never existed.
+5. ~~DQ expectations~~ **Done** — the gate is at 103 expectations (80 blocking, 23 warning).
+6. **Still open:** add `cd_06_land_manual` (and later the dataflow) to `CD_Master_Pipeline`,
+   ahead of `Bronze To Silver`. The nightly run currently rebuilds silver and gold without
+   refreshing manual bronze first — harmless while every table is empty, a staleness bug the
+   day somebody enters a row.
 
 Until step 1 happens, the CSV path above keeps working — and the switch from CSV to
 SharePoint changes one notebook cell. **No gold file, no measure, no report visual.**
@@ -189,6 +200,28 @@ Every one carries `ProjectKey` (the Procore project id) and, except `man_Milesto
 
 The workbook's caps exist because `DASHBOARD` hard-references specific cells — a 5th win
 simply would not appear. Nothing here is capped.
+
+### The eight PQP registers
+
+Added 2026-08-19 for the Project Quality Plan. Same contract, same medallion, same reject
+handling; they feed **Model B** rather than the Monthly Progress Report. Design rationale
+and the workbook sheets each replaces are in [`pqp-solution.md`](pqp-solution.md).
+
+| Table | Grain |
+|---|---|
+| `man_QcDfow` | project × definable feature of work |
+| `man_QcItp` | project × inspection & test plan line |
+| `man_QcGate` | project × gate (against `qc_seed_Gate`, all three paths) |
+| `man_QcSpecialInspection` | project × special inspection |
+| `man_QcCommissioning` | project × commissioning item |
+| `man_QcInspectorSignIn` | project × inspector visit |
+| `man_QcChecklistResult` | project × checklist item (against `qc_seed_ChecklistItem`) |
+| `man_QcDohResult` | project × DOH requirement (against `qc_seed_DohItem`) |
+
+The `qc_seed_*` tables are the template library — what the workbook says should happen on
+every project. These eight record what actually happened. Anything **Procore** already owns
+— NCRs, punch items, submittals — is deliberately *not* a list here, because a SharePoint NCR
+log next to a Procore NCR log is two answers to "how many are open".
 
 ### Codes, not display strings
 
@@ -265,12 +298,12 @@ an admin ticket when part of it is a decision only Affect can make.
 
 | Layer | State |
 |---|---|
-| CSV templates | **Live** — `Files/_manual/_templates/*.csv`, 9 lists, each with an example row |
+| CSV templates | **Live** — `Files/_manual/_templates/*.csv`, **17** lists, each with an example row |
 | CSV → bronze loader | **Live** — `cd_06_land_manual`, run and succeeding |
-| `cd_bronze_man_*` | **Live** — 9 tables, correctly typed, currently 0 rows |
-| Silver parsers | Written (`30_manual_silver.sql`), with dedup and a reject log |
-| Gold `man_*` tables | Exist, correctly typed, empty |
-| Model + scorecard | Bound to all 9, measures written, categories score BLANK not zero |
+| `cd_bronze_man_*` | **Live** — **17** tables, correctly typed, currently 0 rows |
+| Silver parsers | Written (`30_manual_silver.sql`, `31_qc_manual_silver.sql`), with dedup and a reject log — and, since 2026-08-19, actually deployed |
+| Gold `man_*` tables | Exist, correctly typed, empty — and now populated **from silver** rather than declared and abandoned |
+| Model + scorecard | Model A bound to the original 9; Model B bound to the 8 PQP registers. Categories score BLANK, not zero |
 
 **The SharePoint dependency is gone.** Data entry no longer waits on an administrator:
 download a template, fill it in, upload it to `Files/_manual/<list>.csv`, re-run the
@@ -280,47 +313,50 @@ bronze tables and nothing downstream changes — two writers, one contract.
 That matters because the slow part was never the plumbing. It is people sitting down and
 typing a month of history, and that can start now.
 
-### What is NOT built, and needs an Affect decision first
+### What was NOT built — resolved 2026-08-19
 
-**There is no silver → gold link for `man_*`.** `40_man_tables.sql` creates the gold tables
-as empty typed placeholders; nothing populates them from `cd_silver_man_*`. Writing that
-join is small. Agreeing what it should say is not, because the two specs disagree on four
-tables — and each disagreement is a real question about what the scorecard should measure:
+This section used to say **there is no silver → gold link for `man_*`**, and it was right:
+`40_man_tables.sql` created empty typed placeholders and nothing populated them from
+`cd_silver_man_*`. Nine gold tables, bound to the semantic model, permanently empty, with
+the CSV templates, the loader notebook, the silver parsers and the reject log all running
+green and delivering nothing — because the last statement in the chain did not exist.
 
-| Table | Gold expects | Silver produces | The question |
-|---|---|---|---|
-| `man_DailyLogCompliance` | `LogsMissedSameDay` | `LogsSubmitted` | Is compliance "submitted at all" or "submitted the same day"? These give different scores |
-| `man_Milestones` | `ContractStart` + `ContractFinish`, `BaselineStart` + `BaselineFinish`, `ActivityKey` | single `ContractDate`, `BaselineDate`, `ForecastDate`, `ActualDate` | Are milestones a date or a span? Completion variance depends on which |
-| `man_Flags` | `ContingencyRemaining`, `BaselineApproved`, `BaselineRevision`, `MonthEndClosedOut`, `ForecastingInLine`, `ResourcesUpdated` | `ProfitabilityCode`, `CostMgmtFlag`, `ScheduleFlag`, `Notes` | Which attestations are actually captured monthly? |
-| `man_Survey` | `SurveyedParty` | *(not captured)* | Is the survey anonymous, or attributed? |
+**It is fixed.** Gold now `INSERT`s from `sv_man_*` over `cd_silver_man_*`, so the chain runs
+end to end: CSV or SharePoint list → `cd_bronze_man_*` → `cd_silver_man_*` → `man_*` → model.
+With no input the inserts move zero rows and the tables stay empty, which is correct — the
+platform never invents a row. `test_qc.py` asserts all 17 `man_*` tables are reachable from
+silver, which is the assertion that would have failed before any of this.
 
-Guessing any of these produces a scorecard number that looks authoritative and measures
-something nobody asked for — which is exactly the defect class this platform exists to
-remove. So they are questions for the next client call, not decisions to take here.
+It was four root causes, not one: no `sv_man_*` source views existed; `deploy_silver.py`
+skipped prefix `30` so `cd_silver_man_*` was never built; four tables' input columns had
+drifted; and a leftover `mode("overwrite")` cell in `deploy_gold.py` would have wiped every
+row the moment gold started populating. Full write-up in
+[`pqp-solution.md`](pqp-solution.md#part-1--the-root-cause-that-had-to-be-fixed-first).
 
-**Until they are answered, `[Scorecard Coverage %]` stays at 59%** and the four unscored
-categories return BLANK rather than zero. That is the honest reading, and it is visible on
-the Scorecard page rather than buried.
+### The four "open questions" were not questions
 
-### Status, 2026-08-19 — the join is written; the questions are still open
+This page previously listed four tables — `man_DailyLogCompliance`, `man_Milestones`,
+`man_Flags`, `man_Survey` — where the gold DDL and the silver parsers disagreed, and framed
+each as a decision only Affect could take.
 
-**The root cause named above has been addressed in code.** `40_man_tables.sql` no longer
-stops at nine empty typed placeholders — it now `INSERT`s from `sv_man_*` over
-`cd_silver_man_*`, so the chain runs end to end: CSV or SharePoint list →
-`cd_bronze_man_*` → `cd_silver_man_*` → `man_*` → model. With no input the inserts move
-zero rows and the tables stay empty, exactly as before, which is the correct behaviour —
-the platform never invents a row.
+That framing was wrong, and it is worth recording why. **The gold DDL and the semantic model
+TMDL had agreed with each other all along.** It was the *input* side — the silver parsers and
+the CSV loader — that had drifted away from both. There was nothing to decide: the gold DDL
+is the contract the DAX reads by name, so the input side was corrected to match it, and
+`deploy_manual.py` no longer keeps its own column list at all — it derives it from the DDL.
 
-**That does not close this page.** Two things are unchanged:
+So the live spec is, unambiguously: `man_DailyLogCompliance.LogsMissedSameDay`;
+`man_Milestones` as **spans** (`ContractStart`/`ContractFinish`,
+`BaselineStart`/`BaselineFinish`) plus `ActivityKey` and `IsSubstantialCompletion`;
+`man_Flags` carrying the six attestations; and `man_Survey.SurveyedParty` captured.
 
-1. **The four column-spec questions above still need Affect.** A written join does not
-   decide whether daily-log compliance means "submitted" or "submitted the same day", or
-   whether a milestone is a date or a span. Until they are answered the two specs stay
-   divergent and whichever one the join implements is a guess with a schema.
-2. **Nobody has typed a row yet.** The slow part was never the plumbing. `[Scorecard
+### What is genuinely left
+
+1. **Nobody has typed a row yet.** The slow part was never the plumbing. `[Scorecard
    Coverage %]` stays at **59%** and the four unscored categories return BLANK rather than
    zero until real data lands.
-
-The remaining code defect is the SharePoint one: **the list names the provisioning script
-creates do not match the names the dataflow reads** — see the top of this page. That one is
-still open and is a runtime break rather than a question.
+2. **The SharePoint site does not exist**, so `provision-sharepoint.ps1` has not been run and
+   `CD_Manual_Ingest` cannot be bound. That gates the *team* mechanism, not data entry — the
+   CSV path works today and needs nobody.
+3. **`cd_06_land_manual` is not in `CD_Master_Pipeline`.** Harmless while every table is
+   empty; a staleness bug the day somebody enters a row.

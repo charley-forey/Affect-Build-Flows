@@ -3,81 +3,40 @@
 Hand this to whoever has SharePoint admin on Affect's tenant. It is the complete spec for
 the lists that replace the spreadsheet's manual half.
 
-**How many lists.** **Ten in total: nine data lists — one per `man_*` table, 61 columns
+**How many lists.** **Eighteen in total: 17 data lists — one per `man_*` table, 140 columns
 between them — plus `CD Projects`, a lookup list that holds no report data and exists only
 so `ProjectKey` cannot be mistyped.** Both counts you may have seen elsewhere are the same
-thing: "ten lists" counts `CD Projects`, "9 lists, 61 columns" does not. This is the
+thing: "18 lists" counts `CD Projects`, "17 lists, 140 columns" does not. This is the
 sentence to quote.
+
+The 17 are the 9 original registers for the Monthly Progress Report plus the 8 PQP intake
+registers added 2026-08-19 ([`pqp-solution.md`](pqp-solution.md)).
 
 **Site:** one SharePoint site, suggested name `Affect Project Reporting`.
 **Naming:** every list is prefixed `CD ` so it is obvious which lists the report depends on.
 
 ---
 
-## ⚠️ Two known defects — read before running the provisioning script
+## The script is the spec — this document is the review copy
 
-Both are in code, both are being fixed by separate work in progress, and neither is fixed
-by editing this document. They are recorded here because this is the page somebody reads
-immediately before creating the lists, and either one produces a report that looks filled
-in and is empty.
+**Both defects this section used to warn about are fixed at the source, 2026-08-19.**
 
-### Defect 1 — the list names do not match what reads them (runtime break)
+`01-ingestion/Manual/provision-sharepoint.ps1` is **generated** by
+`_local/make_sharepoint.py` from the `man_*` gold DDL (`40_man_tables.sql` and
+`41_man_qc_tables.sql`), and so are `CD_Manual_Ingest`'s `mashup.pq`, its
+`queryMetadata.json`, and `deploy_manual.LISTS` (the CSV path). One function, `list_name()`,
+decides every list name; one function, `bronze_table()`, decides every bronze table name.
+`test_sharepoint.py` asserts all four writers agree, and `make_sharepoint.py --check` fails
+on a stale artefact.
 
-`01-ingestion/Manual/provision-sharepoint.ps1` creates lists whose names have **no spaces**
-inside the noun. `01-ingestion/Manual/CD_Manual_Ingest.Dataflow/mashup.pq` navigates to
-names **with** spaces. Four of the nine do not match:
-
-| Created by `provision-sharepoint.ps1` | Read by `mashup.pq` | Match? |
-|---|---|---|
-| `CD Wins` | `CD Wins` | yes |
-| `CD Risks` | `CD Risks` | yes |
-| **`CD PriorityItems`** | **`CD Priority Items`** | **NO** |
-| `CD Flags` | `CD Flags` | yes |
-| `CD Survey` | `CD Survey` | yes |
-| **`CD SafetyMonthly`** | **`CD Safety Monthly`** | **NO** |
-| **`CD QualityMonthly`** | **`CD Quality Monthly`** | **NO** |
-| `CD Milestones` | `CD Milestones` | yes |
-| **`CD DailyLogCompliance`** | **`CD Daily Log Compliance`** | **NO** |
-
-The headings in this document use the spaced form. **Treat neither as settled until the
-code is reconciled** — a fix is in progress on the ingestion side.
-
-Why it matters more than a typo: a SharePoint navigation to a list that does not exist does
-not fail the way a missing table does. It produces an empty query, which produces an empty
-bronze table, which produces a blank tile on the report — and a blank tile is
-indistinguishable from "nobody filled this in yet". Priority items, safety, quality and
-daily-log compliance would all read as un-entered forever, and the scorecard categories over
-them would score BLANK rather than error.
-
-### Defect 2 — two column specs disagree on four tables
-
-There are two descriptions of what the `man_*` columns are, and they do not match:
-
-| | Files |
+| Was | Now |
 |---|---|
-| **Authoritative** | `02-transformation/sql/gold/40_man_tables.sql` and `01-ingestion/Manual/provision-sharepoint.ps1` — the script is *generated* from the DDL, so these two agree by construction |
-| Not authoritative | this document and `_local/deploy_manual.py` (the CSV path), which agree with each other and with the silver parsers |
+| **List names disagreed** — the PS1 created `CD PriorityItems`, `CD SafetyMonthly`, `CD QualityMonthly`, `CD DailyLogCompliance`; `mashup.pq` read the spaced forms. Four of nine queries would have navigated to a list that does not exist, returned nothing, and rendered as blank tiles indistinguishable from "nobody filled this in" | One generator. The spaced forms (`CD Priority Items`, …) are what both write |
+| **Column specs disagreed** on `man_Flags`, `man_Milestones`, `man_Survey`, `man_DailyLogCompliance`, framed as four open questions for Affect | Not questions. The gold DDL and the model TMDL had agreed all along; the *input* side had drifted from both and was corrected to match. The tables below now carry the live spec |
 
-They disagree on four tables — the same four listed in
-[`manual-input.md`](manual-input.md), where each disagreement is written up as the real
-question it is:
-
-| Table | Authoritative (gold DDL + PS1) | This document / CSV path |
-|---|---|---|
-| `man_Flags` | `ProfitabilityCode`, `ContingencyRemaining`, `BaselineApproved`, `BaselineRevision`, `MonthEndClosedOut`, `ForecastingInLine`, `ResourcesUpdated` | `ProfitabilityCode`, `CostMgmtFlag`, `ScheduleFlag`, `Notes` |
-| `man_Milestones` | `ActivityKey`, `MilestoneName`, `ContractStart`, `ContractFinish`, `BaselineStart`, `BaselineFinish`, `IsSubstantialCompletion` | `MilestoneName`, `ContractDate`, `BaselineDate`, `ForecastDate`, `ActualDate` |
-| `man_Survey` | adds `SurveyedParty` | no `SurveyedParty` |
-| `man_DailyLogCompliance` | `LogsExpected`, `LogsMissedSameDay` | `LogsExpected`, `LogsSubmitted` |
-
-The choice codes differ too: the script writes `NOT_STARTED`/`PLANNED`/`IN_PROGRESS`/
-`COMPLETE` for `CD Risks.StatusCode` and `ON_TRACK`/`BEHIND`/`AT_RISK` for
-`CD PriorityItems.StatusCode`, where the tables below say `OPEN`/`MONITORING`/`CLOSED` and
-`ON_TRACK`/`AT_RISK`/`DELAYED`/`COMPLETE`.
-
-**If you are creating the lists today, the script is what runs — take its columns and its
-codes.** The tables below stay as the human-readable review copy and will be reconciled
-when the four questions in `manual-input.md` are answered, because answering them is what
-decides which spec is right.
+**If you are creating the lists today, run the script.** The tables below are the
+human-readable review copy of what it creates, and they are kept in step with it by hand —
+where they differ, the script wins.
 
 Before creating any of them, turn on for each list: **Settings → Versioning settings →
 Create a version each time you edit an item = Yes.** That is what gives every field change a
@@ -141,7 +100,7 @@ fixed cells. **There is no cap here.**
 | `ImpactCode` | Choice | yes | `HIGH`, `MEDIUM`, `LOW` |
 | `Mitigation` | Multiple lines of text | no | |
 | `OwnerRole` | Choice | no | The 9 roles from `dim_Owner` (PM, Super, PE, …) |
-| `StatusCode` | Choice | yes | `OPEN`, `MONITORING`, `CLOSED` |
+| `StatusCode` | Choice | yes | `NOT_STARTED`, `PLANNED`, `IN_PROGRESS`, `COMPLETE` |
 
 Spreadsheet cap: 8. **No cap here.**
 
@@ -151,7 +110,7 @@ Spreadsheet cap: 8. **No cap here.**
 |---|---|---|---|
 | `ItemNumber` | Number (integer) | yes | |
 | `ScheduleItem` | Single line of text | yes | |
-| `StatusCode` | Choice | yes | `ON_TRACK`, `AT_RISK`, `DELAYED`, `COMPLETE` |
+| `StatusCode` | Choice | yes | `ON_TRACK`, `BEHIND`, `AT_RISK` |
 | `CriticalDelays` | Multiple lines of text | no | |
 | `RecoveryPlan` | Multiple lines of text | no | |
 | `ForecastImpact` | Multiple lines of text | no | |
@@ -163,10 +122,13 @@ One row per project-month.
 
 | Column | Type | Required | Choices / notes |
 |---|---|---|---|
-| `ProfitabilityCode` | Choice | yes | `IMPROVED`, `MAINTAINED`, `DECLINED` — must match `dim_ScorecardBand` category 2 exactly |
-| `CostMgmtFlag` | Choice | no | `GREEN`, `AMBER`, `RED` |
-| `ScheduleFlag` | Choice | no | `GREEN`, `AMBER`, `RED` |
-| `Notes` | Multiple lines of text | no | |
+| `ProfitabilityCode` | Choice | yes | `Within Range`, `Out of Range, but has a plan`, `Margin fade but no plan` — these are `dim_ScorecardBand[MatchValue]` for category 2, and they are **labels, not codes**. Seeding `IN_RANGE` here would look right and match nothing |
+| `ContingencyRemaining` | Number | no | |
+| `BaselineApproved` | Yes/No | no | |
+| `BaselineRevision` | Single line of text | no | e.g. `Rev#3` |
+| `MonthEndClosedOut` | Yes/No | no | |
+| `ForecastingInLine` | Yes/No | no | |
+| `ResourcesUpdated` | Yes/No | no | |
 
 > **Codes, not labels.** `HIGH`, not `🔴 High`. The emoji is applied by the report from
 > `dim_Status`; storing it in the data means the report cannot restyle without a data
@@ -180,7 +142,8 @@ One row **per question**, six questions per project-month.
 |---|---|---|---|
 | `QuestionNumber` | Number (integer) | yes | 1–6 |
 | `QuestionText` | Single line of text | no | **Worth filling in** — see below |
-| `Score` | Number (0–1, 2 decimals) | yes | Or 1–5 if Affect prefers; say which and the pipeline scales |
+| `Score` | Number (integer) | yes | |
+| `SurveyedParty` | Single line of text | no | Who answered. The survey is attributed, not anonymous |
 
 The workbook stores the six scores but **not the question text** (open question 6). Nobody
 now knows what question 3 asked. Capturing it here fixes that permanently.
@@ -207,7 +170,7 @@ Both are already in the registry.
 | `AvgDaysToClose` | Number | no |
 
 **Retire once `observations` and `punch_items` feed the model** — both already extract
-(850 and 1,469 rows). Doing so also fixes workbook defect #2, where the quality tab reads
+(850 and 1,469 rows) and both now land in gold as `fct_QcNcr` and `fct_QcPunch`. Doing so also fixes workbook defect #2, where the quality tab reads
 *safety* orientations.
 
 ## 8. `CD Milestones`
@@ -216,18 +179,62 @@ Per project × milestone. **No `MonthStart`** — a milestone is not monthly.
 
 | Column | Type | Required | Notes |
 |---|---|---|---|
+| `ActivityKey` | Single line of text | no | Ties the milestone to a schedule activity |
 | `MilestoneName` | Single line of text | yes | |
-| `ContractDate` | Date | no | Off the signed contract — exists in no system |
-| `BaselineDate` | Date | no | |
-| `ForecastDate` | Date | no | |
-| `ActualDate` | Date | no | Blank until it happens |
+| `ContractStart` | Date | no | Off the signed contract — exists in no system |
+| `ContractFinish` | Date | no | |
+| `BaselineStart` | Date | no | |
+| `BaselineFinish` | Date | no | |
+| `IsSubstantialCompletion` | Yes/No | no | |
+
+**A milestone is a span, not a date.** That is what completion variance measures against.
 
 ## 9. `CD Daily Log Compliance`
 
 | Column | Type | Required |
 |---|---|---|
 | `LogsExpected` | Number (integer) | yes |
-| `LogsSubmitted` | Number (integer) | yes |
+| `LogsMissedSameDay` | Number (integer) | yes |
+
+**Compliance is "submitted the same day", not "submitted at all".** The column counts the
+misses, so a healthy month is a low number.
+
+---
+
+## 10–17. The PQP registers
+
+Added 2026-08-19 for the Project Quality Plan. Same rules as everything above — `ProjectKey`
+is a lookup, coded fields are choice columns, versioning on. Column-for-column detail is in
+the generated script; the summary here is for review.
+
+| List | Columns beyond `ProjectKey` |
+|---|---|
+| `CD QC DFOW` | `DfowRef`, `DfowDescription`, `TradeKey`, `RiskTier`, `ControlMeasure`, `OwnerRole`, `StatusCode`, `Notes` |
+| `CD QC ITP` | `ItpRef`, `TradeKey`, `Activity`, `InspectionType`, `AcceptanceCriteria`, `HoldPointType`, `Responsible`, `PlannedDate`, `ActualDate`, `ResultCode`, `StatusCode`, `Notes` |
+| `CD QC Gate` | `GateKey`, `GateType`, `StatusCode`, `Responsible`, `TargetDate`, `SubmittedDate`, `CompletedDate`, `EvidenceLink`, `BlockerNote` |
+| `CD QC Special Inspection` | `InspectionRef`, `Category`, `Agency`, `InspectorName`, `RequiredCode`, `PerformedCode`, `ScheduledDate`, `PerformedDate`, `ReportReceivedDate`, `StatusCode`, `Notes` |
+| `CD QC Commissioning` | `SystemRef`, `SystemName`, `TradeKey`, `Responsible`, `PlannedDate`, `ActualDate`, `StatusCode`, `Notes` |
+| `CD QC Inspector Sign In` | `SignInRef`, `VisitDate`, `InspectorName`, `AgencyCode`, `Purpose`, `AreaInspected`, `OutcomeCode`, `FollowUpRequired`, `Notes` |
+| `CD QC Checklist Result` | `TradeKey`, `ItemKey`, `StageCode`, `ResultCode`, `InspectedDate`, `InspectedBy`, `Notes` |
+| `CD QC DOH Result` | `ItemKey`, `ResponsibilityCode`, `StatusCode`, `VerifiedDate`, `VerifiedBy`, `EvidenceLink`, `Notes` |
+
+**None of the choice values here were retyped.** `StatusCode`, `ResultCode`, `StageCode`,
+`AgencyCode`, `OutcomeCode`, `RequiredCode`, `PerformedCode` and `ResponsibilityCode` are all
+read out of `02-transformation/seed/qc_status_vocab.csv` — the workbook's own dropdown
+vocabulary — which is the same file that builds `dim_QcStatus`. So what somebody can **pick**
+and what the model can **resolve** come from one file by construction. Retyping 143 codes into
+a PowerShell script is how you get a status that no measure matches and no error anywhere.
+
+`TradeKey` and `ItemKey` draw their choices from the `qc_seed_*` CSVs for the same reason —
+they have to match `qc_seed_Trade` / `qc_seed_ChecklistItem` exactly or the result joins to
+nothing.
+
+**One cost, stated rather than hidden.** `CD QC Gate` is one list covering all three gate
+paths (Path to TCO, Path to Fire Alarm, Statutory Inspections), so its `StatusCode` offers
+the **union** of the three vocabularies — 15 codes where the three separately hold 6, 7 and
+9. The alternative was three lists differing only in a dropdown, which is what the workbook
+had. `test_sharepoint.py` asserts this deliberately, so it reads as a decision rather than a
+bug.
 
 ---
 
@@ -238,6 +245,7 @@ Per project × milestone. **No `MonthStart`** — a milestone is not monthly.
 | `CD Projects` | Admin only | Everyone |
 | `CD Safety Monthly` | Safety lead + PMs | Everyone |
 | `CD Survey` | Client-facing lead | Leadership |
+| The eight `CD QC *` lists | The Q-Team + PMs | Everyone |
 | All others | PMs | Everyone |
 
 ## What the pipeline does with mistakes
@@ -258,7 +266,11 @@ silently fixes one in a way you cannot see:
 
 ## After the lists exist
 
-Send back the **site URL and the ten list names exactly as SharePoint shows them** — nine
-data lists plus `CD Projects`. The exact strings matter: `CD_Manual_Ingest.Dataflow`
-navigates by list title, and defect 1 above is precisely what happens when the string is
-close but not identical.
+Send back the **site URL** and the list names exactly as SharePoint shows them — 17 data
+lists plus `CD Projects`. The exact strings matter: `CD_Manual_Ingest.Dataflow` navigates by
+list title, and the fixed defect above is precisely what happens when the string is close but
+not identical.
+
+The site URL is the last placeholder: `SITE` in `mashup.pq` is still
+`https://REPLACE-ME.sharepoint.com/…`, and the mashup is generated, so binding it is
+replacing one constant.

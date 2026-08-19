@@ -25,15 +25,16 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - ✅ **Data warehouse review with Rebecca (Thu Jul 23)** — Fabric workspace walkthrough; findings in `meeting-notes/2026-07-23-warehouse-review.md`
 - ✅ **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (~20 min call). $125/hr, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing — see `meeting-notes/2026-07-24-cathal-scope-call.md`
 - ✅ **Fabric access granted** (`cforey-c@affect-group.com`) — workspace `Build`, folder `charley-dev`
-- ✅ **The platform is built and running (Aug 1–2)** — three lakehouses, Procore ingestion from the production tenant, a nightly pipeline with a 63-expectation DQ gate, a 37-table Direct Lake model and a 12-page Monthly Progress Report. See `foundation/charley-dev/`
+- ✅ **The platform is built and running (Aug 1–2)** — three lakehouses, Procore ingestion from the production tenant, a nightly pipeline with a blocking DQ gate (now **103 expectations**, 80 blocking / 23 warning), a 37-table Direct Lake model and a 12-page Monthly Progress Report. See `foundation/charley-dev/`
 - ✅ **`CD_Sage_Ingest` deployed (Aug 3)** — live in the `charley-dev` folder, bound to the existing on-prem gateway, inert until one *Can use* grant lands
 - ✅ **$4.85M defect found, fixed and deployed** — portfolio contract value was understated 16% by a per-month rather than cumulative change-order roll-up
 - ✅ **Fabric MCP** wired for the repo (`.mcp.json`) — used for live exploration (`execute_sql_query` / `execute_dax_query`); item creation stays on the committed REST deploy path
 - ✅ **Platform review with Rebecca — Thu Aug 13** (`meeting-notes/2026-08-13-rebecca-platform-review.md`). Rebecca's workload has increased; Charley absorbs the build load, mentoring goes async/recorded
 - ✅ **Azure subscription and Key Vault now exist (Aug 19)** — "Azure subscription 1" on tenant *Affect Build LLC*, and vault `OneLake`. The only purchasing decision on the blocker list is closed
-- 🟡 **PQP (Project Quality Plan) subject area in progress** — the client's 44-sheet `026-025 SAUNA LOUNGE QA - QC TRACKER` extracted to seed data (26 trades, 625 checklist items, 93 statutory gates, 101 DOH items, 143 status-vocabulary rows); a second semantic model and report follow
-- 🟡 **Two Power Automate flows in progress** — Estimating Setup, and Convert to Bidding
-- 🔵 **Six items with Affect**, every one a permission grant or a decision — the largest is now a single Key Vault role assignment. See `dashboard.md` → Blockers
+- ✅ **PQP (Project Quality Plan) subject area delivered (Aug 19)** — the client's 44-sheet `026-025 SAUNA LOUNGE QA - QC TRACKER` extracted to seed data (26 trades, 625 checklist items, 93 statutory gates, 101 DOH items, 141 status-vocabulary rows), joined to the live Procore facts `fct_QcSubmittal` 2,245 / `fct_QcPunch` 1,469 / `fct_QcNcr` 850, and now **visible**: a second semantic model (`Project Quality Plan` — 19 tables + `_Measures`, 42 measures, 23 relationships) and a second report (7 pages, 95 visuals), both deployed
+- ✅ **Two defects found and fixed (Aug 19)** — `deploy_gold.py` carried a hardcoded table list the QC tables were never added to, so the `fct_Qc*` facts were neither row-checked nor published to `gold_schema.json`, and a gold table missing from that file **silently cannot appear in any semantic model** (published tables 45 → **53**). And `20_fieldops_silver.sql` read `$.trade` as an object rather than `$.trade.name`, which broke every QC trade join **and put raw JSON into `fct_QualityItem.Trade` on the live Monthly Progress Report**
+- 🟡 **Two Power Automate flows built, not deployed** — Estimating Setup, and Convert to Bidding, in `power-automate/`. No SharePoint site exists yet
+- 🔵 **Everything still open sits with Affect**, and every one of them is a permission grant or a decision rather than a build task — the largest is now a single Key Vault role assignment. See `dashboard.md` → Blockers
 - ⚠️ **Existing production reporting is stale** — Sage stops Jul 20, Outbuild Jul 14, almost certainly the same gateway issue
 
 A forwardable write-up of the build lives in [`status-update.md`](status-update.md).
@@ -73,12 +74,12 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 | System | Purpose | Integration status |
 |---|---|---|
 | Microsoft Fabric | Data platform | **Live.** Rebecca's original warehouse, untouched; our `charley-dev` medallion alongside it — 3 lakehouses, 8 notebooks, a nightly pipeline |
-| Procore | Project management & costing | 🟢 **42 endpoints live**, registry-driven, production tenant → bronze. Extraction currently runs locally pending Key Vault. 403 on `punch_item_types` / `schedule` |
+| Procore | Project management & costing | 🟢 **44 endpoints registered, 40 landing bronze tables**, registry-driven, production tenant → bronze; **2 blocked by Procore 403s** (`punch_item_types`, `schedule`). Extraction currently runs locally pending the Key Vault role |
 | Sage 100 Contractor | Accounting, invoicing, payroll | 🔵 `CD_Sage_Ingest` **deployed and gateway-wired**, 8 tables. Blocked on one connection permission grant |
 | Outbuild | Scheduling & milestones | 🔵 16 endpoints **built and verified**, cannot run — `OUTBUILD_API_TOKEN` offered by email Aug 11, **in transit**. The **only** milestone source anywhere |
 | Azure Key Vault | Secret storage for ingestion | 🔵 Vault `OneLake` **exists**; RBAC-mode, and our identity needs one role — *Key Vault Secrets Officer* — before a secret can be written |
 | SharePoint | The ~40% of the report that lives in no system, plus estimating/bidding job folders | 🟡 Provisioning scripts written — manual-input lists, the 8 PQP intake lists, and the `Job Register`. A CSV path works today with no admin ticket. **No site exists yet** |
-| Power BI | Reporting | 🟢 **Monthly Progress Report live** — 12 pages, 180 visuals, Direct Lake over the gold model. The PQP report is not built yet |
+| Power BI | Reporting | 🟢 **Two reports live** — `Monthly Progress Report` (12 pages, 180 visuals) over `Affect Project Report`, and `Project Quality Plan` (7 pages, 95 visuals) over its own model. Both Direct Lake over the gold layer |
 | Power Automate | Workflow automation | 🟡 **Built, not deployed** — Estimating Setup and Convert to Bidding in `power-automate/`. Payments and lien waivers still gated on Chris's SOPs |
 | Ramp | Vendor payments | 🔴 Not integrated — API docs vendored in `resources/ramp/` |
 | ADP | Payroll | 🔴 Not integrated |

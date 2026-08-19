@@ -7,10 +7,18 @@ Companion to [`build-status.md`](build-status.md), which covers the pipeline. Th
 about the report.
 
 **Blockers re-checked 2026-08-19** and corrected below; the report measurements are
-unchanged from 2026-08-02. A second report is now in progress over the PQP (Project Quality
-Plan) subject area — the client's 44-sheet QA/QC tracker, seeded into
-`02-transformation/seed/` — with its own semantic model. It is a separate model and report,
-not a change to this one.
+unchanged from 2026-08-02. **A second report shipped on 2026-08-19** over the PQP (Project
+Quality Plan) subject area — the client's 44-sheet QA/QC tracker — with its own semantic
+model: `Project Quality Plan`, 7 pages, 95 visuals, over 19 tables and 42 measures. It is a
+separate model and report, **not a change to this one** — `dim_Project` and `dim_Date` are
+conformed across both, Model A was not touched, and rollback is deleting one item. See
+[`pqp-solution.md`](pqp-solution.md).
+
+One defect on **this** report was fixed in the same pass, and it was visible to readers:
+`fct_QualityItem.Trade` was showing raw JSON — `{"id":…,"name":"Electrical",…}` — because
+`20_fieldops_silver.sql` read Procore's `$.trade` as an object rather than taking
+`$.trade.name`. It now reads e.g. `"Windows"`. Nothing errored, nothing was NULL, and no
+test that only checks for NULL would have caught it.
 
 ---
 
@@ -112,7 +120,8 @@ Honest list. Most of it is other people's turnaround, not build effort.
 | **Outbuild token** | Milestones cannot refresh at all. Outbuild is the only milestone source that exists anywhere. **In transit** — offered by email Aug 11 | Affect — via Outbuild CS |
 | **Manual / narrative tables** (wins, risks, priority items, survey, flags) | ~40% of the report | Affect — the SharePoint decision |
 | **Safety**: incidents, hours, orientations, violations | The whole safety domain; `[TRIR]` is not computable | Affect — Procore credentials |
-| **Quality**: observations, punch items | Procore 403s on `punch_item_types` | Affect — Procore permissions |
+| **Quality**: observations, punch items | Both now land — 850 and 1,469 rows, as `fct_QcNcr` and `fct_QcPunch` on the PQP model. `punch_item_types` still 403s, but silver derives the punch class from the item itself so nothing downstream depends on it | Affect — Procore permissions, for completeness |
+| **Quality by trade** | 459 of 850 NCRs resolve to no trade — Procore's trade vocabulary (`HVAC`, `Sprinkler`) and the workbook's controlled keys (`HVAC_DUCTWORK`, `FIRE_SPRINKLER`) are different vocabularies. Deliberately not guessed; the count is on the PQP Data Quality page rather than charted | Affect — confirm the alias mapping |
 | **Daily logs** | `Score - Daily Reports`; Procore 403 on `schedule` | Affect — Procore permissions |
 | **Sage AP/AR, retainage, aging, job cost** | Cash position, aging, cost-to-complete | Affect — one *Can use* grant on the gateway connection; `CD_Sage_Ingest` is deployed and inert |
 | **Payment dates in Sage AR** | `[Avg Days To Payment]` returns BLANK by design — the AR header carries the amount paid but not the date | Affect — confirm whether it exists elsewhere in Sage |
@@ -139,7 +148,7 @@ Key Vault Secrets Officer role that moves Procore extraction off a laptop.
 
 Yes, and most of it already runs.
 
-**Offline — 12 suites, no network, no Fabric.** `python _local/run_tests.py`. The `.sql`
+**Offline — 14 suites, no network, no Fabric.** `python _local/run_tests.py`. The `.sql`
 runs through DuckDB via three macros, so the tests exercise the *production* Spark SQL
 rather than a re-implementation. Two suites reproduce the reconciliation gate exactly:
 Current Contract 9,116,960.48 and Contract Growth 3.60%. Mutation-tested — five deliberate
@@ -162,15 +171,23 @@ of period movement.
 model and the report are all live in `charley-dev`: **37 tables, 99 measures, 12 pages, 180
 visuals**. `validate_model.py` reframes the deployed model and passes **17 checks**.
 `[Last Refresh]` returns the real gold build time and the scorecard audit table sums to the
-headline score against live data.
+headline score against live data. On 2026-08-19 a second model and report joined them —
+`Project Quality Plan`, 19 tables plus `_Measures`, 42 measures, 7 pages, 95 visuals.
 
-One deployment trap worth writing down, because it cost a rebuild: `deploy_gold.py` defaults
-to `--source existing`, which reads the legacy warehouse. Under that source the direct-cost
-line, insurance and commitment views are deliberately **empty typed stubs** — the legacy
-warehouse does not hold those objects. Running the default against a lakehouse fed by our
-own ingestion silently empties seven gold tables. The verification step inside the notebook
-caught it and failed the run, which is exactly what it is for, but the correct invocation is
-`--source cd`.
+One deployment trap worth writing down, because it cost a rebuild: `deploy_gold.py` **used
+to** default to `--source existing`, which reads the legacy warehouse. Under that source the
+direct-cost line, insurance and commitment views are deliberately **empty typed stubs** — the
+legacy warehouse does not hold those objects. Running the default against a lakehouse fed by
+our own ingestion silently emptied seven gold tables. The verification step inside the
+notebook caught it and failed the run, which is exactly what it is for. **`DEFAULT_SOURCE` is
+now `cd`**, so the trap is closed; `--source cd` is redundant rather than mandatory.
+
+A second trap, closed in the same pass and worth more attention because nothing caught it:
+`deploy_gold.py` carries a **hardcoded `tables` list** that drives the schema publish to
+`gold_schema.json`. A gold table missing from that file cannot be typed by `deploy_model.py`,
+so it **silently cannot appear in any semantic model** — the SQL runs, the table holds rows,
+the model deploys and reports success, and the table is simply absent. Cost the three
+`fct_Qc*` tables until 2026-08-19. **45 → 53 tables published.**
 
 One thing the deployment caught that offline testing could not: relating the two scorecard
 config tables so the band table could show a category name made Power BI add a blank

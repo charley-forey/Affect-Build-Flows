@@ -216,6 +216,25 @@ point means something raced us, and that should surface rather than overwrite.
 
 Run `python power-automate/test_flows.py` after any edit to the definitions.
 
+### There is a second provisioning script, and it is easy to miss
+
+`provision-sharepoint-build.ps1` creates only what *these two flows* need: the `01 ESTIMATING`
+and `00 PROJECTS` libraries, both template trees, and the `Job Register` list.
+
+The **data platform's** intake lists are a separate script:
+
+```
+foundation/charley-dev/01-ingestion/Manual/provision-sharepoint.ps1
+```
+
+That one creates **17 lists / 140 columns** — the 9 that feed the Monthly Progress Report's
+manual fields, and the 8 PQP quality registers. It is generated from the gold DDL by
+`_local/make_sharepoint.py`, so it is never hand-edited; regenerate rather than patch.
+
+Both scripts must run. Provision only the first and the flows work while every `man_*` table
+in Fabric stays empty — which looks exactly like "nobody has filled it in yet", so the gap
+will not announce itself. Detail: [`_docs/sharepoint-lists.md`](../foundation/charley-dev/_docs/sharepoint-lists.md).
+
 ---
 
 ## What Affect must supply

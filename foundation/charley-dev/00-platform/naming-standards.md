@@ -10,9 +10,17 @@ One page. Follow it and the DAX, the SQL and the model agree without translation
 | `cd_silver_` | Typed, trimmed, validated | `cd_silver_procore_rfis` |
 | `dim_` | Gold dimension | `dim_Project` |
 | `fct_` | Gold fact | `fct_RfiSubmittal` |
-| `man_` | Gold, manually sourced | `man_Risks` |
+| `man_` | Gold, manually sourced | `man_Risks`, `man_QcGate` |
+| `qc_seed_` | Gold, seeded from the client's QA/QC workbook — identical on every project | `qc_seed_Trade`, `qc_seed_ChecklistItem` |
 | `cd_meta_` | Pipeline state | `cd_meta_watermark`, `cd_meta_run_log` |
 | `cd_dq_` | Data quality output | `cd_dq_results`, `cd_dq_rejects` |
+
+`qc_seed_` is a *template library*, not a dimension: it is what the workbook says should
+happen on every project (625 checklist items, 93 gates, 101 DOH requirements). What actually
+happened on a given project is a `man_Qc*` or `fct_Qc*` row pointing at it. Keeping the two
+apart is what makes "which trades has nobody signed off" a join rather than an eyeball.
+`dim_QcStatus` keeps the `dim_` prefix because it is a conventional conformed dimension over
+the workbook's status vocabulary.
 
 `cd_` marks "built by charley-dev" so a table's origin is obvious in a lakehouse listing that
 also contains Rebecca's. Gold tables drop the prefix because their names are the semantic
@@ -58,8 +66,8 @@ on `ProjectKey` only. This is what stops the two systems' identifiers leaking in
 | Notebook | `cd_<nn>_<verb>_<subject>` | `cd_20_silver_to_gold` |
 | Dataflow | `CD_<Source>_Ingest` | `CD_Sage_Ingest` |
 | Pipeline | `CD_<Purpose>_Pipeline` | `CD_Master_Pipeline` |
-| Semantic model | Business name, no prefix | `Affect Project Report` |
-| Report | Business name, no prefix | `Monthly Progress Report` |
+| Semantic model | Business name, no prefix | `Affect Project Report`, `Project Quality Plan` |
+| Report | Business name, no prefix | `Monthly Progress Report`, `Project Quality Plan` |
 
 Numbered notebook prefixes give the run order at a glance and sort correctly in the Fabric
 item list. Semantic models and reports drop the prefix because end users see those names.
@@ -70,11 +78,20 @@ item list. Semantic models and reports drop the prefix because end users see tho
 
 | Band | Contains |
 |---|---|
-| `0*` | Seeds — static reference data |
+| `0*` | Seeds — static reference data, including `08_qc_seeds.sql` and the silver source views |
 | `1*` | Dimensions |
 | `2*`–`3*` | Facts |
 | `4*` | Manual (`man_*`) |
 | `9*` | Data quality |
+
+Two places where the number is load-bearing rather than decorative:
+
+- **`deploy_silver.py` deploys everything except prefixes `00` and `01`** (the source views,
+  which the notebook defines itself). A new silver file gets picked up by being numbered
+  `≥ 02` — which is why `31_qc_manual_silver.sql` is numbered 31 and needed no deploy-script
+  change.
+- **`GOLD_CD_ONLY` in `deploy_gold.py`** names the gold files that only exist under
+  `--source cd`, because the legacy warehouse holds no QC or manual data at all.
 
 ## Two things that are not negotiable
 
