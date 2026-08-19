@@ -176,8 +176,13 @@ def main() -> int:
     EXPECTED_BY_SOURCE = {
         "cd": {
             "[Projects]": 19, "[Vendors]": 126, "[CostCodes]": 5434, "[Dates]": 7670,
-            "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 117,
-            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 130,
+            "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 122,
+            # Periods moved 130 -> 142 when the dim_Project Sage join was repaired
+            # (2026-08-19). fct_FinancialPeriod unions DISTINCT (ProjectKey, MonthStart);
+            # while every invoice carried ProjectKey='UNMATCHED' all AR months collapsed
+            # onto one fake project, so 130 was an UNDERCOUNT caused by the defect. 142 is
+            # the corrected grain, not a regression.
+            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 142,
             "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
         },
         "existing": {
@@ -191,12 +196,21 @@ def main() -> int:
         },
     }
     expected = EXPECTED_BY_SOURCE[os.environ.get("CD_GOLD_SOURCE", "cd")]
+
+    # Sage AR accrues: fct_Invoice was 117 on 2026-08-02 and 122 on 2026-08-19, with no
+    # defect in between. An exact count on an append-only table fails every time the client
+    # bills someone, and a check that cries wolf weekly gets muted - which is the argument
+    # expectations.py makes about ERROR severity, and it applies here too. Floor, not equal.
+    # A shrinking invoice table is still caught; a growing one is not a regression.
+    GROWS = {"[Invoices]"}
+
     bad = []
     for key, want in expected.items():
         got = rows.get(key)
-        print(f"  {key[1:-1]:<14} {got:>7}  (expected {want})")
-        if got != want:
-            bad.append(f"{key}: got {got}, expected {want}")
+        rel = ">=" if key in GROWS else " ="
+        print(f"  {key[1:-1]:<14} {got:>7}  (expected {rel}{want})")
+        if (got < want) if key in GROWS else (got != want):
+            bad.append(f"{key}: got {got}, expected {rel}{want}")
     if bad:
         print("\nROW COUNT MISMATCH:\n  " + "\n  ".join(bad))
         return 1
