@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "e6346d284a8d745d63e3",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1160,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "93 gates: 46 on the Path to TCO, 23 on the FDNY Letter of Approval pathway, 24 statutory inspections. The template is seeded from the workbook; the per-project answers come from the intake list, which is empty until SharePoint is provisioned.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'93 gates: 46 on the Path to TCO, 23 on the FDNY Letter of Approval pathway, 24 statutory inspections. The template is seeded from the workbook; the per-project answers come from the intake list, which is empty until SharePoint is provisioned.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

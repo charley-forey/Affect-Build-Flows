@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "bd67fe15093eca73757a",
+  "position": {
+    "x": 20,
+    "y": 132,
+    "z": 0,
+    "width": 560,
+    "height": 120,
+    "tabOrder": 13
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Procore's trade vocabulary and the workbook's controlled keys are different vocabularies - Procore says \"HVAC\" and \"Sprinkler\" where the workbook says HVAC_DUCTWORK and FIRE_SPRINKLER. Unmatched rows are flagged, never dropped: in the workbook they would vanish from a lookup silently. Resolving them needs Affect to confirm the mapping, because guessing whether \"Concrete Superstructure\" is CIP concrete or slab on deck would attach a defect to the wrong trade.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Procore''s trade vocabulary and the workbook''s controlled keys are different vocabularies - Procore says \"HVAC\" and \"Sprinkler\" where the workbook says HVAC_DUCTWORK and FIRE_SPRINKLER. Unmatched rows are flagged, never dropped: in the workbook they would vanish from a lookup silently. Resolving them needs Affect to confirm the mapping, because guessing whether \"Concrete Superstructure\" is CIP concrete or slab on deck would attach a defect to the wrong trade.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

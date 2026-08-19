@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "9805079a6c906150a6b6",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1160,
+    "height": 40,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "26 trade checklists sharing one schema, 625 items, held once as a versioned library rather than copied into every project workbook. Adding a 27th trade is a row, not a new tab.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'26 trade checklists sharing one schema, 625 items, held once as a versioned library rather than copied into every project workbook. Adding a 27th trade is a row, not a new tab.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

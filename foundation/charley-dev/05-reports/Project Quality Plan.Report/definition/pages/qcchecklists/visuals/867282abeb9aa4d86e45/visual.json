@@ -1,0 +1,126 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "867282abeb9aa4d86e45",
+  "position": {
+    "x": 600,
+    "y": 392,
+    "z": 0,
+    "width": 584,
+    "height": 290,
+    "tabOrder": 21
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Trade"
+                    }
+                  },
+                  "Property": "TradeName"
+                }
+              },
+              "queryRef": "qc_seed_Trade.TradeName",
+              "nativeQueryRef": "TradeName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Trade"
+                    }
+                  },
+                  "Property": "CsiCode"
+                }
+              },
+              "queryRef": "qc_seed_Trade.CsiCode",
+              "nativeQueryRef": "CsiCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Trade"
+                    }
+                  },
+                  "Property": "DfowRef"
+                }
+              },
+              "queryRef": "qc_seed_Trade.DfowRef",
+              "nativeQueryRef": "DfowRef"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Trade"
+                    }
+                  },
+                  "Property": "RiskTier"
+                }
+              },
+              "queryRef": "qc_seed_Trade.RiskTier",
+              "nativeQueryRef": "RiskTier"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Trades, CSI code and risk tier. Shows TradeName, CsiCode, DfowRef, RiskTier for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Trades, CSI code and risk tier'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

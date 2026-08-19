@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "9fdb60e68baf195ea6bc",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1160,
+    "height": 40,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Punch is not quality control - it confirms readiness. Zero Punch is the stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 to the trade executive, which is why ageing is a headline here.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Punch is not quality control - it confirms readiness. Zero Punch is the stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 to the trade executive, which is why ageing is a headline here.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

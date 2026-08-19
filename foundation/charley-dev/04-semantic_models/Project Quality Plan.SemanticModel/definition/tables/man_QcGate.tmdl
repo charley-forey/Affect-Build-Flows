@@ -1,0 +1,61 @@
+table man_QcGate
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column GateKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: GateKey
+
+	column GateType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: GateType
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column Responsible
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Responsible
+
+	column TargetDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: TargetDate
+		formatString: yyyy-mm-dd
+
+	column SubmittedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: SubmittedDate
+		formatString: yyyy-mm-dd
+
+	column CompletedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CompletedDate
+		formatString: yyyy-mm-dd
+
+	column EvidenceLink
+		dataType: string
+		summarizeBy: none
+		sourceColumn: EvidenceLink
+
+	column BlockerNote
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BlockerNote
+
+	partition man_QcGate = entity
+		mode: directLake
+		source
+			entityName: man_qcgate
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

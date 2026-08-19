@@ -1,0 +1,235 @@
+table _Measures
+
+	/// Replaces nothing - the workbook could not say when it was last true
+	measure 'Last Refresh' = MAX('_Measures'[_built_at])
+		formatString: "yyyy-mm-dd hh:nn:ss"
+		displayFolder: 00 Report context
+
+	/// Replaces the workbook used TODAY(), so a saved copy silently re-dated itself
+	measure 'Report Month Label' =
+			VAR L = MIN ( dim_Date[MonthStart] )
+			VAR H = MAX ( dim_Date[MonthStart] )
+			RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )
+		displayFolder: 00 Report context
+
+	/// Replaces no workbook equivalent - a spreadsheet cannot say when it was last correct
+	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
+		formatString: "yyyy-mm-dd hh:nn"
+		displayFolder: 00 Report context
+
+	/// Replaces derived
+	measure 'Hours Since Last Checked Run' =
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )
+		formatString: "#,0"
+		displayFolder: 00 Report context
+
+	/// Replaces nothing - text not colour, so it survives greyscale and colour-blindness
+	measure 'Pipeline Status' =
+			VAR Hrs = [Hours Since Last Checked Run]
+			RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", "STALE - these numbers may be weeks old" )
+		displayFolder: 00 Report context
+
+	/// Replaces nothing - the workbook is one project per file
+	measure 'Projects With Quality Data' = CALCULATE(DISTINCTCOUNT(fct_QcNcr[ProjectKey]), ALL(dim_Project))
+		formatString: "#,0"
+		displayFolder: 00 Report context
+
+	/// Replaces NCR Log!B4 (Total Raised)
+	measure 'Total NCRs' = COUNTROWS(fct_QcNcr)
+		formatString: "#,0"
+		displayFolder: 01 Non-conformance
+
+	/// Replaces NCR Log!D4 (Open)
+	measure 'Open NCRs' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = TRUE())
+		formatString: "#,0"
+		displayFolder: 01 Non-conformance
+
+	/// Replaces NCR Log!F4 (Closed)
+	measure 'Closed NCRs' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = FALSE())
+		formatString: "#,0"
+		displayFolder: 01 Non-conformance
+
+	/// Replaces NCR Log!H4 (Overdue)
+	measure 'NCRs Past Due' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsPastDue] = TRUE())
+		formatString: "#,0"
+		displayFolder: 01 Non-conformance
+
+	/// Replaces NCR Log!K4 (Avg Days to Close)
+	measure 'Avg Days To Close NCR' = AVERAGEX(FILTER(fct_QcNcr, fct_QcNcr[IsOpen] = FALSE()), fct_QcNcr[DaysOpen])
+		formatString: "#,0.0"
+		displayFolder: 01 Non-conformance
+
+	/// Replaces NCR Log - not computed in the workbook
+	measure 'NCR Closure Rate' = DIVIDE([Closed NCRs], [Total NCRs])
+		formatString: "0.0%"
+		displayFolder: 01 Non-conformance
+
+	/// Replaces Punch & RCL Log!B4 (Total Items)
+	measure 'Total Punch Items' = COUNTROWS(fct_QcPunch)
+		formatString: "#,0"
+		displayFolder: 02 Punch & completion
+
+	/// Replaces Punch & RCL Log!D4 (Open)
+	measure 'Open Punch Items' = CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[IsOpen] = TRUE())
+		formatString: "#,0"
+		displayFolder: 02 Punch & completion
+
+	/// Replaces Punch & RCL Log!L4 (Aged > 7 Days)
+	measure 'Punch Items Aged Over 7 Days' = CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[IsOpen] = TRUE(), fct_QcPunch[DaysOpen] > 7)
+		formatString: "#,0"
+		displayFolder: 02 Punch & completion
+
+	/// Replaces Punch & RCL Log!N4 (% Closed)
+	measure 'Punch Closure Rate' = DIVIDE(CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[IsOpen] = FALSE()), [Total Punch Items])
+		formatString: "0.0%"
+		displayFolder: 02 Punch & completion
+
+	/// Replaces Punch & RCL Log!N column (Days Open)
+	measure 'Avg Days Punch Open' = AVERAGEX(FILTER(fct_QcPunch, fct_QcPunch[IsOpen] = TRUE()), fct_QcPunch[DaysOpen])
+		formatString: "#,0.0"
+		displayFolder: 02 Punch & completion
+
+	/// Replaces Submittals & Mockups!B4 (Total)
+	measure 'Total Submittals' = COUNTROWS(fct_QcSubmittal)
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Submittals & Mockups!I4 (Outstanding)
+	measure 'Open Submittals' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsOpen] = TRUE())
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Submittals & Mockups - not computed in the workbook
+	measure 'Overdue Submittals' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsOverdue] = TRUE())
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Submittals & Mockups - not computed in the workbook
+	measure 'Avg Submittal Turnaround' = AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])
+		formatString: "#,0.0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Project Identifiers!B15 (8 project mock-ups)
+	measure 'Mock-Ups Registered' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Path to TCO!E4 + Path to Fire Alarm + Statutory Inspections
+	measure 'Gates Defined' = COUNTROWS(qc_seed_Gate)
+		formatString: "#,0"
+		displayFolder: 04 Statutory gates
+
+	/// Replaces Path to TCO!A9:A71
+	measure 'Gates Recorded' = COUNTROWS(man_QcGate)
+		formatString: "#,0"
+		displayFolder: 04 Statutory gates
+
+	/// Replaces Path to TCO!G4 (Complete)
+	measure 'Gates Complete' = CALCULATE(COUNTROWS(man_QcGate), man_QcGate[StatusCode] = "COMPLETE")
+		formatString: "#,0"
+		displayFolder: 04 Statutory gates
+
+	/// Replaces Path to TCO!K4 (TCO Readiness)
+	measure 'Gate Readiness' = DIVIDE([Gates Complete], [Gates Defined])
+		formatString: "0.0%"
+		displayFolder: 04 Statutory gates
+
+	/// Replaces DASHBOARD!D59 (TOTAL - ALL TRADE CHECKLISTS)
+	measure 'Checklist Items Defined' = COUNTROWS(qc_seed_ChecklistItem)
+		formatString: "#,0"
+		displayFolder: 05 Trade checklists
+
+	/// Replaces the 26 trade checklist tabs, column G
+	measure 'Checklist Items Recorded' = COUNTROWS(man_QcChecklistResult)
+		formatString: "#,0"
+		displayFolder: 05 Trade checklists
+
+	/// Replaces DASHBOARD!E59 (Pass)
+	measure 'Checklist Items Passed' = CALCULATE(COUNTROWS(man_QcChecklistResult), man_QcChecklistResult[ResultCode] = "PASS")
+		formatString: "#,0"
+		displayFolder: 05 Trade checklists
+
+	/// Replaces DASHBOARD!F59 (Fail)
+	measure 'Checklist Items Failed' = CALCULATE(COUNTROWS(man_QcChecklistResult), man_QcChecklistResult[ResultCode] = "FAIL")
+		formatString: "#,0"
+		displayFolder: 05 Trade checklists
+
+	/// Replaces DASHBOARD!G59 (% Complete)
+	measure 'Checklist Completion' = DIVIDE([Checklist Items Passed], [Checklist Items Defined])
+		formatString: "0.0%"
+		displayFolder: 05 Trade checklists
+
+	/// Replaces DFOW Risk Register!A5:A36
+	measure 'DFOWs Registered' = COUNTROWS(man_QcDfow)
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces DASHBOARD!B29 (Tier 3 & 4 DFOWs)
+	measure 'Tier 3 And 4 DFOWs' = CALCULATE(COUNTROWS(man_QcDfow), man_QcDfow[RiskTier] >= 3)
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces DASHBOARD!B10 (ITP total)
+	measure 'ITP Tests Defined' = COUNTROWS(man_QcItp)
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces DASHBOARD!C10 (ITP Pass)
+	measure 'ITP Tests Passed' = CALCULATE(COUNTROWS(man_QcItp), man_QcItp[ResultCode] = "PASS")
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces Special Inspections!B4 (Total Events)
+	measure 'Special Inspections Logged' = COUNTROWS(man_QcSpecialInspection)
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces DASHBOARD!B28 (Inspector sign-in entries)
+	measure 'Inspector Visits Logged' = COUNTROWS(man_QcInspectorSignIn)
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces DASHBOARD!C11 (Commissioning accepted)
+	measure 'Systems Accepted' = CALCULATE(COUNTROWS(man_QcCommissioning), man_QcCommissioning[StatusCode] = "ACCEPTED")
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces DOH Checklist!D4 (Verified)
+	measure 'DOH Items Verified' = CALCULATE(COUNTROWS(man_QcDohResult), man_QcDohResult[StatusCode] = "VERIFIED")
+		formatString: "#,0"
+		displayFolder: 06 DFOW, ITP & inspections
+
+	/// Replaces nothing - Excel drops unmatched rows from a lookup silently
+	measure 'DQ NCRs With Unmapped Trade' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[HasUnmappedTrade] = TRUE())
+		formatString: "#,0"
+		displayFolder: 07 Data quality
+
+	/// Replaces nothing - Excel drops unmatched rows from a lookup silently
+	measure 'DQ Punch With Unmapped Trade' = CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[HasUnmappedTrade] = TRUE())
+		formatString: "#,0"
+		displayFolder: 07 Data quality
+
+	/// Replaces nothing - an empty tab and a complete tab look identical in Excel
+	measure 'DQ Registers Awaiting Input' = IF([Gates Recorded] + [Checklist Items Recorded] + [DFOWs Registered] = 0, "No manual quality data entered yet", "")
+		displayFolder: 07 Data quality
+
+	column _placeholder
+		isHidden
+		dataType: string
+		summarizeBy: none
+		sourceColumn: _placeholder
+
+	column _built_at
+		isHidden
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		summarizeBy: none
+		sourceColumn: _built_at
+
+	partition _Measures = entity
+		mode: directLake
+		source
+			entityName: measures_anchor
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

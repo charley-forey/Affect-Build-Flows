@@ -1,0 +1,71 @@
+table dim_Date
+
+	column Date
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: Date
+		formatString: yyyy-mm-dd
+
+	column Year
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Year
+
+	column Quarter
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Quarter
+
+	column Month
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Month
+
+	column Day
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Day
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column MonthEnd
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthEnd
+		formatString: yyyy-mm-dd
+
+	column MonthName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MonthName
+
+	column MonthYear
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MonthYear
+
+	column MonthYearSort
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: MonthYearSort
+
+	column MonthOffset
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: MonthOffset
+
+	column IsMonthEnd
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsMonthEnd
+
+	partition dim_Date = entity
+		mode: directLake
+		source
+			entityName: dim_date
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -1,0 +1,91 @@
+relationship rel_00_fct_QcNcr_dim_Project_ProjectKey
+	fromColumn: fct_QcNcr.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_01_fct_QcNcr_dim_Date_MonthStart
+	fromColumn: fct_QcNcr.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_02_fct_QcNcr_qc_seed_Trade_TradeKey
+	fromColumn: fct_QcNcr.TradeKey
+	toColumn: qc_seed_Trade.TradeKey
+
+relationship rel_03_fct_QcPunch_dim_Project_ProjectKey
+	fromColumn: fct_QcPunch.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_04_fct_QcPunch_dim_Date_MonthStart
+	fromColumn: fct_QcPunch.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_05_fct_QcPunch_qc_seed_Trade_TradeKey
+	fromColumn: fct_QcPunch.TradeKey
+	toColumn: qc_seed_Trade.TradeKey
+
+relationship rel_06_fct_QcSubmittal_dim_Project_ProjectKey
+	fromColumn: fct_QcSubmittal.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_07_fct_QcSubmittal_dim_Date_MonthStart
+	fromColumn: fct_QcSubmittal.MonthStart
+	toColumn: dim_Date.Date
+
+relationship rel_08_qc_seed_ChecklistItem_qc_seed_Trade_TradeKey
+	fromColumn: qc_seed_ChecklistItem.TradeKey
+	toColumn: qc_seed_Trade.TradeKey
+
+relationship rel_09_man_QcDfow_dim_Project_ProjectKey
+	fromColumn: man_QcDfow.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_10_man_QcDfow_qc_seed_Trade_TradeKey
+	fromColumn: man_QcDfow.TradeKey
+	toColumn: qc_seed_Trade.TradeKey
+
+relationship rel_11_man_QcItp_dim_Project_ProjectKey
+	fromColumn: man_QcItp.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_12_man_QcItp_qc_seed_Trade_TradeKey
+	fromColumn: man_QcItp.TradeKey
+	toColumn: qc_seed_Trade.TradeKey
+
+relationship rel_13_man_QcGate_dim_Project_ProjectKey
+	fromColumn: man_QcGate.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_14_man_QcGate_qc_seed_Gate_GateKey
+	fromColumn: man_QcGate.GateKey
+	toColumn: qc_seed_Gate.GateKey
+
+relationship rel_15_man_QcSpecialInspection_dim_Project_ProjectKey
+	fromColumn: man_QcSpecialInspection.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_16_man_QcCommissioning_dim_Project_ProjectKey
+	fromColumn: man_QcCommissioning.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_17_man_QcCommissioning_qc_seed_Trade_TradeKey
+	fromColumn: man_QcCommissioning.TradeKey
+	toColumn: qc_seed_Trade.TradeKey
+
+relationship rel_18_man_QcInspectorSignIn_dim_Project_ProjectKey
+	fromColumn: man_QcInspectorSignIn.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_19_man_QcChecklistResult_dim_Project_ProjectKey
+	fromColumn: man_QcChecklistResult.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_20_man_QcChecklistResult_qc_seed_ChecklistItem_ItemKey
+	fromColumn: man_QcChecklistResult.ItemKey
+	toColumn: qc_seed_ChecklistItem.ItemKey
+
+relationship rel_21_man_QcDohResult_dim_Project_ProjectKey
+	fromColumn: man_QcDohResult.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_22_man_QcDohResult_qc_seed_DohItem_ItemKey
+	fromColumn: man_QcDohResult.ItemKey
+	toColumn: qc_seed_DohItem.ItemKey

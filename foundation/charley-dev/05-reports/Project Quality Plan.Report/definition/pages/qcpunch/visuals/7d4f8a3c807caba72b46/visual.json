@@ -1,0 +1,126 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "7d4f8a3c807caba72b46",
+  "position": {
+    "x": 600,
+    "y": 260,
+    "z": 0,
+    "width": 584,
+    "height": 280,
+    "tabOrder": 17
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcPunch"
+                    }
+                  },
+                  "Property": "PunchNumber"
+                }
+              },
+              "queryRef": "fct_QcPunch.PunchNumber",
+              "nativeQueryRef": "PunchNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcPunch"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "fct_QcPunch.Title",
+              "nativeQueryRef": "Title"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcPunch"
+                    }
+                  },
+                  "Property": "StatusCode"
+                }
+              },
+              "queryRef": "fct_QcPunch.StatusCode",
+              "nativeQueryRef": "StatusCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcPunch"
+                    }
+                  },
+                  "Property": "DaysOpen"
+                }
+              },
+              "queryRef": "fct_QcPunch.DaysOpen",
+              "nativeQueryRef": "DaysOpen"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Punch register. Shows PunchNumber, Title, StatusCode, DaysOpen for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Punch register'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

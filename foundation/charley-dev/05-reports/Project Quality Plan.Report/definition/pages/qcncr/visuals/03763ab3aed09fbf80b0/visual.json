@@ -1,0 +1,126 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "03763ab3aed09fbf80b0",
+  "position": {
+    "x": 600,
+    "y": 260,
+    "z": 0,
+    "width": 584,
+    "height": 280,
+    "tabOrder": 18
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcNcr"
+                    }
+                  },
+                  "Property": "NcrNumber"
+                }
+              },
+              "queryRef": "fct_QcNcr.NcrNumber",
+              "nativeQueryRef": "NcrNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcNcr"
+                    }
+                  },
+                  "Property": "Title"
+                }
+              },
+              "queryRef": "fct_QcNcr.Title",
+              "nativeQueryRef": "Title"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcNcr"
+                    }
+                  },
+                  "Property": "StatusCode"
+                }
+              },
+              "queryRef": "fct_QcNcr.StatusCode",
+              "nativeQueryRef": "StatusCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcNcr"
+                    }
+                  },
+                  "Property": "DaysOpen"
+                }
+              },
+              "queryRef": "fct_QcNcr.DaysOpen",
+              "nativeQueryRef": "DaysOpen"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. NCR register. Shows NcrNumber, Title, StatusCode, DaysOpen for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'NCR register'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
