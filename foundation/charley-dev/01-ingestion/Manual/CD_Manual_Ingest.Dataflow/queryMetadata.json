@@ -8,53 +8,93 @@
   "documentLocale": "en-US",
   "queriesMetadata": {
     "cd_bronze_man_projects": {
-      "queryId": "d726ef8d-ef9c-4740-86bd-687b49c14fc1",
+      "queryId": "7a82074d-4ca0-5d9a-bcdf-c184aba4a57f",
       "queryName": "cd_bronze_man_projects",
       "loadEnabled": true
     },
     "cd_bronze_man_wins": {
-      "queryId": "64ce0fce-3cb2-4240-bf8c-6ed7974fd6a3",
+      "queryId": "a86dbb16-3e1d-5732-a29f-899f9d9c6e4b",
       "queryName": "cd_bronze_man_wins",
       "loadEnabled": true
     },
     "cd_bronze_man_risks": {
-      "queryId": "ce247deb-cb93-4daf-8ad5-08bed01bf480",
+      "queryId": "a9e3d03e-39fe-58a5-b613-73c7cc9b7f71",
       "queryName": "cd_bronze_man_risks",
       "loadEnabled": true
     },
     "cd_bronze_man_priority_items": {
-      "queryId": "44b4ec97-0122-448c-a1fd-a46da3f1bc9e",
+      "queryId": "70baf1ce-fc66-52ac-874d-e5dd18062425",
       "queryName": "cd_bronze_man_priority_items",
       "loadEnabled": true
     },
     "cd_bronze_man_flags": {
-      "queryId": "732bd892-76d0-4d3a-8366-9aadc51af49f",
+      "queryId": "2e95d6b7-3caf-5aeb-850b-ee61937ee48c",
       "queryName": "cd_bronze_man_flags",
       "loadEnabled": true
     },
     "cd_bronze_man_survey": {
-      "queryId": "2f722c62-4a18-4463-8937-b5af594823ea",
+      "queryId": "040e79d0-e149-5b6c-a425-968957a05095",
       "queryName": "cd_bronze_man_survey",
       "loadEnabled": true
     },
     "cd_bronze_man_safety_monthly": {
-      "queryId": "91e0526f-4f2d-482e-85b3-0958de028714",
+      "queryId": "76940ff1-6bfb-5239-851c-ad8d5db388c4",
       "queryName": "cd_bronze_man_safety_monthly",
       "loadEnabled": true
     },
     "cd_bronze_man_quality_monthly": {
-      "queryId": "8723244c-a8f4-4d6d-907b-e9183491d94c",
+      "queryId": "e06ac815-50cc-567f-923c-2fcbd5bb3fd3",
       "queryName": "cd_bronze_man_quality_monthly",
       "loadEnabled": true
     },
     "cd_bronze_man_milestones": {
-      "queryId": "83315e32-9912-4f57-9ced-40da220335f0",
+      "queryId": "7553a673-e83e-5447-99a3-26004a3eed22",
       "queryName": "cd_bronze_man_milestones",
       "loadEnabled": true
     },
     "cd_bronze_man_daily_log_compliance": {
-      "queryId": "d3363c36-380c-45fa-8368-c8dc0825879d",
+      "queryId": "bc48751f-41a8-580f-b7f4-6d977a796c95",
       "queryName": "cd_bronze_man_daily_log_compliance",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_dfow": {
+      "queryId": "1b9ace1d-97e7-5282-8d4b-54b4ea527ee4",
+      "queryName": "cd_bronze_man_qc_dfow",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_itp": {
+      "queryId": "3f1c190c-9223-517f-92bb-36c9123ed1ab",
+      "queryName": "cd_bronze_man_qc_itp",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_gate": {
+      "queryId": "7255b73c-830c-5ab7-83ae-b19771033e4b",
+      "queryName": "cd_bronze_man_qc_gate",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_special_inspection": {
+      "queryId": "f881bee5-ff61-53aa-8267-3256253070b7",
+      "queryName": "cd_bronze_man_qc_special_inspection",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_commissioning": {
+      "queryId": "53f69c68-e9c9-568a-b394-0162003342db",
+      "queryName": "cd_bronze_man_qc_commissioning",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_inspector_sign_in": {
+      "queryId": "28b7eceb-da00-5b4f-943c-b14a9ca860ab",
+      "queryName": "cd_bronze_man_qc_inspector_sign_in",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_checklist_result": {
+      "queryId": "6e3213ce-09f4-53cd-903b-56d2b09ef698",
+      "queryName": "cd_bronze_man_qc_checklist_result",
+      "loadEnabled": true
+    },
+    "cd_bronze_man_qc_doh_result": {
+      "queryId": "043b3fd1-36a7-5c8d-b715-e10400e038da",
+      "queryName": "cd_bronze_man_qc_doh_result",
       "loadEnabled": true
     }
   },

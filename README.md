@@ -16,33 +16,27 @@ Home base for the Affect Group consulting engagement (construction data & automa
 | Bernard McNamee | Leadership | Copied on emails |
 | Cathal Egan (Cal) | Leadership | **Commercial owner of the engagement** — agreed scope, terms and rate (Jul 24). C: 929-202-3638 |
 
-## Engagement status (as of Aug 2, 2026)
+## Engagement status (as of Aug 19, 2026)
 
-**Phase 0 is delivered.** The Excel Monthly Progress Report has been replaced by a working
-Microsoft Fabric platform, live and running nightly. Read
-[`status-update.md`](status-update.md) for the full picture — it is written to be handed to
-the team as-is.
+- ✅ Intro call with Rebecca (Jul 15)
+- ✅ In-person discovery meeting with wider team (Tue Jul 21, 8:30am at their office)
+- ✅ Excel project reporting template received (Jul 22) and **fully assessed** — see `analysis/excel-tracker/`
+- ✅ Power BI build kit drafted — semantic model, DAX, report spec, theme (`powerbi/`)
+- ✅ **Data warehouse review with Rebecca (Thu Jul 23)** — Fabric workspace walkthrough; findings in `meeting-notes/2026-07-23-warehouse-review.md`
+- ✅ **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (~20 min call). $125/hr, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing — see `meeting-notes/2026-07-24-cathal-scope-call.md`
+- ✅ **Fabric access granted** (`cforey-c@affect-group.com`) — workspace `Build`, folder `charley-dev`
+- ✅ **The platform is built and running (Aug 1–2)** — three lakehouses, Procore ingestion from the production tenant, a nightly pipeline with a 63-expectation DQ gate, a 37-table Direct Lake model and a 12-page Monthly Progress Report. See `foundation/charley-dev/`
+- ✅ **`CD_Sage_Ingest` deployed (Aug 3)** — live in the `charley-dev` folder, bound to the existing on-prem gateway, inert until one *Can use* grant lands
+- ✅ **$4.85M defect found, fixed and deployed** — portfolio contract value was understated 16% by a per-month rather than cumulative change-order roll-up
+- ✅ **Fabric MCP** wired for the repo (`.mcp.json`) — used for live exploration (`execute_sql_query` / `execute_dax_query`); item creation stays on the committed REST deploy path
+- ✅ **Platform review with Rebecca — Thu Aug 13** (`meeting-notes/2026-08-13-rebecca-platform-review.md`). Rebecca's workload has increased; Charley absorbs the build load, mentoring goes async/recorded
+- ✅ **Azure subscription and Key Vault now exist (Aug 19)** — "Azure subscription 1" on tenant *Affect Build LLC*, and vault `OneLake`. The only purchasing decision on the blocker list is closed
+- 🟡 **PQP (Project Quality Plan) subject area in progress** — the client's 44-sheet `026-025 SAUNA LOUNGE QA - QC TRACKER` extracted to seed data (26 trades, 625 checklist items, 93 statutory gates, 101 DOH items, 143 status-vocabulary rows); a second semantic model and report follow
+- 🟡 **Two Power Automate flows in progress** — Estimating Setup, and Convert to Bidding
+- 🔵 **Six items with Affect**, every one a permission grant or a decision — the largest is now a single Key Vault role assignment. See `dashboard.md` → Blockers
+- ⚠️ **Existing production reporting is stale** — Sage stops Jul 20, Outbuild Jul 14, almost certainly the same gateway issue
 
-- ✅ Intro call with Rebecca (Jul 15) · in-person discovery with the wider team (Jul 21)
-- ✅ Excel project reporting template **fully assessed** — 14 defects found (`analysis/excel-tracker/`)
-- ✅ **Data warehouse review with Rebecca (Jul 23)** — `meeting-notes/2026-07-23-warehouse-review.md`
-- ✅ **Scope, terms & engagement agreed with Cathal (Jul 24).** $125/hr, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing
-- ✅ **Fabric access provisioned (Aug 1)** — the whole workspace backed up read-only, and **live credentials found in five notebooks** (`foundation/charley-dev/_docs/security-findings.md`)
-- ✅ **Platform built and live (Aug 1–2)** — bronze → silver → gold medallion off Affect's production Procore tenant, Direct Lake semantic model (37 tables, 99 measures), 12-page report, nightly pipeline, 63-expectation DQ gate
-- ✅ **Found and fixed a $4.85M understatement** of portfolio contract value the existing reporting had been carrying silently
-- 🔴 **Mentoring with Rebecca not yet started** — the one Phase 0 line item still open
-- 🔵 **Four access grants now gate ~41% of report coverage** — Sage gateway permission, Outbuild token, SharePoint lists, Azure subscription. All the pipework behind them is built and tested
-
-### What Affect needs to action
-
-| Priority | Ask | Effort |
-|---|---|---|
-| 🔴 **1** | **Rotate the Procore OAuth credentials** — live secrets in plaintext in a workspace notebook. Rotate first, edit second | Minutes |
-| 🔴 **2** | Grant `cforey-c@affect-group.com` **"Can use"** on connection `nc-affect-1\sage100con;Affect Group` | One grant |
-| 🔴 **3** | Check whether the existing reporting is stale — Rebecca's Sage data stops **2026-07-20**, Outbuild **2026-07-14** | Ten minutes |
-| 🟡 4 | Issue `OUTBUILD_API_TOKEN` — the only milestone source anywhere | One token |
-| 🟡 5 | Answer four manual-input definition questions | 30-min call |
-| 🟡 6 | Confirm NDA status — billing depends on it (`hours-log.md`) | — |
+A forwardable write-up of the build lives in [`status-update.md`](status-update.md).
 
 ## Engagement structure
 
@@ -79,16 +73,17 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 | System | Purpose | Integration status |
 |---|---|---|
 | Microsoft Fabric | Data platform | **Live.** Rebecca's original warehouse, untouched; our `charley-dev` medallion alongside it — 3 lakehouses, 8 notebooks, a nightly pipeline |
-| Procore | Project management & costing | 🟢 **36 endpoints live**, registry-driven, production tenant → bronze. Extraction currently runs locally pending Key Vault |
+| Procore | Project management & costing | 🟢 **42 endpoints live**, registry-driven, production tenant → bronze. Extraction currently runs locally pending Key Vault. 403 on `punch_item_types` / `schedule` |
 | Sage 100 Contractor | Accounting, invoicing, payroll | 🔵 `CD_Sage_Ingest` **deployed and gateway-wired**, 8 tables. Blocked on one connection permission grant |
-| Outbuild | Scheduling & milestones | 🔵 16 endpoints **built and verified**, cannot run — no API token. The **only** milestone source anywhere |
-| SharePoint | The ~40% of the report that lives in no system | 🟡 10-list provisioning script written; a CSV path works today with no admin ticket |
-| Power BI | Reporting | 🟢 **Monthly Progress Report live** — 12 pages, 180 visuals, Direct Lake over the gold model |
+| Outbuild | Scheduling & milestones | 🔵 16 endpoints **built and verified**, cannot run — `OUTBUILD_API_TOKEN` offered by email Aug 11, **in transit**. The **only** milestone source anywhere |
+| Azure Key Vault | Secret storage for ingestion | 🔵 Vault `OneLake` **exists**; RBAC-mode, and our identity needs one role — *Key Vault Secrets Officer* — before a secret can be written |
+| SharePoint | The ~40% of the report that lives in no system, plus estimating/bidding job folders | 🟡 Provisioning scripts written — manual-input lists, the 8 PQP intake lists, and the `Job Register`. A CSV path works today with no admin ticket. **No site exists yet** |
+| Power BI | Reporting | 🟢 **Monthly Progress Report live** — 12 pages, 180 visuals, Direct Lake over the gold model. The PQP report is not built yet |
+| Power Automate | Workflow automation | 🟡 **Built, not deployed** — Estimating Setup and Convert to Bidding in `power-automate/`. Payments and lien waivers still gated on Chris's SOPs |
 | Ramp | Vendor payments | 🔴 Not integrated — API docs vendored in `resources/ramp/` |
 | ADP | Payroll | 🔴 Not integrated |
 | Bluebeam / Navisworks | Design & drawings | 🔴 Not integrated |
 | Outlook / OneDrive | Email & document management | 🔴 Not integrated |
-| Power Automate | Workflow automation | 🔴 Planned (payments, lien waivers) — blocked on SOPs |
 | Drones | Potential future | — |
 
 ## Files
@@ -106,13 +101,16 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 
 - `hours-log.md` — append-only time ledger (billing/validation source of truth) + invoicing record
 - `deliverables/` — one file per deliverable (D1–D8): objective, scope, key data, integration approach, tasks, acceptance criteria. New deliverables copy `_template.md`
-- **`foundation/`** — **the build.** A read-only backup of the whole Fabric `Build` workspace, plus `foundation/charley-dev/`: our self-contained platform — ingestion, medallion SQL, lakehouse and semantic-model definitions, the report, the orchestration DAG, the offline test harness, and `_docs/` (10 documents; `solution-guide.md` first)
+- **`foundation/`** — **the build.** A read-only backup of the whole Fabric `Build` workspace, plus `foundation/charley-dev/`: our self-contained platform — ingestion, medallion SQL, lakehouse and semantic-model definitions, the report, the orchestration DAG, the offline test harness, and `_docs/` (`solution-guide.md` first; `keyvault-runbook.md` for the vault position)
+- `updates/` — client-facing status updates written to be forwarded (`2026-08-13-executive-update.md`)
+- `power-automate/` — **the estimating/bidding job-folder automation**: SharePoint provisioning script, both flow definitions, and the offline test suite. Built, not yet deployed
 - `analysis/excel-tracker/` — full teardown of the client's Monthly Progress Report workbook: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and the 14 verified defects
+- `analysis/pqp-workbook/` — teardown of the QA/QC tracker (Project Quality Plan): 5 verified defects, the 44-sheets-to-9-tables structure, and the open questions for Affect
 - `src/procore/` — the original RFI/submittal reference pipeline (Jul 26). Superseded by `foundation/charley-dev/` but kept: it is the smallest complete example of the pattern, and a good teaching artifact
 - `powerbi/` — the design kit that preceded the build: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan
 - `resources/` — vendored documentation, one folder per solution. Includes the **full Sage 100 Contractor and Outbuild API doc sets** as markdown, a Procore endpoint cheatsheet verified against the 2,111-path OAS, and [`resources/power-bi/monthly-progress-report/`](resources/power-bi/monthly-progress-report/) — **the built dashboard, page by page**, if you want to see the deliverable before reading how it was built
 - `.mcp.json` — Fabric MCP server config for Claude Code (live workspace exploration; see `resources/microsoft-fabric/`)
-- `meeting-notes/` — notes from calls and meetings (discovery Jul 21, warehouse review Jul 23, scope & terms Jul 24)
+- `meeting-notes/` — notes from calls and meetings (discovery Jul 21, warehouse review Jul 23, **scope & terms Jul 24**, **platform review Aug 13**)
 - `call-prep/` — agendas and information requests prepared for calls
 - `internal/` — not client-facing: strategy, communications log, and sent-email drafts
 - `YY-000 PROJECT NAME_InternalReport_YYMMDD.xlsx` — the client's reporting template (the spec for D5)

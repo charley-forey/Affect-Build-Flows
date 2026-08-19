@@ -35,3 +35,9 @@ resources/**/combined_OAS.json
 # Python
 __pycache__/
 *.pyc
+
+# Claude Code local state (contains a full git worktree — never commit)
+.claude/
+
+# LibreOffice lock files
+.~lock.*#

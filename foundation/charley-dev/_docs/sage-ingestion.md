@@ -1,19 +1,23 @@
 # Sage ingestion
 
-`01-ingestion/Sage/CD_Sage_Ingest.Dataflow` — **deployed to the workspace on 2026-08-02**
-(`9d1dc6db-…`), wired to gateway `1e798beb` and datasource `835e72c8`, writing to
-`CD_Bronze`. The definition reads back from Fabric exactly as committed.
+`01-ingestion/Sage/CD_Sage_Ingest.Dataflow` — **built, committed and deployed to the
+workspace on 2026-08-02** (`9d1dc6db-…`), bound to gateway `1e798beb` and datasource
+`835e72c8`, writing to `CD_Bronze_Lakehouse`. Verified live 2026-08-19: the definition reads
+back from Fabric exactly as committed — gateway, both connections, all 8 queries,
+`DefaultDestination`.
 
-**One thing remains, and it is Affect's to grant.** The first run failed in five seconds —
-too fast to be a query. As `cforey-c@affect-group.com`, `GET /v1/gateways` and
-`GET /v1/connections` both return empty and the gateway itself returns 404, while
-`Build_Sage_Test` plainly uses it. The identity cannot see any gateway in the tenant, so the
-dataflow asks to run through one it has no rights on and fails before reaching Sage.
+**It is inert, not missing.** The first run failed in about five seconds — too fast to be a
+query. As `cforey-c@affect-group.com`, `GET /v1/gateways` and `GET /v1/connections` both
+return empty and the gateway itself returns 404, while `Build_Sage_Test` plainly uses it. The
+identity cannot see any gateway in the tenant, so the dataflow asks to run through one it has
+no rights on and fails before reaching Sage.
 
-**The ask:** grant that account **"Can use"** on the connection
-`nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*. No subscription,
-no vault, no code change. The failed dataflow stays deployed on purpose — it is correct and
-inert until run, which turns what is left into one grant and one refresh.
+**The remaining work is one permission grant**, not a build: whoever administers the
+on-premises data gateway grants `cforey-c@affect-group.com` the **"Can use"** permission on
+the connection `nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*.
+No subscription, no vault, no code change — it runs on the next refresh. The failed dataflow
+stays deployed on purpose: it is correct and inert until run, which turns what is left into
+one grant and one refresh.
 
 > **Worth raising on the same call:** Rebecca's Sage data stops at **2026-07-20** and Outbuild
 > at **2026-07-14**. If her dataflows are failing on the same gateway, the *existing*
@@ -79,16 +83,22 @@ optional here.
 
 ## What is left
 
-1. ~~Bind the dataflow to the on-prem gateway.~~ **Done** — deployed and bound 2026-08-02.
-   What replaced it is the single "Can use" grant described at the top of this document.
+1. ~~Bind the dataflow to the on-prem gateway.~~ **Done** — deployed and bound 2026-08-02 to
+   `1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e` (carried in `queryMetadata.json`, so it was a field
+   to confirm rather than one to discover). What replaced it is the single **"Can use"** grant
+   described at the top of this document. That needs Affect — the gateway connection and its
+   credential are theirs, and the Sage database is administered by an outside consultant, so
+   the ask may route through them.
 2. Run it, then write `sql/silver/20_sage_silver.sql` to type and validate the eight tables.
 3. Settle open question 4 with the line data in hand, and point `sv_ar_invoices` at
    `cd_silver_*` — it currently still reads the existing warehouse
    (`01_source_views_cd.sql`), which keeps `fct_Invoice` at its 117 rows rather than zero
    while this is blocked.
 
-Worth raising on the same call as `OUTBUILD_API_TOKEN` and the two Procore 403s
-(`punch_item_types`, `schedule`) — all four are access Affect grants, not work we can do.
+Worth raising on the same call as `OUTBUILD_API_TOKEN` (Rebecca offered to send it by email on
+2026-08-11 — in transit, not yet received), the Key Vault role assignment ("Key Vault Secrets
+Officer" on vault `OneLake`) and the two Procore 403s (`punch_item_types`, `schedule`) — all of
+them are access Affect grants, not work we can do.
 
 ## Isolation
 

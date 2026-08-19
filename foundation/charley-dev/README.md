@@ -27,11 +27,14 @@ Rebecca's reporting keeps running untouched while this is built alongside it.
 ```
 00-platform/       standards + shared library (secrets, merge, DQ, watermarks)
 01-ingestion/      Procore / Sage / Outbuild / SharePoint -> CD_Bronze
-02-transformation/ bronze -> silver -> gold, as ordered .sql
+02-transformation/ bronze -> silver -> gold, as ordered .sql; seed/ holds the PQP
+                   (Project Quality Plan) seed data extracted from the client's QA/QC
+                   tracker - deployed to gold, no semantic model over it yet
 03-lakehouses/     the three lakehouse definitions
-04-semantic_models/ Affect Project Report (DirectLake over gold)
-05-reports/        Monthly Progress Report, Vendor & Insurance List
-                   (screenshots: ../../resources/power-bi/monthly-progress-report/)
+04-semantic_models/ Affect Project Report (DirectLake over gold); the PQP subject area
+                   has no semantic model yet
+05-reports/        Monthly Progress Report
+                   (PDF + page screenshots: ../../resources/power-bi/monthly-progress-report/)
 06-orchestration/  the pipeline DAG + schedules
 _local/            offline harness: fixtures, DuckDB runner, tests
 _docs/             solution-guide.md first; assessment.md is the audit of what is live
@@ -49,19 +52,36 @@ Folder numbering mirrors `foundation/` so the workspace reads the same way.
 
 ## Run order
 
+The eight notebooks that exist in the workspace, in the order they run:
+
 ```
-01  cd_01_extract_procore      ─┐
-    cd_02_extract_outbuild      ├─ parallel
-    cd_03_extract_sharepoint    │
-    CD_Sage_Ingest (dataflow)  ─┘
+01  cd_01_extract_procore       Procore REST -> landing files   (blocked: Key Vault role)
+    cd_05_land_to_bronze        landing files -> CD_Bronze      (no credential needed)
+    cd_06_land_manual           Files/_manual/*.csv -> bronze man_*
+    CD_Sage_Ingest (dataflow)   Sage 100 via gateway -> CD_Bronze (deployed, inert)
 02  cd_10_bronze_to_silver
-    cd_20_silver_to_gold
-    cd_30_dq_checks             <- fails the run rather than publishing bad numbers
+    cd_20_seed_gold             seed dimensions; asserts its own row counts
+    cd_30_build_gold            builds the star schema; verifies it
+    cd_40_dq_checks             <- fails the run rather than publishing bad numbers
 04  semantic model refresh
+
+    cd_90_query                 ad-hoc scratchpad, not part of the DAG
 ```
 
-`06-orchestration/CD_Master_Pipeline` wires this up. Until it exists, run the notebooks in
-the order above.
+**`06-orchestration/CD_Master_Pipeline` exists and runs this.** It is deployed, has 5
+activities, and its last green run was 2026-08-02 22:06. `cd_01_extract_procore` is
+deliberately **out** of the DAG until it can authenticate — leaving it in would mark the
+run Failed every night, which is how an alert stops meaning anything. `cd_05_land_to_bronze`
+takes its place in the pipeline and needs no credential.
+
+Everything in `02-transformation/` runs as ordered `.sql` inside `cd_20_seed_gold` and
+`cd_30_build_gold`; there is no separate `silver_to_gold` notebook.
+
+**Deploy order matters in one place: `_local/deploy_manual.py` must run before
+`_local/deploy_silver.py`.** Silver parses the `cd_bronze_man_*` tables and `cd_06_land_manual`
+is what creates them. Run silver first and it fails with
+`System_Cancelled_Session_Statements_Failed` — which names no table and reads like a Spark
+fault rather than a missing input.
 
 ## Verify without Fabric
 
@@ -83,6 +103,17 @@ Vault inside Fabric and environment variables locally — the same contract as
 |---|---|
 | `PROCORE_CLIENT_ID`, `PROCORE_CLIENT_SECRET`, `PROCORE_COMPANY_ID` | `PROCORE_KEYVAULT_URL` |
 | `OUTBUILD_API_TOKEN` | `OUTBUILD_KEYVAULT_URL` |
+
+Both now exist as of 2026-08-19: the subscription "Azure subscription 1"
+(`0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6`, tenant "Affect Build LLC"
+`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`) and the vault `OneLake`
+(`https://onelake.vault.azure.net/`, resource group `Affect_KeyVault`, East US, **RBAC-mode**,
+purge protection disabled). The vault holds nothing yet: `cforey-c@affect-group.com` has only
+**Contributor on the resource group**, which on an RBAC vault can neither read/write secrets
+nor self-grant. One role assignment — **"Key Vault Secrets Officer" on vault `OneLake`** —
+closes it. Until then extraction runs locally against environment variables and lands files.
+See [`_docs/keyvault-runbook.md`](_docs/keyvault-runbook.md) and
+[`_docs/build-status.md`](_docs/build-status.md).
 
 ## Extending it
 

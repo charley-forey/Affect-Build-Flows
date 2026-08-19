@@ -32,6 +32,7 @@ SUITES = [
     ("gold seeds", TESTS / "test_seeds.py"),
     ("bronze to silver", TESTS / "test_silver.py"),
     ("gold dimensions and facts", TESTS / "test_gold.py"),
+    ("PQP quality plan", TESTS / "test_qc.py"),
     ("extractor compatibility", TESTS / "test_extractor_compat.py"),
     ("report accessibility and chrome", TESTS / "test_report.py"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),

@@ -28,18 +28,53 @@ def check(label: str) -> None:
 
 
 def test_committed_script_is_current() -> None:
-    assert ms.OUT.exists(), f"{ms.OUT.name} has never been generated"
-    assert ms.OUT.read_text(encoding="utf-8") == ms.build(), (
-        "provision-sharepoint.ps1 is stale - re-run make_sharepoint.py. "
-        "A column was added to 40_man_tables.sql without regenerating the lists."
+    for path, builder in ms.ARTEFACTS:
+        assert path.exists(), f"{path.name} has never been generated"
+        assert path.read_text(encoding="utf-8") == builder(), (
+            f"{path.name} is stale - re-run make_sharepoint.py. A column or table was "
+            f"added to the man_* DDL without regenerating it."
+        )
+    check(f"all {len(ms.ARTEFACTS)} generated artefacts match the man_* DDL")
+
+
+def test_list_names_agree_across_writers() -> None:
+    """THE ROOT CAUSE THIS FILE NOW GUARDS.
+
+    The PS1 created "CD PriorityItems" and the dataflow read "CD Priority Items". Neither
+    errors: SharePoint returns nothing for a list that does not exist under that name, so
+    the dataflow would have landed an empty table and the report a blank tile. Both are
+    generated from ms.list_name() now, and this asserts they still are.
+    """
+    script = ms.OUT.read_text(encoding="utf-8")
+    mashup = ms.OUT_PQ.read_text(encoding="utf-8")
+    meta = ms.OUT_META.read_text(encoding="utf-8")
+
+    for table in ms.tables():
+        name, bronze = ms.list_name(table), ms.bronze_table(table)
+        assert f'Ensure-List "{name}"' in script, f"{name} is never created by the PS1"
+        assert f'[Title = "{name}"]' in mashup, f"{name} is never read by the dataflow"
+        assert f"shared {bronze} =" in mashup, f"{bronze} is not a dataflow query"
+        assert f'"queryName": "{bronze}"' in meta, f"{bronze} is missing from the metadata"
+    check("every list name is identical in the PS1, the dataflow and its metadata")
+
+    # The CSV loader is the fourth writer into the same bronze contract.
+    import deploy_manual as dm
+
+    assert set(dm.LISTS) == {ms.csv_name(t) for t in ms.tables()}, (
+        "deploy_manual.LISTS has drifted from the man_* DDL - it must be derived from it"
     )
-    check("provision-sharepoint.ps1 matches 40_man_tables.sql")
+    for table, cols in ms.tables().items():
+        assert [c for c, _ in cols] == [c for c, _ in dm.LISTS[ms.csv_name(table)]], (
+            f"{table}: the CSV loader collects different columns from the gold DDL"
+        )
+    check("the CSV loader collects exactly the columns the man_* tables declare")
 
 
 def test_every_column_is_provisioned() -> None:
     script = ms.OUT.read_text(encoding="utf-8")
     defs = ms.tables()
-    assert len(defs) == 9, f"{len(defs)} man_ tables parsed, expected 9"
+    # 9 monthly-report lists + 8 PQP lists.
+    assert len(defs) == 17, f"{len(defs)} man_ tables parsed, expected 17"
 
     for table, cols in defs.items():
         name = ms.list_name(table)
@@ -82,6 +117,36 @@ def test_choice_values_match_the_dimensions() -> None:
     check("risk and schedule choices carry the dim_Status codes")
 
 
+def test_pqp_choices_come_from_the_seed_vocabulary() -> None:
+    """The PQP choice lists are read out of seed/qc_status_vocab.csv, which also builds
+    dim_QcStatus. One file, so what a person can PICK and what the model can RESOLVE cannot
+    diverge - and nobody retypes 143 codes into a PowerShell script."""
+    script = ms.OUT.read_text(encoding="utf-8")
+
+    for (table, column), domains in ms.VOCAB_COLUMNS.items():
+        values = ms.vocab_choices(table, column)
+        assert values, f"{table}.{column} resolved no codes from {domains}"
+        block = script.split(f'$list = Ensure-List "{ms.list_name(table)}"', 1)[1]                       .split("Ensure-List", 1)[0]
+        joined = ",".join(f'"{v}"' for v in values)
+        assert f'-InternalName "{column}" -Type Choice -Choices {joined}' in block, (
+            f"{table}.{column} is not a choice column over {domains}"
+        )
+    check(f"all {len(ms.VOCAB_COLUMNS)} PQP choice columns come from qc_status_vocab.csv")
+
+    # TradeKey must offer exactly the 26 trades the seed holds, or a result joins to
+    # nothing - and a checklist answer that joins to nothing is an answer nobody counts.
+    trades = ms.vocab_choices("man_QcChecklistResult", "TradeKey")
+    assert len(trades) == 26, f"{len(trades)} trades offered, expected 26"
+    assert "EXCAVATION" in trades and "CONCRETE_FORMWORK" in trades
+    check("TradeKey offers exactly the 26 seeded trades")
+
+    # The gate collapse's visible cost: one result table for three paths means one choice
+    # column offering the union of the three vocabularies.
+    gates = ms.vocab_choices("man_QcGate", "StatusCode")
+    assert {"SUBMITTED", "FAILED_RE_TEST", "RE_INSPECT"} <= set(gates), gates
+    check("the gate list offers all three paths' statuses, which is the collapse's cost")
+
+
 def test_versioning_is_on() -> None:
     """Per-field who and when - the audit trail the spreadsheet has never had."""
     script = ms.OUT.read_text(encoding="utf-8")
@@ -119,9 +184,11 @@ def test_script_parses_as_powershell() -> None:
 
 def main() -> int:
     test_committed_script_is_current()
+    test_list_names_agree_across_writers()
     test_every_column_is_provisioned()
     test_project_key_is_a_lookup_everywhere()
     test_choice_values_match_the_dimensions()
+    test_pqp_choices_come_from_the_seed_vocabulary()
     test_versioning_is_on()
     test_script_parses_as_powershell()
     for c in CHECKS:

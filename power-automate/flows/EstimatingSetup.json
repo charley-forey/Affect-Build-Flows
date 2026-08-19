@@ -1,0 +1,805 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "description": "Estimating Setup for a New Job. Triggered by a new row in the Job Register, allocates the next sequential job number for the year, creates 01 ESTIMATING/E-YY-###-Project Name and copies the boiler plate template into it with CreateCopyJobs. Trigger concurrency is pinned to 1 - see README, that setting is what stops two requests being issued the same number.",
+  "parameters": {
+    "$connections": {
+      "defaultValue": {},
+      "type": "Object"
+    },
+    "$authentication": {
+      "defaultValue": {},
+      "type": "SecureObject"
+    },
+    "SiteUrl": {
+      "type": "String",
+      "defaultValue": "https://REPLACE-ME.sharepoint.com/sites/BUILD",
+      "metadata": {
+        "description": "PLACEHOLDER. The BUILD site. Must match provision-sharepoint-build.ps1. No trailing slash."
+      }
+    },
+    "EstimatingLibrary": {
+      "type": "String",
+      "defaultValue": "01 ESTIMATING"
+    },
+    "EstimatingTemplate": {
+      "type": "String",
+      "defaultValue": "02 E26-000 BOILER PLATE",
+      "metadata": {
+        "description": "Folder inside EstimatingLibrary whose CHILDREN are copied into each new job folder. The SOP names this literally, hard-coded year and all."
+      }
+    },
+    "JobRegisterList": {
+      "type": "String",
+      "defaultValue": "Job Register"
+    },
+    "MaxFolderNameLength": {
+      "type": "Int",
+      "defaultValue": 80,
+      "metadata": {
+        "description": "Budget for the project-name part of the folder name. The 'E-YY-###-' prefix adds 9 more."
+      }
+    },
+    "TemplateDepthAllowance": {
+      "type": "Int",
+      "defaultValue": 200,
+      "metadata": {
+        "description": "Longest path expected UNDER the job folder once the template is copied in. Site URL + job folder + this must stay under SharePoint's 400-character limit, so raise it if the template tree gets deeper."
+      }
+    }
+  },
+  "triggers": {
+    "When_a_job_is_requested": {
+      "type": "OpenApiConnection",
+      "description": "New row in Job Register. Concurrency is the whole ballgame - see runtimeConfiguration below.",
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 1
+      },
+      "splitOn": "@triggerOutputs()?['body/value']",
+      "runtimeConfiguration": {
+        "concurrency": {
+          "runs": 1
+        }
+      },
+      "inputs": {
+        "host": {
+          "connectionName": "shared_sharepointonline",
+          "operationId": "GetOnNewItems",
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+        },
+        "parameters": {
+          "dataset": "@parameters('SiteUrl')",
+          "table": "@parameters('JobRegisterList')"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "Main": {
+      "type": "Scope",
+      "runAfter": {},
+      "actions": {
+        "Site_Relative_Path": {
+          "type": "Compose",
+          "description": "https://<tenant>.sharepoint.com/sites/BUILD -> /sites/BUILD. Derived rather than parameterised so there is only one URL to keep correct.",
+          "runAfter": {},
+          "inputs": "@concat('/', join(skip(split(parameters('SiteUrl'), '/'), 3), '/'))"
+        },
+        "Site_Origin": {
+          "type": "Compose",
+          "description": "https://<tenant>.sharepoint.com . CreateCopyJobs wants absolute URIs; the REST folder APIs return server-relative ones.",
+          "runAfter": {
+            "Site_Relative_Path": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(split(parameters('SiteUrl'), '/')[0], '//', split(parameters('SiteUrl'), '/')[2])"
+        },
+        "Only_Requested_Rows": {
+          "type": "If",
+          "description": "The trigger fires on every new row. Anything not sitting at Requested is somebody backfilling history, not a job to create.",
+          "runAfter": {
+            "Site_Origin": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "not": {
+              "equals": [
+                "@triggerOutputs()?['body/Stage']?['Value']",
+                "Requested"
+              ]
+            }
+          },
+          "actions": {
+            "Exit_Not_Requested": {
+              "type": "Terminate",
+              "runAfter": {},
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Sanitise_Project_Name": {
+          "type": "Compose",
+          "description": "Strips every character SharePoint forbids in a folder name: \" * : < > ? / \\ | plus # and %, which are legal now but still corrupt links in older clients. Outer trim catches whitespace exposed by a stripped character.",
+          "runAfter": {
+            "Only_Requested_Rows": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@trim(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(trim(coalesce(triggerOutputs()?['body/Title'], '')),'\"',''),'*',''),':',''),'<',''),'>',''),'?',''),'/',''),'\\',''),'|',''),'#',''),'%',''))"
+        },
+        "Strip_Dot_1": {
+          "type": "Compose",
+          "description": "SharePoint rejects a trailing dot. Three passes strip up to three of them; a fourth falls through to Validate_Name and fails loudly rather than half-creating a tree.",
+          "runAfter": {
+            "Sanitise_Project_Name": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@if(endsWith(outputs('Sanitise_Project_Name'), '.'), substring(outputs('Sanitise_Project_Name'), 0, sub(length(outputs('Sanitise_Project_Name')), 1)), outputs('Sanitise_Project_Name'))"
+        },
+        "Strip_Dot_2": {
+          "type": "Compose",
+          "runAfter": {
+            "Strip_Dot_1": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@if(endsWith(outputs('Strip_Dot_1'), '.'), substring(outputs('Strip_Dot_1'), 0, sub(length(outputs('Strip_Dot_1')), 1)), outputs('Strip_Dot_1'))"
+        },
+        "Strip_Dot_3": {
+          "type": "Compose",
+          "runAfter": {
+            "Strip_Dot_2": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@if(endsWith(outputs('Strip_Dot_2'), '.'), substring(outputs('Strip_Dot_2'), 0, sub(length(outputs('Strip_Dot_2')), 1)), outputs('Strip_Dot_2'))"
+        },
+        "Folder_Safe_Name": {
+          "type": "Compose",
+          "runAfter": {
+            "Strip_Dot_3": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@trim(outputs('Strip_Dot_3'))"
+        },
+        "Validate_Name": {
+          "type": "If",
+          "description": "Everything that can be known before a single folder is created is checked here. Fail at the start; a half-created tree is worse than a rejected request.",
+          "runAfter": {
+            "Folder_Safe_Name": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "equals": [
+                  "@empty(outputs('Folder_Safe_Name'))",
+                  true
+                ]
+              },
+              {
+                "greater": [
+                  "@length(outputs('Folder_Safe_Name'))",
+                  "@parameters('MaxFolderNameLength')"
+                ]
+              },
+              {
+                "equals": [
+                  "@endsWith(outputs('Folder_Safe_Name'), '.')",
+                  true
+                ]
+              },
+              {
+                "equals": [
+                  "@startsWith(outputs('Folder_Safe_Name'), '.')",
+                  true
+                ]
+              },
+              {
+                "greaterOrEquals": [
+                  "@add(length(concat(parameters('SiteUrl'), '/', parameters('EstimatingLibrary'), '/E-YY-###-', outputs('Folder_Safe_Name'))), parameters('TemplateDepthAllowance'))",
+                  400
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Record_Invalid_Name": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/ErrorDetail": "@{concat('Project name rejected before any folder was created. Sanitised to \"', outputs('Folder_Safe_Name'), '\" (', string(length(outputs('Folder_Safe_Name'))), ' chars, budget ', string(parameters('MaxFolderNameLength')), '). Either it is empty after stripping forbidden characters, it starts or ends with a dot, or the full path would breach SharePoint''s 400-character URL limit once the template tree is copied under it.')}",
+                  "item/CopyJobStatus": "Not attempted"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Invalid_Name": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Invalid_Name": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "InvalidProjectName",
+                  "message": "@{concat('Project name is not usable as a folder name: ', coalesce(triggerOutputs()?['body/Title'], ''))}"
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Get_Last_Job_This_Year": {
+          "type": "OpenApiConnection",
+          "description": "The Job Register is the sequential-number authority. Reading max(JobSeq) is only safe because the trigger runs one at a time.",
+          "runAfter": {
+            "Validate_Name": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "GetItems",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "table": "@parameters('JobRegisterList')",
+              "$filter": "@{concat('JobYear eq ', formatDateTime(utcNow(), 'yy'))}",
+              "$orderby": "JobSeq desc",
+              "$top": 1
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Next_JobSeq": {
+          "type": "Compose",
+          "runAfter": {
+            "Get_Last_Job_This_Year": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@add(int(coalesce(first(body('Get_Last_Job_This_Year')?['value'])?['JobSeq'], 0)), 1)"
+        },
+        "Job_Number": {
+          "type": "Compose",
+          "description": "YY-### , e.g. 26-025. formatNumber pads the sequence to three digits.",
+          "runAfter": {
+            "Next_JobSeq": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(formatDateTime(utcNow(), 'yy'), '-', formatNumber(outputs('Next_JobSeq'), '000'))"
+        },
+        "Job_Folder_Name": {
+          "type": "Compose",
+          "description": "E-YY-###-Project Name, exactly as the SOP specifies.",
+          "runAfter": {
+            "Job_Number": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat('E-', outputs('Job_Number'), '-', outputs('Folder_Safe_Name'))"
+        },
+        "Job_Folder_Server_Relative": {
+          "type": "Compose",
+          "runAfter": {
+            "Job_Folder_Name": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(outputs('Site_Relative_Path'), '/', parameters('EstimatingLibrary'), '/', outputs('Job_Folder_Name'))"
+        },
+        "Job_Folder_Absolute": {
+          "type": "Compose",
+          "runAfter": {
+            "Job_Folder_Server_Relative": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@concat(outputs('Site_Origin'), outputs('Job_Folder_Server_Relative'))"
+        },
+        "OData_Safe_Job_Folder": {
+          "type": "Compose",
+          "description": "A single quote inside an OData string literal has to be doubled. Apostrophes are legal in folder names, so they are escaped rather than stripped - O'Brien Tower keeps its name.",
+          "runAfter": {
+            "Job_Folder_Absolute": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@replace(outputs('Job_Folder_Server_Relative'), '''', '''''')"
+        },
+        "Check_Folder_Exists": {
+          "type": "OpenApiConnection",
+          "description": "Idempotency probe. 404 here is the normal path, so the next action runs after Failed too.",
+          "runAfter": {
+            "OData_Safe_Job_Folder": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', outputs('OData_Safe_Job_Folder'), ''')')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Folder_Already_Exists": {
+          "type": "If",
+          "description": "Re-running must never create E-26-005 twice. If the folder is already there, log it and leave cleanly.",
+          "runAfter": {
+            "Check_Folder_Exists": [
+              "Succeeded",
+              "Failed"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Check_Folder_Exists')?['statusCode']",
+              200
+            ]
+          },
+          "actions": {
+            "Record_Already_Exists": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Estimating",
+                  "item/JobYear": "@int(formatDateTime(utcNow(), 'yy'))",
+                  "item/JobSeq": "@outputs('Next_JobSeq')",
+                  "item/JobNumber": "@{outputs('Job_Number')}",
+                  "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
+                  "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+                  "item/RequestedBy": "@{coalesce(triggerOutputs()?['body/Author']?['Email'], '')}",
+                  "item/RequestedAt": "@{triggerOutputs()?['body/Created']}",
+                  "item/CompletedAt": "@{utcNow()}",
+                  "item/CopyJobStatus": "Skipped - folder already existed, nothing copied"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Already_Exists": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Already_Exists": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Succeeded"
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Create_Job_Folder": {
+          "type": "OpenApiConnection",
+          "runAfter": {
+            "Folder_Already_Exists": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "POST",
+              "parameters/uri": "_api/web/folders",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose",
+                "Content-Type": "application/json;odata=verbose"
+              },
+              "parameters/body": {
+                "__metadata": {
+                  "type": "SP.Folder"
+                },
+                "ServerRelativeUrl": "@{outputs('Job_Folder_Server_Relative')}"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "List_Template_Children": {
+          "type": "OpenApiConnection",
+          "description": "The SOP says copy the folders FROM the template, not the template itself, so the template's children are enumerated and passed to CreateCopyJobs as a single batch.",
+          "runAfter": {
+            "Create_Job_Folder": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "GET",
+              "parameters/uri": "@{concat('_api/web/GetFolderByServerRelativeUrl(''', replace(concat(outputs('Site_Relative_Path'), '/', parameters('EstimatingLibrary'), '/', parameters('EstimatingTemplate')), '''', ''''''), ''')?$expand=Folders,Files&$select=Folders/ServerRelativeUrl,Files/ServerRelativeUrl')}",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose"
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Build_Export_Uris": {
+          "type": "Compose",
+          "runAfter": {
+            "List_Template_Children": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@union(select(coalesce(body('List_Template_Children')?['d']?['Folders']?['results'], json('[]')), concat(outputs('Site_Origin'), item()?['ServerRelativeUrl'])), select(coalesce(body('List_Template_Children')?['d']?['Files']?['results'], json('[]')), concat(outputs('Site_Origin'), item()?['ServerRelativeUrl'])))"
+        },
+        "Template_Is_Empty": {
+          "type": "If",
+          "description": "An empty template means the boiler plate has never been populated. Say so, rather than reporting a successful copy of nothing.",
+          "runAfter": {
+            "Build_Export_Uris": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "equals": [
+              "@empty(outputs('Build_Export_Uris'))",
+              true
+            ]
+          },
+          "actions": {
+            "Record_Empty_Template": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/ErrorDetail": "@{concat('Template ', parameters('EstimatingLibrary'), '/', parameters('EstimatingTemplate'), ' is empty. The job folder was created but nothing was copied into it.')}",
+                  "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
+                  "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+                  "item/CopyJobStatus": "Not attempted - empty template"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Empty_Template": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Empty_Template": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "EmptyTemplate",
+                  "message": "The estimating boiler plate template has no folders or files to copy."
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Create_Copy_Job": {
+          "type": "OpenApiConnection",
+          "description": "CreateCopyJobs, not the connector's Copy folder action. Server-side, asynchronous, built for deep trees; the connector action copies one level at a time from the flow runtime and throttles on exactly this shape of job.",
+          "runAfter": {
+            "Template_Is_Empty": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "HttpRequest",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "parameters/method": "POST",
+              "parameters/uri": "_api/site/CreateCopyJobs",
+              "parameters/headers": {
+                "Accept": "application/json;odata=verbose",
+                "Content-Type": "application/json;odata=verbose"
+              },
+              "parameters/body": {
+                "exportObjectUris": "@outputs('Build_Export_Uris')",
+                "destinationUri": "@{outputs('Job_Folder_Absolute')}",
+                "options": {
+                  "IgnoreVersionHistory": true,
+                  "IsMoveMode": false,
+                  "AllowSchemaMismatch": true,
+                  "AllowSmallerVersionLimitOnDestination": true,
+                  "NameConflictBehavior": 0
+                }
+              }
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Copy_Job_Info": {
+          "type": "Compose",
+          "description": "JobId, JobQueueUri and EncryptionKey. GetCopyJobProgress needs the whole object back, not just the id.",
+          "runAfter": {
+            "Create_Copy_Job": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@first(body('Create_Copy_Job')?['d']?['CreateCopyJobs']?['results'])"
+        },
+        "Wait_For_Copy": {
+          "type": "Until",
+          "description": "JobState 2 = queued, 4 = processing, 0 = finished. One hour and 120 polls is roughly a 20-second cadence; a template deep enough to exceed that needs splitting, not a longer timeout.",
+          "runAfter": {
+            "Copy_Job_Info": [
+              "Succeeded"
+            ]
+          },
+          "expression": "@equals(coalesce(body('Get_Copy_Progress')?['d']?['GetCopyJobProgress']?['JobState'], 4), 0)",
+          "limit": {
+            "count": 120,
+            "timeout": "PT1H"
+          },
+          "actions": {
+            "Poll_Delay": {
+              "type": "Wait",
+              "runAfter": {},
+              "inputs": {
+                "interval": {
+                  "count": 20,
+                  "unit": "Second"
+                }
+              }
+            },
+            "Get_Copy_Progress": {
+              "type": "OpenApiConnection",
+              "runAfter": {
+                "Poll_Delay": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "HttpRequest",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "parameters/method": "POST",
+                  "parameters/uri": "_api/site/GetCopyJobProgress",
+                  "parameters/headers": {
+                    "Accept": "application/json;odata=verbose",
+                    "Content-Type": "application/json;odata=verbose"
+                  },
+                  "parameters/body": {
+                    "copyJobInfo": "@outputs('Copy_Job_Info')"
+                  }
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          }
+        },
+        "Copy_Job_Logs": {
+          "type": "Compose",
+          "runAfter": {
+            "Wait_For_Copy": [
+              "Succeeded"
+            ]
+          },
+          "inputs": "@coalesce(body('Get_Copy_Progress')?['d']?['GetCopyJobProgress']?['Logs'], json('[]'))"
+        },
+        "Copy_Reported_An_Error": {
+          "type": "If",
+          "description": "A migration job can finish with JobState 0 and still have failed. The logs are the only place that shows.",
+          "runAfter": {
+            "Copy_Job_Logs": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "or": [
+              {
+                "equals": [
+                  "@contains(toLower(string(outputs('Copy_Job_Logs'))), 'jobfatalerror')",
+                  true
+                ]
+              },
+              {
+                "equals": [
+                  "@contains(toLower(string(outputs('Copy_Job_Logs'))), 'joberror')",
+                  true
+                ]
+              }
+            ]
+          },
+          "actions": {
+            "Record_Copy_Error": {
+              "type": "OpenApiConnection",
+              "runAfter": {},
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_sharepointonline",
+                  "operationId": "PatchItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                },
+                "parameters": {
+                  "dataset": "@parameters('SiteUrl')",
+                  "table": "@parameters('JobRegisterList')",
+                  "id": "@triggerOutputs()?['body/ID']",
+                  "item/Stage/Value": "Failed",
+                  "item/JobYear": "@int(formatDateTime(utcNow(), 'yy'))",
+                  "item/JobSeq": "@outputs('Next_JobSeq')",
+                  "item/JobNumber": "@{outputs('Job_Number')}",
+                  "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
+                  "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+                  "item/CopyJobStatus": "JobError",
+                  "item/ErrorDetail": "@{substring(string(outputs('Copy_Job_Logs')), 0, min(8000, length(string(outputs('Copy_Job_Logs')))))}"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Exit_Copy_Error": {
+              "type": "Terminate",
+              "runAfter": {
+                "Record_Copy_Error": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "runStatus": "Failed",
+                "runError": {
+                  "code": "CopyJobError",
+                  "message": "CreateCopyJobs finished with errors in its log - see ErrorDetail on the Job Register row."
+                }
+              }
+            }
+          },
+          "else": {
+            "actions": {}
+          }
+        },
+        "Update_Job_Register": {
+          "type": "OpenApiConnection",
+          "description": "The row is the audit log. Writing it is the last step, so a row that says Estimating is a row whose folder is really there.",
+          "runAfter": {
+            "Copy_Reported_An_Error": [
+              "Succeeded"
+            ]
+          },
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PatchItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "table": "@parameters('JobRegisterList')",
+              "id": "@triggerOutputs()?['body/ID']",
+              "item/Stage/Value": "Estimating",
+              "item/JobYear": "@int(formatDateTime(utcNow(), 'yy'))",
+              "item/JobSeq": "@outputs('Next_JobSeq')",
+              "item/JobNumber": "@{outputs('Job_Number')}",
+              "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
+              "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+              "item/RequestedBy": "@{coalesce(triggerOutputs()?['body/Author']?['Email'], '')}",
+              "item/RequestedAt": "@{triggerOutputs()?['body/Created']}",
+              "item/CompletedAt": "@{utcNow()}",
+              "item/CopyJobStatus": "@{concat('Completed - ', string(length(outputs('Build_Export_Uris'))), ' top-level items copied')}",
+              "item/ErrorDetail": ""
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "Handle_Failure": {
+      "type": "Scope",
+      "description": "Catches what the explicit guards inside Main do not: throttling, a 500 from SharePoint, the Until loop timing out. Without this the row sits at Requested forever and nobody knows why.",
+      "runAfter": {
+        "Main": [
+          "Failed",
+          "TimedOut",
+          "Skipped"
+        ]
+      },
+      "actions": {
+        "Record_Failure": {
+          "type": "OpenApiConnection",
+          "runAfter": {},
+          "inputs": {
+            "host": {
+              "connectionName": "shared_sharepointonline",
+              "operationId": "PatchItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+            },
+            "parameters": {
+              "dataset": "@parameters('SiteUrl')",
+              "table": "@parameters('JobRegisterList')",
+              "id": "@triggerOutputs()?['body/ID']",
+              "item/Stage/Value": "Failed",
+              "item/CopyJobStatus": "Failed",
+              "item/ErrorDetail": "@{substring(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))), 0, min(8000, length(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))))))}"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    }
+  },
+  "outputs": {
+    "JobNumber": {
+      "type": "String",
+      "value": "@{outputs('Job_Number')}"
+    },
+    "EstimatingFolderUrl": {
+      "type": "String",
+      "value": "@{outputs('Job_Folder_Absolute')}"
+    }
+  }
+}

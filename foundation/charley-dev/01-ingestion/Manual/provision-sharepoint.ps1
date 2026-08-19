@@ -126,8 +126,8 @@ try {
 }
 
 # --------------------------------------------------------------------------
-# CD PriorityItems  ->  man_PriorityItems
-$list = Ensure-List "CD PriorityItems"
+# CD Priority Items  ->  man_PriorityItems
+$list = Ensure-List "CD Priority Items"
 try {
     Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
     Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
@@ -186,8 +186,8 @@ try {
 }
 
 # --------------------------------------------------------------------------
-# CD SafetyMonthly  ->  man_SafetyMonthly
-$list = Ensure-List "CD SafetyMonthly"
+# CD Safety Monthly  ->  man_SafetyMonthly
+$list = Ensure-List "CD Safety Monthly"
 try {
     Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
     Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
@@ -204,8 +204,8 @@ try {
 }
 
 # --------------------------------------------------------------------------
-# CD QualityMonthly  ->  man_QualityMonthly
-$list = Ensure-List "CD QualityMonthly"
+# CD Quality Monthly  ->  man_QualityMonthly
+$list = Ensure-List "CD Quality Monthly"
 try {
     Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
     Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
@@ -241,8 +241,8 @@ try {
 }
 
 # --------------------------------------------------------------------------
-# CD DailyLogCompliance  ->  man_DailyLogCompliance
-$list = Ensure-List "CD DailyLogCompliance"
+# CD Daily Log Compliance  ->  man_DailyLogCompliance
+$list = Ensure-List "CD Daily Log Compliance"
 try {
     Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
     Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
@@ -256,7 +256,174 @@ try {
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
+# --------------------------------------------------------------------------
+# CD QC DFOW  ->  man_QcDfow
+$list = Ensure-List "CD QC DFOW"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "DfowRef" -InternalName "DfowRef" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "DfowDescription" -InternalName "DfowDescription" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "RiskTier" -InternalName "RiskTier" -Type Number -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ControlMeasure" -InternalName "ControlMeasure" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "OwnerRole" -InternalName "OwnerRole" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","COMPLETE","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC ITP  ->  man_QcItp
+$list = Ensure-List "CD QC ITP"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "ItpRef" -InternalName "ItpRef" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Activity" -InternalName "Activity" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "InspectionType" -InternalName "InspectionType" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "AcceptanceCriteria" -InternalName "AcceptanceCriteria" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "HoldPointType" -InternalName "HoldPointType" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "PlannedDate" -InternalName "PlannedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ActualDate" -InternalName "ActualDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ResultCode" -InternalName "ResultCode" -Type Choice -Choices "PASS","FAIL","PENDING","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","SCHEDULED","COMPLETE","RE_TEST_REQUIRED","CLOSED","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC Gate  ->  man_QcGate
+$list = Ensure-List "CD QC Gate"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "GateKey" -InternalName "GateKey" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "GateType" -InternalName "GateType" -Type Choice -Choices "TCO","FIRE_ALARM","STATUTORY" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","SCHEDULED","COMPLETE","FAILED_RE_TEST","BLOCKED","N_A","SUBMITTED","OPEN","REQUESTED","CLOSED","PASS","FAIL","RE_INSPECT","PENDING" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "TargetDate" -InternalName "TargetDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "SubmittedDate" -InternalName "SubmittedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "CompletedDate" -InternalName "CompletedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "EvidenceLink" -InternalName "EvidenceLink" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "BlockerNote" -InternalName "BlockerNote" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC Special Inspection  ->  man_QcSpecialInspection
+$list = Ensure-List "CD QC Special Inspection"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "InspectionRef" -InternalName "InspectionRef" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Category" -InternalName "Category" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Agency" -InternalName "Agency" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "InspectorName" -InternalName "InspectorName" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "RequiredCode" -InternalName "RequiredCode" -Type Choice -Choices "YES","NO","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "PerformedCode" -InternalName "PerformedCode" -Type Choice -Choices "YES","NO" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ScheduledDate" -InternalName "ScheduledDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "PerformedDate" -InternalName "PerformedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ReportReceivedDate" -InternalName "ReportReceivedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "OPEN","SCHEDULED","REPORT_PENDING","CLOSED","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC Commissioning  ->  man_QcCommissioning
+$list = Ensure-List "CD QC Commissioning"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "SystemRef" -InternalName "SystemRef" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "SystemName" -InternalName "SystemName" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "PlannedDate" -InternalName "PlannedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ActualDate" -InternalName "ActualDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","READY_FOR_CX","TESTED","ACCEPTED","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC Inspector Sign In  ->  man_QcInspectorSignIn
+$list = Ensure-List "CD QC Inspector Sign In"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "SignInRef" -InternalName "SignInRef" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "VisitDate" -InternalName "VisitDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "InspectorName" -InternalName "InspectorName" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "AgencyCode" -InternalName "AgencyCode" -Type Choice -Choices "NYC_DOB","FDNY","NYC_DOH","NYC_DEP","SPECIAL_INSP_AGENCY","TESTING_LABORATORY","OSHA","CON_EDISON","NATIONAL_GRID","LANDLORD_CONDO","OTHER" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Purpose" -InternalName "Purpose" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "AreaInspected" -InternalName "AreaInspected" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "OutcomeCode" -InternalName "OutcomeCode" -Type Choice -Choices "PASS","FAIL","RE_INSPECT","OBSERVATION_ONLY","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "FollowUpRequired" -InternalName "FollowUpRequired" -Type Boolean -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC Checklist Result  ->  man_QcChecklistResult
+$list = Ensure-List "CD QC Checklist Result"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ItemKey" -InternalName "ItemKey" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StageCode" -InternalName "StageCode" -Type Choice -Choices "1_PREPARATORY","2_WORK_READINESS","3_FIRST_WORK_REVIEW","4_FOLLOW_UP" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ResultCode" -InternalName "ResultCode" -Type Choice -Choices "PASS","FAIL","N_A" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "InspectedDate" -InternalName "InspectedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "InspectedBy" -InternalName "InspectedBy" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD QC DOH Result  ->  man_QcDohResult
+$list = Ensure-List "CD QC DOH Result"
+try {
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "ItemKey" -InternalName "ItemKey" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ResponsibilityCode" -InternalName "ResponsibilityCode" -Type Choice -Choices "AFFECT_BUILD","OWNER_S_SEPARATE_TRADES","SHARED_AB_OWNER_S_VENDOR","OWNER_DOH_CONSULTANT" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "OPEN","IN_PROGRESS","VERIFIED","NOT_APPLICABLE","N_A","QUERY_RAISED" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "VerifiedDate" -InternalName "VerifiedDate" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "VerifiedBy" -InternalName "VerifiedBy" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "EvidenceLink" -InternalName "EvidenceLink" -Type Note -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
 Write-Host ''
-Write-Host 'Done. 9 lists plus CD Projects.'
+Write-Host 'Done. 17 lists plus CD Projects.'
 Write-Host 'Next: populate CD Projects from dim_Project, then point'
 Write-Host 'CD_Manual_Ingest at this site and run it.'

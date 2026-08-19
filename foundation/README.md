@@ -73,31 +73,15 @@ JWT, and is idempotent — a clean tree reports zero changes.
 
 ## Known gaps
 
-- **Lakehouse data is not backed up.** Only table/column schemas, in
-  `03-lakehouses/*.Lakehouse.schema.json` (Bronze: 29 tables / 654 columns,
-  Silver: 44 tables / 578 columns). Both lakehouses are schema-enabled, so
-  Fabric's list-tables API rejects them; schemas were read from
-  `INFORMATION_SCHEMA` on the SQL endpoint instead.
+- **Lakehouse data is not backed up.** Only table/column schemas and row counts,
+  in `03-lakehouses/*.Lakehouse.schema.json` — Bronze: 17 tables / 503 columns /
+  29,307 rows; Silver: 32 tables / 427 columns / 29,917 rows (counts as of
+  2026-08-01, `dbo` only). Both lakehouses are schema-enabled, so Fabric's
+  list-tables API rejects them; schemas were read from `INFORMATION_SCHEMA` on
+  the SQL endpoint instead.
 - **Dataflow/report data source credentials** are not exportable via the API —
   connections must be re-bound by hand on any restore.
 - `Ramp_APICalls` and `charley-dev` are empty in Fabric, not missed.
-
-## ⚠️ Live credentials in these files
-
-Five notebooks contain hardcoded Procore OAuth secrets and, in saved cell
-outputs, live access tokens:
-
-```
-01-ingestion/Procore_APICalls/procore_auth.ipynb
-01-ingestion/Procore_APICalls/Financial_Facts/procore_commitment_change_orders.ipynb
-01-ingestion/Procore_APICalls/Financial_Facts/procore_prime_contract_change_orders.ipynb
-01-ingestion/Procore_APICalls/Financial_Facts/procore_prime_contract_SOV_lines.ipynb
-01-ingestion/Procore_APICalls/Financial_Facts/procore_Work_Order_Contract _Line_Items.ipynb
-```
-
-They were left as-is because this is a verbatim backup. Before committing
-`foundation/` to git, either gitignore it, scrub the secrets, or rotate the
-Procore client secret — a commit is effectively permanent.
 
 ## Re-running
 

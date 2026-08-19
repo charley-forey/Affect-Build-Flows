@@ -66,6 +66,15 @@ MACROS = (
     # Spark's datediff(end, start) is 2-arg; DuckDB ships only the 3-arg date_diff(part,
     # start, end). Overloading by arity is allowed, so the Spark spelling works here too.
     "CREATE OR REPLACE MACRO datediff(e, s) AS date_diff('day', CAST(s AS DATE), CAST(e AS DATE))",
+    # NO trunc() MACRO, deliberately. Spark spells month-flooring trunc(date, 'MM') and the
+    # obvious bridge is a 2-arg macro - but unlike datediff, DuckDB does NOT overload it by
+    # arity: the macro REPLACES the builtin trunc(), which DuckDB's own date functions call
+    # internally, and 00_dim_date.sql stops building with a binder error pointing at a
+    # statement that never mentions trunc.
+    #
+    # The manual parsers use date_trunc('MONTH', d) instead, which both engines have with
+    # the same argument order, so no macro is needed. Some Spark spellings are cheaper to
+    # avoid than to bridge.
 )
 
 # Fixtures standing in for sql/silver/00_source_views.sql.
@@ -324,6 +333,204 @@ SOURCE_FIXTURES = (
         ('P1','A3','Inverted dates',      DATE '2025-07-01', DATE '2025-06-01', 0.0, 10.0, TRUE,  'Task','Not Started')
     ) AS t(project_id, activity_id, activity_name, start_date, end_date,
            progress, duration, is_critical, activity_type, status)""",
+
+    # ----------------------------------------------------------------------
+    # MANUAL INPUT. One row each, and that is the point: before these existed the gold
+    # man_* tables had no source at all, so "the manual pipeline works" was a claim with
+    # nothing behind it. A single row per table is enough to prove the join exists, which
+    # is the thing that was broken.
+    #
+    # P9 appears in sv_man_wins and NOWHERE in dim_Project. Silver is what rejects unknown
+    # projects, and silver is not exercised here - so this row is the one that would reach
+    # gold if that rejection were ever removed, and test_gold's referential check is what
+    # notices.
+    # ----------------------------------------------------------------------
+    """CREATE OR REPLACE VIEW sv_man_wins AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 1, 'Topped out two weeks early', 'REALIZED'),
+        ('P1', DATE '2025-05-01', 2, 'Zero recordables this quarter', 'FOCUSAREA')
+    ) AS t(project_id, month_start, win_number, description, win_type)""",
+
+    """CREATE OR REPLACE VIEW sv_man_risks AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 1, 'Curtain wall lead time', 'HIGH',
+         'Expedite fabrication; weekly vendor call', 'PM', 'IN_PROGRESS')
+    ) AS t(project_id, month_start, risk_number, description, impact_code, mitigation,
+           owner_role, status_code)""",
+
+    """CREATE OR REPLACE VIEW sv_man_priority_items AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 1, 'Level 3 slab pour', 'AT_RISK',
+         'Concrete delivery delayed 3 days', 'Saturday pour', 'No impact to SC',
+         CAST(NULL AS VARCHAR))
+    ) AS t(project_id, month_start, item_number, schedule_item, status_code,
+           critical_delays, recovery_plan, forecast_impact, notes)""",
+
+    # ProfitabilityCode is a LABEL, not a code - it matches dim_ScorecardBand[MatchValue].
+    # The fixture carries the label so a regression that upper-cases it fails here.
+    """CREATE OR REPLACE VIEW sv_man_flags AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 'Within Range', 125000.0, TRUE, 'Rev 3',
+         TRUE, TRUE, FALSE)
+    ) AS t(project_id, month_start, profitability_code, contingency_remaining,
+           baseline_approved, baseline_revision, month_end_closed_out,
+           forecasting_in_line, resources_updated)""",
+
+    """CREATE OR REPLACE VIEW sv_man_survey AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 1, 'How satisfied are you with communication?', 4,
+         'ANONYMOUS')
+    ) AS t(project_id, month_start, question_number, question_text, score,
+           surveyed_party)""",
+
+    """CREATE OR REPLACE VIEW sv_man_safety_monthly AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 12500.0, 0, 18, 310.5)
+    ) AS t(project_id, month_start, hours_worked, recordable_incidents, orientations,
+           ot_hours)""",
+
+    """CREATE OR REPLACE VIEW sv_man_quality_monthly AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 42, 17, 3.5, 9.2)
+    ) AS t(project_id, month_start, observations, punchlist_items, avg_days_past_due,
+           avg_days_to_close)""",
+
+    # A SPAN, not a date. The parser used to produce four single dates, which gold could
+    # not fill - the fixture is the pair so a regression to the old shape fails here.
+    """CREATE OR REPLACE VIEW sv_man_milestones AS SELECT * FROM (VALUES
+        ('P1', 'A1', 'Substantial Completion', DATE '2026-03-01', DATE '2026-03-31',
+         DATE '2026-03-01', DATE '2026-03-31', TRUE)
+    ) AS t(project_id, activity_key, milestone_name, contract_start, contract_finish,
+           baseline_start, baseline_finish, is_substantial_completion)""",
+
+    """CREATE OR REPLACE VIEW sv_man_daily_log_compliance AS SELECT * FROM (VALUES
+        ('P1', DATE '2025-05-01', 22, 3)
+    ) AS t(project_id, month_start, logs_expected, logs_missed_same_day)""",
+
+    # ----------------------------------------------------------------------
+    # PQP - Procore half. Values exercise the mapping, not the happy path: OB1's trade
+    # 'Concrete Formwork' resolves to a qc_seed_Trade key, OB2's 'Metals' does not (there
+    # is no METALS trade in the 26), so HasUnmappedTrade must be TRUE on exactly one row.
+    # ----------------------------------------------------------------------
+    """CREATE OR REPLACE VIEW sv_qc_ncr AS SELECT * FROM (VALUES
+        ('P1','OB1','1','Rebar cover short','Cover below spec at grid C4',
+         'Non-Conformance','Structural','Concrete Formwork','Alex R','High',
+         'OPEN','OPEN','NCR', DATE '2025-05-01', DATE '2025-05-10', CAST(NULL AS DATE)),
+        ('P1','OB2','2','Closed finding','Corrected on the day','Corrective Action',
+         'Quality','Metals','Sam T','Normal','CLOSED','CLOSED','COR',
+         DATE '2025-04-01', DATE '2025-04-05', DATE '2025-04-04')
+    ) AS t(project_id, ncr_id, ncr_number, title, description, observation_type, category,
+           trade, assignee_name, priority, source_status, status_code, item_class_code,
+           created_date, due_date, closed_date)""",
+
+    """CREATE OR REPLACE VIEW sv_qc_punch AS SELECT * FROM (VALUES
+        ('P1','PI1','1','Fix grid','Punch','Concrete Formwork','Pat M','CC1','High',
+         'INITIATED','OPEN','PUNCH_ITEM', DATE '2025-05-02', DATE '2025-05-09',
+         CAST(NULL AS DATE)),
+        ('P1','PI2','2','Day 2 work','Day 2 Work','Metals','Pat M',CAST(NULL AS VARCHAR),
+         'Low','CLOSED','CLOSED','DAY_2_WORK', DATE '2025-04-02', DATE '2025-04-08',
+         DATE '2025-04-07')
+    ) AS t(project_id, punch_id, punch_number, title, punch_item_type, trade,
+           manager_name, cost_code_id, priority, source_status, status_code,
+           item_class_code, created_date, due_date, closed_date)""",
+
+    # SB3 is UNMAPPED on purpose: 'Under Review' is not a value 24_qc_procore_silver.sql
+    # maps, so status_code is NULL. The DQ suite counts those rather than the pipeline
+    # bucketing them into whatever an ELSE branch said.
+    """CREATE OR REPLACE VIEW sv_qc_submittal AS SELECT * FROM (VALUES
+        ('P1','SB1','001','Rebar shop drawings','CC1','Open','OPEN','SHOP_DRAWING',
+         DATE '2025-05-01', DATE '2025-05-20', CAST(NULL AS DATE)),
+        ('P1','SB2','002','Lobby stone mockup','CC1','Approved','APPROVED','MOCK_UP',
+         DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-15'),
+        ('P1','SB3','003','Unmapped status',CAST(NULL AS VARCHAR),'Under Review',
+         CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR),
+         DATE '2025-05-03', DATE '2025-05-17', CAST(NULL AS DATE))
+    ) AS t(project_id, submittal_id, submittal_number, subject, cost_code_id,
+           source_status, status_code, submittal_type_code, created_date, due_date,
+           responded_date)""",
+
+    # Not read by any gold file yet - landed and typed so the "could Procore Inspections
+    # replace the 26 checklist sheets" question can be answered against real data rather
+    # than argued about. Declared here so the view contract is verified either way.
+    """CREATE OR REPLACE VIEW sv_qc_inspection AS SELECT * FROM (VALUES
+        ('P1','IN1','1','Slab pour pre-check','Quality','Concrete Pre-Pour',
+         'Concrete Formwork','J. Alvarez','CLOSED', DATE '2025-05-08',
+         DATE '2025-05-08', 100.0)
+    ) AS t(project_id, inspection_id, inspection_number, name, inspection_type,
+           template_name, trade, inspector_name, source_status, inspection_date,
+           due_date, percent_complete)""",
+
+    # ----------------------------------------------------------------------
+    # PQP - SharePoint half. Keys are REAL values from the seed CSVs (EXCAVATION-001,
+    # TCO-A2, H-01, D-07), so the referential checks in test_qc.py test the join rather
+    # than testing that two invented strings match each other.
+    # ----------------------------------------------------------------------
+    """CREATE OR REPLACE VIEW sv_man_qc_dfow AS SELECT * FROM (VALUES
+        ('P1','D-07','Cast-in-place concrete frame','CONCRETE_FORMWORK',3,
+         'Pre-pour checklist and third-party survey','Superintendent','IN_PROGRESS',
+         CAST(NULL AS VARCHAR)),
+        ('P1','D-08','Bulk excavation','EXCAVATION',3,'Daily survey','Superintendent',
+         'COMPLETE', CAST(NULL AS VARCHAR))
+    ) AS t(project_id, dfow_ref, dfow_description, trade_key, risk_tier, control_measure,
+           owner_role, status_code, notes)""",
+
+    """CREATE OR REPLACE VIEW sv_man_qc_itp AS SELECT * FROM (VALUES
+        ('P1','ITP-014','CONCRETE_FORMWORK','Slab on grade pour',
+         'Compressive strength test','28-day break >= 4000 psi','Hold','QA Manager',
+         DATE '2025-05-14', DATE '2025-05-14','PASS','COMPLETE', CAST(NULL AS VARCHAR))
+    ) AS t(project_id, itp_ref, trade_key, activity, inspection_type, acceptance_criteria,
+           hold_point_type, responsible, planned_date, actual_date, result_code,
+           status_code, notes)""",
+
+    # One gate of each type, which is the collapse under test: three sheets, one table.
+    # STAT-1 has a target date AFTER its completed date - workbook defect #6's shape, and
+    # what the date_order expectation is there to catch.
+    """CREATE OR REPLACE VIEW sv_man_qc_gate AS SELECT * FROM (VALUES
+        ('P1','TCO-A2','TCO','SUBMITTED','I. Aguire (PM)', DATE '2025-09-01',
+         DATE '2025-08-20', CAST(NULL AS DATE), CAST(NULL AS VARCHAR),
+         'Awaiting DOB NOW acceptance'),
+        ('P1','FA-01','FIRE_ALARM','NOT_STARTED','MEP Manager', DATE '2025-10-01',
+         CAST(NULL AS DATE), CAST(NULL AS DATE), CAST(NULL AS VARCHAR),
+         CAST(NULL AS VARCHAR)),
+        ('P1','S-01','STATUTORY','CLOSED','QA Manager', DATE '2025-06-01',
+         DATE '2025-05-02', DATE '2025-05-20', 'sp://evidence/S-01',
+         CAST(NULL AS VARCHAR))
+    ) AS t(project_id, gate_key, gate_type, status_code, responsible, target_date,
+           submitted_date, completed_date, evidence_link, blocker_note)""",
+
+    """CREATE OR REPLACE VIEW sv_man_qc_special_inspection AS SELECT * FROM (VALUES
+        ('P1','SI-006','Structural steel welding','SIA','R. Patel','YES','YES',
+         DATE '2025-07-02', DATE '2025-07-02', DATE '2025-07-09','CLOSED',
+         CAST(NULL AS VARCHAR))
+    ) AS t(project_id, inspection_ref, category, agency, inspector_name, required_code,
+           performed_code, scheduled_date, performed_date, report_received_date,
+           status_code, notes)""",
+
+    """CREATE OR REPLACE VIEW sv_man_qc_commissioning AS SELECT * FROM (VALUES
+        ('P1','CX-003','Smoke purge fans','HVAC_DUCTWORK','MEP Manager',
+         DATE '2025-10-01', CAST(NULL AS DATE),'NOT_STARTED', CAST(NULL AS VARCHAR))
+    ) AS t(project_id, system_ref, system_name, trade_key, responsible, planned_date,
+           actual_date, status_code, notes)""",
+
+    """CREATE OR REPLACE VIEW sv_man_qc_inspector_sign_in AS SELECT * FROM (VALUES
+        ('P1','SI-2025-041', DATE '2025-07-16','T. Nguyen','NYC_DOB',
+         'Facade progress inspection','Levels 4-6','OBSERVATION_ONLY', FALSE,
+         CAST(NULL AS VARCHAR))
+    ) AS t(project_id, sign_in_ref, visit_date, inspector_name, agency_code, purpose,
+           area_inspected, outcome_code, follow_up_required, notes)""",
+
+    # Two trades, three items, one FAIL. Enough to prove the 26-sheets-into-one collapse
+    # holds: two different TradeKeys land in the same table and both resolve.
+    """CREATE OR REPLACE VIEW sv_man_qc_checklist_result AS SELECT * FROM (VALUES
+        ('P1','EXCAVATION','EXCAVATION-001','1_PREPARATORY','PASS', DATE '2025-05-08',
+         'J. Alvarez', CAST(NULL AS VARCHAR)),
+        ('P1','EXCAVATION','EXCAVATION-002','1_PREPARATORY','FAIL', DATE '2025-05-08',
+         'J. Alvarez','Water table not noted'),
+        ('P1','CONCRETE_FORMWORK','CONCRETE_FORMWORK-001','2_WORK_READINESS','PASS',
+         DATE '2025-05-14','J. Alvarez', CAST(NULL AS VARCHAR))
+    ) AS t(project_id, trade_key, item_key, stage_code, result_code, inspected_date,
+           inspected_by, notes)""",
+
+    """CREATE OR REPLACE VIEW sv_man_qc_doh_result AS SELECT * FROM (VALUES
+        ('P1','H-01','OWNER_DOH_CONSULTANT','VERIFIED', DATE '2025-07-20','QA Manager',
+         CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR)),
+        ('P1','H-02','AFFECT_BUILD','OPEN', CAST(NULL AS DATE), CAST(NULL AS VARCHAR),
+         CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR))
+    ) AS t(project_id, item_key, responsibility_code, status_code, verified_date,
+           verified_by, evidence_link, notes)""",
 )
 
 # dim_Status is not a pure seed: it unions its 32 static rows with Procore's OWN status
@@ -363,13 +570,53 @@ def gold_files() -> list[Path]:
 
 
 def split_statements(sql: str) -> list[str]:
-    """Split a .sql file into statements, stripping comments first.
+    """Split a .sql file into statements, stripping `--` comments first.
 
-    A `;` inside a `--` comment is otherwise read as a statement boundary and tears the
-    statement in half. Same approach as procore_extract.split_sql_statements.
+    QUOTE AWARE, and it has to be. The first version split on every `;` and stripped from
+    every `--`, which is fine while the SQL contains only identifiers - and silently
+    catastrophic the moment a string LITERAL contains one. 08_qc_seeds.sql inlines 943 rows
+    of workbook prose; 43 of them contain a semicolon ("Verify anchor bolt layout; check
+    template"). Splitting there tears one CREATE TABLE into two invalid halves, and the
+    error you get back is a parse failure hundreds of lines from the actual cause.
+
+    THE ONE PLACE THIS LIVES. deploy_seeds / deploy_silver / deploy_gold each had their own
+    copy of the naive version; they now import this one, so the seeds that run offline and
+    the seeds that run in Fabric are split identically. Three copies of a parser is three
+    parsers that drift.
+
+    `''` inside a literal needs no special case: it closes and immediately reopens the
+    quote, which leaves the in-quote state exactly where it should be.
     """
-    body = "\n".join(line.split("--", 1)[0] for line in sql.splitlines())
-    return [s.strip() for s in body.split(";") if s.strip()]
+    out: list[str] = []
+    buf: list[str] = []
+    in_quote = False
+    i, n = 0, len(sql)
+    while i < n:
+        ch = sql[i]
+        if in_quote:
+            buf.append(ch)
+            if ch == "'":
+                in_quote = False
+            i += 1
+        elif ch == "'":
+            in_quote = True
+            buf.append(ch)
+            i += 1
+        elif ch == "-" and sql.startswith("--", i):
+            i = sql.find("\n", i)
+            if i == -1:
+                break
+            buf.append("\n")
+            i += 1
+        elif ch == ";":
+            out.append("".join(buf).strip())
+            buf = []
+            i += 1
+        else:
+            buf.append(ch)
+            i += 1
+    out.append("".join(buf).strip())
+    return [s for s in out if s]
 
 
 def build(verbose: bool = False) -> Any:

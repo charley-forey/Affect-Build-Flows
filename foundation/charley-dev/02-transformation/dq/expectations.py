@@ -427,6 +427,151 @@ def build_suite() -> Suite:
         ),
     )
 
+    # ------------------------------------------------- PQP (Project Quality Plan)
+    #
+    # The QA/QC subject area has one property the rest of the model does not: its
+    # dimensions are TEMPLATES the client hands us, and its facts are ANSWERS against them.
+    # An answer whose template key does not resolve is not a rounding error - it is a
+    # checklist item nobody can see was failed, sitting in a table that still looks
+    # populated. So the referential checks here are ERROR, not WARN.
+
+    # The seeds. A duplicate key in a template fans out every answer joined to it, so
+    # "62 of 625 items failed" becomes "124 of 1250" with nothing saying so.
+    suite.add(
+        unique_key("qc_seed_Trade", ["TradeKey"]),
+        unique_key("qc_seed_ChecklistItem", ["ItemKey"]),
+        unique_key("qc_seed_Gate", ["GateKey"]),
+        unique_key("qc_seed_DohItem", ["ItemKey"]),
+        unique_key("dim_QcStatus", ["Domain", "Code"]),
+        not_null("qc_seed_ChecklistItem", "TradeKey"),
+        not_null("qc_seed_Gate", "GateType"),
+    )
+
+    # THE TWO COLLAPSES, checked as counts rather than trusted.
+    #
+    # 26 trade sheets became one table and three gate paths became one table. Both are
+    # right, and both are the kind of change that silently loses rows: a trade whose sheet
+    # was skipped, a gate path re-extracted with a different filter. A count is the cheapest
+    # possible detector and the workbook's own numbers are the expected values.
+    suite.add(
+        Expectation(
+            name="the checklist template still holds all 625 items",
+            table="qc_seed_ChecklistItem",
+            failing_sql=("SELECT * FROM (SELECT COUNT(*) AS n, COUNT(DISTINCT TradeKey) AS t "
+                         "FROM qc_seed_ChecklistItem) WHERE n <> 625 OR t <> 26"),
+            severity=SEVERITY_ERROR,
+            description="26 trade sheets collapsed into one table - 625 items across 26 trades",
+        ),
+        Expectation(
+            name="the gate template still holds all three paths",
+            table="qc_seed_Gate",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT SUM(CASE WHEN GateType = 'TCO' THEN 1 ELSE 0 END) AS tco,"
+                "         SUM(CASE WHEN GateType = 'FIRE_ALARM' THEN 1 ELSE 0 END) AS fire,"
+                "         SUM(CASE WHEN GateType = 'STATUTORY' THEN 1 ELSE 0 END) AS stat"
+                "  FROM qc_seed_Gate"
+                ") WHERE tco <> 46 OR fire <> 23 OR stat <> 24"),
+            severity=SEVERITY_ERROR,
+            description="Path to TCO / Fire Alarm / Statutory collapsed to one table: 46/23/24",
+        ),
+        Expectation(
+            name="the DOH checklist still holds all 101 requirements",
+            table="qc_seed_DohItem",
+            failing_sql="SELECT * FROM (SELECT COUNT(*) AS n FROM qc_seed_DohItem) WHERE n <> 101",
+            severity=SEVERITY_ERROR,
+            description="a missing DOH requirement is one nobody is tracking against",
+        ),
+    )
+
+    # Referential integrity. ProjectKey on every manual table, old and new - this is the
+    # link that did not exist at all until the man_* tables were wired to silver, so it is
+    # checked on all seventeen rather than only on the eight new ones.
+    for table in ("man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
+                  "man_SafetyMonthly", "man_QualityMonthly", "man_Milestones",
+                  "man_DailyLogCompliance", "man_QcDfow", "man_QcItp", "man_QcGate",
+                  "man_QcSpecialInspection", "man_QcCommissioning",
+                  "man_QcInspectorSignIn", "man_QcChecklistResult", "man_QcDohResult"):
+        suite.add(referential(table, "ProjectKey", "dim_Project", "ProjectKey"))
+
+    # TradeKey is the controlled key people get wrong - "Concrete Formwork" instead of
+    # CONCRETE_FORMWORK. The SharePoint choice column is generated from qc_seed_Trade to
+    # make that impossible; these prove it stayed impossible.
+    for table in ("man_QcDfow", "man_QcItp", "man_QcCommissioning", "man_QcChecklistResult"):
+        suite.add(referential(table, "TradeKey", "qc_seed_Trade", "TradeKey"))
+
+    suite.add(
+        referential("man_QcChecklistResult", "ItemKey", "qc_seed_ChecklistItem", "ItemKey"),
+        referential("man_QcGate", "GateKey", "qc_seed_Gate", "GateKey"),
+        referential("man_QcDohResult", "ItemKey", "qc_seed_DohItem", "ItemKey"),
+    )
+
+    # DATE ORDER, and only where it is an INVARIANT.
+    #
+    # The obvious set here is every plan-vs-actual pair - target vs submitted, planned vs
+    # actual, scheduled vs performed. Those are NOT invariants: submitting a filing before
+    # its target date, or running an inspection early, is the healthy case, and a check
+    # that fires on the healthy case trains everyone to ignore the data-quality page - the
+    # same mistake the billing check made before it was scoped to cumulative totals.
+    #
+    # What IS an invariant is a thing that cannot logically precede its cause: a gate
+    # cannot complete before it was submitted, and a report cannot arrive before the
+    # inspection that produced it. WARN, because these are dates a human typed and the
+    # right response is to go fix the row, not to stop publishing the rest of the page.
+    suite.add(
+        date_order("man_QcGate", "SubmittedDate", "CompletedDate", severity=SEVERITY_WARN),
+        date_order("man_QcSpecialInspection", "PerformedDate", "ReportReceivedDate",
+                   severity=SEVERITY_WARN),
+    )
+
+    # The plan-vs-actual question asked the way it is actually meant: not "are these dates
+    # in order" but "did this gate miss the date it was targeted for". A real management
+    # signal with a real action behind it, and it does not fire on a gate delivered early.
+    suite.add(Expectation(
+        name="gates completed after their target date",
+        table="man_QcGate",
+        failing_sql=("SELECT * FROM man_QcGate WHERE TargetDate IS NOT NULL "
+                     "AND CompletedDate IS NOT NULL AND CompletedDate > TargetDate"),
+        severity=SEVERITY_WARN,
+        description="a TCO or fire alarm gate closed late - the critical path moved",
+    ))
+
+    suite.add(
+        # A gate result filed under a different path from its own template means the
+        # collapse has mis-routed a row, and every "% of TCO steps complete" is wrong by it.
+        Expectation(
+            name="gate results agree with their template's path",
+            table="man_QcGate",
+            failing_sql=("SELECT g.* FROM man_QcGate g "
+                         "JOIN qc_seed_Gate s ON s.GateKey = g.GateKey "
+                         "WHERE s.GateType <> g.GateType"),
+            severity=SEVERITY_ERROR,
+            description="a gate result filed under the wrong path skews both paths' progress",
+        ),
+        # Procore's status vocabulary is configurable per company, so the mapping onto the
+        # workbook's codes is a guess that can go stale. An unmapped status is not a
+        # pipeline failure - the row is still there with its source text - but it drops out
+        # of every status slicer, so it has to be counted out loud.
+        Expectation(
+            name="Procore QC statuses map to the workbook's vocabulary",
+            table="fct_QcSubmittal",
+            failing_sql=("SELECT * FROM fct_QcSubmittal "
+                         "WHERE SourceStatus IS NOT NULL AND StatusCode IS NULL"),
+            severity=SEVERITY_WARN,
+            description="an unmapped Procore status drops the row out of every status slicer",
+        ),
+        # Same argument for trade. Procore's trade is free text and gold resolves it by
+        # exact match only, refusing to guess - so the unmapped count is the signal for
+        # whether an alias table is worth building.
+        Expectation(
+            name="Procore trades resolve to a seeded trade",
+            table="fct_QcNcr",
+            failing_sql="SELECT * FROM fct_QcNcr WHERE HasUnmappedTrade",
+            severity=SEVERITY_WARN,
+            description="an unmapped trade cannot roll up by trade - alias it or fix Procore",
+        ),
+    )
+
     # ------------------------------------------------------ scorecard integrity
     #
     # ERROR, because this is the number leadership reads. The workbook's scorecard was

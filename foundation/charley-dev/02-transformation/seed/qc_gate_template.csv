@@ -1,0 +1,94 @@
+GateType,GateKey,Step,Section,Gate,Authority,Agency,Prerequisite,Responsible,EvidenceRequired,SortOrder,LinkedTcoGate
+TCO,TCO-A1,A1,"PERMITS, FILINGS & PRECONSTRUCTION",PW1 / PW2 filings approved and work permits issued,DOB,NYC DOB,—,I. Aguire (PM),"Approved PW1, issued PW2 work permit",1,
+TCO,TCO-A2,A2,"PERMITS, FILINGS & PRECONSTRUCTION",TR1 (Technical Report — Statement of Responsibility) filed and accepted,DOB,NYC DOB / SIA,A1,I. Aguire (PM),Accepted TR1 in DOB NOW,2,
+TCO,TCO-A3,A3,"PERMITS, FILINGS & PRECONSTRUCTION",TR8 (Energy / Mechanical) filed and accepted,DOB,NYC DOB / Collectif,A1,I. Aguire (PM),Accepted TR8 in DOB NOW,3,
+TCO,TCO-A4,A4,"PERMITS, FILINGS & PRECONSTRUCTION",Special Inspection Agency and Testing Laboratory engaged and on record,Internal,Affect Build,A2,I. Aguire (PM),Executed agency agreements,4,
+TCO,TCO-A5,A5,"PERMITS, FILINGS & PRECONSTRUCTION",Physical inspector sign-in logbook established at site entry,Internal,Affect Build,A1,N. Scarmacca (Super),Bound logbook on site (see Inspector Sign-In tab),5,
+TCO,TCO-A6,A6,"PERMITS, FILINGS & PRECONSTRUCTION","Permit board, site safety and code postings in place",DOB,NYC DOB,A1,N. Scarmacca (Super),Photo record of postings,6,
+TCO,TCO-A7,A7,"PERMITS, FILINGS & PRECONSTRUCTION",CodeGreen (CGI) Preliminary special inspection completed,Special Insp.,CodeGreen Inspection (CGI),"A1,A4",N. Scarmacca (Super),CGI Preliminary inspection report,7,
+TCO,TCO-B1,B1,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,Concrete placement special inspections complete — pool equipment room slab,Special Insp.,Licensed Testing Lab,A2,N. Scarmacca (Super),"Signed TR2 / TR3 reports, all pours",8,
+TCO,TCO-B2,B2,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,Excavation / SOE special inspections complete,Special Insp.,Special Inspection Agency,A2,N. Scarmacca (Super),Signed TR reports,9,
+TCO,TCO-B3,B3,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,Waterproofing (wet-area interface) special inspections complete,Special Insp.,Independent Inspector,A2,N. Scarmacca (Super),"Signed inspection reports, all wet areas",10,
+TCO,TCO-B4,B4,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,Firestopping special inspections complete — all rated penetrations,Special Insp.,Special Inspection Agency,A2,N. Scarmacca (Super),Signed inspection reports,11,
+TCO,TCO-B5,B5,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,Mechanical / Energy Code compliance special inspection signed off,Special Insp.,Collectif (Mech. Engineer),A3,I. Aguire (PM),Signed TR8,12,
+TCO,TCO-B6,B6,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,Sprinkler / Fire Alarm special inspection signed off,Special Insp.,Approved Inspector,A2,I. Aguire (PM),Signed TR1 for FA / sprinkler,13,
+TCO,TCO-B7,B7,SPECIAL INSPECTION (TR) CLOSURES — CMP §12.6,FINAL TR1 sign-off letter received from Special Inspection Agency,Special Insp.,Special Inspection Agency,"B1,B2,B3,B4,B5,B6",I. Aguire (PM),Final TR1 Sign-Off Letter (mandatory TCO prerequisite),14,
+TCO,TCO-C1,C1,LIFE SAFETY SIGN-OFFS,Fire alarm 100% device pre-test complete (see Path to Fire Alarm tab),FDNY,Fire Alarm Sub,A1,I. Aguire (PM),Signed 100% device pre-test report,15,
+TCO,TCO-C2,C2,LIFE SAFETY SIGN-OFFS,FDNY witness / acceptance test passed — Letter of Approval issued,FDNY,FDNY,C1,I. Aguire (PM),FDNY Letter of Approval (LOA),16,
+TCO,TCO-C3,C3,LIFE SAFETY SIGN-OFFS,"Sprinkler hydrostatic test passed — 200 psi / 2 hrs, DOB witnessed",DOB,NYC DOB,A1,N. Scarmacca (Super),Signed hydrostatic test record,17,
+TCO,TCO-C4,C4,LIFE SAFETY SIGN-OFFS,Sprinkler flow test / FDNY field acceptance — waterflow & tamper switches,FDNY,FDNY,C3,N. Scarmacca (Super),FDNY field acceptance record,18,
+TCO,TCO-C5,C5,LIFE SAFETY SIGN-OFFS,Central station alarm transmission verified,FDNY,FDNY / Central Station,C2,I. Aguire (PM),Central station verification letter,19,
+TCO,TCO-D1,D1,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,Electrical rough inspection passed,DOB,DOB Electrical,A1,I. Aguire (PM),Rough inspection record,20,
+TCO,TCO-D2,D2,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,Electrical final inspection — Certificate of Electrical Inspection issued,DOB,DOB Electrical,D1,I. Aguire (PM),Certificate of Electrical Inspection (or DOB NOW self-cert),21,
+TCO,TCO-D3,D3,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,Con Edison energisation letter received,Utility,Con Edison,D2,I. Aguire (PM),Energisation letter,22,
+TCO,TCO-D4,D4,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,Plumbing rough inspection passed (water / sanitary / vent),DOB,DOB Plumbing,A1,N. Scarmacca (Super),Rough inspection sign-off,23,
+TCO,TCO-D5,D5,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,"Gas pressure test passed — 10 psi / 15 min, DOB witnessed",DOB,DOB Plumbing,D4,N. Scarmacca (Super),Signed gas pressure test record,24,
+TCO,TCO-D6,D6,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,Gas Activation Notice received,Utility,Con Edison / National Grid,D5,I. Aguire (PM),Gas Activation Notice,25,
+TCO,TCO-D7,D7,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,DOB Boiler Unit inspection — after Rheem water heater combustion testing,DOB,DOB Boiler Unit,D6,I. Aguire (PM),Boiler inspection sign-off,26,
+TCO,TCO-D8,D8,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,Plumbing final inspection / sign-off,DOB,DOB Plumbing,D5,N. Scarmacca (Super),Plumbing final sign-off,27,
+TCO,TCO-D9,D9,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,DEP water meter set,DEP,NYC DEP,A1,I. Aguire (PM),Meter set confirmation,28,
+TCO,TCO-D10,D10,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,DEP backflow prevention certification filed,DEP,NYC DEP,D9,I. Aguire (PM),Backflow certification,29,
+TCO,TCO-D11,D11,UTILITY & AGENCY SIGN-OFFS — CMP §19.3 / §20.2,DEP final sewer connection approval,DEP,NYC DEP,A1,I. Aguire (PM),Sewer connection approval,30,
+TCO,TCO-E1,E1,DOH POOL / SPA — OWNER'S SEPARATE TRADES (CMP §20.3),"Pool / sauna / cold plunge utility readiness confirmed (electrical, plumbing, trenching)",Internal,Affect Build,"D2,D8",N. Scarmacca (Super),Utility readiness sign-off,31,
+TCO,TCO-E2,E2,DOH POOL / SPA — OWNER'S SEPARATE TRADES (CMP §20.3),Owner's pool vendor testing & commissioning complete,DOH,Owner's Separate Trades,E1,Owner's Vendor,Vendor commissioning report,32,
+TCO,TCO-E3,E3,DOH POOL / SPA — OWNER'S SEPARATE TRADES (CMP §20.3),NYC DOH Pool / Spa final inspection passed,DOH,NYC DOH,E2,I. Aguire (PM) — coordination only,DOH Pool/Spa approval certificate,33,
+TCO,TCO-F1,F1,"COMMISSIONING, QUALITY & CLOSEOUT",All HVAC equipment startup and functional performance testing complete,Internal,Mechanical Sub / Vendors,A1,I. Aguire (PM),Certified startup + FPT reports,34,
+TCO,TCO-F2,F2,"COMMISSIONING, QUALITY & CLOSEOUT",TAB report issued and accepted,Internal,Approved TAB Firm,F1,I. Aguire (PM),TAB report,35,
+TCO,TCO-F3,F3,"COMMISSIONING, QUALITY & CLOSEOUT",All open NCRs closed (see NCR Log),Internal,Affect Build,—,I. Aguire (PM),NCR Log showing zero open items,36,
+TCO,TCO-F4,F4,"COMMISSIONING, QUALITY & CLOSEOUT",All Tier 3 / Tier 4 DFOW Phase 4 follow-up inspections closed,Internal,Superintendent,—,N. Scarmacca (Super),Procore inspection records,37,
+TCO,TCO-F5,F5,"COMMISSIONING, QUALITY & CLOSEOUT",Trade self-punch and Affect Build punch review complete (Phases A & B),Internal,Affect Build / Trades,F3,N. Scarmacca (Super),Punch & RCL Log,38,
+TCO,TCO-F6,F6,"COMMISSIONING, QUALITY & CLOSEOUT",Owner / Architect punch walk complete (Phase C),Internal,Owner / Colberg Architecture,F5,I. Aguire (PM),Signed punch list,39,
+TCO,TCO-F7,F7,"COMMISSIONING, QUALITY & CLOSEOUT","O&M Manuals, warranties, as-builts and training certificates compiled",Internal,Affect Build,"F1,F2",I. Aguire (PM),Certificate and Approvals Binder (digital + hardcopy),40,
+TCO,TCO-F8,F8,"COMMISSIONING, QUALITY & CLOSEOUT",Owner systems training delivered and documented,Internal,Subs / Vendors,F7,I. Aguire (PM),Training Matrix with attendee sign-in,41,
+TCO,TCO-G1,G1,TCO FILING & ISSUANCE,Closeout Matrix verified — every authority approval accounted for,Internal,Affect Build,"B7,C2,C4,D2,D8,D10,E3",I. Aguire (PM),Completed Closeout Matrix,42,
+TCO,TCO-G2,G2,TCO FILING & ISSUANCE,TCO application filed via DOB NOW,DOB,NYC DOB,G1,I. Aguire (PM),DOB NOW TCO application,43,
+TCO,TCO-G3,G3,TCO FILING & ISSUANCE,DOB final building inspection passed,DOB,NYC DOB,G2,I. Aguire (PM),Final inspection sign-off,44,
+TCO,TCO-G4,G4,TCO FILING & ISSUANCE,TEMPORARY CERTIFICATE OF OCCUPANCY (TCO) ISSUED,DOB,NYC DOB,G3,I. Aguire (PM),Issued TCO,45,
+TCO,TCO-G5,G5,TCO FILING & ISSUANCE,Final Certificate of Occupancy (CO) issued,DOB,NYC DOB,G4,I. Aguire (PM),Issued CO,46,
+FIRE_ALARM,FA-01,FA-01,FDNY Letter of Approval,Fire alarm shop drawings and device layout submitted to Collectif and Architect for review,FDNY,,—,Fire Alarm Sub,Approved shop drawings (Procore submittal),47,
+FIRE_ALARM,FA-02,FA-02,FDNY Letter of Approval,Fire alarm drawings filed with FDNY / DOB as required; approval obtained,FDNY,,FA-01,I. Aguire (PM),FDNY / DOB drawing approval,48,
+FIRE_ALARM,FA-03,FA-03,FDNY Letter of Approval,"FACP, RAN and device rough-in complete — Zones A & B",FDNY,,FA-02,Fire Alarm Sub,Pre-cover inspection sign-off,49,
+FIRE_ALARM,FA-04,FA-04,FDNY Letter of Approval,Pre-cover (pre-drywall) inspection of FA rough-in — HOLD POINT,FDNY,,FA-03,N. Scarmacca (Super),Signed pre-cover inspection record (Procore),50,
+FIRE_ALARM,FA-05,FA-05,FDNY Letter of Approval,"Device trim-out complete — initiating, signaling and notification devices installed",FDNY,,FA-04,Fire Alarm Sub,Device installation checklist,51,
+FIRE_ALARM,FA-06,FA-06,FDNY Letter of Approval,Above-ceiling inspection before ACT / grid close-up — HOLD POINT,FDNY,,FA-05,N. Scarmacca (Super),Above-ceiling inspection record,52,
+FIRE_ALARM,FA-07,FA-07,FDNY Letter of Approval,Permanent electrical power available to FACP (energisation sequenced ahead of FA testing),FDNY,,—,Electrical Sub,Con Edison energisation letter / panel energised,53,
+FIRE_ALARM,FA-08,FA-08,FDNY Letter of Approval,"Device labelling, zone schedule and as-built riser diagram complete",FDNY,,FA-05,Fire Alarm Sub,As-built riser + zone schedule,54,
+FIRE_ALARM,FA-09,FA-09,FDNY Letter of Approval,"100% pre-test of ALL initiating, signaling and notification devices — HOLD POINT",FDNY,,"FA-05,FA-07",Fire Alarm Sub,Signed 100% device pre-test report,55,
+FIRE_ALARM,FA-10,FA-10,FDNY Letter of Approval,Interface test — HVAC damper closure on alarm verified,FDNY,,FA-09,Fire Alarm + Mechanical Subs,Signed interface test record,56,
+FIRE_ALARM,FA-11,FA-11,FDNY Letter of Approval,Interface test — door hold-open device release on alarm verified,FDNY,,FA-09,Fire Alarm + Door Hardware Sub,Signed interface test record,57,
+FIRE_ALARM,FA-12,FA-12,FDNY Letter of Approval,Interface test — sprinkler waterflow and tamper switch supervision to FACP verified,FDNY,,FA-09,Fire Alarm + Sprinkler Subs,Signed interface test record,58,
+FIRE_ALARM,FA-13,FA-13,FDNY Letter of Approval,Central station monitoring account active; signal transmission verified,FDNY,,FA-09,Fire Alarm Sub,Central station verification letter,59,
+FIRE_ALARM,FA-14,FA-14,FDNY Letter of Approval,All deficiencies from pre-test corrected and re-tested; zero open NCRs on FA system,FDNY,,"FA-09,FA-10,FA-11,FA-12",I. Aguire (PM),Closed NCR records (see NCR Log),60,
+FIRE_ALARM,FA-15,FA-15,FDNY Letter of Approval,TR1 special inspection for fire alarm signed by approved inspector,FDNY,,FA-14,Special Inspection Agency,Signed TR1 (fire alarm),61,
+FIRE_ALARM,FA-16,FA-16,FDNY Letter of Approval,FDNY witness test scheduled — must be on or before latest test date in H4,FDNY,,FA-14,I. Aguire (PM),FDNY appointment confirmation,62,
+FIRE_ALARM,FA-17,FA-17,FDNY Letter of Approval,"Site readiness for FDNY: approved drawings on site, permits posted, inspector sign-in log ready, escort assigned",FDNY,,FA-16,N. Scarmacca (Super),Readiness checklist + photo record,63,
+FIRE_ALARM,FA-18,FA-18,FDNY Letter of Approval,FDNY WITNESS / ACCEPTANCE TEST — live testing of representative devices,FDNY,,"FA-16,FA-17",FDNY Inspector,FDNY field test record,64,
+FIRE_ALARM,FA-19,FA-19,FDNY Letter of Approval,Re-test window (if required) — deficiencies corrected and FDNY re-witness,FDNY,,FA-18,Fire Alarm Sub / PM,Re-test record,65,
+FIRE_ALARM,FA-20,FA-20,FDNY Letter of Approval,FDNY LETTER OF APPROVAL (LOA) ISSUED,FDNY,,FA-18,FDNY,FDNY Letter of Approval — mandatory for TCO,66,
+FIRE_ALARM,FA-21,FA-21,FDNY Letter of Approval,LOA archived in Procore and added to Certificate and Approvals Binder,FDNY,,FA-20,I. Aguire (PM),Procore record + binder entry,67,
+FIRE_ALARM,FA-22,FA-22,FDNY Letter of Approval,Owner training on fire alarm system delivered and documented,FDNY,,FA-20,Fire Alarm Sub,Training Matrix with attendee sign-in,68,
+FIRE_ALARM,FA-23,FA-23,FDNY Letter of Approval,"Fire alarm O&M manual, warranty and as-builts turned over",FDNY,,FA-20,Fire Alarm Sub,O&M manual + warranty letter,69,
+STATUTORY,S-01,S-01,Permit,PW1 / PW2 permit issuance,NYC DOB,NYC DOB,,,,70,A1
+STATUTORY,S-02,S-02,Electrical,Electrical rough inspection,DOB Electrical,DOB Electrical,,,,71,D1
+STATUTORY,S-03,S-03,Electrical,Electrical final inspection / Certificate of Electrical Inspection,DOB Electrical,DOB Electrical,,,,72,D2
+STATUTORY,S-04,S-04,Electrical,Con Edison energisation / energisation letter,Con Edison,Con Edison,,,,73,D3
+STATUTORY,S-05,S-05,Plumbing,Plumbing rough inspection — water / sanitary / vent,DOB Plumbing,DOB Plumbing,,,,74,D4
+STATUTORY,S-06,S-06,Gas,Gas pressure test witness — 10 psi / 15 min,DOB Plumbing,DOB Plumbing,,,,75,D5
+STATUTORY,S-07,S-07,Gas,Gas Activation Notice,Con Edison / National Grid,Con Edison / National Grid,,,,76,D6
+STATUTORY,S-08,S-08,Plumbing,DOB Boiler Unit inspection — Rheem water heaters,DOB Boiler Unit,DOB Boiler Unit,,,,77,D7
+STATUTORY,S-09,S-09,Plumbing,Plumbing final inspection / sign-off,DOB Plumbing,DOB Plumbing,,,,78,D8
+STATUTORY,S-10,S-10,Water,DEP water meter set,NYC DEP,NYC DEP,,,,79,D9
+STATUTORY,S-11,S-11,Water,DEP backflow prevention device certification,NYC DEP,NYC DEP,,,,80,D10
+STATUTORY,S-12,S-12,Sewer,DEP final sewer connection approval,NYC DEP,NYC DEP,,,,81,D11
+STATUTORY,S-13,S-13,Fire Protection,Sprinkler hydrostatic test witness — 200 psi / 2 hrs,NYC DOB,NYC DOB,,,,82,C3
+STATUTORY,S-14,S-14,Fire Protection,Sprinkler flow test / FDNY field acceptance — waterflow & tamper,FDNY,FDNY,,,,83,C4
+STATUTORY,S-15,S-15,Fire Alarm,FDNY fire alarm witness / acceptance test,FDNY,FDNY,,,,84,C2
+STATUTORY,S-16,S-16,Fire Alarm,FDNY Letter of Approval (LOA) issuance,FDNY,FDNY,,,,85,C2
+STATUTORY,S-17,S-17,Fire Alarm,Central station alarm transmission verification,FDNY / Central Station,FDNY / Central Station,,,,86,C5
+STATUTORY,S-18,S-18,Pool / Spa,NYC DOH Pool / Spa final inspection,NYC DOH,NYC DOH,,,,87,E3
+STATUTORY,S-19,S-19,Building,DOB final building inspection,NYC DOB,NYC DOB,,,,88,G3
+STATUTORY,S-20,S-20,Building,TCO issuance,NYC DOB,NYC DOB,,,,89,G4
+STATUTORY,S-21,S-21,Building,Final Certificate of Occupancy issuance,NYC DOB,NYC DOB,,,,90,G5
+STATUTORY,S-22,S-22,Site Safety,DOB Chapter 33 site safety inspection (unannounced),NYC DOB,NYC DOB,,,,91,—
+STATUTORY,S-23,S-23,Site Safety,FDNY site inspection — hot work / standpipe / egress (unannounced),FDNY,FDNY,,,,92,—
+STATUTORY,S-24,S-24,Site Safety,OSHA inspection (unannounced),OSHA,OSHA,,,,93,—
