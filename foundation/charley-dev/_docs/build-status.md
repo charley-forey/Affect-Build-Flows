@@ -30,14 +30,14 @@ model rather than 19 more tables in the first.
 |---|---|---|
 | `CD_Bronze_Lakehouse` | Lakehouse | 40 tables, from Affect's **production** Procore tenant |
 | `CD_Silver_Lakehouse` | Lakehouse | 15 typed tables, **14,791 rows, 0 rejects** |
-| `CD_Gold_Lakehouse` | Lakehouse | 40 tables at the 2026-08-02 read — dimensions, facts, crosswalks, bridges, `man_*` — plus the PQP tables landed 2026-08-19. `gold_schema.json` now publishes **53** table schemas (was 45) |
+| `CD_Gold_Lakehouse` | Lakehouse | 40 tables at the 2026-08-02 read — dimensions, facts, crosswalks, bridges, `man_*` — plus the PQP tables landed 2026-08-19. `gold_schema.json` now publishes **54** table schemas (was 45) |
 | `cd_01_extract_procore` | Notebook | deployed; blocked on the Key Vault role assignment (see below) |
 | `cd_05_land_to_bronze` | Notebook | merges landed NDJSON into bronze Delta, no credentials |
 | `cd_06_land_manual` | Notebook | manual-input capture path |
 | `cd_10_bronze_to_silver` | Notebook | runs clean against real bronze |
 | `cd_20_seed_gold` | Notebook | seed dimensions; asserts its own row counts |
 | `cd_30_build_gold` | Notebook | 20 gold files + integrity checks; publishes the schema |
-| `cd_40_dq_checks` | Notebook | the DQ gate — **103 expectations** (80 blocking, 23 warning) |
+| `cd_40_dq_checks` | Notebook | the DQ gate — **104 expectations** (81 blocking, 23 warning) |
 | `cd_90_query` | Notebook | ad-hoc query scratchpad against the medallion |
 | `CD_Master_Pipeline` | DataPipeline | 5 activities, the nightly DAG |
 | `CD_Sage_Ingest` | Dataflow | **deployed**, bound to the on-prem gateway, inert until the connection grant lands |
@@ -78,6 +78,32 @@ silently reverted the medallion to the legacy warehouse. Older docs and older sh
 still carry the `--source cd` flag; it is now redundant rather than mandatory, and passing it
 costs nothing.
 
+### ⚠️ A deploy can report Completed and run the PREVIOUS notebook
+
+**Observed 2026-08-19, cause not proven. Verify the output, not the status.**
+
+`deploy_gold.py --apply` was run after editing `33_fct_qc.sql`. It printed
+`updated cd_30_build_gold` and `running ... Completed`, and exited 0. The gold tables it
+produced were built from the **pre-edit** SQL: `fct_QcNcr` came back with 459 unmapped trades
+rather than the 215 the same code had produced minutes earlier, and every `HVAC` row was
+still flagged unmapped despite `qc_seed_TradeAlias` sitting in the lakehouse with the right
+entry. Re-running the identical command restored 215 and 0.
+
+What is known: the SQL on disk was correct throughout (verified by re-reading it and by the
+offline suite, which executes the same files); the statement splitter parsed it into the
+expected three statements; and the seed table existed with 16 rows. So the notebook that ran
+was not the notebook that had just been uploaded.
+
+A plausible mechanism — **not confirmed** — is that `updateDefinition` only awaits
+`wait_for_operation` when Fabric answers **202**. On a synchronous **200** the script goes
+straight to submitting the run, and the definition may not have propagated. That is a
+hypothesis; it has not been reproduced deliberately.
+
+**The operational rule, regardless of cause: a green deploy is not evidence that new SQL
+ran.** Read a number back out of the lakehouse that the change should have moved, and
+compare it. Every figure on this page follows that rule, which is why the regression was
+caught within the hour rather than shipping into a report.
+
 ### Two structural gotchas found on the 2026-08-19 deploy
 
 Both are fixed. Both are written down because each will bite the next person, and neither
@@ -90,9 +116,10 @@ and `fct_QcSubmittal` were neither row-checked nor published. `deploy_model.py` 
 column from that file, so a table it does not name cannot be typed, and a Direct Lake model
 silently cannot bind it. No error anywhere: the gold SQL runs, the tables hold data, the
 model deploys, and the table is simply absent. Fixed — the three `fct_Qc*` are in `tables`,
-and the four `qc_seed_*` plus `dim_QcStatus` are in the schema-publish list. **45 → 53 tables
-published.** *Adding a gold table means adding it to that list. There is nothing that will
-tell you otherwise.*
+and the five `qc_seed_*` plus `dim_QcStatus` are in the schema-publish list. **45 → 54 tables
+published** (53 on the first pass; `qc_seed_TradeAlias` took it to 54 — see the trade
+vocabulary fix below). *Adding a gold table means adding it to that list. There is nothing
+that will tell you otherwise.*
 
 **2. `20_fieldops_silver.sql` read `$.trade` as an object.** Procore returns
 `{"id":…,"name":"Electrical",…}`, and the column was taking the whole object rather than
@@ -101,12 +128,77 @@ every `fct_Qc*` trade join failed (**631 of 850 NCRs** resolved to no trade), an
 `fct_QualityItem.Trade` on the **live Monthly Progress Report** contained raw JSON. Fixed —
 unmapped NCRs **631 → 459**, and `fct_QualityItem.Trade` now reads e.g. `"Windows"`.
 
-The remaining **459** are a real vocabulary difference, not a bug: Procore's trade list says
-`HVAC` and `Sprinkler` where the workbook's controlled keys are `HVAC_DUCTWORK` and
-`FIRE_SPRINKLER`. They are deliberately **not** guessed — attaching a defect to the wrong
-trade is worse than attaching it to none — so they sit behind `HasUnmappedTrade` and a DQ
-warning. **This is an open question for Affect:** confirm the alias mapping, and the count
-falls to whatever is genuinely unmapped.
+The residual **459** was a vocabulary difference rather than a bug, and is now largely
+closed — see the trade-vocabulary fix below.
+
+### Four data-quality defects fixed 2026-08-19 — all verified live
+
+Three of the four presented as findings about Affect's data and turned out to be our code
+being wrong about Affect's conventions. That is the same shape as the `$.trade` defect
+above, and it is worth naming: a data-quality flag is a claim about the client, and it has
+to survive being checked before it is reported as one.
+
+**1. Submittal statuses: 223 → 0.** The silver `CASE` in `24_qc_procore_silver.sql` handled
+`'FOR RECORD ONLY'` — the workbook's dropdown wording — but Procore actually sends
+`'For Record'`, and `'Not Reviewed'` was unhandled entirely. **222 of 2,245 submittals**, a
+tenth of the register, fell out of every status slicer: not shown wrong, not shown at all.
+Both spellings now map to `FOR_RECORD_ONLY`, and `'Not Reviewed'` maps to `PENDING`.
+
+**2. Trade vocabulary: 970 → 506 unmapped, and what is left is narrower.** New seed table
+**`qc_seed_TradeAlias` (16 rows)**, generated from `seed/qc_trade_alias.csv` by
+`_local/make_qc_seeds.py` and joined in `33_fct_qc.sql` as a fallback **after** the exact
+match — on the raw Procore label, because an alias exists precisely when the label does not
+normalise to a key. **464 rows recovered.** `fct_QcNcr` **459 → 215**, `fct_QcPunch`
+**511 → 291**.
+
+The table carries only unambiguous pairs — `HVAC` → `HVAC_DUCTWORK`, `Sprinkler` →
+`FIRE_SPRINKLER`, `Ceramic Tile` → `TILE_STONE`, and so on. Two things are deliberately
+still open, and they are different questions:
+
+- **Three ambiguous labels, still unmapped:** `Drywall/Carpentry` (255 rows),
+  `Concrete Superstructure` (110) and `Concrete` (64). Framing vs board vs millwork, and
+  cast-in-place vs formwork vs slab-on-deck. Only Affect can say which. Attaching a defect
+  to the wrong trade is worse than attaching it to none.
+- **A separate finding: trades with no equivalent in the library at all.** Roofing, Glazing,
+  Windows, Structural Steel, Low Voltage, Demolition, Housekeeping, Light Fixtures, Window
+  Treatments and others appear in Affect's Procore trade list and have no counterpart in the
+  26-sheet checklist library. That is not a mapping gap — Affect's Procore vocabulary is
+  broader than the SaunaLounge workbook. It is a **scope question**: does the checklist
+  library want those trades?
+
+The `ponytail:` marker in `33_fct_qc.sql` that predicted this alias table is resolved and
+removed.
+
+**3. Cost-code CSI divisions: 807 → 0.** `17_dim_costcodecrosswalk.sql` required two leading
+digits, but Affect writes divisions 1–9 **without the leading zero** — `1-1000 GENERAL
+REQUIREMENTS` is CSI Division **01**, not an unparseable code. All 807 were fixable (780 as
+`N-`, 27 as a bare digit); **not one was genuinely malformed.** The division parse now
+zero-pads. **807 cost codes — 15% of the 5,433-code master, spanning divisions 1–9 — had
+been silently absent from every by-division rollup.** Divisions 01–09 now hold 2,941 codes,
+with 1,540 in division 01 alone.
+
+**4. A new ERROR-severity guard, so the fix cannot rot.**
+`referential("qc_seed_TradeAlias","TradeKey","qc_seed_Trade","TradeKey")`. An alias pointing
+at a `TradeKey` that does not exist resolves to NULL and reads as *"unmapped"* — so a typo
+in a CSV we control would look identical to a trade Affect never aliased. ERROR rather than
+warn, because an unmapped trade is a fact about Procore and a broken alias is our bug.
+
+**Current gate: 104 expectations (81 blocking, 23 warning) — 8 warnings, 0 blocking.** Where
+each stands after the fixes:
+
+| Expectation | Rows |
+|---|---:|
+| cost codes parse to a CSI division | **0** — passes |
+| vendors with no certificate on file | 376 |
+| trades unmapped | 215 |
+| certificates out of date | 105 |
+| projects not in Outbuild | 17 |
+| projects not in Sage | 4 |
+| retainage released | 3 |
+| direct cost stale | 1 |
+
+Every remaining row is a coverage gap or a question for Affect, not corruption — which is
+why they warn rather than block.
 
 ### External blockers — re-checked 2026-08-19
 
@@ -295,9 +387,10 @@ own counts.
 | `dim_QcStatus` | 141 | 25 workbook dropdowns, deduplicated |
 | `qc_seed_DohItem` | 101 | |
 | `qc_seed_Trade` | 26 | |
-| **`fct_QcSubmittal`** | **2,245** | live, from the production Procore tenant |
-| **`fct_QcPunch`** | **1,469** | live |
-| **`fct_QcNcr`** | **850** | live, from Procore Observations. **459 still resolve to no trade** — see the trade-vocabulary gotcha above |
+| `qc_seed_TradeAlias` | 16 | added 2026-08-19 — Procore label → workbook `TradeKey`, unambiguous pairs only |
+| **`fct_QcSubmittal`** | **2,245** | live, from the production Procore tenant. **0 now resolve to no status** (was 223) |
+| **`fct_QcPunch`** | **1,469** | live. **291 still resolve to no trade** (was 511) |
+| **`fct_QcNcr`** | **850** | live, from Procore Observations. **215 still resolve to no trade** (was 459) — see the trade-vocabulary fix above |
 | `man_Qc*` (8 tables) | 0 | correct — typed and empty until the SharePoint lists exist |
 
 The three `fct_Qc*` tables carry real production data because the client's workbook names

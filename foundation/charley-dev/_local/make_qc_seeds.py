@@ -47,6 +47,23 @@ SEEDS: tuple[tuple[str, str, dict[str, str], tuple[str, ...]], ...] = (
         ("TradeKey",),
     ),
     (
+        # Procore's trade list and the workbook's controlled keys are different
+        # vocabularies. This maps ONLY the unambiguous pairs - "HVAC" is plainly
+        # HVAC_DUCTWORK, "Sprinkler" is plainly FIRE_SPRINKLER. Three labels are
+        # deliberately absent because they cannot be resolved without Affect:
+        # "Drywall/Carpentry" (framing, board or millwork?), "Concrete Superstructure"
+        # and "Concrete" (cast-in-place, formwork or slab on deck?). Attaching a defect
+        # to the wrong trade is worse than attaching it to none, so they stay unmapped
+        # and keep showing up on the DQ page until somebody who knows the breakdown says.
+        # A further group - Roofing, Glazing, Windows, Structural Steel, Low Voltage,
+        # Demolition, Housekeeping and others - has no equivalent trade in the 26-sheet
+        # library at all. That is a finding, not a gap to paper over: Affect's Procore
+        # trade list is broader than the SaunaLounge checklist library.
+        "qc_trade_alias.csv", "qc_seed_TradeAlias",
+        {"ProcoreTrade": "STRING", "TradeKey": "STRING", "Rationale": "STRING"},
+        ("ProcoreTrade",),
+    ),
+    (
         "qc_checklist_items.csv", "qc_seed_ChecklistItem",
         {"TradeKey": "STRING", "ItemNumber": "INT", "ItemText": "STRING",
          "ItemKey": "STRING"},
@@ -90,6 +107,9 @@ SEEDS: tuple[tuple[str, str, dict[str, str], tuple[str, ...]], ...] = (
 EXPECTED_ROWS = {
     "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
     "qc_seed_DohItem": 101, "dim_QcStatus": 141,
+    # Grows as Affect resolves the ambiguous labels. Bump it deliberately when it does -
+    # the assertion is here so an alias cannot be added or lost without somebody noticing.
+    "qc_seed_TradeAlias": 16,
 }
 
 

@@ -73,8 +73,9 @@ table is simply absent from it — which looks exactly like forgetting to add it
 `MODEL_TABLES`, so the first hour of debugging is spent in the wrong file.
 
 `fct_QcNcr`, `fct_QcPunch` and `fct_QcSubmittal` were therefore neither row-checked nor
-published. Fixed: the three facts are in `tables`, and the four `qc_seed_*` plus
-`dim_QcStatus` are in the schema-publish list. **45 → 53 tables published.**
+published. Fixed: the three facts are in `tables`, and the five `qc_seed_*` plus
+`dim_QcStatus` are in the schema-publish list. **45 → 54 tables published** (53 on the first
+pass; `qc_seed_TradeAlias` took it to 54).
 
 **6. `20_fieldops_silver.sql` read `$.trade` as an object.** Procore returns
 `{"id":…,"name":"Electrical",…}` for that field, and the parser took the whole object rather
@@ -83,7 +84,16 @@ nothing that checks for NULL would have caught it. Two consequences, one of them
 live: every `fct_Qc*` trade join failed — **631 of 850 NCRs** resolved to no trade — and
 `fct_QualityItem.Trade` on the **live Monthly Progress Report** was showing raw JSON to
 readers. Fixed: unmapped NCRs **631 → 459**, and `fct_QualityItem.Trade` now reads e.g.
-`"Windows"`. What remains is a genuine vocabulary difference, covered in Part 5.
+`"Windows"`. What remained was a genuine vocabulary difference, now largely closed — Part 5.
+
+**7. The submittal status `CASE` was written against the workbook, not against Procore.**
+`24_qc_procore_silver.sql` mapped `'FOR RECORD ONLY'` — the workbook dropdown's wording.
+Procore actually sends **`'For Record'`**, and `'Not Reviewed'` was not handled at all. A
+`CASE` with no `ELSE` returns NULL, so **222 of 2,245 submittals** — a tenth of the register
+— carried no status code and fell out of every status slicer on the Submittals & Mock-Ups
+page. Not shown wrong: not shown. Fixed 2026-08-19, both spellings mapping to
+`FOR_RECORD_ONLY` and `'Not Reviewed'` to `PENDING`; **223 → 0**. A spelling mismatch, not a
+vocabulary problem — and worth separating from item 4 in Part 5, which genuinely is one.
 
 ### The list-name break, fixed at the source
 
@@ -165,7 +175,7 @@ demonstrates which one wins: neither, because nobody trusts either.
 
 | Source | What | Where |
 |---|---|---|
-| **Seed** (identical on every project) | 26 trades, 625 checklist items, 93 gates, 101 DOH requirements, 141 status codes | `sql/gold/08_qc_seeds.sql`, generated from `seed/*.csv` by `_local/make_qc_seeds.py` |
+| **Seed** (identical on every project) | 26 trades, **16 trade aliases**, 625 checklist items, 93 gates, 101 DOH requirements, 141 status codes | `sql/gold/08_qc_seeds.sql`, generated from `seed/*.csv` by `_local/make_qc_seeds.py` |
 | **Procore** (system of record) | NCRs ← observations, punch items, submittals, inspections | `sql/silver/24_qc_procore_silver.sql` → `sql/gold/33_fct_qc.sql` |
 | **SharePoint / CSV** (no system holds it) | DFOW register, ITP, gate progress, special inspections, commissioning, inspector sign-in, checklist answers, DOH answers | `sql/silver/31_qc_manual_silver.sql` → `sql/gold/41_man_qc_tables.sql` |
 
@@ -215,7 +225,8 @@ DuckDB via `seedrunner.py`, which applies Spark→DuckDB compatibility macros an
   struct-shaped bronze fixtures generated from the same DDL the pipeline uses.
 - `test_sharepoint.py` — 12 checks, including that all four writers agree on every list name
   and column, and that the PQP choice lists come from `qc_status_vocab.csv`.
-- `expectations.py` — **63 → 103 expectations** (80 blocking, 23 warning).
+- `expectations.py` — **63 → 104 expectations** (81 blocking, 23 warning). The newest is an
+  ERROR-severity `referential` check on `qc_seed_TradeAlias.TradeKey` — see Part 5, item 4.
 
 ### Two data findings worth knowing
 
@@ -256,23 +267,43 @@ plumbing was never the slow part.
 3. **`punch_item_types` returns 403.** Needs a tool permission on the service account.
    Nothing downstream depends on it.
 
-4. **The Procore trade → `TradeKey` mapping is exact-match only, and it is now sized.**
-   `fct_QcNcr` / `fct_QcPunch` resolve `'Concrete Formwork'` → `CONCRETE_FORMWORK` and leave
-   anything else NULL beside a `HasUnmappedTrade` flag, because a fuzzy match attaches an NCR
-   to the wrong trade — worse than attaching it to none. Marked `ponytail:` in
-   `33_fct_qc.sql`; the upgrade is a `qc_seed_TradeAlias` table.
+4. **The Procore trade → `TradeKey` mapping — aliased 2026-08-19, and what is left is two
+   narrower questions.** The exact match resolves `'Concrete Formwork'` → `CONCRETE_FORMWORK`;
+   `qc_seed_TradeAlias` (16 rows, `seed/qc_trade_alias.csv` → `make_qc_seeds.py`) now runs as
+   a fallback **after** it, joined on the **raw** Procore label rather than the normalised key
+   — an alias exists precisely because the label does not normalise to a key. The `ponytail:`
+   marker in `33_fct_qc.sql` that predicted this table is resolved and removed.
 
-   Live, against real data: **459 of 850 NCRs** resolve to no trade. That is down from 631 —
-   the other 172 were the `$.trade` object-parsing defect above, which was a bug and is
-   fixed. The 459 are not a bug. Procore's trade list says `HVAC` and `Sprinkler` where the
-   workbook's controlled keys are `HVAC_DUCTWORK` and `FIRE_SPRINKLER`: two vocabularies for
-   the same trades, and only Affect can say which Procore value means which workbook key.
-   **It is deliberately not guessed.** The report carries the count on its Data Quality page
-   rather than charting quality by trade, because a by-trade chart today would silently
-   describe 46% of the data.
+   Live, against real data: **970 → 506 unmapped**, 464 rows recovered. `fct_QcNcr`
+   **459 → 215**, `fct_QcPunch` **511 → 291**.
 
-   **This is an open question for Affect** — one alias table, and the number falls to
-   whatever is genuinely unmapped.
+   Only unambiguous pairs were mapped — `HVAC` → `HVAC_DUCTWORK`, `Sprinkler` →
+   `FIRE_SPRINKLER`, `Ceramic Tile` → `TILE_STONE`, `Millwork` and `Cabinetry` →
+   `MILLWORK_CASEWORK`, `Masonry` → `UNIT_MASONRY`, `Carpet` and `Flooring` →
+   `RESILIENT_FLOORING`, the `Doors` variants → `DOORS_HARDWARE`, `Drywall` →
+   `DRYWALL_BOARD`. What is deliberately absent is two different problems:
+
+   **(a) Three ambiguous labels.** `Drywall/Carpentry` (255 rows), `Concrete Superstructure`
+   (110) and `Concrete` (64). Framing, board or millwork; cast-in-place, formwork or
+   slab-on-deck. Only Affect can say. Attaching a defect to the wrong trade is worse than
+   attaching it to none, so they stay NULL behind `HasUnmappedTrade`.
+
+   **(b) A separate finding, and it is a scope question rather than a mapping one.** Roofing,
+   Glazing, Windows, Structural Steel, Low Voltage, Demolition, Housekeeping, Light Fixtures,
+   Window Treatments and others appear in Affect's Procore trade list and have **no equivalent
+   trade in the 26-sheet checklist library at all**. Affect's Procore vocabulary is simply
+   broader than the SaunaLounge workbook's. No alias can close that; the question is whether
+   the checklist library should cover those trades.
+
+   **A new ERROR-severity guard covers the alias table itself:**
+   `referential("qc_seed_TradeAlias","TradeKey","qc_seed_Trade","TradeKey")`. An alias pointing
+   at a `TradeKey` that does not exist resolves to NULL and reads as *unmapped* — so a typo in
+   a CSV we control would look identical to a trade Affect never aliased. ERROR rather than
+   warn, because an unmapped trade is a fact about Procore and a broken alias is our bug.
+
+   The report still carries the counts on its Data Quality page rather than charting quality
+   by trade — a by-trade chart would still leave a quarter of the NCR register out of its
+   bars without saying so.
 
 5. **Procore Inspections may make `man_QcChecklistResult` redundant.** A Procore checklist
    list *is* a per-project instance of a checklist template, which is exactly what the 26
@@ -349,9 +380,10 @@ changed — and the Direct Lake traps are exactly the knowledge a copy loses fir
 
 ### What the report deliberately does not have
 
-A "quality by trade" headline. With 459 of 850 NCRs unmapped (Part 5, item 4), charting by
-trade would silently describe 46% of the data. The count sits on the Data Quality page
-instead, where it is the finding rather than the footnote.
+A "quality by trade" headline. With 215 of 850 NCRs still unmapped (Part 5, item 4) — down
+from 459 — charting by trade would still leave a quarter of the register out of its bars
+without saying so. The count sits on the Data Quality page instead, where it is the finding
+rather than the footnote.
 
 ---
 

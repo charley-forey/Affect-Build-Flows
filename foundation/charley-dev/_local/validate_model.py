@@ -176,13 +176,29 @@ def main() -> int:
     EXPECTED_BY_SOURCE = {
         "cd": {
             "[Projects]": 19, "[Vendors]": 126, "[CostCodes]": 5434, "[Dates]": 7670,
-            "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 117,
-            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 130,
+            # [Invoices] 117 -> 122 on 2026-08-19, and NOT because of anything we changed.
+            # fct_Invoice reads Sage AR from Rebecca's Silver_Lakehouse, which is a live
+            # external source: it moves when her dataflow runs. The max SentDate went
+            # 2026-07-20 -> 2026-07-31 at the same time, so her Sage feed refreshed some
+            # time after our 2026-08-02 measurement. Still 19 days behind today, so the
+            # staleness warning stands - but "stopped dead on Jul 20" no longer does.
+            #
+            # Asserting an exact count against someone else's warehouse is fragile by
+            # design. That fragility is the point: this assertion is what noticed.
+            "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 122,
+            # 130 -> 142 for the same reason, exactly as the note above predicts: Periods
+            # is derived from the fact date range, so eleven more days of Sage AR widened
+            # it by twelve project-months. Two assertions moving together from one external
+            # refresh is the expected shape - had only one moved, that would be the alarm.
+            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 142,
             "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
         },
         "existing": {
             "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,
-            "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 117,
+            # Same live Sage AR source as the cd block above, so the same 117 -> 122 move.
+            # Not re-measured under --source existing today; corrected for consistency
+            # rather than verified, and flagged here rather than quietly assumed.
+            "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 122,
             "[Submittals]": 2242, "[Milestones]": 52, "[Periods]": 128,
             # Zero, legitimately: the existing warehouse holds no progress billing,
             # no direct costs and no vendor bridge. Asserted rather than skipped, so

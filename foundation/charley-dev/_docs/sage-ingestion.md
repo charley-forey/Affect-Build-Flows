@@ -19,9 +19,14 @@ No subscription, no vault, no code change — it runs on the next refresh. The f
 stays deployed on purpose: it is correct and inert until run, which turns what is left into
 one grant and one refresh.
 
-> **Worth raising on the same call:** Rebecca's Sage data stops at **2026-07-20** and Outbuild
-> at **2026-07-14**. If her dataflows are failing on the same gateway, the *existing*
-> reporting is also running on two-week-old numbers and nobody has noticed.
+> **Worth raising on the same call:** re-measured live on **2026-08-19**, Rebecca's Sage data
+> now runs to **2026-07-31** — up from the **2026-07-20** we recorded on 2026-08-02, so her
+> feed refreshed at some point in between rather than stopping dead. It is still **~19 days
+> behind**: lag, not a dead feed. Outbuild's **2026-07-14** is as measured on 2026-08-02 and
+> has **not been re-verified since**. If her dataflows are lagging on the same gateway, the
+> *existing* reporting is running on numbers nearly three weeks old and nobody has noticed —
+> which makes the grant below no less urgent, and `CD_Sage_Ingest` still cannot run at all
+> without it.
 
 ## What it pulls
 
@@ -92,7 +97,7 @@ optional here.
 2. Run it, then write `sql/silver/20_sage_silver.sql` to type and validate the eight tables.
 3. Settle open question 4 with the line data in hand, and point `sv_ar_invoices` at
    `cd_silver_*` — it currently still reads the existing warehouse
-   (`01_source_views_cd.sql`), which keeps `fct_Invoice` at its 117 rows rather than zero
+   (`01_source_views_cd.sql`), which keeps `fct_Invoice` at its 122 rows rather than zero
    while this is blocked.
 
 Worth raising on the same call as `OUTBUILD_API_TOKEN` (Rebecca offered to send it by email on

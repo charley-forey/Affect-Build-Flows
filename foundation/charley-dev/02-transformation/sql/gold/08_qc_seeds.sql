@@ -61,6 +61,30 @@ FROM (VALUES
     ('FIRE_ALARM', 'Fire Alarm', 'Fire Alarm', '28 31 00', 'D-03', '4', '26')
 ) AS t(c1, c2, c3, c4, c5, c6, c7);
 
+-- qc_seed_TradeAlias: 16 row(s) from seed/qc_trade_alias.csv
+CREATE OR REPLACE TABLE qc_seed_TradeAlias AS
+SELECT CAST(c1 AS STRING) AS ProcoreTrade,
+       CAST(c2 AS STRING) AS TradeKey,
+       CAST(c3 AS STRING) AS Rationale
+FROM (VALUES
+    ('HVAC', 'HVAC_DUCTWORK', 'Same trade; the workbook name carries the ductwork scope with it'),
+    ('Sprinkler', 'FIRE_SPRINKLER', 'Same trade; the workbook qualifies it as fire'),
+    ('Fire Protection', 'FIRE_SPRINKLER', 'Procore''s umbrella for the sprinkler/standpipe scope'),
+    ('Millwork', 'MILLWORK_CASEWORK', 'Same trade; the workbook name adds casework'),
+    ('Cabinetry', 'MILLWORK_CASEWORK', 'Casework by another name; the workbook has no separate cabinetry trade'),
+    ('Ceramic Tile', 'TILE_STONE', 'Tile scope; the workbook groups tile and stone'),
+    ('Stone/Tile', 'TILE_STONE', 'Same grouping the workbook uses'),
+    ('Masonry', 'UNIT_MASONRY', 'Same trade; the workbook qualifies it as unit masonry'),
+    ('Masonry/Stucco', 'UNIT_MASONRY', 'Masonry dominates this label; the workbook has no stucco trade'),
+    ('Doors, Frames & Hardware', 'DOORS_HARDWARE', 'Same scope'),
+    ('Doors & Frames (Hardware)', 'DOORS_HARDWARE', 'Same scope; a second Procore spelling'),
+    ('Doors', 'DOORS_HARDWARE', 'The workbook keeps doors and hardware together'),
+    ('Flooring', 'RESILIENT_FLOORING', 'The only flooring trade in the library'),
+    ('Flooring (Self Levelling)', 'RESILIENT_FLOORING', 'Substrate prep within the flooring scope'),
+    ('Carpet', 'RESILIENT_FLOORING', 'The library has no carpet trade; flooring is the only home'),
+    ('Drywall', 'DRYWALL_BOARD', 'Board unless the label says framing; framing is a separate trade')
+) AS t(c1, c2, c3);
+
 -- qc_seed_ChecklistItem: 625 row(s) from seed/qc_checklist_items.csv
 CREATE OR REPLACE TABLE qc_seed_ChecklistItem AS
 SELECT CAST(c1 AS STRING) AS TradeKey,

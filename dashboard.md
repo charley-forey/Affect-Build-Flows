@@ -21,7 +21,7 @@ recurring numbers are maintained: the endpoint registry (**44 registered, 40 bro
 | D1 | Discovery & Architecture Review | 1 - Foundation | 🟢 **Complete** - endpoint inventory generated from the registry, workspace audited, security findings reported | 4 | - | [D1](deliverables/01-discovery-architecture-review.md) |
 | D2 | Procore ETL Validation & Hardening | 1 - Foundation | 🟢 **Complete** - 44 endpoints registered, 40 landing bronze tables (2 blocked by Procore 403s), registry-driven, incremental, tested. **Extraction still runs locally** pending the Key Vault role | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
 | D3 | Sage 100 Ingestion Pipeline | 1 - Foundation | 🔵 **Built & deployed, blocked** - `CD_Sage_Ingest` live and gateway-wired (verified in the Fabric item list 2026-08-19); needs one connection permission grant | 2 | Gateway grant | [D3](deliverables/03-sage100-ingestion.md) |
-| D4 | Core Project Data Model | 1 - Foundation | 🟢 **Complete** - **53 gold tables published** to the semantic-model contract (was 45; the QC facts were missing from it), Direct Lake star schema, crosswalks resolve project/vendor/cost code | 4 | D2 | [D4](deliverables/04-project-data-model.md) |
+| D4 | Core Project Data Model | 1 - Foundation | 🟢 **Complete** - **54 gold tables published** to the semantic-model contract (was 45; the QC facts were missing from it), Direct Lake star schema, crosswalks resolve project/vendor/cost code | 4 | D2 | [D4](deliverables/04-project-data-model.md) |
 | D5 | Power BI Project Dashboard (Excel replacement) | 2 - Project Intelligence | 🟡 **Built and live** - **two models and two reports now deployed**: `Monthly Progress Report` (12 pages, 180 visuals) over `Affect Project Report` (37 tables, 99 measures), and `Project Quality Plan` (7 pages, 95 visuals) over its own model (19 tables + `_Measures`, 42 measures, 23 relationships). Scorecard coverage 59%, gated on source data. [**See the pages**](resources/power-bi/monthly-progress-report/) | 5 | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
 | D6 | Power Automate - Payments Workflow | 3 - Automation | 🔴 Not started | - | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
 | D7 | Power Automate - Lien Waiver Workflow | 3 - Automation | 🔴 Not started | - | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
@@ -101,9 +101,13 @@ rather than absorbing it silently.
 single biggest limit on the report, and every part of it is an access grant rather than a
 build task.
 
-> ⚠️ **The existing production reporting is stale.** Sage data stops at **2026-07-20**,
-> Outbuild at **2026-07-14** — read out of the existing `Silver_Lakehouse`, and almost
-> certainly the same gateway problem blocking `CD_Sage_Ingest`. Eight of our gold source
+> ⚠️ **The existing production reporting lags.** Re-measured live on **2026-08-19**: Sage
+> data now runs to **2026-07-31**, up from the **2026-07-20** recorded on 2026-08-02 — so
+> Rebecca's feed refreshed at some point in between rather than stopping dead. It is still
+> **~19 days behind**, so this is *lag*, not a dead feed. Outbuild's **2026-07-14** is as
+> measured on 2026-08-02 and has **not been re-verified since**. Both read out of the
+> existing `Silver_Lakehouse`, and a lagging feed is still a reason to fix the gateway
+> problem blocking `CD_Sage_Ingest`. Eight of our gold source
 > views still read that lakehouse for what Procore does not hold (Sage AR, Outbuild
 > milestones, the Sage vendor crosswalk), so if Rebecca's dataflows stop, our financial and
 > schedule data stops with them — silently.
@@ -166,14 +170,14 @@ resource library, warehouse review, scope call).
 - [ ] 🟡 The six client-satisfaction survey questions (only scores are stored in the workbook)
 - [ ] 🟡 2–3 **real** completed project reports (the file received is a template with demo data)
 - [ ] 🟡 **PQP workbook: 5 verified defects to report to Affect** — four register roll-ups whose `% Complete` can never reach 100%, and two CSI codes Excel destroyed on the only Tier 4 Critical DFOWs — [`analysis/pqp-workbook/`](analysis/pqp-workbook/defects-and-questions.md)
-- [ ] 🟡 **PQP trade vocabulary: 459 of 850 NCRs resolve to no trade.** Procore says "HVAC" / "Sprinkler"; the client workbook says `HVAC_DUCTWORK` / `FIRE_SPRINKLER`. Deliberately **not** guessed — mapping a defect to the wrong trade is worse than leaving it unmapped. Surfaced on the PQP report's Data Quality page; needs one vocabulary decision from Affect
+- [ ] 🟡 **PQP trade vocabulary — largely closed, two narrower questions left.** `qc_seed_TradeAlias` (16 rows) recovered 464 rows; unmapped NCRs **459 → 215** and punch items **511 → 291**. What still needs Affect: (a) three ambiguous labels deliberately not guessed — `Drywall/Carpentry` (255 rows), `Concrete Superstructure` (110), `Concrete` (64); (b) a **scope** question, not a mapping one — Roofing, Glazing, Windows, Structural Steel, Low Voltage and others exist in Procore and have no equivalent trade in the 26-sheet checklist library at all. Both surfaced on the PQP report's Data Quality page — [`build-status.md`](foundation/charley-dev/_docs/build-status.md)
 - [ ] 🟡 **SharePoint site URL and template folder contents** — the Power Automate SOP names both templates but never says what is inside them
 - [ ] 🟡 Payments + lien waiver SOPs finalized (Chris) — blocks D6/D7
 
 **Action items for Affect (not blockers on us):**
 
 - [ ] 🔴 **Rotate the Procore OAuth credential pair.** Live secrets are in plaintext in a workspace notebook. Rotate first, edit second — [`security-findings.md`](foundation/charley-dev/_docs/security-findings.md)
-- [ ] 🔴 **Check whether the existing reporting is stale.** Rebecca's Sage data stops 2026-07-20, Outbuild 2026-07-14 — possibly the same gateway issue
+- [ ] 🔴 **Check how far behind the existing reporting is running.** Rebecca's Sage data reached 2026-07-31 when re-measured 2026-08-19 (it moved, from 2026-07-20 on 2026-08-02) but is still ~19 days behind; Outbuild's 2026-07-14 was measured 2026-08-02 and not re-verified since — possibly the same gateway issue
 
 **Closed:**
 
@@ -199,10 +203,10 @@ time — it is gated on access and one conversation.
 | | Outbuild milestones landed; Completion Variance scored | `OUTBUILD_API_TOKEN` | 2–3 hrs |
 | | Manual input wired silver → gold; Daily Reports scored | 4 definition answers | 3–4 hrs |
 | | **Target: scorecard coverage 59% → ~100%, source coverage 5% → meaningful** | | |
-| **1 — Harden** | DQ persist gap fixed; billed-vs-billed gap explained on the report. `deploy_gold.py` default **already changed to `cd`**, and its hardcoded publish list **already fixed** (45 → 53 tables) | Nothing | 2 hrs |
+| **1 — Harden** | DQ persist gap fixed; billed-vs-billed gap explained on the report. `deploy_gold.py` default **already changed to `cd`**, and its hardcoded publish list **already fixed** (45 → 54 tables) | Nothing | 2 hrs |
 | | **`cd_06_land_manual` added to `CD_Master_Pipeline`** - the nightly run currently rebuilds silver and gold without refreshing manual bronze. Harmless while every `man_*` is empty; a silent staleness bug the day somebody enters data. Must land before SharePoint goes live | Nothing | 1 hr |
 | | **`cd_01_extract_procore` added to `CD_Master_Pipeline`** - Procore extraction still runs locally and lands files | Key Vault role | 1 hr |
-| **1 — Finish the PQP** | Model and report are **deployed**. What is left is the trade-vocabulary answer from Affect - 459 of 850 NCRs still resolve to no trade - and wiring the 8 `man_Qc*` intake tables | One answer from Affect | 1-2 hrs |
+| **1 — Finish the PQP** | Model and report are **deployed**, and the trade vocabulary is largely resolved - `qc_seed_TradeAlias` took unmapped NCRs 459 → 215 and punch items 511 → 291. What is left is Affect's answer on three ambiguous labels plus the trades with no library equivalent, and wiring the 8 `man_Qc*` intake tables | One answer from Affect | 1-2 hrs |
 | **1 — Go live on folders** | SharePoint site provisioned, both Power Automate flows imported and tested, `dim_Job` built from the Job Register | Site URL + template contents | 2-3 hrs |
 | | Retire the local extraction bridge — ingestion moves into Fabric on a schedule | Key Vault role (the subscription and vault now exist) | 2 hrs |
 | **1 — Transfer** | **Mentoring with Rebecca, recorded.** Extractor registry pattern first, then the deploy scripts, then the DQ gate | Scheduling | 3 hrs to start, then ongoing |
