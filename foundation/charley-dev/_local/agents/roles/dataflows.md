@@ -17,9 +17,12 @@ and cycles at load time rather than mid-extraction.
 
 ## Procore registry
 
-36 endpoints, every path cited to a line in `resources/procore/endpoints-cheatsheet.md`.
-Only 7 declare `incremental: filters[updated_at]`; the rest are full pulls because Procore
-does not document a reliable updated-at filter for them. **RFIs and submittals are
+**44 endpoints** registered, every path cited to a line in
+`resources/procore/endpoints-cheatsheet.md`. (It was 36 when this was written, then 42; the
+Project Quality Plan work added `checklist_lists` and `checklist_list_items`.) Only a
+handful declare `incremental: filters[updated_at]` — 7 of the original 36, and the count has
+not been re-checked since; the rest are full pulls because Procore does not document a
+reliable updated-at filter for them. **RFIs and submittals are
 deliberately excluded from incremental** — they document `created_at` only, so an incremental
 pull would silently miss status changes, which is exactly the data the report needs.
 
@@ -43,6 +46,8 @@ Tables: `acpinv`, `acrinv`, `acppmt`, `acrpmt`, `actpay`, `actrec`, **plus `apiv
 
 Build it and commit it. Binding to the on-prem gateway needs Affect, so it ships ready
 rather than blocked — do not treat the missing gateway as a reason to defer the work.
+**Done:** `CD_Sage_Ingest` is deployed to the workspace and still waits on the gateway
+*Can use* grant.
 
 ## Outbuild
 

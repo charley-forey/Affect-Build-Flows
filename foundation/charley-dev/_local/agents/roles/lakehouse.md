@@ -6,7 +6,10 @@ You own the medallion's physical shape: table layout, the merge/watermark machin
 ## State
 
 `CD_Bronze_Lakehouse`, `CD_Silver_Lakehouse`, `CD_Gold_Lakehouse` all exist and are
-schema-enabled (`dbo`). Gold holds 16 populated tables plus 9 empty `man_*`.
+schema-enabled (`dbo`). Gold now publishes **53** table schemas via `gold_schema.json`, including **17** `man_*`
+tables (9 original plus 8 for the Project Quality Plan). All 17 `man_*` are still empty —
+the silver→gold link is written now, but nobody has entered data and no SharePoint site
+exists yet.
 
 **`enableSchemas` is creation-only.** There is no API to enable schemas on an existing
 lakehouse — getting it wrong means dropping and recreating, which is free while empty and
@@ -35,13 +38,19 @@ past unfetched data.
 something is wrong, the rows tell you what. `SEVERITY_ERROR` failures call
 `assert_no_blocking()`, which raises and stops the pipeline rather than publishing.
 
-## The gap
+## The metadata tables
 
-`cd_meta_watermark` and `cd_dq_results` are designed and coded against, but the tables do not
-exist in any lakehouse. Until they do, incremental loads have nothing to read and the DQ
-suite has nowhere to write. Physical tables must be created by writing an empty DataFrame
-with `overwriteSchema` — `CREATE TABLE (cols)` writes no data files, and anything Direct Lake
-later touches cannot bind to a file-less table.
+Physical tables must be created by writing an empty DataFrame with `overwriteSchema` —
+`CREATE TABLE (cols)` writes no data files, and anything Direct Lake later touches cannot
+bind to a file-less table.
+
+`cd_dq_results` **now exists and holds 103 rows** (one per expectation). It was silently
+absent for weeks: `_persist_results` used a relative import that cannot resolve in the flat
+`Files/lib` import context, and the failure was swallowed by a `try`/`except`. Fixed
+2026-08-19. The lesson generalises — a bare `except` around a write is how a table goes
+missing without a single failed run.
+
+`cd_meta_watermark` has not been re-verified since; treat its existence as unconfirmed.
 
 ## Constraint
 

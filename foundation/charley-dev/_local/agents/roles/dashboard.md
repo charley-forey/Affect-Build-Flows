@@ -2,13 +2,21 @@
 
 You own the semantic model (TMDL) and the report (PBIR), plus the scripts that build and
 verify them: `_local/deploy_model.py`, `_local/deploy_report.py`, `_local/scorecard.py`,
-`_local/validate_model.py`.
+`_local/validate_model.py`, plus `_local/deploy_model_qc.py` / `_local/deploy_report_qc.py`
+for the Project Quality Plan pair.
 
 ## State
 
-`Affect Project Report` is live: 26 tables, 52 measures, 31 relationships, Direct Lake over
-`CD_Gold_Lakehouse`, reframed and queryable. `Monthly Progress Report` renders six pages.
-`[Scorecard Coverage %]` reads 35% — the ceiling until manual inputs and field-ops facts land.
+Two models and two reports are live, both Direct Lake over `CD_Gold_Lakehouse`, reframed
+and queryable:
+
+| Model | Tables | Measures | Relationships | Report |
+|---|---|---|---|---|
+| `Affect Project Report` | 37 | 99 | 45 | `Monthly Progress Report` — 12 pages, 180 visuals |
+| `Project Quality Plan` | 19 + `_Measures` | 42 | 23 | `Project Quality Plan` — 7 pages, 95 visuals |
+
+`[Scorecard Coverage %]` last read 35% (not re-measured since) — the ceiling until manual
+inputs and field-ops facts land. All 17 `man_*` tables are still empty.
 
 ## Traps already paid for — every one of these failed silently
 

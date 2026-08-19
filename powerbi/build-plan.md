@@ -1,5 +1,14 @@
 # Build Plan
 
+> **Status — plan drafted July 2026, largely executed (2026-08-19).** P1–P4 are done: the
+> medallion lakehouses, seed dimensions, Procore ingestion (44 registered endpoints), a gold
+> layer publishing 53 table schemas, a DQ suite, and two semantic models with two reports,
+> all live in Fabric. P5 (deployment pipeline, RLS, parallel run, handover) is not started.
+> What still blocks the build is Affect-side access, not development work.
+> Current truth: `foundation/charley-dev/_docs/build-status.md`.
+> Kept as the record of the plan, its sequencing argument and its estimates — the phase
+> tables below are the plan, not a status report.
+
 Phased delivery of the Power BI dashboard replacing the Excel Monthly Progress Report.
 
 Ties to [`../deliverables/05-powerbi-project-dashboard.md`](../deliverables/05-powerbi-project-dashboard.md)

@@ -1,5 +1,12 @@
 # Procore → Fabric Lakehouse
 
+> **Status — superseded but deliberately kept (2026-08-19).** The reference slice, written
+> 26 Jul 2026. Its extractor, endpoint registry and layered SQL are the pattern that
+> `foundation/charley-dev/01-ingestion/Procore/` now runs at full scale (44 registered
+> endpoints against this slice's four). Kept as the teaching artifact: one source, one fact
+> table, runnable offline with `python src/procore/run_local.py`. Everything below still
+> describes this folder accurately; it is not a description of the production pipeline.
+
 Slice 1: **RFIs & submittals, end to end.** Four endpoints, one gold fact table, the
 figure behind the workbook's only chart. Chosen as the first build because it is the
 smallest thing that proves the whole pattern.

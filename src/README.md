@@ -1,5 +1,14 @@
 # src — pipeline code
 
+> **Status — superseded but deliberately kept (2026-08-19).** Written 26 Jul 2026 as the
+> first end-to-end slice: Procore RFIs and submittals, bronze → silver → gold, runnable on a
+> laptop with no Fabric licence. Production has moved to `foundation/charley-dev/` — 44
+> registered Procore endpoints, eight `cd_*` Fabric notebooks, a six-stage
+> `CD_Master_Pipeline`, a gold layer publishing 53 table schemas, and two semantic models.
+> This folder stays because it is the smallest complete example of that pattern and the only
+> version you can run offline in one command. **Add new work to `foundation/charley-dev/`,
+> not here.** Current truth: `foundation/charley-dev/_docs/solution-guide.md`.
+
 Code that moves data into the Fabric Lakehouse. One folder per source system, as
 [`dashboard.md`](../dashboard.md) sets out.
 
@@ -9,8 +18,10 @@ Code that moves data into the Fabric Lakehouse. One folder per source system, as
 |---|---|
 | [`procore/`](procore/) | Procore REST API → bronze → silver → gold. Slice 1 (RFIs & submittals) is complete and runnable. |
 
-Sage 100 (D3) will follow the same shape: a config-driven extractor, `.sql` transforms,
-and a local runner, so there is one pattern to learn rather than one per source.
+Sage 100 (D3) was to follow the same shape: a config-driven extractor, `.sql` transforms,
+and a local runner, so there is one pattern to learn rather than one per source. It was not
+built here — Sage ingestion ships as the `CD_Sage_Ingest` Dataflow Gen2 in
+`foundation/charley-dev/`, because the on-prem SQL source needs a gateway-bound mashup.
 
 ## The layers
 

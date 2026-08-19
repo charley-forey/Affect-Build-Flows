@@ -1,5 +1,15 @@
 # Semantic Model
 
+> **Status — design intent, superseded by what shipped (2026-08-19).** This star schema was
+> derived from the Excel field inventory in July 2026 and is the design record, not a
+> description of the delivered model. Two semantic models are now live, defined in TMDL under
+> `foundation/charley-dev/04-semantic_models/`: *Affect Project Report* (37 tables,
+> 99 measures, 45 relationships) and a **second** model this document predates entirely,
+> *Project Quality Plan* (19 tables plus `_Measures`, 42 measures, 23 relationships).
+> The build diverged — more tables, more measures, `man_*` sourced from SharePoint lists —
+> but the grain, key and star-discipline decisions below are what it was built from.
+> For the delivered shape read the TMDL and `foundation/charley-dev/_docs/`.
+
 Star schema for the Power BI dashboard replacing the Excel Monthly Progress Report.
 
 Derived from [`../analysis/excel-tracker/field-inventory.md`](../analysis/excel-tracker/field-inventory.md).

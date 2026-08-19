@@ -53,6 +53,14 @@ DEPLOY_SCRIPTS = {
     "deploy.py", "deploy_seeds.py", "deploy_gold.py", "deploy_model.py",
     "deploy_report.py", "deploy_ingestion.py", "deploy_silver.py",
     "deploy_pipeline.py", "deploy_landing.py", "validate_model.py",
+    # Added 2026-08-19. These existed and were simply never allow-listed, so the harness
+    # could build gold but not gate it, and could not land manual input at all - which
+    # matters now that deploy_manual.py is load-bearing: silver PARSES cd_bronze_man_*,
+    # so running deploy_silver.py without it first fails with
+    # System_Cancelled_Session_Statements_Failed, an error that names no table.
+    "deploy_dq.py", "deploy_manual.py", "deploy_schedule.py",
+    # The PQP model and report. Both import the base generators and override three lists.
+    "deploy_model_qc.py", "deploy_report_qc.py",
 }
 # extract_procore_local.py and setup_keyvault.py are DELIBERATELY absent. Both read the
 # .env, and an agent that can run them can print a credential into its own transcript -

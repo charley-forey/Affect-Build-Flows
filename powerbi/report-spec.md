@@ -1,5 +1,12 @@
 # Report Spec
 
+> **Status — design intent, partly superseded (2026-08-19).** Written July 2026, before any
+> report existed. Two reports have since shipped: *Monthly Progress Report* (12 pages,
+> 180 visuals) and *Project Quality Plan* (7 pages, 95 visuals). The six-page structure below
+> is therefore the original plan, not the delivered page list. The colour decisions, number
+> formats and accessibility rules did carry through and still govern.
+> Current truth: `foundation/charley-dev/_docs/`.
+
 Page layout, visuals, and formatting for the Power BI report replacing the Excel Monthly
 Progress Report.
 

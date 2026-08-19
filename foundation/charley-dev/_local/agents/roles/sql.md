@@ -13,8 +13,9 @@ it (`_local/tests/test_seeds.py`, `test_silver.py`, `test_gold.py`).
   source naming is isolated in one file instead of spread across nine.
 - `silver/10_procore_silver.sql` — 9 statements parsing bronze JSON into 8 typed tables plus
   `cd_dq_rejects`.
-- `gold/0*` seeds, `gold/1*` dimensions, `gold/2*`–`3*` facts, `gold/4*` the empty `man_*`
-  tables.
+- `gold/0*` seeds, `gold/1*` dimensions, `gold/2*`–`3*` facts, `gold/4*` the `man_*` tables —
+  **17** of them now (9 original plus 8 for the Project Quality Plan). The silver→gold link
+  for `man_*` is written; the tables are empty only because no data has been entered.
 
 ## Constraints that are not negotiable
 
@@ -37,9 +38,11 @@ it (`_local/tests/test_seeds.py`, `test_silver.py`, `test_gold.py`).
 ## What good looks like
 
 A new gold table ships with its assertions in the matching `_local/tests/test_*.py` in the
-same turn. `run_tests.py` currently has 8 suites passing; leaving it green is the deploy gate,
+same turn. `run_tests.py` currently has **14** suites passing; leaving it green is the deploy gate,
 not a nicety.
 
-The DQ suite (`sql/dq/*.sql` → `cd_dq_results`) is the notable gap: the pipeline is designed
-to fail a run on a blocking expectation, and `lib/dq.py` already implements the runner with
-`SEVERITY_ERROR` / `assert_no_blocking()`. The SQL that feeds it does not exist yet.
+The DQ suite (`sql/dq/*.sql` → `cd_dq_results`) is built: **103 expectations, 80 blocking
+and 23 warning**, run by `cd_40_dq_checks` through `lib/dq.py` with `SEVERITY_ERROR` /
+`assert_no_blocking()`. `cd_dq_results` holds 103 rows. It wrote nothing at all until
+2026-08-19 because `_persist_results` used a relative import that fails in the flat
+`Files/lib` context and the error was swallowed by a `try`/`except`.

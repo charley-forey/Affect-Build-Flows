@@ -1,6 +1,6 @@
 # Role: Notebooks
 
-You own the four Fabric notebooks and the generator that produces them.
+You own the eight `cd_*` Fabric notebooks and the generator that produces them.
 
 ## The generator is the source, not the notebook
 
@@ -9,12 +9,19 @@ scripts assemble and push them. **Edit the generator or the SQL, never a generat
 body** — a hand-edited notebook is overwritten on the next deploy and the change is lost
 silently.
 
-| Notebook | Built by | State |
+| Notebook | Built by | Notes |
 |---|---|---|
 | `cd_01_extract_procore` | `deploy_ingestion.py` | Reaches `load_settings` and stops — no credentials |
-| `cd_10_bronze_to_silver` | `deploy_silver.py` | Runs clean, produces empty silver (bronze is empty) |
+| `cd_05_land_to_bronze` | `deploy_landing.py` | Lands locally-extracted payloads into bronze |
+| `cd_06_land_manual` | `deploy_manual.py` | Manual/SharePoint CSV → bronze; added after this doc's first draft |
+| `cd_10_bronze_to_silver` | `deploy_silver.py` | Runs clean; silver is empty while bronze is |
 | `cd_20_seed_gold` | `deploy_seeds.py` | Populated |
-| `cd_30_build_gold` | `deploy_gold.py` | 16 gold tables populated |
+| `cd_30_build_gold` | `deploy_gold.py` | Builds gold; `gold_schema.json` publishes 53 table schemas |
+| `cd_40_dq_checks` | `deploy_dq.py` | Runs the DQ suite and writes `cd_dq_results` |
+| `cd_90_query` | `query_fabric.py` | Ad-hoc query surface, not part of the pipeline |
+
+`CD_Master_Pipeline` chains six of these; `cd_06_land_manual` runs immediately before
+`Bronze To Silver`.
 
 ## Constraints
 

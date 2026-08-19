@@ -103,7 +103,7 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 - `hours-log.md` — append-only time ledger (billing/validation source of truth) + invoicing record
 - `deliverables/` — one file per deliverable (D1–D8): objective, scope, key data, integration approach, tasks, acceptance criteria. New deliverables copy `_template.md`
 - **`foundation/`** — **the build.** A read-only backup of the whole Fabric `Build` workspace, plus `foundation/charley-dev/`: our self-contained platform — ingestion, medallion SQL, lakehouse and semantic-model definitions, the report, the orchestration DAG, the offline test harness, and `_docs/` (`solution-guide.md` first; `keyvault-runbook.md` for the vault position)
-- `updates/` — client-facing status updates written to be forwarded (`2026-08-13-executive-update.md`)
+- `updates/` — dated, client-facing executive updates written to be forwarded as-is. Latest: [`2026-08-19`](updates/2026-08-19-executive-update.md); previous: [`2026-08-13`](updates/2026-08-13-executive-update.md). These are point-in-time records and are not rewritten; [`status-update.md`](status-update.md) is the living version
 - `power-automate/` — **the estimating/bidding job-folder automation**: SharePoint provisioning script, both flow definitions, and the offline test suite. Built, not yet deployed
 - `analysis/excel-tracker/` — full teardown of the client's Monthly Progress Report workbook: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and the 14 verified defects
 - `analysis/pqp-workbook/` — teardown of the QA/QC tracker (Project Quality Plan): 5 verified defects, the 44-sheets-to-9-tables structure, and the open questions for Affect

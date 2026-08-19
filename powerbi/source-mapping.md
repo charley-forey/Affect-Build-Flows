@@ -1,5 +1,13 @@
 # Source Mapping
 
+> **Status — design intent, still broadly accurate (2026-08-19).** Field-by-field mapping
+> drafted July 2026. Two things have moved since: the Procore registry now holds **44
+> registered endpoints** and the gold layer publishes **53** table schemas, so the tables
+> below are a subset rather than the full inventory; and the manual `man_*` rows arrive from
+> SharePoint lists, not the Excel workbook described in `manual-input-template.md`.
+> Live inventories: `foundation/charley-dev/_docs/endpoint-inventory.md` and
+> `_docs/solution-guide.md`. The endpoint paths and the connector analysis below still hold.
+
 Where every field in the Power BI model comes from.
 
 Procore endpoints below were **verified against `resources/procore/combined_OAS.json`**

@@ -1,5 +1,13 @@
 # Manual Input Template
 
+> **Status — superseded (2026-08-19).** This specifies a locked-down Excel input workbook on
+> SharePoint, drafted July 2026. That workbook was never built. What shipped instead is
+> **17 SharePoint lists / 140 columns**, generated from the gold DDL by
+> `foundation/charley-dev/_local/make_sharepoint.py`, plus a CSV import path that works today.
+> Current truth: `foundation/charley-dev/_docs/sharepoint-lists.md` and `_docs/manual-input.md`.
+> The field-level specs below are still the source of the column design and the validation
+> rules, which is why they are kept intact.
+
 Spec for the input workbook that replaces the ~40% of the Monthly Progress Report that
 exists nowhere but Excel.
 

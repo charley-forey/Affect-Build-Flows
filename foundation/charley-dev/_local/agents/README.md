@@ -49,6 +49,6 @@ Fabric's pace:
 |---|---|---|
 | `lakehouse` | shape, `lib/`, `cd_meta_*` / `cd_dq_*` | Expensive to reverse (`enableSchemas` is creation-only) |
 | `sql` | `02-transformation/sql/**` | Fails offline in DuckDB — cheap and fast |
-| `notebooks` | the four `cd_*` notebooks | Fails at run time in Fabric with no per-cell detail |
+| `notebooks` | the eight `cd_*` notebooks | Fails at run time in Fabric with no per-cell detail |
 | `dashboard` | TMDL + PBIR | Fails **silently** — a model that loads zero tables looks deployed |
 | `dataflows` | Sage `mashup.pq`, ingestion configs | Fails on the on-prem gateway |

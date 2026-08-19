@@ -1,11 +1,21 @@
 # AffectProjectReport.pbip
 
+> **Status — superseded design artifact (2026-08-19).** This local `.pbip` was written in
+> July 2026 as the file-based proof of the model: five tables over parquet on disk. The
+> platform has since shipped **two** semantic models to Fabric from TMDL in
+> `foundation/charley-dev/04-semantic_models/` — *Affect Project Report* (37 tables,
+> 99 measures, 45 relationships, Direct Lake) and *Project Quality Plan* (19 tables plus
+> `_Measures`, 42 measures, 23 relationships) — driving the *Monthly Progress Report*
+> (12 pages) and *Project Quality Plan* (7 pages) reports.
+> Current truth: `foundation/charley-dev/_docs/`. Kept as the record of the starting point.
+
 Power BI project format — the model is plain text (TMDL), so it diffs and reviews like
 code instead of hiding inside a `.pbix` binary.
 
-⚠️ **Not yet opened in Power BI Desktop.** Desktop is not installed on the machine this
-was built on, so the TMDL is written to spec but unverified. Opening it is the first
-thing to do; treat any load error as expected teething, not a redesign.
+⚠️ **This local `.pbip` was never opened in Power BI Desktop.** Desktop is not installed on
+the machine it was built on, so its TMDL is written to spec but unverified. That applies to
+this file only — the Fabric models above were deployed and reframed from TMDL by
+`foundation/charley-dev/_local/deploy_model.py` and are queryable.
 
 ## What is in it
 
