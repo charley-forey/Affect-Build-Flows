@@ -1,0 +1,126 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "eb84e5eeebc5f40efdef",
+  "position": {
+    "x": 306,
+    "y": 260,
+    "z": 0,
+    "width": 878,
+    "height": 290,
+    "tabOrder": 17
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcSubmittal"
+                    }
+                  },
+                  "Property": "SubmittalNumber"
+                }
+              },
+              "queryRef": "fct_QcSubmittal.SubmittalNumber",
+              "nativeQueryRef": "SubmittalNumber"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcSubmittal"
+                    }
+                  },
+                  "Property": "Subject"
+                }
+              },
+              "queryRef": "fct_QcSubmittal.Subject",
+              "nativeQueryRef": "Subject"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcSubmittal"
+                    }
+                  },
+                  "Property": "StatusCode"
+                }
+              },
+              "queryRef": "fct_QcSubmittal.StatusCode",
+              "nativeQueryRef": "StatusCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcSubmittal"
+                    }
+                  },
+                  "Property": "TurnaroundDays"
+                }
+              },
+              "queryRef": "fct_QcSubmittal.TurnaroundDays",
+              "nativeQueryRef": "TurnaroundDays"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Submittal register. Shows SubmittalNumber, Subject, StatusCode, TurnaroundDays for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Submittal register'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

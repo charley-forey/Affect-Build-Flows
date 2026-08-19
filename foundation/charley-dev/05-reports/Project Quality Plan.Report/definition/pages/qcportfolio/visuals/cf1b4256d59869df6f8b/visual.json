@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "cf1b4256d59869df6f8b",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1160,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "The workbook's DASHBOARD tab, rebuilt. Every figure is computed from the registers rather than typed beside them - four of the workbook's own roll-ups counted completions over a shorter row range than totals, so their % Complete could never reach 100%.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'The workbook''s DASHBOARD tab, rebuilt. Every figure is computed from the registers rather than typed beside them - four of the workbook''s own roll-ups counted completions over a shorter row range than totals, so their % Complete could never reach 100%.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

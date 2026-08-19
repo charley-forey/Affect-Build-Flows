@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "b43097c8890d80332487",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1160,
+    "height": 40,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Read from Procore Observations - the client's workbook names Procore as the mandatory system of record for quality, so these are not retyped. NCRs are meant to close before the next progress billing is approved.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Read from Procore Observations - the client''s workbook names Procore as the mandatory system of record for quality, so these are not retyped. NCRs are meant to close before the next progress billing is approved.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

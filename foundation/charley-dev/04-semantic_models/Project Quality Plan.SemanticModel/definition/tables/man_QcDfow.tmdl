@@ -1,0 +1,53 @@
+table man_QcDfow
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column DfowRef
+		dataType: string
+		summarizeBy: none
+		sourceColumn: DfowRef
+
+	column DfowDescription
+		dataType: string
+		summarizeBy: none
+		sourceColumn: DfowDescription
+
+	column TradeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeKey
+
+	column RiskTier
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: RiskTier
+
+	column ControlMeasure
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ControlMeasure
+
+	column OwnerRole
+		dataType: string
+		summarizeBy: none
+		sourceColumn: OwnerRole
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column Notes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Notes
+
+	partition man_QcDfow = entity
+		mode: directLake
+		source
+			entityName: man_qcdfow
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

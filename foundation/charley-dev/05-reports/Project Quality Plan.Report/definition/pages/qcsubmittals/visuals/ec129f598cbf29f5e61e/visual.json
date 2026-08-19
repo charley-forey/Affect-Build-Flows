@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "ec129f598cbf29f5e61e",
+  "position": {
+    "x": 20,
+    "y": 56,
+    "z": 0,
+    "width": 1160,
+    "height": 40,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "No fabrication or procurement begins before written approval, so an overdue submittal is a procurement risk rather than a paperwork one.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'No fabrication or procurement begins before written approval, so an overdue submittal is a procurement risk rather than a paperwork one.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

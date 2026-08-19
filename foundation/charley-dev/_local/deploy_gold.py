@@ -250,7 +250,13 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           "fct_BudgetLine", "fct_QualityItem", "fct_SafetyMonthly", "fct_Billing", "fct_DirectCost", "bridge_ProjectVendor", "bridge_VendorCostCode",
                   "fct_VendorInsurance",
           "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal", "fct_Milestone",
-          "fct_FinancialPeriod"]
+          "fct_FinancialPeriod",
+          # PQP quality facts, read from Procore (the client's system of record for
+          # quality). Listed here so they get the same empty-table guard as everything
+          # else AND so their schema is published - a gold table missing from
+          # gold_schema.json cannot be typed by deploy_model.py, so it silently cannot
+          # appear in any semantic model.
+          "fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal"]
 
 counts, bad = {}, []
 for t in tables:
@@ -313,7 +319,12 @@ results.append({"step": "verification", "ok": not bad,
 schema = {}
 for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    "dim_ActivityCategory", "dim_ScorecardWeight", "dim_ScorecardBand",
-                   "measures_anchor"] + manual_tables:
+                   "measures_anchor",
+                   # PQP seeds. Built by cd_20_seed_gold, which runs before this notebook,
+                   # so they are readable here - but they are not in `tables`, because the
+                   # seed runner already asserts their row counts.
+                   "qc_seed_Trade", "qc_seed_ChecklistItem", "qc_seed_Gate",
+                   "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 
 # meta_PipelineRun is written by the DQ GATE, which runs after this notebook - so on a

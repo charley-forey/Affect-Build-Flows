@@ -1,0 +1,38 @@
+table dim_QcStatus
+
+	column Domain
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Domain
+
+	column Code
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Code
+
+	column Label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Label
+
+	column SortOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SortOrder
+
+	column IsTerminal
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsTerminal
+
+	column UsedBy
+		dataType: string
+		summarizeBy: none
+		sourceColumn: UsedBy
+
+	partition dim_QcStatus = entity
+		mode: directLake
+		source
+			entityName: dim_qcstatus
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

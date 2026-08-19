@@ -36,7 +36,10 @@ SELECT
     TRIM(get_json_object(payload, '$.category.name'))                  AS category,
     UPPER(TRIM(get_json_object(payload, '$.status')))                  AS status_label,
     TRIM(get_json_object(payload, '$.priority'))                       AS priority,
-    TRIM(get_json_object(payload, '$.trade'))                          AS trade,
+    -- $.trade is an OBJECT ({"id":..,"name":"Electrical",..}), not a string. Reading it
+    -- whole put raw JSON in fct_QualityItem.Trade on the live report, and made every
+    -- fct_Qc* trade join fail: 631 of 850 NCRs resolved to no trade. Take the name.
+    TRIM(get_json_object(payload, '$.trade.name'))                     AS trade,
     TRIM(get_json_object(payload, '$.assignee.name'))                  AS assignee_name,
     CAST(get_json_object(payload, '$.created_at')           AS DATE)   AS created_date,
     CAST(get_json_object(payload, '$.due_date')             AS DATE)   AS due_date,
@@ -62,7 +65,10 @@ SELECT
     UPPER(TRIM(get_json_object(payload, '$.status')))                  AS status_label,
     UPPER(TRIM(get_json_object(payload, '$.workflow_status')))         AS workflow_status,
     TRIM(get_json_object(payload, '$.priority'))                       AS priority,
-    TRIM(get_json_object(payload, '$.trade'))                          AS trade,
+    -- $.trade is an OBJECT ({"id":..,"name":"Electrical",..}), not a string. Reading it
+    -- whole put raw JSON in fct_QualityItem.Trade on the live report, and made every
+    -- fct_Qc* trade join fail: 631 of 850 NCRs resolved to no trade. Take the name.
+    TRIM(get_json_object(payload, '$.trade.name'))                     AS trade,
     CAST(get_json_object(payload, '$.cost_code.id')         AS STRING) AS cost_code_id,
     TRIM(get_json_object(payload, '$.punch_item_manager.name'))        AS manager_name,
     CAST(get_json_object(payload, '$.created_at')           AS DATE)   AS created_date,

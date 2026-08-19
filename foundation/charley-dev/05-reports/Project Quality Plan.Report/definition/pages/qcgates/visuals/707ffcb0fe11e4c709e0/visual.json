@@ -1,0 +1,126 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "707ffcb0fe11e4c709e0",
+  "position": {
+    "x": 520,
+    "y": 260,
+    "z": 0,
+    "width": 664,
+    "height": 290,
+    "tabOrder": 17
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Gate"
+                    }
+                  },
+                  "Property": "GateType"
+                }
+              },
+              "queryRef": "qc_seed_Gate.GateType",
+              "nativeQueryRef": "GateType"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Gate"
+                    }
+                  },
+                  "Property": "Step"
+                }
+              },
+              "queryRef": "qc_seed_Gate.Step",
+              "nativeQueryRef": "Step"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Gate"
+                    }
+                  },
+                  "Property": "Gate"
+                }
+              },
+              "queryRef": "qc_seed_Gate.Gate",
+              "nativeQueryRef": "Gate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "qc_seed_Gate"
+                    }
+                  },
+                  "Property": "Authority"
+                }
+              },
+              "queryRef": "qc_seed_Gate.Authority",
+              "nativeQueryRef": "Authority"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Gate register. Shows GateType, Step, Gate, Authority for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Gate register'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

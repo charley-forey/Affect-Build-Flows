@@ -1,0 +1,28 @@
+table qc_seed_ChecklistItem
+
+	column TradeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeKey
+
+	column ItemNumber
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: ItemNumber
+
+	column ItemText
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemText
+
+	column ItemKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemKey
+
+	partition qc_seed_ChecklistItem = entity
+		mode: directLake
+		source
+			entityName: qc_seed_checklistitem
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'
