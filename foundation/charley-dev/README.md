@@ -1,11 +1,12 @@
 # charley-dev
 
-A complete, self-contained data solution for Affect Group's Monthly Progress Report, built
-inside the Fabric workspace **Build** under the folder `charley-dev`
-(`25dd1e34-bd57-43ca-aa29-c8fd33013101`).
+A complete, self-contained data solution for Affect Group's Monthly Progress Report **and
+Project Quality Plan**, built inside the Fabric workspace **Build** under the folder
+`charley-dev` (`25dd1e34-bd57-43ca-aa29-c8fd33013101`). **20 items** as of 2026-08-19.
 
-It has its own bronze → silver → gold lakehouses, its own ingestion, its own semantic model
-and reports. It does not depend on, and never writes to, anything in the existing workspace.
+It has its own bronze → silver → gold lakehouses, its own ingestion, and **two semantic
+models over one gold layer** with a report each. It does not depend on, and never writes to,
+anything in the existing workspace.
 
 ## The isolation rule
 
@@ -29,11 +30,12 @@ Rebecca's reporting keeps running untouched while this is built alongside it.
 01-ingestion/      Procore / Sage / Outbuild / SharePoint -> CD_Bronze
 02-transformation/ bronze -> silver -> gold, as ordered .sql; seed/ holds the PQP
                    (Project Quality Plan) seed data extracted from the client's QA/QC
-                   tracker - deployed to gold, no semantic model over it yet
+                   tracker
 03-lakehouses/     the three lakehouse definitions
-04-semantic_models/ Affect Project Report (DirectLake over gold); the PQP subject area
-                   has no semantic model yet
-05-reports/        Monthly Progress Report
+04-semantic_models/ Affect Project Report (Model A) and Project Quality Plan (Model B),
+                   both DirectLake over the SAME gold lakehouse - dim_Project and
+                   dim_Date are conformed, not copied
+05-reports/        Monthly Progress Report (12 pages) and Project Quality Plan (7 pages)
                    (PDF + page screenshots: ../../resources/power-bi/monthly-progress-report/)
 06-orchestration/  the pipeline DAG + schedules
 _local/            offline harness: fixtures, DuckDB runner, tests
@@ -57,13 +59,13 @@ The eight notebooks that exist in the workspace, in the order they run:
 ```
 01  cd_01_extract_procore       Procore REST -> landing files   (blocked: Key Vault role)
     cd_05_land_to_bronze        landing files -> CD_Bronze      (no credential needed)
-    cd_06_land_manual           Files/_manual/*.csv -> bronze man_*
+    cd_06_land_manual           Files/_manual/*.csv -> bronze man_*  (17 tables)
     CD_Sage_Ingest (dataflow)   Sage 100 via gateway -> CD_Bronze (deployed, inert)
 02  cd_10_bronze_to_silver
     cd_20_seed_gold             seed dimensions; asserts its own row counts
     cd_30_build_gold            builds the star schema; verifies it
     cd_40_dq_checks             <- fails the run rather than publishing bad numbers
-04  semantic model refresh
+04  semantic model refresh          (both models)
 
     cd_90_query                 ad-hoc scratchpad, not part of the DAG
 ```
@@ -73,6 +75,11 @@ activities, and its last green run was 2026-08-02 22:06. `cd_01_extract_procore`
 deliberately **out** of the DAG until it can authenticate — leaving it in would mark the
 run Failed every night, which is how an alert stops meaning anything. `cd_05_land_to_bronze`
 takes its place in the pipeline and needs no credential.
+
+**`cd_06_land_manual` is also not in the DAG, and that one is not deliberate.** The nightly
+run rebuilds silver and gold without refreshing manual bronze first. Harmless while every
+`man_*` table is empty; a real staleness bug the day somebody enters a row. It should join
+the DAG ahead of `Bronze To Silver` before the SharePoint lists go live.
 
 Everything in `02-transformation/` runs as ordered `.sql` inside `cd_20_seed_gold` and
 `cd_30_build_gold`; there is no separate `silver_to_gold` notebook.
@@ -88,10 +95,11 @@ fault rather than a missing input.
 Every transform is provable offline — no capacity spend, no API quota:
 
 ```bash
-python foundation/charley-dev/_local/tests/test_seeds.py
-python foundation/charley-dev/_local/tests/test_extract.py
-python foundation/charley-dev/_local/run_local.py
+python foundation/charley-dev/_local/run_tests.py   # 14 suites, no network, no Fabric
 ```
+
+The `.sql` runs through DuckDB via compatibility macros, so the suites exercise the
+*production* Spark SQL rather than a re-implementation.
 
 ## Secrets
 
@@ -121,3 +129,15 @@ Adding a Procore endpoint is a YAML entry in `01-ingestion/Procore/config/endpoi
 not a new notebook. Auth, pagination, the v2.0 header rule, retry and watermarking are
 implemented once in the shared extractor. That is the pattern worth learning — it is why
 this tree has one extractor instead of twenty-five near-identical notebooks.
+
+Adding a **subject area** follows the same rule. `_local/deploy_model_qc.py` and
+`_local/deploy_report_qc.py` import `deploy_model` / `deploy_report` and override three
+module-level lists (`MODEL_TABLES`, `RELATIONSHIPS`, `MEASURES`, and `PAGES`) rather than
+copying 800 and 1,171 lines. Every generator function reads those globals at call time, so a
+new model is three lists and a name — and the Direct Lake traps encoded in the original stay
+encoded in exactly one place.
+
+**One thing that will bite you:** `_local/deploy_gold.py` carries a hardcoded `tables` list
+that drives both the empty-table guard and the schema publish to `gold_schema.json`. A gold
+table missing from that file cannot be typed by `deploy_model.py`, so it **silently cannot
+appear in any semantic model** — no error, anywhere. Add the table to the list.

@@ -73,7 +73,15 @@ STAGES = [
     # This merges the already-landed files into bronze and needs no credential.
     ("Land To Bronze", "cd_05_land_to_bronze", []),
     ("Seed Gold Dimensions", "cd_20_seed_gold", []),
-    ("Bronze To Silver", "cd_10_bronze_to_silver", ["Land To Bronze"]),
+    # Silver PARSES cd_bronze_man_*, and this notebook is what creates them - typed and
+    # empty when there is no CSV. Without this stage the nightly run rebuilt silver and gold
+    # off whatever manual bronze happened to be there from the last manual deploy. Harmless
+    # while all 17 man_* tables are empty; a silent staleness bug the day somebody enters
+    # data, because nothing errors - the report just keeps showing yesterday's answer.
+    # Same ordering that, run by hand in the wrong order, fails with
+    # System_Cancelled_Session_Statements_Failed and names no table.
+    ("Land Manual Input", "cd_06_land_manual", []),
+    ("Bronze To Silver", "cd_10_bronze_to_silver", ["Land To Bronze", "Land Manual Input"]),
     ("Build Gold", "cd_30_build_gold", ["Bronze To Silver", "Seed Gold Dimensions"]),
     # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
     # means the numbers were checked - not merely that the tables were written. Anything

@@ -213,7 +213,17 @@ def _persist_rejects(spark: Any, exp: Expectation, failing: Any, batch_id: str) 
 
 
 def _persist_results(spark: Any, results: list[Result], batch_id: str) -> None:
-    from .fabric_common import utc_now
+    # stdlib, NOT `from .fabric_common import utc_now`. cd_40_dq_checks uploads this file
+    # alone to Files/lib and imports it flat (`sys.path.insert(...); import dq`), so there
+    # is no package context and a relative import raises ImportError. That fired here, was
+    # swallowed by the try/except around the persist call in deploy_dq.py, and left
+    # cd_dq_results NEVER CREATED while cd_dq_rejects - which has no such import - filled
+    # normally at 1,021 rows. The gate's verdict was always correct; only its audit trail
+    # was missing, which is the harder failure to notice.
+    from datetime import datetime, timezone
+
+    def utc_now() -> datetime:
+        return datetime.now(timezone.utc)
 
     rows = [
         (batch_id, r.expectation.name, r.expectation.table, r.expectation.severity,

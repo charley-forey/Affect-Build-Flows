@@ -28,8 +28,16 @@ Folder layout:
 04-semantic_models/    3 models
 05-reports/            4 reports
 _workspace-root/       items sitting outside any Fabric folder
-charley-dev/           empty in Fabric
+charley-dev/           empty in Fabric when this backup was taken (2026-08-01)
 ```
+
+> **`charley-dev` is no longer empty.** It now holds **20 items** — three lakehouses and
+> their SQL endpoints, eight notebooks, a pipeline, a dataflow, two semantic models and two
+> reports — all created after this backup was taken. They are **not** in the counts above,
+> which are a snapshot of the pre-existing workspace. See
+> [`charley-dev/README.md`](charley-dev/README.md) and
+> [`charley-dev/_docs/build-status.md`](charley-dev/_docs/build-status.md); the backup tree
+> is deliberately not re-taken, because its job is to record what existed *before*.
 
 Local folder names keep the pre-existing spelling (`01-ingestion`,
 `02 transformation`, `Financial_Facts`) rather than Fabric's
@@ -81,7 +89,8 @@ JWT, and is idempotent — a clean tree reports zero changes.
   the SQL endpoint instead.
 - **Dataflow/report data source credentials** are not exportable via the API —
   connections must be re-bound by hand on any restore.
-- `Ramp_APICalls` and `charley-dev` are empty in Fabric, not missed.
+- `Ramp_APICalls` was empty in Fabric, not missed. `charley-dev` was empty when this backup
+  was taken and is not any more — see the note above.
 
 ## Re-running
 

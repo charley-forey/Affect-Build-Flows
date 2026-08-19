@@ -86,8 +86,15 @@ VOCAB_COLUMNS: dict[tuple[str, str], tuple[str, ...]] = {
     ("man_QcItp", "StatusCode"): ("ITP_6",),
     # THE COST OF THE GATE COLLAPSE, stated rather than hidden: one result table for three
     # paths means one choice column, so it offers the union of the three paths' vocabularies
-    # (12 distinct codes rather than 6/7/5). The alternative is three lists that differ only
-    # in a dropdown, which is what the workbook had and what the collapse removed.
+    # - 15 distinct codes, where the three paths separately hold 6, 7 and 10. The
+    # alternative is three lists that differ only in a dropdown, which is what the workbook
+    # had and what the collapse removed.
+    #
+    # Read the domain suffixes as an ID, NOT a count. `extract_pqp_workbook.py` names a
+    # domain `{SHEET}_{len(values)}`, so two different dropdowns on one sheet with the same
+    # number of options collide into a single domain: STATUTORYINSPECTIONS_5 holds 10 rows,
+    # being two 5-option dropdowns merged. Counted from qc_status_vocab.csv, 2026-08-19.
+    # ponytail: suffix-by-count collides; upgrade is naming the domain by its column.
     ("man_QcGate", "StatusCode"): ("PATHTOTCO_6", "PATHTOFIREALARM_7",
                                    "STATUTORYINSPECTIONS_5"),
     ("man_QcSpecialInspection", "RequiredCode"): ("SPECIALINSPECTIONS_3",),

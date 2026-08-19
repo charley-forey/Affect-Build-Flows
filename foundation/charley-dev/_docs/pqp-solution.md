@@ -3,6 +3,11 @@
 The client's QA/QC workbook is 44 sheets. This is what it became, why it became that shape,
 and what is still blocked.
 
+**Status: deployed end to end on 2026-08-19.** Seeds, silver, gold, the DQ gate, a semantic
+model and a report are all live in the `charley-dev` folder. Part 6 covers the model and the
+report; Part 5 is what is still blocked, and the honest answer is that nobody has typed a PQP
+row yet.
+
 Read `_docs/manual-input.md` first if you want the history of the manual pipeline — the
 first half of this document is about fixing it, because the PQP work sits on top of it.
 
@@ -18,7 +23,7 @@ not exist.
 
 Eight more manual tables were about to be added on that same path.
 
-### What was actually broken (four things, not one)
+### What was actually broken (six things, not one)
 
 **1. There were no `sv_man_*` source views.** Gold reads `sv_*` and nothing else. There was
 no `sv_man_wins`, so `40_man_tables.sql` had nothing it *could* select from.
@@ -55,6 +60,30 @@ path, separate from `cd_06_land_manual`'s `Files/_manual/` and from the SharePoi
 and it ran **after** `40_man_tables.sql`. The moment gold started populating from silver,
 that cell would have wiped every row. It is now a materialise-only cell (Direct Lake needs
 real Delta data files, which is the part of it that was load-bearing).
+
+**5. `deploy_gold.py` carries a hardcoded `tables` list, and the QC tables were not in it.**
+This is the one worth reading twice, because it is not a PQP problem — it is a property of
+the build that will bite whoever adds the next gold table.
+
+That list does two jobs: it drives the empty-table guard, and it drives the schema publish to
+`gold_schema.json`. **A gold table missing from `gold_schema.json` cannot be typed by
+`deploy_model.py`, and therefore silently cannot appear in any semantic model.** Nothing
+errors. The SQL runs, the table holds rows, the model deploys and reports success, and the
+table is simply absent from it — which looks exactly like forgetting to add it to
+`MODEL_TABLES`, so the first hour of debugging is spent in the wrong file.
+
+`fct_QcNcr`, `fct_QcPunch` and `fct_QcSubmittal` were therefore neither row-checked nor
+published. Fixed: the three facts are in `tables`, and the four `qc_seed_*` plus
+`dim_QcStatus` are in the schema-publish list. **45 → 53 tables published.**
+
+**6. `20_fieldops_silver.sql` read `$.trade` as an object.** Procore returns
+`{"id":…,"name":"Electrical",…}` for that field, and the parser took the whole object rather
+than `$.trade.name`, so the silver column held raw JSON. It parses, it is not NULL, and
+nothing that checks for NULL would have caught it. Two consequences, one of them already
+live: every `fct_Qc*` trade join failed — **631 of 850 NCRs** resolved to no trade — and
+`fct_QualityItem.Trade` on the **live Monthly Progress Report** was showing raw JSON to
+readers. Fixed: unmapped NCRs **631 → 459**, and `fct_QualityItem.Trade` now reads e.g.
+`"Windows"`. What remains is a genuine vocabulary difference, covered in Part 5.
 
 ### The list-name break, fixed at the source
 
@@ -119,9 +148,10 @@ What this bought: `LinkedTcoGate` carries a statutory step back to the TCO step 
 by reading two sheets side by side; nobody could query it. It is now a join.
 
 What it cost, stated plainly: one result table means one `StatusCode` choice column, so it
-offers the **union** of the three paths' vocabularies (15 codes rather than 6 / 7 / 5). The
-alternative was three lists differing only in a dropdown, which is what the workbook had.
-`test_sharepoint.py` asserts this deliberately, so it reads as a decision rather than a bug.
+offers the **union** of the three paths' vocabularies — **15 codes** where the three
+separately hold 6, 7 and 9. The alternative was three lists differing only in a dropdown,
+which is what the workbook had. `test_sharepoint.py` asserts this deliberately, so it reads
+as a decision rather than a bug.
 
 ---
 
@@ -157,7 +187,9 @@ alongside so an unmapped value is a visible row rather than an `ELSE` branch.
 ### Endpoints
 
 `observations`, `punch_items` and `submittals` were **already in the registry** — the PQP
-work needed no new endpoint for them, which is the registry paying off. Added:
+work needed no new endpoint for them, which is the registry paying off. Two were added,
+taking the registry from 42 to **44** ([`endpoint-inventory.md`](endpoint-inventory.md) is
+generated from it):
 
 - `checklist_lists` — Procore Inspections, `/rest/v1.0/checklist/lists`
 - `checklist_list_items` — parent-scoped on the above, one call per inspection
@@ -224,13 +256,23 @@ plumbing was never the slow part.
 3. **`punch_item_types` returns 403.** Needs a tool permission on the service account.
    Nothing downstream depends on it.
 
-4. **The Procore trade → `TradeKey` mapping is exact-match only.** `fct_QcNcr` /
-   `fct_QcPunch` resolve `'Concrete Formwork'` → `CONCRETE_FORMWORK` and leave anything else
-   NULL beside a `HasUnmappedTrade` flag, because a fuzzy match attaches an NCR to the wrong
-   trade — worse than attaching it to none. Marked `ponytail:` in `33_fct_qc.sql`; the
-   upgrade is a `qc_seed_TradeAlias` table, and the DQ warning is what tells you when the
-   unmapped count is worth it. **This needs live data to size** — the fixture has one
-   unmapped trade because it was constructed to.
+4. **The Procore trade → `TradeKey` mapping is exact-match only, and it is now sized.**
+   `fct_QcNcr` / `fct_QcPunch` resolve `'Concrete Formwork'` → `CONCRETE_FORMWORK` and leave
+   anything else NULL beside a `HasUnmappedTrade` flag, because a fuzzy match attaches an NCR
+   to the wrong trade — worse than attaching it to none. Marked `ponytail:` in
+   `33_fct_qc.sql`; the upgrade is a `qc_seed_TradeAlias` table.
+
+   Live, against real data: **459 of 850 NCRs** resolve to no trade. That is down from 631 —
+   the other 172 were the `$.trade` object-parsing defect above, which was a bug and is
+   fixed. The 459 are not a bug. Procore's trade list says `HVAC` and `Sprinkler` where the
+   workbook's controlled keys are `HVAC_DUCTWORK` and `FIRE_SPRINKLER`: two vocabularies for
+   the same trades, and only Affect can say which Procore value means which workbook key.
+   **It is deliberately not guessed.** The report carries the count on its Data Quality page
+   rather than charting quality by trade, because a by-trade chart today would silently
+   describe 46% of the data.
+
+   **This is an open question for Affect** — one alias table, and the number falls to
+   whatever is genuinely unmapped.
 
 5. **Procore Inspections may make `man_QcChecklistResult` redundant.** A Procore checklist
    list *is* a per-project instance of a checklist template, which is exactly what the 26
@@ -239,17 +281,91 @@ plumbing was never the slow part.
    against real data rather than argued about. **Nothing reads it in gold yet** — that is the
    next decision, and it is the client's to make once they can see both.
 
-6. **No semantic model or report changes.** The 8 new `man_Qc*`, the 5 seeds and the 3
-   `fct_Qc*` tables have no TMDL and appear on no page. `04-semantic_models/` and
-   `05-reports/` are owned elsewhere; the gold tables are the contract they bind to, and the
-   column names are final.
-
-7. **`deploy_gold.py --source existing` no longer builds the QC or manual halves.** The
+6. **`deploy_gold.py --source existing` no longer builds the QC or manual halves.** The
    existing warehouse holds none of it — this data was invented as part of this build. Rather
    than hand it empty views that pretend a source exists, `GOLD_CD_ONLY` skips those three
    files under `--source existing`, and `DEFAULT_SOURCE` is now `cd`, which is what has been
    in production since 2026-08-02. The gold SQL is still byte-identical across both sources;
    only the selection differs.
 
-**Nothing has been deployed.** Every change is dry-run by default and the whole suite passes
-offline.
+---
+
+## Part 6 — the model and the report, deployed 2026-08-19
+
+The item at the top of this list used to read *"no semantic model or report changes"*. Both
+now exist in the workspace, which takes the `charley-dev` folder to **20 items**.
+
+| | |
+|---|---|
+| `Project Quality Plan` (SemanticModel) | Direct Lake, **19 tables plus `_Measures`, 42 measures, 23 relationships** |
+| `Project Quality Plan` (Report) | **7 pages, 95 visuals** |
+
+### Why a second model rather than 19 more tables in the first
+
+Both models are Direct Lake over the **same** `CD_Gold_Lakehouse`. `dim_Project` and
+`dim_Date` are **conformed** — the same physical tables, one definition, two models. A second
+lakehouse would have duplicated them, and duplicated dimensions drift until the two reports
+disagree about how many projects there are.
+
+Model A (`Affect Project Report`) is live, audited and 99 measures deep, and it serves
+leadership portfolio finance. Model B serves the Q-Team at per-project quality grain. They
+share no page, no filter context and no definition of "open". Adding 19 tables and 42
+measures to a working model to serve a different audience would have risked the working one
+for no gain — and **rollback here is deleting one item.** The gold tables stay, Model A never
+knew it existed.
+
+The cost, stated: a measure both audiences need has to exist in both models. Today none does.
+
+### `TradeKey` resolves to `qc_seed_Trade`, not `dim_Trade`
+
+Worth calling out because it looks like a mistake. The PQP uses the workbook's controlled
+trade vocabulary (`EXCAVATION`, `WATERPROOFING`, …), which is a different key space from the
+existing `dim_Trade`. Relating the two would have produced a blank unknown-member row that
+renders as an empty category and nulls any total over it.
+
+### The scripts are overrides, not copies
+
+`_local/deploy_model_qc.py` and `_local/deploy_report_qc.py` are ~250 lines each. They
+**import** `deploy_model` and `deploy_report` and override three module-level lists:
+
+```python
+import deploy_model as dm
+dm.MODEL_NAME    = "Project Quality Plan"
+dm.MODEL_TABLES  = [...]   # 19
+dm.RELATIONSHIPS = [...]   # 23
+dm.MEASURES      = [...]   # 42
+```
+
+…and `deploy_report_qc.py` overrides `dr.PAGES` (7) plus the report and model names. This
+works because every generator function reads those globals **at call time**.
+
+Everything else is inherited: the TMDL emission, the Fabric introspection, the Direct Lake
+traps, the upload and retry logic, the visual helpers, alt text, tab order, the synced
+slicers and footer, the id stability that stops a redeploy churning every visual. The
+alternative was copying 800 and 1,171 lines, which would have rotted the day the originals
+changed — and the Direct Lake traps are exactly the knowledge a copy loses first.
+
+**This is the pattern for the next subject area.** Three lists and a name.
+
+### What the report deliberately does not have
+
+A "quality by trade" headline. With 459 of 850 NCRs unmapped (Part 5, item 4), charting by
+trade would silently describe 46% of the data. The count sits on the Data Quality page
+instead, where it is the finding rather than the footnote.
+
+---
+
+## Deploying it
+
+**`deploy_manual.py` must run before `deploy_silver.py`.** Silver parses `cd_bronze_man_*`,
+and `cd_06_land_manual` is what creates those **17** tables — typed and empty when no CSV has
+been uploaded. Run silver first and the whole notebook fails with
+`System_Cancelled_Session_Statements_Failed`: an error that names no table and reads like a
+Spark fault rather than a missing input. Hit on the 2026-08-19 deploy; the fix is one earlier
+step, not a code change. The full order is in
+[`build-status.md`](build-status.md#how-to-run-it).
+
+**Related and still open: `cd_06_land_manual` is not in `CD_Master_Pipeline`.** The nightly
+run rebuilds silver and gold without refreshing manual bronze first. Harmless while every
+`man_*` is empty; a real staleness bug the day somebody enters a row. It should join the DAG
+ahead of `Bronze To Silver` before the SharePoint lists go live.

@@ -1,8 +1,10 @@
 # D5 — Power BI Project Dashboard (Excel Replacement)
 
-**Status:** 🟢 **Deployed and live** — coverage gated on source data | **Phase:** 2 — Project Intelligence | **Billing:** ~5 hrs in Phase 0 | **Target:** Delivered; parallel run and leadership iteration outstanding
+**Status:** 🟢 **Deployed and live — two models, two reports** — coverage gated on source data | **Phase:** 2 — Project Intelligence | **Billing:** ~5 hrs in Phase 0 | **Target:** Delivered; parallel run and leadership iteration outstanding
 
 > **The Excel replacement exists and is running in Fabric.** `Monthly Progress Report` — **12 pages, 180 visuals, 99 measures** on a Direct Lake semantic model of **37 tables, 99 measures, 45 relationships** — with drill-through, 3 bookmarks, synced project and month slicers on every page, alt text on all 180 visuals, tab order in reading order, and the validated theme applied. Refreshes nightly. **It has already paid for itself:** a $4.85M understatement of portfolio contract value was found here and fixed (Current Contract $30.25M → $35.10M, growth 0.00% → 16.03%). PDF and page screenshots: [`resources/power-bi/monthly-progress-report/`](../resources/power-bi/monthly-progress-report/).
+>
+> **A second model and a second report are now live alongside it.** `Project Quality Plan` — **7 pages, 95 visuals** over its own Direct Lake model of **19 tables plus `_Measures`, 42 measures and 23 relationships**. Pages: Quality Portfolio, Non-Conformance, Punch & Completion, Submittals & Mock-Ups, Statutory Gates, Trade Checklists & DFOW, and a hidden Data Quality page. It reads 26 trades, 625 checklist items, 93 statutory gates, 101 DOH items and 141 status rows from the client's QA/QC tracker against the live Procore facts `fct_QcSubmittal` 2,245, `fct_QcPunch` 1,469 and `fct_QcNcr` 850. It is a **separate** model deliberately — quality has its own grain, its own audience and its own refresh sensitivity, and folding it into the project model would have cost both.
 >
 > **It goes beyond the workbook** rather than reproducing it: a Portfolio page (leadership had no cross-project view — the Excel is one workbook per job), a billing S-curve, a schedule timeline, budget as a matrix rolling up by division instead of a flat table over 4,837 cost codes, and a Vendor Insurance page.
 >
@@ -40,7 +42,7 @@ Curated Lakehouse tables (D4) → Power BI semantic model (Direct Lake or import
 ## Tasks
 - [x] Extract and assess the Excel tracker (all 11 tabs, formulas, dropdowns, defects)
 - [x] Write the semantic model, DAX library, report spec, and theme
-- [x] Build semantic model + load `measures.dax` — 37 tables, 99 measures, 45 relationships, Direct Lake
+- [x] Build semantic model + load `measures.dax` — `Affect Project Report`: 37 tables, 99 measures, 45 relationships, Direct Lake
 - [x] Build page 1 — Overview (the one-page replacement)
 - [x] Build pages 2–5 — Schedule, Financial, Safety & Quality, Scorecard detail
 - [x] Build the Data Quality page (hidden)
@@ -48,6 +50,9 @@ Curated Lakehouse tables (D4) → Power BI semantic model (Direct Lake or import
 - [x] **Reconciliation gate** — Current Contract 9,116,960.48 and Contract Growth 3.60% asserted offline, mutation-tested
 - [x] Accessibility pass — alt text on all 180 visuals, tab order on every visual, text label beside every status colour, contrast-corrected RAG steps
 - [x] Refresh config — pipeline 02:00, model 04:00 Eastern
+- [x] **Build the second model and report** — `Project Quality Plan`, 19 tables + `_Measures`, 42 measures, 23 relationships; 7 pages, 95 visuals, both deployed to `charley-dev`
+- [ ] Answer the PQP trade-vocabulary question with Affect — 459 of 850 NCRs still resolve to no trade, shown on the PQP Data Quality page rather than hidden
+- [ ] Wire the 8 `man_Qc*` intake tables once the SharePoint/CSV path is live
 - [ ] Confirm the page/KPI spec with Rebecca + leadership
 - [ ] Access/roles — **row-level security before the Portfolio page is shared**; it is the first page showing every PM each other's jobs
 - [ ] Reconciliation **page** in the report — the values are asserted in CI but are not visible to Affect
@@ -67,7 +72,9 @@ Curated Lakehouse tables (D4) → Power BI semantic model (Direct Lake or import
 - **[`powerbi/semantic-model.md`](../powerbi/semantic-model.md)** — the model it builds on
 - **[`powerbi/build-plan.md`](../powerbi/build-plan.md)** — phases, estimates, the reconciliation gate
 - **[`analysis/excel-tracker/dashboard-map.md`](../analysis/excel-tracker/dashboard-map.md)** — cell-by-cell map of what the current dashboard shows
-- **[`resources/power-bi/monthly-progress-report/`](../resources/power-bi/monthly-progress-report/)** — the deployed report as a PDF plus a screenshot of each of the ten pages
+- **[`resources/power-bi/monthly-progress-report/`](../resources/power-bi/monthly-progress-report/)** — the deployed `Monthly Progress Report` as a PDF plus screenshots of ten of its twelve pages
+- **`foundation/charley-dev/04-semantic_models/Project Quality Plan.SemanticModel`** and **`foundation/charley-dev/05-reports/Project Quality Plan.Report`** — the committed definitions of the second model and report
+- **[`analysis/pqp-workbook/defects-and-questions.md`](../analysis/pqp-workbook/defects-and-questions.md)** — the 5 verified defects in the source QA/QC workbook
 - (add: PBIX/workspace link, validation notes, training recording)
 
 ## Log
@@ -75,4 +82,5 @@ Curated Lakehouse tables (D4) → Power BI semantic model (Direct Lake or import
 |---|---|
 | 2026-08-02 | **Deployed.** 12 pages, 180 visuals, 99 measures, all evaluated against live data. Two broken field references found on Project Detail that had failed no deploy, refresh or log — a visual bound to a name the model does not have is invisible to everything except a person looking at that page. `test_report.py` now resolves all 138 field references against the model offline. The validated theme had been sitting unused in the repo while the report ran bare Power BI defaults. |
 | 2026-08-13 | Platform review with Rebecca. |
-| 2026-08-19 | Unchanged and live; the PDF and the ten page screenshots are published under `resources/power-bi/monthly-progress-report/`. The PQP (Project Quality Plan) subject area is deployed to gold, but **no PQP semantic model or report exists yet** — when built it gets its own model, separate from this one. |
+| 2026-08-19 | `Monthly Progress Report` unchanged and live; the PDF and ten page screenshots are published under `resources/power-bi/monthly-progress-report/`. **A second model and report shipped:** `Project Quality Plan` — 19 tables + `_Measures`, 42 measures, 23 relationships; 7 pages, 95 visuals. `charley-dev` now holds **two** semantic models and **two** reports. |
+| 2026-08-19 | Two defects fixed upstream of this deliverable, both of which affected what the reports show. `deploy_gold.py` had a hardcoded publish list the QC tables were missing from, so no PQP model could have been built at all until it was fixed (45 → 53 published tables). And the silver `$.trade` parse was returning the whole JSON object, which was rendering as raw JSON in `fct_QualityItem.Trade` **on the live Monthly Progress Report**; it now reads e.g. `"Windows"`. |

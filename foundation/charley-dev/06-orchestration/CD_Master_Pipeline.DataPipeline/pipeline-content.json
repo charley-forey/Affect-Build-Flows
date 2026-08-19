@@ -34,11 +34,33 @@
         }
       },
       {
+        "name": "Land Manual Input",
+        "type": "TridentNotebook",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "4eff5de6-3c4a-4238-9af2-79fb69f07709",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
         "name": "Bronze To Silver",
         "type": "TridentNotebook",
         "dependsOn": [
           {
             "activity": "Land To Bronze",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "Land Manual Input",
             "dependencyConditions": [
               "Succeeded"
             ]

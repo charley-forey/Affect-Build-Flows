@@ -55,16 +55,18 @@ both.
 |---|---|
 | Bronze | 40 tables from Affect's **production** Procore tenant |
 | Silver | 15 typed tables, 14,791 rows, **0 rejects** |
-| Gold | 40 tables — dimensions, facts, crosswalks, bridges, manual placeholders |
-| Model | 37 tables, 99 measures, 45 relationships, Direct Lake |
-| Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
+| Gold | 40 tables at the 2026-08-02 read plus the PQP tables landed 2026-08-19; `gold_schema.json` publishes **53** table schemas |
+| Model A — `Affect Project Report` | 37 tables, 99 measures, 45 relationships, Direct Lake |
+| Report A — `Monthly Progress Report` | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
+| Model B — `Project Quality Plan` | **19 tables plus `_Measures`, 42 measures, 23 relationships**, Direct Lake. New 2026-08-19 |
+| Report B — `Project Quality Plan` | **7 pages, 95 visuals**. New 2026-08-19 |
 | Schedule | Pipeline 02:00 daily, model 04:00 daily (Eastern) |
 | Sage | `CD_Sage_Ingest` **deployed** and inert — one gateway connection grant away from running |
-| PQP (Project Quality Plan) | **In progress** — seed data extracted from the client's 44-sheet QA/QC tracker into `02-transformation/seed/`; a second semantic model and report follow |
+| PQP (Project Quality Plan) | **Deployed end to end 2026-08-19** — the client's 44-sheet QA/QC tracker as seeds, silver, gold, a DQ gate, its own model and its own report. [`pqp-solution.md`](pqp-solution.md) |
 
-**Verification:** 12 offline suites, 14 live DAX checks, 63 DQ expectations — all passing,
-zero blocking violations. The pipeline has run end to end, all five stages green; last run
-2026-08-02 22:06.
+**Verification:** 14 offline suites, 14 live DAX checks, **103 DQ expectations** (80 blocking,
+23 warning) — all passing, zero blocking violations. The pipeline has run end to end, all five
+stages green; last run 2026-08-02 22:06.
 
 **What the pipeline does not do:** it never calls the Procore API. Extraction runs on a
 laptop and lands NDJSON; the nightly run merges whatever was last landed. Until the Key
@@ -96,6 +98,66 @@ RBAC-mode where our identity holds only resource-group Contributor.
 
 ---
 
+## Two models over one gold layer, and why
+
+There are now **two semantic models and two reports**, both Direct Lake over the same
+`CD_Gold_Lakehouse`:
+
+| | Model A | Model B |
+|---|---|---|
+| Name | `Affect Project Report` | `Project Quality Plan` |
+| Report | `Monthly Progress Report` — 12 pages, 180 visuals | `Project Quality Plan` — 7 pages, 95 visuals |
+| Audience | leadership, portfolio finance | the Q-Team, per-project quality |
+| Shape | 37 tables, 99 measures, 45 relationships | 19 tables plus `_Measures`, 42 measures, 23 relationships |
+| Replaces | the 11-tab monthly workbook | the 44-sheet QA/QC tracker |
+
+**One lakehouse, two models — not two lakehouses.** `dim_Project` and `dim_Date` are
+**conformed**: the same physical gold tables, one definition, bound by both models. A second
+lakehouse would have duplicated them, and duplicated dimensions drift — quietly, and then the
+two reports disagree about how many projects there are and nobody can say which is right.
+
+**Model A was not touched.** It is live, audited, and 99 measures deep. Adding 19 tables and
+42 measures to it to serve a different audience with a different grain would have put a
+working model at risk for no gain — and the two audiences do not share a page, a filter
+context, or a definition of "open".
+
+**Rollback is deleting one item.** That is the property that made this the cheap choice. If
+the PQP model is wrong, it is deleted and nothing else moves; the gold tables stay, Model A
+never knew it existed, and the Monthly Progress Report does not blink.
+
+The cost, stated: a measure needed by both audiences has to exist in both models. Today none
+do. The day one does, it is written twice or promoted into a shared calculation group — and
+that is a smaller problem than a shared model neither audience can safely change.
+
+### How Model B was built — the pattern to copy
+
+`_local/deploy_model_qc.py` and `_local/deploy_report_qc.py` are **~250 lines each**, not
+copies of the 800-line and 1,171-line generators they sit on. Each imports the existing
+module and overrides three module-level lists:
+
+```python
+import deploy_model as dm
+dm.MODEL_NAME    = "Project Quality Plan"
+dm.MODEL_TABLES  = [...]     # 19 tables
+dm.RELATIONSHIPS = [...]     # 23
+dm.MEASURES      = [...]     # 42
+```
+
+This works because every generator function reads those globals **at call time**. Everything
+else — the TMDL emission, the Fabric introspection, the Direct Lake traps, the upload and
+retry logic, the visual helpers, alt text, tab order, the synced slicers and footer, the id
+stability that stops a redeploy churning every visual — is inherited rather than duplicated.
+
+**This is how the next subject area gets added.** A copy would have rotted the day the
+original changed, and the Direct Lake traps in `deploy_model.py` are exactly the knowledge a
+copy loses first.
+
+Two supporting scripts came with it: `_local/extract_pqp_workbook.py` (the client's workbook →
+seed CSVs, asserting its own row counts so a silently short extract fails loudly) and
+`_local/make_qc_seeds.py` (seed CSVs → `08_qc_seeds.sql`).
+
+---
+
 ## The three things this does that the spreadsheet cannot
 
 **1. It shows you where the data is missing.** `dim_ProjectCrosswalk` maps every project
@@ -109,8 +171,8 @@ looking.
 that looks wrong can only be checked by asking whoever typed it. Right-click any project →
 Drill through opens that project's budget lines, change orders, RFIs and milestones.
 
-**3. It refuses to publish bad numbers.** 35 expectations run between gold and the report.
-Blocking failures stop the pipeline.
+**3. It refuses to publish bad numbers.** 103 expectations run between gold and the report —
+80 blocking, 23 warning. Blocking failures stop the pipeline.
 
 ---
 
@@ -142,7 +204,7 @@ every day and stop meaning anything.
 the report is fresh to the last **landing**, not to the last Procore change. Until Key Vault
 exists, somebody runs `extract_procore_local.py` to refresh the landing files. The nightly
 run still earns its place — it re-applies every transform, rebuilds gold and re-runs the
-62-expectation gate — but it does not fetch new data. Three freshness expectations now warn
+103-expectation gate — but it does not fetch new data. Three freshness expectations now warn
 when the newest billing, cost or field-ops record goes stale, so "nobody has run the
 extractor in two months" is visible instead of silent.
 
@@ -186,8 +248,9 @@ These were the two Phase 0 scope items still open.
 **Item 3 — "resolve the vendor ↔ cost-code linkage (invoice as the bridge)".** The linkage
 exists in no single Procore object: the direct cost *header* carries the vendor and no cost
 code; its *line items* carry the cost code and no vendor. `bridge_VendorCostCode` joins them
-on the line's `holder`. **114 vendor↔cost-code pairs covering $1.47M**, and the model can now
-slice spend by vendor and cost code together, which nothing could before.
+on the line's `holder`. **407 rows over 398 distinct vendor↔cost-code pairs** (measured
+2026-08-19), and the model can now slice spend by vendor and cost code together, which nothing
+could before.
 
 It covers direct costs only — subcontract spend flows through commitment line items, which
 are a per-contract nested pull (hundreds of calls against a 600/hour limit) and are not yet
@@ -297,20 +360,32 @@ category scored 0 rather than blank, that was invisible.
 ```bash
 cd foundation/charley-dev/_local
 
-python run_tests.py                              # 11 offline suites - no Fabric, no network
+python run_tests.py                              # 14 offline suites - no Fabric, no network
 python extract_procore_local.py --apply          # Procore -> OneLake landing files
 python deploy_landing.py --apply                 # landing files -> bronze Delta
+python deploy_seeds.py --apply                   # seed dimensions + the PQP seeds
+python deploy_manual.py --apply                  # MUST run before deploy_silver.py
 python deploy_silver.py --apply                  # bronze -> silver
-python deploy_gold.py --source cd --apply        # silver -> gold star schema
-python deploy_dq.py --apply                      # the 35-expectation gate
-python deploy_model.py --apply                   # semantic model (TMDL)
-python deploy_report.py --apply                  # report (PBIR)
-python validate_model.py                         # 9 live DAX checks
+python deploy_gold.py --apply                    # silver -> gold star schema
+python deploy_dq.py --apply                      # the 103-expectation gate
+python deploy_model.py --apply                   # Model A  (TMDL)
+python deploy_report.py --apply                  # Report A (PBIR)
+python deploy_model_qc.py --apply                # Model B  (PQP)
+python deploy_report_qc.py --apply               # Report B (PQP)
+python validate_model.py                         # live DAX checks
 ```
 
-`--source cd` builds gold from **our** medallion; `--source existing` builds it from the
-current warehouse. That one flag is the entire source migration — no gold file, measure or
-visual changes between them.
+**`deploy_manual.py` before `deploy_silver.py` is load-bearing.** Silver parses the
+`cd_bronze_man_*` tables and `cd_06_land_manual` is what creates them. Run silver first and
+it fails with `System_Cancelled_Session_Statements_Failed` — an error that names no table and
+reads like a Spark fault rather than a missing input.
+
+`--source` selects gold's input: `cd` (**now the default**) builds from **our** medallion,
+`existing` from the current warehouse. That one flag is the entire source migration — no gold
+file, measure or visual changes between them. The default used to be `existing`, so a bare
+`--apply` silently reverted the medallion to the legacy warehouse; that foot-gun is closed.
+(Under `--source existing` the QC and manual halves are skipped rather than built empty — the
+existing warehouse holds none of that data.)
 
 Everything reaches Fabric through these scripts and the REST API, so every change is in git
 and a mis-deploy is fixed by re-running rather than by clicking.
@@ -320,14 +395,17 @@ and a mis-deploy is fixed by re-running rather than by clicking.
 ## Why extraction runs locally
 
 `cd_01_extract_procore` is the real scheduled ingestion and it runs in Fabric — but it needs
-a Procore secret, and the only safe way to give a Fabric notebook one is Key Vault, which
-needs an Azure subscription this tenant does not have. Every in-Fabric alternative is
-plaintext-readable by any workspace member, which is exactly the finding we reported
-(`security-findings.md`, F1).
+a Procore secret, and the only safe way to give a Fabric notebook one is Key Vault. Every
+in-Fabric alternative is plaintext-readable by any workspace member, which is exactly the
+finding we reported (`security-findings.md`, F1).
 
 So extraction runs where the secret already lives, and lands files; `cd_05_land_to_bronze`
-merges them in Fabric with no credential at all. **A bridge, not the destination** — when a
-subscription lands, `setup_keyvault.py --apply` and the notebook takes over.
+merges them in Fabric with no credential at all. **A bridge, not the destination.**
+
+As of 2026-08-19 the subscription and the vault both exist. What is left is one role
+assignment — **Key Vault Secrets Officer on vault `OneLake`** — after which
+`setup_keyvault.py --apply` loads the secrets and the notebook takes over. See
+[`keyvault-runbook.md`](keyvault-runbook.md).
 
 ---
 
@@ -337,9 +415,10 @@ The ~40% of the report that lives in no system was blocked on a SharePoint admin
 It is not any more.
 
 `cd_06_land_manual` reads CSVs from `Files/_manual/` and writes exactly the bronze tables
-the SharePoint dataflow would have — same names, same shapes, same parsers downstream. Nine
-templates with worked examples are generated on every run at
-`Files/_manual/_templates/`. Fill one in, upload it, re-run.
+the SharePoint dataflow would have — same names, same shapes, same parsers downstream.
+**Seventeen** templates with worked examples are generated on every run at
+`Files/_manual/_templates/` — the 9 original registers plus the 8 PQP intake lists. Fill one
+in, upload it, re-run.
 
 When the lists are eventually provisioned, the dataflow takes over and nothing downstream
 changes. Neither path is a workaround; they are two writers into one contract.
@@ -347,14 +426,23 @@ changes. Neither path is a workaround; they are two writers into one contract.
 This matters because the slow part was never the plumbing — it is people typing a month of
 history they have only ever kept in a spreadsheet, and that no longer waits on a ticket.
 
-**One thing is still missing, and it needs Affect rather than us.** There is no silver →
-gold link for the manual tables yet — `40_man_tables.sql` creates them as empty typed
-placeholders and nothing populates them — because the gold schema and the silver parsers
-disagree on four of them — whether daily-log compliance means "submitted" or "submitted the
-same day", whether a milestone is a date or a span, which attestations are captured
-monthly, and whether the client survey is anonymous. Each is a real question about what the
-scorecard should measure, and guessing would produce an authoritative-looking number
-measuring the wrong thing. `manual-input.md` lists them for the next call.
+**The chain is now complete.** Until 2026-08-19 there was no silver → gold link for the
+manual tables: `40_man_tables.sql` created empty typed placeholders and nothing populated
+them, so nine gold tables bound to the model were permanently empty while every stage above
+them reported green. That is fixed — gold now `INSERT`s from `sv_man_*` over
+`cd_silver_man_*`, `30_manual_silver.sql` is no longer excluded from the deploy, and
+`test_qc.py` asserts all 17 `man_*` tables are reachable from silver. With no input the
+inserts move zero rows and the tables stay empty, which is correct — the platform never
+invents a row.
+
+The four column-spec differences that used to be framed as open questions for Affect were
+not questions. The gold DDL and the semantic model TMDL had agreed all along; the *input*
+side had drifted from both, and it was corrected to match. `deploy_manual.py` no longer
+keeps its own column list — it derives it from the DDL. See
+[`pqp-solution.md`](pqp-solution.md) Part 1.
+
+**What still needs Affect is the SharePoint site**, and that gates the team mechanism rather
+than data entry. `manual-input.md` has the detail.
 
 
 ## What blocks the remaining 41% of coverage
@@ -363,7 +451,7 @@ All four are access Affect grants, not work we can do. All the pipework is built
 
 | Blocker | Unlocks | Owner |
 |---|---|---|
-| **SharePoint lists** (nine data lists plus the `CD Projects` lookup — ten in total, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates | SharePoint admin |
+| **SharePoint lists** (**17** data lists / 140 columns plus the `CD Projects` lookup — 18 in total, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates, and the 8 PQP registers | SharePoint admin |
 | **`OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere. Offered by email Aug 11; **in transit** | Outbuild CS rep / Affect |
 | **Sage gateway connection grant** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage. The dataflow is deployed and inert | Affect IT |
 | **Key Vault role assignment** — "Key Vault Secrets Officer" on vault `OneLake` | Key Vault, so ingestion runs in Fabric on a schedule. The subscription and the vault now exist; the vault is RBAC-mode and resource-group Contributor cannot read or write secrets | Affect IT |
@@ -383,7 +471,8 @@ Almost every defect found here failed **silently** — a valid-looking call retu
 or a parse producing NULL:
 
 - `Procore-Company-Id` missing → **404**, reading as "this project has no RFI tool". Cost 28
-  of the 36 endpoints the registry held at the time (it now holds 42).
+  of the 36 endpoints the registry held at the time (it now holds 44 — see
+  [`build-status.md`](build-status.md), which is where that count is maintained).
 - `manpower_logs` without a date range → **200 with zero rows**, reading as "no manpower
   logged". Cost 120,766 hours.
 - `get_json_object` on a key containing `(` or `=` → **NULL**, so every budget money column
@@ -399,6 +488,15 @@ or a parse producing NULL:
 - A brand-new gold table that Direct Lake had not yet bound → the model deploys with no
   error, and every measure over it fails only when a visual renders. `validate_model.py`
   now COUNTROWS all 35 model tables for exactly this reason.
+- A gold table left out of `deploy_gold.py`'s hardcoded `tables` list → its schema is never
+  published to `gold_schema.json`, so `deploy_model.py` cannot type it and Direct Lake
+  cannot bind it. The SQL runs, the table holds data, the model deploys — and the table is
+  simply **absent**. Cost the three `fct_Qc*` tables until 2026-08-19.
+- `get_json_object(payload, '$.trade')` where the field is an **object** → the column holds
+  `{"id":…,"name":"Electrical",…}` rather than `Electrical`. Every trade join fails (631 of
+  850 NCRs), and `fct_QualityItem.Trade` on the **live** Monthly Progress Report showed raw
+  JSON. It parses, it is not NULL, and no test that only checks for NULL would have caught
+  it.
 
 None raised an error. This is why the platform prefers a loud failure to a plausible number,
 why rejects are recorded with reasons, and why the DQ gate blocks rather than warns.
@@ -413,6 +511,7 @@ why rejects are recorded with reasons, and why the DQ gate blocks rather than wa
 | `procore-ingestion.md` | The endpoint registry, the split pipeline, the defects found |
 | `sage-ingestion.md` | The dataflow and why `arivln`/`apivln` matter |
 | `manual-input.md` | The design for the ~40% that lives in no system |
+| `pqp-solution.md` | The Project Quality Plan subject area — Model B end to end |
 | `sharepoint-lists.md` | Build sheet to hand to a SharePoint admin |
 | `security-findings.md` | Credential exposure in the existing workspace — report only |
 | `_local/agents/README.md` | The multi-agent system and its enforced gates |

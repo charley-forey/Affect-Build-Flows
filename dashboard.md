@@ -2,7 +2,7 @@
 
 Single-page rollup of the engagement. Detail lives in `deliverables/` (one file per deliverable) and `hours-log.md` (time ledger). Update this page whenever a deliverable changes status.
 
-**Current as of 2026-08-02.** For the team-facing narrative — what was built, what it found, what we need from Affect — see [`status-update.md`](status-update.md). For the measured engineering state, [`foundation/charley-dev/_docs/build-status.md`](foundation/charley-dev/_docs/build-status.md).
+**Current as of 2026-08-19.** For the team-facing narrative — what was built, what it found, what we need from Affect — see [`status-update.md`](status-update.md). For the measured engineering state, [`foundation/charley-dev/_docs/build-status.md`](foundation/charley-dev/_docs/build-status.md).
 
 **Status key:** 🔴 Not started · 🟡 In progress · 🔵 Blocked/waiting · 🟢 Complete
 
@@ -13,16 +13,16 @@ Rebecca ([notes](meeting-notes/2026-08-13-rebecca-platform-review.md)) and the A
 follow it. The build is audited in
 [`build-status.md`](foundation/charley-dev/_docs/build-status.md) - every figure there was read
 back out of Fabric, not carried forward from a doc. That page is also the single place two
-recurring numbers are maintained: the endpoint registry (**42 registered, 40 bronze tables**)
-and **59% scorecard coverage**.
+recurring numbers are maintained: the endpoint registry (**44 registered, 40 bronze tables,
+2 blocked by Procore 403s**) and **59% scorecard coverage**.
 
 | ID | Deliverable | Phase | Status | Phase 0 hrs | Depends on | Detail |
 |----|-------------|-------|--------|-------------|------------|--------|
 | D1 | Discovery & Architecture Review | 1 - Foundation | 🟢 **Complete** - endpoint inventory generated from the registry, workspace audited, security findings reported | 4 | - | [D1](deliverables/01-discovery-architecture-review.md) |
-| D2 | Procore ETL Validation & Hardening | 1 - Foundation | 🟢 **Complete** - 42 endpoints registered, 40 landing bronze tables (2 blocked by Procore 403s), registry-driven, incremental, tested. **Extraction still runs locally** pending the Key Vault role | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
+| D2 | Procore ETL Validation & Hardening | 1 - Foundation | 🟢 **Complete** - 44 endpoints registered, 40 landing bronze tables (2 blocked by Procore 403s), registry-driven, incremental, tested. **Extraction still runs locally** pending the Key Vault role | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
 | D3 | Sage 100 Ingestion Pipeline | 1 - Foundation | 🔵 **Built & deployed, blocked** - `CD_Sage_Ingest` live and gateway-wired (verified in the Fabric item list 2026-08-19); needs one connection permission grant | 2 | Gateway grant | [D3](deliverables/03-sage100-ingestion.md) |
-| D4 | Core Project Data Model | 1 - Foundation | 🟢 **Complete** - 40 gold tables, Direct Lake star schema, crosswalks resolve project/vendor/cost code | 4 | D2 | [D4](deliverables/04-project-data-model.md) |
-| D5 | Power BI Project Dashboard (Excel replacement) | 2 - Project Intelligence | 🟡 **Built and live** - 12 pages, 180 visuals, 99 measures. Scorecard coverage 59%, gated on source data. [**See the pages**](resources/power-bi/monthly-progress-report/) | 5 | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
+| D4 | Core Project Data Model | 1 - Foundation | 🟢 **Complete** - **53 gold tables published** to the semantic-model contract (was 45; the QC facts were missing from it), Direct Lake star schema, crosswalks resolve project/vendor/cost code | 4 | D2 | [D4](deliverables/04-project-data-model.md) |
+| D5 | Power BI Project Dashboard (Excel replacement) | 2 - Project Intelligence | 🟡 **Built and live** - **two models and two reports now deployed**: `Monthly Progress Report` (12 pages, 180 visuals) over `Affect Project Report` (37 tables, 99 measures), and `Project Quality Plan` (7 pages, 95 visuals) over its own model (19 tables + `_Measures`, 42 measures, 23 relationships). Scorecard coverage 59%, gated on source data. [**See the pages**](resources/power-bi/monthly-progress-report/) | 5 | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
 | D6 | Power Automate - Payments Workflow | 3 - Automation | 🔴 Not started | - | Payments SOP finalized | [D6](deliverables/06-power-automate-payments.md) |
 | D7 | Power Automate - Lien Waiver Workflow | 3 - Automation | 🔴 Not started | - | Lien waiver SOP finalized | [D7](deliverables/07-power-automate-lien-waivers.md) |
 | D8 | Quick-win automation - vendor / insurance / contract list | 1 - Foundation | 🟡 **Delivered inside D5** - vendor and insurance data reaches the Monthly Progress Report; the standalone report was never built | 1 | - | [D8](deliverables/08-vendor-list-automation.md) |
@@ -34,8 +34,8 @@ Four additions that were not in the original Phase 0 scope and were built anyway
 |---|---|
 | **Outbuild ingestion** - 16 endpoints, registry-driven | 🔵 Built and verified, cannot run - token offered by email Aug 11, **in transit** |
 | **Manual-input capture** - the ~40% that lives in no system | 🟡 Both paths built: SharePoint provisioning script, **and** a CSV path that works today with no admin ticket |
-| **PQP (Project Quality Plan)** - the client's 44-sheet QA/QC tracker, collapsed to 9 tables | 🟢 **Data deployed 2026-08-19** - 625 checklist items, 93 statutory gates, and 4,564 live quality records read from Procore. ⚠️ **No semantic model or report yet, so nobody can see it** |
-| **Power Automate - Estimating Setup & Convert to Bidding** | 🟡 **Built, not deployed** - both flows, the provisioning script and 14 offline checks in `power-automate/`. No SharePoint site exists yet |
+| **PQP (Project Quality Plan)** - the client's 44-sheet QA/QC tracker, collapsed to 9 tables | 🟢 **Deployed and visible 2026-08-19** - 26 trades, 625 checklist items, 93 statutory gates (46 TCO / 23 Fire Alarm / 24 Statutory), 101 DOH items and 141 status rows, plus the live Procore facts `fct_QcSubmittal` 2,245 / `fct_QcPunch` 1,469 / `fct_QcNcr` 850. Now readable: semantic model `Project Quality Plan` (19 tables + `_Measures`, 42 measures, 23 relationships) and a 7-page, 95-visual report. 8 `man_Qc*` tables typed and empty |
+| **Power Automate - Estimating Setup & Convert to Bidding** | 🟡 **Built, not deployed** - both flow definitions, the PnP provisioning script and 14 passing offline checks in `power-automate/`. No SharePoint site exists yet, and the `powerautomate-mcp` server currently fails to connect |
 
 ## Commercial terms
 
@@ -68,7 +68,7 @@ Drawn from the Jul 23 warehouse review's agreed ingestion-first sequence. **Deli
 
 | # | Work | Deliverable | Budget | Status |
 |---|---|---|---|---|
-| 1 | **Endpoint inventory** — every Procore (then Sage) endpoint needed to reproduce the Excel report, mapped field by field | D1 | 4 | 🟢 Done — 36 endpoints live, 42 in the registry |
+| 1 | **Endpoint inventory** — every Procore (then Sage) endpoint needed to reproduce the Excel report, mapped field by field | D1 | 4 | 🟢 Done — 44 endpoints registered, 40 landing bronze tables, 2 blocked by Procore 403s |
 | 2 | **Notebook & transformation review** — confirm every required column/ID is pulled and not dropped; move hard-coded credentials to secure storage; design incremental refresh | D2 | 6 | 🟢 Done — and went further: the ETL was rebuilt registry-driven with a test harness, rather than patched |
 | 3 | **Relational bridging** — resolve the vendor ↔ cost-code linkage (invoice as the bridge) so the model slices by both | D4 | 4 | 🟢 Done — `bridge_VendorCostCode` (407 rows), plus project and vendor crosswalks |
 | 4 | **Quick-win automation** — vendor list with insurance and contract info, to demonstrate value early | D8 | 3 | 🟡 Data delivered inside the Monthly Progress Report; standalone report not built |
@@ -90,10 +90,10 @@ rather than absorbing it silently.
 
 | Source | Method | Status | Blocked on | Deliverable |
 |---|---|---|---|---|
-| Procore | API → registry-driven extractor → bronze | 🟡 **36 endpoints live**, production tenant, 40 bronze tables. Extraction runs **locally** and lands files; the Fabric notebook merges them | Azure subscription → Key Vault, to move extraction into Fabric | D2 |
+| Procore | API → registry-driven extractor → bronze | 🟡 **44 endpoints registered, 40 landing bronze tables**, production tenant; 2 blocked by Procore 403s (`punch_item_types`, `schedule`). Extraction runs **locally** and lands files; the Fabric notebook merges them. `cd_01_extract_procore` is **not** in the nightly DAG | One Key Vault role assignment, to move extraction into Fabric | D2 |
 | Sage 100 Contractor | Dataflow Gen2 over the existing on-prem gateway → bronze | 🔵 **`CD_Sage_Ingest` deployed and gateway-wired**, 8 tables incl. the AR/AP line tables the current dataflow discards. First run failed in 5s — the identity cannot see any gateway in the tenant | **One "Can use" grant** on connection `nc-affect-1\sage100con;Affect Group` | D3 |
 | Excel project tracker | Manual today; every field mapped to a source | 🟢 **Replaced** — 12-page Power BI report live over the gold model | — | D4/D5 |
-| Manual-only fields (~40% of the report) | SharePoint lists **or** CSV upload → bronze (two writers, one contract) | 🟡 **Both paths built.** 9 `man_*` tables deployed and empty. CSV path needs no admin ticket and works today | SharePoint provisioning, **or** somebody filling in a template. Plus 4 definition questions | D4 |
+| Manual-only fields (~40% of the report) | SharePoint lists **or** CSV upload → bronze (two writers, one contract) | 🟡 **Both paths built.** `cd_06_land_manual` now creates **17** manual bronze tables (9 original + 8 PQP); every `man_*` is deployed and empty. CSV path needs no admin ticket and works today | SharePoint provisioning, **or** somebody filling in a template. Plus 4 definition questions | D4 |
 | Outbuild | API → registry-driven extractor, 16 endpoints | 🔵 **Built and verified, cannot run.** The **only** milestone source anywhere; 17 of 19 projects have none | `OUTBUILD_API_TOKEN` not issued | D5 |
 | Ramp / ADP / Bluebeam / Navisworks / Outlook / OneDrive | — | 🔴 Future / backlog | — | Future |
 
@@ -166,6 +166,7 @@ resource library, warehouse review, scope call).
 - [ ] 🟡 The six client-satisfaction survey questions (only scores are stored in the workbook)
 - [ ] 🟡 2–3 **real** completed project reports (the file received is a template with demo data)
 - [ ] 🟡 **PQP workbook: 5 verified defects to report to Affect** — four register roll-ups whose `% Complete` can never reach 100%, and two CSI codes Excel destroyed on the only Tier 4 Critical DFOWs — [`analysis/pqp-workbook/`](analysis/pqp-workbook/defects-and-questions.md)
+- [ ] 🟡 **PQP trade vocabulary: 459 of 850 NCRs resolve to no trade.** Procore says "HVAC" / "Sprinkler"; the client workbook says `HVAC_DUCTWORK` / `FIRE_SPRINKLER`. Deliberately **not** guessed — mapping a defect to the wrong trade is worse than leaving it unmapped. Surfaced on the PQP report's Data Quality page; needs one vocabulary decision from Affect
 - [ ] 🟡 **SharePoint site URL and template folder contents** — the Power Automate SOP names both templates but never says what is inside them
 - [ ] 🟡 Payments + lien waiver SOPs finalized (Chris) — blocks D6/D7
 
@@ -198,11 +199,12 @@ time — it is gated on access and one conversation.
 | | Outbuild milestones landed; Completion Variance scored | `OUTBUILD_API_TOKEN` | 2–3 hrs |
 | | Manual input wired silver → gold; Daily Reports scored | 4 definition answers | 3–4 hrs |
 | | **Target: scorecard coverage 59% → ~100%, source coverage 5% → meaningful** | | |
-| **1 — Harden** | DQ persist gap fixed; billed-vs-billed gap explained on the report. `deploy_gold.py` default **already changed to `cd`** | Nothing | 2 hrs |
-| | **`cd_06_land_manual` added to `CD_Master_Pipeline`** - the nightly run currently rebuilds silver without refreshing manual bronze. Harmless while empty; a staleness bug the day somebody types | Nothing | 1 hr |
-| **1 — Make the PQP visible** | Second semantic model + report over the deployed quality data. **The data is live and nobody can see it** | Nothing | 4-6 hrs |
+| **1 — Harden** | DQ persist gap fixed; billed-vs-billed gap explained on the report. `deploy_gold.py` default **already changed to `cd`**, and its hardcoded publish list **already fixed** (45 → 53 tables) | Nothing | 2 hrs |
+| | **`cd_06_land_manual` added to `CD_Master_Pipeline`** - the nightly run currently rebuilds silver and gold without refreshing manual bronze. Harmless while every `man_*` is empty; a silent staleness bug the day somebody enters data. Must land before SharePoint goes live | Nothing | 1 hr |
+| | **`cd_01_extract_procore` added to `CD_Master_Pipeline`** - Procore extraction still runs locally and lands files | Key Vault role | 1 hr |
+| **1 — Finish the PQP** | Model and report are **deployed**. What is left is the trade-vocabulary answer from Affect - 459 of 850 NCRs still resolve to no trade - and wiring the 8 `man_Qc*` intake tables | One answer from Affect | 1-2 hrs |
 | **1 — Go live on folders** | SharePoint site provisioned, both Power Automate flows imported and tested, `dim_Job` built from the Job Register | Site URL + template contents | 2-3 hrs |
-| | Retire the local extraction bridge — ingestion moves into Fabric on a schedule | Azure subscription | 2 hrs |
+| | Retire the local extraction bridge — ingestion moves into Fabric on a schedule | Key Vault role (the subscription and vault now exist) | 2 hrs |
 | **1 — Transfer** | **Mentoring with Rebecca, recorded.** Extractor registry pattern first, then the deploy scripts, then the DQ gate | Scheduling | 3 hrs to start, then ongoing |
 | **2 — Project intelligence** | Report iteration with leadership; real completed-project validation; standalone Vendor & Insurance list if still wanted | Real project data | TBD |
 | **3 — Automation** | D6 payments, D7 lien waivers | SOPs from Chris | Quote per SOP |

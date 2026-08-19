@@ -106,8 +106,8 @@ door, which is a reason to think about it now rather than after it holds live cr
 
 **Remediation.** Stand up one vault for the workspace and adopt `get_secret()` as the single
 accessor. charley-dev does this for its own notebooks
-(`_local/setup_keyvault.py`, `_docs/keyvault.md`); the same vault and the same helper work for
-the existing pipelines with no redesign. Doing it once, in one place, is what stops F1
+(`_local/setup_keyvault.py`, [`keyvault-runbook.md`](keyvault-runbook.md)); the same vault and
+the same helper work for the existing pipelines with no redesign. Doing it once, in one place, is what stops F1
 recurring.
 
 ---
