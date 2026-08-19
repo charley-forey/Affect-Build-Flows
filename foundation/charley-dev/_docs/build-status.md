@@ -39,7 +39,7 @@ notebooks.
 | `CD_Master_Pipeline` | DataPipeline | 5 activities, the nightly DAG |
 | `CD_Sage_Ingest` | Dataflow | **deployed**, bound to the on-prem gateway, inert until the connection grant lands |
 | `Affect Project Report` | SemanticModel | Direct Lake, **37 tables, 99 measures, 45 relationships** |
-| `Monthly Progress Report` | Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks |
+| `Monthly Progress Report` | Report | **12 pages, 180 visuals**, drill-through, 3 bookmarks — [screenshots of the 10 visible pages](../../../resources/power-bi/monthly-progress-report/) |
 
 ### Silver, from our own ingestion
 

@@ -1,12 +1,12 @@
 # D3 — Sage 100 Ingestion Pipeline
 
-**Status:** 🔵 Built and deployed — blocked on one gateway permission grant | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review (per-solution block) | **Target:** Runs the day the grant lands
+**Status:** 🔵 **Built & deployed — blocked on one permission grant** | **Phase:** 1 — Foundation | **Billing:** ~2 hrs in Phase 0; silver transforms to follow | **Target:** Runs the day the grant lands
 
-> **Built, committed and deployed.** `CD_Sage_Ingest` is live in the Fabric workspace `Build`, folder `charley-dev`, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze_Lakehouse`. Eight tables, including the two AR/AP **line** tables (`arivln`, `apivln`) whose pointing columns the existing dataflow explicitly removes — which is where retainage and cost codes live.
+> **`CD_Sage_Ingest` is live** in the Fabric workspace `Build`, folder `charley-dev`, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze_Lakehouse`. Eight tables, including the two AR/AP **line** tables (`arivln`, `apivln`) whose pointing columns the existing dataflow explicitly removes — which is where cost codes and the real retainage live. (Header `retain` is **$0 across all 940 invoices**; a header-sourced report shows zero retainage silently.)
 >
 > **It is inert, not missing.** The first run failed in about five seconds, too fast to be a query: `cforey-c@affect-group.com` cannot see any gateway or connection in the tenant, so the dataflow asks to run through a gateway its runner has no rights on.
 >
-> **The ask is one line.** Whoever administers the on-premises data gateway grants `cforey-c@affect-group.com` the **"Can use"** permission on connection `nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*. No subscription, no vault, no code change — Affect already uses this connection, so nothing new is built. The Sage database is managed by an outside consultant, so the ask may route through them. Detail: [`sage-ingestion.md`](../foundation/charley-dev/_docs/sage-ingestion.md).
+> **The ask is one line.** Whoever administers the on-premises data gateway grants `cforey-c@affect-group.com` the **"Can use"** permission on connection `nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*. No subscription, no vault, no code change — Affect already uses this connection, so nothing new is built. The Sage database is managed by an outside consultant, so the ask may route through them. Detail: [`_docs/sage-ingestion.md`](../foundation/charley-dev/_docs/sage-ingestion.md).
 
 ## Objective
 Sage 100 Contractor data lands in the Fabric Lakehouse on a schedule, replacing the current live SQL queries from Power BI, so accounting data joins the warehouse alongside Procore.

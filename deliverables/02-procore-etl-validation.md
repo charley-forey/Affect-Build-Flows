@@ -1,10 +1,10 @@
 # D2 — Procore ETL Validation & Hardening
 
-**Status:** 🟢 Live against the production tenant | **Phase:** 1 — Foundation | **Billing:** Scoped from D1 review — 6 hrs in Phase 0 | **Target:** Delivered
+**Status:** 🟢 **Live against the production tenant** (2026-08-02) | **Phase:** 1 — Foundation | **Billing:** 6 hrs in Phase 0 | **Target:** ✅ Met
 
-> **Live.** Ingesting Affect's **production** Procore tenant through a 42-endpoint registry and one shared extractor — adding an endpoint is a YAML entry, not a new notebook. 40 bronze tables, 15 typed silver tables, 14,791 rows, **0 rejects**. Incremental where the API verifiably supports it, upsert on the natural key, credentials via `get_secret()`. 12 offline suites run the production Spark SQL through DuckDB with no Fabric and no network.
+> **Delivered, and rebuilt rather than patched.** Ingesting Affect's **production** Procore tenant through a **42-endpoint** registry and one shared extractor — adding an endpoint is a YAML entry, not a new notebook. 40 bronze tables, 15 typed silver tables, 14,791 rows, **0 rejects**. Incremental where the API verifiably supports `filters[updated_at]`, upsert on the natural key, quota-aware, credentials via `get_secret()`. 12 offline suites run the production Spark SQL through DuckDB with no Fabric and no network.
 >
-> **Two live limitations, both external.** Extraction runs **locally** and lands files — the nightly pipeline merges what was last landed and does not call the Procore API — pending one Key Vault role assignment. And `punch_item_types` and `schedule` return **403**. Detail: [`build-status.md`](../foundation/charley-dev/_docs/build-status.md).
+> **Two live limitations, both external.** Extraction runs **locally** and lands files — the nightly pipeline merges what was last landed and does not call the Procore API — pending one Key Vault role assignment ("Key Vault Secrets Officer" on vault `OneLake`; the Azure subscription and the vault themselves now exist). And `punch_item_types` and `schedule` return **403**. Detail: [`_docs/procore-ingestion.md`](../foundation/charley-dev/_docs/procore-ingestion.md) and [`build-status.md`](../foundation/charley-dev/_docs/build-status.md).
 
 ## Objective
 Rebecca's existing Procore → Lakehouse ETL is reviewed, corrected where needed, and hardened into a reliable production pipeline with a known refresh cadence.

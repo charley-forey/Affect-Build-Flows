@@ -36,6 +36,8 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - 🔵 **Six items with Affect**, every one a permission grant or a decision — the largest is now a single Key Vault role assignment. See `dashboard.md` → Blockers
 - ⚠️ **Existing production reporting is stale** — Sage stops Jul 20, Outbuild Jul 14, almost certainly the same gateway issue
 
+A forwardable write-up of the build lives in [`status-update.md`](status-update.md).
+
 ## Engagement structure
 
 Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commercial terms**.
@@ -70,34 +72,45 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 
 | System | Purpose | Integration status |
 |---|---|---|
-| Microsoft Fabric (Lakehouse) | Data warehouse | Live — Rebecca's, plus our isolated `charley-dev` medallion alongside it |
-| Procore | Project management & costing | 🟢 **Live** — 42-endpoint config-driven extractor → `CD_Bronze`, production tenant. 403 on `punch_item_types` / `schedule` |
-| Sage 100 Contractor | Accounting, invoicing, payroll | 🔵 `CD_Sage_Ingest` **deployed** and inert — one gateway permission grant away |
-| Outbuild | Scheduling / milestones | 🔵 Built and verified, cannot run yet — `OUTBUILD_API_TOKEN` offered by email Aug 11, **in transit**. The only milestone source anywhere |
+| Microsoft Fabric | Data platform | **Live.** Rebecca's original warehouse, untouched; our `charley-dev` medallion alongside it — 3 lakehouses, 8 notebooks, a nightly pipeline |
+| Procore | Project management & costing | 🟢 **42 endpoints live**, registry-driven, production tenant → bronze. Extraction currently runs locally pending Key Vault. 403 on `punch_item_types` / `schedule` |
+| Sage 100 Contractor | Accounting, invoicing, payroll | 🔵 `CD_Sage_Ingest` **deployed and gateway-wired**, 8 tables. Blocked on one connection permission grant |
+| Outbuild | Scheduling & milestones | 🔵 16 endpoints **built and verified**, cannot run — `OUTBUILD_API_TOKEN` offered by email Aug 11, **in transit**. The **only** milestone source anywhere |
 | Azure Key Vault | Secret storage for ingestion | 🔵 Vault `OneLake` **exists**; RBAC-mode, and our identity needs one role — *Key Vault Secrets Officer* — before a secret can be written |
-| Ramp | Vendor payments | Not integrated |
-| ADP | Payroll | Not integrated |
-| Bluebeam / Navisworks | Design & drawings | Not integrated |
-| Outlook / OneDrive | Email & document management | Not integrated |
-| Power BI | Reporting | In use (live Sage SQL queries today) |
-| Power Automate | Workflow automation | 🟡 **In progress** — Estimating Setup and Convert to Bidding. Payments and lien waivers still gated on Chris's SOPs |
+| SharePoint | The ~40% of the report that lives in no system, plus estimating/bidding job folders | 🟡 Provisioning scripts written — manual-input lists, the 8 PQP intake lists, and the `Job Register`. A CSV path works today with no admin ticket. **No site exists yet** |
+| Power BI | Reporting | 🟢 **Monthly Progress Report live** — 12 pages, 180 visuals, Direct Lake over the gold model. The PQP report is not built yet |
+| Power Automate | Workflow automation | 🟡 **Built, not deployed** — Estimating Setup and Convert to Bidding in `power-automate/`. Payments and lien waivers still gated on Chris's SOPs |
+| Ramp | Vendor payments | 🔴 Not integrated — API docs vendored in `resources/ramp/` |
+| ADP | Payroll | 🔴 Not integrated |
+| Bluebeam / Navisworks | Design & drawings | 🔴 Not integrated |
+| Outlook / OneDrive | Email & document management | 🔴 Not integrated |
 | Drones | Potential future | — |
 
 ## Files
 
-- `dashboard.md` — **start here**: rollup of all deliverables, integration status, blockers, hours summary
-- `foundation/charley-dev/` — **the platform**. `_docs/solution-guide.md` explains what it is and how it works; `_docs/build-status.md` is what is live, measured out of Fabric; `_docs/assessment.md` is the independent audit
-- `updates/` — client-facing status updates written to be forwarded (`2026-08-13-executive-update.md`)
+**Read in this order:**
+
+| # | File | What it is |
+|---|---|---|
+| 1 | [`status-update.md`](status-update.md) | **The team update.** What was built, what it found, what needs verification, what is blocked, what comes next. Written to be handed over as-is |
+| 2 | [`dashboard.md`](dashboard.md) | Deliverable rollup, integration status, hours, blockers, **roadmap** |
+| 3 | [`foundation/charley-dev/_docs/solution-guide.md`](foundation/charley-dev/_docs/solution-guide.md) | How the platform actually works — the engineering read |
+| 4 | [`foundation/charley-dev/_docs/assessment.md`](foundation/charley-dev/_docs/assessment.md) | Independent audit of the above, checked against the live workspace |
+
+**Everything else:**
+
 - `hours-log.md` — append-only time ledger (billing/validation source of truth) + invoicing record
-- `deliverables/` — one file per deliverable (D1–D8): objective, scope, key data, integration approach, tasks, acceptance criteria, files. New deliverables copy `_template.md`.
-- `analysis/excel-tracker/` — **full teardown of the client's Monthly Progress Report workbook**: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and 14 verified defects
-- `analysis/pqp-workbook/` — **teardown of the QA/QC tracker (Project Quality Plan)**: 5 verified defects, the 44-sheets-to-9-tables structure, and the open questions for Affect
-- `power-automate/` — **the estimating/bidding folder automation**: SharePoint provisioning script, both flow definitions, and the offline test suite
-- `src/` — **the pipeline code**. `src/procore/` takes RFIs & submittals from the Procore API through bronze → silver → gold and runs end to end today; `src/README.md` explains the layers and how to deploy into Fabric
-- `powerbi/` — the build kit: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan, and `AffectProjectReport.pbip` (the TMDL model over the pipeline's gold tables)
-- `resources/` — curated documentation and links, one folder per solution (Procore, Sage 100 Contractor, Fabric, Power BI, Power Automate, Outbuild, Ramp, ADP)
-- `.mcp.json` — Fabric MCP server config for Claude Code. Access is granted and it reads the live workspace; used for exploration (`execute_sql_query` / `execute_dax_query`) while item creation stays on the committed REST deploy path. See `resources/microsoft-fabric/`
-- `call-prep/2026-07-23-warehouse-review.md` — agenda, findings summary, and the information request for the warehouse review call
+- `deliverables/` — one file per deliverable (D1–D8): objective, scope, key data, integration approach, tasks, acceptance criteria. New deliverables copy `_template.md`
+- **`foundation/`** — **the build.** A read-only backup of the whole Fabric `Build` workspace, plus `foundation/charley-dev/`: our self-contained platform — ingestion, medallion SQL, lakehouse and semantic-model definitions, the report, the orchestration DAG, the offline test harness, and `_docs/` (`solution-guide.md` first; `keyvault-runbook.md` for the vault position)
+- `updates/` — client-facing status updates written to be forwarded (`2026-08-13-executive-update.md`)
+- `power-automate/` — **the estimating/bidding job-folder automation**: SharePoint provisioning script, both flow definitions, and the offline test suite. Built, not yet deployed
+- `analysis/excel-tracker/` — full teardown of the client's Monthly Progress Report workbook: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and the 14 verified defects
+- `analysis/pqp-workbook/` — teardown of the QA/QC tracker (Project Quality Plan): 5 verified defects, the 44-sheets-to-9-tables structure, and the open questions for Affect
+- `src/procore/` — the original RFI/submittal reference pipeline (Jul 26). Superseded by `foundation/charley-dev/` but kept: it is the smallest complete example of the pattern, and a good teaching artifact
+- `powerbi/` — the design kit that preceded the build: semantic model, DAX measure library, report spec, theme, manual-input template, phased build plan
+- `resources/` — vendored documentation, one folder per solution. Includes the **full Sage 100 Contractor and Outbuild API doc sets** as markdown, a Procore endpoint cheatsheet verified against the 2,111-path OAS, and [`resources/power-bi/monthly-progress-report/`](resources/power-bi/monthly-progress-report/) — **the built dashboard, page by page**, if you want to see the deliverable before reading how it was built
+- `.mcp.json` — Fabric MCP server config for Claude Code (live workspace exploration; see `resources/microsoft-fabric/`)
 - `meeting-notes/` — notes from calls and meetings (discovery Jul 21, warehouse review Jul 23, **scope & terms Jul 24**, **platform review Aug 13**)
+- `call-prep/` — agendas and information requests prepared for calls
 - `internal/` — not client-facing: strategy, communications log, and sent-email drafts
 - `YY-000 PROJECT NAME_InternalReport_YYMMDD.xlsx` — the client's reporting template (the spec for D5)
