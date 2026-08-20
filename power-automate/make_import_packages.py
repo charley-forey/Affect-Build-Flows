@@ -227,7 +227,19 @@ def main() -> int:
         import io
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+            # TWO COPIES OF THE SAME MANIFEST, and this is not belt-and-braces.
+            #
+            # The import UI reads the ROOT manifest.json to render the review screen - it
+            # showed the flow's name, description and "Create as new" correctly from it. The
+            # import ITSELF then reads a second one and fails without it:
+            #
+            #   MissingPackageManifest: The package manifest file 'manifest.json' under
+            #   'Microsoft.Flow' folder missing.
+            #
+            # Two code paths, two locations, same file. Writing the byte-identical content to
+            # both is the whole fix; the content was never wrong.
             z.writestr("manifest.json", json.dumps(man, indent=2))
+            z.writestr("Microsoft.Flow/manifest.json", json.dumps(man, indent=2))
             z.writestr(
                 f"Microsoft.Flow/flows/{flow_id(stem)}/definition.json",
                 json.dumps(resource, indent=2),
@@ -239,6 +251,7 @@ def main() -> int:
         with zipfile.ZipFile(io.BytesIO(buf.getvalue())) as z:
             names = set(z.namelist())
             expected = {"manifest.json",
+                        "Microsoft.Flow/manifest.json",
                         f"Microsoft.Flow/flows/{flow_id(stem)}/definition.json"}
             if names != expected:
                 problems.append(f"{stem}: package holds {sorted(names)}")
