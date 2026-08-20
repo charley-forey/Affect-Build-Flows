@@ -52,7 +52,11 @@ OUT_META = MANUAL_DIR / "CD_Manual_Ingest.Dataflow" / "queryMetadata.json"
 
 SITE_TITLE = "Affect Project Reporting"
 LOOKUP_LIST = "CD Projects"
-SITE_URL = "https://REPLACE-ME.sharepoint.com/sites/AffectProjectReporting"
+# Bound 2026-08-20. Note the _main suffix: SharePoint appended it because a first attempt
+# at this site was created by SPSiteManager, came out half-provisioned - no lists at all,
+# not even the default Documents library, so every write returned 502 - and still holds the
+# unsuffixed name. The site below is the working one, created through the SharePoint UI.
+SITE_URL = "https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main"
 
 # THE SECOND SITE. The Job Register lives on the BUILD site, not the reporting one. It is
 # created and driven by power-automate/provision-sharepoint-build.ps1 and the two job flows,
@@ -65,7 +69,10 @@ SITE_URL = "https://REPLACE-ME.sharepoint.com/sites/AffectProjectReporting"
 # templates as well as this dataflow, so adding it there would create a duplicate
 # "CD Job Register" list on the WRONG site - which the flows would ignore while it sat there
 # collecting nothing, looking exactly like a register nobody had used yet.
-SITE_BUILD = "https://REPLACE-ME.sharepoint.com/sites/BUILD"
+# Bound 2026-08-20. Not a site called BUILD - Affect reused an existing site rather than
+# creating a dedicated one, and the two job flows point at it. This is where Job Register
+# lives, which is the only list on this site the dataflow reads.
+SITE_BUILD = "https://affectbuildllc.sharepoint.com/sites/AFFECTBUILD1"
 JOB_REGISTER_LIST = "Job Register"
 JOB_REGISTER_QUERY = "cd_bronze_man_job_register"
 

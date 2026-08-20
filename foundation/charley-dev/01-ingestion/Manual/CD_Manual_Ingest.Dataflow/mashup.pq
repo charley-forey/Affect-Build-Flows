@@ -34,8 +34,8 @@ section Section1;
 // Automate job flows, not by this platform. Both are placeholders; both must be set.
 // ============================================================================
 
-SITE = "https://REPLACE-ME.sharepoint.com/sites/AffectProjectReporting";
-SITE_BUILD = "https://REPLACE-ME.sharepoint.com/sites/BUILD";
+SITE = "https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main";
+SITE_BUILD = "https://affectbuildllc.sharepoint.com/sites/AFFECTBUILD1";
 
 // Where every query below lands. Referenced by DefaultOutputDestinationSettings at the top
 // of this file; without it the dataflow parses and then fails at run with an unresolved
