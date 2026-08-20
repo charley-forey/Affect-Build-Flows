@@ -8,6 +8,7 @@ imported by hand once the client confirms the site URL and the template contents
 
 ```
 RUNBOOK.md                       Ordered import steps. BOTH SharePoint sites, and Fabric.
+make_import_packages.py          Wraps flows/*.json into importable .zip packages.
 provision-sharepoint-build.ps1   PnP PowerShell. Site, libraries, template trees, Job Register.
 flows/EstimatingSetup.json       New job  ->  01 ESTIMATING/E-YY-###-Project Name
 flows/ConvertToBidding.json      E-YY-### ->  00 PROJECTS/YY-###-Project Name
@@ -238,9 +239,16 @@ site's script came to be a footnote below rather than a step - and provisioning 
 site is the mistake that costs the most, because nothing about it fails visibly.
 
 The short version: register a PnP Entra app (once per tenant, needs an admin), set the site
-URLs, dry-run then `-Apply` both provisioning scripts, paste the two flow definitions into
-the Power Automate designer, re-check trigger concurrency is 1, publish `CD_Manual_Ingest`,
-and smoke-test with `Test / Job: "Alpha"`.
+URLs, dry-run then `-Apply` both provisioning scripts, build the import packages with
+`python make_import_packages.py --site-url ...` and import each through **My flows → Import →
+Import Package (Legacy)**, re-check trigger concurrency is 1, publish `CD_Manual_Ingest`, and
+smoke-test with `Test / Job: "Alpha"`.
+
+**`flows/*.json` cannot be imported directly.** They are workflow definitions, which is the
+right thing to keep in git and not a thing Power Automate accepts — its Import menu offers
+only a Dataverse solution or a legacy package. `make_import_packages.py` builds the legacy
+package. The admin consent above is for PnP and the SharePoint provisioning; importing a
+package needs no consent at all.
 
 Run `python power-automate/test_flows.py` after any edit to the definitions.
 

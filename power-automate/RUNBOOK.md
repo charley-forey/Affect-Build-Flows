@@ -29,11 +29,28 @@ PnP.PowerShell 2.x **removed** the built-in multi-tenant app, so `Connect-PnPOnl
 -Interactive` on its own now fails with `ClientId is required`. The registration prints a
 ClientId — keep it, every `Connect-PnPOnline` below needs it.
 
-It asks a tenant admin to consent. **This is the only admin gate in the entire runbook.** If
-you are not one, someone who is has to approve it before anything else can start.
+It asks a tenant admin to consent. **This is the only admin gate in the entire runbook**, and
+it gates *provisioning* only. Importing the flows (step 4) is an ordinary user action and needs
+no consent — see "If you cannot get the PnP consent" below if you are blocked here.
 
 > Commands are one line each on purpose. A copied backslash is not a PowerShell line
 > continuation and fails with a confusing parse error.
+
+### If you cannot get the PnP consent
+
+PnP is a convenience, not a dependency. Nothing in the flows or the dataflow needs it — it
+only creates SharePoint structure faster and more repeatably than clicking.
+
+| Blocked on | Do instead |
+|---|---|
+| **BUILD site** (step 2) | Build it by hand: a Team site, two document libraries (`01 ESTIMATING`, `00 PROJECTS`), and one list, `Job Register`, with the 12 columns in README.md's *Contract* table. That is perhaps 20 minutes, and it is the only hand-work worth doing. |
+| **Reporting site** (step 3) | **Do not do this by hand.** 17 lists and 140 columns is hours of clicking and every column name must match the `man_*` tables exactly, with no error if one does not — the column simply stops arriving and the report shows a blank tile. Get the consent, or keep using the CSV path (`Files/_manual/*.csv` + `cd_06_land_manual`), which works today and needs nobody. |
+| **Importing the flows** (step 4) | Nothing — this never needed consent. Go straight there. |
+
+If you build `Job Register` by hand, get `Stage` right: a **Choice** column with exactly
+`Requested`, `Estimating`, `Bidding`, `Failed`, defaulting to `Requested`. The flows branch on
+those four strings. And turn on **versioning** — that is what makes every field change record
+a who and a when.
 
 ---
 
@@ -47,7 +64,7 @@ purpose — this repo never guesses a tenant.
 | `SITE_URL` | `foundation/charley-dev/_local/make_sharepoint.py` | Reporting |
 | `SITE_BUILD` | `foundation/charley-dev/_local/make_sharepoint.py` | BUILD |
 | `$BUILD_SITE_URL` | `power-automate/provision-sharepoint-build.ps1` | BUILD |
-| `SiteUrl` → `defaultValue` | `power-automate/flows/EstimatingSetup.json` and `ConvertToBidding.json` | BUILD |
+| `--site-url` | passed to `power-automate/make_import_packages.py` (step 4) — **not** edited into `flows/*.json` | BUILD |
 
 **`provision-sharepoint.ps1`, `mashup.pq` and `queryMetadata.json` are GENERATED.** Do not
 edit them. Set the two constants in `make_sharepoint.py` and regenerate:
@@ -107,29 +124,57 @@ lookup list with no projects in it and every intake list unusable.
 ## 4. Import the two flows
 
 `flows/*.json` are **workflow definitions** — `$schema`, `parameters`, `triggers`, `actions`,
-`outputs`. They are not solution `.zip` packages, so there is no "import solution" button that
-takes them. Two routes:
+`outputs`. That is deliberately what lives in git: it is what you read in a diff and what
+`test_flows.py` asserts against. It is **not** something Power Automate will take as-is.
 
-- **Designer, for getting running now.** Power Automate → *My flows* → *New* → *Automated*,
-  pick the SharePoint trigger (*When an item is created* for EstimatingSetup, *When an item is
-  created or modified* for ConvertToBidding), then paste the definition into the designer's
-  code view.
-- **Solution package, if these are going into ALM.** Wrap each definition in a
-  `Microsoft.Flow/flows` resource inside a solution and import that. Take this route if the
-  flows will ever be moved between environments — retrofitting it later means rebuilding both.
+*My flows → Import* offers exactly two doors, and neither accepts a bare definition:
 
-Then, for each flow:
+| | |
+|---|---|
+| **Import Solution (Dataverse)** | Wants a Dataverse solution `.zip` — needs a solution, a publisher, and a Dataverse database in the target environment |
+| **Import Package (Legacy)** | Wants a legacy package `.zip` — needs none of that |
 
-1. Set the **`SiteUrl`** parameter to the same URL as step 1.
-2. Check **`EstimatingTemplate`** and **`ProjectTemplate`** match the real folder names. See
-   the open questions at the bottom — one of them almost certainly does not.
-3. **Re-verify trigger concurrency.** Open the trigger → Settings → Concurrency Control → on,
-   degree of parallelism **1**. It is in the committed definitions, but the designer can drop
-   it on import, and this is the single most consequential setting in the solution: without it
-   two jobs get issued the same number and nothing anywhere errors.
-4. Set the connection to run as a **service account**, not a named person. The flows run as
-   whoever owns the SharePoint connection, and they break when that person leaves.
-   `RequestedBy` still records the actual requester either way.
+Build the second:
+
+```bash
+cd power-automate
+python make_import_packages.py --site-url https://<tenant>.sharepoint.com/sites/BUILD
+```
+
+That writes `dist/EstimatingSetup.zip` and `dist/ConvertToBidding.zip`.
+
+> **The site URL is baked in at build time, and that is not a convenience.** `SiteUrl` is a
+> *definition* parameter, not one of the "flow parameters" the designer exposes — **there is
+> no way to edit it in the UI after import**. A package built with the placeholder imports
+> cleanly, looks finished, and every run fails against a host called `REPLACE-ME`. The script
+> refuses to build without `--site-url` for that reason.
+
+Then, for each package: **My flows → Import → Import Package (Legacy)**, upload the `.zip`,
+and in *Review Package Content*:
+
+1. The **flow** shows as *Create as new*. Leave it.
+2. The **SharePoint connection** shows an import setup action — pick an existing connection
+   or create one. A connection is a credential, so it cannot travel in a package.
+3. Import, then **turn the flow on** — imported flows arrive off.
+
+Afterwards, on each flow:
+
+- **Re-verify trigger concurrency.** Trigger → Settings → Concurrency Control → on, degree of
+  parallelism **1**. It is in the definition and it survives packaging (`test_flows.py`
+  asserts both), but confirm it on the live flow: this is the single most consequential
+  setting here, and without it two jobs get issued the same number with nothing erroring.
+- **Check `EstimatingTemplate` and `ProjectTemplate`** match the real folder names. See the
+  open questions at the bottom — one of them almost certainly does not.
+- **Own the connection with a service account**, not a named person. The flows run as whoever
+  owns the SharePoint connection and break when that person leaves. `RequestedBy` still
+  records the actual requester either way.
+
+To change the site URL later, rebuild the package with the new `--site-url` and re-import as
+a new flow. Editing the imported flow in the designer will not reach that parameter.
+
+**If ALM is the destination**, wrap the same definitions in a Dataverse solution instead —
+that is the route that moves flows between environments, and retrofitting it later means
+rebuilding both flows. The legacy package is the right choice for getting running now.
 
 ---
 
