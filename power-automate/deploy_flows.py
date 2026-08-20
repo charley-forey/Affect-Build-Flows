@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import subprocess
 import sys
 import urllib.error
@@ -60,10 +61,31 @@ FLOWS_TO_CREATE = {
 }
 
 
+def az() -> str:
+    """The full path to the Azure CLI.
+
+    Resolved rather than spelled "az", because on Windows the CLI is `az.cmd` - a batch
+    file, not an executable - and CreateProcess cannot launch one from a bare name. The
+    failure is FileNotFoundError [WinError 2] out of subprocess, which reads like the script
+    is missing rather than the interpreter for the thing it is calling. shutil.which honours
+    PATHEXT, so it finds az.cmd on Windows and plain az everywhere else.
+
+    The alternative, shell=True, would also work and is worse: it puts the resource URL
+    through a shell that then has opinions about the characters in it.
+    """
+    found = shutil.which("az")
+    if not found:
+        raise SystemExit(
+            "the Azure CLI ('az') is not on PATH.\n"
+            "Install it, or run this from a shell where `az --version` works."
+        )
+    return found
+
+
 def token() -> str:
     """A Power Automate token from the CLI session you are already signed in to."""
     result = subprocess.run(
-        ["az", "account", "get-access-token", "--resource", RESOURCE,
+        [az(), "account", "get-access-token", "--resource", RESOURCE,
          "--query", "accessToken", "-o", "tsv"],
         capture_output=True, text=True,
     )

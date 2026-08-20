@@ -366,6 +366,22 @@ def test_deploy_script_substitutes_the_site() -> None:
         assert "description" not in body
     check("deploy_flows.py builds a definition with the site URL and concurrency intact")
 
+    # The Azure CLI is resolved to a full path, never invoked as a bare "az".
+    #
+    # On Windows the CLI is az.cmd - a batch file - and CreateProcess cannot launch one from
+    # a bare name. subprocess then raises FileNotFoundError [WinError 2], which reads like
+    # THIS script is missing rather than the thing it is calling. It cost a round trip.
+    try:
+        resolved = df.az()
+        assert Path(resolved).exists(), f"az() returned {resolved!r}, which does not exist"
+        assert resolved != "az", "az() must resolve a path, not return the bare name"
+    except SystemExit:
+        # No Azure CLI on this machine. That is a legitimate state, and raising SystemExit
+        # with an explanation is exactly the required behaviour - the bug was raising
+        # FileNotFoundError from inside subprocess instead.
+        pass
+    check("the Azure CLI is resolved to a full path, so az.cmd launches on Windows")
+
 
 def main() -> int:
     test_both_flows_parse()
