@@ -229,7 +229,7 @@ def test_ps1_provisions_every_column_the_flows_write() -> None:
     # column arrives, and a missing one never errors.
     import provision_build_site as pbs  # noqa: PLC0415
 
-    python_side = {name for name, _, _ in pbs.COLUMNS}
+    python_side = {name for name, _ in pbs.COLUMNS}
     assert python_side == provisioned, (
         "provision_build_site.py and provision-sharepoint-build.ps1 disagree.\n"
         f"  only in the PS1:    {sorted(provisioned - python_side)}\n"
