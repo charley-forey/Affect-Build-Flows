@@ -101,7 +101,9 @@ def token() -> str:
     return result.stdout.strip()
 
 
-def call(method: str, path: str, tok: str, body: dict | None = None) -> dict:
+def try_call(method: str, path: str, tok: str,
+             body: dict | None = None) -> tuple[int, dict | str]:
+    """(status, parsed body) or (status, error text). Never raises on an HTTP error."""
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(
         f"{API}{path}", data=data, method=method,
@@ -110,12 +112,18 @@ def call(method: str, path: str, tok: str, body: dict | None = None) -> dict:
     try:
         with urllib.request.urlopen(req) as response:
             raw = response.read()
-            return json.loads(raw) if raw else {}
+            return response.status, (json.loads(raw) if raw else {})
     except urllib.error.HTTPError as exc:
-        detail = exc.read().decode(errors="replace")
+        return exc.code, exc.read().decode(errors="replace")
+
+
+def call(method: str, path: str, tok: str, body: dict | None = None) -> dict:
+    status, payload = try_call(method, path, tok, body)
+    if status >= 400:
         # The API's errors are specific and worth surfacing whole. The package importer's
         # were not, which is the reason this file exists.
-        raise SystemExit(f"{method} {path}\n  HTTP {exc.code}\n  {detail}") from exc
+        raise SystemExit(f"{method} {path}\n  HTTP {status}\n  {payload}")
+    return payload  # type: ignore[return-value]
 
 
 def environment(tok: str, wanted: str | None) -> str:
@@ -133,19 +141,37 @@ def environment(tok: str, wanted: str | None) -> str:
     return default["name"]
 
 
-def connections_path(env: str) -> str:
-    """The SharePoint connections in one environment.
+def connection_paths(env: str) -> list[tuple[str, str]]:
+    """(label, path) endpoints that might list connections, likeliest first.
 
-    The OData filter value carries spaces and single quotes, and urllib refuses outright to
-    send a URL containing a raw space - `InvalidURL: URL can't contain control characters`,
-    raised before any request is made, which reads like a malformed endpoint rather than an
-    unescaped argument.
+    WHY A LIST RATHER THAN THE ONE RIGHT ANSWER.
 
-    So the VALUE is percent-encoded and the `$filter` key is left literal: the API wants the
-    OData spelling, and urlencode() would turn the key itself into %24filter.
+    The api-scoped spelling - /providers/Microsoft.PowerApps/apis/shared_sharepointonline
+    /connections - is the one the documentation shows, and against this tenant it 404s with
+    "No HTTP resource was found that matches the request URI". That endpoint lives on the
+    Power Apps host; this script talks to api.flow.microsoft.com because that is where the
+    flows are created, and the two hosts do not serve the same routes.
+
+    Each wrong guess costs a full round trip through somebody else's tenant, because there
+    is no way to test this from here. Three candidates cost one. The first that answers 200
+    wins and is named in the output, so the answer is recorded rather than rediscovered.
+
+    Note that the two ProcessSimple spellings need no $filter at all - the environment is
+    already in the path - which sidesteps the OData encoding entirely. Only the Power Apps
+    spelling needs it, and its value is percent-encoded because urllib refuses to send a URL
+    containing a raw space.
     """
     flt = quote(f"environment eq '{env}'", safe="")
-    return f"{SHAREPOINT_API}/connections?api-version={API_VERSION}&$filter={flt}"
+    return [
+        ("ProcessSimple, environment-scoped",
+         f"/providers/Microsoft.ProcessSimple/environments/{env}"
+         f"/connections?api-version={API_VERSION}"),
+        ("ProcessSimple, api-scoped",
+         f"/providers/Microsoft.ProcessSimple/environments/{env}"
+         f"/apis/shared_sharepointonline/connections?api-version={API_VERSION}"),
+        ("PowerApps, api-scoped (documented; 404s on api.flow.microsoft.com)",
+         f"{SHAREPOINT_API}/connections?api-version={API_VERSION}&$filter={flt}"),
+    ]
 
 
 def sharepoint_connection(tok: str, env: str) -> tuple[str, str]:
@@ -157,12 +183,38 @@ def sharepoint_connection(tok: str, env: str) -> tuple[str, str]:
     somebody's personal connection and a service account is exactly the choice that should
     not be made quietly.
     """
-    found = call("GET", connections_path(env), tok).get("value", [])
+    every: list[dict] = []
+    attempts: list[str] = []
+    for label, path in connection_paths(env):
+        status, payload = try_call("GET", path, tok)
+        if status == 200 and isinstance(payload, dict):
+            every = payload.get("value", [])
+            print(f"  connections endpoint: {label}")
+            break
+        attempts.append(f"    {status}  {label}")
+    else:
+        raise SystemExit(
+            "could not find the connections endpoint. Tried:\n"
+            + "\n".join(attempts)
+            + "\n\nThe flows can still be created - a connection is only needed to bind "
+              "them.\nCreate them without one by passing --connection <name>, taking the "
+              "name from\nthe URL of the connection in Power Automate -> Connections."
+        )
+
+    # Filtered here rather than in the query. Two of the three endpoints above are already
+    # environment-scoped and take no $filter, and an environment holds a handful of
+    # connections - so client-side is both simpler and one less thing to get wrong.
+    found = [c for c in every
+             if "shared_sharepointonline" in str(c.get("properties", {}).get("apiId", ""))]
     if not found:
+        others = {str(c.get("properties", {}).get("apiId", "")).rsplit("/", 1)[-1]
+                  for c in every}
         raise SystemExit(
             "no SharePoint connection exists in this environment.\n"
-            "Create one first: Power Automate -> Connections -> New connection ->\n"
-            "SharePoint, and sign in as the account the flows should run as."
+            + (f"Connections that DO exist: {', '.join(sorted(others))}\n" if others else "")
+            + "Create one: Power Automate -> Connections -> New connection -> SharePoint,\n"
+              "signed in as the account the flows should run as - a service account rather\n"
+              "than a person, because the flows break when that person leaves."
         )
     first = found[0]
     if len(found) > 1:
@@ -186,6 +238,10 @@ def main() -> int:
     parser.add_argument("--site-url", help="the BUILD site, e.g. "
                                            "https://contoso.sharepoint.com/sites/BUILD")
     parser.add_argument("--environment", help="environment id; default is your default one")
+    parser.add_argument("--connection",
+                        help="SharePoint connection name, to skip the lookup. Take it from "
+                             "the URL of the connection in Power Automate -> Connections - "
+                             "the last segment, which looks like a GUID with no dashes")
     parser.add_argument("--apply", action="store_true", help="actually create the flows")
     args = parser.parse_args()
 
@@ -201,7 +257,10 @@ def main() -> int:
     env = environment(tok, args.environment)
     print(f"environment: {env}")
 
-    conn_name, conn_display = sharepoint_connection(tok, env)
+    if args.connection:
+        conn_name, conn_display = args.connection, "(given on the command line)"
+    else:
+        conn_name, conn_display = sharepoint_connection(tok, env)
     print(f"connection:  {conn_display}  ({conn_name})")
     print(f"site:        {args.site_url or '(not set - required for --apply)'}\n")
 
