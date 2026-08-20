@@ -57,7 +57,13 @@ def find_env() -> Path | None:
             return candidate
     return None
 
-DEFAULT_VAULT = "kv-affect-charleydev"
+# The vault the platform actually uses. Not the one _docs/keyvault-runbook.md named until
+# 2026-08-19: that was `OneLake` in subscription 0bee26ab, which this account cannot read
+# (403, no role assignment). AffectKeyVault lives in resource group Affect_Data of
+# subscription 73932b34 and already holds OutbuildToken, and cforey-c@affect-group.com has
+# Key Vault Administrator on the resource group - so nothing here needs a new grant.
+DEFAULT_VAULT = "AffectKeyVault"
+DEFAULT_RESOURCE_GROUP = "Affect_Data"
 LOCATION = "eastus"
 
 # Allow-list, not "everything in .env". A vault is a shared surface; what goes in it is a
@@ -65,9 +71,17 @@ LOCATION = "eastus"
 PUSH = ["PROCORE_CLIENT_ID", "PROCORE_CLIENT_SECRET", "PROCORE_COMPANY_ID"]
 NEVER_PUSH = ["FABRIC_PASSWORD", "FABRIC_EMAIL"]
 
-# Key Vault secret names cannot contain underscores.
-def kv_name(env_name: str) -> str:
-    return env_name.replace("_", "-").lower()
+# Key Vault secret names cannot contain underscores. This MUST agree with the read side -
+# fabric_common.kv_secret_name - or a secret gets written under a name nothing looks up.
+# Imported rather than restated so the two cannot drift; the fallback keeps this script
+# runnable from a checkout where 00-platform/lib is not on sys.path.
+try:
+    import sys as _sys
+    _sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "00-platform" / "lib"))
+    from fabric_common import kv_secret_name as kv_name  # noqa: F401
+except ImportError:  # pragma: no cover
+    def kv_name(env_name: str) -> str:
+        return env_name.replace("_", "-").lower()
 
 
 def az(*args: str, check: bool = True) -> subprocess.CompletedProcess:
@@ -98,9 +112,22 @@ def ensure_vault(vault: str, resource_group: str, apply: bool) -> str:
         print(f"  vault {vault} exists -> {uri}")
         return uri
 
+    # ARM could not see it, which is NOT the same as it being absent. `az keyvault show`
+    # is a management-plane call scoped to the subscriptions in the local az profile, and
+    # AffectKeyVault lives in one this profile has never been logged into. The data plane
+    # resolves the vault by DNS and authorises from the inherited role, so it answers
+    # correctly where ARM cannot. Without this check, --apply would try to CREATE a second
+    # vault with the same name in the wrong subscription.
+    data_probe = az("keyvault", "secret", "list", "--vault-name", vault,
+                    "--query", "[].name", "-o", "tsv", check=False)
+    if data_probe.returncode == 0:
+        uri = f"https://{vault.lower()}.vault.azure.net/"
+        print(f"  vault {vault} exists (visible on the data plane only) -> {uri}")
+        return uri
+
     print(f"  vault {vault} does not exist")
     if not apply:
-        return f"https://{vault}.vault.azure.net/"
+        return f"https://{vault.lower()}.vault.azure.net/"
 
     if not resource_group:
         raise SystemExit(

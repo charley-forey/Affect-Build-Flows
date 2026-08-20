@@ -47,26 +47,43 @@ class Settings:
         return f"{self.base_url.rstrip('/')}/oauth/token"
 
 
-def get_secret(name: str) -> str:
-    """Read a secret from Fabric's Key Vault binding, falling back to the environment.
+def get_secret(name: str, vault_env: str = "AFFECT_KEYVAULT_URL") -> str:
+    """Read a secret from Key Vault inside Fabric, from the environment locally.
 
     Fixes defect #1 (credentials hard-coded in a notebook cell). There is exactly one
     function that produces a credential, so there is no second place for one to hide.
+
+    Two things the first version got wrong, both of which meant this could never have
+    worked against a real vault:
+
+    - It passed `name` straight to Key Vault. Secret names cannot contain underscores,
+      so `PROCORE_CLIENT_ID` is not a legal secret name; `setup_keyvault.py` writes
+      `procore-client-id`. The translation lives in fabric_common.kv_secret_name.
+    - It fell through to os.environ when the vault lookup did not fire, so a
+      misconfigured vault read a credential from somewhere else and reported success.
+      Inside Fabric this now fails closed.
+
+    fabric_common is imported inside the Fabric branch, not at module scope: it ships to
+    the same Files/lib directory in the lakehouse, but src/procore/run_local.py puts only
+    src/procore on sys.path. Locally that branch never runs, so the import never happens.
     """
     try:
         import notebookutils  # type: ignore[import-not-found]
-
-        vault = os.environ.get("PROCORE_KEYVAULT_URL")
-        if vault:
-            return notebookutils.credentials.getSecret(vault, name)
     except ImportError:
-        pass  # not running inside Fabric
+        notebookutils = None  # not running inside Fabric
+
+    if notebookutils is not None:
+        from fabric_common import KEYVAULT_URL, kv_secret_name
+
+        vault = os.environ.get(vault_env) or KEYVAULT_URL
+        return notebookutils.credentials.getSecret(vault, kv_secret_name(name))
 
     value = os.environ.get(name)
     if not value:
         raise RuntimeError(
-            f"Secret {name!r} not found. Set it in Key Vault (and PROCORE_KEYVAULT_URL) "
-            f"or as an environment variable. See config/settings.example.env."
+            f"Secret {name!r} not found. Export it locally (see "
+            f"config/settings.example.env), or run inside Fabric where it is read from "
+            f"Key Vault. See charley-dev/_docs/keyvault-runbook.md."
         )
     return value
 

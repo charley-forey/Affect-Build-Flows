@@ -94,21 +94,38 @@ store, and no convention for the existing ingestion notebooks — so the only pl
 credential *could* go was a notebook cell. The next integration reproduces F1 unless the
 pattern changes with it.
 
-**Half of this is now fixed.** As of 2026-08-19 the vault exists. What has not changed is
-the *convention*: nothing yet reads from it, because nobody has the role that lets them
-write to it. The finding stays open until `get_secret()` is the accessor the existing
-notebooks actually use.
+**Closed for charley-dev as of 2026-08-19; open for the existing pipelines.** A secret now
+travels the whole path: `OutbuildToken` lives in `AffectKeyVault`, `get_secret()` reads it,
+and it authenticated a live pull of 3,078 rows. The convention is no longer theoretical.
 
-Two vault settings worth deciding while it is empty: it is **RBAC-mode** (so access is role
-assignments, not access policies — this is the better default, and it is why Contributor is
-not enough) and **purge protection is disabled**. Turning purge protection on is a one-way
-door, which is a reason to think about it now rather than after it holds live credentials.
+Getting there exposed two defects that would each have survived the vault being filled, which
+is worth recording because both failed in a way that pointed elsewhere:
 
-**Remediation.** Stand up one vault for the workspace and adopt `get_secret()` as the single
-accessor. charley-dev does this for its own notebooks
-(`_local/setup_keyvault.py`, [`keyvault-runbook.md`](keyvault-runbook.md)); the same vault and
-the same helper work for the existing pipelines with no redesign. Doing it once, in one place, is what stops F1
-recurring.
+- **The read side never translated the secret name.** Key Vault forbids underscores, so
+  `PROCORE_CLIENT_ID` is not a legal secret name; `setup_keyvault.py` correctly wrote
+  `procore-client-id`, and `get_secret` correctly asked for `PROCORE_CLIENT_ID`. Loading the
+  secrets would not have been enough. The error — "secret not found" — would have pointed at
+  the loading step rather than at the lookup. One function, `fabric_common.kv_secret_name`,
+  now owns the translation and the write side imports it.
+- **`get_secret` failed open.** When the vault lookup did not fire it fell through to
+  `os.environ` and returned whatever was there. A half-configured vault would have read a
+  credential from an unaudited source and reported success — the failure surfacing only in the
+  unattended 02:00 run. Inside Fabric it now raises.
+
+Related: the vault URL was read from `PROCORE_KEYVAULT_URL` in five files and set in none, so
+the Key Vault branch had never executed in any environment. It is now a default in code.
+
+**Still open for the existing pipelines.** `procore_auth` and the other `Procore_APICalls`
+notebooks do not use `get_secret()` yet. The same vault and helper work for them with no
+redesign — see [`keyvault-runbook.md`](keyvault-runbook.md). Doing it once, in one place, is
+what stops F1 recurring.
+
+**Note on the vault, corrected.** Until 2026-08-19 this document and every other named
+`OneLake` (subscription `0bee26ab-…`, RBAC-mode, purge protection off) as *the* vault, and
+recorded a missing role assignment as the blocker. That was the wrong vault. The one in use is
+`AffectKeyVault` in subscription `73932b34-…`, where this account already holds Key Vault
+Administrator. The purge-protection observation still applies to `OneLake`, which is empty and
+unused — the cleaner action there is to remove it rather than harden it.
 
 ---
 

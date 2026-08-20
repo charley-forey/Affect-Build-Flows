@@ -31,7 +31,7 @@ model rather than 19 more tables in the first.
 | `CD_Bronze_Lakehouse` | Lakehouse | 40 tables, from Affect's **production** Procore tenant |
 | `CD_Silver_Lakehouse` | Lakehouse | 15 typed tables, **14,791 rows, 0 rejects** |
 | `CD_Gold_Lakehouse` | Lakehouse | 40 tables at the 2026-08-02 read — dimensions, facts, crosswalks, bridges, `man_*` — plus the PQP tables landed 2026-08-19. `gold_schema.json` now publishes **54** table schemas (was 45) |
-| `cd_01_extract_procore` | Notebook | deployed; blocked on the Key Vault role assignment (see below) |
+| `cd_01_extract_procore` | Notebook | deployed; held out of the DAG until the Procore credentials are rotated (see below) |
 | `cd_05_land_to_bronze` | Notebook | merges landed NDJSON into bronze Delta, no credentials |
 | `cd_06_land_manual` | Notebook | manual-input capture path |
 | `cd_10_bronze_to_silver` | Notebook | runs clean against real bronze |
@@ -250,24 +250,57 @@ the joins did.*
 
 ### External blockers — re-checked 2026-08-19
 
-Two of the four blockers standing at the last edit have moved. The Azure subscription
-exists, a Key Vault exists, and the Outbuild token is in transit. What is left is smaller
-and more specific than what it replaced.
+Re-checked again late on 2026-08-19, against Azure and the live Outbuild API. **The Key
+Vault blocker is gone and Outbuild is live.** Neither turned out to be what it was recorded
+as: the vault every document named was the wrong vault, and the Outbuild client had never
+been run against the real API. Both are written up in
+[`keyvault-runbook.md`](keyvault-runbook.md).
 
 | Blocker | Effect | Owner |
 |---|---|---|
-| **Key Vault role assignment** — vault `OneLake` exists (`https://onelake.vault.azure.net/`, RG `Affect_KeyVault`, East US) but is **RBAC-mode**, and `cforey-c@affect-group.com` holds only **Contributor on the resource group**. Contributor on an RBAC vault can neither read nor write secrets, and cannot grant itself the right to. | No secret can be written, so `cd_01_extract_procore` still cannot hold a credential. Extraction keeps running locally and landing files; `cd_05_land_to_bronze` merges them in Fabric with no secret. **The ask is one role assignment: "Key Vault Secrets Officer" on vault `OneLake` for `cforey-c@affect-group.com`.** | Affect |
+| ~~**Key Vault role assignment** on vault `OneLake`~~ | **RESOLVED 2026-08-19 — and the ask is withdrawn.** It targeted the wrong vault. The vault in use is **`AffectKeyVault`** (`https://affectkeyvault.vault.azure.net/`, RG `Affect_Data`, subscription `73932b34-…`), where `cforey-c@affect-group.com` already holds **Key Vault Administrator** inherited at resource-group scope. Reading and writing secrets needs no grant from anyone. `OneLake` remains unreadable by this account and holds nothing we depend on. | — |
+| **Procore credentials not yet rotated** | `cd_01_extract_procore` has failed on every run since 2026-08-02 with `Secret 'PROCORE_CLIENT_ID' not found`, and is held out of the nightly DAG so it does not redden it. The vault path is now built and proven; what is missing is the credential itself. Runbook: [`keyvault-runbook.md`](keyvault-runbook.md). | Affect — regenerate in Procore, then `setup_keyvault.py --apply` |
 | **Sage gateway connection grant** | `CD_Sage_Ingest` is deployed and correct but its runner has no rights on the gateway, so it fails in ~5 seconds before reaching Sage. One grant: *Can use* on `nc-affect-1\sage100con;Affect Group`. | Affect / their Sage consultant |
 | **Procore 403s** on `punch_item_types` and `schedule` | Two report sections cannot be sourced. | Affect — Procore role permissions |
 | ~~**No Azure subscription** on this tenant~~ | **RESOLVED 2026-08-19.** "Azure subscription 1" (`0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6`) exists on tenant "Affect Build LLC" (`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`). | — |
-| ~~**`OUTBUILD_API_TOKEN` not issued**~~ | **Effectively unblocked** — Rebecca offered to send the token by email on Aug 11. Pending transfer, not pending a decision. | Affect (in transit) |
+| ~~**`OUTBUILD_API_TOKEN` not issued**~~ | **RESOLVED 2026-08-19.** Rebecca placed it in `AffectKeyVault` as `OutbuildToken` at 18:27 UTC. It reads back through `get_secret` and authenticates: **3,078 rows across 15 endpoints** landed into `cd_bronze_outbuild_*`. | — |
 
-Step-by-step for whoever grants it: [`keyvault-runbook.md`](keyvault-runbook.md).
+#### Outbuild — measured live, 2026-08-19
 
-**Key Vault `OneLake`, as provisioned:** RBAC authorization on, soft-delete on with a
-90-day retention, **purge protection disabled**. Purge protection is worth turning on
-before the vault holds anything that matters — without it a deleted vault can be purged
-inside the retention window, which defeats the recovery the soft-delete is there to give.
+| Table | Rows | | Table | Rows |
+|---|---|---|---|---|
+| `cd_bronze_outbuild_activities` | 1,860 | | `cd_bronze_outbuild_roadblock_types` | 147 |
+| `cd_bronze_outbuild_tasks` | 483 | | `cd_bronze_outbuild_companies` | 82 |
+| `cd_bronze_outbuild_rfv_types` | 200 | | `cd_bronze_outbuild_tags` | 35 |
+| `cd_bronze_outbuild_roadblocks` | 165 | | `cd_bronze_outbuild_projects` | 15 |
+| `cd_bronze_outbuild_roadblock_tasks` | 55 | | `cd_bronze_outbuild_users` | 12 |
+| `cd_bronze_outbuild_task_tags` | 10 | | `cd_bronze_outbuild_weekly_commitments` | 5 |
+| `cd_bronze_outbuild_activity_tags` | 5 | | `cd_bronze_outbuild_rfvs` / `_rfv_tasks` | 2 / 2 |
+
+Read out of Delta via Spark, **not** the Lakehouse SQL endpoint — the endpoint lagged by
+hours on this workspace and reported zero Outbuild tables while all 15 existed. It also
+reported `dim_Project.SageJobNumber` as null for all 19 projects when Direct Lake showed 15
+populated. Treat the SQL endpoint as a convenience, and confirm anything surprising against
+Delta or DAX before acting on it.
+
+**Not yet wired:** `sv_outbuild_activities` still reads Rebecca's
+`Silver_Lakehouse/Outbuild_activities` dataflow, so `fct_Milestone`'s 52 rows come from her
+path, not from `cd_bronze_outbuild_*`. Repointing it risks taking milestones to zero and is
+its own piece of work.
+
+#### Sage: the database name is `Affect Group`, not `ABMI`
+
+The Sage 100 handoff document (Nerds That Care, May 20 2026) records the validated gateway
+connection as database **`ABMI`**, and §12 admits the choice was inferred from Rebecca saying
+"Affect Build", listing `Affect Group` among the other databases on the instance. The repo's
+`CD_Sage_Ingest` queries `Affect Group`.
+
+`Affect Group` is correct, on the evidence: it yields Sage job numbers 1–22 that resolve to
+**15 of the 16 real Procore projects**, carrying $22.5M of AR. The four projects without a job
+number are `Standard Project Template`, `Sandbox Test Project`, `TEST - ABM SUBORDINATE` — all
+templates, which should have none — and City Harvest, genuinely not yet in Sage. A wrong
+database does not join 15 of 16 projects. **No change made;** the handoff document is the thing
+that is wrong, and §12 already flags it as needing confirmation.
 
 ### The gold model, with real data
 
@@ -416,7 +449,7 @@ listed as "not deployed" for two weeks after it was deployed. Corrected below.
 | Procore ingestion **run inside Fabric** | Notebook and 44-endpoint registry built and tested; still needs `PROCORE_CLIENT_ID`/`SECRET` in Key Vault. Extraction runs **locally** and lands files; `cd_05_land_to_bronze` merges them. The nightly pipeline therefore re-processes whatever was last landed — **it does not call the Procore API.** |
 | Sage dataflow (`CD_Sage_Ingest`) | **Built and deployed** — live in the `charley-dev` folder, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze`. Inert until `cforey-c@affect-group.com` is granted *Can use* on `nc-affect-1\sage100con;Affect Group`. Deployed-and-inert is deliberate: it turns the remaining work into one grant plus one refresh |
 | Manual dataflow (`CD_Manual_Ingest`) | Defined in the repo, **not deployed** to the workspace — `SITE` in `mashup.pq` is still a `REPLACE-ME` placeholder, so deploying it would create an item that cannot run. The list-name defect it used to carry is **fixed at the source**: `_local/make_sharepoint.py` now generates the PS1, the mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so one function decides a list name and `test_sharepoint.py` fails the build if the four writers drift. See [`sharepoint-lists.md`](sharepoint-lists.md) |
-| Outbuild ingestion | Built and verified, cannot run — `OUTBUILD_API_TOKEN` not issued. Outbuild is the only milestone source, and 17 of 19 projects are missing from it |
+| Outbuild ingestion | **Live as of 2026-08-19** — token in Key Vault, 3,078 rows landed in `cd_bronze_outbuild_*`. Silver still reads Rebecca's dataflow, so `fct_Milestone` does not consume this yet |
 | `man_*` manual tables | **Built and deployed** — 9 tables live in gold, currently empty. The silver → gold `INSERT`s are now written, so the chain runs end to end; the tables stay empty because nobody has entered a row, not because the join is missing. Four column-spec questions still need Affect — [`manual-input.md`](manual-input.md) |
 | Orchestration pipeline | **Built and running** — `CD_Master_Pipeline`, 6 activities. Read out of the live pipeline definition 2026-08-19; a pipeline-triggered run of the DQ gate completed 2026-08-19 06:16 UTC |
 | Scorecard measures | **Written** — 9 category measures live. **Scorecard coverage is 59%** (`[Scorecard Coverage %]`, live): 5 of 9 categories score from real data, 4 return BLANK for want of source data. This is the canonical figure — other documents reference it rather than restate it. Coverage read 35% before field ops landed and went 35% → 45% → 59%; filling the `man_*` tables is projected to take it to 88%, which is a projection, not a measurement |
