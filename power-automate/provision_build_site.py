@@ -1,33 +1,43 @@
-"""Create the BUILD site structure over SharePoint REST - no PnP, no admin consent.
+"""Create the BUILD site structure over Microsoft Graph - no PnP, no admin consent.
 
     python provision_build_site.py --site-url https://<tenant>.sharepoint.com/sites/<site>
     python provision_build_site.py --site-url ... --apply
+    python provision_build_site.py --print-columns    # the spec, for building it by hand
 
 WHY THIS EXISTS ALONGSIDE provision-sharepoint-build.ps1.
 
 The PS1 does the same job and is the better tool if you can run it. It needs PnP.PowerShell,
 which since 2.x needs `Register-PnPEntraIDAppForInteractiveLogin`, which needs a **tenant
-admin to consent**. That consent has been the blocker throughout, and it is a blocker on a
-step that turns out to gate everything else:
+admin to consent**. That consent was the blocker throughout, and it gates everything else:
 
     InvalidOpenApiFlow ... 'GetTable' failed with status code 'NotFound' ... "List not found"
 
-That is what Power Automate returns when you try to SAVE a flow whose trigger points at a
-list that does not exist. The flows cannot merely fail at runtime without the site structure
-- they cannot be CREATED without it. So this had to stop being blocked on an admin ticket.
+That is what Power Automate returns when you SAVE a flow whose trigger points at a list that
+does not exist. Without the site structure the flows cannot merely fail at runtime - they
+cannot be CREATED. So this had to stop being blocked on an admin ticket.
 
-This uses the same mechanism deploy_flows.py already proved works in this tenant: a token
-from the Azure CLI session you are already signed in to. No new consent, no new module.
+WHY GRAPH RATHER THAN SHAREPOINT REST.
 
-WHAT IT CREATES, matching the PS1 exactly:
+The obvious spelling is the SharePoint REST API, `{site}/_api/web`, and against this tenant
+it returns:
+
+    HTTP 401 {"error":"invalid_request"}
+
+with a token whose audience is correct (00000003-0000-0ff1-ce00-000000000000, SharePoint's
+own app id). The tenant does not accept Azure CLI tokens for SharePoint's legacy endpoint.
+Microsoft Graph, with a token from the same CLI session, returns 200 for the same site. Both
+were measured, not assumed - see the audiences in the commit message.
+
+So: Graph. Same mechanism deploy_flows.py already proved works here - a token from the CLI
+session you are signed in to. No new module, no new consent.
+
+WHAT IT CREATES, matching provision-sharepoint-build.ps1 exactly:
     01 ESTIMATING       document library
     00 PROJECTS         document library
-    Job Register        list, 11 columns, versioning on
-    two template folder trees
+    Job Register        list, 11 columns, and the two template folder trees
 
-DRY RUN BY DEFAULT. Reads happen either way, so a dry run reports what a real run would do.
-IDEMPOTENT: anything that already exists is left alone, so re-running is how you apply a
-change rather than something to avoid.
+DRY RUN BY DEFAULT. IDEMPOTENT: anything that exists is left alone, so re-running is how you
+apply a change rather than something to avoid.
 """
 
 from __future__ import annotations
@@ -41,10 +51,8 @@ import urllib.error
 import urllib.request
 from urllib.parse import quote, urlparse
 
-API_VERSION_HEADERS = {
-    "Accept": "application/json;odata=verbose",
-    "Content-Type": "application/json;odata=verbose",
-}
+GRAPH = "https://graph.microsoft.com/v1.0"
+GRAPH_RESOURCE = "https://graph.microsoft.com"
 
 ESTIMATING_LIBRARY = "01 ESTIMATING"
 PROJECTS_LIBRARY = "00 PROJECTS"
@@ -53,8 +61,8 @@ PROJECT_TEMPLATE_ROOT = "YY-000 STANDARD PROJECT TEMPLATE"
 
 # Placeholder structure, exactly as the PS1 ships it. Only 01-BIDDING/02-ESTIMATING is
 # certain - the Convert-to-Bidding step copies the estimating folder into that literal path,
-# so the project template must contain it. Everything else is a shape to be replaced with
-# the client's real trees; the SOP names the folders and never says what is in them.
+# so the project template must contain it. Everything else is a shape to be replaced with the
+# client's real trees; the SOP names the folders and never says what is inside them.
 ESTIMATING_TEMPLATE = [
     "01-ENQUIRY", "02-DRAWINGS", "03-TAKEOFF", "04-SUBCONTRACTOR QUOTES",
     "05-SUPPLIER QUOTES", "06-ESTIMATE SUMMARY", "07-SUBMISSION",
@@ -65,31 +73,37 @@ PROJECT_TEMPLATE = [
     "07-COMMERCIAL", "08-HANDOVER",
 ]
 
-# (name, SchemaXml type, extra XML). Created with createfieldasxml so one code path handles
-# Number, Text, Note, DateTime, URL and Choice alike, and Options=8 adds each to the default
-# view in the same call.
+# (name, Graph column facet). The facet decides the SharePoint type.
 #
 # INTERNAL NAMES ARE THE CONTRACT. The flows read these exact strings, and a column created
 # through the SharePoint UI as "Job Year" gets the internal name Job_x0020_Year - which does
-# not error, it just never arrives. Name and DisplayName are set identically here.
-COLUMNS: list[tuple[str, str, str]] = [
-    ("JobYear", "Number", ""),
-    ("JobSeq", "Number", ""),
-    ("JobNumber", "Text", ""),
-    ("Stage", "Choice",
-     "<Default>Requested</Default>"
-     "<CHOICES><CHOICE>Requested</CHOICE><CHOICE>Estimating</CHOICE>"
-     "<CHOICE>Bidding</CHOICE><CHOICE>Failed</CHOICE></CHOICES>"),
-    ("EstimatingFolderUrl", "URL", ""),
-    ("ProjectFolderUrl", "URL", ""),
-    # Text, not Person. A Person column arrives in Fabric as a nested record that silver
-    # then has to unpick, and the flow only ever has an email anyway.
-    ("RequestedBy", "Text", ""),
-    ("RequestedAt", "DateTime", ""),
-    ("CompletedAt", "DateTime", ""),
-    ("CopyJobStatus", "Text", ""),
-    ("ErrorDetail", "Note", ""),
+# not error, the value simply never arrives and the report shows a blank that reads exactly
+# like nobody having filled it in.
+COLUMNS: list[tuple[str, dict]] = [
+    ("JobYear", {"number": {"decimalPlaces": "none"}}),
+    ("JobSeq", {"number": {"decimalPlaces": "none"}}),
+    ("JobNumber", {"text": {}}),
+    ("Stage", {"choice": {"choices": ["Requested", "Estimating", "Bidding", "Failed"],
+                          "displayAs": "dropDownMenu"},
+               "defaultValue": {"value": "Requested"}}),
+    ("EstimatingFolderUrl", {"hyperlinkOrPicture": {"isPicture": False}}),
+    ("ProjectFolderUrl", {"hyperlinkOrPicture": {"isPicture": False}}),
+    # Text, not Person. A Person column arrives in Fabric as a nested record that silver then
+    # has to unpick, and the flow only ever has an email anyway.
+    ("RequestedBy", {"text": {}}),
+    ("RequestedAt", {"dateTime": {"format": "dateTime"}}),
+    ("CompletedAt", {"dateTime": {"format": "dateTime"}}),
+    ("CopyJobStatus", {"text": {}}),
+    ("ErrorDetail", {"text": {"allowMultipleLines": True}}),
 ]
+
+HUMAN_TYPE = {
+    "number": "Number",
+    "text": "Single line of text",
+    "choice": "Choice",
+    "dateTime": "Date and time",
+    "hyperlinkOrPicture": "Hyperlink",
+}
 
 
 def az() -> str:
@@ -99,124 +113,138 @@ def az() -> str:
     return found
 
 
-def token(site_url: str) -> str:
-    """A SharePoint token for this tenant, from your existing CLI session.
-
-    The resource is the tenant's SharePoint host - not a Graph or Azure scope. If the tenant
-    has not consented the Azure CLI to SharePoint, this is where it says so, and the fallback
-    is the PS1 or building the list by hand.
-    """
-    host = f"{urlparse(site_url).scheme}://{urlparse(site_url).netloc}"
+def token() -> str:
     result = subprocess.run(
-        [az(), "account", "get-access-token", "--resource", host,
+        [az(), "account", "get-access-token", "--resource", GRAPH_RESOURCE,
          "--query", "accessToken", "-o", "tsv"],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
         raise SystemExit(
-            f"could not get a SharePoint token for {host}.\n"
+            "could not get a Microsoft Graph token from the Azure CLI.\n"
             f"  {result.stderr.strip()}\n\n"
-            "This tenant has not consented the Azure CLI to SharePoint. Two ways on:\n"
-            "  - run provision-sharepoint-build.ps1 (needs PnP and a tenant admin), or\n"
-            "  - create 'Job Register' by hand; --print-columns lists exactly what it needs."
+            "Run 'az login' first. If that works and this still fails, build the list by\n"
+            "hand instead: python provision_build_site.py --print-columns"
         )
     return result.stdout.strip()
 
 
-def call(method: str, url: str, tok: str, body: dict | None = None) -> tuple[int, str]:
+def call(method: str, url: str, tok: str, body: dict | None = None) -> tuple[int, dict | str]:
+    """(status, parsed body) or (status, error text). Never raises on an HTTP error."""
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(
-        url, data=data, method=method,
-        headers={"Authorization": f"Bearer {tok}", **API_VERSION_HEADERS},
+        url if url.startswith("http") else f"{GRAPH}{url}",
+        data=data, method=method,
+        headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"},
     )
     try:
         with urllib.request.urlopen(req) as response:
-            return response.status, response.read().decode(errors="replace")
+            raw = response.read()
+            return response.status, (json.loads(raw) if raw else {})
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read().decode(errors="replace")
 
 
-def exists(site: str, tok: str, path: str) -> bool:
-    status, _ = call("GET", f"{site}/_api/{path}", tok)
-    return status == 200
+def need(method: str, url: str, tok: str, body: dict | None = None, what: str = "") -> dict:
+    status, payload = call(method, url, tok, body)
+    if status >= 400:
+        raise SystemExit(f"{what or method} {url}\n  HTTP {status}\n  {str(payload)[:900]}")
+    return payload  # type: ignore[return-value]
 
 
-def ensure_list(site: str, tok: str, title: str, template: int, apply: bool) -> None:
-    """A list (100) or document library (101). Left alone if it is already there."""
-    if exists(site, tok, f"web/lists/getbytitle('{quote(title)}')"):
+def site_id(site_url: str, tok: str) -> str:
+    parsed = urlparse(site_url)
+    status, payload = call("GET", f"/sites/{parsed.netloc}:{parsed.path.rstrip('/')}", tok)
+    if status >= 400:
+        hint = {
+            401: "the Graph token was rejected. Run 'az login' again.",
+            403: "authenticated but not authorised on this site.",
+            404: "no site at this path. The URL must be the SITE - the part up to\n"
+                 "  /sites/<name> - not a page inside it.",
+        }.get(status, "the response body above is the whole answer.")
+        raise SystemExit(f"GET /sites/{parsed.netloc}:{parsed.path}\n"
+                         f"  HTTP {status}\n  {str(payload)[:500]}\n\n  {hint}")
+    return payload["id"]  # type: ignore[index]
+
+
+def lists_by_name(sid: str, tok: str) -> dict[str, dict]:
+    found = need("GET", f"/sites/{sid}/lists?$select=id,displayName,name", tok)
+    return {item["displayName"]: item for item in found.get("value", [])}
+
+
+def ensure_list(sid: str, tok: str, title: str, template: str, apply: bool,
+                existing: dict[str, dict]) -> str | None:
+    if title in existing:
         print(f"  exists   {title}")
-        return
+        return existing[title]["id"]
     if not apply:
         print(f"  would create  {title}")
-        return
-    status, detail = call("POST", f"{site}/_api/web/lists", tok, {
-        "__metadata": {"type": "SP.List"},
-        "Title": title,
-        "BaseTemplate": template,
-        # Versioning is what gives every field change a who and a when - the difference
-        # between "the flow failed" and "the flow failed at 14:02 for Sam on job 26-025".
-        "EnableVersioning": True,
-    })
-    if status >= 400:
-        raise SystemExit(f"creating {title}\n  HTTP {status}\n  {detail[:800]}")
+        return None
+    created = need("POST", f"/sites/{sid}/lists", tok, {
+        "displayName": title,
+        "list": {"template": template},
+    }, what=f"create {title}")
     print(f"  created  {title}")
+    return created["id"]
 
 
-def ensure_column(site: str, tok: str, list_title: str,
-                  name: str, ftype: str, extra: str, apply: bool) -> None:
-    lst = f"web/lists/getbytitle('{quote(list_title)}')"
-    if exists(site, tok, f"{lst}/fields/getbyinternalnameortitle('{name}')"):
-        print(f"    exists   {name}")
+def ensure_columns(sid: str, list_id: str | None, tok: str, apply: bool) -> None:
+    have: set[str] = set()
+    if list_id:
+        have = {c["name"] for c in
+                need("GET", f"/sites/{sid}/lists/{list_id}/columns?$select=name",
+                     tok).get("value", [])}
+    for name, facet in COLUMNS:
+        if name in have:
+            print(f"    exists   {name}")
+            continue
+        if not apply or not list_id:
+            print(f"    would create  {name}")
+            continue
+        body = {"name": name, "displayName": name, **facet}
+        need("POST", f"/sites/{sid}/lists/{list_id}/columns", tok, body,
+             what=f"create column {name}")
+        print(f"    created  {name}")
+
+
+def drive_id(sid: str, list_id: str, tok: str) -> str:
+    """A document library's drive, which is how Graph addresses its folders."""
+    return need("GET", f"/sites/{sid}/lists/{list_id}/drive?$select=id", tok)["id"]
+
+
+def ensure_folder(drive: str, tok: str, path: str, apply: bool) -> None:
+    status, _ = call("GET", f"/drives/{drive}/root:/{quote(path)}", tok)
+    if status == 200:
+        print(f"    exists   {path}")
         return
     if not apply:
-        print(f"    would create  {name} ({ftype})")
+        print(f"    would create  {path}")
         return
-    schema = (f"<Field Type='{ftype}' DisplayName='{name}' Name='{name}' "
-              f"StaticName='{name}'>{extra}</Field>")
-    status, detail = call("POST", f"{site}/_api/{lst}/fields/createfieldasxml", tok, {
-        "parameters": {
-            "__metadata": {"type": "SP.XmlSchemaFieldCreationInformation"},
-            "SchemaXml": schema,
-            "Options": 8,  # AddFieldToDefaultView
-        },
-    })
-    if status >= 400:
-        raise SystemExit(f"creating column {name}\n  HTTP {status}\n  {detail[:800]}")
-    print(f"    created  {name}")
-
-
-def ensure_folder(site: str, tok: str, server_relative: str, apply: bool) -> None:
-    if exists(site, tok, f"web/getfolderbyserverrelativeurl('{quote(server_relative)}')"):
-        print(f"    exists   {server_relative}")
-        return
-    if not apply:
-        print(f"    would create  {server_relative}")
-        return
-    status, detail = call("POST", f"{site}/_api/web/folders", tok, {
-        "__metadata": {"type": "SP.Folder"},
-        "ServerRelativeUrl": server_relative,
-    })
-    if status >= 400:
-        raise SystemExit(f"creating folder {server_relative}\n  HTTP {status}\n  {detail[:800]}")
-    print(f"    created  {server_relative}")
+    parent, _, leaf = path.rpartition("/")
+    target = (f"/drives/{drive}/root:/{quote(parent)}:/children" if parent
+              else f"/drives/{drive}/root/children")
+    need("POST", target, tok,
+         {"name": leaf, "folder": {}, "@microsoft.graph.conflictBehavior": "fail"},
+         what=f"create folder {path}")
+    print(f"    created  {path}")
 
 
 def print_columns() -> None:
-    print("Job Register - create these with EXACTLY these names (internal names are the")
-    print("contract; 'Job Year' becomes Job_x0020_Year and simply never arrives):\n")
+    print("Job Register - create these with EXACTLY these names. Internal names are the")
+    print("contract: 'Job Year' becomes Job_x0020_Year and simply never arrives.\n")
     print(f"  {'Column':<22} Type")
-    print(f"  {'-' * 22} {'-' * 40}")
+    print(f"  {'-' * 22} {'-' * 46}")
     print(f"  {'Title':<22} Single line of text  (rename to 'Project Name', required)")
-    for name, ftype, extra in COLUMNS:
-        kind = {"Number": "Number", "Text": "Single line of text",
-                "Note": "Multiple lines of text", "DateTime": "Date and time",
-                "URL": "Hyperlink", "Choice": "Choice"}[ftype]
+    for name, facet in COLUMNS:
+        kind = next(HUMAN_TYPE[k] for k in facet if k in HUMAN_TYPE)
         note = ""
-        if ftype == "Choice":
+        if "choice" in facet:
             note = "  Requested / Estimating / Bidding / Failed, default Requested"
+        elif facet.get("text", {}).get("allowMultipleLines"):
+            kind = "Multiple lines of text"
         print(f"  {name:<22} {kind}{note}")
-    print("\nAlso turn on versioning: List settings -> Versioning settings -> Create a")
-    print("version each time you edit an item = Yes.")
+    print("\nAlso: List settings -> Versioning settings -> Create a version each time you")
+    print("edit an item = Yes. That is what gives every field change a who and a when.")
 
 
 def main() -> int:
@@ -237,41 +265,34 @@ def main() -> int:
     site = args.site_url.rstrip("/")
     if not args.apply:
         print("DRY RUN - nothing will be created. Re-run with --apply.\n")
-    print(f"site: {site}\n")
+    print(f"site: {site}")
 
-    tok = token(site)
-    if not exists(site, tok, "web"):
-        raise SystemExit(
-            f"cannot read {site}.\n"
-            "Check the URL is the SITE, not a page in it - a link ending in /SitePages/"
-            "Something.aspx\nnames a page, and the site is the part up to /sites/<name>."
-        )
+    tok = token()
+    sid = site_id(site, tok)
+    print(f"  resolved: {sid.split(',')[0]}\n")
 
-    path = urlparse(site).path.rstrip("/")
+    existing = lists_by_name(sid, tok)
 
     print("libraries")
-    ensure_list(site, tok, ESTIMATING_LIBRARY, 101, args.apply)
-    ensure_list(site, tok, PROJECTS_LIBRARY, 101, args.apply)
+    est_id = ensure_list(sid, tok, ESTIMATING_LIBRARY, "documentLibrary", args.apply, existing)
+    prj_id = ensure_list(sid, tok, PROJECTS_LIBRARY, "documentLibrary", args.apply, existing)
 
     print("\nJob Register")
-    ensure_list(site, tok, "Job Register", 100, args.apply)
-    for name, ftype, extra in COLUMNS:
-        ensure_column(site, tok, "Job Register", name, ftype, extra, args.apply)
+    reg_id = ensure_list(sid, tok, "Job Register", "genericList", args.apply, existing)
+    ensure_columns(sid, reg_id, tok, args.apply)
 
-    print(f"\ntemplate: {ESTIMATING_LIBRARY}/{ESTIMATING_TEMPLATE_ROOT}")
-    ensure_folder(site, tok, f"{path}/{ESTIMATING_LIBRARY}/{ESTIMATING_TEMPLATE_ROOT}",
-                  args.apply)
-    for folder in ESTIMATING_TEMPLATE:
-        ensure_folder(site, tok,
-                      f"{path}/{ESTIMATING_LIBRARY}/{ESTIMATING_TEMPLATE_ROOT}/{folder}",
-                      args.apply)
-
-    print(f"\ntemplate: {PROJECTS_LIBRARY}/{PROJECT_TEMPLATE_ROOT}")
-    ensure_folder(site, tok, f"{path}/{PROJECTS_LIBRARY}/{PROJECT_TEMPLATE_ROOT}", args.apply)
-    for folder in PROJECT_TEMPLATE:
-        ensure_folder(site, tok,
-                      f"{path}/{PROJECTS_LIBRARY}/{PROJECT_TEMPLATE_ROOT}/{folder}",
-                      args.apply)
+    for label, list_id, root, tree in (
+        (ESTIMATING_LIBRARY, est_id, ESTIMATING_TEMPLATE_ROOT, ESTIMATING_TEMPLATE),
+        (PROJECTS_LIBRARY, prj_id, PROJECT_TEMPLATE_ROOT, PROJECT_TEMPLATE),
+    ):
+        print(f"\ntemplate: {label}/{root}")
+        if not list_id:
+            print(f"    (library not created yet - folders come with it)")
+            continue
+        drive = drive_id(sid, list_id, tok)
+        ensure_folder(drive, tok, root, args.apply)
+        for folder in tree:
+            ensure_folder(drive, tok, f"{root}/{folder}", args.apply)
 
     if args.apply:
         print("\nDone. Now create the flows:")
