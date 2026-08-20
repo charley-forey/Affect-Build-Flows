@@ -18,10 +18,14 @@ half-provisioned (no lists at all, not even the default Documents library) and w
 and it still reserves the unsuffixed URL from the site recycle bin. The site now bound is the
 working one.
 
-**Provisioned 2026-08-20: all 18 lists, 142 of 142 columns, and 19 `CD Projects` rows.**
-Verified by reading the site back through Graph —
-`bootstrap_reporting_site.py --verify` — not from the run status, which reports Succeeded as
-long as its last action did.
+**Provisioned in two parts, and it is worth knowing which was which.** The **18 lists** were
+created 2026-08-19; their **142 of 142 columns** and the 19 `CD Projects` rows landed
+2026-08-20. The run that made the lists was recorded at the time as having created nothing —
+it had in fact finished the lists and stalled on the columns, and the run status could not
+distinguish the two.
+
+Verified by reading the site back through Graph — `bootstrap_reporting_site.py --verify` —
+not from the run status, which reports Succeeded as long as its last action did.
 **Naming:** every list is prefixed `CD ` so it is obvious which lists the report depends on.
 
 ---

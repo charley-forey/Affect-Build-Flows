@@ -42,7 +42,7 @@ spent, and the work since then was not in that scope.
 | Quality data, live | **4,564 quality records** already flowing from Procore — 2,245 submittals, 1,469 punch items, 850 observations. Nobody typed any of them |
 | Schedule data, live | **3,078 records across 15 Outbuild endpoints**, landed the evening the token arrived. This is the only source of critical-path milestones anywhere in the business |
 | Estimating → bidding automation | **Both workflows now exist in your Power Automate**, created switched off. The job-folder structure and the Job Register list are provisioned on `AFFECTBUILD1`. What is still needed is what goes *inside* the two folder templates |
-| Intake forms | 17 SharePoint lists generated — the 9 that feed the Monthly Progress Report's manual fields, and 8 new ones for the quality registers. The reporting site now exists and the loader that reads these lists is published against it; creating the lists themselves is my remaining task, not yours |
+| Intake forms | 17 SharePoint lists generated — the 9 that feed the Monthly Progress Report's manual fields, and 8 new ones for the quality registers. The reporting site now exists, all 18 lists are built with their 142 columns, and the loader that reads them is published against it. Connecting that loader is my remaining task, not yours |
 
 **The reason the quality data was free.** Your own workbook says it on its cover page:
 *"Procore is the mandatory system of record."* So non-conformances, punch items and submittals
