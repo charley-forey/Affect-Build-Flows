@@ -290,6 +290,63 @@ WHERE _rn = 1
   AND project_id IN (SELECT project_id FROM mv_valid_projects);
 
 -- ---------------------------------------------------------------------------
+-- Job Register - the BUILD site, not the reporting site
+-- ---------------------------------------------------------------------------
+--
+-- Written by the two Power Automate job flows (power-automate/), one row per job from the
+-- moment somebody asks for it. This is the ONLY record of a job between "requested" and
+-- "it became a Procore project", and many jobs never make that second step - so there is
+-- no ProjectKey here and no join to dim_Project. Bidding on work you do not win still
+-- happened, and a register that quietly dropped those rows would answer "how many jobs did
+-- we estimate this year" with only the ones that were won.
+--
+-- DEDUPLICATED ON Id, NOT ON JobNumber, and that distinction is the entire point.
+--
+-- Two register rows sharing a JobNumber is not a duplicate row - it is TWO DIFFERENT JOBS
+-- that were both issued 26-025, which is what happens the moment somebody turns off the
+-- flows' `concurrency: runs: 1` in the Power Automate designer. Both flows read max(JobSeq),
+-- both compute the same next number, and nothing anywhere errors. Deduplicating on
+-- JobNumber here would discard one of the two real jobs and make the collision invisible -
+-- the same silent-drop failure this file exists to prevent, applied to the one bug
+-- power-automate/README.md calls "the single most likely production bug in the whole
+-- solution".
+--
+-- So both rows survive to gold, and dq/expectations.py fails the nightly gate on the
+-- duplicate. Id is SharePoint's own item identity, so this still collapses the same item
+-- appearing twice, which is all a dedup should ever do.
+
+CREATE OR REPLACE TABLE cd_silver_man_job_register AS
+SELECT * FROM (
+    SELECT
+        CAST(Id AS INT)                                     AS register_id,
+        TRIM(Title)                                         AS project_name,
+        CAST(JobYear AS INT)                                AS job_year,
+        CAST(JobSeq AS INT)                                 AS job_seq,
+        UPPER(TRIM(JobNumber))                              AS job_number,
+        -- The flows write 'Requested' / 'Estimating' / 'Bidding' / 'Failed'. Upper-cased to
+        -- the same shape as every other code in this platform, so a measure over Stage
+        -- reads like a measure over StatusCode rather than like a special case.
+        UPPER(TRIM(Stage))                                  AS stage,
+        -- A SharePoint URL column arrives as a record, the same way a lookup does. Taking
+        -- .Url keeps the link and drops the display text, which is the folder name and is
+        -- already carried by project_name.
+        EstimatingFolderUrl.Url                             AS estimating_folder_url,
+        ProjectFolderUrl.Url                                AS project_folder_url,
+        TRIM(RequestedBy)                                   AS requested_by,
+        CAST(RequestedAt AS TIMESTAMP)                      AS requested_at,
+        CAST(CompletedAt AS TIMESTAMP)                      AS completed_at,
+        TRIM(CopyJobStatus)                                 AS copy_job_status,
+        TRIM(ErrorDetail)                                   AS error_detail,
+        CAST(Modified AS TIMESTAMP)                         AS last_modified,
+        TRIM(Editor.Title)                                  AS last_modified_by,
+        ROW_NUMBER() OVER (PARTITION BY CAST(Id AS INT)
+                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
+    FROM cd_bronze_man_job_register
+    WHERE Id IS NOT NULL
+)
+WHERE _rn = 1;
+
+-- ---------------------------------------------------------------------------
 -- Rejects: every row the rules above excluded, WITH THE REASON
 -- ---------------------------------------------------------------------------
 --
@@ -335,4 +392,19 @@ SELECT 'cd_silver_man_risks', TRIM(ProjectKey.Title), CAST(MonthStart AS DATE),
        CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
 FROM cd_bronze_man_risks
 WHERE MonthStart IS NOT NULL
-  AND CAST(MonthStart AS DATE) <> CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE);
+  AND CAST(MonthStart AS DATE) <> CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
+
+UNION ALL
+-- The Job Register. No project and no month - a job predates both - so those two columns
+-- are NULL here rather than invented. A register row that moved past Requested without
+-- picking up a JobNumber is a flow that half-ran: EstimatingSetup writes Stage and
+-- JobNumber in the same action, so one without the other means something failed between
+-- issuing the number and recording it.
+SELECT 'cd_silver_man_job_register', CAST(NULL AS STRING), CAST(NULL AS DATE),
+       CONCAT('job "', COALESCE(TRIM(Title), '(unnamed)'), '"'),
+       CONCAT('Stage is ', COALESCE(Stage, '(blank)'), ' but JobNumber is empty - ',
+              'the flow did not finish. Check ErrorDetail on the row.'),
+       CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
+FROM cd_bronze_man_job_register
+WHERE UPPER(TRIM(COALESCE(Stage, ''))) IN ('ESTIMATING', 'BIDDING')
+  AND (JobNumber IS NULL OR TRIM(JobNumber) = '');

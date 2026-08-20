@@ -28,9 +28,22 @@ section Section1;
 // Expand=false on lookup columns keeps ProjectKey as the raw lookup record. Silver reads
 // the id out of it; expanding here would bake a display name into bronze, and a renamed
 // project would then silently orphan its history.
+//
+// TWO SITES. Everything except the last query reads the reporting site (SITE). The Job
+// Register lives on the BUILD site (SITE_BUILD) because it is owned by the two Power
+// Automate job flows, not by this platform. Both are placeholders; both must be set.
 // ============================================================================
 
 SITE = "https://REPLACE-ME.sharepoint.com/sites/AffectProjectReporting";
+SITE_BUILD = "https://REPLACE-ME.sharepoint.com/sites/BUILD";
+
+// Where every query below lands. Referenced by DefaultOutputDestinationSettings at the top
+// of this file; without it the dataflow parses and then fails at run with an unresolved
+// reference, because every query carries BindToDefaultDestination = true. This line was
+// missing for the entire life of this dataflow - it was never caught because the dataflow
+// has never been deployed, and CD_Sage_Ingest (which has it) is the only one that has.
+// Points at CD_Bronze, never at the existing Silver lakehouse.
+shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){[workspaceId = "1f7caed6-f88a-4e52-bc83-9a498a165301"]}[Data]{[lakehouseId = "fa946636-e143-417b-b598-5cbd31ed9990"]}[Data];
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_projects = let
@@ -155,5 +168,17 @@ in
 shared cd_bronze_man_qc_doh_result = let
   Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
   Navigation = Source{[Title = "CD QC DOH Result"]}[Items]
+in
+  Navigation;
+
+// ---------------------------------------------------------------- the BUILD site
+// The job flows' register: one row per job from the moment somebody asks for it. Feeds
+// dim_Job (sql/gold/13_dim_job.sql), which is what actually connects the two Power Automate
+// flows to this platform - power-automate/README.md described that link long before any of
+// it existed.
+[BindToDefaultDestination = true]
+shared cd_bronze_man_job_register = let
+  Source = SharePoint.Tables(SITE_BUILD, [Implementation = "2.0", ViewMode = "All"]),
+  Navigation = Source{[Title = "Job Register"]}[Items]
 in
   Navigation;

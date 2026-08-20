@@ -405,6 +405,31 @@ SOURCE_FIXTURES = (
         ('P1', DATE '2025-05-01', 22, 3)
     ) AS t(project_id, month_start, logs_expected, logs_missed_same_day)""",
 
+    # The job register, off the BUILD site. No project_id: a job is registered before
+    # anybody knows whether it will be won, and most never become Procore projects.
+    #
+    # Rows 2 and 3 are two different jobs both issued 26-002 - the collision a race between
+    # two Power Automate runs produces. They are here deliberately so dim_Job carries a
+    # duplicate and the DQ expectation over it has something real to be exercised against.
+    """CREATE OR REPLACE VIEW sv_man_job_register AS SELECT * FROM (VALUES
+        (1, 'Fulton Street Fit-Out', 26, 1, '26-001', 'ESTIMATING',
+         '/sites/BUILD/01 ESTIMATING/E-26-001-Fulton Street Fit-Out',
+         CAST(NULL AS VARCHAR), 'pm@example.com', TIMESTAMP '2026-07-01 09:00:00',
+         TIMESTAMP '2026-07-01 09:01:00', 'Copied 12 item(s)', CAST(NULL AS VARCHAR),
+         TIMESTAMP '2026-07-01 09:01:00', 'flow:EstimatingSetup'),
+        (2, 'Bergen Street Retail', 26, 2, '26-002', 'BIDDING',
+         '/sites/BUILD/01 ESTIMATING/E-26-002-Bergen Street Retail',
+         '/sites/BUILD/00 PROJECTS/26-002-Bergen Street Retail', 'pm@example.com',
+         TIMESTAMP '2026-07-02 09:00:00', TIMESTAMP '2026-07-02 09:02:00',
+         'Copied 31 item(s)', NULL, TIMESTAMP '2026-07-02 09:02:00', 'flow:ConvertToBidding'),
+        (3, 'Court Square Lobby', 26, 2, '26-002', 'ESTIMATING',
+         '/sites/BUILD/01 ESTIMATING/E-26-002-Court Square Lobby', NULL, 'pm2@example.com',
+         TIMESTAMP '2026-07-02 09:00:01', TIMESTAMP '2026-07-02 09:00:09',
+         'Copied 12 item(s)', NULL, TIMESTAMP '2026-07-02 09:00:09', 'flow:EstimatingSetup')
+    ) AS t(register_id, project_name, job_year, job_seq, job_number, stage,
+           estimating_folder_url, project_folder_url, requested_by, requested_at,
+           completed_at, copy_job_status, error_detail, last_modified, last_modified_by)""",
+
     # ----------------------------------------------------------------------
     # PQP - Procore half. Values exercise the mapping, not the happy path: OB1's trade
     # 'Concrete Formwork' resolves to a qc_seed_Trade key, OB2's 'Metals' does not (there

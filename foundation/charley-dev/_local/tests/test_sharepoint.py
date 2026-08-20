@@ -57,6 +57,41 @@ def test_list_names_agree_across_writers() -> None:
         assert f'"queryName": "{bronze}"' in meta, f"{bronze} is missing from the metadata"
     check("every list name is identical in the PS1, the dataflow and its metadata")
 
+    # THE OTHER WAY THIS DATAFLOW SHIPS BROKEN, and it did until 2026-08-19.
+    #
+    # The header declares its output destination by REFERENCE - QueryName =
+    # "DefaultDestination" - and every query carries BindToDefaultDestination = true. If
+    # nothing in the file actually defines that query, the mashup still parses, still
+    # deploys, and fails at RUN with an unresolved reference. All 18 queries, every time.
+    # It went unnoticed because this dataflow has never been deployed; CD_Sage_Ingest,
+    # the only one that has, carries the line and a comment saying exactly this.
+    assert 'QueryName = "DefaultDestination"' in mashup
+    assert "shared DefaultDestination =" in mashup, (
+        "mashup.pq binds every query to DefaultDestination but never defines it - "
+        "the dataflow will deploy and then fail at run"
+    )
+    assert "Lakehouse.Contents" in mashup, "DefaultDestination does not point at a lakehouse"
+    workspace_id, bronze_id = ms.fabric_ids()
+    assert workspace_id in mashup and bronze_id in mashup, (
+        "the destination does not match fabric_ids.json - it must land in CD_Bronze"
+    )
+    check("the dataflow defines the destination it binds every query to")
+
+    # Two sites, and only the Job Register reads the second one. The reporting lists and
+    # the BUILD site are different tenanted sites; crossing them wires the register to a
+    # site that does not have it and returns nothing, silently.
+    assert f'shared {ms.JOB_REGISTER_QUERY} =' in mashup
+    assert "SITE_BUILD = " in mashup
+    register_block = mashup.split(f"shared {ms.JOB_REGISTER_QUERY} =")[1]
+    assert "SharePoint.Tables(SITE_BUILD" in register_block, (
+        "the Job Register must read SITE_BUILD, not the reporting site"
+    )
+    assert f'Ensure-List "{ms.JOB_REGISTER_LIST}"' not in script, (
+        "the Job Register is created by power-automate/provision-sharepoint-build.ps1 on "
+        "the BUILD site - this script must not create a second one on the reporting site"
+    )
+    check("the Job Register reads the BUILD site, and is not duplicated onto the other one")
+
     # The CSV loader is the fourth writer into the same bronze contract.
     import deploy_manual as dm
 

@@ -96,6 +96,11 @@
       "queryId": "043b3fd1-36a7-5c8d-b715-e10400e038da",
       "queryName": "cd_bronze_man_qc_doh_result",
       "loadEnabled": true
+    },
+    "cd_bronze_man_job_register": {
+      "queryId": "f19ec524-495c-5e57-8319-b9c5e93c8b42",
+      "queryName": "cd_bronze_man_job_register",
+      "loadEnabled": true
     }
   },
   "connections": []

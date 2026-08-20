@@ -7,6 +7,7 @@ Nothing in here has been deployed. It is committed so it can be reviewed as a di
 imported by hand once the client confirms the site URL and the template contents.
 
 ```
+RUNBOOK.md                       Ordered import steps. BOTH SharePoint sites, and Fabric.
 provision-sharepoint-build.ps1   PnP PowerShell. Site, libraries, template trees, Job Register.
 flows/EstimatingSetup.json       New job  ->  01 ESTIMATING/E-YY-###-Project Name
 flows/ConvertToBidding.json      E-YY-### ->  00 PROJECTS/YY-###-Project Name
@@ -24,7 +25,7 @@ One SharePoint list on the BUILD site does four jobs at once:
 | **Trigger** | A new row starts Estimating Setup. Setting `Stage = Bidding` starts Convert to Bidding. |
 | **Sequential-number authority** | `max(JobSeq)` for the current `JobYear` is read from this list. There is no counter anywhere else. |
 | **Audit log** | Every run writes back to the row it was triggered by. List versioning is on, so every field change has a who and a when. |
-| **`dim_Job` source** | Fabric ingests the list as-is. The columns are already the dimension. |
+| **`dim_Job` source** | The `CD_Manual_Ingest` dataflow reads this list into `cd_bronze_man_job_register`, and it lands in `CD_Gold_Lakehouse` as `dim_Job`. See "How this reaches Fabric" below. |
 
 That is the point: there is no separate log to forget to write to, and no second place a job
 number can be issued from. A run that does not update its row is a run that failed, and the
@@ -137,6 +138,55 @@ turning it off shows up in a diff.
 Cost: jobs are created one at a time. Each run is seconds of flow time plus however long the
 copy takes. For a firm creating a handful of jobs a day this is free.
 
+### And the production guard for it lives in Fabric
+
+`test_flows.py` asserts the setting is present, so **removing** it shows up in a diff. That
+does nothing about somebody switching it off in the **live** flow through the designer, where
+there is no diff to read — and that is the likelier way it happens.
+
+So the check that catches it is at the other end of the chain. `dim_Job` carries a blocking
+data-quality expectation on `JobNumber` uniqueness
+(`foundation/charley-dev/02-transformation/dq/expectations.py`). Two jobs issued `26-025`
+fails the nightly gate on the day it happens, with both offending rows named, instead of
+surfacing weeks later as two folder trees that both contain real documents.
+
+That only works because the silver parser deduplicates on the SharePoint **item id**, not on
+`JobNumber`. Deduplicating on the number would look reasonable, discard one of the two real
+jobs, and hide the exact thing being checked. `test_silver.py` asserts both rows survive.
+
+## How this reaches Fabric
+
+Until 2026-08-19 it did not. This README described the Job Register as the `dim_Job` source
+while nothing anywhere read it — no bronze table, no dataflow query, no silver parser, no gold
+DDL. The flows created folders and issued job numbers, and not one row reached the platform.
+
+The chain now runs the same medallion every other source does:
+
+```
+Job Register (SharePoint, /sites/BUILD)      written by flows/*.json
+  -> cd_bronze_man_job_register              CD_Manual_Ingest.Dataflow, the one query
+                                             reading SITE_BUILD rather than SITE
+  -> cd_silver_man_job_register              sql/silver/30_manual_silver.sql
+  -> sv_man_job_register                     sql/silver/01_source_views_cd.sql
+  -> dim_Job                                 sql/gold/13_dim_job.sql
+```
+
+Two things worth knowing about the shape:
+
+- **There is no `ProjectKey` on `dim_Job`.** A job is registered when somebody asks for an
+  estimate, long before anyone knows whether the work will be won, and a job lost at bid never
+  becomes a Procore project at all. Giving it a project key would mean inventing one or
+  dropping every unwon job — and the second quietly turns "how many jobs did we estimate this
+  year" into "how many did we win".
+- **`dim_Job` stops at gold.** It is not bound to either semantic model yet, because no report
+  visual asks for the job pipeline. Binding it is one TMDL table and a relationship when one
+  does; binding it now would add a table nothing reads, which this platform has been bitten by
+  before.
+
+Nothing here runs until `CD_Manual_Ingest` is published — see [`RUNBOOK.md`](RUNBOOK.md), step
+5. Until then `cd_06_land_manual` declares the bronze table empty so the nightly pipeline stays
+green, and `dim_Job` reads as an honest blank rather than breaking the build.
+
 ## Why `CreateCopyJobs`, not the connector's "Copy folder"
 
 | | Connector "Copy folder" | `CreateCopyJobs` |
@@ -182,37 +232,15 @@ point means something raced us, and that should surface rather than overwrite.
 
 ## Manual import steps
 
-1. **Set the site URL.** Edit `$BUILD_SITE_URL` at the top of
-   `provision-sharepoint-build.ps1`. It is `https://REPLACE-ME.sharepoint.com/sites/BUILD`
-   on purpose - the script refuses to run while it still says that.
-2. **Dry-run the provisioning.** See the header of the script for the PnP install and the
-   `Register-PnPEntraIDAppForInteractiveLogin` step, which is the one people get stuck on:
-   PnP.PowerShell 2.x removed the built-in multi-tenant app, so `Connect-PnPOnline
-   -Interactive` on its own now fails with `ClientId is required`.
+**They live in [`RUNBOOK.md`](RUNBOOK.md)**, in order, covering both SharePoint sites and the
+Fabric binding in one sequence. They used to be duplicated here, which is how the reporting
+site's script came to be a footnote below rather than a step - and provisioning only the BUILD
+site is the mistake that costs the most, because nothing about it fails visibly.
 
-   ```
-   ./provision-sharepoint-build.ps1
-   ```
-
-   Reads and prints. Writes nothing.
-3. **Apply.**
-
-   ```
-   ./provision-sharepoint-build.ps1 -Apply
-   ```
-4. **Populate the two template trees.** See "What Affect must supply".
-5. **Create the flows.** These JSON files are workflow *definitions*, not a solution `.zip`.
-   Two ways in:
-   - Power Automate -> *My flows* -> *New* -> *Instant/Automated*, add the SharePoint trigger,
-     then paste the definition in via the designer's code view; or
-   - wrap each in a `Microsoft.Flow/flows` resource inside a solution package and import that,
-     which is the route to take if these are going into ALM.
-6. **Set the flow parameters** - at minimum `SiteUrl`, to the same URL as step 1. Check
-   `EstimatingTemplate` and `ProjectTemplate` match the real folder names.
-7. **Confirm concurrency.** Open each trigger -> Settings -> Concurrency Control -> on, degree
-   of parallelism **1**. Verify it after import; the designer can quietly drop it.
-8. **Test with a throwaway name** containing an awkward character, e.g.
-   `Test / Job: "Alpha"`, and confirm the folder comes out as `E-26-001-Test Job Alpha`.
+The short version: register a PnP Entra app (once per tenant, needs an admin), set the site
+URLs, dry-run then `-Apply` both provisioning scripts, paste the two flow definitions into
+the Power Automate designer, re-check trigger concurrency is 1, publish `CD_Manual_Ingest`,
+and smoke-test with `Test / Job: "Alpha"`.
 
 Run `python power-automate/test_flows.py` after any edit to the definitions.
 
