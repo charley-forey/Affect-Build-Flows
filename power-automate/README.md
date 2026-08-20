@@ -8,7 +8,8 @@ imported by hand once the client confirms the site URL and the template contents
 
 ```
 RUNBOOK.md                       Ordered import steps. BOTH SharePoint sites, and Fabric.
-make_import_packages.py          Wraps flows/*.json into importable .zip packages.
+deploy_flows.py                  Creates both flows via the API. The working route.
+make_import_packages.py          Legacy import package. Currently rejected - see RUNBOOK.
 provision-sharepoint-build.ps1   PnP PowerShell. Site, libraries, template trees, Job Register.
 flows/EstimatingSetup.json       New job  ->  01 ESTIMATING/E-YY-###-Project Name
 flows/ConvertToBidding.json      E-YY-### ->  00 PROJECTS/YY-###-Project Name

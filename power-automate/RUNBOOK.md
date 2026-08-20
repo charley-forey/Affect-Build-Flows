@@ -121,60 +121,68 @@ lookup list with no projects in it and every intake list unusable.
 
 ---
 
-## 4. Import the two flows
+## 4. Create the two flows
 
-`flows/*.json` are **workflow definitions** — `$schema`, `parameters`, `triggers`, `actions`,
-`outputs`. That is deliberately what lives in git: it is what you read in a diff and what
-`test_flows.py` asserts against. It is **not** something Power Automate will take as-is.
-
-*My flows → Import* offers exactly two doors, and neither accepts a bare definition:
-
-| | |
-|---|---|
-| **Import Solution (Dataverse)** | Wants a Dataverse solution `.zip` — needs a solution, a publisher, and a Dataverse database in the target environment |
-| **Import Package (Legacy)** | Wants a legacy package `.zip` — needs none of that |
-
-Build the second:
+`flows/*.json` are **workflow definitions** — the right thing to keep in git, and not
+something Power Automate's Import menu accepts. Use the API instead:
 
 ```bash
 cd power-automate
-python make_import_packages.py --site-url https://<tenant>.sharepoint.com/sites/BUILD
+python deploy_flows.py                       # dry run - reads, writes nothing
+python deploy_flows.py --site-url https://<tenant>.sharepoint.com/sites/<site> --apply
 ```
 
-That writes `dist/EstimatingSetup.zip` and `dist/ConvertToBidding.zip`.
+The dry run prints your environment, the SharePoint connection it will use, and which flows
+it would create. Nothing is written without `--apply`.
 
-> **The site URL is baked in at build time, and that is not a convenience.** `SiteUrl` is a
-> *definition* parameter, not one of the "flow parameters" the designer exposes — **there is
-> no way to edit it in the UI after import**. A package built with the placeholder imports
-> cleanly, looks finished, and every run fails against a host called `REPLACE-ME`. The script
-> refuses to build without `--site-url` for that reason.
+**Prerequisites**, both checked by the dry run:
 
-Then, for each package: **My flows → Import → Import Package (Legacy)**, upload the `.zip`,
-and in *Review Package Content*:
+- `az login` in the tenant. The script takes a Power Automate token from your existing CLI
+  session — nothing is stored, printed, or written to a file.
+- **A SharePoint connection must already exist** in the environment. A connection is a
+  credential and cannot be created from a definition: make one at *Power Automate →
+  Connections → New connection → SharePoint*, signed in as the account the flows should run
+  as. Use a **service account**, not a named person — the flows run as whoever owns the
+  connection and break when that person leaves. `RequestedBy` still records the real
+  requester either way.
 
-1. The **flow** shows as *Create as new*. Leave it.
-2. The **SharePoint connection** shows an import setup action — pick an existing connection
-   or create one. A connection is a credential, so it cannot travel in a package.
-3. Import, then **turn the flow on** — imported flows arrive off.
+The script **never overwrites** an existing flow of the same name; it skips and says so. A
+flow somebody has since edited in the designer is not something to silently replace from a
+file, and a second flow side by side is recoverable where a clobbered one is not.
 
-Afterwards, on each flow:
+Both flows are created **stopped**. Before turning them on:
 
-- **Re-verify trigger concurrency.** Trigger → Settings → Concurrency Control → on, degree of
-  parallelism **1**. It is in the definition and it survives packaging (`test_flows.py`
-  asserts both), but confirm it on the live flow: this is the single most consequential
-  setting here, and without it two jobs get issued the same number with nothing erroring.
-- **Check `EstimatingTemplate` and `ProjectTemplate`** match the real folder names. See the
-  open questions at the bottom — one of them almost certainly does not.
-- **Own the connection with a service account**, not a named person. The flows run as whoever
-  owns the SharePoint connection and break when that person leaves. `RequestedBy` still
-  records the actual requester either way.
+1. **Confirm trigger concurrency is 1** — Trigger → Settings → Concurrency Control. It is in
+   the definition and `test_flows.py` asserts it, but confirm on the live flow: without it,
+   two jobs get issued the same number and nothing anywhere errors.
+2. **Confirm the site structure exists** — `01 ESTIMATING`, `00 PROJECTS`, `Job Register`,
+   and both template folders. The flows will fail on their first run otherwise.
+3. Check `EstimatingTemplate` and `ProjectTemplate` match the real folder names. See the open
+   questions at the bottom — one of them almost certainly does not.
 
-To change the site URL later, rebuild the package with the new `--site-url` and re-import as
-a new flow. Editing the imported flow in the designer will not reach that parameter.
+> **The site URL is set at creation time and cannot be changed afterwards.** `SiteUrl` is a
+> *definition* parameter, not one of the "flow parameters" the designer exposes. To move the
+> flows to a different site, delete them and re-run with the new `--site-url`.
 
-**If ALM is the destination**, wrap the same definitions in a Dataverse solution instead —
-that is the route that moves flows between environments, and retrofitting it later means
-rebuilding both flows. The legacy package is the right choice for getting running now.
+### The package route, and why it is not the one above
+
+`make_import_packages.py` builds a legacy import package (`dist/*.zip`) for *My flows →
+Import → Import Package (Legacy)*. **It does not currently work.** Two attempts against a
+live tenant, both rejected identically:
+
+```
+MissingPackageManifest: The package manifest file 'manifest.json'
+under 'Microsoft.Flow' folder missing.
+```
+
+The manifest **content** is right — the review screen renders the flow's name, description
+and *Create as new* straight out of it. Some third location is expected for a second copy and
+the error does not say where; adding one at `Microsoft.Flow/manifest.json` changed nothing.
+
+It is kept rather than deleted because the answer is one observation away: **export any
+existing flow from this tenant as a package and look at its zip layout.** That gives the
+expected paths exactly, and the generator can be corrected in a line. Until somebody does
+that, use the API route above.
 
 ---
 
