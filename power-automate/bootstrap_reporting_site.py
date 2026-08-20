@@ -220,6 +220,21 @@ def run_batch(tok: str, env: str, site: str, connection: str,
     import time
     old = find_flow(tok, env, HELPER_NAME)
     if old:
+        # REFUSE TO CLOBBER A LIVE RUN. Every batch reuses one helper flow name, so a second
+        # copy of this script deletes the first one's flow mid-run - the surviving process
+        # then polls a flow that no longer exists and reports FlowNotFound, while the work
+        # it was doing is simply gone. That happened, and it looked like the SharePoint calls
+        # were hanging when they were being deleted out from under.
+        live = [r for r in call("GET", f"/providers/Microsoft.ProcessSimple/environments"
+                                       f"/{env}/flows/{old}/runs?api-version=2016-11-01",
+                                tok).get("value", [])
+                if r.get("properties", {}).get("status") in ("Running", "Waiting")]
+        if live:
+            raise SystemExit(
+                f"a helper flow run is still going ({live[0]['name']}).\n"
+                "Another copy of this script is probably running - wait for it, or clear it\n"
+                "with --cleanup if you know it is orphaned."
+            )
         call("DELETE", f"/providers/Microsoft.ProcessSimple/environments/{env}"
                        f"/flows/{old}?api-version=2016-11-01", tok)
     created = call("POST", f"/providers/Microsoft.ProcessSimple/environments/{env}"
@@ -262,6 +277,12 @@ def run_batch(tok: str, env: str, site: str, connection: str,
                              f"?api-version=2016-11-01", tok).get("value", [])
         for action in detail:
             props = action.get("properties", {})
+            # A connector action that keeps getting 502 sits in Running, not Failed - the
+            # SharePoint connector retries BadGateway silently. Reported too, or a batch
+            # that is quietly retrying looks identical to one making progress.
+            if props.get("status") == "Running" and props.get("code"):
+                failed.append(f"{action.get('name')}: still Running, last code "
+                              f"{props.get('code')} - the connector is retrying")
             if props.get("status") == "Failed":
                 err = props.get("error", {})
                 failed.append(f"{action.get('name')}: "
