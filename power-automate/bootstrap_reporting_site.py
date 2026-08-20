@@ -305,6 +305,9 @@ def main() -> int:
     parser.add_argument("--connection", required=True)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--cleanup", action="store_true")
+    parser.add_argument("--probe", action="store_true",
+                        help="one GET against the site, to see whether SharePoint serves it "
+                             "yet - answers in under a minute instead of ten")
     parser.add_argument("--create-site", action="store_true",
                         help="create the site first (needs rights to create sites)")
     parser.add_argument("--owner", help="site owner UPN, required with --create-site")
@@ -324,6 +327,17 @@ def main() -> int:
             print("deleted the helper flow")
         else:
             print("no helper flow to delete")
+        return 0
+
+    if args.probe:
+        # ONE call, not eighteen. A newly created site returns 502 from SharePoint while
+        # Graph reads it perfectly well, and the connector retries 502 silently - so the
+        # only cheap way to ask "is it serving yet" is to make one request and read the
+        # action's code. A full batch takes ten minutes to report the same thing.
+        outcome = run_batch(tok, env, site, args.connection,
+                            [("probe the site", "GET", "_api/web", None)], "probe")
+        print("\nSucceeded means SharePoint is serving the site and the real run will work.")
+        print("A BadGateway code above means it is not ready yet - wait and probe again.")
         return 0
 
     gtok = graph_token()
