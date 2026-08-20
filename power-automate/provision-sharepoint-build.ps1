@@ -55,7 +55,15 @@
 [CmdletBinding()]
 param(
     [string]$SiteUrl,
-    [switch]$Apply
+    [switch]$Apply,
+    # Use the connection already open in this session, and skip the site-existence check.
+    #
+    # The site block below calls Get-PnPTenantSite, which needs the -admin endpoint, and
+    # then reconnects with -Interactive. Both are wrong when the site already exists and
+    # you signed in some other way - -DeviceLogin in particular, where an -Interactive
+    # reconnect discards the session you just approved and demands a browser that may not
+    # be on the machine running this.
+    [switch]$UseExistingConnection
 )
 
 $ErrorActionPreference = 'Stop'
@@ -134,22 +142,27 @@ function Step($label, [scriptblock]$body) {
 # --------------------------------------------------------------------- site
 if (-not (Get-PnPContext)) { throw 'Connect-PnPOnline first - see step 4 in the header.' }
 
-$siteExists = $null -ne (Get-PnPTenantSite -Identity $SiteUrl -ErrorAction SilentlyContinue)
-if (-not $siteExists) {
-    # Falls back to a read attempt for accounts without tenant-admin rights;
-    # Get-PnPTenantSite needs the admin endpoint, a plain connect does not.
-    try { Connect-PnPOnline -Url $SiteUrl -Interactive -ErrorAction Stop; $siteExists = $true } catch { }
-}
-
-if ($siteExists) {
-    Write-Host "site exists - leaving it alone"
+if ($UseExistingConnection) {
+    Write-Host 'using the connection already open in this session'
+    $siteExists = $true
 } else {
-    Step "site $SiteTitle ($SiteUrl)" {
-        New-PnPSite -Type TeamSite -Title $SiteTitle -Alias $SiteAlias -Wait | Out-Null
+    $siteExists = $null -ne (Get-PnPTenantSite -Identity $SiteUrl -ErrorAction SilentlyContinue)
+    if (-not $siteExists) {
+        # Falls back to a read attempt for accounts without tenant-admin rights;
+        # Get-PnPTenantSite needs the admin endpoint, a plain connect does not.
+        try { Connect-PnPOnline -Url $SiteUrl -Interactive -ErrorAction Stop; $siteExists = $true } catch { }
+    }
+
+    if ($siteExists) {
+        Write-Host "site exists - leaving it alone"
+    } else {
+        Step "site $SiteTitle ($SiteUrl)" {
+            New-PnPSite -Type TeamSite -Title $SiteTitle -Alias $SiteAlias -Wait | Out-Null
+        }
     }
 }
 
-if ($Apply) { Connect-PnPOnline -Url $SiteUrl -Interactive }
+if ($Apply -and -not $UseExistingConnection) { Connect-PnPOnline -Url $SiteUrl -Interactive }
 elseif (-not $siteExists) {
     Write-Host ''
     Write-Host 'Site does not exist yet, so the libraries and list below cannot be'
