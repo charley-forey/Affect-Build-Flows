@@ -51,6 +51,13 @@ FLOWS = HERE / "flows"
 
 API = "https://api.flow.microsoft.com"
 RESOURCE = "https://service.flow.microsoft.com/"
+
+# Connections live on the POWER APPS host, not the Flow one, and that is the whole reason the
+# lookup 404'd three times. The previous attempt probed three paths against api.flow - while
+# `flows`, a sibling route on that same host, works fine - so the path was never the problem
+# and the probe varied the wrong axis.
+POWERAPPS_API = "https://api.powerapps.com"
+POWERAPPS_RESOURCE = "https://service.powerapps.com/"
 API_VERSION = "2016-11-01"
 SHAREPOINT_API = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
 
@@ -83,14 +90,21 @@ def az() -> str:
     return found
 
 
-def token() -> str:
-    """A Power Automate token from the CLI session you are already signed in to."""
+def token(resource: str = RESOURCE, required: bool = True) -> str | None:
+    """A token for `resource` from the CLI session you are already signed in to.
+
+    `required=False` returns None instead of exiting, for the Power Apps token: the two
+    services often accept each other's, so a tenant that has not consented the CLI to Power
+    Apps specifically should fall back rather than abort a run that is otherwise fine.
+    """
     result = subprocess.run(
-        [az(), "account", "get-access-token", "--resource", RESOURCE,
+        [az(), "account", "get-access-token", "--resource", resource,
          "--query", "accessToken", "-o", "tsv"],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
+        if not required:
+            return None
         raise SystemExit(
             "could not get a Power Automate token from the Azure CLI.\n"
             f"  {result.stderr.strip()}\n\n"
@@ -101,12 +115,17 @@ def token() -> str:
     return result.stdout.strip()
 
 
-def try_call(method: str, path: str, tok: str,
-             body: dict | None = None) -> tuple[int, dict | str]:
-    """(status, parsed body) or (status, error text). Never raises on an HTTP error."""
+def try_call(method: str, path: str, tok: str, body: dict | None = None,
+             host: str = API) -> tuple[int, dict | str]:
+    """(status, parsed body) or (status, error text). Never raises on an HTTP error.
+
+    `host` defaults to the Flow API because everything except the connections lookup lives
+    there. It is a parameter at all because the previous version hard-coded it, so the
+    connections probe could only vary the path - and the path was never what was wrong.
+    """
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(
-        f"{API}{path}", data=data, method=method,
+        f"{host}{path}", data=data, method=method,
         headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"},
     )
     try:
@@ -141,36 +160,36 @@ def environment(tok: str, wanted: str | None) -> str:
     return default["name"]
 
 
-def connection_paths(env: str) -> list[tuple[str, str]]:
-    """(label, path) endpoints that might list connections, likeliest first.
+def connection_paths(env: str) -> list[tuple[str, str, str]]:
+    """(label, host, path) endpoints that might list connections, likeliest first.
 
-    WHY A LIST RATHER THAN THE ONE RIGHT ANSWER.
+    THE HOST IS THE THING THAT WAS WRONG.
 
     The api-scoped spelling - /providers/Microsoft.PowerApps/apis/shared_sharepointonline
-    /connections - is the one the documentation shows, and against this tenant it 404s with
-    "No HTTP resource was found that matches the request URI". That endpoint lives on the
-    Power Apps host; this script talks to api.flow.microsoft.com because that is where the
-    flows are created, and the two hosts do not serve the same routes.
+    /connections - is what the documentation shows, and it 404'd here. So did two others.
+    All three were tried against api.flow.microsoft.com, while `flows` - a sibling route on
+    that same host - works: the path was never the problem, and probing three paths on one
+    host varied the wrong axis.
 
-    Each wrong guess costs a full round trip through somebody else's tenant, because there
-    is no way to test this from here. Three candidates cost one. The first that answers 200
-    wins and is named in the output, so the answer is recorded rather than rediscovered.
+    Connections are served by the Power Apps host. The Flow spellings are kept below it
+    because a fallback that costs one HTTP call is cheaper than being wrong again, and
+    because the first that answers 200 is NAMED in the output - so whichever it turns out to
+    be gets recorded rather than rediscovered.
 
-    Note that the two ProcessSimple spellings need no $filter at all - the environment is
-    already in the path - which sidesteps the OData encoding entirely. Only the Power Apps
-    spelling needs it, and its value is percent-encoded because urllib refuses to send a URL
-    containing a raw space.
+    The Power Apps spelling needs a $filter, whose value is percent-encoded because urllib
+    refuses to send a URL containing a raw space. The ProcessSimple ones are already
+    environment-scoped and need none.
     """
     flt = quote(f"environment eq '{env}'", safe="")
     return [
-        ("ProcessSimple, environment-scoped",
+        ("PowerApps host, api-scoped", POWERAPPS_API,
+         f"{SHAREPOINT_API}/connections?api-version={API_VERSION}&$filter={flt}"),
+        ("PowerApps host, environment-scoped", POWERAPPS_API,
+         f"/providers/Microsoft.PowerApps/environments/{env}"
+         f"/connections?api-version={API_VERSION}"),
+        ("Flow host, ProcessSimple environment-scoped", API,
          f"/providers/Microsoft.ProcessSimple/environments/{env}"
          f"/connections?api-version={API_VERSION}"),
-        ("ProcessSimple, api-scoped",
-         f"/providers/Microsoft.ProcessSimple/environments/{env}"
-         f"/apis/shared_sharepointonline/connections?api-version={API_VERSION}"),
-        ("PowerApps, api-scoped (documented; 404s on api.flow.microsoft.com)",
-         f"{SHAREPOINT_API}/connections?api-version={API_VERSION}&$filter={flt}"),
     ]
 
 
@@ -183,10 +202,17 @@ def sharepoint_connection(tok: str, env: str) -> tuple[str, str]:
     somebody's personal connection and a service account is exactly the choice that should
     not be made quietly.
     """
+    # The Power Apps host may want its own token. Asked for lazily and allowed to fail: the
+    # two services often accept each other's, so a tenant that has not consented the CLI to
+    # Power Apps specifically should fall back rather than abort a run that is otherwise
+    # fine.
+    pa_tok = token(POWERAPPS_RESOURCE, required=False) or tok
+
     every: list[dict] = []
     attempts: list[str] = []
-    for label, path in connection_paths(env):
-        status, payload = try_call("GET", path, tok)
+    for label, host, path in connection_paths(env):
+        status, payload = try_call("GET", path, pa_tok if host == POWERAPPS_API else tok,
+                                   host=host)
         if status == 200 and isinstance(payload, dict):
             every = payload.get("value", [])
             print(f"  connections endpoint: {label}")

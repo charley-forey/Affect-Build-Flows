@@ -389,7 +389,13 @@ def test_deploy_script_substitutes_the_site() -> None:
     env = "Default-b2a2225b-4b4e-42ec-ba52-c7e1c2dea580"
     candidates = df.connection_paths(env)
     assert len(candidates) >= 2, "one candidate is a guess; the point is not to guess once"
-    for label, path in candidates:
+    # The HOST has to vary, not just the path. Three paths on one host is what failed:
+    # `flows` works on api.flow.microsoft.com, so the path was never what was wrong.
+    hosts = {host for _, host, _ in candidates}
+    assert len(hosts) >= 2, f"all candidates share a host ({hosts}) - that was the bug"
+    assert df.POWERAPPS_API == candidates[0][1], "the Power Apps host must be tried first"
+    for label, host, path in candidates:
+        assert host.startswith("https://"), f"{label}: {host!r} is not a host"
         assert " " not in path, f"unencoded space in {label}: {path!r}"
         assert "'" not in path, f"unencoded quote in {label}: {path!r}"
         assert env in path, f"{label} does not scope to the environment"
@@ -397,7 +403,7 @@ def test_deploy_script_substitutes_the_site() -> None:
             # The key stays OData-spelled; only the value is escaped. urlencode() would
             # turn the key itself into %24filter, which is the mistake the obvious fix makes.
             assert "%24filter" not in path
-    check("every connections candidate is URL-safe and scoped to the environment")
+    check("connections candidates vary the HOST, and try Power Apps first")
 
 
 def main() -> int:
