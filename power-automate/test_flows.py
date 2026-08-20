@@ -223,6 +223,20 @@ def test_ps1_provisions_every_column_the_flows_write() -> None:
     assert not unused, f"provisioned but never referenced by either flow: {sorted(unused)}"
     check(f"all {len(referenced - BUILT_IN)} Job Register columns the flows use are provisioned, and none is dead")
 
+    # The Python provisioner has to create the SAME set. It exists because the PS1 needs a
+    # tenant admin's consent to PnP and this one does not, but two provisioners that disagree
+    # is worse than one that is hard to run: whichever you happened to use decides whether a
+    # column arrives, and a missing one never errors.
+    import provision_build_site as pbs  # noqa: PLC0415
+
+    python_side = {name for name, _, _ in pbs.COLUMNS}
+    assert python_side == provisioned, (
+        "provision_build_site.py and provision-sharepoint-build.ps1 disagree.\n"
+        f"  only in the PS1:    {sorted(provisioned - python_side)}\n"
+        f"  only in the Python: {sorted(python_side - provisioned)}"
+    )
+    check("both provisioners create exactly the same Job Register columns")
+
 
 def test_no_premium_connectors() -> None:
     """Send an HTTP request to SharePoint is a STANDARD connector. HTTP, and the Azure and
