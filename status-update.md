@@ -1,9 +1,13 @@
 # Status Update — Affect Group
 
-**As of 2026-08-19.** Written to be handed to the team as-is.
+**As of 2026-08-19, end of day.** Written to be handed to the team as-is.
 
 Every figure on this page was read out of the live Fabric workspace on 2026-08-19, not
-carried forward from a previous update. The engineering detail behind each claim is in
+carried forward from a previous update. **Three of the four access blockers closed during
+that day** — the Outbuild token arrived, the Key Vault ask turned out to be aimed at the
+wrong vault and was withdrawn, and a SharePoint site was provided. One remains.
+
+The engineering detail behind each claim is in
 [`foundation/charley-dev/_docs/`](foundation/charley-dev/_docs/) — start with
 [`solution-guide.md`](foundation/charley-dev/_docs/solution-guide.md).
 
@@ -24,8 +28,14 @@ Since then a **second subject area has been delivered: the Project Quality Plan*
 client's 44-sheet QA/QC tracker is now a modelled part of the platform with its own semantic
 model and its own 7-page report, joined to 4,564 live quality records read out of Procore.
 
-The build is not the bottleneck any more. **Four access grants are**, and they are worth
-about 41% of the report's coverage between them.
+Late on the same day, three further things landed. A dead join was found and repaired that
+had been attributing **$22.5M of accounts receivable to no project at all** while reporting
+itself as fully mapped. **Outbuild went live** — 3,078 rows across 15 endpoints — closing the
+milestone gap that had been open since the start. And the estimating→bidding folder
+automation moved from committed files into Affect's actual tenant.
+
+The build is not the bottleneck any more. **One access grant is** — the Sage gateway. It was
+four this morning.
 
 ---
 
@@ -42,7 +52,7 @@ Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been mo
 | **Gold** | **54 tables published** to the semantic-model contract — dimensions, facts, crosswalks, bridges, quality tables, manual placeholders |
 | **Semantic models** | **Two.** `Affect Project Report` — Direct Lake, **37 tables, 99 measures**. `Project Quality Plan` — **19 tables plus a measure table, 42 measures, 23 relationships** |
 | **Reports** | **Two.** `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable ([**see every page**](resources/power-bi/monthly-progress-report/) without opening Fabric). `Project Quality Plan` — **7 pages, 95 visuals** |
-| **Orchestration** | `CD_Master_Pipeline`, 5 activities. Pipeline 02:00 daily, model refresh 04:00 daily (Eastern) |
+| **Orchestration** | `CD_Master_Pipeline`, **6 activities** — *Land Manual Input* is in the nightly run, verified live 2026-08-19. Pipeline 02:00 daily, model refresh 04:00 daily (Eastern) |
 | **Data quality** | **104 expectations** — 81 blocking, 23 warning — gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
 
 ### The ingestion
@@ -51,8 +61,8 @@ Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been mo
 |---|---|
 | **Procore** | **44 endpoints registered, 40 landing bronze tables**, registry-driven — one shared extractor, not 25 near-identical notebooks. Adding an endpoint is a YAML entry. Two endpoints (`punch_item_types`, `schedule`) are blocked by Procore **403s** and are a permissions ask, not a build gap |
 | **Sage 100** | `CD_Sage_Ingest` **deployed** to the workspace, wired to the existing gateway, 8 tables including the two AR/AP **line** tables the current dataflow explicitly discards. Blocked on one permission grant — see below |
-| **Outbuild** | Built and verified across 16 endpoints. Cannot run — no API token issued |
-| **Manual (~40% of the report)** | Two writers into one contract: a SharePoint path (provisioning script written and runnable) **and** a CSV path that works today with no admin ticket. **17** manual tables are now created and typed — the original 9, plus 8 for the Quality Plan's intake |
+| **Outbuild** | **Live as of 2026-08-19.** Rebecca placed the token in `AffectKeyVault` at 18:27 UTC and **3,078 rows across 15 endpoints** landed in bronze, verified by reading the counts back out of Delta. Three bugs that only a live call could reveal were fixed first — the client had been written against the docs and never actually run. `fct_Milestone` does not consume it yet; silver still reads Rebecca's existing dataflow, and repointing it is its own change |
+| **Manual (~40% of the report)** | Two writers into one contract: a SharePoint path and a CSV path that works today with no admin ticket. **17** manual tables are created and typed — the original 9, plus 8 for the Quality Plan's intake. The `CD_Manual_Ingest` dataflow is **published** as of 2026-08-19 with 19 queries, bound to the real sites; it is not yet authenticated, and the 18 intake lists still need creating |
 
 ### The Project Quality Plan — new, and now visible
 
@@ -129,6 +139,42 @@ unmapped records fell from **631 to 459** and the report now reads e.g. `Windows
 The remaining **459** were a genuine vocabulary difference rather than a bug — and have since
 been largely closed. See below.
 
+### $22.5M of accounts receivable was attributed to no project, and the check said it was fine
+
+This is the most consequential thing found on Aug 19, and it is the same shape as the $4.85M
+change-order error: correct-looking output, no error anywhere.
+
+`dim_Project` read its Sage job number from a view that, since the switch onto our own
+medallion, returns `NULL` — the Procore project record simply does not carry a Sage id. So
+the column was empty for all 19 projects, the invoice join matched nothing, and **122 of 122
+AR invoices resolved to `UNMATCHED`**. **$23,695,760.48 of receivables was attributed to no
+project at all.**
+
+Two things made it survive:
+
+- **The row count never moved.** It is a `LEFT JOIN`, so 117 invoices went in and 117 came
+  out — which is precisely the check that had been run to prove the source switch was safe.
+  The rows survived. The join did not.
+- **The flag whose entire job is catching this reported success.** `IsInCrosswalk` was
+  derived from the *same wrong view*, so it read TRUE for all 19 projects. A completely
+  broken join was reporting itself as fully mapped.
+
+Fixed by joining the crosswalk explicitly. Measured live after rebuilding gold:
+
+| | Before | After |
+|---|---:|---:|
+| Projects resolving to a Sage job | 0 | **15** |
+| `IsInCrosswalk` TRUE | 19 (wrongly) | **15** |
+| Unmatched AR invoices | 122 | **24** |
+| AR attributed to a project | $0 | **$22,548,861.96** |
+
+The four projects still without a Sage job are three templates and City Harvest — a real and
+much smaller gap than the 19 the old flag implied.
+
+Three guards were added, because the offline suite had passed throughout: the test fixture
+had been giving `sv_projects` a Sage id where production gives `NULL`, so the suite was
+exercising a path that cannot exist live.
+
 ### Four more defects — found, fixed, verified against the live workspace
 
 Three of the four had been sitting on the Data Quality page as findings *about Affect's
@@ -202,7 +248,9 @@ than a code change; they are itemised in
 
 1. **Sentinel dates before 1582-10-15** in the submittals data — Spark refuses to read them
    from Parquet at all. Placeholders for "unknown", now floored to NULL.
-2. **2 projects have no Sage crosswalk entry** — they cannot join to any financial data.
+2. ~~**2 projects have no Sage crosswalk entry**~~ — **superseded 2026-08-19.** The real
+   number is **4 of 19**, and they are three templates plus City Harvest. The "2" came from
+   the broken `IsInCrosswalk` flag described above, which was reading TRUE for every project.
 3. **70 cost codes are absent from master data.**
 4. **23 AR invoices reference a Sage job that resolves to no project.**
 5. **Retainage reads as $0 across all 940 Sage invoices** on the invoice header. It is not
@@ -247,8 +295,8 @@ Honest separation between "built" and "proven correct against reality".
 
 | Item | Status | What would settle it |
 |---|---|---|
-| **The nightly pipeline does not call Procore** | Known limitation | `cd_01_extract_procore` is not in the nightly run. Extraction runs on a laptop and lands files; the pipeline merges whatever was last landed. "Ran green" means the transforms are healthy, **not** that the data is fresh. Resolved by the Key Vault role assignment |
-| **The nightly pipeline does not refresh manual input either** | Known limitation | `cd_06_land_manual` is not in `CD_Master_Pipeline`, so the nightly run rebuilds silver and gold without refreshing manual bronze. Harmless while every manual table is empty; a silent staleness bug the day somebody enters data. **Must land before SharePoint goes live** |
+| **The nightly pipeline does not call Procore** | Known limitation | `cd_01_extract_procore` is not in the nightly run. Extraction runs on a laptop and lands files; the pipeline merges whatever was last landed. "Ran green" means the transforms are healthy, **not** that the data is fresh. **Key Vault is no longer the gate** — resolved 2026-08-19. What is left is rotating the exposed Procore credentials, below |
+| ~~**The nightly pipeline does not refresh manual input either**~~ | **Resolved 2026-08-19** | `cd_06_land_manual` does run in `CD_Master_Pipeline`, as the activity *Land Manual Input* — verified live. The pipeline is 6 activities, not 5. The earlier claim was wrong |
 | **215 of 850 non-conformance records still have no trade** (was 459) | Needs a decision, not a fix | The alias table closed 464 records across the quality facts. What is left is three ambiguous labels — `Drywall/Carpentry`, `Concrete Superstructure`, `Concrete` — and a set of Procore trades with no equivalent in the checklist library at all, which is a scope question rather than a mapping one |
 | **DQ reject detail is stale** | Diagnosed, not yet fixed | The gate reports success while silently failing to write reject detail, so the Data Quality page shows rows from an older run. **Counts are trustworthy; drill-through is not.** Two small fixes identified |
 | **Source coverage is 5.26%** | Measured | Only 1 of 19 projects is present in all three systems. This is the single biggest limit on the report, and it is an access problem, not a build problem |
@@ -261,7 +309,10 @@ Honest separation between "built" and "proven correct against reality".
 
 ---
 
-## Roadblocks — four access grants, all Affect's to give
+## Roadblocks — one access grant left, down from four
+
+**Three of the four closed on Aug 19**, and only one of them closed the way we expected.
+They are recorded below the table, because *how* they closed matters more than that they did.
 
 All the pipework behind each of these is built, committed and tested. Nothing here is
 waiting on engineering.
@@ -269,15 +320,40 @@ waiting on engineering.
 | # | Blocker | Unlocks | Who can grant it | Effort |
 |---|---|---|---|---|
 | 1 | **Grant `cforey-c@affect-group.com` "Can use" on the connection `nc-affect-1\sage100con;Affect Group`** | Sage AR/AP detail, retainage, actual-cost-by-cost-code, AR scorecard category | Whoever administers the on-prem data gateway | **One grant, one refresh.** No subscription, no code change |
-| 2 | **Issue `OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere. 17 of 19 projects currently have none. Largest single coverage gain available | Affect via Outbuild CS rep | One token |
-| 3 | **Provision the SharePoint lists** (or start with the CSV path today) | The ~40% of the report that lives in no system — wins, risks, priority items, client survey, milestone dates — plus the 8 Quality Plan intake lists and the `Job Register` | SharePoint admin | Provisioning script is written and runnable, but **no site exists yet**. **The CSV path works today with no ticket at all** |
-| 4 | **One role assignment: "Key Vault Secrets Officer" on vault `OneLake`** for `cforey-c@affect-group.com` | Key Vault, so Procore ingestion runs *inside* Fabric on a schedule instead of on a laptop | Whoever owns the Azure subscription | **The subscription and the vault now both exist.** Our identity holds only *Contributor on the resource group*, which on an RBAC vault can neither read nor write a secret nor grant itself the right to. One role, then one script — [`keyvault-runbook.md`](foundation/charley-dev/_docs/keyvault-runbook.md) |
+| ~~2~~ | ~~**Issue `OUTBUILD_API_TOKEN`**~~ | ✅ **CLOSED 2026-08-19.** Rebecca placed the token in `AffectKeyVault` at 18:27 UTC. **3,078 rows across 15 endpoints** now land in bronze | Done — thank you | — |
+| ~~3~~ | ~~**Provision the SharePoint lists**~~ | 🟡 **The site question is closed; the lists are now ours to finish.** Affect supplied sites, the `Job Register` is provisioned, and `CD_Manual_Ingest` is published against the reporting site. The 18 intake lists still need creating — a retry on our side, not an ask. **The CSV path works today with no ticket at all** | — | Ours |
+| ~~4~~ | ~~**"Key Vault Secrets Officer" on vault `OneLake`**~~ | ❌ **WITHDRAWN 2026-08-19 — this ask should never have been made.** It named the wrong vault. The vault actually in use is **`AffectKeyVault`** (RG `Affect_Data`), where our account already held *Key Vault Administrator* inherited at resource-group scope. Nobody needed to grant anything, and this had been sitting in three documents since Aug 13 | Nobody | — |
 
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
 and `schedule` both return **403**.
 
-**If only one thing gets done this week, make it #1.** It is the highest value per unit of
-effort by a wide margin, and it may also explain the data-lag finding above.
+**#1 is now the only one left, so it is also the whole list.** It remains the highest value
+per unit of effort by a wide margin, and it may also explain the data-lag finding above.
+
+### How the other three closed, because two of them are worth reading
+
+**The Key Vault ask was wrong, and we made it four times.** Every document here named vault
+`OneLake` and recorded the blocker as a missing role assignment on it. The vault Affect
+actually uses is `AffectKeyVault`, in a different subscription, where this account already
+held administrator rights inherited from the resource group. The ask was **withdrawn, not
+completed** — it would have solved a problem that did not exist. Two real defects were
+sitting behind it and were only found once the vault was actually exercised: secret names
+were never being translated (Key Vault forbids underscores, so `PROCORE_CLIENT_ID` is not a
+legal secret name), and the secret helper **failed open** — when a vault lookup did not fire
+it silently fell through to an environment variable and reported success. A half-configured
+vault would have read a credential from an unaudited source and nobody would have known
+until an unattended 02:00 run. It now raises instead.
+
+**The Outbuild client had never actually been run.** It was written against the
+documentation and verified against the documentation. The first live call revealed three
+faults at once: no User-Agent header, so Cloudflare rejected the request before it reached
+Outbuild — indistinguishable from a bad token, which is exactly what we had just been handed;
+the wrong response envelope key, which returned one row per page containing the whole page;
+and a paging rule that stopped after page one on most endpoints. All three fixed, 3,078 rows
+landed and verified by reading counts back out of Delta rather than trusting the run status.
+
+**Affect supplied a site by reusing one they already had.** `AFFECTBUILD1`, not a new site
+called `BUILD` — which is fine, and is what the flows now point at.
 
 ---
 
@@ -289,16 +365,18 @@ Ordered by value per unit of effort, engineering side.
 |---|---|---|
 | 1 | Fix the DQ persist gap — create the results table, move reject persistence out of the shared exception handler, record the outcome on the heartbeat | Nothing |
 | 2 | ✅ **Done.** `deploy_gold.py`'s default source is now `cd`, so a bare re-deploy no longer silently reverts gold to the legacy warehouse, and its hardcoded publish list is gone | — |
-| 3 | Add `cd_06_land_manual` (and, once the vault role lands, `cd_01_extract_procore`) to `CD_Master_Pipeline` | Nothing / Blocker #4 |
+| 3 | ✅ **Half done.** `cd_06_land_manual` is in `CD_Master_Pipeline` as *Land Manual Input*. `cd_01_extract_procore` is still held out, now waiting on the Procore credential rotation rather than on Key Vault | Credential rotation |
 | 4 | Explain the `Total Billed` / `Owner Billed To Date` gap on the report itself | Nothing |
 | 5 | Land Sage silver, settle the retainage question, repoint the AR views at our own medallion | Blocker #1 |
-| 6 | Land Outbuild milestones, close Completion Variance | Blocker #2 |
+| 6 | **Unblocked — Outbuild is landing.** What is left is repointing `sv_outbuild_activities` off Rebecca's `Silver_Lakehouse` onto our own bronze, which could take `fct_Milestone` to zero if done carelessly and so is its own change. Then Completion Variance can be scored | Nothing |
 | 7 | Answer the four manual-input questions and the quality trade vocabulary, then wire manual silver → gold | A 30-minute call |
-| 8 | Retire the local extraction bridge; ingestion moves into Fabric | Blocker #4 |
+| 8 | Retire the local extraction bridge; ingestion moves into Fabric | Procore credential rotation |
 | 9 | Mentoring sessions with Rebecca — recorded, on the extractor registry pattern first | Scheduling |
+| 10 | Create the 18 reporting-site intake lists (a retry — SharePoint was returning 502 on a site minutes old), sign `CD_Manual_Ingest` in, and refresh it | Nothing |
+| 11 | Turn the two job flows on: template contents from Affect, a service account to own the SharePoint connection, then smoke-test with a real job | Template contents |
 
-Reaching ~100% scorecard coverage needs items 5, 6 and 7. All three are gated on access or a
-conversation, not on build time.
+Reaching ~100% scorecard coverage needs items 5, 6 and 7. **Item 6 is no longer gated on
+anything but our own work**; 5 needs the one remaining grant, and 7 needs a 30-minute call.
 
 ---
 

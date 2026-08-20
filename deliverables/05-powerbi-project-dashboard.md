@@ -15,7 +15,14 @@ Replace the manually-maintained Excel project tracker with a Power BI report fed
 
 ## Scope
 **In:** Semantic model on the curated tables; six report pages (overview + schedule, financial, safety & quality, scorecard detail, hidden data quality); the eight sections of the Excel tracker; refresh configuration; rollout to leadership.
-**Out:** Schedule data from Outbuild (pending — the Procore API has no `milestone` endpoint, so this may become in-scope), automations (D6/D7).
+**Out:** automations (D6/D7).
+
+**Schedule data from Outbuild is now in.** The Procore API has no `milestone` endpoint, so
+Outbuild is the only source; the token landed 2026-08-19 and **3,078 rows across 15
+endpoints** are in bronze. It is not yet on the report: `sv_outbuild_activities` still reads
+Rebecca's `Silver_Lakehouse` dataflow, so `fct_Milestone`'s 52 rows are hers. Repointing it
+could take milestones to zero if done carelessly and is its own piece of work — after which
+Completion Variance can be scored and coverage moves off 59%.
 
 The Excel tracker has been fully extracted — its eight dashboard sections, 17 tables, 15 pick-lists, and complete formula set are documented in [`analysis/excel-tracker/`](../analysis/excel-tracker/). Scope below is the real thing, not a placeholder.
 

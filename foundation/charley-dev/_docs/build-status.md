@@ -288,6 +288,40 @@ Delta or DAX before acting on it.
 path, not from `cd_bronze_outbuild_*`. Repointing it risks taking milestones to zero and is
 its own piece of work.
 
+#### SharePoint writes: every direct route from a script is closed on this tenant
+
+Measured 2026-08-19, not assumed. Worth recording because the next attempt should not have to
+rediscover that two whole auth routes are dead ends.
+
+| Route | Result |
+|---|---|
+| **SharePoint REST**, `{site}/_api/web` | **401** `{"error":"invalid_request"}` with a token whose audience is correct (`00000003-0000-0ff1-ce00-000000000000`, SharePoint's own app id). The tenant does not accept Azure CLI tokens at the legacy endpoint at all |
+| **Microsoft Graph** | Reads **200**. `POST /sites/{id}/lists` → **403 accessDenied**. The CLI's Graph token carries **no `Sites.*` scope**; reads slip through on `Directory.AccessAsUser.All`, and creating a list needs `Sites.Manage.All`. The CLI is a fixed first-party app, so this cannot be widened |
+| **PnP PowerShell** | `AADSTS700016`. 3.x needs PowerShell 7 (this machine has 5.1); 1.12.0 signs in through the shared *PnP Management Shell* app, which Microsoft retired and which exists in no directory — so it is not a consent a click can fix |
+| **Power Automate API** | ✅ **Works.** A flow's SharePoint actions run server-side **as the connection**, which carries the site permissions of whoever made it. So a flow can do what no script token here can |
+
+That last row is how the sites were provisioned: a throwaway helper flow whose actions are the
+REST calls, run once and deleted (`bootstrap_site_via_flow.py`, `bootstrap_reporting_site.py`).
+No new consent, no application registered, no credential left behind. **It is a bootstrap, not
+a pattern** — it exists only because Power Automate resolves a trigger's list at *save* time,
+so the site structure had to exist before the real flows could even be created.
+
+Three things that cost time and are worth knowing:
+
+- **A run reporting `Succeeded` proves nothing here.** Every action runs after the previous one
+  on `Succeeded` *or* `Failed`, so the chain survives an already-exists error — which also means
+  the run's status only reflects its *last* action. One run reported `Succeeded` while creating
+  nothing at all. Read the per-action results, not the run.
+- **The SharePoint connector retries 502 silently**, so a call failing repeatedly looks exactly
+  like a call making progress. `--probe` in `bootstrap_reporting_site.py` answers it in one call.
+- **A newly created site returns 502 from SharePoint REST for roughly its first half hour**
+  while Graph reads it perfectly. The site is real; only its REST endpoint lags.
+
+Also from the same token: this account holds `Application.ReadWrite.All`,
+`AppRoleAssignment.ReadWrite.All` and `DelegatedPermissionGrant.ReadWrite.All` — so the PnP
+consent that `provision-sharepoint-build.ps1` was blocked on all along is something **this
+account can approve itself**, if the PnP route is ever wanted.
+
 #### Sage: the database name is `Affect Group`, not `ABMI`
 
 The Sage 100 handoff document (Nerds That Care, May 20 2026) records the validated gateway
@@ -448,14 +482,14 @@ listed as "not deployed" for two weeks after it was deployed. Corrected below.
 |---|---|
 | Procore ingestion **run inside Fabric** | Notebook and 44-endpoint registry built and tested; still needs `PROCORE_CLIENT_ID`/`SECRET` in Key Vault. Extraction runs **locally** and lands files; `cd_05_land_to_bronze` merges them. The nightly pipeline therefore re-processes whatever was last landed — **it does not call the Procore API.** |
 | Sage dataflow (`CD_Sage_Ingest`) | **Built and deployed** — live in the `charley-dev` folder, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze`. Inert until `cforey-c@affect-group.com` is granted *Can use* on `nc-affect-1\sage100con;Affect Group`. Deployed-and-inert is deliberate: it turns the remaining work into one grant plus one refresh |
-| Manual dataflow (`CD_Manual_Ingest`) | Defined in the repo, **not deployed** to the workspace — `SITE` in `mashup.pq` is still a `REPLACE-ME` placeholder, so deploying it would create an item that cannot run. A second defect was found and fixed 2026-08-19: the mashup bound all 18 queries to a `DefaultDestination` it never defined, so it would have deployed and then failed at run on every query. `test_sharepoint.py` now asserts the destination exists. The list-name defect it used to carry is **fixed at the source**: `_local/make_sharepoint.py` now generates the PS1, the mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so one function decides a list name and `test_sharepoint.py` fails the build if the four writers drift. See [`sharepoint-lists.md`](sharepoint-lists.md) |
+| Manual dataflow (`CD_Manual_Ingest`) | **Published 2026-08-19**, workspace `Build`, folder `charley-dev`, item `54addfb1-df2f-4ab0-9f5f-d0f36c64376e`. **19 queries** — 18 against the reporting site plus `cd_bronze_man_job_register` against BUILD, which is why the generator carries two site constants rather than one. **Not yet authenticated or refreshed**: `queryMetadata.json` ships `connections: []`, the honest not-bound-yet state Fabric fills in on first sign-in, and the destination is pinned in the mashup as `shared DefaultDestination` so it cannot write anywhere unintended while it waits. Both site constants were `REPLACE-ME` until 2026-08-19 and are now the real sites. A second defect was found and fixed 2026-08-19: the mashup bound all 18 queries to a `DefaultDestination` it never defined, so it would have deployed and then failed at run on every query. `test_sharepoint.py` now asserts the destination exists. The list-name defect it used to carry is **fixed at the source**: `_local/make_sharepoint.py` now generates the PS1, the mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so one function decides a list name and `test_sharepoint.py` fails the build if the four writers drift. See [`sharepoint-lists.md`](sharepoint-lists.md) |
 | Outbuild ingestion | **Live as of 2026-08-19** — token in Key Vault, 3,078 rows landed in `cd_bronze_outbuild_*`. Silver still reads Rebecca's dataflow, so `fct_Milestone` does not consume this yet |
 | `man_*` manual tables | **Built and deployed** — 9 tables live in gold, currently empty. The silver → gold `INSERT`s are now written, so the chain runs end to end; the tables stay empty because nobody has entered a row, not because the join is missing. Four column-spec questions still need Affect — [`manual-input.md`](manual-input.md) |
 | Orchestration pipeline | **Built and running** — `CD_Master_Pipeline`, 6 activities. Read out of the live pipeline definition 2026-08-19; a pipeline-triggered run of the DQ gate completed 2026-08-19 06:16 UTC |
 | Scorecard measures | **Written** — 9 category measures live. **Scorecard coverage is 59%** (`[Scorecard Coverage %]`, live): 5 of 9 categories score from real data, 4 return BLANK for want of source data. This is the canonical figure — other documents reference it rather than restate it. Coverage read 35% before field ops landed and went 35% → 45% → 59%; filling the `man_*` tables is projected to take it to 88%, which is a projection, not a measurement |
 | `Vendor & Insurance List` report | **Never built, and no longer planned.** The insurance data reached the Monthly Progress Report instead, as `fct_VendorInsurance` (105 rows) plus a Vendor Insurance page. The stale reference has been removed from `README.md` |
 | PQP (Project Quality Plan) subject area | **Deployed and running end to end, 2026-08-19.** Seeds, silver, gold and the DQ gate all ran to Completed against `CD_Gold_Lakehouse`, and the semantic model (`Project Quality Plan`, 19 tables plus `_Measures` / 42 measures / 23 relationships) and its 7-page, 95-visual report are live. Counts below were read back out of Fabric with `query_fabric.py`, not carried forward from the build. [`pqp-solution.md`](pqp-solution.md) |
-| Power Automate flows (Estimating Setup, Convert to Bidding) | **Built locally, not deployed, 2026-08-19.** `power-automate/` holds both flow definitions, the PnP provisioning script, 14 passing offline checks and now [`RUNBOOK.md`](../../../power-automate/RUNBOOK.md), the ordered import sequence for both SharePoint sites. Nothing exists in the client's SharePoint or Power Automate yet — the site URL is still a `REPLACE-ME` placeholder. **Their link to Fabric is now built**: `dim_Job` (`sql/gold/13_dim_job.sql`) lands the Job Register through the medallion, with a blocking DQ expectation on `JobNumber` uniqueness. It had been *described* in `power-automate/README.md` and never implemented — no bronze table, no parser, no DDL |
+| Power Automate flows (Estimating Setup, Convert to Bidding) | **Created in the client's tenant 2026-08-19, both stopped.** `Estimating Setup` `98d2c411-a668-42f2-a2a2-f68e4d528a54`, `Convert to Bidding` `d8a239e6-e668-474c-a33d-50145601e7ab`. The BUILD-site structure they trigger on is provisioned on **`AFFECTBUILD1`** — a site Affect already had, not a new `BUILD` site. `power-automate/` holds both definitions, `deploy_flows.py` (the working API route), the bootstrap provisioners, [`RUNBOOK.md`](../../../power-automate/RUNBOOK.md) and 20 passing offline checks. Not yet turned on: the two folder templates' contents are unspecified by the SOP, and the connection owner should be a service account. **Their link to Fabric is now built**: `dim_Job` (`sql/gold/13_dim_job.sql`) lands the Job Register through the medallion, with a blocking DQ expectation on `JobNumber` uniqueness. It had been *described* in `power-automate/README.md` and never implemented — no bronze table, no parser, no DDL |
 
 ### PQP tables, measured out of Fabric 2026-08-19
 

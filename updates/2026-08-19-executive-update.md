@@ -1,6 +1,12 @@
 # Affect Group, Data Platform: Executive Update
 
-**Aug 19, 2026. Charley Forey. Prepared for Rebecca Buckley to share internally.**
+**Aug 19, 2026 — revised end of day. Charley Forey. Prepared for Rebecca Buckley to share
+internally.**
+
+> **This update was revised after it was first written.** Three of the four items it asked
+> Affect for were closed during the same day, and one of them — the Key Vault permission —
+> **turned out to be an ask that should never have been made.** Both are corrected below
+> rather than quietly edited out.
 
 Follows the [Aug 13 update](2026-08-13-executive-update.md) and the in-person session with
 Rebecca and Chris that evening.
@@ -15,9 +21,14 @@ Building it also turned up **defects in the reporting you already have**, all of
 silent kind as the $4.85M change-order error: things that produced clean-looking output while
 being wrong. All are fixed, and all are verified against your live data rather than assumed.
 
-Of the six items that sat with Affect on the 13th, one is closed, one is in transit, and the
-largest — the Azure subscription — has shrunk to a single permission grant that takes about
-two minutes.
+Later the same day three more things landed, and they change what is being asked of Affect.
+A dead join was found that had been attributing **$22.5M of your receivables to no project at
+all** — while the check designed to catch exactly that reported everything as fine. **Outbuild
+went live**, closing the schedule-milestone gap that has been open since the start. And the
+estimating→bidding folder automation moved out of my repository and into your tenant.
+
+**Of the six items that sat with Affect on the 13th, four are now closed and two remain.**
+One of the four closed because it was never a real ask — see "A correction" below.
 
 One commercial item needs a conversation: the twenty hours agreed for the initial scope are
 spent, and the work since then was not in that scope.
@@ -29,8 +40,9 @@ spent, and the work since then was not in that scope.
 | Project Quality Plan — data | The 44-sheet QA/QC tracker rebuilt as nine tables. 625 trade checklist items, 93 statutory gates, 101 DOH items, held once as a versioned library rather than copied into every project's workbook |
 | Project Quality Plan — reporting | A second Power BI report, seven pages: Quality Portfolio, Non-Conformance, Punch & Completion, Submittals & Mock-Ups, Statutory Gates, Trade Checklists, and a Data Quality page |
 | Quality data, live | **4,564 quality records** already flowing from Procore — 2,245 submittals, 1,469 punch items, 850 observations. Nobody typed any of them |
-| Estimating → bidding automation | Both folder-provisioning workflows built and tested offline, ready to import once the SharePoint site exists |
-| Intake forms | 17 SharePoint lists generated — the 9 that feed the Monthly Progress Report's manual fields, and 8 new ones for the quality registers |
+| Schedule data, live | **3,078 records across 15 Outbuild endpoints**, landed the evening the token arrived. This is the only source of critical-path milestones anywhere in the business |
+| Estimating → bidding automation | **Both workflows now exist in your Power Automate**, created switched off. The job-folder structure and the Job Register list are provisioned on `AFFECTBUILD1`. What is still needed is what goes *inside* the two folder templates |
+| Intake forms | 17 SharePoint lists generated — the 9 that feed the Monthly Progress Report's manual fields, and 8 new ones for the quality registers. The reporting site now exists and the loader that reads these lists is published against it; creating the lists themselves is my remaining task, not yours |
 
 **The reason the quality data was free.** Your own workbook says it on its cover page:
 *"Procore is the mandatory system of record."* So non-conformances, punch items and submittals
@@ -45,6 +57,34 @@ are the same shape as each other, so they became one register with a type column
 27th trade is now a row, not a new tab.
 
 ## What it found in the reporting you already have
+
+**$22.5M of your receivables was attached to no project — and the check built to catch that
+said everything was fine.** This is the most serious thing found today, and it is the same
+shape as the $4.85M change-order error: clean-looking output, no error anywhere.
+
+Invoices are matched to projects through the Sage job number. When the platform moved onto
+its own data pipeline, that field started coming from a source that does not carry it, so it
+was blank for every project. **All 122 accounts-receivable invoices — $23,695,760.48 — were
+attributed to no project at all.**
+
+Two reasons nobody would have spotted it:
+
+- **Nothing was lost, so nothing looked wrong.** 117 invoices went in and 117 came out. That
+  count is exactly the check that had been run to confirm the pipeline change was safe. The
+  invoices survived; only their link to a project did not.
+- **The mapping indicator was reading from the same broken source**, so it reported all 19
+  projects as correctly mapped. A completely dead join was certifying itself as healthy.
+
+Fixed and verified against your live data: **15 of 19 projects** now resolve to a Sage job,
+unmatched invoices fall from **122 to 24**, and **$22,548,861.96 of receivables is attributed
+to a project** where none was before. The four projects still without a Sage job are three
+templates and City Harvest.
+
+**Your schedule data is now flowing.** The Outbuild token arrived on the 19th and 3,078
+records across 15 endpoints landed the same evening. Worth knowing: the connection had been
+built and tested against Outbuild's documentation but never actually run, and the first real
+call failed three different ways — one of which looked exactly like a rejected token. Had we
+not been able to test it live, "the token doesn't work" is the answer you would have got.
 
 **Your live dashboard was displaying raw code in a trade column.** The pipeline was reading
 Procore's trade field as a whole object rather than its name, so instead of "Electrical" the
@@ -92,16 +132,37 @@ Those two are the only Tier 4 Critical items on the register.
 
 Full detail: `analysis/pqp-workbook/defects-and-questions.md`.
 
+## A correction: one of the things I asked you for was not needed
+
+**I have been asking for a Key Vault permission since August 13. It was the wrong vault, and
+nobody needed to grant anything.**
+
+The request named a vault called `OneLake`. The vault Affect actually uses is
+**`AffectKeyVault`**, in a different subscription — and my account already had administrator
+rights on it, inherited from the resource group. That ask appeared in three documents and in
+the earlier version of this update. **It is withdrawn, not completed.** It would have solved a
+problem that did not exist, and it took someone's attention for a week.
+
+I found it by finally exercising the vault instead of reasoning about it — which also turned
+up two genuine faults hiding behind it. The one worth telling you about: the code that reads
+secrets **failed open**. If the vault lookup did not fire, it quietly fell back to reading the
+credential from the machine's environment and reported success. A half-configured vault would
+have pulled a credential from an unaudited source and told nobody, and the first sign would
+have been an unattended 2am run. It now refuses and fails loudly instead.
+
 ## What is needed from Affect
 
-Down from six items to four, and none of them is a purchasing decision any more.
+**Down from six items to two**, and neither is a purchasing decision.
 
 | # | What is needed | Why it matters | Effort |
 |---|---|---|---|
-| 1 | **One role assignment: "Key Vault Secrets Officer" on vault `OneLake`** for `cforey-c@affect-group.com` | The subscription and vault now exist — thank you. But the account has only resource-group Contributor, which cannot read or write a secret in an RBAC vault, or grant itself the right to. Until this lands, Procore extraction runs from my machine rather than inside your tenant | ~2 minutes, someone with Owner |
-| 2 | Grant "Can use" on the existing gateway connection `nc-affect-1\sage100con` | Turns on Sage — AR/AP, retainage, actual cost by cost code. Nothing new is built; this is the connection your team already uses. May need to route through your outside Sage consultant | One permission |
-| 3 | The Outbuild API token | Offered by email on the 11th and not yet received. It is the only source of schedule milestones anywhere; 17 of 19 projects currently have none | One email |
-| 4 | A SharePoint site, and what belongs in the two folder templates | The estimating/bidding workflows are built and tested. Your SOP names `02 E26-000 BOILER PLATE` and `YY-000 STANDARD PROJECT TEMPLATE` but never says what is inside them | One decision |
+| 1 | Grant "Can use" on the existing gateway connection `nc-affect-1\sage100con` | **The only access item left.** Turns on Sage — AR/AP, retainage, actual cost by cost code. Nothing new is built; this is the connection your team already uses. May need to route through your outside Sage consultant | One permission |
+| 2 | What belongs inside the two folder templates | Both estimating/bidding workflows now exist in your Power Automate, switched off, pointing at the folder structure on `AFFECTBUILD1`. Your SOP names `02 E26-000 BOILER PLATE` and `YY-000 STANDARD PROJECT TEMPLATE` but never says what is inside them, so today they would copy a correct but empty skeleton. Worth deciding at the same time: `02 E26-000 BOILER PLATE` has the year `26` in its name, so it needs renaming each January unless we change it now | One decision |
+
+**Closed since the earlier version of this update:** the Outbuild token (received — thank you,
+3,078 records landed that evening), the Key Vault permission (withdrawn, above), and the
+SharePoint site (you reused `AFFECTBUILD1` rather than creating a new one, which is fine —
+the workflows point at it). Creating the 18 reporting intake lists is on me, not you.
 
 **Two narrower questions rather than blockers.** Both of the items flagged here earlier today
 have since been worked through, and what is left for Affect is smaller than it was.
@@ -130,10 +191,12 @@ Two things I still will not decide without you:
 The initial scope agreed with Cathal on July 24 was **20 hours**. Phase 0's five line items
 were delivered by August 2 at roughly 22 hours, which was flagged at the time.
 
-Since then: the Project Quality Plan as a second subject area, two Power Automate workflows,
-and the reporting layer over both. That is a further **12.5 hours**, bringing the total to
-**34.5**. None of it was in the original twenty, and none of it was a Phase 0 overrun — it is
-work that followed the request made at the August 13 session.
+Since then: the Project Quality Plan as a second subject area, two Power Automate workflows
+now deployed into your tenant, the reporting layer over both, and the defect work described
+above. That is a further **18.5 hours**, bringing the total to **40.5**. (The earlier version
+of this update said 34.5 — that was written this morning, before the day's later sessions.)
+None of it was in the original twenty, and none of it was a Phase 0 overrun — it is work that
+followed the request made at the August 13 session.
 
 I would rather raise this than invoice it unremarked. Either it bills against the agreed
 5 hrs/week ongoing cadence, or it is scoped as a second block. That is Cathal's call and I am
@@ -141,10 +204,17 @@ happy either way.
 
 ## Where this goes next
 
-Once Sage and Outbuild are flowing, the Monthly Progress Report covers itself without manual
-assembly, and the scorecard's four unscored categories get real data. The quality platform now
-supplies exactly the signal those categories were meant to measure — non-conformance ageing,
-punch closure, hold-point compliance.
+**Outbuild is now flowing**, so one of the two remaining data gaps closed today; connecting
+its milestones through to the report is my next piece of work rather than an access question.
+Once Sage joins it, the Monthly Progress Report covers itself without manual assembly, and
+the scorecard's four unscored categories get real data. The quality platform now supplies
+exactly the signal those categories were meant to measure — non-conformance ageing, punch
+closure, hold-point compliance.
+
+On the folder automation: both workflows are in your tenant and switched off. Turning them on
+needs the template contents above, and a decision about **which account owns the SharePoint
+connection** — the workflows run as whoever created it, so a named person's account means
+they stop working when that person leaves. A service account is worth ten minutes now.
 
 The nightly pipeline runs six stages and validates 104 expectations before anything publishes.
 Everything is deployed from version-controlled scripts, so the repository is the source of

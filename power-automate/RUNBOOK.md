@@ -2,6 +2,27 @@
 
 Everything that has to happen in Affect's tenant, in order, once.
 
+---
+
+## What is already done, as of 2026-08-19
+
+Most of this runbook has been executed. Read this table first so you do not redo it.
+
+| Step | State |
+|---|---|
+| 0. PnP Entra app consent | **Never obtained, and no longer needed.** PnP is a dead end on this tenant — see `bootstrap_site_via_flow.py`'s header for the measurements. Everything below was done without it |
+| 1. Set the site URLs | ✅ **Done.** `SITE_URL` = `.../sites/AffectProjectReporting_main`, `SITE_BUILD` = `.../sites/AFFECTBUILD1`, both in `_local/make_sharepoint.py`; the PS1, `mashup.pq` and `queryMetadata.json` are regenerated from them |
+| 2. Provision the BUILD site | ✅ **Done**, on `AFFECTBUILD1` — an existing site Affect reused. Libraries, template trees and `Job Register` all created, via `bootstrap_site_via_flow.py` rather than the PS1 |
+| 3. Provision the reporting site | 🟡 **Site created, lists NOT created.** `bootstrap_reporting_site.py --apply` is the remaining run. Check `--probe` first |
+| 4. Import the flows | ✅ **Done, and not by import.** `deploy_flows.py` posts the definitions at the API directly. Both flows exist, **created stopped** |
+| 5. Publish `CD_Manual_Ingest` | ✅ **Published** — item `54addfb1-…`, 19 queries. Not yet signed in or refreshed |
+| 6. Smoke test | ⬜ **Outstanding.** Blocked on the template contents and a service-account connection owner |
+
+**The two remaining asks for Affect** are the folder templates' contents and which account
+owns the SharePoint connection. Everything else on this page is either done or ours.
+
+---
+
 **Read this first: there are TWO SharePoint sites and TWO provisioning scripts**, in two
 different directories, and doing one and stopping is the failure this document exists to
 prevent. Provision only the BUILD site and the job flows work perfectly while every `man_*`
@@ -56,8 +77,15 @@ a who and a when.
 
 ## 1. Set the site URLs
 
-Four places, and they are **not all the same site**. Everything ships as `REPLACE-ME` on
-purpose — this repo never guesses a tenant.
+Four places, and they are **not all the same site**. Two of the four are now set to the real
+sites; the flow definitions deliberately still are not.
+
+> **`AffectProjectReporting_main` and `AFFECTBUILD1` are both correct, and both look wrong.**
+> The `_main` suffix is SharePoint's: a first attempt at that site came out half-provisioned
+> — no lists at all, not even the default Documents library — and was deleted, and it still
+> reserves the unsuffixed URL from the site recycle bin. `AFFECTBUILD1` is not a site called
+> `BUILD`: Affect reused an existing site rather than creating a dedicated one. Do not
+> "correct" either of them.
 
 | Placeholder | File | Which site |
 |---|---|---|

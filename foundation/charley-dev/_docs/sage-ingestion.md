@@ -100,10 +100,10 @@ optional here.
    (`01_source_views_cd.sql`), which keeps `fct_Invoice` at its 122 rows rather than zero
    while this is blocked.
 
-Worth raising on the same call as `OUTBUILD_API_TOKEN` (Rebecca offered to send it by email on
-2026-08-11 — in transit, not yet received), the Key Vault role assignment ("Key Vault Secrets
-Officer" on vault `OneLake`) and the two Procore 403s (`punch_item_types`, `schedule`) — all of
-them are access Affect grants, not work we can do.
+**This is now the only access grant left.** The Outbuild token arrived on 2026-08-19, and the
+Key Vault ask was withdrawn the same evening as having named the wrong vault. Worth raising on
+the same call as the two Procore 403s (`punch_item_types`, `schedule`), which are the only
+other thing here Affect grants rather than us building.
 
 ## Isolation
 

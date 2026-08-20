@@ -397,7 +397,7 @@ Spark fault rather than a missing input. Hit on the 2026-08-19 deploy; the fix i
 step, not a code change. The full order is in
 [`build-status.md`](build-status.md#how-to-run-it).
 
-**Related and still open: `cd_06_land_manual` is not in `CD_Master_Pipeline`.** The nightly
-run rebuilds silver and gold without refreshing manual bronze first. Harmless while every
-`man_*` is empty; a real staleness bug the day somebody enters a row. It should join the DAG
-ahead of `Bronze To Silver` before the SharePoint lists go live.
+~~**Related and still open: `cd_06_land_manual` is not in `CD_Master_Pipeline`.**~~
+**Corrected 2026-08-19: it is in the pipeline**, as the activity `Land Manual Input`, read out
+of the live pipeline definition. `CD_Master_Pipeline` runs 6 activities, not 5. The claim
+above was wrong.

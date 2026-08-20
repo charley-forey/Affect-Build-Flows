@@ -244,11 +244,12 @@ anywhere.
 1. **Bind `CD_Sage_Ingest` to the existing gateway connection.** Needs someone with
    permission on that connection — not a subscription. This is the single highest-value ask
    and it can be done the same day.
-2. **Send `OUTBUILD_API_TOKEN`.** Offered by email Aug 11 and still to arrive. Unblocks
-   milestones for 17 projects.
-3. **Grant Key Vault Secrets Officer on vault `OneLake`** to `cforey-c@affect-group.com`.
-   The subscription and the vault both exist as of 2026-08-19; the vault is RBAC-mode and
-   Contributor on the resource group cannot read or write a secret. One role assignment.
+2. ~~**Send `OUTBUILD_API_TOKEN`.**~~ **Done 2026-08-19** — placed in `AffectKeyVault` at
+   18:27 UTC. 3,078 rows across 15 endpoints landed in bronze.
+3. ~~**Grant Key Vault Secrets Officer on vault `OneLake`.**~~ **Withdrawn 2026-08-19 — this
+   ask named the wrong vault.** The vault in use is `AffectKeyVault` (RG `Affect_Data`,
+   subscription `73932b34-…`), where `cforey-c@affect-group.com` already held *Key Vault
+   Administrator* inherited at resource-group scope. Nobody needed to grant anything.
 4. **Rotate the Procore credential** (F1), then edit the notebook — in that order. Rotation
    should not wait for the vault: the old pair has been readable by anyone with Viewer on
    the workspace, so editing the literal out first changes nothing about the exposure.
@@ -459,12 +460,12 @@ regression is back.
 
 | Blocker | Effect | Owner |
 |---|---|---|
-| **Key Vault role assignment** — the vault exists (`OneLake`, RG `Affect_KeyVault`) but is RBAC-mode and `cforey-c@affect-group.com` has only Contributor on the resource group, which cannot read or write secrets | Procore extraction runs on a laptop and lands files. **The nightly pipeline does not call the Procore API** — it re-processes whatever was last landed. Landing files were last written 04:44 on 2026-08-02. The ask is one role: **Key Vault Secrets Officer on vault `OneLake`** | Affect |
+| ~~**Key Vault role assignment** on vault `OneLake`~~ | **WITHDRAWN 2026-08-19 — the wrong vault.** `AffectKeyVault` (RG `Affect_Data`) was readable and writable by this account all along, via *Key Vault Administrator* inherited at RG scope. Procore extraction still runs on a laptop, but the gate is now **rotating the exposed credential pair**, not an access grant | — |
 | On-prem gateway grant for Sage | `CD_Sage_Ingest` is **deployed** and inert — one *Can use* grant on `nc-affect-1\sage100con;Affect Group` away from running | Affect / their Sage consultant |
 | Procore 403s on `punch_item_types` and `schedule` | Two report sections cannot be sourced | Affect |
 | SharePoint decision | **17** `man_*` tables are deployed and empty (9 original plus 8 PQP registers); ~40% of the Monthly Progress Report and most of the Project Quality Plan. The CSV path in `Files/_manual/` works today, so this gates the *team* mechanism, not data entry | Affect |
 | ~~No Azure subscription~~ | **RESOLVED 2026-08-19** — "Azure subscription 1" `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` on tenant "Affect Build LLC" `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` | — |
-| ~~`OUTBUILD_API_TOKEN` not issued~~ | **In transit** — Rebecca offered to send the token by email on Aug 11. Once it lands, milestones for 17 of 19 projects follow | Affect (in transit) |
+| ~~`OUTBUILD_API_TOKEN` not issued~~ | **RESOLVED 2026-08-19** — placed in `AffectKeyVault` at 18:27 UTC; **3,078 rows across 15 endpoints** in `cd_bronze_outbuild_*`. `fct_Milestone` does not consume it yet: silver still reads Rebecca's dataflow | — |
 
 ---
 
@@ -482,8 +483,10 @@ regression is back.
    what is deployed, and does not contain this fix.
 4. ~~Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the
    source.~~ **Done 2026-08-19** — `DEFAULT_SOURCE = "cd"`.
-5. Chase the Outbuild token to completion. Offered Aug 11, not yet received. It is the
-   largest single coverage gain available — 17 of 19 projects have no milestones.
+5. ~~Chase the Outbuild token to completion.~~ **Done 2026-08-19** — token in
+   `AffectKeyVault`, 3,078 rows across 15 endpoints in bronze. The coverage gain is **not**
+   realised yet: `sv_outbuild_activities` still reads Rebecca's `Silver_Lakehouse`, so
+   `fct_Milestone` is unchanged at 52 rows. Repointing it is the next step and is ours.
 6. Put the insurance finding in front of Affect as a question, not a metric.
 7. ~~**Fix the SharePoint list-name mismatch** before anyone runs the provisioning script.~~
    **Done 2026-08-19, at the source.** `_local/make_sharepoint.py` now generates the PS1, the

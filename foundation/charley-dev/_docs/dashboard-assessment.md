@@ -116,7 +116,7 @@ Honest list. Most of it is other people's turnaround, not build effort.
 | Missing | What it blocks | Owner |
 |---|---|---|
 | **Milestone baselines** | The Gantt shows the schedule as it stands and **cannot show drift**. `fct_Milestone` has `CurrentStart`/`CurrentFinish` only — no baseline, no actual | Affect — Outbuild |
-| **Outbuild token** | Milestones cannot refresh at all. Outbuild is the only milestone source that exists anywhere. **In transit** — offered by email Aug 11 | Affect — via Outbuild CS |
+| ~~**Outbuild token**~~ | ✅ **Received 2026-08-19** — 3,078 rows across 15 endpoints now land in `cd_bronze_outbuild_*`. Milestones still read Rebecca's `Silver_Lakehouse` dataflow, so repointing `sv_outbuild_activities` is the remaining step, and it is ours | — |
 | **Manual / narrative tables** (wins, risks, priority items, survey, flags) | ~40% of the report | Affect — the SharePoint decision |
 | **Safety**: incidents, hours, orientations, violations | The whole safety domain; `[TRIR]` is not computable | Affect — Procore credentials |
 | **Quality**: observations, punch items | Both now land — 850 and 1,469 rows, as `fct_QcNcr` and `fct_QcPunch` on the PQP model. `punch_item_types` still 403s, but silver derives the punch class from the item itself so nothing downstream depends on it | Affect — Procore permissions, for completeness |
