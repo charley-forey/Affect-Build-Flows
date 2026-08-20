@@ -14,6 +14,7 @@ Run:  python power-automate/test_flows.py
 
 from __future__ import annotations
 
+import inspect
 import json
 import re
 import sys
@@ -460,6 +461,40 @@ def test_deploy_script_substitutes_the_site() -> None:
     check("connections candidates vary the HOST, and try Power Apps first")
 
 
+def test_project_seed_skips_rows_that_already_exist() -> None:
+    """Phase 3 is the one phase with no natural idempotency, and it cost 19 duplicate rows.
+
+    Creating a list or a column FAILS when it already exists, so re-running phases 1 and 2
+    is harmless. Creating a list ITEM always succeeds. On 2026-08-19 a second --apply left
+    CD Projects holding 38 rows where 19 were real, and every batch reported Succeeded.
+
+    ProjectKey is a Lookup at that list, so duplicates make the target ambiguous - this is
+    not cosmetic. The guard is that the seed is filtered against the keys already present.
+    """
+    import importlib
+    brs = importlib.import_module("bootstrap_reporting_site")
+
+    steps = brs.project_steps()
+    assert steps, "no project steps - cd-projects.csv missing?"
+    keys = [s[3]["Title"] for s in steps]
+    assert len(keys) == len(set(keys)), "cd-projects.csv itself carries a duplicate key"
+
+    source = inspect.getsource(brs.main)
+    assert "existing_project_keys" in source, (
+        "main() no longer filters the project seed against what is already in the list - "
+        "every re-run will duplicate all 19 projects and report Succeeded")
+    assert 'if s[3]["Title"] not in already' in source, (
+        "the seed filter is not keyed on Title (the ProjectKey)")
+
+    # --verify has to read the site back. The dry run cannot: it prints the full column
+    # count unconditionally, so it reports 142 outstanding even when all 142 exist.
+    assert hasattr(brs, "verify"), "no verify() - there is no way to check what landed"
+    vsrc = inspect.getsource(brs.verify)
+    assert "distinct ProjectKey" in vsrc, "verify() does not report duplicate project rows"
+
+    check("the project seed skips rows already present, and --verify reads the site back")
+
+
 def main() -> int:
     test_both_flows_parse()
     test_concurrency_is_one()
@@ -478,6 +513,7 @@ def main() -> int:
     test_patchitem_shape_the_connector_accepts()
     test_import_packages_build()
     test_deploy_script_substitutes_the_site()
+    test_project_seed_skips_rows_that_already_exist()
     for c in CHECKS:
         print(f"  ok  {c}")
     print(f"\ntest_flows: {len(CHECKS)} checks passed")

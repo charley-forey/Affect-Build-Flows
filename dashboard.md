@@ -164,7 +164,7 @@ resource library, warehouse review, scope call).
 (withdrawn — wrong vault) and the SharePoint site:**
 
 - [ ] 🔴 **Grant `cforey-c@affect-group.com` "Can use"** on connection `nc-affect-1\sage100con;Affect Group` — **highest value per unit of effort.** One grant, one refresh
-- [ ] 🟡 **The 18 reporting-site lists still need creating.** The site itself now exists (`AffectProjectReporting_main`) and `CD_Manual_Ingest` is published against it, but SharePoint returned 502 on a site minutes old and the list-creation run has not been retried since it started serving. This is ours to finish, not Affect's — *or* somebody fills in a CSV template, which needs no ticket at all
+- [x] 🟢 **The reporting site's intake lists are provisioned** — 2026-08-20. 18 lists, **142 of 142 columns**, and 19 `CD Projects` rows, all read back through Graph rather than taken from the run status. What remains is signing `CD_Manual_Ingest` in and refreshing it
 - [ ] 🟡 Procore permissions: `punch_item_types` and `schedule` both return **403**
 
 **Decisions & information:**

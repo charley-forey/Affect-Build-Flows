@@ -180,6 +180,78 @@ def project_steps() -> list[tuple[str, str, str, dict | None]]:
     return steps
 
 
+def existing_project_keys(site_id: str, list_id: str, tok: str) -> set[str]:
+    """The ProjectKeys already in CD Projects - so the seed does not double them.
+
+    Creating a list or a column FAILS harmlessly when it already exists, which is what
+    makes phases 1 and 2 safe to re-run. Creating a list ITEM always succeeds, so phase 3
+    had no such protection: every re-run added a second copy of all 19 projects, the batch
+    reported Succeeded, and nothing said a word. That happened on 2026-08-19 and left 38
+    rows where 19 were real.
+
+    Duplicates are not cosmetic here. ProjectKey is a Lookup at this list, so two rows per
+    project make the lookup target ambiguous.
+    """
+    items = graph(f"/sites/{site_id}/lists/{list_id}/items"
+                  f"?$expand=fields($select=Title)&$top=500", tok)
+    return {str(x.get("fields", {}).get("Title")) for x in items.get("value", [])}
+
+
+def site_id(site_url: str, tok: str) -> str:
+    host, _, path = site_url.replace("https://", "").partition("/")
+    found = graph(f"/sites/{host}:/{path}", tok)
+    if "id" not in found:
+        raise SystemExit(f"cannot read {site_url} through Graph: {found}")
+    return found["id"]
+
+
+def verify(site_url: str, tok: str) -> int:
+    """Read the site back and report what is actually there.
+
+    This exists because neither the run status nor the dry run can answer it. A batch
+    reports Succeeded as long as its LAST action did, and the dry run counts only lists -
+    it prints every column and project row as outstanding whether or not they landed.
+    """
+    sid = site_id(site_url, tok)
+    have = existing_lists(site_url, tok)
+    wanted = {ms.list_name(t): [c for c, _ in cols] for t, cols in ms.tables().items()}
+    wanted[ms.LOOKUP_LIST] = ["ProjectName", "IsActive"]
+
+    total_want = total_have = 0
+    gaps = []
+    for title, cols in sorted(wanted.items()):
+        lid = have.get(title)
+        if not lid:
+            print(f"  MISSING LIST  {title}")
+            gaps.append(title)
+            continue
+        got = graph(f"/sites/{sid}/lists/{lid}/columns?$select=name,displayName", tok)
+        names = {c.get("name") for c in got.get("value", [])}
+        names |= {c.get("displayName") for c in got.get("value", [])}
+        present = [c for c in cols if c in names]
+        total_want += len(cols)
+        total_have += len(present)
+        mark = "ok " if len(present) == len(cols) else "GAP"
+        if mark == "GAP":
+            gaps.append(title)
+        print(f"  {mark} {title:<28} {len(present):>3}/{len(cols)}")
+
+    print(f"\ncolumns: {total_have} of {total_want}")
+
+    lid = have.get(ms.LOOKUP_LIST)
+    if lid:
+        keys = existing_project_keys(sid, lid, tok)
+        rows = graph(f"/sites/{sid}/lists/{lid}/items?$top=500", tok).get("value", [])
+        print(f"{ms.LOOKUP_LIST}: {len(rows)} rows, {len(keys)} distinct ProjectKey")
+        if len(rows) != len(keys):
+            print(f"  DUPLICATES: {len(rows) - len(keys)} surplus row(s). A Lookup with two "
+                  f"rows per project is ambiguous - remove the later ones.")
+            gaps.append(ms.LOOKUP_LIST)
+
+    print("\nEVERYTHING PRESENT" if not gaps else f"\nINCOMPLETE: {len(gaps)} list(s)")
+    return 0 if not gaps else 1
+
+
 def graph_token() -> str:
     import shutil
     import subprocess
@@ -305,6 +377,9 @@ def main() -> int:
     parser.add_argument("--connection", required=True)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--cleanup", action="store_true")
+    parser.add_argument("--verify", action="store_true",
+                        help="read the site back through Graph and report what is actually "
+                             "there - the run status and the dry run cannot tell you")
     parser.add_argument("--probe", action="store_true",
                         help="one GET against the site, to see whether SharePoint serves it "
                              "yet - answers in under a minute instead of ten")
@@ -328,6 +403,11 @@ def main() -> int:
         else:
             print("no helper flow to delete")
         return 0
+
+    if args.verify:
+        # Reads only, through Graph, and no helper flow - so it is safe to run at any time,
+        # including while another copy of this script is mid-batch.
+        return verify(site, graph_token())
 
     if args.probe:
         # ONE call, not eighteen. A newly created site returns 502 from SharePoint while
@@ -405,6 +485,11 @@ def main() -> int:
                   f"columns {start + 1}-{min(start + BATCH, len(columns))}")
 
     projects = project_steps()
+    already = existing_project_keys(site_id(site, gtok), projects_guid, gtok)
+    if already:
+        before = len(projects)
+        projects = [s for s in projects if s[3]["Title"] not in already]
+        print(f"\nprojects: {before - len(projects)} already present, skipped")
     if projects:
         print(f"\nprojects: {len(projects)}")
         for start in range(0, len(projects), BATCH):
@@ -412,9 +497,12 @@ def main() -> int:
                       f"projects {start + 1}-{min(start + BATCH, len(projects))}")
 
     print("\nA batch reports Failed if ANY step in it failed, and a step fails when the")
-    print("thing it creates already exists - so Failed is expected on a re-run. Verify:")
+    print("thing it creates already exists - so Failed is expected on a re-run.")
+    print("\nThe run status is NOT the verification, and neither is the dry run: a batch")
+    print("reports Succeeded as long as its last action did, and the dry run counts only")
+    print("lists. Read the site back instead:")
     print(f"  python bootstrap_reporting_site.py --site-url {site} "
-          f"--connection {args.connection}")
+          f"--connection {args.connection} --verify")
     return 0
 
 

@@ -12,11 +12,16 @@ sentence to quote.
 The 17 are the 9 original registers for the Monthly Progress Report plus the 8 PQP intake
 registers added 2026-08-19 ([`pqp-solution.md`](pqp-solution.md)).
 
-**Site:** `AffectProjectReporting_main` — created 2026-08-19 and now bound in
+**Site:** `AffectProjectReporting_main` — created 2026-08-19 and bound in
 `_local/make_sharepoint.py`. The `_main` suffix is not a typo: a first attempt came out
 half-provisioned (no lists at all, not even the default Documents library) and was deleted,
 and it still reserves the unsuffixed URL from the site recycle bin. The site now bound is the
-working one. **The 18 lists on it have not been created yet** — that run is outstanding.
+working one.
+
+**Provisioned 2026-08-20: all 18 lists, 142 of 142 columns, and 19 `CD Projects` rows.**
+Verified by reading the site back through Graph —
+`bootstrap_reporting_site.py --verify` — not from the run status, which reports Succeeded as
+long as its last action did.
 **Naming:** every list is prefixed `CD ` so it is obvious which lists the report depends on.
 
 ---
