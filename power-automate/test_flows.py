@@ -316,6 +316,34 @@ def test_ps1_is_dry_run_by_default() -> None:
     check("provisioning script is dry-run by default with an -Apply switch")
 
 
+def test_import_packages_build() -> None:
+    """The definitions still wrap into a legacy import package.
+
+    flows/*.json cannot be imported into Power Automate directly - the UI offers only
+    "Import Solution (Dataverse)" and "Import Package (Legacy)", and neither takes a bare
+    workflow definition. make_import_packages.py builds the second. This asserts it still
+    builds, and that the site URL substitution reaches the parameter the flow actually
+    reads - if it silently missed, every imported flow would run against REPLACE-ME with no
+    way to correct it in the designer.
+    """
+    import make_import_packages as mip  # noqa: PLC0415
+
+    for stem, display in mip.PACKAGES.items():
+        man, resource, definition = mip.build(stem, display,
+                                              "https://example.sharepoint.com/sites/BUILD")
+        assert not mip.check_definition(stem, definition), \
+            f"{stem}: definition did not survive packaging"
+        assert definition["parameters"]["SiteUrl"]["defaultValue"] \
+            == "https://example.sharepoint.com/sites/BUILD"
+        assert man["resources"], f"{stem}: manifest lists no resources"
+        assert resource["properties"]["definition"]["triggers"], f"{stem}: trigger lost"
+        # The connection is deliberately NOT carried - it is a credential, and it must be
+        # picked in the importing tenant.
+        refs = resource["properties"]["connectionReferences"]
+        assert refs["shared_sharepointonline"]["source"] == "Invoker"
+    check(f"both flows wrap into a legacy import package with the site URL baked in")
+
+
 def main() -> int:
     test_both_flows_parse()
     test_concurrency_is_one()
@@ -331,6 +359,7 @@ def main() -> int:
     test_convert_flow_cannot_loop()
     test_ps1_is_dry_run_by_default()
     test_powershell_parses()
+    test_import_packages_build()
     for c in CHECKS:
         print(f"  ok  {c}")
     print(f"\ntest_flows: {len(CHECKS)} checks passed")
