@@ -135,15 +135,15 @@ Of the 14 defects, **7 are structurally fixed** in the platform. See
 See [`hours-log.md`](hours-log.md) for the ledger - it is the billing source of truth and the
 only place hours are maintained.
 
-> ⚠️ **All sessions through 2026-08-19 are now logged** — entries 16–20. Entries 19 and 20
+> ⚠️ **All sessions through 2026-08-20 are now logged** — entries 16–22. Entries 19 and 20
 > were reconstructed from commit timestamps after the fact and the method is stated in the
 > ledger; **Charley to confirm or correct both before the first invoice.**
 
 | | Hours | @ $125 |
 |---|---|---|
 | Phase 0 budget | 20.0 | $2,500 |
-| Consumed (all billable to date) | 40.5 | $5,062.50 |
-| **Remaining** | **−20.5** | **−$2,562.50** |
+| Consumed (all billable to date) | 45.5 | $5,687.50 |
+| **Remaining** | **−25.5** | **−$3,187.50** |
 
 The overrun is **not** a Phase 0 overspend. Phase 0's five line items were delivered by Aug 2
 at ~22 hrs; everything after that is a second subject area (the PQP), the folder automation,
@@ -165,6 +165,7 @@ resource library, warehouse review, scope call).
 
 - [ ] 🔴 **Grant `cforey-c@affect-group.com` "Can use"** on connection `nc-affect-1\sage100con;Affect Group` — **highest value per unit of effort.** One grant, one refresh
 - [x] 🟢 **The reporting site's intake lists are complete** — the 18 lists were created 2026-08-19; their **142 of 142 columns** and 19 `CD Projects` rows landed 2026-08-20. All read back through Graph rather than taken from the run status. What remains is signing `CD_Manual_Ingest` in and refreshing it
+- [ ] 🟡 **Outbuild → Procore project links** — only **3 of 15** Outbuild projects carry a `procore_id`, so **280 of 406** critical-path activities cannot be attributed to a project and are absent from `fct_Milestone`. Configuration in Outbuild rather than a build task; roughly triples schedule coverage on the report
 - [ ] 🟡 Procore permissions: `punch_item_types` and `schedule` both return **403**
 
 **Decisions & information:**

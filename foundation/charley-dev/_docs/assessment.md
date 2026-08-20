@@ -478,7 +478,7 @@ the SharePoint item turned out to need nothing from Affect at all.
 | Procore 403s on `punch_item_types` and `schedule` | Two report sections cannot be sourced | Affect |
 | ~~SharePoint decision~~ | **RESOLVED 2026-08-19/20.** Affect supplied the sites; the 18 intake lists were created on the 19th and their 142 columns and 19 `CD Projects` rows on the 20th, and `CD_Manual_Ingest` is published against them. The **17** `man_*` tables stay empty until the dataflow gets its first sign-in — ours to do — or somebody fills a CSV, which works today | — |
 | ~~No Azure subscription~~ | **RESOLVED 2026-08-19** — "Azure subscription 1" `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` on tenant "Affect Build LLC" `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` | — |
-| ~~`OUTBUILD_API_TOKEN` not issued~~ | **RESOLVED 2026-08-19** — placed in `AffectKeyVault` at 18:27 UTC; **3,078 rows across 15 endpoints** in `cd_bronze_outbuild_*`. `fct_Milestone` does not consume it yet: silver still reads Rebecca's dataflow | — |
+| ~~`OUTBUILD_API_TOKEN` not issued~~ | **RESOLVED 2026-08-19**, and **consumed 2026-08-20** — token placed in `AffectKeyVault` at 18:27 UTC; **3,078 rows across 15 endpoints** in `cd_bronze_outbuild_*`, and `fct_Milestone` now reads them: **52 → 126 rows, 2 → 3 projects** | — |
 
 ---
 
@@ -496,10 +496,11 @@ the SharePoint item turned out to need nothing from Affect at all.
    what is deployed, and does not contain this fix.
 4. ~~Change `deploy_gold.py`'s default to `cd`, so a bare `--apply` cannot regress the
    source.~~ **Done 2026-08-19** — `DEFAULT_SOURCE = "cd"`.
-5. ~~Chase the Outbuild token to completion.~~ **Done 2026-08-19** — token in
-   `AffectKeyVault`, 3,078 rows across 15 endpoints in bronze. The coverage gain is **not**
-   realised yet: `sv_outbuild_activities` still reads Rebecca's `Silver_Lakehouse`, so
-   `fct_Milestone` is unchanged at 52 rows. Repointing it is the next step and is ours.
+5. ~~Chase the Outbuild token to completion.~~ **Done 2026-08-19, and realised 2026-08-20**
+   — `sv_outbuild_activities` repointed onto our own silver, `fct_Milestone` **52 → 126**
+   rows across **3** projects, 0 orphans, model reframed. The remaining ceiling is Affect's:
+   only **3 of 15** Outbuild projects carry a `procore_id`, so 280 of 406 critical activities
+   cannot be attributed to a project at all.
 6. Put the insurance finding in front of Affect as a question, not a metric.
 7. ~~**Fix the SharePoint list-name mismatch** before anyone runs the provisioning script.~~
    **Done 2026-08-19, at the source.** `_local/make_sharepoint.py` now generates the PS1, the

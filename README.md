@@ -57,6 +57,7 @@ The build is not the bottleneck. Nothing below is blocked on engineering capacit
 | 🔴 **Rotate the exposed Procore credential pair** | Security, and it also gates moving extraction into Fabric. Rotate first, edit the notebook second |
 | 🟡 **The two folder templates' contents**, and a service account to own the SharePoint connection | The last things between the two flows and being switched on |
 | 🟡 **Four manual-input definition questions**, three ambiguous trade labels, and whether the checklist library should cover the trades Procore has and it does not | One 30-minute call |
+| 🟡 **Link the remaining Outbuild projects to Procore** | Only **3 of 15** carry a `procore_id`, so 280 of 406 critical activities cannot be attributed to a project and never reach the report. Configuration in Outbuild, not development — roughly triples schedule coverage |
 | 🟡 **Procore 403s** on `punch_item_types` and `schedule` | Two report sections cannot be sourced |
 
 **Ours to finish:**
@@ -73,7 +74,7 @@ The build is not the bottleneck. Nothing below is blocked on engineering capacit
 **Not started:** mentoring and recorded walkthroughs — the one Phase 0 line item still
 outstanding — and D6/D7, which wait on Chris's SOPs.
 
-**Commercial:** billable time stands at **40.5 hrs** against a 20-hour Phase 0. The overrun
+**Commercial:** billable time stands at **45.5 hrs** against a 20-hour Phase 0. The overrun
 is work past the end of Phase 0 that has not been re-scoped, not a Phase 0 overspend. It
 needs a conversation with Cathal rather than an invoice — see [`hours-log.md`](hours-log.md).
 
@@ -141,7 +142,7 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 - `hours-log.md` — append-only time ledger (billing/validation source of truth) + invoicing record
 - `deliverables/` — one file per deliverable (D1–D8): objective, scope, key data, integration approach, tasks, acceptance criteria. New deliverables copy `_template.md`
 - **`foundation/`** — **the build.** A read-only backup of the whole Fabric `Build` workspace, plus `foundation/charley-dev/`: our self-contained platform — ingestion, medallion SQL, lakehouse and semantic-model definitions, the report, the orchestration DAG, the offline test harness, and `_docs/` (`solution-guide.md` first; `keyvault-runbook.md` for the vault position)
-- `updates/` — dated, client-facing executive updates written to be forwarded as-is. Latest: [`2026-08-19`](updates/2026-08-19-executive-update.md); previous: [`2026-08-13`](updates/2026-08-13-executive-update.md). These are point-in-time records and are not rewritten; [`status-update.md`](status-update.md) is the living version
+- `updates/` — dated, client-facing executive updates written to be forwarded as-is. Latest: [`2026-08-20`](updates/2026-08-20-executive-update.md); previous: [`2026-08-19`](updates/2026-08-19-executive-update.md), [`2026-08-13`](updates/2026-08-13-executive-update.md). These are point-in-time records and are not rewritten; [`status-update.md`](status-update.md) is the living version
 - `power-automate/` — **the estimating/bidding job-folder automation**: both flow definitions, the API deployer, the SharePoint provisioning scripts, [`RUNBOOK.md`](power-automate/RUNBOOK.md) and the offline test suite. Both flows now exist in Affect's tenant, created stopped
 - `analysis/excel-tracker/` — full teardown of the client's Monthly Progress Report workbook: field inventory, decoded formulas, dashboard cell map, drop-down vocabulary, and the 14 verified defects
 - `analysis/pqp-workbook/` — teardown of the QA/QC tracker (Project Quality Plan): 5 verified defects, the 44-sheets-to-9-tables structure, and the open questions for Affect

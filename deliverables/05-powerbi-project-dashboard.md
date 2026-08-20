@@ -17,12 +17,20 @@ Replace the manually-maintained Excel project tracker with a Power BI report fed
 **In:** Semantic model on the curated tables; six report pages (overview + schedule, financial, safety & quality, scorecard detail, hidden data quality); the eight sections of the Excel tracker; refresh configuration; rollout to leadership.
 **Out:** automations (D6/D7).
 
-**Schedule data from Outbuild is now in.** The Procore API has no `milestone` endpoint, so
-Outbuild is the only source; the token landed 2026-08-19 and **3,078 rows across 15
-endpoints** are in bronze. It is not yet on the report: `sv_outbuild_activities` still reads
-Rebecca's `Silver_Lakehouse` dataflow, so `fct_Milestone`'s 52 rows are hers. Repointing it
-could take milestones to zero if done carelessly and is its own piece of work — after which
-Completion Variance can be scored and coverage moves off 59%.
+**Schedule data from Outbuild is in, and on the report.** The Procore API has no
+`milestone` endpoint, so Outbuild is the only source; the token landed 2026-08-19 and
+**3,078 rows across 15 endpoints** are in bronze. On **2026-08-20** `sv_outbuild_activities`
+was repointed off Rebecca's `Silver_Lakehouse` onto our own silver, taking `fct_Milestone`
+from **52 rows across 2 projects to 126 across 3** — 0 orphans, model reframed, 17 live DAX
+checks passing.
+
+**Coverage still reads 59%, and that is correct.** Completion Variance is not scored by
+having milestones; it needs the CONTRACT dates to compare them against, and those exist in
+neither Procore nor Outbuild — they come off the signed contract and stay manual
+(`man_Milestones`, joined on `ActivityKey`). Outbuild exposes current dates only, and
+whether its baselines are maintained is still unconfirmed, so computing a variance from
+current-vs-current would produce a confident zero. The schedule data is real; the yardstick
+is still missing.
 
 The Excel tracker has been fully extracted — its eight dashboard sections, 17 tables, 15 pick-lists, and complete formula set are documented in [`analysis/excel-tracker/`](../analysis/excel-tracker/). Scope below is the real thing, not a placeholder.
 
@@ -93,4 +101,5 @@ Curated Lakehouse tables (D4) → Power BI semantic model (Direct Lake or import
 | 2026-08-19 | **Three more upstream fixes, all visible in the reports.** Submittal statuses **223 → 0** — Procore sends `For Record` where silver only recognised `For Record Only`, so **222 of 2,245 submittals** were falling out of every status slicer on the Submittals & Mock-Ups page. Trade vocabulary **970 → 506 unmapped** via `qc_seed_TradeAlias`, which takes the Data Quality page's largest quality warning down by 464 records. And cost-code CSI divisions **807 → 0**, which restores 15% of the cost-code master to the budget matrix's by-division rollup on the Monthly Progress Report — those codes had been silently absent from it. Published gold tables 53 → **54**; the DQ gate 103 → **104 expectations**. |
 | 2026-08-19 | Two defects fixed upstream of this deliverable, both of which affected what the reports show. `deploy_gold.py` had a hardcoded publish list the QC tables were missing from, so no PQP model could have been built at all until it was fixed (45 → 54 published tables). And the silver `$.trade` parse was returning the whole JSON object, which was rendering as raw JSON in `fct_QualityItem.Trade` **on the live Monthly Progress Report**; it now reads e.g. `"Windows"`. |
 | 2026-08-19 (evening) | **Outbuild is landing** — 3,078 rows across 15 endpoints in `cd_bronze_outbuild_*`. **The reports do not show it yet**: `sv_outbuild_activities` still reads Rebecca's `Silver_Lakehouse`, so `fct_Milestone` is unchanged at 52 rows and Completion Variance is still unscored. Repointing it is its own change — done carelessly it takes milestones to zero. Scorecard coverage therefore stays at **59%**. |
+| 2026-08-20 | **Repointed, and the reports do show it now.** `fct_Milestone` **52 → 126** rows, **2 → 3** projects, 0 orphans, `PercentComplete` 0.0–1.0 (avg 0.131), 52 overdue, 0 inverted dates. By project: Embankment Phase III 74, 360 Lexington 49, Sandbox Test 3. Model reframed; 17 live DAX checks pass. It did **not** take milestones to zero, but only because two traps were measured first — Outbuild sends `progress` as 0–100 against gold's 0–1 contract (unnormalised, `IsOverdue` reports **zero overdue milestones on a late job**), and 4 of 15 projects have multiple schedules, so `$.schedules[0].id` would have dropped 1,150 of 1,860 activities. **Coverage stays 59%**: Completion Variance needs contract dates from `man_Milestones`, not milestones. |
 | 2026-08-19 (evening) | AR now resolves to projects (**122 → 24** unmatched, **$22.5M** attributed), so every AR-sourced visual is reading against real project keys for the first time since the `--source cd` switch. |
