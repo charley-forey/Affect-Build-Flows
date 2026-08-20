@@ -293,10 +293,25 @@ a lookup that holds no report data and exists so `ProjectKey` cannot be mistyped
 you may see elsewhere are the same thing. It is generated from the gold DDL by
 `_local/make_sharepoint.py`, so it is never hand-edited; regenerate rather than patch.
 
-**As of 2026-08-19 these 18 lists do not exist yet.** The reporting site does
-(`AffectProjectReporting_main`) and `CD_Manual_Ingest` is published against it, but the
-creation run hit a site whose REST endpoint was still returning 502 and has not been retried.
-`bootstrap_reporting_site.py --probe` says in under a minute whether it will work now.
+**Provisioned 2026-08-20.** All 18 lists, **142 of 142 columns** and 19 `CD Projects` rows,
+on `AffectProjectReporting_main`. Confirm with `--verify`, which reads the site back through
+Graph; `--probe` is the one-call check for whether a *newly created* site is being served yet.
+
+### The three phases are not equally re-runnable, and one of them bit
+
+Creating a list or a column **fails** when it already exists, which is what makes phases 1
+and 2 safe to re-run. Creating a list **item** always succeeds — so phase 3, the `CD Projects`
+seed, had no such protection. A second `--apply` on 2026-08-20 left the list holding **38 rows
+where 19 were real**, and every batch reported `Succeeded` throughout. `ProjectKey` is a
+Lookup at that list, so duplicate rows make the target ambiguous; this is not cosmetic.
+
+Fixed at the source: the seed is now filtered against the keys already in the list, and
+`test_flows.py` asserts it. The duplicates were removed.
+
+**Neither the run status nor the dry run could have told you.** A batch reports `Succeeded`
+as long as its *last* action did, and the dry run counts only lists — it prints all 142
+columns and 19 rows as outstanding whether or not they exist. That is what `--verify` is
+for, and it is the only one of the three that answers the question.
 
 Both scripts must run. Provision only the first and the flows work while every `man_*` table
 in Fabric stays empty — which looks exactly like "nobody has filled it in yet", so the gap

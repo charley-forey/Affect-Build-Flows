@@ -321,7 +321,7 @@ waiting on engineering.
 |---|---|---|---|---|
 | 1 | **Grant `cforey-c@affect-group.com` "Can use" on the connection `nc-affect-1\sage100con;Affect Group`** | Sage AR/AP detail, retainage, actual-cost-by-cost-code, AR scorecard category | Whoever administers the on-prem data gateway | **One grant, one refresh.** No subscription, no code change |
 | ~~2~~ | ~~**Issue `OUTBUILD_API_TOKEN`**~~ | ✅ **CLOSED 2026-08-19.** Rebecca placed the token in `AffectKeyVault` at 18:27 UTC. **3,078 rows across 15 endpoints** now land in bronze | Done — thank you | — |
-| ~~3~~ | ~~**Provision the SharePoint lists**~~ | 🟡 **The site question is closed; the lists are now ours to finish.** Affect supplied sites, the `Job Register` is provisioned, and `CD_Manual_Ingest` is published against the reporting site. The 18 intake lists still need creating — a retry on our side, not an ask. **The CSV path works today with no ticket at all** | — | Ours |
+| ~~3~~ | ~~**Provision the SharePoint lists**~~ | ✅ **DONE 2026-08-20.** Affect supplied the sites; the `Job Register` is provisioned on BUILD, and the reporting site now carries all **18 lists, 142 of 142 columns and 19 `CD Projects` rows**, verified by reading the site back through Graph. `CD_Manual_Ingest` is published against it and needs only its first sign-in | — | — |
 | ~~4~~ | ~~**"Key Vault Secrets Officer" on vault `OneLake`**~~ | ❌ **WITHDRAWN 2026-08-19 — this ask should never have been made.** It named the wrong vault. The vault actually in use is **`AffectKeyVault`** (RG `Affect_Data`), where our account already held *Key Vault Administrator* inherited at resource-group scope. Nobody needed to grant anything, and this had been sitting in three documents since Aug 13 | Nobody | — |
 
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
@@ -372,7 +372,7 @@ Ordered by value per unit of effort, engineering side.
 | 7 | Answer the four manual-input questions and the quality trade vocabulary, then wire manual silver → gold | A 30-minute call |
 | 8 | Retire the local extraction bridge; ingestion moves into Fabric | Procore credential rotation |
 | 9 | Mentoring sessions with Rebecca — recorded, on the extractor registry pattern first | Scheduling |
-| 10 | Create the 18 reporting-site intake lists (a retry — SharePoint was returning 502 on a site minutes old), sign `CD_Manual_Ingest` in, and refresh it | Nothing |
+| 10 | ✅ **Lists done 2026-08-20** — 18 lists, 142/142 columns, 19 project rows. What is left is signing `CD_Manual_Ingest` in and refreshing it, after which the manual half of the report has a live path | Nothing |
 | 11 | Turn the two job flows on: template contents from Affect, a service account to own the SharePoint connection, then smoke-test with a real job | Template contents |
 
 Reaching ~100% scorecard coverage needs items 5, 6 and 7. **Item 6 is no longer gated on
