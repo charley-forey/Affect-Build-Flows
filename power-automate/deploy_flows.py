@@ -44,6 +44,7 @@ import sys
 import urllib.error
 import urllib.request
 from pathlib import Path
+from urllib.parse import quote
 
 HERE = Path(__file__).resolve().parent
 FLOWS = HERE / "flows"
@@ -132,6 +133,21 @@ def environment(tok: str, wanted: str | None) -> str:
     return default["name"]
 
 
+def connections_path(env: str) -> str:
+    """The SharePoint connections in one environment.
+
+    The OData filter value carries spaces and single quotes, and urllib refuses outright to
+    send a URL containing a raw space - `InvalidURL: URL can't contain control characters`,
+    raised before any request is made, which reads like a malformed endpoint rather than an
+    unescaped argument.
+
+    So the VALUE is percent-encoded and the `$filter` key is left literal: the API wants the
+    OData spelling, and urlencode() would turn the key itself into %24filter.
+    """
+    flt = quote(f"environment eq '{env}'", safe="")
+    return f"{SHAREPOINT_API}/connections?api-version={API_VERSION}&$filter={flt}"
+
+
 def sharepoint_connection(tok: str, env: str) -> tuple[str, str]:
     """(connection name, display name) of a SharePoint connection in this environment.
 
@@ -141,9 +157,7 @@ def sharepoint_connection(tok: str, env: str) -> tuple[str, str]:
     somebody's personal connection and a service account is exactly the choice that should
     not be made quietly.
     """
-    found = call("GET", f"{SHAREPOINT_API}/connections"
-                        f"?api-version={API_VERSION}&$filter=environment eq '{env}'",
-                 tok).get("value", [])
+    found = call("GET", connections_path(env), tok).get("value", [])
     if not found:
         raise SystemExit(
             "no SharePoint connection exists in this environment.\n"

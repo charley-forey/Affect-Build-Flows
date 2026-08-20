@@ -382,6 +382,18 @@ def test_deploy_script_substitutes_the_site() -> None:
         pass
     check("the Azure CLI is resolved to a full path, so az.cmd launches on Windows")
 
+    # No request path carries a raw space. urllib refuses to send one at all -
+    # `InvalidURL: URL can't contain control characters`, raised before the request leaves -
+    # and the OData $filter value ("environment eq '...'") is full of them. The error names
+    # the whole URL, so it reads like a bad endpoint rather than an unescaped argument.
+    path = df.connections_path("Default-b2a2225b-4b4e-42ec-ba52-c7e1c2dea580")
+    assert " " not in path, f"unencoded space in {path!r}"
+    assert "'" not in path, f"unencoded quote in {path!r}"
+    # The key stays OData-spelled; only the value is escaped.
+    assert "$filter=" in path and "%24filter" not in path
+    assert "Default-b2a2225b-4b4e-42ec-ba52-c7e1c2dea580" in path
+    check("the OData filter is percent-encoded, so urllib will send it")
+
 
 def main() -> int:
     test_both_flows_parse()
