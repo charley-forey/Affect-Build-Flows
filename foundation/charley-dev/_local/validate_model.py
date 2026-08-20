@@ -195,7 +195,15 @@ def main() -> int:
             # ProjectKey='UNMATCHED' a month contributed at most ONE (ProjectKey,
             # MonthStart) pair however many invoices it held. Repairing the join fans those
             # invoices across 15 real projects, and that is where the twelve come from.
-            "[Submittals]": 2861, "[Milestones]": 52, "[Periods]": 142,
+            # Milestones 52 -> 126 on 2026-08-20, when sv_outbuild_activities was repointed
+            # off Rebecca's Silver_Lakehouse onto our own cd_silver_outbuild_activities.
+            # Ours holds 1,860 activities against her 1,196, and 406 critical against 168 -
+            # but only 126 reach gold, because an Outbuild activity's route to a Procore
+            # project runs through project.procore_id and just 3 of 15 projects carry one.
+            # The other 280 critical activities are real and unattributable, and gold's
+            # `WHERE project_id IS NOT NULL` is what drops them. Raising this number means
+            # Affect connected more projects to Procore, not that a bug was fixed.
+            "[Submittals]": 2861, "[Milestones]": 126, "[Periods]": 142,
             "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
         },
         "existing": {
@@ -204,6 +212,10 @@ def main() -> int:
             # Not re-measured under --source existing today; corrected for consistency
             # rather than verified, and flagged here rather than quietly assumed.
             "[BudgetLines]": 404, "[ChangeOrders]": 1812, "[Invoices]": 122,
+            # STAYS 52, deliberately. --source existing reads Rebecca's
+            # Silver_Lakehouse/Outbuild_activities, which the 2026-08-20 repoint did not
+            # touch - only the cd block moved. If this ever equals the cd figure, the two
+            # sources have stopped being independent and the switch proves nothing.
             "[Submittals]": 2242, "[Milestones]": 52, "[Periods]": 128,
             # Zero, legitimately: the existing warehouse holds no progress billing,
             # no direct costs and no vendor bridge. Asserted rather than skipped, so

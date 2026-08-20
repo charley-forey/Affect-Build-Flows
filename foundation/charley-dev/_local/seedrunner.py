@@ -46,6 +46,18 @@ MACROS = (
     # operations unnest(generate_series(...)).
     "CREATE OR REPLACE MACRO sequence(a, b, c) AS generate_series(a, b, c)",
     "CREATE OR REPLACE MACRO explode(l) AS unnest(l)",
+    # from_json(json, 'array<string>') - ONLY that schema. 25_outbuild_silver.sql needs it
+    # because an Outbuild activity carries no project id: the route to one runs through the
+    # project's nested `schedules` array, and 4 of 15 projects have more than one schedule.
+    # Taking `$.schedules[0]` instead would have been portable and would have silently lost
+    # 1,150 of 1,860 activities - measured, not guessed.
+    #
+    # THE SECOND ARGUMENT IS IGNORED. DuckDB has no schema-string parser, and the only
+    # schema this codebase asks for is array<string>, where '$[*]' is exactly equivalent.
+    # A from_json(x, 'map<string,string>') would therefore return the wrong shape rather
+    # than failing - so use json_field() for map lookups, which is what it exists for.
+    # Asserted in test_silver.test_outbuild_parser, which is what notices if that changes.
+    "CREATE OR REPLACE MACRO from_json(j, s) AS json_extract_string(j, '$[*]')",
     # Used by dim_Status to read Procore's raw payloads. Same macro src/procore uses.
     "CREATE OR REPLACE MACRO get_json_object(j, p) AS json_extract_string(j, p)",
     # Spark spells regex matching as an infix operator (x RLIKE 'p'); DuckDB has only the

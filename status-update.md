@@ -61,7 +61,7 @@ Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been mo
 |---|---|
 | **Procore** | **44 endpoints registered, 40 landing bronze tables**, registry-driven — one shared extractor, not 25 near-identical notebooks. Adding an endpoint is a YAML entry. Two endpoints (`punch_item_types`, `schedule`) are blocked by Procore **403s** and are a permissions ask, not a build gap |
 | **Sage 100** | `CD_Sage_Ingest` **deployed** to the workspace, wired to the existing gateway, 8 tables including the two AR/AP **line** tables the current dataflow explicitly discards. Blocked on one permission grant — see below |
-| **Outbuild** | **Live as of 2026-08-19.** Rebecca placed the token in `AffectKeyVault` at 18:27 UTC and **3,078 rows across 15 endpoints** landed in bronze, verified by reading the counts back out of Delta. Three bugs that only a live call could reveal were fixed first — the client had been written against the docs and never actually run. `fct_Milestone` does not consume it yet; silver still reads Rebecca's existing dataflow, and repointing it is its own change |
+| **Outbuild** | **Live, and now feeding the report.** The token landed 2026-08-19 and **3,078 rows across 15 endpoints** are in bronze; on 2026-08-20 the schedule fact was repointed onto it, taking `fct_Milestone` from **52 to 126 milestones across 3 projects**. Three bugs that only a live call could reveal were fixed first — the client had been written against the docs and never actually run |
 | **Manual (~40% of the report)** | Two writers into one contract: a SharePoint path and a CSV path that works today with no admin ticket. **17** manual tables are created and typed — the original 9, plus 8 for the Quality Plan's intake. The `CD_Manual_Ingest` dataflow is **published** as of 2026-08-19 with 19 queries, bound to the real sites; it is not yet authenticated. The lists it reads are complete — 18 lists created 2026-08-19, their **142 columns and 19 `CD Projects` rows** 2026-08-20 |
 
 ### The Project Quality Plan — new, and now visible
@@ -369,7 +369,7 @@ Ordered by value per unit of effort, engineering side.
 | 3 | ✅ **Half done.** `cd_06_land_manual` is in `CD_Master_Pipeline` as *Land Manual Input*. `cd_01_extract_procore` is still held out, now waiting on the Procore credential rotation rather than on Key Vault | Credential rotation |
 | 4 | Explain the `Total Billed` / `Owner Billed To Date` gap on the report itself | Nothing |
 | 5 | Land Sage silver, settle the retainage question, repoint the AR views at our own medallion | Blocker #1 |
-| 6 | **Unblocked — Outbuild is landing.** What is left is repointing `sv_outbuild_activities` off Rebecca's `Silver_Lakehouse` onto our own bronze, which could take `fct_Milestone` to zero if done carelessly and so is its own change. Then Completion Variance can be scored | Nothing |
+| 6 | ✅ **Done 2026-08-20.** `fct_Milestone` reads our own Outbuild ingestion: **52 → 126 milestones across 3 projects**, 0 orphans, model reframed. Completion Variance still needs the manual contract dates (`man_Milestones`) before it can be scored | Nothing |
 | 7 | Answer the four manual-input questions and the quality trade vocabulary, then wire manual silver → gold | A 30-minute call |
 | 8 | Retire the local extraction bridge; ingestion moves into Fabric | Procore credential rotation |
 | 9 | Mentoring sessions with Rebecca — recorded, on the extractor registry pattern first | Scheduling |

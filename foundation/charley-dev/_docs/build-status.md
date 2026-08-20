@@ -291,10 +291,33 @@ reported `dim_Project.SageJobNumber` as null for all 19 projects when Direct Lak
 populated. Treat the SQL endpoint as a convenience, and confirm anything surprising against
 Delta or DAX before acting on it.
 
-**Not yet wired:** `sv_outbuild_activities` still reads Rebecca's
-`Silver_Lakehouse/Outbuild_activities` dataflow, so `fct_Milestone`'s 52 rows come from her
-path, not from `cd_bronze_outbuild_*`. Repointing it risks taking milestones to zero and is
-its own piece of work.
+**Wired 2026-08-20.** `sv_outbuild_activities` now reads our own
+`cd_silver_outbuild_activities` (`sql/silver/25_outbuild_silver.sql`), and `fct_Milestone`
+was rebuilt and the model reframed. Measured live either side:
+
+| | hers | ours |
+|---|---:|---:|
+| activities | 1,196 | **1,860** |
+| critical | 168 | **406** |
+| `fct_Milestone` rows | 52 | **126** |
+| projects reaching gold | 2 | **3** |
+
+0 orphan milestones, `PercentComplete` 0.0-1.0 (avg 0.131), 52 overdue, 0 inverted dates.
+By project: Embankment Phase III 74, 360 Lexington 49, Sandbox Test Project 3.
+
+**Why 126 and not 406.** An Outbuild activity carries no project id - only `schedule_id`.
+The route is `activity.schedule_id -> project.schedules[].id -> project.procore_id`, and
+Outbuild's docs qualify `procore_id` as "only applicable if there is an active integration
+with Procore": **3 of 15 projects carry one.** The other 280 critical activities are real
+and unattributable, and gold's `WHERE project_id IS NOT NULL` drops them. That number rises
+when Affect connects more projects to Procore, not when we fix anything.
+
+**Two traps, both measured rather than assumed.** Outbuild returns `progress` as 0-100 and
+gold's contract is a 0-1 fraction (Rebecca's silver had already normalised it, which is what
+hid the difference) - left alone, `Avg Milestone Progress` reads 5000% and `IsOverdue`, which
+tests `progress < 1`, reports **zero overdue milestones on a late job**. And 4 of 15 projects
+have more than one schedule, so the portable-looking `$.schedules[0].id` would have silently
+dropped **1,150 of 1,860** activities.
 
 #### SharePoint writes: every direct route from a script is closed on this tenant
 
