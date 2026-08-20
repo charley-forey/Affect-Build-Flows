@@ -386,13 +386,18 @@ def test_deploy_script_substitutes_the_site() -> None:
     # `InvalidURL: URL can't contain control characters`, raised before the request leaves -
     # and the OData $filter value ("environment eq '...'") is full of them. The error names
     # the whole URL, so it reads like a bad endpoint rather than an unescaped argument.
-    path = df.connections_path("Default-b2a2225b-4b4e-42ec-ba52-c7e1c2dea580")
-    assert " " not in path, f"unencoded space in {path!r}"
-    assert "'" not in path, f"unencoded quote in {path!r}"
-    # The key stays OData-spelled; only the value is escaped.
-    assert "$filter=" in path and "%24filter" not in path
-    assert "Default-b2a2225b-4b4e-42ec-ba52-c7e1c2dea580" in path
-    check("the OData filter is percent-encoded, so urllib will send it")
+    env = "Default-b2a2225b-4b4e-42ec-ba52-c7e1c2dea580"
+    candidates = df.connection_paths(env)
+    assert len(candidates) >= 2, "one candidate is a guess; the point is not to guess once"
+    for label, path in candidates:
+        assert " " not in path, f"unencoded space in {label}: {path!r}"
+        assert "'" not in path, f"unencoded quote in {label}: {path!r}"
+        assert env in path, f"{label} does not scope to the environment"
+        if "$filter" in path:
+            # The key stays OData-spelled; only the value is escaped. urlencode() would
+            # turn the key itself into %24filter, which is the mistake the obvious fix makes.
+            assert "%24filter" not in path
+    check("every connections candidate is URL-safe and scoped to the environment")
 
 
 def main() -> int:
