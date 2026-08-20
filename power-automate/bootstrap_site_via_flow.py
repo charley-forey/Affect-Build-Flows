@@ -139,6 +139,45 @@ def environment(tok: str) -> str:
     return default["name"]
 
 
+def url_column_steps() -> list[tuple[str, str, str, dict | None]]:
+    """Drop and rebuild the two hyperlink columns, with the format stated explicitly.
+
+    WHY. After the first bootstrap, creating the real flows failed with:
+
+        WorkflowOperationParametersExtraParameter: The API operation does not contain a
+        definition for parameter 'item/EstimatingFolderUrl/Url'.
+
+    The flows write item/<name>/Url, which is how the SharePoint connector addresses a
+    HYPERLINK column - it exposes Url and Description as separate parameters. The connector
+    was not offering them, so the column is not the type it needs.
+
+    `<Field Type='URL'>` is supposed to default to Format='Hyperlink'. Graph reports no type
+    facet at all for these two columns while reporting text/number/choice/dateTime correctly
+    for the other nine, so whatever they became, it was not what the other nine became.
+    Stating Format removes the assumption rather than arguing with it.
+
+    Retried once before doing this, in case the connector was simply caching the list schema
+    it had read seconds earlier. Same error, so it was not that.
+    """
+    steps: list[tuple[str, str, str, dict | None]] = []
+    for name in ("EstimatingFolderUrl", "ProjectFolderUrl"):
+        field = (f"_api/web/lists/getbytitle('Job Register')/fields/"
+                 f"getbyinternalnameortitle('{name}')")
+        steps.append((f"drop {name}", "POST", f"{field}/deleteobject", None))
+        schema = (f"<Field Type='URL' Format='Hyperlink' DisplayName='{name}' "
+                  f"Name='{name}' StaticName='{name}' />")
+        steps.append((f"recreate {name} as Hyperlink", "POST",
+                      "_api/web/lists/getbytitle('Job Register')/fields/createfieldasxml", {
+                          "parameters": {
+                              "__metadata": {
+                                  "type": "SP.XmlSchemaFieldCreationInformation"},
+                              "SchemaXml": schema,
+                              "Options": 8,
+                          },
+                      }))
+    return steps
+
+
 def rest_steps(site_url: str) -> list[tuple[str, str, str, dict | None]]:
     """(label, method, uri, body) - every SharePoint REST call, in dependency order."""
     path = "/" + site_url.split("/", 3)[3] if site_url.count("/") > 2 else ""
@@ -183,6 +222,73 @@ def safe(label: str, index: int) -> str:
     """Flow action names allow no spaces or punctuation."""
     cleaned = "".join(c if c.isalnum() else "_" for c in label)
     return f"S{index:02d}_{cleaned}"[:80]
+
+
+def probe_definition(site_url: str) -> dict:
+    """Read the field types out of SharePoint and park them where Graph can read them.
+
+    Direct SharePoint reads are 401 and Graph does not model URL columns at all - it returns
+    a column with no type facet whatsoever, which is why two rounds of guessing at the
+    hyperlink format changed nothing observable. TypeAsString is the actual answer and only
+    SharePoint will say it.
+
+    So: one action asks SharePoint, a second writes the reply into a Job Register item's
+    ErrorDetail, and Graph reads the item back. Graph's READS work fine; only writes are
+    blocked. The item is disposable and gets deleted afterwards.
+    """
+    fields = ("_api/web/lists/getbytitle('Job Register')/fields"
+              "?$select=InternalName,TypeAsString,Hidden"
+              "&$filter=substringof('FolderUrl',InternalName)")
+    return {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/"
+                   "2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+            "$connections": {"defaultValue": {}, "type": "Object"},
+            "$authentication": {"defaultValue": {}, "type": "SecureObject"},
+        },
+        "triggers": {
+            "manual": {"type": "Request", "kind": "Button",
+                       "inputs": {"schema": {"type": "object", "properties": {}}}},
+        },
+        "actions": {
+            "Read_Fields": {
+                "type": "OpenApiConnection",
+                "runAfter": {},
+                "inputs": {
+                    "host": {"connectionName": "shared_sharepointonline",
+                             "operationId": "HttpRequest", "apiId": SHAREPOINT_API},
+                    "parameters": {
+                        "dataset": site_url,
+                        "parameters/method": "GET",
+                        "parameters/uri": fields,
+                        "parameters/headers": {"Accept": "application/json;odata=nometadata"},
+                    },
+                    "authentication": "@parameters('$authentication')",
+                },
+            },
+            "Park_The_Answer": {
+                "type": "OpenApiConnection",
+                "runAfter": {"Read_Fields": ["Succeeded", "Failed"]},
+                "inputs": {
+                    "host": {"connectionName": "shared_sharepointonline",
+                             "operationId": "HttpRequest", "apiId": SHAREPOINT_API},
+                    "parameters": {
+                        "dataset": site_url,
+                        "parameters/method": "POST",
+                        "parameters/uri": "_api/web/lists/getbytitle('Job Register')/items",
+                        "parameters/headers": VERBOSE,
+                        "parameters/body":
+                            "@{concat('{\"__metadata\":{\"type\":\"SP.Data.Job_x005f_"
+                            "RegisterListItem\"},\"Title\":\"FIELDPROBE\",\"ErrorDetail\":',"
+                            "string(string(body('Read_Fields'))),'}')}",
+                    },
+                    "authentication": "@parameters('$authentication')",
+                },
+            },
+        },
+        "outputs": {},
+    }
 
 
 def build_definition(site_url: str, steps) -> dict:
@@ -257,6 +363,10 @@ def main() -> int:
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--cleanup", action="store_true",
                         help="delete the helper flow and exit")
+    parser.add_argument("--fix-url-columns", action="store_true",
+                        help="only drop and rebuild the two hyperlink columns")
+    parser.add_argument("--probe-fields", action="store_true",
+                        help="ask SharePoint what type the URL columns actually are")
     args = parser.parse_args()
 
     tok = token()
@@ -278,7 +388,9 @@ def main() -> int:
         return 2
 
     site = args.site_url.rstrip("/")
-    steps = rest_steps(site)
+    steps = url_column_steps() if args.fix_url_columns else rest_steps(site)
+    if args.probe_fields:
+        steps = [("read the URL columns' TypeAsString", "GET", "(probe)", None)]
     print(f"site: {site}")
     print(f"steps: {len(steps)} SharePoint REST calls\n")
     for label, method, uri, _ in steps:
@@ -287,6 +399,9 @@ def main() -> int:
     if not args.apply:
         print("\nDRY RUN - nothing created. Re-run with --apply.")
         return 0
+
+    definition = (probe_definition(site) if args.probe_fields
+                  else build_definition(site, steps))
 
     existing = find_flow(tok, env, HELPER_NAME)
     if existing:
@@ -299,7 +414,7 @@ def main() -> int:
                            f"/flows?api-version={API_VERSION}", tok, {
         "properties": {
             "displayName": HELPER_NAME,
-            "definition": build_definition(site, steps),
+            "definition": definition,
             "connectionReferences": {
                 "shared_sharepointonline": {
                     "connectionName": args.connection,

@@ -207,7 +207,8 @@
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Stage/Value": "Failed",
                   "item/CopyJobStatus": "Not attempted",
-                  "item/ErrorDetail": "@{concat('No folder in ', parameters('EstimatingLibrary'), ' starts with E-', triggerOutputs()?['body/JobNumber'], '-. Either the estimating setup never completed for this job, or the folder was renamed by hand.')}"
+                  "item/ErrorDetail": "@{concat('No folder in ', parameters('EstimatingLibrary'), ' starts with E-', triggerOutputs()?['body/JobNumber'], '-. Either the estimating setup never completed for this job, or the folder was renamed by hand.')}",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -284,7 +285,8 @@
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Stage/Value": "Failed",
                   "item/CopyJobStatus": "Not attempted",
-                  "item/ErrorDetail": "@{concat('Estimating folder \"', outputs('Matching_Estimating_Folder')?['Name'], '\" either does not start with E- or the resulting project path would breach SharePoint''s 400-character URL limit once 01-BIDDING/02-ESTIMATING is created under it.')}"
+                  "item/ErrorDetail": "@{concat('Estimating folder \"', outputs('Matching_Estimating_Folder')?['Name'], '\" either does not start with E- or the resulting project path would breach SharePoint''s 400-character URL limit once 01-BIDDING/02-ESTIMATING is created under it.')}",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -380,10 +382,10 @@
                   "dataset": "@parameters('SiteUrl')",
                   "table": "@parameters('JobRegisterList')",
                   "id": "@triggerOutputs()?['body/ID']",
-                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
-                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/ProjectFolderUrl": "@{outputs('Project_Folder_Absolute')}",
                   "item/CompletedAt": "@{utcNow()}",
-                  "item/CopyJobStatus": "Skipped - project folder already existed, nothing copied"
+                  "item/CopyJobStatus": "Skipped - project folder already existed, nothing copied",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -615,10 +617,10 @@
                   "table": "@parameters('JobRegisterList')",
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Stage/Value": "Failed",
-                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
-                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/ProjectFolderUrl": "@{outputs('Project_Folder_Absolute')}",
                   "item/CopyJobStatus": "JobError - standard project template copy",
-                  "item/ErrorDetail": "@{substring(string(outputs('Template_Copy_Logs')), 0, min(8000, length(string(outputs('Template_Copy_Logs')))))}"
+                  "item/ErrorDetail": "@{substring(string(outputs('Template_Copy_Logs')), 0, min(8000, length(string(outputs('Template_Copy_Logs')))))}",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -782,10 +784,10 @@
                   "dataset": "@parameters('SiteUrl')",
                   "table": "@parameters('JobRegisterList')",
                   "id": "@triggerOutputs()?['body/ID']",
-                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
-                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/ProjectFolderUrl": "@{outputs('Project_Folder_Absolute')}",
                   "item/CompletedAt": "@{utcNow()}",
-                  "item/CopyJobStatus": "Completed - project template copied, estimating folder was empty"
+                  "item/CopyJobStatus": "Completed - project template copied, estimating folder was empty",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -952,10 +954,10 @@
                   "table": "@parameters('JobRegisterList')",
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Stage/Value": "Failed",
-                  "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
-                  "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+                  "item/ProjectFolderUrl": "@{outputs('Project_Folder_Absolute')}",
                   "item/CopyJobStatus": "JobError - estimating folder copy",
-                  "item/ErrorDetail": "@{substring(string(outputs('Estimating_Copy_Logs')), 0, min(8000, length(string(outputs('Estimating_Copy_Logs')))))}"
+                  "item/ErrorDetail": "@{substring(string(outputs('Estimating_Copy_Logs')), 0, min(8000, length(string(outputs('Estimating_Copy_Logs')))))}",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -999,11 +1001,11 @@
               "table": "@parameters('JobRegisterList')",
               "id": "@triggerOutputs()?['body/ID']",
               "item/Stage/Value": "Bidding",
-              "item/ProjectFolderUrl/Url": "@{outputs('Project_Folder_Absolute')}",
-              "item/ProjectFolderUrl/Description": "@{outputs('Project_Folder_Name')}",
+              "item/ProjectFolderUrl": "@{outputs('Project_Folder_Absolute')}",
               "item/CompletedAt": "@{utcNow()}",
               "item/CopyJobStatus": "@{concat('Completed - ', string(length(outputs('Build_Template_Uris'))), ' template items and ', string(length(outputs('Build_Estimating_Uris'))), ' estimating items copied')}",
-              "item/ErrorDetail": ""
+              "item/ErrorDetail": "",
+              "item/Title": "@triggerOutputs()?['body/Title']"
             },
             "authentication": "@parameters('$authentication')"
           }
@@ -1036,7 +1038,8 @@
               "id": "@triggerOutputs()?['body/ID']",
               "item/Stage/Value": "Failed",
               "item/CopyJobStatus": "Failed",
-              "item/ErrorDetail": "@{substring(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))), 0, min(8000, length(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))))))}"
+              "item/ErrorDetail": "@{substring(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))), 0, min(8000, length(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))))))}",
+              "item/Title": "@triggerOutputs()?['body/Title']"
             },
             "authentication": "@parameters('$authentication')"
           }
