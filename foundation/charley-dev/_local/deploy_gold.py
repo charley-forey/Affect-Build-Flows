@@ -87,7 +87,8 @@ statements = split_statements
 #
 # The gold SQL stays byte-identical across both sources. Only the SELECTION differs, which
 # is what --source has always been for.
-GOLD_CD_ONLY = ("33_fct_qc.sql", "40_man_tables.sql", "41_man_qc_tables.sql")
+GOLD_CD_ONLY = ("13_dim_job.sql", "33_fct_qc.sql", "40_man_tables.sql",
+                "41_man_qc_tables.sql")
 
 
 def gold_files(source: str = "cd") -> list[Path]:

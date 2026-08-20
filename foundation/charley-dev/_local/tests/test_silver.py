@@ -334,6 +334,59 @@ def manual_bronze() -> dict[str, str]:
             f"CREATE OR REPLACE TABLE {ms.bronze_table(table)} AS "
             f"SELECT * FROM (VALUES {', '.join(rows)}) AS t({names})"
         )
+
+    # The Job Register, off the BUILD site. Not driven by ms.tables() because it is not a
+    # man_* table - the Power Automate flows own it, not the CSV templates.
+    #
+    # The fixture is built around the one thing this parser has to get right: rows 2 and 4
+    # are DIFFERENT JOBS THAT WERE BOTH ISSUED 26-002, which is what a race between two
+    # flow runs produces. Both must survive to gold so the DQ gate can fail on them.
+    # Deduplicating on JobNumber instead of Id would discard one and hide the collision.
+    # Row 3 is a job somebody has just asked for and the flow has not numbered yet - the
+    # normal resting state of a healthy register, and it must not be dropped either.
+    # Row 5 repeats Id 4 at an older timestamp: THAT is what dedup is for.
+    url = "{{'Url': '{}'}}"
+    none_url = "CAST(NULL AS STRUCT(Url VARCHAR))"
+    editor = "{'Title': 'flow:EstimatingSetup'}"
+    # DuckDB types a bare NULL in a VALUES list as INTEGER, and a column that is NULL in
+    # every fixture row then reaches TRIM() as an integer. Spelled out rather than relying
+    # on inference from whichever row happens to be first.
+    ns, ni, nt = "CAST(NULL AS VARCHAR)", "CAST(NULL AS INTEGER)", "CAST(NULL AS TIMESTAMP)"
+    register_rows = [
+        f"(1, 'Fulton Street Fit-Out', 26, 1, '26-001', 'Estimating', "
+        f"{url.format('/sites/BUILD/01 ESTIMATING/E-26-001-Fulton Street Fit-Out')}, "
+        f"{none_url}, 'pm@example.com', TIMESTAMP '2026-07-01 09:00:00', "
+        f"TIMESTAMP '2026-07-01 09:01:00', 'Copied 12 item(s)', {ns}, "
+        f"TIMESTAMP '2026-07-01 09:01:00', {editor})",
+
+        f"(2, 'Bergen Street Retail', 26, 2, '26-002', 'Bidding', "
+        f"{url.format('/sites/BUILD/01 ESTIMATING/E-26-002-Bergen Street Retail')}, "
+        f"{url.format('/sites/BUILD/00 PROJECTS/26-002-Bergen Street Retail')}, "
+        f"'pm@example.com', TIMESTAMP '2026-07-02 09:00:00', "
+        f"TIMESTAMP '2026-07-02 09:02:00', 'Copied 31 item(s)', {ns}, "
+        f"TIMESTAMP '2026-07-02 09:02:00', {editor})",
+
+        f"(3, 'Not Numbered Yet', {ni}, {ni}, {ns}, 'Requested', {none_url}, {none_url}, "
+        f"'pm@example.com', TIMESTAMP '2026-07-03 09:00:00', {nt}, {ns}, {ns}, "
+        f"TIMESTAMP '2026-07-03 09:00:00', {editor})",
+
+        f"(4, 'Court Square Lobby', 26, 2, '26-002', 'Estimating', "
+        f"{url.format('/sites/BUILD/01 ESTIMATING/E-26-002-Court Square Lobby')}, "
+        f"{none_url}, 'pm2@example.com', TIMESTAMP '2026-07-02 09:00:01', "
+        f"TIMESTAMP '2026-07-02 09:00:09', 'Copied 12 item(s)', {ns}, "
+        f"TIMESTAMP '2026-07-02 09:00:09', {editor})",
+
+        f"(4, 'Court Square Lobby', 26, 2, '26-002', 'Requested', {none_url}, {none_url}, "
+        f"'pm2@example.com', TIMESTAMP '2026-07-02 09:00:01', {nt}, {ns}, {ns}, "
+        f"TIMESTAMP '2026-07-02 09:00:02', {editor})",
+    ]
+    out["cd_bronze_man_job_register"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_man_job_register AS "
+        f"SELECT * FROM (VALUES {', '.join(register_rows)}) AS t("
+        "Id, Title, JobYear, JobSeq, JobNumber, Stage, EstimatingFolderUrl, "
+        "ProjectFolderUrl, RequestedBy, RequestedAt, CompletedAt, CopyJobStatus, "
+        "ErrorDetail, Modified, Editor)"
+    )
     return out
 
 
@@ -650,6 +703,44 @@ def test_manual_parsers(con) -> None:
     # 1st, so this asserts the floor did not MOVE them, which a wrong trunc() would.
     assert one(con, "SELECT month_start FROM cd_silver_man_wins") == date(2026, 7, 1)
     check("MonthStart is floored to the 1st of the reporting month")
+
+    # ------------------------------------------------------------- the Job Register
+    #
+    # THE ASSERTION THAT MATTERS: two different jobs both issued 26-002 BOTH SURVIVE.
+    #
+    # That collision is what happens when somebody switches off trigger concurrency on the
+    # Power Automate flows, and it is the whole reason dim_Job is worth building. If this
+    # parser deduplicated on JobNumber - the obvious thing to do to a column called
+    # "number" - one of the two real jobs would vanish here and the DQ gate downstream
+    # would have nothing left to fail on. The bug would then surface weeks later, as two
+    # folder trees with real documents in both.
+    n = one(con, "SELECT COUNT(*) FROM cd_silver_man_job_register WHERE job_number = '26-002'")
+    assert n == 2, f"the 26-002 collision collapsed to {n} row(s) - dedup is on the wrong key"
+    check("two jobs issued the same number both survive, so the DQ gate can fail on them")
+
+    # Dedup IS applied, just on the right key: Id 4 appears twice and collapses to its
+    # latest Modified.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_man_job_register") == 4
+    assert one(con, "SELECT stage FROM cd_silver_man_job_register WHERE register_id = 4") \
+        == "ESTIMATING"
+    check("the same register row landed twice collapses to its latest version")
+
+    # A job somebody has just asked for has no number yet. That is the normal resting state
+    # of a healthy register, not a defect, and dropping it would under-count the pipeline.
+    assert one(con, "SELECT job_number FROM cd_silver_man_job_register "
+                    "WHERE register_id = 3") is None
+    check("a job still awaiting its number is kept, not dropped")
+
+    # URL columns arrive as records; silver takes .Url or the link is lost.
+    assert one(con, "SELECT project_folder_url FROM cd_silver_man_job_register "
+                    "WHERE register_id = 2").endswith("26-002-Bergen Street Retail")
+    check("SharePoint URL columns are unwrapped to the link itself")
+
+    # And the half-run flow reaches the reject log with a reason, rather than nowhere.
+    assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_manual "
+                    "WHERE target_table = 'cd_silver_man_job_register'") == 0, \
+        "no fixture row is past Requested without a number, so nothing should reject"
+    check("a healthy register produces no job-register rejects")
 
     # An unknown project is REJECTED WITH A REASON, not dropped. Two of the eight PQP
     # lists log it, plus the gate collapse's own new failure mode.

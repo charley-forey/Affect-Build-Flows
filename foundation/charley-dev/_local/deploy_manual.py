@@ -207,6 +207,52 @@ for name, cols in SPEC.items():
 '''),
 
         cell('''
+# ------------------------------------------------- the Job Register, declared only
+#
+# cd_bronze_man_job_register is written by CD_Manual_Ingest off the BUILD site, NOT from a
+# CSV - the two Power Automate job flows own it and nobody types into it by hand. It is
+# declared here anyway because 30_manual_silver.sql reads it, and until the dataflow is
+# published the table does not exist: silver would fail on "table not found" and take the
+# whole nightly pipeline with it, on a chain that is otherwise ready to run.
+#
+# CREATED ONLY IF ABSENT. Every other table above is written with mode("overwrite"), which
+# is correct for them - the CSV is the whole truth each run. Doing that here would delete
+# the register the dataflow just landed, every single night. That exact bug (a leftover
+# overwrite that would have wiped gold the moment it started populating) has already been
+# found once in this repo; this is the same shape and it is not repeated.
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
+
+JOB_REGISTER = "cd_bronze_man_job_register"
+
+if spark.catalog.tableExists(JOB_REGISTER):
+    print(f"  {JOB_REGISTER:<26} exists - left alone (the dataflow owns it)")
+else:
+    # The shape SharePoint.Tables returns. URL and person columns arrive as records, the
+    # same way lookup columns do, which is why silver reads EstimatingFolderUrl.Url and
+    # Editor.Title rather than the bare column.
+    url = StructType([StructField("Url", StringType(), True)])
+    schema = StructType([
+        StructField("Id", IntegerType(), True),
+        StructField("Title", StringType(), True),
+        StructField("JobYear", IntegerType(), True),
+        StructField("JobSeq", IntegerType(), True),
+        StructField("JobNumber", StringType(), True),
+        StructField("Stage", StringType(), True),
+        StructField("EstimatingFolderUrl", url, True),
+        StructField("ProjectFolderUrl", url, True),
+        StructField("RequestedBy", StringType(), True),
+        StructField("RequestedAt", TimestampType(), True),
+        StructField("CompletedAt", TimestampType(), True),
+        StructField("CopyJobStatus", StringType(), True),
+        StructField("ErrorDetail", StringType(), True),
+        StructField("Modified", TimestampType(), True),
+        StructField("Editor", StructType([StructField("Title", StringType(), True)]), True),
+    ])
+    spark.createDataFrame([], schema).write.format("delta").saveAsTable(JOB_REGISTER)
+    print(f"  {JOB_REGISTER:<26} declared empty - publish CD_Manual_Ingest to fill it")
+'''),
+
+        cell('''
 total = sum(v["rows"] for v in loaded.values())
 from_csv = [k for k, v in loaded.items() if v["source"] == "csv"]
 print(f"\\n{total} manual row(s) across {len(loaded)} list(s); "

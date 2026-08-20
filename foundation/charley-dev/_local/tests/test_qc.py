@@ -360,10 +360,53 @@ def test_procore_facts(con) -> None:
     check("every QC fact's MonthStart resolves to dim_Date")
 
 
+def test_dim_job_links_the_flows_to_fabric(con) -> None:
+    """The Power Automate job flows reach gold, and a duplicated job number is caught.
+
+    Before this existed, power-automate/README.md described the Job Register as the dim_Job
+    source while nothing anywhere read it: the flows created folders and issued numbers and
+    not one row reached Fabric. This is the assertion that would have failed.
+    """
+    assert one(con, "SELECT COUNT(*) FROM dim_Job") > 0, \
+        "no silver -> gold link reaches dim_Job"
+    assert one(con, "SELECT ProjectName FROM dim_Job WHERE JobNumber = '26-001'") \
+        == "Fulton Street Fit-Out"
+    check("dim_Job is populated from the Job Register, so the job flows reach Fabric")
+
+    # AND THE POINT OF BUILDING IT. The fixture holds two different jobs both issued
+    # 26-002, which is what a race between two flow runs produces when somebody switches
+    # trigger concurrency off in the Power Automate designer. Run the real expectation -
+    # not a re-implementation of it - and require that it returns them.
+    sys.path.insert(0, str(CHARLEY_DEV / "02-transformation" / "dq"))
+    import expectations  # noqa: PLC0415
+
+    suite = expectations.build_suite()
+    dupe = next(e for e in suite.expectations if e.name == "dim_Job.JobNumber.unique")
+    offenders = con.execute(dupe.failing_sql).fetchall()
+    assert offenders, (
+        "two jobs share a number and the expectation did not catch it - the guard on the "
+        "flows' concurrency setting is not working"
+    )
+    assert offenders[0][0] == "26-002"
+    assert dupe.severity == expectations.SEVERITY_ERROR, \
+        "a duplicated job number must block, not warn"
+    check("a duplicated job number fails the DQ gate, which is what guards flow concurrency")
+
+    # The pending row - a job asked for but not yet numbered - must NOT trip anything.
+    # It is the normal resting state of a healthy register, and a gate that fires on it
+    # gets muted within a week, taking the real check above with it.
+    pending = next(e for e in suite.expectations
+                   if e.name == "dim_Job.JobNumber.issued_past_requested")
+    assert not con.execute(pending.failing_sql).fetchall(), \
+        "a job legitimately awaiting its number was flagged"
+    check("a job still awaiting its number does not trip the gate")
+
+
 def main() -> int:
     con = build()
     for fn in (test_seed_sql_is_current, test_checklist_collapse, test_gate_collapse,
                test_doh_and_status_seeds, test_manual_tables_are_reachable,
+               test_dim_job_links_the_flows_to_fabric,
                test_every_pqp_table_carries_a_project,
                test_pqp_results_resolve_to_their_templates, test_pqp_keys_are_unique,
                test_status_codes_resolve, test_procore_facts):

@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import re
 import sys
 import uuid
@@ -52,6 +53,32 @@ OUT_META = MANUAL_DIR / "CD_Manual_Ingest.Dataflow" / "queryMetadata.json"
 SITE_TITLE = "Affect Project Reporting"
 LOOKUP_LIST = "CD Projects"
 SITE_URL = "https://REPLACE-ME.sharepoint.com/sites/AffectProjectReporting"
+
+# THE SECOND SITE. The Job Register lives on the BUILD site, not the reporting one. It is
+# created and driven by power-automate/provision-sharepoint-build.ps1 and the two job flows,
+# NOT by the PS1 this file generates. It is read here because that register is the only
+# record of a job between "somebody asked for it" and "it became a Procore project", and
+# nothing was reading it at all: power-automate/README.md described it as the dim_Job source
+# while no bronze table, no silver parser and no gold DDL existed anywhere.
+#
+# It is deliberately NOT in MAN_SQL. tables() drives the provisioning script and the CSV
+# templates as well as this dataflow, so adding it there would create a duplicate
+# "CD Job Register" list on the WRONG site - which the flows would ignore while it sat there
+# collecting nothing, looking exactly like a register nobody had used yet.
+SITE_BUILD = "https://REPLACE-ME.sharepoint.com/sites/BUILD"
+JOB_REGISTER_LIST = "Job Register"
+JOB_REGISTER_QUERY = "cd_bronze_man_job_register"
+
+# Where the dataflow lands. Read from fabric_ids.json rather than pasted in, because that
+# file is already the one place workspace and lakehouse ids are recorded - deploy_gold.py
+# substitutes {CD_SILVER_ABFSS} from it - and a second copy is a second thing to update.
+FABRIC_IDS = HERE / "fabric_ids.json"
+
+
+def fabric_ids() -> tuple[str, str]:
+    """(workspace id, CD_Bronze_Lakehouse id) - the dataflow's output destination."""
+    ids = json.loads(FABRIC_IDS.read_text(encoding="utf-8"))
+    return ids["_workspace"]["id"], ids["CD_Bronze_Lakehouse"]["id"]
 
 # Choice columns, with the values read out of dim_Status / dim_ScorecardBand on
 # 2026-08-02. A choice column is what stops somebody typing "🔴 High" where HIGH is
@@ -385,8 +412,16 @@ def build() -> str:
 
 
 def query_names() -> list[str]:
-    """Every bronze table the dataflow writes: the projects lookup, then one per man_*."""
-    return ["cd_bronze_man_projects"] + [bronze_table(t) for t in tables()]
+    """Every bronze table the dataflow writes.
+
+    The projects lookup, one per man_*, and finally the Job Register off the BUILD site.
+    The register is last because it is the only query pointing at a different site, and
+    grouping it with the reporting lists is how somebody later "tidies" it onto the wrong
+    SITE constant.
+    """
+    return (["cd_bronze_man_projects"]
+            + [bronze_table(t) for t in tables()]
+            + [JOB_REGISTER_QUERY])
 
 
 def build_mashup() -> str:
@@ -396,6 +431,7 @@ def build_mashup() -> str:
     creates, and hand-maintaining that across two files is what produced "CD PriorityItems"
     in one and "CD Priority Items" in the other.
     """
+    workspace_id, bronze_id = fabric_ids()
     header = f'''[DefaultOutputDestinationSettings = [DestinationDefinition = [Kind = "Reference", QueryName = "DefaultDestination", IsNewTarget = true], UpdateMethod = [Kind = "Replace"], DestinationTypeSettings = [Kind = "Table"]], StagingDefinition = [Kind = "FastCopy"]]
 section Section1;
 
@@ -426,9 +462,22 @@ section Section1;
 // Expand=false on lookup columns keeps ProjectKey as the raw lookup record. Silver reads
 // the id out of it; expanding here would bake a display name into bronze, and a renamed
 // project would then silently orphan its history.
+//
+// TWO SITES. Everything except the last query reads the reporting site (SITE). The Job
+// Register lives on the BUILD site (SITE_BUILD) because it is owned by the two Power
+// Automate job flows, not by this platform. Both are placeholders; both must be set.
 // ============================================================================
 
 SITE = "{SITE_URL}";
+SITE_BUILD = "{SITE_BUILD}";
+
+// Where every query below lands. Referenced by DefaultOutputDestinationSettings at the top
+// of this file; without it the dataflow parses and then fails at run with an unresolved
+// reference, because every query carries BindToDefaultDestination = true. This line was
+// missing for the entire life of this dataflow - it was never caught because the dataflow
+// has never been deployed, and CD_Sage_Ingest (which has it) is the only one that has.
+// Points at CD_Bronze, never at the existing Silver lakehouse.
+shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){{[workspaceId = "{workspace_id}"]}}[Data]{{[lakehouseId = "{bronze_id}"]}}[Data];
 '''
     parts = [header]
     # The lookup list first, then one query per man_* table.
@@ -443,6 +492,22 @@ shared {query} = let
 in
   Navigation;
 ''')
+    # The Job Register, off the OTHER site. Emitted separately rather than folded into the
+    # loop above because the only thing that distinguishes it is which SITE constant it
+    # reads, and that is precisely the difference a loop would hide.
+    parts.append(f'''
+// ---------------------------------------------------------------- the BUILD site
+// The job flows' register: one row per job from the moment somebody asks for it. Feeds
+// dim_Job (sql/gold/13_dim_job.sql), which is what actually connects the two Power Automate
+// flows to this platform - power-automate/README.md described that link long before any of
+// it existed.
+[BindToDefaultDestination = true]
+shared {JOB_REGISTER_QUERY} = let
+  Source = SharePoint.Tables(SITE_BUILD, [Implementation = "2.0", ViewMode = "All"]),
+  Navigation = Source{{[Title = "{JOB_REGISTER_LIST}"]}}[Items]
+in
+  Navigation;
+''')
     return "".join(parts)
 
 
@@ -453,6 +518,17 @@ def build_query_metadata() -> str:
     byte-identical file and `--check` means something. They are internal to a dataflow that
     has never been bound (SITE is still a placeholder), so making them deterministic costs
     nothing and removes the only reason this file would have to be hand-edited.
+
+    `connections` stays EMPTY, deliberately. CD_Sage_Ingest carries a Lakehouse entry with a
+    ClusterId/DatasourceId pair, and copying that pair over here was considered and rejected:
+    those ids identify a binding Fabric issued for THAT dataflow, and a borrowed one is the
+    kind of value that looks right in a diff and resolves to nothing at run. Fabric writes
+    this block itself when the destination is authenticated after publish - see step 5 of
+    power-automate/RUNBOOK.md. The empty list is the honest "not bound yet" state.
+
+    What DOES have to be right before publish is `shared DefaultDestination` in mashup.pq,
+    and that is not a connection - it names the target lakehouse directly, so the dataflow
+    cannot write somewhere unintended while it waits to be authenticated.
     """
     ns = uuid.UUID("6ba7b811-9dad-11d1-80b4-00c04fd430c8")  # RFC 4122 URL namespace
     entries = ",\n".join(
