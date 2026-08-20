@@ -344,6 +344,29 @@ def test_import_packages_build() -> None:
     check(f"both flows wrap into a legacy import package with the site URL baked in")
 
 
+def test_deploy_script_substitutes_the_site() -> None:
+    """deploy_flows.py imports, and its definition() reaches the parameter that matters.
+
+    Nothing here touches the network - `definition()` is pure. The check exists because the
+    site URL is a DEFINITION parameter that the Power Automate designer cannot edit after
+    the fact, so a substitution that silently missed would produce two flows pointed at
+    REPLACE-ME with no way to correct them short of deleting and recreating.
+    """
+    import deploy_flows as df  # noqa: PLC0415
+
+    for stem in df.FLOWS_TO_CREATE:
+        body = df.definition(stem, "https://example.sharepoint.com/sites/BUILD")
+        assert body["parameters"]["SiteUrl"]["defaultValue"] \
+            == "https://example.sharepoint.com/sites/BUILD"
+        assert body["triggers"], f"{stem}: trigger lost"
+        trigger = next(iter(body["triggers"].values()))
+        assert trigger["runtimeConfiguration"]["concurrency"]["runs"] == 1
+        # `description` describes the file, not the workflow, and the API rejects unknown
+        # top-level keys in a definition.
+        assert "description" not in body
+    check("deploy_flows.py builds a definition with the site URL and concurrency intact")
+
+
 def main() -> int:
     test_both_flows_parse()
     test_concurrency_is_one()
@@ -360,6 +383,7 @@ def main() -> int:
     test_ps1_is_dry_run_by_default()
     test_powershell_parses()
     test_import_packages_build()
+    test_deploy_script_substitutes_the_site()
     for c in CHECKS:
         print(f"  ok  {c}")
     print(f"\ntest_flows: {len(CHECKS)} checks passed")
