@@ -53,7 +53,7 @@ Workspace `Build`, folder `charley-dev`. Nothing outside that folder has been mo
 | **Semantic models** | **Two.** `Affect Project Report` — Direct Lake, **37 tables, 99 measures**. `Project Quality Plan` — **19 tables plus a measure table, 42 measures, 23 relationships** |
 | **Reports** | **Two.** `Monthly Progress Report` — **12 pages, 180 visuals**, drill-through, 3 bookmarks, themed and navigable ([**see every page**](resources/power-bi/monthly-progress-report/) without opening Fabric). `Project Quality Plan` — **7 pages, 95 visuals** |
 | **Orchestration** | `CD_Master_Pipeline`, **6 activities** — *Land Manual Input* is in the nightly run, verified live 2026-08-19. Pipeline 02:00 daily, model refresh 04:00 daily (Eastern) |
-| **Data quality** | **104 expectations** — 81 blocking, 23 warning — gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
+| **Data quality** | **107 expectations** — 83 blocking, 24 warning — gating the publish. A blocking violation keeps yesterday's numbers rather than publishing wrong ones |
 
 ### The ingestion
 
@@ -218,7 +218,8 @@ trade key that does not exist would resolve to nothing and read as "unmapped" �
 look identical to a trade nobody has mapped yet. That is now an error-severity check rather
 than a warning.
 
-The gate is at **104 expectations**, 8 warnings and **0 blocking**. The cost-code
+The suite is at **107 expectations**; the last live run measured 8 warnings and **0
+blocking**. The cost-code
 expectation, which used to be the largest warning on the page, now passes.
 
 ### The 14 Excel defects — 7 structurally fixed, plus 2 structural issues

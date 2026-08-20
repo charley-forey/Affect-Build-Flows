@@ -216,7 +216,7 @@ needs the template contents above, and a decision about **which account owns the
 connection** — the workflows run as whoever created it, so a named person's account means
 they stop working when that person leaves. A service account is worth ten minutes now.
 
-The nightly pipeline runs six stages and validates 104 expectations before anything publishes.
+The nightly pipeline runs six stages and validates 107 expectations before anything publishes.
 Everything is deployed from version-controlled scripts, so the repository is the source of
 truth rather than the workspace, and any of it can be rebuilt or rolled back.
 

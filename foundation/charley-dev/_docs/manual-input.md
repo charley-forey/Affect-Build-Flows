@@ -172,7 +172,7 @@ need SharePoint admin rights. `sharepoint-lists.md` is written to hand over dire
 4. ~~Point `40_man_tables.sql` at silver instead of the empty declarations.~~ **Done** — gold
    now `INSERT`s from `sv_man_*`, and `01_source_views_cd.sql` defines all 17 `sv_man_*`
    views that had never existed.
-5. ~~DQ expectations~~ **Done** — the gate is at 104 expectations (81 blocking, 23 warning).
+5. ~~DQ expectations~~ **Done** — the gate is at 107 expectations (83 blocking, 24 warning).
 6. ~~Add `cd_06_land_manual` to `CD_Master_Pipeline`, ahead of `Bronze To Silver`.~~ **Done**
    — it runs as the `Land Manual Input` activity and `Bronze To Silver` depends on it, so
    manual bronze is refreshed before silver rebuilds. Verified against the live pipeline

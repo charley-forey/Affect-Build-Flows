@@ -26,7 +26,7 @@ Procore REST API (OAuth) → existing script (hosting method confirmed in D1: Fa
 - [x] Assess full vs incremental refresh — incremental where the API verifiably supports `filters[updated_at]`, MERGE on the natural key everywhere else
 - [x] Add error handling, run logging — `meta_PipelineRun` heartbeat, diagnostics to `Files/_diag/`
 - [x] Confirm and document refresh schedule — pipeline 02:00, model 04:00 Eastern
-- [x] Data quality checks on landed data — **104 expectations (81 blocking, 23 warning)**; the gate blocks rather than warns
+- [x] Data quality checks on landed data — **107 expectations (83 blocking, 24 warning)**; the gate blocks rather than warns
 - [x] Handoff doc — [`procore-ingestion.md`](../foundation/charley-dev/_docs/procore-ingestion.md)
 - [ ] **Move extraction into Fabric** — blocked on rotating the exposed Procore credentials, not on Key Vault
 - [ ] Resolve the two Procore 403s (`punch_item_types`, `schedule`) — Affect
