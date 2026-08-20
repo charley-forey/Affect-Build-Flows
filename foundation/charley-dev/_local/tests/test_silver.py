@@ -104,6 +104,42 @@ BRONZE = {
     ],
     # Field ops. These parsers shipped with no offline fixture at all - the test named one
     # SQL file by hand and never reached them. The glob that replaced it found this.
+    # Outbuild. Two projects: OB1 is integrated with Procore, OB2 is NOT - which is the
+    # live shape (only 3 of 15 carry a procore_id). Schedules are a nested JSON array, and
+    # the activity's ONLY route to a project is through them.
+    "cd_bronze_outbuild_projects": [
+        bronze_row("OB1", {"id": 4001, "name": "Tower A", "procore_id": "7",
+                           "schedules": [{"id": 9001, "name": "Main Schedule",
+                                          "is_current_schedule": True}]}),
+        bronze_row("OB2", {"id": 4002, "name": "Unintegrated Site", "procore_id": None,
+                           "schedules": [{"id": 9002, "name": "Main Schedule",
+                                          "is_current_schedule": True}]}),
+    ],
+    "cd_bronze_outbuild_activities": [
+        # progress 50 on the wire. Gold's contract is a 0-1 fraction, so silver must land
+        # 0.5 - the single most consequential line in this parser.
+        bronze_row("A1", {"id": 14971, "name": "  Foundation complete  ", "schedule_id": 9001,
+                          "start_date": "2025-05-01T08:00:00.000",
+                          "end_date": "2025-06-30T17:00:00.000",
+                          "progress": 50, "duration": 60, "is_critical": True,
+                          "activity_type": "task",
+                          "baseline_start_date": "2025-05-01T08:00:00.000",
+                          "baseline_end_date": "2025-06-20T17:00:00.000",
+                          "baseline_duration": 50}),
+        # 100 on the wire must become exactly 1.0, or IsOverdue's `progress < 1` misfires.
+        bronze_row("A2", {"id": 14972, "name": "Done", "schedule_id": 9001,
+                          "start_date": "2025-05-01T08:00:00.000",
+                          "end_date": "2025-06-30T17:00:00.000",
+                          "progress": 100, "duration": 10, "is_critical": True,
+                          "activity_type": "task"}),
+        # Belongs to the UNINTEGRATED project: must survive silver with a NULL project_id
+        # and a named Outbuild project, not be dropped.
+        bronze_row("A3", {"id": 14973, "name": "Orphan", "schedule_id": 9002,
+                          "start_date": "2025-05-01T08:00:00.000",
+                          "end_date": "2025-06-30T17:00:00.000",
+                          "progress": 25, "duration": 5, "is_critical": True,
+                          "activity_type": "task"}),
+    ],
     "cd_bronze_procore_observations": [
         bronze_row("O1", {"id": "O1", "number": "1", "name": "  Missing guardrail  ",
                           "type": {"name": "Safety"}, "category": {"name": "Fall"},
@@ -785,11 +821,59 @@ def test_qc_procore_parser(con) -> None:
     check("Procore Inspections (checklist/lists) parses, trimmed, keyless rows dropped")
 
 
+def test_outbuild_parser(con) -> None:
+    """25_outbuild_silver.sql - the parser fct_Milestone reads, and its two traps."""
+    # Nothing is dropped. Three activities in, three out - including the one whose project
+    # has no Procore integration.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_outbuild_activities") == 3
+    check("every Outbuild activity survives silver, attributed or not")
+
+    # THE TRAP. Outbuild sends progress as 0-100; gold documents its contract as a 0-1
+    # fraction and the gold fixture uses 0.5. Landing 50 here would make
+    # `Avg Milestone Progress` read 5000%, and IsOverdue - which tests
+    # `COALESCE(progress,0) < 1` - would call every activity past 1% complete and report
+    # ZERO overdue milestones on a late job.
+    assert one(con, "SELECT progress FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14971'") == 0.5
+    assert one(con, "SELECT progress FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14972'") == 1.0
+    check("progress is normalised from Outbuild's 0-100 to the 0-1 fraction gold expects")
+
+    # An activity carries no project. The route is schedule_id -> project.schedules[].id
+    # -> project.procore_id, and it must land the PROCORE id, not Outbuild's own.
+    assert one(con, "SELECT project_id FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14971'") == "7"
+    check("an activity resolves to its PROCORE project through the schedule map")
+
+    # The unintegrated project: NULL project_id, but named, so "which schedules are we
+    # failing to attribute" is a query rather than a re-extract. Gold's
+    # `WHERE project_id IS NOT NULL` is what excludes it - that decision is not silver's.
+    assert one(con, "SELECT project_id FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14973'") is None
+    assert one(con, "SELECT outbuild_project_name FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14973'") == "Unintegrated Site"
+    check("an activity on a project with no procore_id keeps a NULL key and a real name")
+
+    # Outbuild has no status on an activity; Rebecca's `Status` column was hers. NULL
+    # rather than derived from progress, which would be a guess dressed as data.
+    assert one(con, "SELECT status FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14971'") is None
+    check("status stays NULL - Outbuild has no such field, and it is not invented")
+
+    assert one(con, "SELECT activity_name FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14971'") == "Foundation complete"
+    # Baselines exist on the wire and are landed, so wiring StartVariance later is a gold
+    # change rather than another extract.
+    assert one(con, "SELECT baseline_duration FROM cd_silver_outbuild_activities "
+                    "WHERE activity_id='14971'") == 50.0
+    check("names are trimmed and baseline dates are landed for later variance work")
+
+
 def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
                test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
-               test_manual_parsers, test_qc_procore_parser):
+               test_manual_parsers, test_qc_procore_parser, test_outbuild_parser):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

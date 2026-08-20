@@ -64,7 +64,7 @@ The build is not the bottleneck. Nothing below is blocked on engineering capacit
 | | |
 |---|---|
 | Sign `CD_Manual_Ingest` in and refresh it | Turns on the SharePoint path for the manual ~40%. The site is ready; the dataflow ships `connections: []` and needs one interactive sign-in |
-| Repoint `sv_outbuild_activities` onto `cd_bronze_outbuild_*` | Outbuild has been landing since Aug 19 but `fct_Milestone` still reads Rebecca's dataflow, so **the coverage gain the token was wanted for is not realised yet**. Careless repointing takes milestones to zero, so it is its own change |
+| ~~Repoint `sv_outbuild_activities`~~ ✅ **Done Aug 20** | `fct_Milestone` reads our own ingestion — 52 → **126 milestones**, 2 → **3 projects**, 0 orphans. The ceiling now is Affect's: only 3 of 15 Outbuild projects carry a `procore_id`, so 280 critical activities stay unattributable until more are connected to Procore |
 | Fix the DQ persist gap | Counts are trustworthy; the reject drill-through shows an older run |
 | Explain the `Total Billed` / `Owner Billed To Date` gap on the report | Different grains, not a defect — but unexplained on the page |
 | Wire the 8 `man_Qc*` intake tables silver → gold | Gated on the definition answers above |
@@ -114,7 +114,7 @@ Agreed with Cathal Egan, Jul 24, 2026. Full detail: `dashboard.md` → **Commerc
 | Microsoft Fabric | Data platform | **Live.** Rebecca's original warehouse, untouched; our `charley-dev` medallion alongside it — 3 lakehouses, 8 notebooks, a nightly pipeline |
 | Procore | Project management & costing | 🟢 **44 endpoints registered, 40 landing bronze tables**, registry-driven, production tenant → bronze; **2 blocked by Procore 403s** (`punch_item_types`, `schedule`). Extraction still runs locally — no longer for want of Key Vault, but until the exposed credentials are rotated |
 | Sage 100 Contractor | Accounting, invoicing, payroll | 🔵 `CD_Sage_Ingest` **deployed and gateway-wired**, 8 tables. Blocked on one connection permission grant |
-| Outbuild | Scheduling & milestones | 🟢 **Live Aug 19** — **3,078 rows across 15 endpoints** in `cd_bronze_outbuild_*`. The **only** milestone source anywhere. `fct_Milestone` does not read it yet: silver still points at Rebecca's dataflow |
+| Outbuild | Scheduling & milestones | 🟢 **Live Aug 19, feeding the report Aug 20** — **3,078 rows across 15 endpoints**, and `fct_Milestone` now reads it: **126 milestones across 3 projects**, up from 52 across 2. The **only** milestone source anywhere |
 | Azure Key Vault | Secret storage for ingestion | 🟢 **Working, Aug 19.** `AffectKeyVault` (RG `Affect_Data`), where our account already held *Key Vault Administrator* at RG scope. The vault every document had been naming, `OneLake`, was the wrong one and holds nothing we depend on |
 | SharePoint | The ~40% of the report that lives in no system, plus estimating/bidding job folders | 🟡 **Sites exist, Aug 19.** `AFFECTBUILD1` carries the provisioned `Job Register` and both template trees; `AffectProjectReporting_main` carries all 18 intake lists (2026-08-19) with their **142 columns and 19 `CD Projects` rows** (2026-08-20). A CSV path works today with no admin ticket |
 | Power BI | Reporting | 🟢 **Two reports live** — `Monthly Progress Report` (12 pages, 180 visuals) over `Affect Project Report`, and `Project Quality Plan` (7 pages, 95 visuals) over its own model. Both Direct Lake over the gold layer |

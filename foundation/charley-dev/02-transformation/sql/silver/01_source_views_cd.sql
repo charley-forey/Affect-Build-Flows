@@ -25,14 +25,15 @@
 -- abfss rather than by bare name because gold's notebook runs with CD_Gold_Lakehouse as its
 -- default catalog - an unqualified cd_silver_projects does not resolve from there.
 --
--- Three views still read the existing warehouse, each for a reason that is not laziness:
+-- TWO views still read the existing warehouse, each for a reason that is not laziness:
 --
 --   sv_ar_invoices          Sage AR. Procore does not hold it and CD_Sage_Ingest is blocked
 --                           on the on-prem gateway.
---   sv_outbuild_activities  Outbuild. The only source of milestone data anywhere - Procore's
---                           OAS has no milestone endpoint - and its ingestion is not built.
 --   sv_vendors              carries sage_vendor_id, which Procore does not put on the vendor
 --                           record; it comes from the existing crosswalk.
+--
+-- sv_outbuild_activities WAS the third and is not any more - repointed 2026-08-20 onto
+-- cd_silver_outbuild_activities, once the token landed and our own ingestion had run.
 --
 -- Pointing a view at the old source is a smaller problem than pointing it at an empty new
 -- one: fct_Invoice keeps its 117 rows through the switch instead of going to zero.
@@ -115,35 +116,45 @@ SELECT project_id, item_id, item_number, subject, status_label, priority, cost_c
        created_date, due_date, responded_date
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_rfis`;
 
--- Outbuild is the ONLY source of milestone data anywhere in the estate - Procore's
--- OAS has no milestone endpoint - and CD_Outbuild ingestion is not built yet. So this
--- view keeps reading the existing Silver lakehouse read-only, verbatim from
--- 00_source_views.sql. Omitting it entirely is what would break fct_Milestone: gold
--- reads sv_outbuild_activities unconditionally, so a missing view is a hard failure,
--- not an empty fact.
+-- Outbuild is the ONLY source of milestone data anywhere in the estate - Procore's OAS has
+-- no milestone endpoint.
+--
+-- REPOINTED 2026-08-20 onto our own ingestion. This read Rebecca's
+-- `Silver_Lakehouse/Outbuild_activities` until then, because our Outbuild ingestion could
+-- not run without a token; the token arrived 2026-08-19 and 25_outbuild_silver.sql now
+-- parses our own bronze. Measured either side of the switch:
+--
+--                              hers        ours
+--     activities             1,196       1,860
+--     critical                 168         406
+--     fct_Milestone rows        52         126
+--     projects reaching gold      2           3
+--
+-- The gain is smaller than the raw row counts suggest, and the reason is worth knowing:
+-- only 3 of 15 Outbuild projects carry a `procore_id`, so 280 of the 406 critical
+-- activities cannot be attributed to a Procore project and gold drops them. That is a
+-- Procore-integration gap on Affect's side, not a defect here - and it is now visible,
+-- because silver keeps the Outbuild project name on every unattributed row.
+--
+-- Gold reads sv_outbuild_activities unconditionally, so a missing view is a hard failure
+-- rather than an empty fact. That is deliberate and unchanged.
 CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_activities AS
-SELECT
-    CAST(`Procore Project ID` AS STRING)  AS project_id,
-    CAST(id                   AS STRING)  AS activity_id,
-    CAST(name                 AS STRING)  AS activity_name,
-    CAST(start_date           AS DATE)    AS start_date,
-    CAST(end_date             AS DATE)    AS end_date,
-    CAST(progress             AS DOUBLE)  AS progress,
-    CAST(duration             AS DOUBLE)  AS duration,
-    CAST(is_critical          AS BOOLEAN) AS is_critical,
-    CAST(activity_type        AS STRING)  AS activity_type,
-    CAST(Status               AS STRING)  AS status
-FROM delta.`{SILVER_ABFSS}/Outbuild_activities`;
+SELECT project_id, activity_id, activity_name, start_date, end_date,
+       progress, duration, is_critical, activity_type, status
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`;
 
 
 -- ---------------------------------------------------------------------------
 -- CROSSWALK SOURCES
 -- ---------------------------------------------------------------------------
 --
--- These three feed dim_ProjectCrosswalk / dim_VendorCrosswalk. All read the EXISTING
--- warehouse, under both --source settings, because neither Sage nor Outbuild ingestion can
--- run yet (gateway binding and OUTBUILD_API_TOKEN, both Affect's to grant). When they do,
--- only these views move - the crosswalk gold files and every measure stay as they are.
+-- These three feed dim_ProjectCrosswalk / dim_VendorCrosswalk, and all read the EXISTING
+-- warehouse under both --source settings. The reason is now only Sage: CD_Sage_Ingest is
+-- still blocked on the gateway grant. Outbuild's half of that sentence expired on
+-- 2026-08-19 when the token arrived, and sv_outbuild_activities has since moved onto our
+-- own bronze - these crosswalk views did not, because the Procore<->Sage mapping they
+-- carry has nothing to do with Outbuild. When Sage lands, only these views move; the
+-- crosswalk gold files and every measure stay as they are.
 
 -- Procore project id <-> Sage project id. Per resources/sage-100-contractor/schema, Sage
 -- `jobnum` on an invoice is a foreign key to actrec.recnum, NOT a readable job code - so

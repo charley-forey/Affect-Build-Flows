@@ -258,10 +258,12 @@ anywhere.
 7. **Sign `CD_Manual_Ingest` in and refresh it.** Ours, not Affect's. The dataflow is
    published against a fully provisioned reporting site and ships `connections: []`, so the
    SharePoint path stays dark until someone completes the interactive sign-in.
-8. **Repoint `sv_outbuild_activities`** off Rebecca's `Silver_Lakehouse` onto
-   `cd_bronze_outbuild_*`. Outbuild has been landing since 2026-08-19 and `fct_Milestone`
-   still does not read it, so the coverage gain the token was wanted for is not realised
-   yet. Doing it carelessly can take milestones to zero, which is why it is its own change.
+8. ~~**Repoint `sv_outbuild_activities`**~~ **Done 2026-08-20.** `fct_Milestone` reads our
+   own bronze: **52 -> 126 rows, 2 -> 3 projects**, 0 orphans, model reframed and all 17
+   live DAX checks passing. It did not take milestones to zero, but only because two traps
+   were measured first - see [`build-status.md`](build-status.md). The remaining ceiling is
+   Affect's, not ours: only 3 of 15 Outbuild projects carry a `procore_id`, so 280 critical
+   activities stay unattributable until more projects are connected to Procore.
 
 ---
 

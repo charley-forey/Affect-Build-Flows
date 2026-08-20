@@ -195,10 +195,29 @@ for t in {BRONZE_TABLES!r}:
             # one of them.
             f"tables = {SILVER_TABLES!r}\n"
             """
+# WRITE THE DIAG BEFORE COUNTING ANYTHING.
+#
+# It used to be written after the count loop, and that loop raises uncaught when a table
+# does not exist - which is exactly what happens when a CREATE above it failed. So the one
+# artefact that says WHICH statement failed was skipped precisely when it was needed, and
+# the only thing left was the jobs API's generic "System cancelled the Spark session due to
+# statement execution failures". Two runs were spent rediscovering that.
+#
+# The per-statement results are complete by this point; the counts are a bonus. Write what
+# is known first, then enrich.
+with open(f"{DIAG}/silver_run.json", "w", encoding="utf-8") as fh:
+    json.dump(results, fh, indent=1)
+
 counts = {}
 for t in tables:
-    counts[t] = spark.sql(f"SELECT COUNT(*) AS n FROM {t}").collect()[0]["n"]
-    print(f"  {t:<34} {counts[t]:>7} rows")
+    # A missing table is a FAILED CREATE upstream, already recorded in results. Catch it so
+    # the loop reaches the tables after it, rather than hiding them behind the first gap.
+    try:
+        counts[t] = spark.sql(f"SELECT COUNT(*) AS n FROM {t}").collect()[0]["n"]
+        print(f"  {t:<34} {counts[t]:>7} rows")
+    except Exception as exc:
+        counts[t] = None
+        print(f"  {t:<34}   MISSING  ({type(exc).__name__})")
 
 rejects = spark.sql("SELECT COUNT(*) AS n FROM cd_dq_rejects").collect()[0]["n"]
 print(f"\\n  cd_dq_rejects {rejects} row(s) - rows that failed their key check")
@@ -215,11 +234,12 @@ if failed:
 
 # Zero rows is EXPECTED until cd_01_extract_procore can authenticate, so this is not an
 # error - but it must be visible, not mistaken for a working pipeline.
-if sum(counts.values()) == 0:
+if sum(v for v in counts.values() if v is not None) == 0:
     print("\\nAll silver tables are empty - bronze has not been extracted yet.")
     print("See _docs/procore-ingestion.md: the ingestion needs Procore credentials.")
 else:
-    print(f"\\nsilver built: {sum(counts.values())} rows across {len(tables)} tables")
+    built = [v for v in counts.values() if v is not None]
+    print(f"\\nsilver built: {sum(built)} rows across {len(built)} of {len(tables)} tables")
 """
         )
     )
