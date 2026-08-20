@@ -231,7 +231,8 @@
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Stage/Value": "Failed",
                   "item/ErrorDetail": "@{concat('Project name rejected before any folder was created. Sanitised to \"', outputs('Folder_Safe_Name'), '\" (', string(length(outputs('Folder_Safe_Name'))), ' chars, budget ', string(parameters('MaxFolderNameLength')), '). Either it is empty after stripping forbidden characters, it starts or ends with a dot, or the full path would breach SharePoint''s 400-character URL limit once the template tree is copied under it.')}",
-                  "item/CopyJobStatus": "Not attempted"
+                  "item/CopyJobStatus": "Not attempted",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -395,12 +396,12 @@
                   "item/JobYear": "@int(formatDateTime(utcNow(), 'yy'))",
                   "item/JobSeq": "@outputs('Next_JobSeq')",
                   "item/JobNumber": "@{outputs('Job_Number')}",
-                  "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
-                  "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+                  "item/EstimatingFolderUrl": "@{outputs('Job_Folder_Absolute')}",
                   "item/RequestedBy": "@{coalesce(triggerOutputs()?['body/Author']?['Email'], '')}",
                   "item/RequestedAt": "@{triggerOutputs()?['body/Created']}",
                   "item/CompletedAt": "@{utcNow()}",
-                  "item/CopyJobStatus": "Skipped - folder already existed, nothing copied"
+                  "item/CopyJobStatus": "Skipped - folder already existed, nothing copied",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -516,9 +517,9 @@
                   "id": "@triggerOutputs()?['body/ID']",
                   "item/Stage/Value": "Failed",
                   "item/ErrorDetail": "@{concat('Template ', parameters('EstimatingLibrary'), '/', parameters('EstimatingTemplate'), ' is empty. The job folder was created but nothing was copied into it.')}",
-                  "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
-                  "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
-                  "item/CopyJobStatus": "Not attempted - empty template"
+                  "item/EstimatingFolderUrl": "@{outputs('Job_Folder_Absolute')}",
+                  "item/CopyJobStatus": "Not attempted - empty template",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -695,10 +696,10 @@
                   "item/JobYear": "@int(formatDateTime(utcNow(), 'yy'))",
                   "item/JobSeq": "@outputs('Next_JobSeq')",
                   "item/JobNumber": "@{outputs('Job_Number')}",
-                  "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
-                  "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+                  "item/EstimatingFolderUrl": "@{outputs('Job_Folder_Absolute')}",
                   "item/CopyJobStatus": "JobError",
-                  "item/ErrorDetail": "@{substring(string(outputs('Copy_Job_Logs')), 0, min(8000, length(string(outputs('Copy_Job_Logs')))))}"
+                  "item/ErrorDetail": "@{substring(string(outputs('Copy_Job_Logs')), 0, min(8000, length(string(outputs('Copy_Job_Logs')))))}",
+                  "item/Title": "@triggerOutputs()?['body/Title']"
                 },
                 "authentication": "@parameters('$authentication')"
               }
@@ -745,13 +746,13 @@
               "item/JobYear": "@int(formatDateTime(utcNow(), 'yy'))",
               "item/JobSeq": "@outputs('Next_JobSeq')",
               "item/JobNumber": "@{outputs('Job_Number')}",
-              "item/EstimatingFolderUrl/Url": "@{outputs('Job_Folder_Absolute')}",
-              "item/EstimatingFolderUrl/Description": "@{outputs('Job_Folder_Name')}",
+              "item/EstimatingFolderUrl": "@{outputs('Job_Folder_Absolute')}",
               "item/RequestedBy": "@{coalesce(triggerOutputs()?['body/Author']?['Email'], '')}",
               "item/RequestedAt": "@{triggerOutputs()?['body/Created']}",
               "item/CompletedAt": "@{utcNow()}",
               "item/CopyJobStatus": "@{concat('Completed - ', string(length(outputs('Build_Export_Uris'))), ' top-level items copied')}",
-              "item/ErrorDetail": ""
+              "item/ErrorDetail": "",
+              "item/Title": "@triggerOutputs()?['body/Title']"
             },
             "authentication": "@parameters('$authentication')"
           }
@@ -784,7 +785,8 @@
               "id": "@triggerOutputs()?['body/ID']",
               "item/Stage/Value": "Failed",
               "item/CopyJobStatus": "Failed",
-              "item/ErrorDetail": "@{substring(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))), 0, min(8000, length(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))))))}"
+              "item/ErrorDetail": "@{substring(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))), 0, min(8000, length(string(filter(result('Main'), not(equals(item()?['status'], 'Succeeded')))))))}",
+              "item/Title": "@triggerOutputs()?['body/Title']"
             },
             "authentication": "@parameters('$authentication')"
           }

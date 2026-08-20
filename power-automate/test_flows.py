@@ -330,6 +330,46 @@ def test_ps1_is_dry_run_by_default() -> None:
     check("provisioning script is dry-run by default with an -Apply switch")
 
 
+def test_patchitem_shape_the_connector_accepts() -> None:
+    """The two things Power Automate refused to save, both found by experiment.
+
+    Neither was guessable. The flows were rejected twice with errors that named a parameter
+    and nothing else, and the answer came from posting candidate definitions at the API and
+    reading which one saved - flow creation is cheap and its validation is the authority.
+
+    1. HYPERLINK COLUMNS ARE ADDRESSED FLAT. `item/EstimatingFolderUrl/Url` and
+       `.../Description` produce WorkflowOperationParametersExtraParameter: the connector has
+       no such parameters. `item/EstimatingFolderUrl` is accepted. The flows already READ
+       these columns flat (`body/ProjectFolderUrl`), so the writes were the odd ones out.
+
+    2. TITLE IS REQUIRED ON EVERY PatchItem. Title is a required column on Job Register, so
+       the connector requires it on every update - `missing required property 'item/Title'` -
+       even though the flows never change it. Re-sending what the trigger already carries
+       satisfies that without weakening the list, which should keep requiring a project name.
+    """
+    for name, path in FLOWS.items():
+        text = path.read_text(encoding="utf-8")
+        assert "FolderUrl/Url" not in text, (
+            f"{name}: writes item/<column>/Url, which the connector rejects outright - "
+            "hyperlink columns are addressed flat"
+        )
+        assert "FolderUrl/Description" not in text, f"{name}: writes a /Description half"
+
+        for action in walk(load(name), []):
+            inputs = action.get("inputs")
+            # Compose and Until carry a bare expression rather than an inputs object.
+            if not isinstance(inputs, dict):
+                continue
+            if inputs.get("host", {}).get("operationId") != "PatchItem":
+                continue
+            params = inputs.get("parameters", {})
+            assert "item/Title" in params, (
+                f"{name}: a PatchItem without item/Title. Title is required on the list, so "
+                "the connector refuses to save the flow without it."
+            )
+    check("PatchItem writes hyperlinks flat and always carries the required Title")
+
+
 def test_import_packages_build() -> None:
     """The definitions still wrap into a legacy import package.
 
@@ -435,6 +475,7 @@ def main() -> int:
     test_convert_flow_cannot_loop()
     test_ps1_is_dry_run_by_default()
     test_powershell_parses()
+    test_patchitem_shape_the_connector_accepts()
     test_import_packages_build()
     test_deploy_script_substitutes_the_site()
     for c in CHECKS:
