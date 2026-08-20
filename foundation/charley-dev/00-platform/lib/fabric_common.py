@@ -34,28 +34,51 @@ AUDIT_COLUMNS = ("_ingested_at", "_source_endpoint", "_batch_id", "_row_hash")
 # --------------------------------------------------------------------------
 
 
-def get_secret(name: str, vault_env: str = "PROCORE_KEYVAULT_URL") -> str:
+# The vault the platform actually uses: resource group Affect_Data, subscription
+# 73932b34-3bb6-4a94-bd4b-4b7623d4f7d6. Not a secret - it is a URL - and defaulting it
+# here removes the failure this code shipped with: PROCORE_KEYVAULT_URL was read in five
+# places and set in none, so the Key Vault branch never executed at all.
+KEYVAULT_URL = "https://affectkeyvault.vault.azure.net/"
+
+# Key Vault secret names cannot contain underscores, so the environment-variable name is
+# not the secret name. Most translate mechanically. OutbuildToken was created by hand in
+# the portal and does not follow the rule, so it is mapped explicitly rather than renamed
+# out from under whoever else is reading it.
+SECRET_NAMES = {"OUTBUILD_API_TOKEN": "OutbuildToken"}
+
+
+def kv_secret_name(name: str) -> str:
+    """Environment-variable name -> Key Vault secret name."""
+    return SECRET_NAMES.get(name, name.replace("_", "-").lower())
+
+
+def get_secret(name: str, vault_env: str = "AFFECT_KEYVAULT_URL") -> str:
     """Key Vault inside Fabric, environment variable locally.
 
-    Same contract as foundation/01-ingestion/Procore_APICalls/procore_auth.ipynb, so
-    there is one way to obtain a credential across the whole workspace and no second
+    One way to obtain a credential across the whole workspace, so there is no second
     place for one to hide. The Jul 23 warehouse review flagged hard-coded credentials in
     a notebook cell as the first thing to fix.
+
+    Inside Fabric this fails closed: if the vault lookup does not produce the secret it
+    raises, rather than falling through to os.environ. The previous version fell through,
+    so a half-configured vault quietly read the value from somewhere else and looked
+    healthy right up until the unattended 02:00 run.
     """
     try:
         import notebookutils  # type: ignore[import-not-found]
-
-        vault = os.environ.get(vault_env)
-        if vault:
-            return notebookutils.credentials.getSecret(vault, name)
     except ImportError:
-        pass  # not running inside Fabric
+        notebookutils = None  # not running inside Fabric
+
+    if notebookutils is not None:
+        vault = os.environ.get(vault_env) or KEYVAULT_URL
+        return notebookutils.credentials.getSecret(vault, kv_secret_name(name))
 
     value = os.environ.get(name)
     if not value:
         raise RuntimeError(
-            f"Secret {name!r} not found. Set {vault_env} to the Key Vault URL inside "
-            f"Fabric, or export {name} locally. See charley-dev/README.md."
+            f"Secret {name!r} not found. Export {name} locally, or run inside Fabric "
+            f"where it is read from {KEYVAULT_URL} as {kv_secret_name(name)!r}. "
+            f"See charley-dev/_docs/keyvault-runbook.md."
         )
     return value
 
@@ -191,6 +214,25 @@ def log_run(
 
 
 def _selftest() -> None:
+    # Key Vault forbids underscores, so the env-var name is never the secret name. Getting
+    # this wrong is silent: the vault returns "not found" for a name that looks correct.
+    assert kv_secret_name("PROCORE_CLIENT_ID") == "procore-client-id"
+    assert kv_secret_name("PROCORE_CLIENT_SECRET") == "procore-client-secret"
+    assert "_" not in kv_secret_name("PROCORE_COMPANY_ID")
+    # Hand-created secrets are mapped, not renamed.
+    assert kv_secret_name("OUTBUILD_API_TOKEN") == "OutbuildToken"
+
+    # Locally (no notebookutils) a missing secret raises rather than returning None, and
+    # the message names the vault so the reader knows which one to look in.
+    import os as _os
+    _os.environ.pop("NO_SUCH_SECRET_XYZ", None)
+    try:
+        get_secret("NO_SUCH_SECRET_XYZ")
+    except RuntimeError as exc:
+        assert "no-such-secret-xyz" in str(exc), str(exc)
+    else:
+        raise AssertionError("get_secret must raise when the secret is absent")
+
     # row_hash is order-independent, so a source reordering keys is not a false change.
     assert row_hash({"a": 1, "b": 2}) == row_hash({"b": 2, "a": 1})
     assert row_hash({"a": 1}) != row_hash({"a": 2})

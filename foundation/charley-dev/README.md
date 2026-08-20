@@ -104,24 +104,32 @@ The `.sql` runs through DuckDB via compatibility macros, so the suites exercise 
 ## Secrets
 
 Nothing goes in a notebook cell. `00-platform/lib/fabric_common.py::get_secret()` reads Key
-Vault inside Fabric and environment variables locally — the same contract as
-`foundation/01-ingestion/Procore_APICalls/procore_auth.ipynb`.
+Vault inside Fabric and environment variables locally.
 
-| Secret | Vault URL variable |
-|---|---|
-| `PROCORE_CLIENT_ID`, `PROCORE_CLIENT_SECRET`, `PROCORE_COMPANY_ID` | `PROCORE_KEYVAULT_URL` |
-| `OUTBUILD_API_TOKEN` | `OUTBUILD_KEYVAULT_URL` |
+The vault is **`AffectKeyVault`** — `https://affectkeyvault.vault.azure.net/`, resource group
+`Affect_Data`, subscription `73932b34-3bb6-4a94-bd4b-4b7623d4f7d6`, tenant "Affect Build LLC"
+`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`. `cforey-c@affect-group.com` holds **Key Vault
+Administrator** on the resource group, so reading and writing secrets needs no further grant.
 
-Both now exist as of 2026-08-19: the subscription "Azure subscription 1"
-(`0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6`, tenant "Affect Build LLC"
-`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`) and the vault `OneLake`
-(`https://onelake.vault.azure.net/`, resource group `Affect_KeyVault`, East US, **RBAC-mode**,
-purge protection disabled). The vault holds nothing yet: `cforey-c@affect-group.com` has only
-**Contributor on the resource group**, which on an RBAC vault can neither read/write secrets
-nor self-grant. One role assignment — **"Key Vault Secrets Officer" on vault `OneLake`** —
-closes it. Until then extraction runs locally against environment variables and lands files.
-See [`_docs/keyvault-runbook.md`](_docs/keyvault-runbook.md) and
-[`_docs/build-status.md`](_docs/build-status.md).
+Key Vault names cannot contain underscores, so the environment-variable name is never the
+secret name. `fabric_common.kv_secret_name` owns the translation and `setup_keyvault.py`
+imports it, so the write side and the read side cannot disagree:
+
+| Environment variable | Key Vault secret | State |
+|---|---|---|
+| `PROCORE_CLIENT_ID` | `procore-client-id` | pending rotation |
+| `PROCORE_CLIENT_SECRET` | `procore-client-secret` | pending rotation |
+| `PROCORE_COMPANY_ID` | `procore-company-id` | pending rotation |
+| `OUTBUILD_API_TOKEN` | `OutbuildToken` | **live** |
+
+The vault URL is a default in code, not an environment variable to set. `AFFECT_KEYVAULT_URL`
+overrides it. Inside Fabric `get_secret` **fails closed** — it will not silently fall back to
+`os.environ` when the vault lookup does not produce the secret.
+
+Until 2026-08-19 every document here named a different vault (`OneLake`, in subscription
+`0bee26ab-…`) that this account cannot read at all. That vault holds nothing we depend on.
+See [`_docs/keyvault-runbook.md`](_docs/keyvault-runbook.md) for the correction, the Procore
+rotation runbook, and what Outbuild took to get live.
 
 ## Extending it
 

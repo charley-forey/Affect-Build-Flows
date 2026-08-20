@@ -1,149 +1,192 @@
-# Key Vault — state, blocker and runbook
+# Key Vault — state and runbook
 
-**Verified against Azure on 2026-08-19** by `az` as `cforey-c@affect-group.com`.
+**Verified against Azure and the live Outbuild API on 2026-08-19** as `cforey-c@affect-group.com`.
 
-Blocker #3 from the Aug 13 executive update is **partly resolved**: the Azure subscription and
-the vault both now exist. One permission grant remains before a single secret can be written.
+Blocker #3 from the Aug 13 executive update is **resolved**. It was never one blocker: it was
+a vault we could not read plus a vault nobody had told us about. Secrets now load and are read
+back end to end — proven, not assumed, by a live Outbuild pull of 3,078 rows.
 
-## What exists
+## The correction that mattered
+
+Every document in this repo pointed at the wrong vault.
+
+| | Documented until 2026-08-19 | Actually used |
+|---|---|---|
+| Vault | `OneLake` | **`AffectKeyVault`** |
+| Subscription | `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` | **`73932b34-3bb6-4a94-bd4b-4b7623d4f7d6`** |
+| Resource group | `Affect_KeyVault` | **`Affect_Data`** |
+| Our access | none — 403, `Assignment: (not found)` | **Key Vault Administrator** |
+
+The old runbook asked Rebecca for a Key Vault Secrets Officer grant on `OneLake`. That ask is
+withdrawn — it would have solved a problem we do not have. Rebecca had already added the
+Outbuild token to `AffectKeyVault`, in a different subscription, and the access we needed came
+with it. **Nothing further is required from anyone to read or write secrets.**
+
+`OneLake` still exists and is still unreadable by this account. It holds nothing we depend on.
+Leave it alone, or have someone with Owner delete it — a vault named after Fabric's storage
+layer, in RBAC mode with no data-plane assignments and purge protection off, is a trap for the
+next person, not an asset.
+
+## What exists now
 
 | | |
 |---|---|
-| Subscription | `Azure subscription 1` — `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` |
-| Tenant | Affect Build LLC — `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` (`affect-group.com`) |
-| Vault name | **`OneLake`** |
-| Resource group | `Affect_KeyVault` |
-| Region | East US |
-| Vault URI | `https://onelake.vault.azure.net/` |
-| Authorisation model | **RBAC** (`enableRbacAuthorization: true`) |
-| Soft delete | Enabled, 90-day retention |
-| Purge protection | **Disabled** |
-| Access policies | 0 (correct — RBAC mode ignores them) |
+| Vault name | **`AffectKeyVault`** |
+| Vault URI | `https://affectkeyvault.vault.azure.net/` |
+| Resource group | `Affect_Data` — East US |
+| Subscription | `73932b34-3bb6-4a94-bd4b-4b7623d4f7d6` |
+| Tenant | Affect Build LLC — `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` |
+| Authorisation model | RBAC |
+| Our role | **Key Vault Administrator**, inherited at resource-group scope |
 
-## The blocker
+Secrets held:
 
-`cforey-c@affect-group.com` holds **Contributor on the resource group** and nothing else:
+| Secret | Added | State |
+|---|---|---|
+| `OutbuildToken` | Rebecca, 2026-08-19 18:27 UTC | **Live** — reads back, and authenticates against the Datahub API |
+| `procore-client-id` | — | Pending rotation |
+| `procore-client-secret` | — | Pending rotation |
+| `procore-company-id` | — | Pending rotation |
 
-```
-Role         Scope
------------  ----------------------------------------------------------------
-Contributor  /subscriptions/0bee26ab-…/resourcegroups/Affect_KeyVault
-```
+### One thing worth knowing about `az`
 
-In an RBAC-mode vault, Contributor is a **management-plane** role. It can see that the vault
-exists, change its settings, even delete it — but it cannot read or write a single secret, and
-it cannot grant itself the role that would. Listing secrets returns:
+`az keyvault show` cannot see this vault: it is a management-plane call scoped to the
+subscriptions in the local `az` profile, and this machine has only ever logged into
+`0bee26ab`. Data-plane calls resolve the vault by DNS and authorise from the inherited role,
+so they work fine. **Do not pass `--subscription` to a data-plane command** — `az` rejects the
+unknown subscription before it makes the call.
 
-```
-(Forbidden) Caller is not authorized to perform action on resource.
-Action: 'Microsoft.KeyVault/vaults/secrets/readMetadata/action'
-Assignment: (not found)
-```
+`setup_keyvault.py` now probes the data plane before concluding a vault is absent. Without
+that check, `--apply` would have tried to create a *second* `AffectKeyVault` in the wrong
+subscription.
 
-`Assignment: (not found)` is the whole story — there is no data-plane role assignment.
+## Secret naming — the defect that would have hidden here
 
-### The ask — one role assignment, ~2 minutes
+Key Vault secret names cannot contain underscores, so **the environment-variable name is never
+the secret name**. `setup_keyvault.py` always knew this and wrote `procore-client-id`. The read
+side did not: it passed `PROCORE_CLIENT_ID` straight to Key Vault, which is not a legal secret
+name. Loading the secrets would not have been enough — the lookup would still have failed, and
+the error ("secret not found") would have pointed at the loading step, not at the bug.
 
-Someone with **Owner** or **User Access Administrator** on the vault or resource group grants:
+One function now owns the translation, `fabric_common.kv_secret_name`, and `setup_keyvault.py`
+imports it rather than restating it so the two cannot drift:
 
-> **Key Vault Secrets Officer** → `cforey-c@affect-group.com` → scope: vault `OneLake`
+| Environment variable | Key Vault secret |
+|---|---|
+| `PROCORE_CLIENT_ID` | `procore-client-id` |
+| `PROCORE_CLIENT_SECRET` | `procore-client-secret` |
+| `PROCORE_COMPANY_ID` | `procore-company-id` |
+| `OUTBUILD_API_TOKEN` | `OutbuildToken` |
 
-Portal: *Key Vault `OneLake` → Access control (IAM) → Add role assignment → Key Vault Secrets
-Officer → cforey-c@affect-group.com*. Or:
+`OutbuildToken` breaks the rule because Rebecca created it by hand in the portal. It is
+**mapped**, in `fabric_common.SECRET_NAMES`, not renamed — something else may already read it
+under that name, and renaming a secret to satisfy a convention is not worth breaking a caller
+we cannot see.
 
-```bash
-az role assignment create \
-  --role "Key Vault Secrets Officer" \
-  --assignee cforey-c@affect-group.com \
-  --scope "/subscriptions/0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6/resourceGroups/Affect_KeyVault/providers/Microsoft.KeyVault/vaults/OneLake"
-```
+## The read path
 
-*Secrets Officer* (read + write) is what's needed to load the secrets. If Affect would rather
-load them itself, **Key Vault Secrets User** (read only) is sufficient for everything after
-that, and is the better long-term grant.
+`get_secret(name)` — Key Vault inside Fabric, environment variable locally.
 
-### A deliberate non-action
+Two changes on 2026-08-19, both of which had to be right before any secret was worth loading:
 
-Contributor *can* switch the vault from RBAC to legacy access-policy mode and then add itself
-a policy. That is a documented privilege-escalation path and it would have worked. It was not
-done: it silently downgrades the client's security posture on a vault they just created, and
-that is their decision, not ours. The role assignment above is the correct fix.
+- **It translates the name.** See above.
+- **It fails closed inside Fabric.** The old version fell through to `os.environ` whenever the
+  vault lookup did not fire, so a misconfigured vault read the credential from somewhere else
+  and reported success. It now raises. A wrong answer that looks healthy until the unattended
+  02:00 run is worse than a loud failure at 14:00.
 
-## Two things worth changing while the vault is still empty
+The vault URL is a **default in code**, not an environment variable to remember. It was
+previously read from `PROCORE_KEYVAULT_URL` in five places and set in none, so the Key Vault
+branch had never executed — not once, in any environment. `AFFECT_KEYVAULT_URL` still overrides
+it if a future environment needs a different vault.
 
-1. **The vault is named `OneLake`.** OneLake is also the name of Fabric's storage layer, which
-   this platform uses constantly. Every future reader will have to disambiguate
-   "onelake.vault.azure.net" from OneLake-the-Fabric-thing. Renaming is free today and
-   impossible later (vault names are immutable — it means create-new, migrate, delete-old).
-   Suggested: `kv-affect-platform`.
-2. **Purge protection is disabled.** With it off, a deleted vault or secret can be purged
-   before the soft-delete window expires, which defeats the recovery guarantee. Standard
-   practice for a vault holding production credentials is on. It is **irreversible once
-   enabled** — which is exactly why it should be a deliberate decision now rather than a
-   default nobody revisited.
+## Runbook — rotating the Procore credentials
 
-## Runbook — once the role lands
+Order matters. **Rotate in Procore first, then clear the notebook.** Editing the notebook first
+leaves the live credential in Fabric's item-definition history with nothing revoked, which
+reads as fixed and is not.
 
-Everything below is already written and tested; none of it is new work.
+1. **Regenerate in Procore.** Developer Portal → the Data Connector app → regenerate the client
+   secret. This invalidates the old one immediately, so expect Rebecca's `procore_auth`
+   notebook to start failing from this moment — that is the point, and it is worth telling her
+   before rather than after.
 
-### 1. Load the secrets
+2. **Put the new values in `.env`** at `C:\Users\charl\Documents\Affect\.env`:
+   ```
+   PROCORE_CLIENT_ID=...
+   PROCORE_CLIENT_SECRET=...
+   PROCORE_COMPANY_ID=562949953444705
+   ```
+   `.env` is gitignored. `PROCORE_COMPANY_ID` is an org identifier, not a credential — it
+   travels in request headers by design — but it lives with the others so one call site
+   produces all three.
 
-```bash
-cd foundation/charley-dev
-python _local/setup_keyvault.py --vault OneLake --resource-group Affect_KeyVault           # dry run
-python _local/setup_keyvault.py --vault OneLake --resource-group Affect_KeyVault --apply
-python _local/setup_keyvault.py --vault OneLake --resource-group Affect_KeyVault --verify  # names only
-```
+3. **Push to the vault and confirm:**
+   ```bash
+   python foundation/charley-dev/_local/setup_keyvault.py --apply
+   python foundation/charley-dev/_local/setup_keyvault.py --verify
+   ```
+   `--verify` lists names only, never values. Expect four secrets afterwards.
 
-Reads `.env`, pushes `PROCORE_CLIENT_ID`, `PROCORE_CLIENT_SECRET`, `PROCORE_COMPANY_ID`.
-Values never touch argv or a log — they go to `az` via a temp file deleted in a `finally`.
-`FABRIC_PASSWORD` is deliberately excluded: a named user's password is not a service
-credential and does not belong in a shared vault. If Fabric needs non-interactive auth, that
-wants a service principal.
+4. **Prove the credential works before wiring anything to it:**
+   ```bash
+   python foundation/charley-dev/_local/extract_procore_local.py --probe
+   ```
+   Check the host in the output is `https://api.procore.com`. The extractor's default is the
+   **sandbox**, and a sandbox run lands convincingly empty tables rather than failing.
 
-Add `OUTBUILD_API_TOKEN` the same way once Rebecca sends it.
+5. **Run the Fabric notebook**, which is where the vault path is actually exercised:
+   ```
+   cd_01_extract_procore
+   ```
+   Its last four runs all failed on `Secret 'PROCORE_CLIENT_ID' not found` (2026-08-02). A
+   green run here is the real proof — steps 3 and 4 do not touch `notebookutils`.
 
-### 2. Wire Fabric to the vault — the two steps that get missed
+6. **Only then, clear the literals from Rebecca's `procore_auth` notebook** — finding F1 in
+   `security-findings.md`. Workspace `1f7caed6-…`, folder `594bfe88-…`, lines 21 and 23. The
+   old secret is dead by now, so this is tidying rather than remediation, but leaving a
+   credential-shaped string in a live notebook trains everyone who reads it that this is normal.
 
-**a. Set the environment variable.** *Fabric workspace → Settings → Spark → Environment →
-Variables*:
+7. **Add `cd_01_extract_procore` back to `CD_Master_Pipeline`.** It was deliberately held out
+   of the DAG so its guaranteed failure would not redden the nightly run. Once step 5 is green
+   it belongs ahead of `Bronze To Silver`, and `deploy_pipeline.py` is where that is declared —
+   not the portal.
 
-```
-PROCORE_KEYVAULT_URL = https://onelake.vault.azure.net/
-```
+## Outbuild — done, and what it took
 
-**b. Grant the workspace identity read access:**
+The token loads from the vault and pulls live data: 3,078 rows across 15 endpoints.
 
-```bash
-az role assignment create --role "Key Vault Secrets User" \
-  --assignee <fabric-workspace-managed-identity-object-id> \
-  --scope "/subscriptions/0bee26ab-…/resourceGroups/Affect_KeyVault/providers/Microsoft.KeyVault/vaults/OneLake"
-```
+The client had never been run against the real API, and had three bugs that only a live call
+could reveal. Recorded here because each one failed in a way that pointed somewhere else:
 
-> **Why this is the dangerous step.** `lib/fabric_common.get_secret()` tries Key Vault *only*
-> if `PROCORE_KEYVAULT_URL` is set, and otherwise **falls through to an environment
-> variable**. Locally the env var is present, so a half-configured vault looks like it works
-> — and fails only in the unattended 02:00 pipeline run, where nobody is watching. Verify by
-> running `cd_01_extract_procore` in Fabric *after* the wiring, not before.
+- **No `User-Agent`.** Cloudflare answered `403 Error 1010: access denied based on your
+  browser's signature` before the request reached Outbuild. This is indistinguishable from a
+  rejected token, and the token was the thing we had just been given. urllib's default UA is
+  the trigger; the client now sends a descriptive one.
+- **Wrong envelope key.** The real shape is `{"<entity>": [...], "page": N, "hasNextPage": …}`
+  — keyed by entity name, not `data`. The old code looked for `data`/`items`/`results`, missed,
+  and returned `[envelope]`: one row per page holding the entire payload, with nothing raising.
+- **Wrong paging rule.** It stopped on a page shorter than 500, but `/projects` returns 15 per
+  page — so it would have stopped after page one on most endpoints. It now uses the API's own
+  `hasNextPage`.
 
-### 3. Then, and only then, move extraction into Fabric
+`schedule_impact_requests` is declared but skipped: the real path is
+`/scheduleimpactrequests/schedule/{scheduleId}`, which needs per-schedule expansion, and
+nothing downstream reads it yet.
 
-`cd_01_extract_procore` is currently out of the nightly DAG — it failed 4/4 runs without a
-vault, so extraction runs locally and lands files that `cd_05_land_to_bronze` merges. Once
-step 2 verifies, add it back as the head of `STAGES` in `_local/deploy_pipeline.py` and
-redeploy. That closes the last "runs on Charley's laptop" gap.
+**Still not wired:** `sv_outbuild_activities` reads Rebecca's `Silver_Lakehouse/Outbuild_activities`
+dataflow, not our `cd_bronze_outbuild_*`. `fct_Milestone`'s 52 rows come from her path.
+Repointing it is a real change with real regression risk — milestones could go to zero — and is
+its own piece of work, not a footnote to this one.
 
-## Related: security finding F1 is now actionable, and the order matters
+## Gaps this does not close
 
-`_docs/security-findings.md` F1 (high): the Procore client id and secret are **string literals
-in the live `procore_auth` notebook in the workspace**. The repo copy was scrubbed; the
-workspace copy was not — so it reads as fixed from git and is not fixed in the service. It is
-readable by anyone with Viewer and is captured in item-definition history.
-
-**Rotate the Procore secret first, then edit the notebook.** Editing first leaves the live
-credential in version history with nothing revoked. Rotating first makes the exposed value
-worthless the moment it is replaced. The vault's arrival is what makes the second half
-possible — but the rotation does not depend on it and can happen today.
-
-This is Rebecca's notebook and her running pipeline; rotating on her behalf would break it
-without warning. It needs to be coordinated, not done unilaterally.
+- **No rotation schedule, no expiry tracking, no owner list.** The Procore ordering rule above
+  is the only rotation process that exists anywhere.
+- **`OutbuildToken` is a `superadmin` token valid until 2036-06-09.** A ten-year credential with
+  the widest available role is worth questioning with Outbuild — a read-only, shorter-lived
+  token would do everything the Datahub API is used for here.
+- **The 1Password share links in the Sage handoff document expired 2026-05-28.** The gateway
+  recovery key, the `FabricReader` SQL login and the `fabricconnector@` service account
+  credentials are all behind them. Nothing needs them today; the day something does will be a
+  day when the gateway is already down. Ask Nerds That Care to re-share into somewhere durable.

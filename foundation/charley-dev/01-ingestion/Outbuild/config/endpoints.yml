@@ -76,8 +76,15 @@ endpoints:
     bronze_table: cd_bronze_outbuild_rfv_types
     key: id
 
+  # Per-schedule, not organisation-wide: the real path is
+  # /scheduleimpactrequests/schedule/{scheduleId} (Schedule-Impact-Requests.md:11), so the
+  # flat path here returned 404 on every run. Serving it means iterating every schedule of
+  # every project, and nothing downstream reads it yet - no silver view, no gold table - so
+  # it stays declared and skipped rather than half-built. Drop `scope` to enable it once a
+  # consumer exists and the runner learns to expand {scheduleId}.
   - name: schedule_impact_requests
-    path: /scheduleimpactrequests
+    path: /scheduleimpactrequests/schedule/{scheduleId}
+    scope: schedule
     bronze_table: cd_bronze_outbuild_schedule_impact_requests
     key: id
 
