@@ -64,7 +64,7 @@ both.
 | Sage | `CD_Sage_Ingest` **deployed** and inert — one gateway connection grant away from running |
 | PQP (Project Quality Plan) | **Deployed end to end 2026-08-19** — the client's 44-sheet QA/QC tracker as seeds, silver, gold, a DQ gate, its own model and its own report. [`pqp-solution.md`](pqp-solution.md) |
 
-**Verification:** 14 offline suites, 14 live DAX checks, **104 DQ expectations** (81 blocking,
+**Verification:** 14 offline suites, 14 live DAX checks, **107 DQ expectations** (83 blocking,
 23 warning) — all passing, zero blocking violations. The pipeline has run end to end, all five
 stages green; last run 2026-08-02 22:06.
 
@@ -161,7 +161,9 @@ seed CSVs, asserting its own row counts so a silently short extract fails loudly
 ## The three things this does that the spreadsheet cannot
 
 **1. It shows you where the data is missing.** `dim_ProjectCrosswalk` maps every project
-across Procore, Sage and Outbuild. Live result: **1 of 19 projects is in all three.** Four
+across Procore, Sage and Outbuild. Live result when last measured on 2026-08-02: **1 of 19
+projects is in all three** — not re-measured since Outbuild began landing on 2026-08-19, and
+it should move, because Outbuild is one of the three. Four
 are missing from Sage — and a project missing from Sage contributes **zero revenue to every
 financial measure without erroring**. It doesn't blank, it doesn't warn; it just looks like a
 project that never billed. Nothing could surface that before, and nobody would have gone
@@ -171,8 +173,8 @@ looking.
 that looks wrong can only be checked by asking whoever typed it. Right-click any project →
 Drill through opens that project's budget lines, change orders, RFIs and milestones.
 
-**3. It refuses to publish bad numbers.** 104 expectations run between gold and the report —
-81 blocking, 23 warning. Blocking failures stop the pipeline.
+**3. It refuses to publish bad numbers.** 107 expectations run between gold and the report —
+83 blocking, 24 warning. Blocking failures stop the pipeline.
 
 ---
 
@@ -421,8 +423,10 @@ the SharePoint dataflow would have — same names, same shapes, same parsers dow
 `Files/_manual/_templates/` — the 9 original registers plus the 8 PQP intake lists. Fill one
 in, upload it, re-run.
 
-When the lists are eventually provisioned, the dataflow takes over and nothing downstream
-changes. Neither path is a workaround; they are two writers into one contract.
+The lists now exist — 18 of them on `AffectProjectReporting_main`, with their 142 columns
+and the 19 `CD Projects` rows — and `CD_Manual_Ingest` is published against them. Once that
+dataflow is signed in and refreshed it takes over, and nothing downstream changes. Neither
+path is a workaround; they are two writers into one contract.
 
 This matters because the slow part was never the plumbing — it is people typing a month of
 history they have only ever kept in a spreadsheet, and that no longer waits on a ticket.
@@ -442,17 +446,22 @@ side had drifted from both, and it was corrected to match. `deploy_manual.py` no
 keeps its own column list — it derives it from the DDL. See
 [`pqp-solution.md`](pqp-solution.md) Part 1.
 
-**What still needs Affect is the SharePoint site**, and that gates the team mechanism rather
-than data entry. `manual-input.md` has the detail.
+**Affect no longer needs to do anything here.** The site question closed on 2026-08-19 and
+the lists and columns were provisioned across the 19th and 20th. What is left is one
+interactive step on our side: `CD_Manual_Ingest` ships `connections: []` — the honest
+not-bound-yet state — and needs its first sign-in and a refresh before the dataflow path is
+live. Until then the CSV path is the working one. `manual-input.md` has the detail.
 
 
 ## What blocks the remaining 41% of coverage
 
-All four are access Affect grants, not work we can do. All the pipework is built and tested.
+**One is left.** Three of the four closed on 2026-08-19 and only one closed the way it was
+written — the Key Vault ask named the wrong vault and was withdrawn rather than granted. All
+the pipework was built and tested throughout.
 
 | Blocker | Unlocks | Owner |
 |---|---|---|
-| **SharePoint lists** (**17** data lists / 140 columns plus the `CD Projects` lookup — 18 in total, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates, and the 8 PQP registers | SharePoint admin |
+| ~~**SharePoint lists**~~ | ✅ **Provisioned.** The 18 lists landed 2026-08-19 and their 142 columns and 19 `CD Projects` rows 2026-08-20, on `AffectProjectReporting_main`. What is left is signing `CD_Manual_Ingest` in — ours, not Affect's | — |
 | ~~**`OUTBUILD_API_TOKEN`**~~ | ✅ **Received 2026-08-19** — 3,078 rows across 15 endpoints in bronze. Repointing `sv_outbuild_activities` off Rebecca's `Silver_Lakehouse` is ours to do | — |
 | **Sage gateway connection grant** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage. The dataflow is deployed and inert | Affect IT |
 | ~~**Key Vault role assignment** on vault `OneLake`~~ | ❌ **Withdrawn 2026-08-19 — wrong vault.** `AffectKeyVault` was already writable by this account. The remaining gate on running ingestion inside Fabric is the **Procore credential rotation** | — |
@@ -460,9 +469,12 @@ All four are access Affect grants, not work we can do. All the pipework is built
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
 and `schedule` both return **403**.
 
-Two of these have moved since the last edit. **The Azure subscription is no longer a
-blocker** — "Azure subscription 1" exists on tenant "Affect Build LLC" as of 2026-08-19, and
-a vault with it. What replaced it is smaller: one role assignment.
+**The Sage gateway grant is now the only access item on this list.** The Azure subscription
+stopped being a blocker on 2026-08-19, and the role assignment that briefly replaced it was
+withdrawn the same evening as having named the wrong vault — `AffectKeyVault` had been
+writable by this account all along. The remaining gate on running Procore ingestion inside
+Fabric is not access at all: it is rotating the exposed credential pair
+([`security-findings.md`](security-findings.md)).
 
 ---
 

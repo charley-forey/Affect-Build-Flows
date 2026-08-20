@@ -225,7 +225,7 @@ DuckDB via `seedrunner.py`, which applies Spark→DuckDB compatibility macros an
   struct-shaped bronze fixtures generated from the same DDL the pipeline uses.
 - `test_sharepoint.py` — 12 checks, including that all four writers agree on every list name
   and column, and that the PQP choice lists come from `qc_status_vocab.csv`.
-- `expectations.py` — **63 → 104 expectations** (81 blocking, 23 warning). The newest is an
+- `expectations.py` — **63 → 107 expectations** (83 blocking, 24 warning). The newest is an
   ERROR-severity `referential` check on `qc_seed_TradeAlias.TradeKey` — see Part 5, item 4.
 
 ### Two data findings worth knowing

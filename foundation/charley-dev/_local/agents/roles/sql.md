@@ -47,7 +47,7 @@ A new gold table ships with its assertions in the matching `_local/tests/test_*.
 same turn. `run_tests.py` currently has **14** suites passing; leaving it green is the deploy gate,
 not a nicety.
 
-The DQ suite (`sql/dq/*.sql` → `cd_dq_results`) is built: **104 expectations, 81 blocking
+The DQ suite (`sql/dq/*.sql` → `cd_dq_results`) is built: **107 expectations, 83 blocking
 and 23 warning**, run by `cd_40_dq_checks` through `lib/dq.py` with `SEVERITY_ERROR` /
 `assert_no_blocking()`. `cd_dq_results` holds 104 rows. It wrote nothing at all until
 2026-08-19 because `_persist_results` used a relative import that fails in the flat

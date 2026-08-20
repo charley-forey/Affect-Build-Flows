@@ -25,7 +25,7 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - ✅ **Data warehouse review with Rebecca (Thu Jul 23)** — Fabric workspace walkthrough; findings in `meeting-notes/2026-07-23-warehouse-review.md`
 - ✅ **Scope, terms & engagement agreed with Cathal — Fri Jul 24** (~20 min call). $125/hr, 9–10 months, 20 hrs initial scope, 5 hrs/wk ongoing — see `meeting-notes/2026-07-24-cathal-scope-call.md`
 - ✅ **Fabric access granted** (`cforey-c@affect-group.com`) — workspace `Build`, folder `charley-dev`
-- ✅ **The platform is built and running (Aug 1–2)** — three lakehouses, Procore ingestion from the production tenant, a nightly pipeline with a blocking DQ gate (now **104 expectations**, 81 blocking / 23 warning), a 37-table Direct Lake model and a 12-page Monthly Progress Report. See `foundation/charley-dev/`
+- ✅ **The platform is built and running (Aug 1–2)** — three lakehouses, Procore ingestion from the production tenant, a nightly pipeline with a blocking DQ gate (now **107 expectations**, 83 blocking / 24 warning), a 37-table Direct Lake model and a 12-page Monthly Progress Report. See `foundation/charley-dev/`
 - ✅ **`CD_Sage_Ingest` deployed (Aug 3)** — live in the `charley-dev` folder, bound to the existing on-prem gateway, inert until one *Can use* grant lands
 - ✅ **$4.85M defect found, fixed and deployed** — portfolio contract value was understated 16% by a per-month rather than cumulative change-order roll-up
 - ✅ **Fabric MCP** wired for the repo (`.mcp.json`) — used for live exploration (`execute_sql_query` / `execute_dax_query`); item creation stays on the committed REST deploy path
@@ -38,11 +38,44 @@ Home base for the Affect Group consulting engagement (construction data & automa
 - ✅ **Outbuild is live (Aug 19)** — Rebecca put the token in `AffectKeyVault` at 18:27 UTC and **3,078 rows across 15 endpoints** landed in bronze. Three bugs that only a live call could reveal were fixed first: the client had been written against the docs and never actually run
 - ✅ **The Key Vault blocker is closed — and the ask was withdrawn, not granted (Aug 19)** — it had named the wrong vault. The one in use is **`AffectKeyVault`** (RG `Affect_Data`), where `cforey-c@affect-group.com` already held *Key Vault Administrator* inherited at resource-group scope. Three documents had been asking Affect for a role nobody needed to grant, since Aug 13. Two real defects sat behind it: secret names were never translated, and the secret helper **failed open** to an environment variable — a half-configured vault would have read a credential from an unaudited source and reported success
 - ✅ **The estimating/bidding automation is in Affect's tenant (Aug 19)** — both flows created (stopped): `Estimating Setup` and `Convert to Bidding`. The BUILD site structure is provisioned on **`AFFECTBUILD1`**, a site Affect already had, and `CD_Manual_Ingest` is published with 19 queries. Getting there meant routing around a tenant where every direct write path is closed — SharePoint REST 401, Graph 403 for want of any `Sites.*` scope, PnP's shared app retired by Microsoft — by having Power Automate do the provisioning, since a flow's actions run as the connection rather than as the script
+- ✅ **The reporting site's intake is provisioned (Aug 19–20)** — 18 lists on `AffectProjectReporting_main`, their **142 columns** and the 19 `CD Projects` rows, verified by reading the site back through Graph rather than trusting the run status. `CD_Manual_Ingest` is published against it with 19 queries and needs only its first sign-in
 - 🟡 **`dim_Job` links the flows to the platform** — the Job Register had been *described* as the `dim_Job` source with no bronze table, no dataflow query, no silver parser and no gold DDL behind it. The chain is now built end to end, with a blocking DQ expectation on job-number uniqueness that catches somebody switching off the flows' concurrency guard in the designer
 - 🔵 **One access grant left, down from four** — the Sage gateway "Can use". See `dashboard.md` → Blockers
 - ⚠️ **Existing production reporting lags** — re-measured Aug 19: Sage now carries to Jul 31, up from the Jul 20 recorded on Aug 2, so her feed refreshed rather than stopped dead. Still ~19 days behind. Outbuild's Jul 14 is as measured Aug 2 and has not been re-verified. Lag, not a dead feed — but still a reason to fix the gateway
 
 A forwardable write-up of the build lives in [`status-update.md`](status-update.md).
+
+### What is still to be completed
+
+The build is not the bottleneck. Nothing below is blocked on engineering capacity.
+
+**Affect's to give — one access grant, down from four:**
+
+| | |
+|---|---|
+| 🔴 **Sage gateway "Can use"** on `nc-affect-1\sage100con;Affect Group` | The only access item left. Unlocks AR/AP detail, retainage, cost-by-cost-code and the AR scorecard category |
+| 🔴 **Rotate the exposed Procore credential pair** | Security, and it also gates moving extraction into Fabric. Rotate first, edit the notebook second |
+| 🟡 **The two folder templates' contents**, and a service account to own the SharePoint connection | The last things between the two flows and being switched on |
+| 🟡 **Four manual-input definition questions**, three ambiguous trade labels, and whether the checklist library should cover the trades Procore has and it does not | One 30-minute call |
+| 🟡 **Procore 403s** on `punch_item_types` and `schedule` | Two report sections cannot be sourced |
+
+**Ours to finish:**
+
+| | |
+|---|---|
+| Sign `CD_Manual_Ingest` in and refresh it | Turns on the SharePoint path for the manual ~40%. The site is ready; the dataflow ships `connections: []` and needs one interactive sign-in |
+| Repoint `sv_outbuild_activities` onto `cd_bronze_outbuild_*` | Outbuild has been landing since Aug 19 but `fct_Milestone` still reads Rebecca's dataflow, so **the coverage gain the token was wanted for is not realised yet**. Careless repointing takes milestones to zero, so it is its own change |
+| Fix the DQ persist gap | Counts are trustworthy; the reject drill-through shows an older run |
+| Explain the `Total Billed` / `Owner Billed To Date` gap on the report | Different grains, not a defect — but unexplained on the page |
+| Wire the 8 `man_Qc*` intake tables silver → gold | Gated on the definition answers above |
+| Add `cd_01_extract_procore` to the nightly DAG | After the credential rotation |
+
+**Not started:** mentoring and recorded walkthroughs — the one Phase 0 line item still
+outstanding — and D6/D7, which wait on Chris's SOPs.
+
+**Commercial:** billable time stands at **40.5 hrs** against a 20-hour Phase 0. The overrun
+is work past the end of Phase 0 that has not been re-scoped, not a Phase 0 overspend. It
+needs a conversation with Cathal rather than an invoice — see [`hours-log.md`](hours-log.md).
 
 ## Engagement structure
 

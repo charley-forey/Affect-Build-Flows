@@ -37,7 +37,7 @@ model rather than 19 more tables in the first.
 | `cd_10_bronze_to_silver` | Notebook | runs clean against real bronze |
 | `cd_20_seed_gold` | Notebook | seed dimensions; asserts its own row counts |
 | `cd_30_build_gold` | Notebook | 20 gold files + integrity checks; publishes the schema |
-| `cd_40_dq_checks` | Notebook | the DQ gate — **105 expectations** (82 blocking, 23 warning) |
+| `cd_40_dq_checks` | Notebook | the DQ gate — **107 expectations** (83 blocking, 24 warning) |
 | `cd_90_query` | Notebook | ad-hoc query scratchpad against the medallion |
 | `CD_Master_Pipeline` | DataPipeline | 6 activities, the nightly DAG |
 | `CD_Sage_Ingest` | Dataflow | **deployed**, bound to the on-prem gateway, inert until the connection grant lands |
@@ -229,8 +229,16 @@ at a `TradeKey` that does not exist resolves to NULL and reads as *"unmapped"* �
 in a CSV we control would look identical to a trade Affect never aliased. ERROR rather than
 warn, because an unmapped trade is a fact about Procore and a broken alias is our bug.
 
-**Current gate: 104 expectations (81 blocking, 23 warning) — 8 warnings, 0 blocking.** Where
-each stands after the fixes:
+**The suite defines 107 expectations (83 blocking, 24 warning)**, counted out of
+`build_suite()` rather than carried forward. It moved three times on 2026-08-19: the
+`SageJobNumber` guard came with the crosswalk repair, the trade-alias guard with the
+data-quality work, and the two `dim_Job` job-number checks with the Power Automate link.
+
+**The last live run measured 8 warnings and 0 blocking** — against the suite as it stood
+that morning, not against all 107. The two `dim_Job` expectations have never been evaluated
+live, because the dataflow that fills `dim_Job` has not been signed in and run yet; they
+will first fire the night after it does. Where each of the measured ones stands after the
+fixes:
 
 | Expectation | Rows |
 |---|---:|

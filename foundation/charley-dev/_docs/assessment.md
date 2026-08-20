@@ -57,7 +57,7 @@ insurance certificates expired. Both are explained below — do not "fix" either
 | Measures compute | All 99 evaluated via `execute_dax_query` | All evaluate |
 | Numbers are *correct* | Recomputed independently in SQL | **One defect found** |
 | Pipeline freshness | `meta_PipelineRun` | Ran 2026-08-02 22:06, 0 blocking |
-| DQ gate | `cd_dq_rejects` + heartbeat | 63 expectations at this audit, 6 failing, 0 blocking. The suite is now **104** (81 blocking, 23 warning) |
+| DQ gate | `cd_dq_rejects` + heartbeat | 63 expectations at this audit, 6 failing, 0 blocking. The suite is now **107** (83 blocking, 23 warning) |
 
 ---
 
@@ -242,8 +242,8 @@ anywhere.
 ### What to ask for on the call
 
 1. **Bind `CD_Sage_Ingest` to the existing gateway connection.** Needs someone with
-   permission on that connection — not a subscription. This is the single highest-value ask
-   and it can be done the same day.
+   permission on that connection — not a subscription. This is the single highest-value ask,
+   it can be done the same day, and after 2026-08-19 it is the **only** access item left.
 2. ~~**Send `OUTBUILD_API_TOKEN`.**~~ **Done 2026-08-19** — placed in `AffectKeyVault` at
    18:27 UTC. 3,078 rows across 15 endpoints landed in bronze.
 3. ~~**Grant Key Vault Secrets Officer on vault `OneLake`.**~~ **Withdrawn 2026-08-19 — this
@@ -255,6 +255,13 @@ anywhere.
    the workspace, so editing the literal out first changes nothing about the exposure.
 5. Confirm the gateway account is **read-only** on the Sage database.
 6. Ask whether 13 open AR rows is real, or a filter artefact.
+7. **Sign `CD_Manual_Ingest` in and refresh it.** Ours, not Affect's. The dataflow is
+   published against a fully provisioned reporting site and ships `connections: []`, so the
+   SharePoint path stays dark until someone completes the interactive sign-in.
+8. **Repoint `sv_outbuild_activities`** off Rebecca's `Silver_Lakehouse` onto
+   `cd_bronze_outbuild_*`. Outbuild has been landing since 2026-08-19 and `fct_Milestone`
+   still does not read it, so the coverage gain the token was wanted for is not realised
+   yet. Doing it carelessly can take milestones to zero, which is why it is its own change.
 
 ---
 
@@ -456,14 +463,18 @@ regression is back.
 
 ---
 
-## External blockers, unchanged
+## External blockers — three of five closed on 2026-08-19
+
+Only the Sage gateway grant is still Affect's to give. Two of the closures were not what
+they looked like: the Key Vault role was **withdrawn** as having named the wrong vault, and
+the SharePoint item turned out to need nothing from Affect at all.
 
 | Blocker | Effect | Owner |
 |---|---|---|
 | ~~**Key Vault role assignment** on vault `OneLake`~~ | **WITHDRAWN 2026-08-19 — the wrong vault.** `AffectKeyVault` (RG `Affect_Data`) was readable and writable by this account all along, via *Key Vault Administrator* inherited at RG scope. Procore extraction still runs on a laptop, but the gate is now **rotating the exposed credential pair**, not an access grant | — |
 | On-prem gateway grant for Sage | `CD_Sage_Ingest` is **deployed** and inert — one *Can use* grant on `nc-affect-1\sage100con;Affect Group` away from running | Affect / their Sage consultant |
 | Procore 403s on `punch_item_types` and `schedule` | Two report sections cannot be sourced | Affect |
-| SharePoint decision | **17** `man_*` tables are deployed and empty (9 original plus 8 PQP registers); ~40% of the Monthly Progress Report and most of the Project Quality Plan. The CSV path in `Files/_manual/` works today, so this gates the *team* mechanism, not data entry | Affect |
+| ~~SharePoint decision~~ | **RESOLVED 2026-08-19/20.** Affect supplied the sites; the 18 intake lists were created on the 19th and their 142 columns and 19 `CD Projects` rows on the 20th, and `CD_Manual_Ingest` is published against them. The **17** `man_*` tables stay empty until the dataflow gets its first sign-in — ours to do — or somebody fills a CSV, which works today | — |
 | ~~No Azure subscription~~ | **RESOLVED 2026-08-19** — "Azure subscription 1" `0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6` on tenant "Affect Build LLC" `b2a2225b-4b4e-42ec-ba52-c7e1c2dea580` | — |
 | ~~`OUTBUILD_API_TOKEN` not issued~~ | **RESOLVED 2026-08-19** — placed in `AffectKeyVault` at 18:27 UTC; **3,078 rows across 15 endpoints** in `cd_bronze_outbuild_*`. `fct_Milestone` does not consume it yet: silver still reads Rebecca's dataflow | — |
 
