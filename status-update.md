@@ -328,6 +328,13 @@ waiting on engineering.
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
 and `schedule` both return **403**.
 
+**And one configuration item found on 2026-08-20, worth more than either.** Outbuild
+activities carry no project reference of their own — the only route to an Affect project is
+the Procore link on the Outbuild project, and **only 3 of 15 carry one**. So 406 critical-path
+activities exist in Outbuild and just **126** can be attributed to a project; the other 280
+are real schedule data that cannot reach any report. Setting those links is configuration in
+Outbuild, not development, and it would roughly triple schedule coverage.
+
 **#1 is now the only one left, so it is also the whole list.** It remains the highest value
 per unit of effort by a wide margin, and it may also explain the data-lag finding above.
 
