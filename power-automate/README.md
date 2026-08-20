@@ -261,12 +261,12 @@ site is the mistake that costs the most, because nothing about it fails visibly.
 **That sequence is now largely history — most of it has been done.** What actually worked is
 `deploy_flows.py`, which posts the workflow definition straight at the Power Automate API and
 needs no package, no PnP app and no admin consent. Both flows were created that way on
-2026-08-19; `CD_Manual_Ingest` is published; both sites are provisioned bar the reporting
-site's 18 lists.
+2026-08-19; `CD_Manual_Ingest` is published; both sites are fully provisioned — the reporting
+site's 18 lists on 2026-08-19 and their 142 columns and 19 project rows on 2026-08-20.
 
-What is left: create those 18 lists, sign the dataflow in, supply the template contents,
-point the connection at a service account, confirm trigger concurrency is still 1, then turn
-the flows on and smoke-test with `Test / Job: "Alpha"`.
+What is left: sign the dataflow in, supply the template contents, point the connection at a
+service account, confirm trigger concurrency is still 1, then turn the flows on and
+smoke-test with `Test / Job: "Alpha"`.
 
 **`flows/*.json` cannot be imported directly.** They are workflow definitions, which is the
 right thing to keep in git and not a thing Power Automate accepts — its Import menu offers
@@ -293,9 +293,13 @@ a lookup that holds no report data and exists so `ProjectKey` cannot be mistyped
 you may see elsewhere are the same thing. It is generated from the gold DDL by
 `_local/make_sharepoint.py`, so it is never hand-edited; regenerate rather than patch.
 
-**Provisioned 2026-08-20.** All 18 lists, **142 of 142 columns** and 19 `CD Projects` rows,
-on `AffectProjectReporting_main`. Confirm with `--verify`, which reads the site back through
-Graph; `--probe` is the one-call check for whether a *newly created* site is being served yet.
+**Provisioned, in two parts.** The **18 lists** landed 2026-08-19; their **142 of 142
+columns** and the 19 `CD Projects` rows landed 2026-08-20. Worth keeping straight, because
+the run that created the lists was recorded at the time as having created *nothing* — it had
+finished phase 1 and stalled on phase 2, and nothing in the run status said which.
+
+Confirm with `--verify`, which reads the site back through Graph; `--probe` is the one-call
+check for whether a *newly created* site is being served yet.
 
 ### The three phases are not equally re-runnable, and one of them bit
 
