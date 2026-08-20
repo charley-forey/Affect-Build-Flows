@@ -3,17 +3,36 @@
 Two Power Automate flows and the SharePoint they run on, for the BUILD job-setup SOP:
 create an estimating folder for a new job, and convert an estimating job into a project.
 
-Nothing in here has been deployed. It is committed so it can be reviewed as a diff, then
-imported by hand once the client confirms the site URL and the template contents.
+**Status, 2026-08-19: both flows exist in Affect's tenant, created stopped.**
+
+    Estimating Setup      98d2c411-a668-42f2-a2a2-f68e4d528a54
+    Convert to Bidding    d8a239e6-e668-474c-a33d-50145601e7ab
+
+They run against **`AFFECTBUILD1`** — a site Affect already had, not a new site called
+`BUILD` — whose libraries, template trees and `Job Register` are provisioned. `dim_Job` reads
+the register through the medallion, so the chain is closed end to end.
+
+They are **not turned on**, and two things are needed before they are:
+
+1. **What goes inside the two folder templates.** The SOP names both and never says. Today
+   they would copy a correct but empty skeleton.
+2. **A service account to own the SharePoint connection.** The flows run as whoever created
+   it, so a named person's account means they break when that person leaves.
+
+`flows/*.json` still ship with `REPLACE-ME` as the host, deliberately — the site is passed at
+deploy time, and `test_flows.py` asserts no tenant is hardcoded.
 
 ```
-RUNBOOK.md                       Ordered import steps. BOTH SharePoint sites, and Fabric.
-deploy_flows.py                  Creates both flows via the API. The working route.
-make_import_packages.py          Legacy import package. Currently rejected - see RUNBOOK.
-provision-sharepoint-build.ps1   PnP PowerShell. Site, libraries, template trees, Job Register.
+RUNBOOK.md                       Ordered steps. BOTH SharePoint sites, and Fabric.
+deploy_flows.py                  Creates both flows via the API. The route that worked.
+bootstrap_site_via_flow.py       Provisions the BUILD site THROUGH a throwaway flow. Why: below.
+bootstrap_reporting_site.py      Same trick for the reporting site's 18 intake lists.
+provision_build_site.py          Graph provisioner. Reads work, writes 403 - kept as a survey.
+provision-sharepoint-build.ps1   PnP PowerShell. Needs a consent this tenant would not give.
+make_import_packages.py          Legacy import package. Rejected by the importer - see RUNBOOK.
 flows/EstimatingSetup.json       New job  ->  01 ESTIMATING/E-YY-###-Project Name
 flows/ConvertToBidding.json      E-YY-### ->  00 PROJECTS/YY-###-Project Name
-test_flows.py                    Offline self-check. No network, no tenant.
+test_flows.py                    Offline self-check. No network, no tenant. 20 checks.
 ```
 
 ---
@@ -239,11 +258,15 @@ Fabric binding in one sequence. They used to be duplicated here, which is how th
 site's script came to be a footnote below rather than a step - and provisioning only the BUILD
 site is the mistake that costs the most, because nothing about it fails visibly.
 
-The short version: register a PnP Entra app (once per tenant, needs an admin), set the site
-URLs, dry-run then `-Apply` both provisioning scripts, build the import packages with
-`python make_import_packages.py --site-url ...` and import each through **My flows → Import →
-Import Package (Legacy)**, re-check trigger concurrency is 1, publish `CD_Manual_Ingest`, and
-smoke-test with `Test / Job: "Alpha"`.
+**That sequence is now largely history — most of it has been done.** What actually worked is
+`deploy_flows.py`, which posts the workflow definition straight at the Power Automate API and
+needs no package, no PnP app and no admin consent. Both flows were created that way on
+2026-08-19; `CD_Manual_Ingest` is published; both sites are provisioned bar the reporting
+site's 18 lists.
+
+What is left: create those 18 lists, sign the dataflow in, supply the template contents,
+point the connection at a service account, confirm trigger concurrency is still 1, then turn
+the flows on and smoke-test with `Test / Job: "Alpha"`.
 
 **`flows/*.json` cannot be imported directly.** They are workflow definitions, which is the
 right thing to keep in git and not a thing Power Automate accepts — its Import menu offers
@@ -264,9 +287,16 @@ The **data platform's** intake lists are a separate script:
 foundation/charley-dev/01-ingestion/Manual/provision-sharepoint.ps1
 ```
 
-That one creates **17 lists / 140 columns** — the 9 that feed the Monthly Progress Report's
-manual fields, and the 8 PQP quality registers. It is generated from the gold DDL by
+That one creates **18 lists** — 17 data lists (the 9 feeding the Monthly Progress Report's
+manual fields plus the 8 PQP quality registers, 140 columns between them) and `CD Projects`,
+a lookup that holds no report data and exists so `ProjectKey` cannot be mistyped. Both counts
+you may see elsewhere are the same thing. It is generated from the gold DDL by
 `_local/make_sharepoint.py`, so it is never hand-edited; regenerate rather than patch.
+
+**As of 2026-08-19 these 18 lists do not exist yet.** The reporting site does
+(`AffectProjectReporting_main`) and `CD_Manual_Ingest` is published against it, but the
+creation run hit a site whose REST endpoint was still returning 502 and has not been retried.
+`bootstrap_reporting_site.py --probe` says in under a minute whether it will work now.
 
 Both scripts must run. Provision only the first and the flows work while every `man_*` table
 in Fabric stays empty — which looks exactly like "nobody has filled it in yet", so the gap
@@ -278,7 +308,7 @@ will not announce itself. Detail: [`_docs/sharepoint-lists.md`](../foundation/ch
 
 | | |
 |---|---|
-| **The BUILD site URL** | Every file uses `REPLACE-ME` as the host. Needed before anything runs. |
+| ~~**The BUILD site URL**~~ | ✅ **Answered.** `AFFECTBUILD1` — Affect reused an existing site rather than creating a `BUILD` one. `flows/*.json` still carry `REPLACE-ME` on purpose; the site is supplied at deploy time and `test_flows.py` asserts no tenant is hardcoded. |
 | **Template folder contents** | See the open question below. |
 | **The real template folder names** | Both are taken literally from the SOP. Evidence says `YY` is Affect's own placeholder convention, not a year: the repo root holds `YY-000 PROJECT NAME_InternalReport_YYMMDD.xlsx`, using `YY` and `YYMMDD` the same way. So `YY-000 STANDARD PROJECT TEMPLATE` is most likely the literal folder name, and is year-agnostic — good. **`02 E26-000 BOILER PLATE` is the problem**: it bakes in `26`, so in January someone must either rename the folder or edit `$EstimatingTemplateRoot` and the flow parameter. The two templates follow different conventions. Confirm both names, and prefer renaming the estimating one to carry no year. |
 | **A service account for the connection** | The flows run as whoever owns the SharePoint connection. A named person's account means the flows break when they leave, and `RequestedBy` still records the requester correctly either way. |

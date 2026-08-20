@@ -23,11 +23,18 @@ Re-checked 2026-08-19: **F1 is still open**, and is now actionable for the first
 > scrubbed file in git next to an unscrubbed notebook in the service is the most dangerous
 > shape this finding can take, because the exposure reads as fixed and is not.
 >
-> What changed is that the remediation is now possible. An Azure subscription and the Key
-> Vault `OneLake` both exist as of 2026-08-19, so there is somewhere for the new pair to
-> go. One thing is still missing: `cforey-c@affect-group.com` has only **Contributor on the
-> resource group**, and the vault is RBAC-mode, so no secret can be written or read yet.
-> **The ask is one role assignment — "Key Vault Secrets Officer" on vault `OneLake`.**
+> What changed is that the remediation is now possible, and **nothing is blocking it.**
+> Re-checked late on 2026-08-19: the vault to use is **`AffectKeyVault`**
+> (`https://affectkeyvault.vault.azure.net/`, RG `Affect_Data`, subscription `73932b34-…`),
+> where `cforey-c@affect-group.com` already holds **Key Vault Administrator** inherited at
+> resource-group scope. Secrets read and write today — Rebecca's Outbuild token was placed
+> there and read back successfully the same evening.
+>
+> **The earlier ask — "Key Vault Secrets Officer" on vault `OneLake` — was aimed at the wrong
+> vault and is withdrawn.** It had been in this document since Aug 13. `OneLake` remains
+> unreadable by this account and holds nothing we depend on.
+>
+> **So the only thing standing between this finding and its fix is the rotation itself.**
 >
 > **Order matters: rotate first, then edit the notebook.** Editing the literal out does not
 > un-expose a credential that has already been readable; only revoking it does. See the

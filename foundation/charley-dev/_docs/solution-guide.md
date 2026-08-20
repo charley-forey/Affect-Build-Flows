@@ -402,10 +402,11 @@ finding we reported (`security-findings.md`, F1).
 So extraction runs where the secret already lives, and lands files; `cd_05_land_to_bronze`
 merges them in Fabric with no credential at all. **A bridge, not the destination.**
 
-As of 2026-08-19 the subscription and the vault both exist. What is left is one role
-assignment — **Key Vault Secrets Officer on vault `OneLake`** — after which
-`setup_keyvault.py --apply` loads the secrets and the notebook takes over. See
-[`keyvault-runbook.md`](keyvault-runbook.md).
+**As of 2026-08-19 Key Vault is no longer a blocker at all.** The ask that sat here — a role
+on vault `OneLake` — named the wrong vault and is withdrawn; `AffectKeyVault` (RG
+`Affect_Data`) was already writable by this account. What is left is **rotating the exposed
+Procore credential pair**, after which `setup_keyvault.py --apply` loads the secrets and the
+notebook takes over. See [`keyvault-runbook.md`](keyvault-runbook.md).
 
 ---
 
@@ -452,9 +453,9 @@ All four are access Affect grants, not work we can do. All the pipework is built
 | Blocker | Unlocks | Owner |
 |---|---|---|
 | **SharePoint lists** (**17** data lists / 140 columns plus the `CD Projects` lookup — 18 in total, spec in `sharepoint-lists.md`) | Wins, risks, priority items, client survey, contract milestone dates, and the 8 PQP registers | SharePoint admin |
-| **`OUTBUILD_API_TOKEN`** | Milestones — Outbuild is the **only** source of these anywhere. Offered by email Aug 11; **in transit** | Outbuild CS rep / Affect |
+| ~~**`OUTBUILD_API_TOKEN`**~~ | ✅ **Received 2026-08-19** — 3,078 rows across 15 endpoints in bronze. Repointing `sv_outbuild_activities` off Rebecca's `Silver_Lakehouse` is ours to do | — |
 | **Sage gateway connection grant** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage. The dataflow is deployed and inert | Affect IT |
-| **Key Vault role assignment** — "Key Vault Secrets Officer" on vault `OneLake` | Key Vault, so ingestion runs in Fabric on a schedule. The subscription and the vault now exist; the vault is RBAC-mode and resource-group Contributor cannot read or write secrets | Affect IT |
+| ~~**Key Vault role assignment** on vault `OneLake`~~ | ❌ **Withdrawn 2026-08-19 — wrong vault.** `AffectKeyVault` was already writable by this account. The remaining gate on running ingestion inside Fabric is the **Procore credential rotation** | — |
 
 Plus two Procore permissions worth asking for in the same conversation: `punch_item_types`
 and `schedule` both return **403**.

@@ -2,7 +2,7 @@
 
 Single-page rollup of the engagement. Detail lives in `deliverables/` (one file per deliverable) and `hours-log.md` (time ledger). Update this page whenever a deliverable changes status.
 
-**Current as of 2026-08-19.** For the team-facing narrative — what was built, what it found, what we need from Affect — see [`status-update.md`](status-update.md). For the measured engineering state, [`foundation/charley-dev/_docs/build-status.md`](foundation/charley-dev/_docs/build-status.md).
+**Current as of 2026-08-19, end of day.** Three blockers closed during the day — see **Blockers** below; the Aug 19 executive update was written that morning and is a point-in-time record. For the team-facing narrative — what was built, what it found, what we need from Affect — see [`status-update.md`](status-update.md). For the measured engineering state, [`foundation/charley-dev/_docs/build-status.md`](foundation/charley-dev/_docs/build-status.md).
 
 **Status key:** 🔴 Not started · 🟡 In progress · 🔵 Blocked/waiting · 🟢 Complete
 
@@ -19,7 +19,7 @@ recurring numbers are maintained: the endpoint registry (**44 registered, 40 bro
 | ID | Deliverable | Phase | Status | Phase 0 hrs | Depends on | Detail |
 |----|-------------|-------|--------|-------------|------------|--------|
 | D1 | Discovery & Architecture Review | 1 - Foundation | 🟢 **Complete** - endpoint inventory generated from the registry, workspace audited, security findings reported | 4 | - | [D1](deliverables/01-discovery-architecture-review.md) |
-| D2 | Procore ETL Validation & Hardening | 1 - Foundation | 🟢 **Complete** - 44 endpoints registered, 40 landing bronze tables (2 blocked by Procore 403s), registry-driven, incremental, tested. **Extraction still runs locally** pending the Key Vault role | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
+| D2 | Procore ETL Validation & Hardening | 1 - Foundation | 🟢 **Complete** - 44 endpoints registered, 40 landing bronze tables (2 blocked by Procore 403s), registry-driven, incremental, tested. **Extraction still runs locally** - no longer for want of Key Vault (resolved 2026-08-19), but until the exposed Procore credentials are rotated | 6 | D1 | [D2](deliverables/02-procore-etl-validation.md) |
 | D3 | Sage 100 Ingestion Pipeline | 1 - Foundation | 🔵 **Built & deployed, blocked** - `CD_Sage_Ingest` live and gateway-wired (verified in the Fabric item list 2026-08-19); needs one connection permission grant | 2 | Gateway grant | [D3](deliverables/03-sage100-ingestion.md) |
 | D4 | Core Project Data Model | 1 - Foundation | 🟢 **Complete** - **54 gold tables published** to the semantic-model contract (was 45; the QC facts were missing from it), Direct Lake star schema, crosswalks resolve project/vendor/cost code | 4 | D2 | [D4](deliverables/04-project-data-model.md) |
 | D5 | Power BI Project Dashboard (Excel replacement) | 2 - Project Intelligence | 🟡 **Built and live** - **two models and two reports now deployed**: `Monthly Progress Report` (12 pages, 180 visuals) over `Affect Project Report` (37 tables, 99 measures), and `Project Quality Plan` (7 pages, 95 visuals) over its own model (19 tables + `_Measures`, 42 measures, 23 relationships). Scorecard coverage 59%, gated on source data. [**See the pages**](resources/power-bi/monthly-progress-report/) | 5 | D4 | [D5](deliverables/05-powerbi-project-dashboard.md) |
@@ -32,10 +32,10 @@ Four additions that were not in the original Phase 0 scope and were built anyway
 
 | Item | Status |
 |---|---|
-| **Outbuild ingestion** - 16 endpoints, registry-driven | 🔵 Built and verified, cannot run - token offered by email Aug 11, **in transit** |
-| **Manual-input capture** - the ~40% that lives in no system | 🟡 Both paths built: SharePoint provisioning script, **and** a CSV path that works today with no admin ticket |
+| **Outbuild ingestion** - 16 endpoints, registry-driven | 🟢 **Live 2026-08-19.** Token landed in `AffectKeyVault` 18:27 UTC; **3,078 rows across 15 endpoints** in `cd_bronze_outbuild_*`, verified by reading counts back out of Delta. Three bugs only a live call could reveal were fixed first - missing User-Agent (Cloudflare 403), wrong envelope key, wrong paging rule. `fct_Milestone` does not consume it yet: silver still reads Rebecca's dataflow |
+| **Manual-input capture** - the ~40% that lives in no system | 🟡 Both paths built, and the dataflow is now **published**: `CD_Manual_Ingest` is live in `charley-dev` with 19 queries (18 reporting-site lists + the Job Register), bound to the real sites. Not yet authenticated or refreshed, and the 18 lists are not created yet. The CSV path works today with no admin ticket |
 | **PQP (Project Quality Plan)** - the client's 44-sheet QA/QC tracker, collapsed to 9 tables | 🟢 **Deployed and visible 2026-08-19** - 26 trades, 625 checklist items, 93 statutory gates (46 TCO / 23 Fire Alarm / 24 Statutory), 101 DOH items and 141 status rows, plus the live Procore facts `fct_QcSubmittal` 2,245 / `fct_QcPunch` 1,469 / `fct_QcNcr` 850. Now readable: semantic model `Project Quality Plan` (19 tables + `_Measures`, 42 measures, 23 relationships) and a 7-page, 95-visual report. 8 `man_Qc*` tables typed and empty |
-| **Power Automate - Estimating Setup & Convert to Bidding** | 🟡 **Built, not deployed** - both flow definitions, the PnP provisioning script and 14 passing offline checks in `power-automate/`. No SharePoint site exists yet, and the `powerautomate-mcp` server currently fails to connect |
+| **Power Automate - Estimating Setup & Convert to Bidding** | 🟡 **In Affect's tenant 2026-08-19, created stopped.** `Estimating Setup` (`98d2c411-…`) and `Convert to Bidding` (`d8a239e6-…`) both exist, and the BUILD site structure they trigger on is provisioned on `AFFECTBUILD1` - a site Affect already had, rather than a new one. Still to do before turning them on: the two folder templates' **contents**, which the SOP never specifies. 20 offline checks pass |
 
 ## Commercial terms
 
@@ -90,14 +90,16 @@ rather than absorbing it silently.
 
 | Source | Method | Status | Blocked on | Deliverable |
 |---|---|---|---|---|
-| Procore | API → registry-driven extractor → bronze | 🟡 **44 endpoints registered, 40 landing bronze tables**, production tenant; 2 blocked by Procore 403s (`punch_item_types`, `schedule`). Extraction runs **locally** and lands files; the Fabric notebook merges them. `cd_01_extract_procore` is **not** in the nightly DAG | One Key Vault role assignment, to move extraction into Fabric | D2 |
+| Procore | API → registry-driven extractor → bronze | 🟡 **44 endpoints registered, 40 landing bronze tables**, production tenant; 2 blocked by Procore 403s (`punch_item_types`, `schedule`). Extraction runs **locally** and lands files; the Fabric notebook merges them. `cd_01_extract_procore` is **not** in the nightly DAG | **Rotating the exposed Procore credential pair.** The Key Vault blocker is closed - `AffectKeyVault` is readable and writable by our account today | D2 |
 | Sage 100 Contractor | Dataflow Gen2 over the existing on-prem gateway → bronze | 🔵 **`CD_Sage_Ingest` deployed and gateway-wired**, 8 tables incl. the AR/AP line tables the current dataflow discards. First run failed in 5s — the identity cannot see any gateway in the tenant | **One "Can use" grant** on connection `nc-affect-1\sage100con;Affect Group` | D3 |
 | Excel project tracker | Manual today; every field mapped to a source | 🟢 **Replaced** — 12-page Power BI report live over the gold model | — | D4/D5 |
-| Manual-only fields (~40% of the report) | SharePoint lists **or** CSV upload → bronze (two writers, one contract) | 🟡 **Both paths built.** `cd_06_land_manual` now creates **17** manual bronze tables (9 original + 8 PQP); every `man_*` is deployed and empty. CSV path needs no admin ticket and works today | SharePoint provisioning, **or** somebody filling in a template. Plus 4 definition questions | D4 |
-| Outbuild | API → registry-driven extractor, 16 endpoints | 🔵 **Built and verified, cannot run.** The **only** milestone source anywhere; 17 of 19 projects have none | `OUTBUILD_API_TOKEN` not issued | D5 |
+| Manual-only fields (~40% of the report) | SharePoint lists **or** CSV upload → bronze (two writers, one contract) | 🟡 **Both paths built, and `CD_Manual_Ingest` is published** (2026-08-19) with 19 queries, bound to the real sites. `cd_06_land_manual` creates **17** manual bronze tables (9 original + 8 PQP); every `man_*` is deployed and empty. CSV path needs no admin ticket and works today | The 18 reporting-site lists still need creating, and the dataflow needs its first sign-in. **Or** somebody fills in a template. Plus 4 definition questions | D4 |
+| Outbuild | API → registry-driven extractor, 16 endpoints | 🟢 **Live 2026-08-19** - **3,078 rows across 15 endpoints** landed in `cd_bronze_outbuild_*`. The **only** milestone source anywhere | Nothing to ingest. Downstream: `sv_outbuild_activities` still reads Rebecca's `Silver_Lakehouse`, so `fct_Milestone`'s 52 rows are still hers - repointing it is its own change | D5 |
 | Ramp / ADP / Bluebeam / Navisworks / Outlook / OneDrive | — | 🔴 Future / backlog | — | Future |
 
-**Source coverage is 5.26%** — 1 of 19 projects present in all three systems. This is the
+**Source coverage was 5.26% when last measured (2026-08-02)** — 1 of 19 projects present in
+all three systems. **Not re-measured since Outbuild started landing on 2026-08-19**, and it
+should move: Outbuild is one of the three systems. Re-measure before quoting it. This is the
 single biggest limit on the report, and every part of it is an access grant rather than a
 build task.
 
@@ -123,7 +125,7 @@ Full detail in [`analysis/excel-tracker/`](analysis/excel-tracker/).
 | **Defects found** | **14 verified** — 3 change reported numbers |
 | **Biggest issue** | **42% of the scorecard weight is disconnected from reality** — Schedule Performance always scores 3/3, Completion Variance always 0/3, Accounts Receivable reads a dollar balance against day-count bands. The first two errors cancel, which is why it went unnoticed |
 | **Cleanest win** | `SUBMITTALS & RFI` — one table, fully derivable from 4 Procore endpoints, feeds the only chart |
-| **Linchpin unknown** | 🟢 **Resolved** — `dim_ProjectCrosswalk`, `dim_VendorCrosswalk` and `dim_CostCodeCrosswalk` are built and populated. 2 projects still have no Sage entry |
+| **Linchpin unknown** | 🟢 **Resolved, and the join was repaired 2026-08-19.** `dim_ProjectCrosswalk`, `dim_VendorCrosswalk` and `dim_CostCodeCrosswalk` are built and populated — but `dim_Project` had been reading `SageJobNumber` from the wrong view, so **122 of 122 AR invoices resolved to `UNMATCHED`** and $23.7M was attributed to no project. Fixed: **15 of 19** projects now resolve to a Sage job, unmatched invoices **122 → 24**, AR attributed **$0 → $22,548,861.96**. The 4 without a job are three templates and City Harvest |
 
 Of the 14 defects, **7 are structurally fixed** in the platform. See
 [`status-update.md`](status-update.md) for the table.
@@ -133,15 +135,20 @@ Of the 14 defects, **7 are structurally fixed** in the platform. See
 See [`hours-log.md`](hours-log.md) for the ledger - it is the billing source of truth and the
 only place hours are maintained.
 
-> ⚠️ **Two sessions are not yet logged**: the Aug 13 platform review and the Aug 19 build.
-> The ledger is append-only and only Charley can write it; estimating retroactively would
-> corrupt the record. Log both before the first invoice.
+> ⚠️ **All sessions through 2026-08-19 are now logged** — entries 16–20. Entries 19 and 20
+> were reconstructed from commit timestamps after the fact and the method is stated in the
+> ledger; **Charley to confirm or correct both before the first invoice.**
 
 | | Hours | @ $125 |
 |---|---|---|
 | Phase 0 budget | 20.0 | $2,500 |
-| Consumed (Aug 1–2 build) | 22.0 | $2,750 |
-| **Remaining** | **−2.0** | **−$250** |
+| Consumed (all billable to date) | 40.5 | $5,062.50 |
+| **Remaining** | **−20.5** | **−$2,562.50** |
+
+The overrun is **not** a Phase 0 overspend. Phase 0's five line items were delivered by Aug 2
+at ~22 hrs; everything after that is a second subject area (the PQP), the folder automation,
+and the Aug 19 defect work. It needs re-scoping with Cathal rather than invoicing unremarked
+— see the callout in [`hours-log.md`](hours-log.md).
 
 Non-billable pre-agreement goodwill: **16.0 hrs** (tracker assessment, Power BI build kit,
 resource library, warehouse review, scope call).
@@ -153,12 +160,11 @@ resource library, warehouse review, scope call).
 
 ## Blockers & waiting on
 
-**Access — all Affect's to grant, all pipework already built:**
+**Access — down from four items to one, after Aug 19 closed the Outbuild token, Key Vault
+(withdrawn — wrong vault) and the SharePoint site:**
 
 - [ ] 🔴 **Grant `cforey-c@affect-group.com` "Can use"** on connection `nc-affect-1\sage100con;Affect Group` — **highest value per unit of effort.** One grant, one refresh
-- [ ] 🟡 **`OUTBUILD_API_TOKEN`** — **in transit**, offered by email Aug 11. The only milestone source anywhere; 17 of 19 projects have none. Chase rather than escalate
-- [ ] 🟡 **SharePoint lists provisioned** (script is written) — *or* somebody fills in a CSV template, which needs no ticket
-- [ ] 🔴 **Key Vault role assignment** - the subscription and vault `OneLake` now both exist, but `cforey-c@affect-group.com` holds only *Contributor on the resource group*, which on an RBAC vault can neither read nor write a secret nor grant itself the right to. **The ask is one role: “Key Vault Secrets Officer” on vault `OneLake`.** Until then Procore extraction runs on a laptop - [`keyvault-runbook.md`](foundation/charley-dev/_docs/keyvault-runbook.md)
+- [ ] 🟡 **The 18 reporting-site lists still need creating.** The site itself now exists (`AffectProjectReporting_main`) and `CD_Manual_Ingest` is published against it, but SharePoint returned 502 on a site minutes old and the list-creation run has not been retried since it started serving. This is ours to finish, not Affect's — *or* somebody fills in a CSV template, which needs no ticket at all
 - [ ] 🟡 Procore permissions: `punch_item_types` and `schedule` both return **403**
 
 **Decisions & information:**
@@ -171,7 +177,7 @@ resource library, warehouse review, scope call).
 - [ ] 🟡 2–3 **real** completed project reports (the file received is a template with demo data)
 - [ ] 🟡 **PQP workbook: 5 verified defects to report to Affect** — four register roll-ups whose `% Complete` can never reach 100%, and two CSI codes Excel destroyed on the only Tier 4 Critical DFOWs — [`analysis/pqp-workbook/`](analysis/pqp-workbook/defects-and-questions.md)
 - [ ] 🟡 **PQP trade vocabulary — largely closed, two narrower questions left.** `qc_seed_TradeAlias` (16 rows) recovered 464 rows; unmapped NCRs **459 → 215** and punch items **511 → 291**. What still needs Affect: (a) three ambiguous labels deliberately not guessed — `Drywall/Carpentry` (255 rows), `Concrete Superstructure` (110), `Concrete` (64); (b) a **scope** question, not a mapping one — Roofing, Glazing, Windows, Structural Steel, Low Voltage and others exist in Procore and have no equivalent trade in the 26-sheet checklist library at all. Both surfaced on the PQP report's Data Quality page — [`build-status.md`](foundation/charley-dev/_docs/build-status.md)
-- [ ] 🟡 **SharePoint site URL and template folder contents** — the Power Automate SOP names both templates but never says what is inside them
+- [ ] 🟡 **Template folder contents** — the site question is answered (Affect reused `AFFECTBUILD1` rather than creating a `BUILD` site, and both flows now point at it), but the SOP names `02 E26-000 BOILER PLATE` and `YY-000 STANDARD PROJECT TEMPLATE` and **never says what is inside them**. Until that lands, the flows create a correct but empty skeleton. Also worth deciding: `02 E26-000 BOILER PLATE` bakes in the year `26`, so in January it needs renaming or the parameter editing
 - [ ] 🟡 Payments + lien waiver SOPs finalized (Chris) — blocks D6/D7
 
 **Action items for Affect (not blockers on us):**
@@ -184,13 +190,16 @@ resource library, warehouse review, scope call).
 - [x] Fabric workspace access provisioned — **Aug 1**
 - [x] The shared project key across Procore / Sage / the tracker — **crosswalks built and populated**
 - [x] Sage ingestion approach decided and built (not waiting on the Procore↔Sage connector)
-- [x] Where critical-path milestones live — **Outbuild, confirmed as the only source**
+- [x] Where critical-path milestones live — **Outbuild, confirmed as the only source**, and as of 2026-08-19 **landing live**
 - [x] Where the ~40% manual data lives — **decided: SharePoint lists, with a CSV path that works today**
 - [x] Data warehouse review with Rebecca — **Thu Jul 23** (`meeting-notes/2026-07-23-warehouse-review.md`)
 - [x] Scope, terms & engagement agreed with Cathal — **Fri Jul 24** (`meeting-notes/2026-07-24-cathal-scope-call.md`)
 - [x] Excel project tracker shared (Jul 22) and assessed
 - [x] **Azure subscription** - exists. “Azure subscription 1”, `0bee26ab-…`, tenant *Affect Build LLC*. The only purchasing decision on the list is closed
 - [x] Platform review with Rebecca - **Thu Aug 13** (`meeting-notes/2026-08-13-rebecca-platform-review.md`)
+- [x] **`OUTBUILD_API_TOKEN`** - **received 2026-08-19.** Rebecca placed it in `AffectKeyVault` at 18:27 UTC. 3,078 rows across 15 endpoints now land in bronze
+- [x] **Key Vault access** - **closed 2026-08-19, and the ask was withdrawn rather than granted.** It had been aimed at the wrong vault. The vault in use is **`AffectKeyVault`** (RG `Affect_Data`, subscription `73932b34-…`), where `cforey-c@affect-group.com` already holds *Key Vault Administrator* inherited at resource-group scope. Nobody needed to grant anything. `OneLake`, which three documents had been naming since Aug 13, holds nothing we depend on - [`keyvault-runbook.md`](foundation/charley-dev/_docs/keyvault-runbook.md)
+- [x] **A SharePoint site for the job flows** - **resolved 2026-08-19.** Affect reused an existing site, `AFFECTBUILD1`, rather than creating a dedicated `BUILD` one; both flows point at it and its structure is provisioned
 
 ## Roadmap
 
@@ -204,11 +213,11 @@ time — it is gated on access and one conversation.
 | | Manual input wired silver → gold; Daily Reports scored | 4 definition answers | 3–4 hrs |
 | | **Target: scorecard coverage 59% → ~100%, source coverage 5% → meaningful** | | |
 | **1 — Harden** | DQ persist gap fixed; billed-vs-billed gap explained on the report. `deploy_gold.py` default **already changed to `cd`**, and its hardcoded publish list **already fixed** (45 → 54 tables) | Nothing | 2 hrs |
-| | **`cd_06_land_manual` added to `CD_Master_Pipeline`** - the nightly run currently rebuilds silver and gold without refreshing manual bronze. Harmless while every `man_*` is empty; a silent staleness bug the day somebody enters data. Must land before SharePoint goes live | Nothing | 1 hr |
-| | **`cd_01_extract_procore` added to `CD_Master_Pipeline`** - Procore extraction still runs locally and lands files | Key Vault role | 1 hr |
+| | 🟢 **Done.** `cd_06_land_manual` runs in `CD_Master_Pipeline` as *Land Manual Input* - verified live 2026-08-19. The pipeline is 6 activities, not 5 | — | — |
+| | **`cd_01_extract_procore` added to `CD_Master_Pipeline`** - Procore extraction still runs locally and lands files. Key Vault is no longer the gate; the credential rotation is | Procore credential rotation | 1 hr |
 | **1 — Finish the PQP** | Model and report are **deployed**, and the trade vocabulary is largely resolved - `qc_seed_TradeAlias` took unmapped NCRs 459 → 215 and punch items 511 → 291. What is left is Affect's answer on three ambiguous labels plus the trades with no library equivalent, and wiring the 8 `man_Qc*` intake tables | One answer from Affect | 1-2 hrs |
-| **1 — Go live on folders** | SharePoint site provisioned, both Power Automate flows imported and tested, `dim_Job` built from the Job Register | Site URL + template contents | 2-3 hrs |
-| | Retire the local extraction bridge — ingestion moves into Fabric on a schedule | Key Vault role (the subscription and vault now exist) | 2 hrs |
+| **1 — Go live on folders** | 🟡 **Mostly done.** Site provisioned on `AFFECTBUILD1`, both flows created in the tenant (stopped), `dim_Job` built end to end from the Job Register. What is left: the template **contents**, a service account to own the connection, then turn the triggers on and smoke-test | Template contents | 1 hr |
+| | Retire the local extraction bridge — ingestion moves into Fabric on a schedule | Procore credential rotation (Key Vault itself is no longer a blocker) | 2 hrs |
 | **1 — Transfer** | **Mentoring with Rebecca, recorded.** Extractor registry pattern first, then the deploy scripts, then the DQ gate | Scheduling | 3 hrs to start, then ongoing |
 | **2 — Project intelligence** | Report iteration with leadership; real completed-project validation; standalone Vendor & Insurance list if still wanted | Real project data | TBD |
 | **3 — Automation** | D6 payments, D7 lien waivers | SOPs from Chris | Quote per SOP |
