@@ -86,6 +86,70 @@ built on 2026-08-02. All eight tables exist in `CD_Bronze_Lakehouse/Tables/dbo`,
 **`arivln` and `apivln`** — the AR/AP line tables the existing `Build_Sage_Test` dataflow
 explicitly strips the pointer columns for, and which no one at Affect has ever queried.
 
+### What landed, measured
+
+| Table | Rows | |
+|---|---:|---|
+| `cd_bronze_sage_actpay` | 1,080 | payable accounts |
+| **`cd_bronze_sage_apivln`** | **901** | **AP invoice LINES — never queried before** |
+| `cd_bronze_sage_acpinv` | 871 | AP invoice headers |
+| `cd_bronze_sage_acppmt` | 656 | AP payments |
+| **`cd_bronze_sage_arivln`** | **258** | **AR invoice LINES — never queried before** |
+| `cd_bronze_sage_acrinv` | 148 | AR invoice headers |
+| `cd_bronze_sage_acrpmt` | 86 | AR payments |
+| `cd_bronze_sage_actrec` | 27 | jobs / receivable accounts |
+
+**4,027 rows.** AR line value **$25,613,659.66**, AP line value **$15,509,381.78**.
+
+### Open question 4 is answered, and the answer is no
+
+**Affect does not track retainage in Sage. Anywhere.** Measured across every place it could be:
+
+| Location | Rows checked | Rows with retainage | Total |
+|---|---:|---:|---:|
+| `acrinv.retain` (header) | 940 | 0 | $0.00 |
+| `arivln.hldamt` (AR lines) | 258 | 0 | $0.00 |
+| `apivln.hldamt` (AP lines) | 901 | 0 | $0.00 |
+| `actrec.retain` (jobs) | 27 | 0 | $0.00 |
+
+The line tables were the last candidate and they are empty of it too. So a report showing
+**$0 retainage is correct**, not the silent defect we were braced for — and that is worth
+saying plainly, because we had it on the risk list for a month.
+
+What it turns into is a **process question for Affect rather than a data question for us**:
+either retainage is genuinely not withheld, or it is tracked outside Sage. It cannot be
+derived from Sage, and no amount of transform work will conjure it. Worth asking Rebecca
+directly before anyone builds a retainage visual.
+
+### The join keys, verified rather than assumed
+
+`resources/sage-100-contractor/schema` implies the line tables hang off the header by
+`invrec`. **They do not.** Measured:
+
+| Join | Result |
+|---|---|
+| `arivln.invrec` → `acrinv.recnum` | **258 of 258 orphaned** |
+| `apivln.invrec` → `acpinv.recnum` | **901 of 901 orphaned** |
+| **`arivln._idref` → `acrinv._idnum`** | **0 orphaned** |
+| **`apivln._idref` → `acpinv._idnum`** | **0 orphaned** |
+| `acrinv.jobnum` → `actrec.recnum` | **0 orphaned** across 148 invoices, 24 distinct jobs |
+
+`_idref` is the foreign key, not `invrec`. Silver must join on it, and a `_idnum`/`_idref`
+pair that looks like an internal GUID is easy to dismiss as plumbing — which is presumably
+how the documented answer came to be wrong. The `jobnum` FK the whole Procore↔Sage crosswalk
+rests on is confirmed sound.
+
+### Cost codes: AP is complete, AR is not
+
+- **`apivln`: 901 of 901 lines carry `actnum`** (GL account). Actual-cost-by-account is now
+  possible for the first time — this is what makes `fct_BudgetLine`'s invoiced column real
+  rather than Procore-only.
+- `arivln`: only **25 of 258** lines carry `cstcde`. AR line detail is mostly uncoded, so
+  revenue-by-cost-code is not available from this source and should not be promised.
+
+Note the two line tables do not share a shape: AP codes to `actnum`/`subact`, AR to `cstcde`.
+Silver has to treat them separately rather than unioning them.
+
 ### The actual root cause, which was none of the three we guessed
 
 The destination failed because **the Lakehouse connection was being forced through the
