@@ -16,8 +16,12 @@ Home base for the Affect Group consulting engagement (construction data & automa
 | Bernard McNamee | Leadership | Copied on emails |
 | Cathal Egan (Cal) | Leadership | **Commercial owner of the engagement** — agreed scope, terms and rate (Jul 24). C: 929-202-3638 |
 
-## Engagement status (as of Aug 19, 2026)
+## Engagement status (as of Aug 25, 2026)
 
+- ✅ **SAGE IS LIVE END TO END (Aug 25)** — `CD_Sage_Ingest` runs, all 8 tables land (**4,027 rows**) including the AR/AP **line tables nobody at Affect had ever queried**, a new Sage silver layer feeds gold, and `fct_Invoice` went **122 → 148 rows, $23.70M → $25.61M**, with the latest invoice moving Jul 31 → **Aug 31**. Our own ingestion is fresher than the feed it replaced. The last blocked subject area is closed
+- ✅ **Procore extraction moved INTO Fabric (Aug 25)** — `cd_01_extract_procore` is the head of the nightly DAG and authenticates from Key Vault. **No laptop is in the data path for any source.** Its four previous lifetime runs had all died on `Secret not found`, so every line after authentication had never executed; fixing that exposed **eleven defects in sequence**. **Five endpoints had never returned a single row since registration** — all contract line items, payment applications and budget detail
+- ✅ **Twelve silent defects fixed (Aug 25)** — the two worth naming never crashed: merging nullable keys with `=` rather than `<=>` would have appended a fresh copy of every company record **every night, forever**, with nothing raising; and Sage's `invamt` column is **zero on all 1,019 invoices**, so the obvious reading would have published **$0 billed** with total confidence. Invoice totals are derived as paid + outstanding and reconcile **to the cent** against the line detail on both AR and AP
+- ✅ **The Sage "blocker" was ours, not Affect's (Aug 25)** — the ask carried since Aug 2 (*"grant Charley Can use on the gateway"*) was a mis-diagnosis. Rebecca and IT already held that permission; our dataflow simply ran as an account that did not. Corrected in front of the client rather than quietly fixed
 - ✅ Intro call with Rebecca (Jul 15)
 - ✅ In-person discovery meeting with wider team (Tue Jul 21, 8:30am at their office)
 - ✅ Excel project reporting template received (Jul 22) and **fully assessed** — see `analysis/excel-tracker/`

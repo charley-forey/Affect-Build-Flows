@@ -185,7 +185,21 @@ def main() -> int:
             #
             # Asserting an exact count against someone else's warehouse is fragile by
             # design. That fragility is the point: this assertion is what noticed.
-            "[BudgetLines]": 402, "[ChangeOrders]": 307, "[Invoices]": 122,
+            # REBASED 2026-08-25. Every count below moved UP, and none of it is a
+            # regression - two things changed on the same day:
+            #
+            #   * cd_01_extract_procore now runs INSIDE Fabric on the nightly schedule
+            #     instead of on a laptop, and five endpoints that had never returned a
+            #     single row started landing (contract line items, payment applications,
+            #     budget detail). Procore facts therefore grew against a baseline taken
+            #     when the pipeline was re-processing whatever was last landed on Aug 2.
+            #   * fct_Invoice reads our own Sage ingestion rather than Rebecca's
+            #     Revenue_AllTime, which filters `Invoice Balance <> 0` and so DROPPED
+            #     every fully-paid invoice. 122 -> 148 is those 26 invoices coming back.
+            #
+            # A baseline that is never rebased stops being a regression guard and becomes
+            # noise everyone learns to skip, so these are re-measured rather than widened.
+            "[BudgetLines]": 402, "[ChangeOrders]": 325, "[Invoices]": 148,
             # [Periods] 130 -> 142 landed the same day but is NOT the same cause, and the
             # difference matters because one story is checkable and the other is not.
             # Measured both ways against the SAME 122 invoices: with the dim_Project Sage
@@ -203,8 +217,8 @@ def main() -> int:
             # The other 280 critical activities are real and unattributable, and gold's
             # `WHERE project_id IS NOT NULL` is what drops them. Raising this number means
             # Affect connected more projects to Procore, not that a bug was fixed.
-            "[Submittals]": 2861, "[Milestones]": 126, "[Periods]": 142,
-            "[Billings]": 607, "[DirectCosts]": 418, "[ProjectVendors]": 393,
+            "[Submittals]": 2897, "[Milestones]": 126, "[Periods]": 143,
+            "[Billings]": 862, "[DirectCosts]": 436, "[ProjectVendors]": 409,
         },
         "existing": {
             "[Projects]": 17, "[Vendors]": 126, "[CostCodes]": 4837, "[Dates]": 7670,

@@ -25,12 +25,13 @@
 -- abfss rather than by bare name because gold's notebook runs with CD_Gold_Lakehouse as its
 -- default catalog - an unqualified cd_silver_projects does not resolve from there.
 --
--- TWO views still read the existing warehouse, each for a reason that is not laziness:
+-- ONE view still reads the existing warehouse, for a reason that is not laziness:
 --
---   sv_ar_invoices          Sage AR. Procore does not hold it and CD_Sage_Ingest is blocked
---                           on the on-prem gateway.
 --   sv_vendors              carries sage_vendor_id, which Procore does not put on the vendor
 --                           record; it comes from the existing crosswalk.
+--
+-- sv_ar_invoices was the other one until 2026-08-25. CD_Sage_Ingest now runs, so it reads
+-- cd_silver_sage_ar_invoices and the Sage subject area is ours end to end.
 --
 -- sv_outbuild_activities WAS the third and is not any more - repointed 2026-08-20 onto
 -- cd_silver_outbuild_activities, once the token landed and our own ingestion had run.
@@ -90,17 +91,60 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_budgets`;
 -- Copied verbatim from 00_source_views.sql, including the casts. Retyping it from memory
 -- got the column names wrong; the two must stay identical anyway, because gold reads the
 -- same sv_ar_invoices either way.
+-- REPOINTED 2026-08-25 off Rebecca's Revenue_AllTime onto our own Sage ingestion.
+--
+-- CD_Sage_Ingest went live at 09:25 UTC and lands acrinv directly, so gold no longer reads
+-- a warehouse table built by a dataflow we do not control. Two differences worth knowing
+-- before the row count is called a regression:
+--
+--   * Revenue_AllTime applies `Invoice Balance <> 0` inside Power Query, so it DROPS fully
+--     paid invoices. Ours keeps them, which is why the count goes UP rather than staying
+--     put. "Total billed to date" was unanswerable from the filtered source.
+--   * `Billing Period` was a column there and does not exist in Sage; it is derived from
+--     the invoice date at the same monthly grain the workbook reports at.
+--
+-- The column contract is unchanged, so gold did not need editing.
 CREATE OR REPLACE TEMPORARY VIEW sv_ar_invoices AS
 SELECT
-    CAST(`Job Number`      AS STRING) AS sage_project_id,
-    CAST(`Invoice Date`    AS DATE)   AS invoice_date,
-    CAST(`Due Date`        AS DATE)   AS due_date,
-    CAST(Description       AS STRING) AS description,
-    CAST(`Invoice Total`   AS DOUBLE) AS invoice_total,
-    CAST(`Amount Paid`     AS DOUBLE) AS amount_paid,
-    CAST(`Invoice Balance` AS DOUBLE) AS invoice_balance,
-    CAST(`Billing Period`  AS STRING) AS billing_period
-FROM delta.`{SILVER_ABFSS}/Revenue_AllTime`;
+    sage_project_id,
+    invoice_date,
+    due_date,
+    description,
+    invoice_total,
+    amount_paid,
+    invoice_balance,
+    billing_period
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ar_invoices`;
+
+-- Sage AP, which has no equivalent in the existing warehouse at all. The line view is what
+-- makes actual-cost-by-account possible: 901 of 901 AP lines carry a GL account, where the
+-- AP header carries a job number and no account.
+CREATE OR REPLACE TEMPORARY VIEW sv_ap_invoices AS
+SELECT
+    invoice_id, invoice_number, sage_vendor_id, sage_project_id, job_name,
+    invoice_date, due_date, description, invoice_total, amount_paid,
+    invoice_balance, billing_period
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ap_invoices`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_ap_lines AS
+SELECT
+    line_uid, invoice_id, sage_project_id, sage_vendor_id, line_number,
+    description, quantity, unit_price, line_total, invoiced_amount,
+    ledger_account, sub_account
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ap_lines`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_ar_lines AS
+SELECT
+    line_uid, invoice_id, sage_project_id, line_number, description,
+    quantity, unit_price, line_total, billed_amount, cost_code, ledger_account
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ar_lines`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_sage_jobs AS
+SELECT
+    sage_project_id, job_name, job_short_name, client_id, city, state,
+    status_code, start_date, completion_date, contract_date,
+    beginning_balance, ending_balance
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_jobs`;
 
 -- Submittals AND RFIs. The RFI arm is new - no RFI data exists anywhere in the warehouse
 -- today, so this union is the half of the workbook's only chart that has never been

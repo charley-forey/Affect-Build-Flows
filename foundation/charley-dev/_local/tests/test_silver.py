@@ -350,6 +350,87 @@ def _literal(value: str, sql_type: str) -> str:
     return f"CAST('{value}' AS {'INT' if sql_type == 'INT' else 'DOUBLE'})"
 
 
+def sage_bronze() -> dict[str, str]:
+    """cd_bronze_sage_* table name -> the CREATE statement that fixtures it.
+
+    Sage bronze is NOT the Procore payload shape - CD_Sage_Ingest lands real typed SQL
+    Server columns, so these cannot go through bronze_row() like every other fixture.
+
+    The fixture encodes the two facts that cost the most to learn against live data:
+
+      * the line tables join to their header on `_idref` -> `_idnum`, NOT on `invrec`.
+        `invrec` is populated here with a DELIBERATELY WRONG value, so a transform that
+        reverts to the documented-but-wrong key produces zero rows and fails the test
+        rather than silently emptying the table in production.
+      * retainage (`hldamt`) is zero everywhere in Sage, which is the measured answer and
+        not a gap - see 26_sage_silver.sql.
+    """
+    def row(*values) -> str:
+        return "(" + ", ".join(values) + ")"
+
+    out: dict[str, str] = {}
+
+    out["cd_bronze_sage_actrec"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_actrec AS SELECT * FROM (VALUES "
+        + row("'J-UID-1'", "11", "'  Tower A  '", "'TWRA'", "501", "'Brooklyn'", "'NY'",
+              "3", "DATE '2025-01-15'", "DATE '2026-06-30'", "DATE '2024-12-01'",
+              "0.0", "125000.0", "0.0", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ") AS t(_idnum, recnum, jobnme, shtnme, clnnum, ctynme, state_, status, "
+          "strdte, cmpdte, ctcdte, begbal, endbal, retain, upddte)"
+    )
+
+    # Two AR invoices: one open, one FULLY PAID. Revenue_AllTime drops the paid one via its
+    # `Invoice Balance <> 0` filter; ours must keep both, which is what the count test pins.
+    out["cd_bronze_sage_acrinv"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_acrinv AS SELECT * FROM (VALUES "
+        # invamt is 0 on BOTH, exactly as the live tenant has it on all 148 AR rows.
+        # The real total is amtpad + invbal. A transform that trusts invamt puts $0 on
+        # every invoice and this test is what stops it reaching the report.
+        + row("'AR-UID-1'", "901", "'  AIA #1  '", "11", "DATE '2026-03-31'",
+              "DATE '2026-04-30'", "'  Progress billing 1  '", "0.0", "4000.0",
+              "6000.0", "0.0", "1", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ", "
+        + row("'AR-UID-2'", "902", "'AIA #2'", "11", "DATE '2026-04-30'",
+              "DATE '2026-05-31'", "'Progress billing 2'", "0.0", "5000.0",
+              "0.0", "0.0", "1", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ") AS t(_idnum, recnum, invnum, jobnum, invdte, duedte, dscrpt, invamt, "
+          "amtpad, invbal, hldamt, status, upddte)"
+    )
+
+    # invrec is set to 999 on purpose: it matches NO header. Only _idref resolves.
+    out["cd_bronze_sage_arivln"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_arivln AS SELECT * FROM (VALUES "
+        + row("'ARL-UID-1'", "'AR-UID-1'", "999", "1", "'  Sitework  '", "2.0", "1500.0",
+              "3000.0", "0.0", "3000.0", "1100.25", "40100", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ", "
+        + row("'ARL-UID-2'", "'AR-UID-1'", "999", "2", "'Concrete'", "1.0", "7000.0",
+              "7000.0", "0.0", "7000.0", "NULL", "40200", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ") AS t(_idnum, _idref, invrec, linnum, dscrpt, linqty, linprc, extprc, "
+          "hldamt, bllamt, cstcde, lgract, upddte)"
+    )
+
+    out["cd_bronze_sage_acpinv"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_acpinv AS SELECT * FROM (VALUES "
+        + row("'AP-UID-1'", "801", "'INV-77'", "55", "11", "DATE '2026-03-15'",
+              "DATE '2026-04-15'", "'  Subcontract draw  '", "0.0", "2000.0",
+              "6000.0", "0.0", "1", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ") AS t(_idnum, recnum, invnum, vndnum, jobnum, invdte, duedte, dscrpt, "
+          "invamt, amtpad, invbal, hldamt, status, upddte)"
+    )
+
+    out["cd_bronze_sage_apivln"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_apivln AS SELECT * FROM (VALUES "
+        + row("'APL-UID-1'", "'AP-UID-1'", "999", "1", "'  Labour  '", "10.0", "500.0",
+              "5000.0", "0.0", "5000.0", "50100", "1", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ", "
+        + row("'APL-UID-2'", "'AP-UID-1'", "999", "2", "'Materials'", "1.0", "3000.0",
+              "3000.0", "0.0", "3000.0", "50200", "1", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ") AS t(_idnum, _idref, invrec, linnum, prtdsc, linqty, linprc, extttl, "
+          "hldamt, invamt, actnum, subact, upddte)"
+    )
+    return out
+
+
 def manual_bronze() -> dict[str, str]:
     """cd_bronze_man_* table name -> the CREATE statement that fixtures it."""
     import deploy_manual as dm
@@ -438,6 +519,8 @@ def build():
             f"SELECT * FROM (VALUES {', '.join(rows)}) AS t({COLUMNS})"
         )
     for statement in manual_bronze().values():
+        con.execute(statement)
+    for statement in sage_bronze().values():
         con.execute(statement)
     for path in SILVER_SQL:
         for statement in split_statements(path.read_text(encoding="utf-8")):
@@ -869,11 +952,78 @@ def test_outbuild_parser(con) -> None:
     check("names are trimmed and baseline dates are landed for later variance work")
 
 
+def test_sage_parser(con) -> None:
+    """The Sage transforms, pinned on the facts that were expensive to learn."""
+    # THE JOIN KEY. Every fixture line carries invrec = 999, which matches no header. If a
+    # future edit reverts to the documented-but-wrong `invrec`, these come back 0 and the
+    # test fails - rather than the table silently emptying in production, which is what
+    # would otherwise happen and would read as "Sage has no line detail".
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_lines") == 2
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ap_lines") == 2
+    check("line tables join to their header on _idref, not the documented invrec")
+
+    # Lines must inherit the header's project, or nothing downstream can allocate cost.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ap_lines "
+                    "WHERE sage_project_id IS NULL") == 0
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ap_lines "
+                    "WHERE ledger_account IS NULL") == 0
+    check("every AP line carries its project and GL account - the point of the line tables")
+
+    # FULLY PAID INVOICES SURVIVE. Revenue_AllTime filters `Invoice Balance <> 0` inside
+    # Power Query and drops them, which makes "total billed to date" unanswerable. The
+    # fixture has one open invoice and one fully paid; both must be here.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_invoices") == 2
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_invoices "
+                    "WHERE invoice_balance = 0") == 1
+    check("fully paid AR invoices are kept, unlike the filtered warehouse source")
+
+    # THE $0 INVOICE TRAP. invamt is zero on every row in the fixture, as it is on all 148
+    # live AR invoices, so a transform that trusts it reports $0 billed with total
+    # confidence. The total is paid + outstanding: (4000+6000) + (5000+0) = 15000.
+    assert one(con, "SELECT SUM(invoice_total) FROM cd_silver_sage_ar_invoices") == 15000.0
+    assert one(con, "SELECT SUM(invoice_total) FROM cd_silver_sage_ap_invoices") == 8000.0
+    check("invoice_total is derived from paid + balance, because invamt is 0 everywhere")
+
+    # And it must equal the line detail, which is the independent cross-check that made
+    # this a fact rather than a guess: live AR ties to the cent at $25,613,659.66.
+    assert one(con, "SELECT SUM(invoice_total) FROM cd_silver_sage_ap_invoices") ==            one(con, "SELECT SUM(line_total) FROM cd_silver_sage_ap_lines")
+    check("AP invoice totals reconcile exactly against the AP line detail")
+    assert one(con, "SELECT SUM(line_total) FROM cd_silver_sage_ap_lines") == 8000.0
+    check("invoice and line amounts land as numbers and sum correctly")
+
+    # Gold reads billing_period off sv_ar_invoices; Sage has no such column.
+    assert one(con, "SELECT billing_period FROM cd_silver_sage_ar_invoices "
+                    "WHERE invoice_id = '901'") == "2026-03"
+    check("billing_period is derived from the invoice date at monthly grain")
+
+    # TRIM at the boundary, same rule as every other parser here.
+    assert one(con, "SELECT job_name FROM cd_silver_sage_jobs") == "Tower A"
+    assert one(con, "SELECT description FROM cd_silver_sage_ar_invoices "
+                    "WHERE invoice_id = '901'") == "Progress billing 1"
+    check("Sage text values are trimmed at the silver boundary")
+
+    # The header join, which the whole Procore-Sage crosswalk rests on.
+    assert one(con, "SELECT job_name FROM cd_silver_sage_ar_invoices "
+                    "WHERE invoice_id = '901'") == "Tower A"
+    check("invoices resolve their job through jobnum -> actrec.recnum")
+
+    # Retainage is zero in Sage - measured, not assumed. Carried through so a future
+    # non-zero value appears rather than being filtered away.
+    assert one(con, "SELECT SUM(hold_amount) FROM cd_silver_sage_ap_lines") == 0.0
+    check("retainage is carried through Sage silver even though it is zero everywhere")
+
+    # AR cost-code coverage is partial and must stay honest: 1 of 2 fixture lines has one.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_lines "
+                    "WHERE cost_code IS NOT NULL") == 1
+    check("AR lines keep a NULL cost code rather than inventing one")
+
+
 def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
                test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
-               test_manual_parsers, test_qc_procore_parser, test_outbuild_parser):
+               test_manual_parsers, test_qc_procore_parser, test_outbuild_parser,
+               test_sage_parser):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

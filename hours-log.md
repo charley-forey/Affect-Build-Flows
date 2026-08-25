@@ -39,10 +39,13 @@ Source of truth for time/project validation and invoicing. **Append-only** — n
 | 21 | 2026-08-20 | Development | 3.0 | Yes | [D4](deliverables/04-project-data-model.md) / General | **Finished the reporting site, and reconciled every document against the live platform.** Provisioned the intake site's **142 columns and 19 `CD Projects` rows** onto the 18 lists (the lists themselves had landed the night before, by a run recorded at the time as having created nothing). Found the seed was **not idempotent** — creating a list or column fails harmlessly when it exists, but creating a list ITEM always succeeds, so a second run left **38 rows where 19 were real** while every batch reported `Succeeded`; `ProjectKey` is a Lookup at that list, so duplicates make the target ambiguous. Removed the surplus, filtered the seed at the source, and added `--verify`, because neither the run status nor the dry run could answer "what actually landed" — the dry run counts only lists and reported 142 columns outstanding against a site that already had all of them. Then a full documentation pass: the **DQ expectation count was wrong in thirteen files and disagreed with itself** (twelve said 104, `build-status` said 105, `build_suite()` says **107**), five documents still said the intake lists needed creating, and three claims were actively false rather than merely stale — including a client-facing Key Vault ask that had named the wrong vault since Aug 13 and was recorded as **withdrawn, not completed**. | commits `5245fa1`…`c10eb86`, PRs #38, #39, #40, #41 | — |
 | 22 | 2026-08-20 | Development | 2.0 | Yes | [D5](deliverables/05-powerbi-project-dashboard.md) / [D4](deliverables/04-project-data-model.md) | **Put the schedule data on the report, and fixed two defects that were hiding the reason it could not go.** Repointed `sv_outbuild_activities` off Rebecca's `Silver_Lakehouse` onto our own ingestion via a new silver parser: `fct_Milestone` **52 → 126 rows, 2 → 3 projects**, 0 orphans, model reframed, 17 live DAX checks passing. Two traps caught by measuring rather than reasoning: Outbuild sends `progress` as **0–100** against gold's 0–1 contract — and Rebecca's silver had already normalised it, which is exactly what hid the difference — so unnormalised, `IsOverdue` would report **zero overdue milestones on a late job**; and 4 of 15 projects have multiple schedules, so the portable-looking `$.schedules[0].id` would have silently dropped **1,150 of 1,860** activities. Diagnosing a Spark failure took three runs because `deploy_silver` wrote its run diagnostics **after** a `COUNT(*)` loop that crashes on a missing table — which is precisely what a failed `CREATE` upstream produces — so the artefact naming the failing statement was skipped exactly when it was needed. Fixed, and it immediately named a second pre-existing defect: the Job Register parser's bronze table had never been deployed, which would have failed the nightly pipeline. | commit `31cb72c`, PR #42 | — |
 
+| 23 | 2026-08-25 | Development | 5.0 | Yes | [D3](deliverables/03-sage100-ingestion.md) / [D2](deliverables/02-procore-etl-validation.md) / [D4](deliverables/04-project-data-model.md) | **Sage went live end to end, Procore extraction moved into Fabric, and twelve silent defects were fixed.** Two subject areas that had never once run correctly now do. **Procore:** `cd_01_extract_procore` had failed all four of its lifetime runs on `Secret not found`, so every line after authentication had never executed — fixing that exposed eleven defects in sequence, seven of them the same shape (a rule `extract_procore_local.py` implemented and the generated notebook did not). Those rules now live once in `procore_extract.py`. **Five endpoints had never returned a single row since registration** — all contract line items, payment applications and budget detail — because `collect_parent_ids` defaulted to not pairing a parent with its project. Two defects never crashed at all: merging nullable keys with `=` instead of `<=>` would have appended a fresh copy of every company record nightly, forever, silently; and a sandbox default would have landed convincingly empty tables had the credentials been valid in both environments. **Sage:** the ask carried since Aug 2 — "grant Charley Can use on the gateway" — was **our own mis-diagnosis**: Rebecca and IT already held it, and the dataflow simply ran as an account that did not. The real blocker was that the Lakehouse *destination* was being dragged through the on-premises gateway by the dataflow-level `gatewayObjectId`, so Fabric was asking a server in Affect's office to authenticate to OneLake. Fixed by re-adding the destination with the gateway set to `(none)`. All 8 tables landed, **4,027 rows**, including the AR/AP line tables no one at Affect had ever queried. Then built the Sage silver layer and found two more: the documented join key `invrec` **orphans every single line row** (the real key is `_idref`), and `invamt` — the obvious "invoice total" column — is **zero on all 1,019 invoices**, so trusting it would have reported $0 billed with total confidence. Total derived as paid + outstanding, which reconciles **to the cent** against the line tables on both AR and AP. `fct_Invoice` **122 → 148 rows, $23.70M → $25.61M**, latest invoice Jul 31 → **Aug 31** — our own ingestion is fresher than the feed it replaced. 62 offline silver checks, 4 new blocking DQ expectations, 17 live model checks, full nightly pipeline run end to end. | commits `004edcb`…, PRs pending | — |
+
 ### How entries 16–22 were timed
 
 Same method as 11–15: the elapsed span of each contiguous working session, from commit
-timestamps, rounded to the nearest 0.25. Entry 16 is different — it is two scheduled
+timestamps, rounded to the nearest 0.25. Entry 23 covers one continuous session on Aug 25,
+roughly 05:00–10:30 UTC, timed the same way. Entry 16 is different — it is two scheduled
 meetings of known length (30 min virtual, 1 hr in person) plus preparation and write-up.
 Entries 17 and 18 split one continuous session at the point the work changed shape, which is
 also where PR #16 merged. **Reconstructed after the fact and stated plainly so it can be
@@ -68,9 +71,9 @@ invoicing.
 | Category | Hours | Billable @ $125 |
 |---|---|---|
 | Consulting (billable) | 3.75 | $468.75 |
-| Development (billable) | 41.75 | $5,218.75 |
+| Development (billable) | 46.75 | $5,843.75 |
 | Mentoring (billable) | 0.0 | $0 |
-| **Billable total** | **45.5** | **$5,687.50** |
+| **Billable total** | **50.5** | **$6,312.50** |
 | Non-billable (pre-agreement) | 16.0 | — |
 
 ### Phase 0 budget — 20 hrs / $2,500
@@ -78,8 +81,8 @@ invoicing.
 | | Hours | Amount |
 |---|---|---|
 | Budget | 20.0 | $2,500 |
-| Consumed | 45.5 | $5,687.50 |
-| **Remaining** | **−25.5** | **−$3,187.50** |
+| Consumed | 50.5 | $6,312.50 |
+| **Remaining** | **−30.5** | **−$3,812.50** |
 
 > ⚠️ **Phase 0's twenty hours are spent, and then some.** The overrun is not a Phase 0
 > overspend — it is work past the end of Phase 0 that has not been re-scoped. Phase 0's five
@@ -91,9 +94,17 @@ invoicing.
 > absorbed silently, and rather than invoiced without being agreed.
 >
 > **The number keeps moving.** It was 34.5 at the Aug 19 08:23 update, 40.5 by the end of
-> that day, and is **45.5** now; entries 21 and 22 are Aug 20. Any figure quoted to Cathal should be
-> taken from this table rather than from the executive update, which is a point-in-time
-> document.
+> that day, 45.5 after Aug 20, and is **50.5** now; entry 23 is Aug 25. Any figure quoted to
+> Cathal should be taken from this table rather than from the executive update, which is a
+> point-in-time document.
+>
+> **Entry 23 is the one most worth explaining if it is questioned.** Five hours closed the
+> last blocked subject area on the engagement and removed the final laptop dependency, and
+> it did so by finding twelve defects that were producing confident, wrong, or absent
+> numbers — including five Procore endpoints that had never returned a row since the day
+> they were registered, and a Sage invoice total that would have published as $0. None of
+> those would have announced themselves; they were found by measuring rather than by
+> anything failing.
 
 > The 16.0 hours logged before Aug 1 are **non-billable by choice** — the tracker assessment,
 > Power BI build kit, resource library, warehouse review, and the scope call itself were

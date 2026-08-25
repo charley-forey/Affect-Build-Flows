@@ -102,6 +102,68 @@ def build_suite() -> Suite:
         description="no project maps to Sage - the crosswalk join is broken, not sparse",
     ))
 
+    # ------------------------------------------------------------ Sage AR
+    #
+    # fct_Invoice reads our own Sage ingestion as of 2026-08-25, not Rebecca's
+    # Revenue_AllTime. These guard the three ways that source can go wrong QUIETLY - each
+    # one produces a report that renders perfectly and is wrong.
+
+    # THE $0 TRAP. acrinv.invamt is zero on all 148 live rows; the total is amtpad + invbal.
+    # A transform that trusts invamt reports $0 billed with total confidence. Blocking,
+    # because a zero revenue figure on a client-facing report is not a warning.
+    suite.add(Expectation(
+        name="fct_Invoice.Amount is not universally zero",
+        table="fct_Invoice",
+        failing_sql=(
+            "SELECT * FROM fct_Invoice "
+            "WHERE NOT EXISTS (SELECT 1 FROM fct_Invoice WHERE Amount <> 0)"
+        ),
+        severity=SEVERITY_ERROR,
+        description="every invoice totals zero - invamt was trusted instead of paid+balance",
+    ))
+
+    # Paid + outstanding must equal the total. If the derivation above is ever replaced by
+    # a raw column, this catches the drift on the next run rather than at quarter end.
+    suite.add(Expectation(
+        name="fct_Invoice.Amount reconciles to AmountPaid + Balance",
+        table="fct_Invoice",
+        failing_sql=(
+            "SELECT * FROM fct_Invoice "
+            "WHERE Amount IS NOT NULL AND AmountPaid IS NOT NULL AND Balance IS NOT NULL "
+            "AND ABS(Amount - (AmountPaid + Balance)) > 0.01"
+        ),
+        severity=SEVERITY_ERROR,
+        description="invoice total no longer equals paid plus outstanding",
+    ))
+
+    # The source must not go empty. Sage runs through an on-premises gateway, and the
+    # failure mode when that breaks is an empty table rather than an error - which reads
+    # downstream as "Affect billed nothing".
+    suite.add(Expectation(
+        name="fct_Invoice has rows",
+        table="fct_Invoice",
+        failing_sql=(
+            "SELECT * FROM dim_Project "
+            "WHERE NOT EXISTS (SELECT 1 FROM fct_Invoice)"
+        ),
+        severity=SEVERITY_ERROR,
+        description="no AR invoices at all - the Sage gateway or dataflow has stopped",
+    ))
+
+    # Unmatched jobs are EXPECTED and must stay visible rather than blocking: Sage carries
+    # jobs that were never opened in Procore. Warn so the number is watched, because a
+    # sudden jump means the crosswalk broke rather than that Affect won work.
+    suite.add(Expectation(
+        name="fct_Invoice project match rate is not collapsing",
+        table="fct_Invoice",
+        failing_sql=(
+            "SELECT * FROM fct_Invoice f "
+            "WHERE NOT EXISTS (SELECT 1 FROM fct_Invoice WHERE HasUnmatchedProject = FALSE)"
+        ),
+        severity=SEVERITY_WARN,
+        description="not one AR invoice resolves to a project - the crosswalk join broke",
+    ))
+
     # ------------------------------------------------------------ dates
     #
     # MonthStart is the dim_Date join. A value outside the calendar matches nothing, and a

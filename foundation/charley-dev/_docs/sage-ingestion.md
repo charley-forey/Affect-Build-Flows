@@ -101,9 +101,16 @@ explicitly strips the pointer columns for, and which no one at Affect has ever q
 
 **4,027 rows.** AR line value **$25,613,659.66**, AP line value **$15,509,381.78**.
 
-### Open question 4 is answered, and the answer is no
+### Retainage: Sage confirms what progress billing already told us
 
-**Affect does not track retainage in Sage. Anywhere.** Measured across every place it could be:
+Open question 4 was **already closed on 2026-08-02** — retainage lives in Procore progress
+billing, not Sage, and `21_financial_silver.sql` carries the numbers: owner retainage held
+**$830,725.87**, sub retainage held **$486,030.04**, net position **$344,695.83**.
+
+What the line tables add is the last piece of proof for the *other* half of that conclusion:
+**Sage holds no retainage anywhere.** That had been verified only at header level; the two
+line tables and `actrec` were the remaining candidates and needed the gateway. They are now
+measured, and they are empty of it:
 
 | Location | Rows checked | Rows with retainage | Total |
 |---|---:|---:|---:|
@@ -112,14 +119,13 @@ explicitly strips the pointer columns for, and which no one at Affect has ever q
 | `apivln.hldamt` (AP lines) | 901 | 0 | $0.00 |
 | `actrec.retain` (jobs) | 27 | 0 | $0.00 |
 
-The line tables were the last candidate and they are empty of it too. So a report showing
-**$0 retainage is correct**, not the silent defect we were braced for — and that is worth
-saying plainly, because we had it on the risk list for a month.
+So a Sage-sourced retainage figure of $0 is **correct**, and the report's retainage numbers
+correctly come from progress billing instead. Nothing to fix, and the last "we should check
+that when the gateway lands" item on this subject area is now checked.
 
-What it turns into is a **process question for Affect rather than a data question for us**:
-either retainage is genuinely not withheld, or it is tracked outside Sage. It cannot be
-derived from Sage, and no amount of transform work will conjure it. Worth asking Rebecca
-directly before anyone builds a retainage visual.
+Worth one sentence to Rebecca all the same: Affect withholds retainage on Procore contracts
+but records none of it in Sage, so the two systems disagree by design. That is a process
+observation, not a defect, and she is the right person to say whether it is intended.
 
 ### The join keys, verified rather than assumed
 

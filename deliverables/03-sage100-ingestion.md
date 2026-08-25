@@ -1,12 +1,8 @@
 # D3 — Sage 100 Ingestion Pipeline
 
-**Status:** 🔵 **Built & deployed — blocked on one permission grant** | **Phase:** 1 — Foundation | **Billing:** ~2 hrs in Phase 0; silver transforms to follow | **Target:** Runs the day the grant lands
+**Status:** 🟢 **Live end to end** | **Phase:** 1 — Foundation | **Billing:** ~2 hrs in Phase 0 + ~2 hrs on 2026-08-25 | **Target:** ✅ Met
 
-> **`CD_Sage_Ingest` is live** in the Fabric workspace `Build`, folder `charley-dev`, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze_Lakehouse`. Eight tables, including the two AR/AP **line** tables (`arivln`, `apivln`) whose pointing columns the existing dataflow explicitly removes — which is where cost codes and the real retainage live. (Header `retain` is **$0 across all 940 invoices**; a header-sourced report shows zero retainage silently.)
->
-> **It is inert, not missing.** The first run failed in about five seconds, too fast to be a query: `cforey-c@affect-group.com` cannot see any gateway or connection in the tenant, so the dataflow asks to run through a gateway its runner has no rights on.
->
-> **The ask is one line.** Whoever administers the on-premises data gateway grants `cforey-c@affect-group.com` the **"Can use"** permission on connection `nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*. No subscription, no vault, no code change — Affect already uses this connection, so nothing new is built. The Sage database is managed by an outside consultant, so the ask may route through them. Detail: [`_docs/sage-ingestion.md`](../foundation/charley-dev/_docs/sage-ingestion.md).
+> **LIVE as of 2026-08-25.** `CD_Sage_Ingest` completed at 09:25 UTC — the first successful run since it was built on Aug 2 — and all 8 tables land in `CD_Bronze_Lakehouse`: **4,027 rows**, including `arivln` and `apivln`, the AR/AP **line tables the existing dataflow strips the pointer columns for and which no one at Affect had ever queried**. A new silver layer (`26_sage_silver.sql`, 5 tables) feeds gold, and `fct_Invoice` moved **122 → 148 rows** and **$23.70M → $25.61M**, with the latest invoice going Jul 31 → **Aug 31**. Detail: [`_docs/sage-ingestion.md`](../foundation/charley-dev/_docs/sage-ingestion.md).
 
 ## Objective
 Sage 100 Contractor data lands in the Fabric Lakehouse on a schedule, replacing the current live SQL queries from Power BI, so accounting data joins the warehouse alongside Procore.
@@ -27,18 +23,20 @@ Sage 100 SQL Server (read-only; likely on-prem → **on-premises data gateway** 
 - [x] Design landing schema + load strategy — land raw, shape in `sql/silver/`, so every transform is diffable and testable offline
 - [x] Build the dataflow — 8 queries, `DefaultDestination` → `CD_Bronze_Lakehouse`
 - [x] Deploy it — live in the `charley-dev` folder; the definition reads back from Fabric exactly as committed
-- [ ] **Grant `cforey-c@affect-group.com` *Can use* on `nc-affect-1\sage100con;Affect Group`** — Affect / their Sage consultant
-- [ ] Run it, then write `sql/silver/20_sage_silver.sql` to type and validate the eight tables
-- [ ] Point `sv_ar_invoices` at `cd_silver_*` (it still reads the existing warehouse, which keeps `fct_Invoice` at 117 rows rather than zero while this is blocked)
-- [ ] Settle open question 4 (retainage) with the line data in hand
-- [ ] Schedule + alerting
-- [ ] Repoint/plan migration of existing Power BI live queries to Lakehouse data
+- [x] ~~Grant *Can use* on the gateway connection~~ — **withdrawn 2026-08-25 as a mis-diagnosis.** Rebecca and IT already held it; the dataflow ran as an account that did not. The real fault was the Lakehouse destination being routed through the on-premises gateway
+- [x] **Run it** — completed 09:25 UTC 2026-08-25, all 8 tables, 4,027 rows
+- [x] **Silver transform** — `26_sage_silver.sql`, five typed tables, 62 offline checks
+- [x] **Point `sv_ar_invoices` at `cd_silver_*`** — `fct_Invoice` 122 → **148 rows / $25.61M**
+- [x] **Settle open question 4 (retainage)** — Sage holds none anywhere; the real figures come from Procore progress billing and were already in `fct_Billing`
+- [x] **Schedule** — `Ingest Sage` runs in `CD_Master_Pipeline`, parallel to Procore extraction, ahead of Bronze To Silver
+- [ ] Alerting — the DQ gate fails the run, but nothing emails a person yet (shared gap with every other subject area)
+- [ ] Repoint `fct_BudgetLine`'s invoiced column onto `apivln` — the actual-cost-by-account prize, and a real change to a live report
 - [ ] Document for Rebecca (pattern reusable for future sources)
 
 ## Acceptance criteria
-- Required Sage tables land in the Lakehouse on schedule
-- Power BI no longer depends on live SQL queries for the core reports
-- Job/cost data reconciles with Sage source (spot-check totals)
+- [x] Required Sage tables land in the Lakehouse on schedule — 8 of 8, nightly
+- [x] Power BI no longer depends on live SQL queries for the core reports — `sv_ar_invoices` reads our own silver, not Rebecca's `Revenue_AllTime`
+- [x] Job/cost data reconciles with the Sage source — **AR $25,613,659.66 and AP $15,509,381.78 tie to the cent** between two independent derivations (header paid + outstanding, and the sum of the line detail). `jobnum → actrec.recnum` orphans 0 of 148
 
 ## Files & resources
 - [`sage-ingestion.md`](../foundation/charley-dev/_docs/sage-ingestion.md) — the dataflow, why `arivln`/`apivln` matter, and what is left
@@ -51,4 +49,5 @@ Sage 100 SQL Server (read-only; likely on-prem → **on-premises data gateway** 
 | 2026-08-03 | **Deployed.** First run failed in 5 seconds — `GET /v1/gateways` and `GET /v1/connections` both return empty for our identity, and `GET /v1/gateways/1e798beb-…` returns 404. The gateway demonstrably exists (`Build_Sage_Test` uses it); this identity cannot see it. Leaving the failed dataflow deployed is deliberate: it is correct, inert until run, and it turns the remaining work into one grant plus one refresh. |
 | 2026-08-11 | Rebecca raising the gateway grant with IT support, alongside the Key Vault ask. |
 | 2026-08-19 | Still blocked on the same single grant. Verified live that the dataflow **is** deployed and present in the `charley-dev` folder — documentation that said "defined in the repo, not deployed" was stale and has been corrected. |
+| 2026-08-25 | **LIVE.** Ran at 09:25 UTC, 3m55s, all 8 tables, **4,027 rows**. Three findings the run itself produced. (1) **The blocker was ours.** Rebecca and IT already held *Can use* on the datasource — a Dataflow Gen2 runs as its OWNER, and we had deployed it owned by an account with no gateway rights, then reported the failure as a grant Affect was withholding. (2) **The real fault was the destination, not the source.** `gatewayObjectId` sits at the dataflow level and Power Query applies it to *every* connection, so Fabric was asking a server in Affect's office to authenticate to OneLake. Fixed by re-adding the data destination with the gateway set to `(none)` — a dropdown that only appears when the destination is added from scratch. (3) **`invamt` is zero on all 1,019 invoices.** The obvious "invoice total" column is not populated by this company; the total is paid + outstanding, which reconciles **to the cent** against the line tables on both AR and AP. Trusting it would have published $0 billed with total confidence. Also found the documented join key `invrec` orphans **every** line row — the real key is `_idref`. |
 | 2026-08-19 (evening) | **Now the only access grant left on the engagement.** The Outbuild token arrived and the Key Vault ask was withdrawn as having named the wrong vault, so this is the last one. Separately: the handoff document's database name `ABMI` is **wrong** and was not changed — `Affect Group`, which `CD_Sage_Ingest` already queries, resolves to 15 of the 16 real projects and $22.5M of AR. |

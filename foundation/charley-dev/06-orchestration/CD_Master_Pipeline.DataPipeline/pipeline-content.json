@@ -76,6 +76,12 @@
             ]
           },
           {
+            "activity": "Ingest Sage",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
             "activity": "Land To Bronze",
             "dependencyConditions": [
               "Succeeded"
@@ -150,6 +156,23 @@
         "typeProperties": {
           "notebookId": "4940d038-fa40-4402-a315-e2ec85f02f38",
           "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
+        "name": "Ingest Sage",
+        "type": "RefreshDataflow",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "dataflowId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+          "notifyOption": "NoNotification"
         }
       }
     ],

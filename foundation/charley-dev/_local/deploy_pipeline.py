@@ -101,7 +101,7 @@ STAGES = [
     # System_Cancelled_Session_Statements_Failed and names no table.
     ("Land Manual Input", "cd_06_land_manual", []),
     ("Bronze To Silver", "cd_10_bronze_to_silver",
-     ["Extract Procore", "Land To Bronze", "Land Manual Input"]),
+     ["Extract Procore", "Ingest Sage", "Land To Bronze", "Land Manual Input"]),
     ("Build Gold", "cd_30_build_gold", ["Bronze To Silver", "Seed Gold Dimensions"]),
     # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
     # means the numbers were checked - not merely that the tables were written. Anything
@@ -116,6 +116,39 @@ STAGES = [
 # cold start plus the retry.
 TIMEOUTS = {"cd_01_extract_procore": "0.02:00:00", "cd_05_land_to_bronze": "0.01:00:00"}
 DEFAULT_TIMEOUT = "0.00:30:00"
+
+
+# Dataflow Gen2 stages. Separate from STAGES because a dataflow activity is a different
+# activity TYPE with different typeProperties - not a notebook with a different id.
+#
+# CD_Sage_Ingest went live 2026-08-25. It runs parallel to Procore extraction rather than
+# after it: the two sources are independent, and serialising them would add Sage's four
+# minutes to the critical path for no benefit. Bronze To Silver waits for both.
+DATAFLOW_STAGES = [
+    ("Ingest Sage", "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8", []),
+]
+
+
+def dataflow_activity(name: str, dataflow_id: str, upstream: list[str]) -> dict:
+    return {
+        "name": name,
+        "type": "RefreshDataflow",
+        "dependsOn": [
+            {"activity": u, "dependencyConditions": ["Succeeded"]} for u in upstream
+        ],
+        "policy": {
+            "timeout": "0.01:00:00",
+            "retry": 1,
+            "retryIntervalInSeconds": 60,
+            "secureOutput": False,
+            "secureInput": False,
+        },
+        "typeProperties": {
+            "dataflowId": dataflow_id,
+            "workspaceId": dp.WORKSPACE_ID,
+            "notifyOption": "NoNotification",
+        },
+    }
 
 
 def activity(name: str, notebook_id: str, upstream: list[str], timeout: str) -> dict:
@@ -145,6 +178,9 @@ def build(notebook_ids: dict[str, str]) -> dict[str, str]:
     activities = [
         activity(name, notebook_ids[nb], upstream, TIMEOUTS.get(nb, DEFAULT_TIMEOUT))
         for name, nb, upstream in STAGES
+    ] + [
+        dataflow_activity(name, dataflow_id, upstream)
+        for name, dataflow_id, upstream in DATAFLOW_STAGES
     ]
     content = {"properties": {
         "activities": activities,

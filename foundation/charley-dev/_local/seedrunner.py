@@ -78,6 +78,12 @@ MACROS = (
     # Spark's datediff(end, start) is 2-arg; DuckDB ships only the 3-arg date_diff(part,
     # start, end). Overloading by arity is allowed, so the Spark spelling works here too.
     "CREATE OR REPLACE MACRO datediff(e, s) AS date_diff('day', CAST(s AS DATE), CAST(e AS DATE))",
+    # Spark's date_format(d, 'yyyy-MM'); DuckDB spells it strftime with C-style codes.
+    # 26_sage_silver.sql needs it because Sage has no billing-period column - Rebecca's
+    # Revenue_AllTime carried one and gold reads it, so it is derived from the invoice date
+    # at the monthly grain the workbook reports at. ONLY 'yyyy-MM' is translated; any other
+    # pattern would silently come back wrong, so assert on the output if one is ever added.
+    "CREATE OR REPLACE MACRO date_format(d, f) AS strftime(CAST(d AS DATE), '%Y-%m')",
     # NO trunc() MACRO, deliberately. Spark spells month-flooring trunc(date, 'MM') and the
     # obvious bridge is a 2-arg macro - but unlike datediff, DuckDB does NOT overload it by
     # arity: the macro REPLACES the builtin trunc(), which DuckDB's own date functions call

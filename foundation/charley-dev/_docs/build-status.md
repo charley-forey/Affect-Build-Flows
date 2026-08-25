@@ -14,6 +14,71 @@ endpoint-registry count (**44**, generated into
 `checklist_lists` and `checklist_list_items`) and **scorecard coverage (59%)**. Other
 documents should link here rather than repeat them.
 
+## 2026-08-25 — Sage and Procore both live in Fabric, twelve defects fixed
+
+The two subject areas that had never once run correctly now both do, on the nightly
+schedule, with no laptop anywhere in the data path.
+
+| | Before 2026-08-25 | After |
+|---|---|---|
+| Procore extraction | on a laptop, `cd_01_extract_procore` out of the DAG | **in Fabric, head of the DAG**, authenticating from Key Vault |
+| Procore endpoints returning rows | 39 of 44 | **44 of 44** |
+| Sage | deployed and inert since 2026-08-02 | **live, 8 tables, 4,027 rows** |
+| `fct_Invoice` | 122 rows, $23,695,760.48 | **148 rows, $25,613,659.66** |
+| Latest AR invoice | 2026-07-31 | **2026-08-31** |
+| Gold tables | 54 | **59** |
+| Silver transforms | 9 files | **10** (`26_sage_silver.sql`) |
+| Offline silver checks | 51 | **62** |
+| DQ expectations | 107 | **111** |
+
+**Five Procore endpoints had never returned a single row since the day they were
+registered** — `prime_contract_line_items`, `payment_applications`,
+`work_order_contract_line_items`, `purchase_order_contract_line_items`, `budget_detail_rows`.
+Contract line items and budget detail are what make actual-cost-by-cost-code possible, so
+everything downstream had been reading an empty table and reporting **zero** rather than
+reporting nothing.
+
+### The two defects that never crashed
+
+Worth separating from the rest, because nothing would ever have alerted on them:
+
+1. **Bronze merged nullable keys with `=` instead of `<=>`.** `_project_id` is NULL on all 8
+   company-scoped endpoints, and `NULL = NULL` is not true, so no source row would ever have
+   matched a target row. The nightly run would have appended a **fresh copy of every company
+   record, every night, forever**, and nothing would have raised.
+2. **Sage's `invamt` is zero on all 1,019 invoices.** The obvious "invoice total" column is
+   simply not populated by this company. Reading it at face value publishes **$0 billed**
+   with total confidence and a report that looks finished. The total is paid + outstanding,
+   and it reconciles **to the cent** against the line tables on both AR ($25,613,659.66) and
+   AP ($15,509,381.78) — two independent derivations agreeing is what makes it a fact.
+
+### The Sage blocker was ours
+
+The ask carried since 2026-08-02 — *"grant `cforey-c@` Can use on the gateway"* — was a
+mis-diagnosis. Measured by signing in as the gateway's own registration account: **Rebecca
+and IT already held that permission.** A Dataflow Gen2 runs as its owner, and we had deployed
+it owned by an account that did not, then reported the resulting failure as something Affect
+was withholding.
+
+The real fault was different again: `gatewayObjectId` sits at the dataflow level and Power
+Query applies it to **every** connection, so the Lakehouse **destination** was being routed
+through the on-premises gateway — Fabric asking a server in Affect's office to authenticate
+to OneLake. Fixed by re-adding the destination with the gateway set to `(none)`.
+
+### Verified, not assumed
+
+- `arivln._idref → acrinv._idnum` orphans **0**; the documented key `invrec` orphans **258
+  of 258**. Same on AP: 0 versus 901 of 901.
+- `acrinv.jobnum → actrec.recnum` orphans **0 of 148** — the key the whole Procore↔Sage
+  crosswalk rests on.
+- **901 of 901** AP lines carry a GL account. **25 of 258** AR lines carry a cost code, so
+  revenue-by-cost-code is not available and is not promised.
+- Retainage is **$0 everywhere in Sage** — header, both line tables, and `actrec`. That
+  confirms the 2026-08-02 conclusion rather than opening a gap: the real figures come from
+  Procore progress billing and are already in `fct_Billing`.
+- All **17** live model checks pass, including `[Total Billed] = [Total Paid] + [AR
+  Outstanding]` on the new numbers, and all 26 measures evaluate.
+
 ## Live in Fabric
 
 Workspace `Build`, folder `charley-dev` (`25dd1e34-…`). **Nothing outside `charley-dev` has
