@@ -1,7 +1,24 @@
 """Grant "Can use" on the Sage gateway datasource, acting as the gateway's own admin.
 
-    python grant_sage_gateway.py            # READ-ONLY. Sign in, list gateways/datasources.
-    python grant_sage_gateway.py --grant    # add "Can use" for GRANTEE on the Sage datasource
+    python grant_sage_gateway.py                    # READ-ONLY. List gateways/datasources.
+    python grant_sage_gateway.py --take-ownership   # PREFERRED - see below
+    python grant_sage_gateway.py --grant            # add "Can use" for GRANTEE
+
+PREFER --take-ownership OVER --grant
+------------------------------------
+A Dataflow Gen2 runs as its OWNER. `fabricconnector@` already holds gateway rights, so
+making it the owner of CD_Sage_Ingest dissolves the permission problem instead of answering
+it: there is no ACL entry to maintain and no named person in the data path to break when
+they leave the engagement. `--grant` ties Sage to whoever is named in --grantee, which is a
+consultant's account by default, and that is a grant somebody has to redo later.
+
+--take-ownership needs two things first, both Rebecca's to do and neither ours:
+
+  1. `fabricconnector@affect-group.com` added to the **Build** workspace (Contributor)
+  2. a **Power BI Pro** license on it - section 10 of the handoff records it as having
+     none, and on F2 (below F64) any account that runs shared content needs Pro, $14/month
+
+Until those land, --take-ownership returns 401/403. That means "ask Rebecca", not "broken".
 
 WHY THIS EXISTS
 ---------------
@@ -66,6 +83,9 @@ AZ_CLI_CLIENT = "04b07795-8ddb-461a-bbee-02f9e1bf7b46"
 
 GATEWAY_ID = "1e798beb-cc0f-4f72-bb1e-9c8fca8ba03e"
 DATASOURCE_ID = "835e72c8-7995-4171-91cb-2a32fbd2050a"   # nc-affect-1\sage100con;Affect Group
+
+WORKSPACE_ID = "1f7caed6-f88a-4e52-bc83-9a498a165301"    # Build
+DATAFLOW_ID = "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8"     # CD_Sage_Ingest
 
 GRANTEE = "cforey-c@affect-group.com"
 
@@ -141,6 +161,10 @@ def main() -> int:
     parser.add_argument("--grant", action="store_true",
                         help="make the ONE write: add the Can use grant")
     parser.add_argument("--grantee", default=GRANTEE)
+    parser.add_argument("--take-ownership", action="store_true",
+                        help="make this service account the OWNER of CD_Sage_Ingest, so the "
+                             "dataflow runs as the identity that already holds gateway "
+                             "rights and no named person is in the path at all")
     args = parser.parse_args()
 
     user = secret("Fabric-Gateway-Service-Account-Username")
@@ -180,9 +204,30 @@ def main() -> int:
         print(f"\n{args.grantee} ALREADY has access. Nothing to do.")
         return 0
 
+    if args.take_ownership:
+        # The durable answer, and the reason this beats --grant: a Dataflow Gen2 runs as its
+        # OWNER. Make the owner the account that already holds gateway rights and the
+        # permission question disappears rather than being answered - no "Can use" entry to
+        # maintain, and no named consultant in the data path to break when they leave.
+        #
+        # Needs two things first, both Rebecca's to do and neither ours:
+        #   1. fabricconnector@ added to the Build workspace (Contributor or Member)
+        #   2. a Power BI Pro license on it - section 10 records it as having none, and on
+        #      F2, which is below F64, any account that runs shared content needs Pro
+        # Without those this returns 401 or 403, which means "ask Rebecca", not "broken".
+        status, _ = call("POST",
+                         f"/groups/{WORKSPACE_ID}/dataflows/{DATAFLOW_ID}/Default.Takeover",
+                         tok)
+        print(f"\nOWNERSHIP TAKEN: CD_Sage_Ingest is now owned by {user}")
+        print("The dataflow now runs as the identity that already holds gateway rights.")
+        print("Nothing in the Sage path is tied to a named person.")
+        return 0
+
     if not args.grant:
         print("\nREAD-ONLY. Nothing was written.")
-        print(f"Re-run with --grant to add {args.grantee} as \"Can use\".")
+        print(f"Re-run with --grant to add {args.grantee} as \"Can use\",")
+        print("or --take-ownership to hand CD_Sage_Ingest to this service account instead")
+        print("(preferred - see the module docstring).")
         return 0
 
     call("POST", f"/gateways/{GATEWAY_ID}/datasources/{DATASOURCE_ID}/users", tok, {
