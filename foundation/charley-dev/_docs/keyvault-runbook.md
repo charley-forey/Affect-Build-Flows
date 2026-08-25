@@ -203,10 +203,10 @@ could reveal. Recorded here because each one failed in a way that pointed somewh
 `/scheduleimpactrequests/schedule/{scheduleId}`, which needs per-schedule expansion, and
 nothing downstream reads it yet.
 
-**Still not wired:** `sv_outbuild_activities` reads Rebecca's `Silver_Lakehouse/Outbuild_activities`
-dataflow, not our `cd_bronze_outbuild_*`. `fct_Milestone`'s 52 rows come from her path.
-Repointing it is a real change with real regression risk — milestones could go to zero — and is
-its own piece of work, not a footnote to this one.
+~~**Still not wired**~~ — **done 2026-08-20** (commit `31cb72c`). `sv_outbuild_activities` now
+reads our own `cd_bronze_outbuild_*` rather than Rebecca's `Silver_Lakehouse/Outbuild_activities`
+dataflow, and `fct_Milestone` went **52 → 126** milestones. The regression risk was real and the
+change was measured either side rather than predicted.
 
 ## Gaps this does not close
 
