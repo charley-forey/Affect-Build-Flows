@@ -159,9 +159,34 @@ def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns:
     # UPDATE clause is omitted when every column is a key - "matched" then means the row
     # is byte-identical and there is nothing to write.
     matched = f"WHEN MATCHED THEN UPDATE SET {updates}\n" if updates else ""
+    # DEDUPE THE SOURCE IN THE STATEMENT ITSELF, not at the call site.
+    #
+    # Delta refuses a MERGE where two source rows match the same target row - it cannot know
+    # which should win - and raises DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE.
+    # There are TWO merge paths here: merge_delta() below, and the landing notebook, which
+    # builds its own DataFrame and calls this function directly. Fixing it in merge_delta on
+    # 2026-08-25 therefore fixed exactly half of them, and the nightly run failed that
+    # evening on four Outbuild tables that go through the other half.
+    #
+    # Putting it here covers every caller, including the next one somebody writes.
+    #
+    # It only ever fires on the SECOND run: with an empty target there is nothing to match,
+    # so duplicates insert quietly and the bug waits. That is the worst schedule a defect can
+    # keep, and it is why this belongs in the shared builder rather than in whichever call
+    # site last got bitten.
+    #
+    # Rows sharing a natural key inside one batch are the same record fetched twice - an
+    # incremental pull deliberately overlaps by an hour, and a paginated list can repeat a
+    # row across page boundaries - so keeping one is correct, not lossy.
+    partition = ", ".join(f"`{k}`" for k in keys)
+    deduped = (
+        f"(SELECT * FROM (SELECT *, ROW_NUMBER() OVER "
+        f"(PARTITION BY {partition} ORDER BY 1) AS _dedupe_rn FROM {source_view}) "
+        f"WHERE _dedupe_rn = 1)"
+    )
     return (
         f"MERGE INTO {table} AS t\n"
-        f"USING {source_view} AS s\n"
+        f"USING {deduped} AS s\n"
         f"ON {on}\n"
         f"{matched}"
         f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
@@ -285,6 +310,14 @@ def _selftest() -> None:
     assert "t.`id` = s.`id`," not in sql, "key columns must not appear in the UPDATE SET"
     assert "= s.`id`" not in sql.split("WHEN")[0], "join must be null-safe"
     assert "WHEN NOT MATCHED THEN INSERT" in sql
+
+    # The source is deduplicated INSIDE the statement, so every caller gets it - not just
+    # merge_delta. This bug landed twice: once in bronze, then again the same evening in the
+    # landing notebook, which calls merge_sql directly. It only fires on the second run,
+    # because an empty target has nothing to match.
+    assert "ROW_NUMBER() OVER (PARTITION BY `id`, `project_id`" in sql
+    assert "_dedupe_rn = 1" in sql
+    assert "USING v_src AS s" not in sql, "source must be wrapped, not used raw"
 
     # All-key merge has nothing to update, so the UPDATE clause is omitted entirely.
     assert "WHEN MATCHED" not in merge_sql("t", "v", ["id"], ["id"])
