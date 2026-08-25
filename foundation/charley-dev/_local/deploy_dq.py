@@ -42,6 +42,10 @@ NOTEBOOK_NAME = "cd_40_dq_checks"
 UPLOADS = [
     (CHARLEY_DEV / "00-platform" / "lib" / "dq.py", "Files/lib/dq.py"),
     (DQ_DIR / "expectations.py", "Files/lib/expectations.py"),
+    # The gate imports fabric_common for notify(). The GOLD lakehouse has its own Files/lib
+    # - deploy_ingestion uploads to BRONZE - so shipping it here is not redundant, and
+    # leaving it out fails the gate with ModuleNotFoundError on the first run.
+    (CHARLEY_DEV / "00-platform" / "lib" / "fabric_common.py", "Files/lib/fabric_common.py"),
 ]
 
 
@@ -71,6 +75,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, "/lakehouse/default/Files/lib")
 import dq
+import fabric_common as fc
 from expectations import build_suite, summarise
 
 DIAG = "/lakehouse/default/Files/_diag"
@@ -167,6 +172,21 @@ if broken:
     raise AssertionError(
         f"{len(broken)} expectation(s) could not run - the checks themselves are broken:\\n  "
         + "\\n  ".join(r.expectation.name for r in broken))
+
+# ALERT BEFORE RAISING. assert_no_blocking raises, and anything after a raise does not run -
+# so a notification placed below it would fire on every outcome except the one that needs it.
+blocking_results = [r for r in results if r.blocking]
+if blocking_results:
+    fc.notify(
+        f"DQ GATE FAILED - {len(blocking_results)} blocking failure(s)",
+        "The nightly run stopped before refreshing the model, so the report is showing "
+        "yesterday's numbers rather than today's wrong ones.
+
+"
+        + "
+".join(f"- {r.expectation.name}: {r.failing_rows} row(s) - "
+                     f"{r.expectation.description}" for r in blocking_results[:10]),
+        failing=len(blocking_results))
 
 dq.assert_no_blocking(results)
 

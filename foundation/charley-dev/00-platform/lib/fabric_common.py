@@ -90,6 +90,74 @@ def get_secret(name: str, vault_env: str = "AFFECT_KEYVAULT_URL") -> str:
     return value
 
 
+def get_secret_optional(name: str) -> str | None:
+    """get_secret, but None instead of raising when the secret does not exist.
+
+    get_secret fails CLOSED on purpose: a credential that silently resolves from somewhere
+    unexpected is worse than a loud failure. That rule is right for credentials and wrong
+    for configuration, and an alert webhook is configuration - its absence means "nobody has
+    set up alerting yet", not "something is misconfigured".
+
+    Without this distinction the choice is between an alerting feature that cannot ship
+    until someone creates a webhook, and a get_secret that no longer fails closed. Neither
+    is acceptable, so the two cases get two functions.
+    """
+    try:
+        return get_secret(name)
+    except Exception:                                               # noqa: BLE001
+        return None
+
+
+def notify(subject: str, body: str, failing: int = 0) -> bool:
+    """Post an alert to a Teams incoming webhook. Returns True if it was sent.
+
+    WHY A WEBHOOK AND NOT EMAIL. A pipeline email activity, a Teams activity and
+    notebookutils' mail all require an OAuth connection that has to be created interactively
+    by a licensed user. An incoming webhook is a URL and nothing else, so this ships today,
+    is version-controlled, and needs no grant from anyone.
+
+    INERT UNTIL CONFIGURED, AND SAYS SO. With no `DQ_ALERT_WEBHOOK` secret this prints what
+    it would have sent and returns False. That means the alerting path is exercised by every
+    run from the day it lands - if the wiring is wrong, it is wrong loudly and immediately
+    rather than on the first night it was actually needed.
+
+    NEVER RAISES. Taking the pipeline down to protect the thing that watches the pipeline is
+    backwards - the same rule the heartbeat already follows.
+    """
+    url = get_secret_optional("DQ_ALERT_WEBHOOK")
+    if not url:
+        print(f"[alert] NOT SENT - no DQ_ALERT_WEBHOOK secret in the vault.")
+        print(f"[alert] would have sent: {subject}")
+        print(f"[alert] {body[:500]}")
+        print("[alert] To enable: create a Teams incoming webhook and store the URL as")
+        print("[alert] 'DQ-ALERT-WEBHOOK' in AffectKeyVault. No code change needed.")
+        return False
+
+    import json as _json
+    import urllib.request
+
+    # Teams' legacy MessageCard, because it renders in both Teams and most webhook relays.
+    # Adaptive Cards need a Workflows-style webhook and would narrow where this works.
+    payload = {
+        "@type": "MessageCard",
+        "@context": "https://schema.org/extensions",
+        "themeColor": "C62828" if failing else "2E7D32",
+        "summary": subject,
+        "title": subject,
+        "text": body,
+    }
+    try:
+        request = urllib.request.Request(
+            url, data=_json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(request, timeout=30) as response:
+            print(f"[alert] sent ({response.status}): {subject}")
+        return True
+    except Exception as exc:                                        # noqa: BLE001
+        print(f"[alert] FAILED to send ({type(exc).__name__}: {exc}) - run unaffected")
+        return False
+
+
 # --------------------------------------------------------------------------
 # Run identity and audit columns
 # --------------------------------------------------------------------------
@@ -318,6 +386,12 @@ def _selftest() -> None:
     assert "ROW_NUMBER() OVER (PARTITION BY `id`, `project_id`" in sql
     assert "_dedupe_rn = 1" in sql
     assert "USING v_src AS s" not in sql, "source must be wrapped, not used raw"
+
+    # Alerting is inert without its secret, and must SAY so rather than failing silently.
+    # An alert path that is never exercised until the night it matters is not an alert path.
+    _os.environ.pop("DQ_ALERT_WEBHOOK", None)
+    assert get_secret_optional("DQ_ALERT_WEBHOOK") is None, "optional secret must not raise"
+    assert notify("test", "body", failing=1) is False, "unconfigured notify must return False"
 
     # All-key merge has nothing to update, so the UPDATE clause is omitted entirely.
     assert "WHEN MATCHED" not in merge_sql("t", "v", ["id"], ["id"])

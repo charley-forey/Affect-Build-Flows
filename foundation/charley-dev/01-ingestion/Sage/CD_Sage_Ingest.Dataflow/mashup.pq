@@ -41,6 +41,18 @@ section Section1;
 // reference. Points at CD_Bronze, never at the existing Silver lakehouse.
 shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){[workspaceId = "1f7caed6-f88a-4e52-bc83-9a498a165301"]}[Data]{[lakehouseId = "fa946636-e143-417b-b598-5cbd31ed9990"]}[Data];
 
+// CATALOGUE DISCOVERY: TRIED, AND IT DOES NOT WORK THROUGH THIS CONNECTION.
+//
+// A query navigating to INFORMATION_SCHEMA.TABLES fails with
+// "The key didn't match any rows in the table" (Expression.Error 10061): the gateway
+// connection exposes the `dbo` schema only, so the catalogue cannot be listed from here.
+//
+// This matters because the AP line detail carries a GL ACCOUNT, not a cost code - 431 of
+// 901 lines sit on one account (50004) holding $10.4M of $15.5M, and `phsnum` is 0 on all
+// 871 AP headers. Actual-cost-by-cost-code is therefore NOT derivable from these eight
+// tables, and "is it in another table" cannot be answered by us. It needs someone with
+// direct database access to say what job-cost tables exist - see _docs/sage-ingestion.md.
+
 // ---------------------------------------------------------------- AR (revenue)
 
 [BindToDefaultDestination = true]

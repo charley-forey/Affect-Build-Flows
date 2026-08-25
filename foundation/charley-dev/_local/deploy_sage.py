@@ -86,20 +86,50 @@ def b64(text: str) -> str:
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
 
 
-def build_definition(strip_lakehouse: bool = True) -> tuple[dict, list[str]]:
-    """The committed definition, with the destination binding dropped. Returns (defn, notes)."""
+def live_metadata(tok: str) -> dict | None:
+    """The queryMetadata.json currently deployed, or None if it cannot be read."""
+    status, body, headers = dp.call(
+        "POST", f"/workspaces/{dp.WORKSPACE_ID}/items/{DATAFLOW_ID}/getDefinition", tok, {})
+    if status == 202:
+        body = dp.wait_for_operation(headers, tok) or {}
+    for part in body.get("definition", {}).get("parts", []):
+        if part.get("path") == "queryMetadata.json":
+            return json.loads(base64.b64decode(part["payload"]))
+    return None
+
+
+def build_definition(tok: str) -> tuple[dict, list[str]]:
+    """The committed mashup, with the LIVE connection bindings preserved.
+
+    CONNECTION BINDINGS ARE ENVIRONMENT STATE, NOT SOURCE. This script used to write
+    `connections` and `gatewayObjectId` from the committed file, which meant deploying it
+    destroyed whatever the portal had configured. That is exactly what happened on
+    2026-08-25: the Lakehouse destination was fixed by hand in Power Query, and the next
+    `--apply` silently reverted it and took Sage down again.
+
+    The mashup is the versioned artifact - it is the logic, it is diffable, and it belongs in
+    git. The connection ids are not: they are per-user (`Lakehouse cforey-c` is a personal
+    cloud connection; the one we inherited from Build_Sage_Test was Rebecca's, which is what
+    caused the original defect) and they differ per environment. Committing them is how this
+    dataflow came to be pointing at a connection nobody here could use.
+
+    So the live bindings win, always. If the item does not exist yet, the committed file is
+    the fallback.
+    """
     notes = []
     metadata = json.loads((DATAFLOW_DIR / "queryMetadata.json").read_text(encoding="utf-8"))
 
-    if STRIP_GATEWAY and metadata.pop("gatewayObjectId", None):
-        notes.append("drop dataflow-level gatewayObjectId (the SQL connection carries it)")
-
-    if strip_lakehouse:
-        before = metadata.get("connections", [])
-        after = [c for c in before if c.get("kind") in KEEP_CONNECTION_KINDS]
-        for dropped in [c for c in before if c not in after]:
-            notes.append(f"drop {dropped.get('kind')} binding for {dropped.get('path')!r}")
-        metadata["connections"] = after
+    deployed = live_metadata(tok)
+    if deployed is not None:
+        for key in ("connections", "gatewayObjectId"):
+            if key in deployed:
+                metadata[key] = deployed[key]
+            else:
+                metadata.pop(key, None)
+        conns = metadata.get("connections", [])
+        notes.append(f"preserve {len(conns)} live connection binding(s) and the gateway")
+    else:
+        notes.append("item has no live definition - using the committed bindings")
 
     parts = [
         {"path": "queryMetadata.json",
@@ -124,8 +154,6 @@ def main() -> int:
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--run", action="store_true", help="refresh after deploying")
     parser.add_argument("--status", action="store_true", help="last refresh outcome only")
-    parser.add_argument("--keep-lakehouse-binding", action="store_true",
-                        help="leave the destination connectionId in place (it is the bug)")
     args = parser.parse_args()
 
     tok = dp.token()
@@ -140,7 +168,7 @@ def main() -> int:
             print(json.dumps(run["failureReason"], indent=1)[:600])
         return 0
 
-    definition, notes = build_definition(strip_lakehouse=not args.keep_lakehouse_binding)
+    definition, notes = build_definition(tok)
     print(f"{DATAFLOW_NAME}  ({DATAFLOW_ID})")
     for note in notes:
         print(f"  {note}")

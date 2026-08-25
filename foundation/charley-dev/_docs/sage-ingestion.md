@@ -209,6 +209,64 @@ script. It has one now (`deploy_sage.py`).
 4. Pick `CD_Bronze_Lakehouse` → `dbo`, update method **Replace**
 5. **Bind selected queries** (all 8 are pre-checked), then **Save & run**
 
+## OPERATIONAL WARNING: deploy_sage.py used to clobber the destination
+
+**Fixed 2026-08-25, and worth reading before touching this dataflow.**
+
+The connection bindings in `queryMetadata.json` are **environment state, not source.** The
+script originally wrote them from the committed file, so running `--apply` overwrote whatever
+the portal had configured — which is precisely what happened after the destination was fixed
+by hand: the next deploy silently reverted it and took Sage down again. Twice, because the
+first time it was not understood.
+
+`build_definition()` now reads the LIVE `connections` and `gatewayObjectId` off the deployed
+item and preserves them, taking only the mashup from git. The mashup is the versioned
+artifact — it is the logic, it is diffable. The connection ids are not: `Lakehouse cforey-c`
+is a personal cloud connection, and the one originally committed here was **Rebecca's**,
+which is the root cause of the whole destination saga.
+
+**If the destination breaks again**, the repair is in the portal and takes about six clicks:
+Power Query → **Default data destination → Remove**, then **Add → Lakehouse**, set
+**Data gateway → `(none)`** (this is the whole trick), pick `CD_Bronze_Lakehouse` → `dbo`,
+update method **Replace**, **Bind selected queries** (all pre-checked), **Save & run**.
+
+## Actual-cost-by-cost-code is NOT available from Sage (measured 2026-08-25)
+
+This was written up on 2026-08-25 as "the prize" — `apivln` carries an account on 901 of 901
+lines, so `fct_BudgetLine`'s invoiced column could finally stop being Procore-only. **That was
+wrong, and it was wrong because "901 of 901 carry an account" was reported without checking
+what those accounts are.**
+
+They are **GL accounts, not cost codes**, and the distribution kills the idea outright:
+
+| `actnum` | Lines | Value |
+|---|---:|---:|
+| **50004** | **431** | **$10,437,732.28** |
+| 50001 | 160 | $2,777,337.76 |
+| 50005 | 56 | $137,715.03 |
+| 50400 | 41 | $422,154.68 |
+| everything else | 213 | $1,734,442.03 |
+
+**Two-thirds of the money sits on one account.** `sub_account` is NULL on every row, and
+`phsnum` — the phase, the other candidate — is **0 on all 871 AP headers**. So the only
+dimensions Sage AP offers are project and a four-way-ish GL split.
+
+Repointing `fct_BudgetLine.SpentToDate` onto this would **replace cost-code-level Procore
+figures with a project-level number that is 67% one bucket**. It would make the report worse
+and would look like an upgrade. Not done, deliberately.
+
+### What would make it possible
+
+Sage 100 Contractor keeps job cost in dedicated tables that these eight do not include. We
+cannot enumerate them: a Power Query navigation to `INFORMATION_SCHEMA.TABLES` fails with
+`Expression.Error 10061` because the gateway connection exposes only `dbo`, and the pipeline
+Copy route is blocked by the logon trigger (§9).
+
+**So this needs one question answered by someone with direct database access** — Rebecca, or
+Nerds That Care: *which table holds job cost detail by cost code?* Add it to `mashup.pq`, and
+the budget fact becomes real. Until then, the honest position is that Procore is the only
+source of cost-coded actuals and Sage is the source of truth for AR/AP totals.
+
 ## The two routes are broken at opposite ends (measured 2026-08-25)
 
 Both were tried against the live tenant. Neither guess would have survived contact.
