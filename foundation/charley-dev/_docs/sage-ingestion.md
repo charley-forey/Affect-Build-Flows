@@ -79,6 +79,63 @@ Three candidates, in order of likelihood given a 3m25s runtime:
    **Event ID 17063** in the Windows Application log on `NC-AFFECT-1` — it will not appear as a
    connection error on the Fabric side.
 
+## The two routes are broken at opposite ends (measured 2026-08-25)
+
+Both were tried against the live tenant. Neither guess would have survived contact.
+
+| Route | Connects to Sage as | Source | Lakehouse destination |
+|---|---|---|---|
+| **Dataflow Gen2** (`CD_Sage_Ingest`) | `Mashup Engine (TridentDataflowNative)` | **works** — read for 3m25s and 3m55s | **fails** — binding points at a connection we do not own |
+| **Copy activity** (`CD_Sage_Copy`) | `.Net SqlClient Data Provider` | **blocked** — SQL error 17892 | works — needs no connection at all |
+
+### Why the Copy route is blocked
+
+All eight activities failed identically:
+
+```
+Logon failed for login 'FabricReader' due to trigger execution.
+SqlErrorNumber=17892   Source=.Net SqlClient Data Provider
+```
+
+That is §9 of the Nerds That Care handoff doing its job. Sage 100 runs a SQL Server logon
+trigger that refuses any application not named in an XML allow-list. The document lists
+`.Net SqlClient Data Provider` as approved — so either the XML on the server does not match
+the document, or the host check (`%LOCALHOST%`) resolves differently for the Copy runtime
+than for the mashup engine.
+
+**§9 names the diagnostic itself:** Windows Event Viewer on `NC-AFFECT-1`, Application log,
+**Event ID 17063**, which logs the exact application name being blocked. That is one lookup
+by whoever administers the Sage box, and it would settle the question outright.
+
+`CD_Sage_Copy` is left deployed and failing on purpose. It is correct, and it starts working
+the day that XML entry lands — which makes it a concrete ask with a demonstrated failure
+attached rather than a theoretical request.
+
+### Why the Dataflow route is the one to finish
+
+The mashup engine is demonstrably allowed: `Build_Sage_Test` runs on it today, and ours read
+Sage for minutes before failing. The source half is solved and needs nothing from anyone.
+
+What is left is one connection. `queryMetadata.json` bound the destination to Lakehouse
+connection `44379bed-…`, which belongs to somebody else — `GET /connections/44379bed-…`
+returns **403 InsufficientPermissionsToManageConnection**, and the refresh fails on
+`*_WriteToDataDestination` with "Data source credentials are missing or invalid" (error
+999999). Those ids were almost certainly copied from `Build_Sage_Test` when this dataflow was
+authored, and survived unnoticed because the dataflow had no deploy script until now
+(`deploy_sage.py`).
+
+A Lakehouse connection cannot be created from the REST API without interactive consent:
+`POST /connections` accepts the shape once `credentialDetails.credentials.useCallerIdentity`
+is set, then fails with `OAuthTokenLoginFailed`. So this last step is a portal action, and
+there is no way around that:
+
+> **`Build` → `charley-dev` → `CD_Sage_Ingest` → Edit → set the data destination to
+> `CD_Bronze_Lakehouse` → Save/Publish → Refresh.**
+
+Setting the destination in the UI creates the Lakehouse connection under the signed-in
+identity, which is the one thing the API will not do. Roughly two minutes, and it is the last
+mile of the whole Sage subject area.
+
 ## What it pulls
 
 Eight tables from `Sql.Database("NC-AFFECT-1\SAGE100CON", "Affect Group")` — the same source
