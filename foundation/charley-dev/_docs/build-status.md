@@ -65,6 +65,31 @@ Query applies it to **every** connection, so the Lakehouse **destination** was b
 through the on-premises gateway — Fabric asking a server in Affect's office to authenticate
 to OneLake. Fixed by re-adding the destination with the gateway set to `(none)`.
 
+### The nightly pipeline, proven end to end
+
+`CD_Master_Pipeline` ran green on 2026-08-25, 11:13 → 12:06 UTC. All eight stages:
+
+| Stage | Duration |
+|---|---|
+| Ingest Sage | 2m36s |
+| Land Manual Input | 2m09s |
+| Extract Procore | 20m11s |
+| Land To Bronze | 23m28s |
+| Bronze To Silver | 9m38s |
+| Seed Gold Dimensions | 6m40s |
+| Build Gold | 8m46s |
+| **Data Quality Gate** | **5m41s — passed** |
+
+An earlier run that evening failed at Land To Bronze on four Outbuild tables with
+`DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE` — the same defect fixed hours
+earlier in `merge_delta`, arriving through the other door. There are two merge paths: that
+function, and the landing notebook, which calls `merge_sql` directly. The dedupe now lives
+inside the MERGE statement, so every caller has it.
+
+**It only ever fires on the second run.** With an empty target there is nothing to match, so
+duplicates insert quietly and the defect waits for the table to be populated. A bug that
+cannot reproduce on a fresh environment is the worst schedule one can keep.
+
 ### Verified, not assumed
 
 - `arivln._idref → acrinv._idnum` orphans **0**; the documented key `invrec` orphans **258
