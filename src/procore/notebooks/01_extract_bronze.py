@@ -27,6 +27,8 @@ import requests
 from delta.tables import DeltaTable
 
 from procore_extract import (
+    bronze_merge_keys,
+    bronze_schema,
     extract_endpoint,
     fetch_token,
     iter_active_projects,
@@ -71,7 +73,7 @@ def merge_bronze(rows: list[dict], table: str) -> int:
     if not rows:
         return 0
 
-    source = spark.createDataFrame(rows)  # noqa: F821
+    source = spark.createDataFrame(rows, bronze_schema())  # noqa: F821
     if not spark.catalog.tableExists(table):  # noqa: F821
         source.write.format("delta").saveAsTable(table)
         return source.count()
@@ -81,7 +83,7 @@ def merge_bronze(rows: list[dict], table: str) -> int:
         .alias("t")
         .merge(
             source.alias("s"),
-            "t._key = s._key AND t._project_id <=> s._project_id",
+            " AND ".join(f"t.{k} <=> s.{k}" for k in bronze_merge_keys(ep)),
         )
         .whenMatchedUpdateAll()
         .whenNotMatchedInsertAll()

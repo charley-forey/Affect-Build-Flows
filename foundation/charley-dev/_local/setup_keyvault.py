@@ -69,6 +69,10 @@ LOCATION = "eastus"
 # Allow-list, not "everything in .env". A vault is a shared surface; what goes in it is a
 # decision, not a copy.
 PUSH = ["PROCORE_CLIENT_ID", "PROCORE_CLIENT_SECRET", "PROCORE_COMPANY_ID"]
+
+# Everything get_secret() is asked for anywhere in the platform. --verify asserts each one
+# resolves to a name the vault actually holds.
+READS = PUSH + ["OUTBUILD_API_TOKEN"]
 NEVER_PUSH = ["FABRIC_PASSWORD", "FABRIC_EMAIL"]
 
 # Key Vault secret names cannot contain underscores. This MUST agree with the read side -
@@ -176,6 +180,25 @@ def main() -> int:
         print(f"{len(names)} secret(s) in {args.vault}:")
         for n in names:
             print(f"  {n}")
+
+        # The check that matters: every name the READ side will ask for must exist. The
+        # secrets were created by hand in the portal, so the vault is free to disagree
+        # with kv_secret_name() and nothing notices until an unattended Fabric run fails
+        # with "secret not found" - an error that points at the vault, not at the mapping.
+        print()
+        print(f"read-side lookups ({len(READS)}):")
+        absent = []
+        for key in READS:
+            want = kv_name(key)
+            ok = want in names
+            print(f"  {key:<24} -> {want:<24} {'ok' if ok else 'NOT IN VAULT'}")
+            if not ok:
+                absent.append(want)
+        if absent:
+            print()
+            print(f"{len(absent)} lookup(s) resolve to a name the vault does not hold: "
+                  f"{', '.join(absent)}. Fix fabric_common.SECRET_NAMES.")
+            return 1
         return 0
 
     env_file = Path(args.env_file) if args.env_file else find_env()

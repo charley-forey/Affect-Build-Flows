@@ -57,7 +57,7 @@ Folder numbering mirrors `foundation/` so the workspace reads the same way.
 The eight notebooks that exist in the workspace, in the order they run:
 
 ```
-01  cd_01_extract_procore       Procore REST -> landing files   (blocked: Key Vault role)
+01  cd_01_extract_procore       Procore REST -> bronze          (live in Fabric, 2026-08-25)
     cd_05_land_to_bronze        landing files -> CD_Bronze      (no credential needed)
     cd_06_land_manual           Files/_manual/*.csv -> bronze man_*  (17 tables)
     CD_Sage_Ingest (dataflow)   Sage 100 via gateway -> CD_Bronze (deployed, inert)
@@ -117,10 +117,14 @@ imports it, so the write side and the read side cannot disagree:
 
 | Environment variable | Key Vault secret | State |
 |---|---|---|
-| `PROCORE_CLIENT_ID` | `procore-client-id` | pending rotation |
-| `PROCORE_CLIENT_SECRET` | `procore-client-secret` | pending rotation |
-| `PROCORE_COMPANY_ID` | `procore-company-id` | pending rotation |
+| `PROCORE_CLIENT_ID` | `ProcoreClientID` | **live** |
+| `PROCORE_CLIENT_SECRET` | `ProcoreClientSecret` | **live** |
+| `PROCORE_COMPANY_ID` | `ProcoreCompanyID` | **live** |
 | `OUTBUILD_API_TOKEN` | `OutbuildToken` | **live** |
+
+The vault also holds five Sage/gateway credentials Rebecca added on 2026-08-22 (the
+`FabricReader` SQL login, the `fabricconnector@` service account and the gateway recovery
+key). Nothing reads them, and they do **not** unblock `CD_Sage_Ingest` — see the runbook.
 
 The vault URL is a default in code, not an environment variable to set. `AFFECT_KEYVAULT_URL`
 overrides it. Inside Fabric `get_secret` **fails closed** — it will not silently fall back to

@@ -142,10 +142,30 @@ def test_real_registry_round_trips() -> None:
     check("no endpoint claims an unverified incremental filter")
 
 
+def test_lib_has_no_relative_imports() -> None:
+    """Everything in 00-platform/lib is uploaded FLAT into Files/lib.
+
+    A relative import has no parent package there, so it raises ImportError at the point
+    the module is first used - which for watermark.py meant after a successful extract,
+    on 2026-08-25, in production. Offline tests import these modules by path and never
+    notice. This is the cheapest thing that would have caught it.
+    """
+    import re
+
+    offenders = []
+    for path in sorted((CHARLEY_DEV / "00-platform" / "lib").glob("*.py")):
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            if re.match(r"\s*from \.\w", line):
+                offenders.append(f"{path.name}:{n}: {line.strip()}")
+    assert not offenders, "relative imports in flat-uploaded lib: " + "; ".join(offenders)
+    check("no module in 00-platform/lib uses a relative import")
+
+
 def main() -> int:
     for fn in (
         test_attribute_contract, test_build_headers, test_watermark_params,
         test_to_bronze_row, test_real_registry_round_trips,
+        test_lib_has_no_relative_imports,
     ):
         fn()
     for label in CHECKS:

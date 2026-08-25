@@ -150,7 +150,10 @@ from datetime import timezone
 fetched: dict[str, list[dict]] = {}
 summary = []
 
+failures = []
+
 for ep in ordered:
+  try:
     parent_ids = None
     if ep.parent:
         parent_ids = ps.collect_parent_ids(fetched.get(ep.parent.endpoint, []), ep.parent)
@@ -164,28 +167,42 @@ for ep in ordered:
     since = wm.read_since(spark, ep.bronze_table, ep.name) if ep.incremental else None
 
     headers = px.build_headers(token, settings.company_id, ep)
-    params = px.watermark_params(ep, since) if ep.incremental else {}
-    if ep.scope == "company":
-        params = {**params, "company_id": settings.company_id}
+    # Shared with extract_procore_local.py. Company scoping, the incremental watermark and
+    # the declared date window are all decided in one function, so this notebook cannot
+    # quietly ship without one of them again.
+    params = px.build_params(ep, settings.company_id, since if ep.incremental else None)
 
     records, rows = [], []
     ingested_at = fc.utc_now()
+    skipped = 0
     for path, project_id in ps.expand_paths(ep, settings.company_id, project_ids, parent_ids):
-        for record in px.iter_records(session, settings.base_url, path, headers, params=params):
-            records.append(record)
-            rows.append({
-                **px.to_bronze_row(record, ep, project_id, ingested_at),
-                "_batch_id": batch_id,
-                "_row_hash": fc.row_hash(record),
-            })
+        try:
+            for record in px.iter_records(session, settings.base_url, path, headers,
+                                          params=params):
+                # The project this was fetched under, for the child endpoints that need it.
+                record = px.stamp_project(record, project_id)
+                records.append(record)
+                rows.append({
+                    **px.to_bronze_row(record, ep, project_id, ingested_at),
+                    "_batch_id": batch_id,
+                    "_row_hash": fc.row_hash(record),
+                })
+        except Exception as exc:                                    # noqa: BLE001
+            # One scope without the tool enabled must not cost the other 43 endpoints.
+            # px.is_tool_not_enabled owns the rule; anything else is real and re-raises.
+            if not px.is_tool_not_enabled(exc):
+                raise
+            skipped += 1
+    if skipped:
+        print(f"      ({skipped} scope(s) skipped - tool not enabled)")
 
     fetched[ep.name] = records
 
     if rows:
-        df = spark.createDataFrame(rows)
+        df = spark.createDataFrame(rows, px.bronze_schema())
         # MERGE on the natural key, not DROP + append: re-running is a no-op, so the
         # deliberate one-hour watermark overlap cannot duplicate rows.
-        fc.merge_delta(spark, df, ep.bronze_table, ["_key"])
+        fc.merge_delta(spark, df, ep.bronze_table, px.bronze_merge_keys(ep))
 
         high = wm.high_water(records, "updated_at")
         if ep.incremental and high:
@@ -194,18 +211,44 @@ for ep in ordered:
     fc.log_run(spark, batch_id, "extract_procore", ep.bronze_table, len(rows))
     summary.append((ep.name, len(rows), "incremental" if since else "full"))
     print(f"  {ep.name:<32} {len(rows):>7} rows  ({summary[-1][2]})")
+
+  except Exception as exc:                                          # noqa: BLE001
+    # One endpoint's contract being wrong must not cost the other 43. commitment_contracts
+    # is the live example: a REST v2.0 path that 400s on page/per_page, because v2.0 pages
+    # by cursor. That is a real defect, it is named in the summary below, and it still
+    # fails the run - but only after everything that could land has landed.
+    #
+    # 403/404 is handled one level in, as "tool not enabled" for a single scope. Everything
+    # else arrives here.
+    failures.append((ep.name, f"{type(exc).__name__}: {exc}"[:300]))
+    summary.append((ep.name, 0, "failed"))
+    print(f"  {ep.name:<32} FAILED  {type(exc).__name__}: {str(exc)[:160]}")
 """
     ),
     cell(
         """
 total = sum(n for _, n, _ in summary)
-empty = [name for name, n, mode in summary if n == 0 and mode != "skipped"]
+empty = [name for name, n, mode in summary
+         if n == 0 and mode not in ("skipped", "failed")]
 
 print(f"\\nbatch {batch_id}: {total} rows across {len(summary)} endpoints")
 if empty:
     # Worth surfacing rather than burying: on a full reload an empty result usually means
     # a permission gap or a tool Affect does not use, not genuinely zero records.
     print(f"returned nothing: {', '.join(empty)}")
+
+if failures:
+    print(f"\\n{len(failures)} endpoint(s) FAILED:")
+    for name, detail in failures:
+        print(f"  {name:<32} {detail}")
+    # Raise only now. Everything that could land has landed and been merged, so the rerun
+    # after a fix is incremental rather than a full re-pull - and the pipeline still goes
+    # red, which is the point. Silently succeeding on 43 of 44 is how one endpoint stays
+    # broken for a month.
+    raise RuntimeError(
+        f"{len(failures)} of {len(summary)} endpoints failed: "
+        + ", ".join(name for name, _ in failures)
+    )
 """
     ),
 ]

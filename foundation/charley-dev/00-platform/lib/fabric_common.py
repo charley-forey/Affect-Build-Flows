@@ -41,10 +41,17 @@ AUDIT_COLUMNS = ("_ingested_at", "_source_endpoint", "_batch_id", "_row_hash")
 KEYVAULT_URL = "https://affectkeyvault.vault.azure.net/"
 
 # Key Vault secret names cannot contain underscores, so the environment-variable name is
-# not the secret name. Most translate mechanically. OutbuildToken was created by hand in
-# the portal and does not follow the rule, so it is mapped explicitly rather than renamed
-# out from under whoever else is reading it.
-SECRET_NAMES = {"OUTBUILD_API_TOKEN": "OutbuildToken"}
+# not the secret name. Every secret in AffectKeyVault was created by hand in the portal by
+# Rebecca, in PascalCase rather than the mechanical kebab-case this used to assume, so each
+# one is mapped explicitly. Mapped, not renamed: something we cannot see may already read
+# them under these names, and renaming a secret to satisfy a convention breaks that caller
+# silently. Verified against `az keyvault secret list` on 2026-08-24.
+SECRET_NAMES = {
+    "OUTBUILD_API_TOKEN": "OutbuildToken",
+    "PROCORE_CLIENT_ID": "ProcoreClientID",
+    "PROCORE_CLIENT_SECRET": "ProcoreClientSecret",
+    "PROCORE_COMPANY_ID": "ProcoreCompanyID",
+}
 
 
 def kv_secret_name(name: str) -> str:
@@ -139,7 +146,12 @@ def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns:
     if not cols:
         raise ValueError("merge requires at least one column")
 
-    on = " AND ".join(f"t.`{k}` = s.`{k}`" for k in keys)
+    # <=> not =. A nullable key column makes `=` return NULL rather than true, so no
+    # source row ever matches and every run appends a fresh copy of the data with
+    # nothing raising. Bronze hit exactly this: `_project_id` is NULL on all 8
+    # company-scoped Procore endpoints. Identical to `=` when neither side is null,
+    # so it is safe for every other caller and removes the trap for the next one.
+    on = " AND ".join(f"t.`{k}` <=> s.`{k}`" for k in keys)
     updates = ", ".join(f"t.`{c}` = s.`{c}`" for c in cols if c not in keys)
     insert_cols = ", ".join(f"`{c}`" for c in cols)
     insert_vals = ", ".join(f"s.`{c}`" for c in cols)
@@ -166,6 +178,23 @@ def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str]) -> 
     and must not duplicate.
     """
     keys = list(key_columns)
+
+    # Delta refuses a MERGE where two source rows match the same target row, and it is
+    # right to: it cannot know which one should win. So the source is made unique on the
+    # key first, which is what the Delta docs tell you to do.
+    #
+    # This is not hypothetical tidiness. Bronze hits it two different ways: an incremental
+    # pull deliberately overlaps by an hour, so the same record legitimately arrives twice
+    # in one batch; and a paginated list can repeat a row across page boundaries while
+    # records are being written underneath it. `checklist_lists` failed exactly here on
+    # 2026-08-25 - and only once its target table was non-empty, because with nothing to
+    # match, duplicates insert quietly instead of raising. A bug that appears on the SECOND
+    # run and not the first is the worst kind to leave to production.
+    #
+    # Deduplicating rather than raising is safe because rows sharing a natural key inside
+    # one batch are the same record fetched twice, not two different records.
+    df = df.dropDuplicates(keys)
+
     if not spark.catalog.tableExists(table):
         df.write.format("delta").saveAsTable(table)
         return df.count()
@@ -216,11 +245,14 @@ def log_run(
 def _selftest() -> None:
     # Key Vault forbids underscores, so the env-var name is never the secret name. Getting
     # this wrong is silent: the vault returns "not found" for a name that looks correct.
-    assert kv_secret_name("PROCORE_CLIENT_ID") == "procore-client-id"
-    assert kv_secret_name("PROCORE_CLIENT_SECRET") == "procore-client-secret"
-    assert "_" not in kv_secret_name("PROCORE_COMPANY_ID")
-    # Hand-created secrets are mapped, not renamed.
+    # Every secret in AffectKeyVault was created by hand in the portal, so all four are
+    # mapped, not renamed. These names are what `az keyvault secret list` returns; the
+    # kebab-case fallback below is only for a secret nobody has created yet.
+    assert kv_secret_name("PROCORE_CLIENT_ID") == "ProcoreClientID"
+    assert kv_secret_name("PROCORE_CLIENT_SECRET") == "ProcoreClientSecret"
+    assert kv_secret_name("PROCORE_COMPANY_ID") == "ProcoreCompanyID"
     assert kv_secret_name("OUTBUILD_API_TOKEN") == "OutbuildToken"
+    assert "_" not in kv_secret_name("SOME_FUTURE_TOKEN")
 
     # Locally (no notebookutils) a missing secret raises rather than returning None, and
     # the message names the vault so the reader knows which one to look in.
@@ -248,9 +280,10 @@ def _selftest() -> None:
 
     # The merge predicate joins on every key, and never updates a key column.
     sql = merge_sql("t_target", "v_src", ["id", "project_id"], ["id", "project_id", "subject"])
-    assert "t.`id` = s.`id` AND t.`project_id` = s.`project_id`" in sql
+    assert "t.`id` <=> s.`id` AND t.`project_id` <=> s.`project_id`" in sql
     assert "t.`subject` = s.`subject`" in sql
     assert "t.`id` = s.`id`," not in sql, "key columns must not appear in the UPDATE SET"
+    assert "= s.`id`" not in sql.split("WHEN")[0], "join must be null-safe"
     assert "WHEN NOT MATCHED THEN INSERT" in sql
 
     # All-key merge has nothing to update, so the UPDATE clause is omitted entirely.

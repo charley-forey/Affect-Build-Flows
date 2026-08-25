@@ -217,7 +217,7 @@ def expand_paths(
 
 
 def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef,
-                       with_project: bool = False) -> list[Any]:
+                       with_project: bool = True) -> list[Any]:
     """Distinct, order-preserving ids from a parent endpoint's records.
 
     with_project=True returns (parent_id, project_id) pairs instead of bare ids, for the
@@ -227,6 +227,12 @@ def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef,
 
     Kept as a flag rather than a second function because the two differ only in what they
     carry, and callers pass the result straight into expand_paths either way.
+
+    It defaults to True because False is a trap: the generated Fabric notebook took the
+    default and every parent-scoped endpoint 400'd with "Missing Project or Company ID",
+    or - worse, once a project id was supplied - 404'd because a parent from project A had
+    been paired with project B. Both read as a broken endpoint rather than a missing flag.
+    Nothing in production wants bare ids; the self-check asks for them explicitly.
     """
     seen: dict[Any, Any] = {}
     for record in records:
@@ -302,7 +308,8 @@ def _selftest() -> None:
     order = [e.name for e in resolution_order([child, contracts, project])]
     assert order.index("contracts") < order.index("lines"), order
 
-    assert collect_parent_ids([{"id": 1}, {"id": 2}, {"id": 1}, {}], ParentRef("x", "id")) == [1, 2]
+    assert collect_parent_ids([{"id": 1}, {"id": 2}, {"id": 1}, {}], ParentRef("x", "id"),
+                          with_project=False) == [1, 2]
 
     # Pair form: the project travels WITH the parent id, read from either shape Procore
     # uses. Without it, /prime_contracts/{id}/line_items and budget_views/{id}/detail_rows
@@ -328,7 +335,8 @@ def _selftest() -> None:
     ref = ParentRef("budget_views", "id", where_field="name", where_value="CM")
     assert collect_parent_ids(shared, ref, with_project=True) == [(99, 7), (99, 8), (99, 9)]
     # No filter means every parent, as before.
-    assert len(collect_parent_ids(views, ParentRef("budget_views", "id"))) == 3
+    assert len(collect_parent_ids(views, ParentRef("budget_views", "id"),
+                              with_project=False)) == 3
 
     paired = _ep("li", "/rest/v1.0/prime_contracts/{parent_id}/line_items",
                  SCOPE_PARENT, ParentRef("contracts", "id"))

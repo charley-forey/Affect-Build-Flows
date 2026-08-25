@@ -2,6 +2,22 @@
   "properties": {
     "activities": [
       {
+        "name": "Extract Procore",
+        "type": "TridentNotebook",
+        "dependsOn": [],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
         "name": "Land To Bronze",
         "type": "TridentNotebook",
         "dependsOn": [],
@@ -53,6 +69,12 @@
         "name": "Bronze To Silver",
         "type": "TridentNotebook",
         "dependsOn": [
+          {
+            "activity": "Extract Procore",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
           {
             "activity": "Land To Bronze",
             "dependencyConditions": [

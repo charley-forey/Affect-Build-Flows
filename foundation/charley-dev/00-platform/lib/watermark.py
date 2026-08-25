@@ -51,7 +51,12 @@ def read_watermark(spark: Any, table: str, endpoint: str) -> datetime | None:
 
 def write_watermark(spark: Any, table: str, endpoint: str, value: datetime, batch_id: str) -> None:
     """Record a new high-water mark. Call only after the load has succeeded."""
-    from .fabric_common import merge_delta, utc_now
+    # Flat import, not relative. Everything in 00-platform/lib is uploaded side by side
+    # into Files/lib and imported as a top-level module, so there is no parent package for
+    # a relative import to resolve against - this was the only one left in the tree, and
+    # it took down the 2026-08-25 run at the point the watermark is written, i.e. after a
+    # successful extract. Matches procore_extract.py, which already imports it this way.
+    from fabric_common import merge_delta, utc_now
 
     df = spark.createDataFrame(
         [(table, endpoint, value, batch_id, utc_now())], _SCHEMA

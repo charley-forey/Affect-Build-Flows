@@ -189,22 +189,9 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
     Everything except path expansion is the shared extractor, unchanged.
     """
     headers = px.build_headers(token, settings.company_id, endpoint)
-    params = px.watermark_params(endpoint, None)   # None = full pull; watermarks live in Fabric
-    if endpoint.scope == "company":
-        params = {**params, "company_id": settings.company_id}
-
-    # A declared window. Without it these endpoints return 200 and no rows, which reads as
-    # "this project has no daily logs" - the most expensive kind of wrong, because nothing
-    # errors and the absence looks like data.
-    if getattr(endpoint, "date_range_days", None):
-        from datetime import timedelta
-
-        end = datetime.now(timezone.utc).date()
-        start = end - timedelta(days=endpoint.date_range_days)
-        prefix = getattr(endpoint, "date_param_prefix", "") or ""
-        lo = f"{prefix}start_date" if not prefix else f"{prefix}[start_date]"
-        hi = f"{prefix}end_date" if not prefix else f"{prefix}[end_date]"
-        params = {**params, lo: start.isoformat(), hi: end.isoformat()}
+    # None = full pull; watermarks live in Fabric. px.build_params owns the rest -
+    # company scoping and the declared date window - so the notebook cannot drift from it.
+    params = px.build_params(endpoint, settings.company_id, None)
 
     parent_ids = None
     if endpoint.parent:
@@ -220,20 +207,14 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
         try:
             for record in px.iter_records(session, settings.base_url, path, headers,
                                           params=params):
-                # Stamp the project we FETCHED this record under. Procore's project-scoped
-                # list endpoints do not reliably echo project_id back in the payload, and a
-                # child endpoint needs it (see collect_parent_ids / expand_paths). Reading
-                # it off the payload finds nothing; the caller already knows it.
-                if project_id is not None and record.get("project_id") is None:
-                    record = {**record, "project_id": project_id}
+                record = px.stamp_project(record, project_id)
                 raw.append(record)
                 rows.append(px.to_bronze_row(record, endpoint, project_id, ingested_at))
         except Exception as exc:                                    # noqa: BLE001
             # A 404/403 on ONE project means that project does not have the tool enabled -
             # normal across a 19-project portfolio, and not a reason to lose the other 18.
             # Anything else is a real failure and is re-raised.
-            status = getattr(getattr(exc, "response", None), "status_code", None)
-            if status not in (403, 404):
+            if not px.is_tool_not_enabled(exc):
                 raise
             skipped += 1
     if skipped:

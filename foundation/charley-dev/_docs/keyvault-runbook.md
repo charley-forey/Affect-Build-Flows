@@ -43,10 +43,34 @@ Secrets held:
 
 | Secret | Added | State |
 |---|---|---|
-| `OutbuildToken` | Rebecca, 2026-08-19 18:27 UTC | **Live** — reads back, and authenticates against the Datahub API |
-| `procore-client-id` | — | Pending rotation |
-| `procore-client-secret` | — | Pending rotation |
-| `procore-company-id` | — | Pending rotation |
+| `OutbuildToken` | Rebecca, 2026-08-19 | **Live** — reads back, and authenticates against the Datahub API |
+| `ProcoreClientID` | Rebecca, 2026-08-22 | **Live** — verified 2026-08-24 against `https://api.procore.com`, 19 active projects |
+| `ProcoreClientSecret` | Rebecca, 2026-08-22 | **Live** — same probe |
+| `ProcoreCompanyID` | Rebecca, 2026-08-22 | **Live** — same probe |
+| `Fabric-SQL-Login-Username` | Rebecca, 2026-08-22 | Held, unused — the `FabricReader` SQL login |
+| `Fabric-SQL-Login-Password` | Rebecca, 2026-08-22 | Held, unused |
+| `Fabric-Gateway-Service-Account-Username` | Rebecca, 2026-08-22 | Held, unused — `fabricconnector@` |
+| `Fabric-Gateway-Service-Account-Password` | Rebecca, 2026-08-22 | Held, unused |
+| `Sage-Data-Gateway-Recovery-Key` | Rebecca, 2026-08-22 | Held, unused |
+
+### The five Sage/gateway secrets do not unblock Sage
+
+They close a **different** gap — the one at the bottom of this document: the 1Password share
+links holding the gateway recovery key, the `FabricReader` SQL login and the `fabricconnector@`
+credentials expired 2026-05-28, and those three things now live somewhere durable. That is
+worth having.
+
+They are not what `CD_Sage_Ingest` is waiting for. Sage 100 is **on-premises**
+(`NC-AFFECT-1\SAGE100CON`); a Fabric notebook has no network route to it, and a dataflow
+reaches it through the on-premises data gateway, which authenticates with the credential
+**stored in the gateway connection** — not with anything in Key Vault. Re-checked
+2026-08-24: `GET /gateways` and `GET /connections` both still return **0** for
+`cforey-c@affect-group.com`. The ask is unchanged and is still one line: **"Can use" on
+connection `nc-affect-1\sage100con;Affect Group`** in *Manage connections and gateways*.
+
+The full identity picture — what this account can and cannot do (verified, not assumed), why
+a workspace identity beats a service principal here, the four honest Sage options, and the
+one-email ask that closes all of it — is in [`access-model.md`](access-model.md).
 
 ### One thing worth knowing about `az`
 
@@ -63,25 +87,30 @@ subscription.
 ## Secret naming — the defect that would have hidden here
 
 Key Vault secret names cannot contain underscores, so **the environment-variable name is never
-the secret name**. `setup_keyvault.py` always knew this and wrote `procore-client-id`. The read
-side did not: it passed `PROCORE_CLIENT_ID` straight to Key Vault, which is not a legal secret
-name. Loading the secrets would not have been enough — the lookup would still have failed, and
-the error ("secret not found") would have pointed at the loading step, not at the bug.
+the secret name**. `setup_keyvault.py` assumed a mechanical kebab-case translation and would
+have written `procore-client-id`; the read side originally passed `PROCORE_CLIENT_ID` straight
+through, which is not a legal secret name at all.
 
-One function now owns the translation, `fabric_common.kv_secret_name`, and `setup_keyvault.py`
-imports it rather than restating it so the two cannot drift:
+Both were wrong about the same thing, and reality settled it on 2026-08-22: Rebecca created
+every secret **by hand in the portal, in PascalCase** — `ProcoreClientID`, not
+`procore-client-id`. So all four are now mapped explicitly rather than derived, and the
+mechanical fallback survives only for a secret nobody has created yet. Mapped, not renamed:
+something we cannot see may already read them under these names.
+
+One function owns the translation, `fabric_common.kv_secret_name`, and `setup_keyvault.py`
+imports it rather than restating it so the two cannot drift. `--verify` now asserts every
+read-side lookup resolves to a name the vault actually holds, which is the check that would
+have caught this on 2026-08-22 instead of at the next unattended 02:00 run:
 
 | Environment variable | Key Vault secret |
 |---|---|
-| `PROCORE_CLIENT_ID` | `procore-client-id` |
-| `PROCORE_CLIENT_SECRET` | `procore-client-secret` |
-| `PROCORE_COMPANY_ID` | `procore-company-id` |
+| `PROCORE_CLIENT_ID` | `ProcoreClientID` |
+| `PROCORE_CLIENT_SECRET` | `ProcoreClientSecret` |
+| `PROCORE_COMPANY_ID` | `ProcoreCompanyID` |
 | `OUTBUILD_API_TOKEN` | `OutbuildToken` |
 
-`OutbuildToken` breaks the rule because Rebecca created it by hand in the portal. It is
-**mapped**, in `fabric_common.SECRET_NAMES`, not renamed — something else may already read it
-under that name, and renaming a secret to satisfy a convention is not worth breaking a caller
-we cannot see.
+All four are **mapped**, in `fabric_common.SECRET_NAMES`. Renaming a secret to satisfy a
+convention is not worth breaking a caller we cannot see.
 
 ## The read path
 
@@ -186,7 +215,8 @@ its own piece of work, not a footnote to this one.
 - **`OutbuildToken` is a `superadmin` token valid until 2036-06-09.** A ten-year credential with
   the widest available role is worth questioning with Outbuild — a read-only, shorter-lived
   token would do everything the Datahub API is used for here.
-- **The 1Password share links in the Sage handoff document expired 2026-05-28.** The gateway
-  recovery key, the `FabricReader` SQL login and the `fabricconnector@` service account
-  credentials are all behind them. Nothing needs them today; the day something does will be a
-  day when the gateway is already down. Ask Nerds That Care to re-share into somewhere durable.
+- ~~**The 1Password share links in the Sage handoff document expired 2026-05-28.**~~
+  **CLOSED 2026-08-22** — Rebecca put all three in `AffectKeyVault`: the gateway recovery key,
+  the `FabricReader` SQL login and the `fabricconnector@` service account credentials. Nothing
+  reads them, which is correct; they exist so the day the gateway is down is not also the day
+  nobody can find the recovery key.

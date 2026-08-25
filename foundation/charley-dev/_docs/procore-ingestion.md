@@ -17,6 +17,82 @@ The pipeline is split in two, and the split is deliberate:
                                           cd_bronze_procore_*  (Delta, MERGE)
 ```
 
+## 2026-08-25 — extraction moved into Fabric, and the eleven defects in the way
+
+`cd_01_extract_procore` now authenticates and extracts **inside Fabric**, reading its
+credentials from `AffectKeyVault`. The laptop is out of the data path.
+
+Eleven defects had to be fixed to get there. All of them had been in the tree since the notebook
+was written, and all were invisible, because **the notebook had never once run past
+authentication** — its four previous runs died on `Secret 'PROCORE_CLIENT_ID' not found`, so
+no line after that had ever executed. Each fix only exposed the next.
+
+| # | Defect | Why it stayed hidden |
+|---|---|---|
+| 1 | Read side asked for `procore-client-id`; the vault holds `ProcoreClientID` | Rebecca created the secrets by hand in PascalCase. Write side and read side agreed with each other and both disagreed with the vault |
+| 2 | `PROCORE_BASE_URL` defaulted to **sandbox** | The local script set the override; the notebook did not. **Had the credentials been valid in both, this would have landed convincingly empty tables rather than failing** |
+| 3 | `spark.createDataFrame(rows)` inferred the schema | `_project_id` is `None` on all 8 company-scoped endpoints, so Spark could not type it. Which endpoint runs first decides whether it fires |
+| 4 | `watermark.py` used a relative import | The tree's last one. `00-platform/lib` uploads **flat**, so there is no parent package. Offline tests import by path and never notice |
+| 5 | Bronze merged on `_key` alone | `project_vendors` returns 409 rows with **58 duplicate vendor ids** — one vendor, several projects |
+| 6 | The merge joined nullable keys with `=` | `NULL = NULL` is not true, so company records would never match. This one **never crashes**: it appends a fresh copy of every company record every night, silently, forever |
+| 7 | Duplicate source rows within one batch | Delta refuses a MERGE it cannot disambiguate. `checklist_lists` hit it — and **only on the second run**, because with an empty target there is nothing to match and duplicates insert quietly |
+| 8 | `per_page=1000` | REST v2.0 caps at 100 and says so outright. One endpoint affected |
+| 9 | `collect_parent_ids(..., with_project=False)` **by default** | The notebook took the default. Nested endpoints answered `Missing Project or Company ID`, or — worse, once a project was supplied — `404 Item not found`, because a parent from project A had been paired with project B |
+| 11 | The project a record was fetched under was never **stamped onto it** | Procore's list endpoints do not reliably echo `project_id` back. Without the stamp the failure lands one step later and somewhere else: the CHILD endpoint builds a URL with no project and gets `Missing Project or Company ID`. Which children broke depended purely on whether their parent's payload happened to include a project |
+| 10 | The date window used **UTC's today** | Procore validates it against its own current day in the company's timezone and rejects anything beyond it. Eastern is 4–5h behind UTC, so this 400s only between 20:00 and midnight local — **and never during a daytime test** |
+
+### Defect 9 is the one with a number attached
+
+Five endpoints had **never returned a single row** — not in Fabric, and not through the laptop
+bridge either, since the day they were registered. Measured against the live tenant once the
+default was fixed:
+
+| Endpoint | Rows, first time ever |
+|---|---:|
+| `budget_detail_rows` | **404** |
+| `prime_contract_line_items` | **317** |
+| `work_order_contract_line_items` | **264** |
+| `purchase_order_contract_line_items` | **176** |
+| `payment_applications` | **136** |
+
+Two more that had been quietly wrong rather than empty: `daily_log_headers` went 0 → **19**,
+and `manpower_logs` **18 → 4,627** once the date window stopped being rejected.
+
+Contract line items and budget detail rows are what make actual-cost-by-cost-code possible.
+Anything downstream reading them has been reading an empty table — and reporting **zero**
+rather than reporting nothing, which is the failure mode this whole engagement exists to
+remove.
+
+`with_project=True` is now the default. Nothing in production wants bare parent ids; the
+self-check asks for them explicitly.
+
+### Defect 10 only happens at night
+
+It surfaced at 03:06 UTC. A run at 09:00 works perfectly and a run at 23:00 Eastern does not,
+which means every test anyone would think to do by hand passes while the unattended overnight
+run — the only time this pipeline actually executes — fails. The window now ends yesterday,
+which is timezone-proof for any offset and costs the current day's logs, which are incomplete
+anyway.
+
+### What the notebook does when an endpoint fails
+
+A 403/404 on one scope means that project or company does not have the tool enabled: skipped
+and counted. Anything else is recorded, named in the summary, and **still fails the run** —
+but only after every other endpoint has had its chance to land. Succeeding quietly on 43 of 44
+is how one endpoint stays broken for a month.
+
+### The pattern worth naming
+
+**Seven of the eleven were the same shape**: a rule the local bridge implemented and the generated
+notebook did not — the production base URL, the date window, the parent/project pairing, the
+403 tolerance, the merge key, the per-endpoint error isolation. The bridge was not a stand-in
+for the notebook; it was quietly a second, better implementation, and nobody could see the gap
+because only one of the two ever ran.
+
+Those rules now live once, in `procore_extract.py` — `build_params`, `bronze_schema`,
+`bronze_merge_keys`, `is_tool_not_enabled`, `stamp_project` — and both runners call them. That is the fix that
+matters more than any single defect above.
+
 ## Why it is split
 
 `cd_01_extract_procore` is the real, scheduled ingestion and it runs inside Fabric. It needs

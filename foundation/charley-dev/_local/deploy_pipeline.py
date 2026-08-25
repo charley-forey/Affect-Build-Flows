@@ -19,8 +19,23 @@ rather than let gold rebuild over stale bronze and publish numbers that look cur
 is the same principle as the notebooks asserting their own output: the failure has to be
 loud, because a quietly stale report is worse than a missing one.
 
-WHY cd_01_extract_procore IS NOT IN THIS DAG
---------------------------------------------
+WHY cd_01_extract_procore IS NOW THE HEAD OF THIS DAG (2026-08-25)
+------------------------------------------------------------------
+It is in, and the history below is kept because it explains what "in" had to mean.
+
+Extraction now authenticates inside Fabric against production Procore, reading its
+credentials from AffectKeyVault. Proven by a green run, not by a deploy succeeding.
+
+The condition this file always stated has been met: extraction is in the DAG the day it can
+actually authenticate, and not one day earlier. Everything downstream now gates on real data
+having been fetched rather than on whatever a laptop last landed.
+
+cd_05_land_to_bronze stays, and stays parallel rather than downstream. It merges anything in
+Files/_landing and needs no credential, so it remains the way a one-off backfill or a manual
+re-land reaches bronze. It is no longer the only way new data arrives.
+
+THE ORIGINAL REASONING, KEPT
+----------------------------
 It used to be, as the first stage, and that made the scheduled pipeline fail every single
 night. The notebook needs a Procore secret, the only safe way to give a Fabric notebook one
 is Key Vault, and this tenant has no Azure subscription (security-findings.md, F1). So it
@@ -46,6 +61,7 @@ run still earns its place - it re-applies every transform, rebuilds gold and re-
 47-expectation gate - but it does not go and fetch new data.
 
 Put cd_01_extract_procore back at the head of STAGES the day Key Vault is available.
+-- done, 2026-08-25. See the note at the top.
 """
 
 from __future__ import annotations
@@ -69,8 +85,11 @@ PIPELINE_NAME = "CD_Master_Pipeline"
 
 # (activity name, notebook, [upstream activities])
 STAGES = [
-    # cd_01_extract_procore belongs here and cannot be here yet - see the module docstring.
-    # This merges the already-landed files into bronze and needs no credential.
+    # Extraction. Reads Key Vault, calls Procore, merges straight into bronze.
+    ("Extract Procore", "cd_01_extract_procore", []),
+    # Kept, and deliberately NOT downstream of extraction: it merges whatever sits in
+    # Files/_landing and needs no credential, so a manual backfill still has a way in even
+    # on a night when Procore is unreachable.
     ("Land To Bronze", "cd_05_land_to_bronze", []),
     ("Seed Gold Dimensions", "cd_20_seed_gold", []),
     # Silver PARSES cd_bronze_man_*, and this notebook is what creates them - typed and
@@ -81,7 +100,8 @@ STAGES = [
     # Same ordering that, run by hand in the wrong order, fails with
     # System_Cancelled_Session_Statements_Failed and names no table.
     ("Land Manual Input", "cd_06_land_manual", []),
-    ("Bronze To Silver", "cd_10_bronze_to_silver", ["Land To Bronze", "Land Manual Input"]),
+    ("Bronze To Silver", "cd_10_bronze_to_silver",
+     ["Extract Procore", "Land To Bronze", "Land Manual Input"]),
     ("Build Gold", "cd_30_build_gold", ["Bronze To Silver", "Seed Gold Dimensions"]),
     # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
     # means the numbers were checked - not merely that the tables were written. Anything
@@ -90,9 +110,10 @@ STAGES = [
     ("Data Quality Gate", "cd_40_dq_checks", ["Build Gold"]),
 ]
 
-# A timeout that is too generous hides a hung run; too tight kills a working one. Landing
-# is the long pole while extraction is out of the DAG - it merges every landed endpoint
-# into bronze. Extraction's 2-hour allowance is kept ready for the day it rejoins.
+# A timeout that is too generous hides a hung run; too tight kills a working one.
+# Extraction is now the long pole: 44 endpoints, most fanned out across 19 projects, at 100
+# records per page. A full first pull measured ~11 minutes; the 2-hour allowance covers a
+# cold start plus the retry.
 TIMEOUTS = {"cd_01_extract_procore": "0.02:00:00", "cd_05_land_to_bronze": "0.01:00:00"}
 DEFAULT_TIMEOUT = "0.00:30:00"
 
@@ -206,9 +227,9 @@ def main() -> int:
 
     if not args.run:
         print("\nDeployed but not triggered. Re-run with --run to execute.")
-        print("NOTE: this DAG reprocesses what is already landed. It does NOT fetch new "
-              "data from Procore - extraction runs locally until Key Vault exists, so the "
-              "report is fresh to the last run of extract_procore_local.py.")
+        print("This DAG now FETCHES from Procore before it rebuilds - Extract Procore runs "
+              "first, authenticating from Key Vault. The report is fresh to the nightly "
+              "run, not to whenever somebody last ran a script on a laptop.")
         return 0
 
     status, _, headers = dp.call(
