@@ -12,12 +12,21 @@ return empty and the gateway itself returns 404, while `Build_Sage_Test` plainly
 identity cannot see any gateway in the tenant, so the dataflow asks to run through one it has
 no rights on and fails before reaching Sage.
 
-**The remaining work is one permission grant**, not a build: whoever administers the
-on-premises data gateway grants `cforey-c@affect-group.com` the **"Can use"** permission on
-the connection `nc-affect-1\sage100con;Affect Group`, in *Manage connections and gateways*.
-No subscription, no vault, no code change — it runs on the next refresh. The failed dataflow
-stays deployed on purpose: it is correct and inert until run, which turns what is left into
-one grant and one refresh.
+**The remaining work is an ownership change, and it needs nothing from Affect.** Measured
+2026-08-25 by signing in as the gateway's own registration account: `RBuckley@affect-group.com`
+and `IT@affect-group.com` **already hold "Can use"** on `nc-affect-1\sage100con;Affect Group`,
+the exact datasource this dataflow is bound to.
+
+A Dataflow Gen2 runs as its **owner**. We deployed this one owned by `cforey-c@`, which has no
+gateway rights — so the failure was an ownership choice on our side, not a grant withheld on
+theirs. The ask carried since 2026-08-02 was a valid fix but never the only one, and the
+framing around it was wrong.
+
+**Fastest fix, available today and costing nothing: Rebecca opens `CD_Sage_Ingest` and clicks
+Take over.** It runs on the next refresh. The durable fix is to hand ownership to
+`fabricconnector@` so no named person is in the path at all — that needs the account added to
+the `Build` workspace and a Power BI Pro licence ($14/mo), and is the target to aim at rather
+than the thing to wait for. See [`access-model.md`](access-model.md).
 
 > **Worth raising on the same call:** re-measured live on **2026-08-19**, Rebecca's Sage data
 > now runs to **2026-07-31** — up from the **2026-07-20** we recorded on 2026-08-02, so her

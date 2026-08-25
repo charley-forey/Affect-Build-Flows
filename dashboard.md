@@ -163,7 +163,7 @@ resource library, warehouse review, scope call).
 **Access — down from four items to one, after Aug 19 closed the Outbuild token, Key Vault
 (withdrawn — wrong vault) and the SharePoint site:**
 
-- [ ] 🔴 **Grant `cforey-c@affect-group.com` "Can use"** on connection `nc-affect-1\sage100con;Affect Group` — **highest value per unit of effort.** One grant, one refresh
+- [ ] 🟡 **Rebecca clicks "Take over" on `CD_Sage_Ingest`** — **needs nothing from anyone and costs nothing.** Measured 2026-08-25: she and IT already hold "Can use" on the Sage datasource. A Dataflow Gen2 runs as its owner, and we had deployed it owned by an account without gateway rights - so this was our ownership choice, not a grant Affect withheld. Durable version: hand ownership to `fabricconnector@` (needs a $14/mo Pro licence) - [`access-model.md`](foundation/charley-dev/_docs/access-model.md)
 - [x] 🟢 **The reporting site's intake lists are complete** — the 18 lists were created 2026-08-19; their **142 of 142 columns** and 19 `CD Projects` rows landed 2026-08-20. All read back through Graph rather than taken from the run status. What remains is signing `CD_Manual_Ingest` in and refreshing it
 - [ ] 🟡 **Outbuild → Procore project links** — only **3 of 15** Outbuild projects carry a `procore_id`, so **280 of 406** critical-path activities cannot be attributed to a project and are absent from `fct_Milestone`. Configuration in Outbuild rather than a build task; roughly triples schedule coverage on the report
 - [ ] 🟡 Procore permissions: `punch_item_types` and `schedule` both return **403**

@@ -63,6 +63,56 @@ The fix is a non-human identity owning the items. Two forms, and the second is b
   store, nothing to rotate, nothing to leak. **Prefer this.** It needs a workspace admin to
   enable, and a Key Vault role assignment so it can read secrets.
 
+## 2026-08-25, measured: the Sage blocker was ours, not Affect's
+
+Signed in as `fabricconnector@affect-group.com` and read the gateway. No MFA prompt, no
+password change, nothing written. What came back settles three weeks of asking:
+
+```
+gateways visible to this account: 1
+  1e798beb-…  AffectGroup-Sage-Gateway
+
+datasources on the Sage gateway: 3
+  d34f4487-…  nc-affect-1\sage100con;ABMI
+  835e72c8-…  nc-affect-1\sage100con;Affect Group      <-- CD_Sage_Ingest is bound to this
+  43e42c29-…  nc-affect-1\sage100con;Make By Affect
+
+current users on the Affect Group datasource: 2
+  RBuckley@affect-group.com  Read
+  IT@affect-group.com        Read
+```
+
+**Rebecca already holds "Can use" on the exact datasource `CD_Sage_Ingest` needs.** So does
+IT. That access was in place before we ever asked for it.
+
+So the ask we have been carrying since 2026-08-02 — *"grant `cforey-c@` Can use"* — was a
+valid fix but never the only one, and the framing around it was wrong. Affect was not
+withholding anything. A Dataflow Gen2 runs as its **owner**; we deployed `CD_Sage_Ingest`
+owned by `cforey-c@`, an account with no gateway rights, and then described the resulting
+failure as an outstanding permission grant on Affect's side. It was an ownership choice on
+ours.
+
+That correction belongs in front of the client rather than buried, and it is worth more than
+the fix: **the cheapest unblock never required Affect to do anything at all.**
+
+### What this makes possible, in order of how fast it lands
+
+| | Route | Needs | Ties Sage to |
+|---|---|---|---|
+| **Today, free** | Rebecca opens `CD_Sage_Ingest` and clicks **Take over** | Nothing. She already has Can use, workspace access and a Pro licence | Rebecca — a permanent employee, not a consultant |
+| **Durable** | `fabricconnector@` owns it (`--take-ownership`) | Add it to the `Build` workspace + a **Power BI Pro** licence, $14/mo | Nobody. No human in the path |
+| Fallback | `--grant` adds `cforey-c@` as Can use | Nothing | A consultant's account. Somebody redoes this later |
+
+The middle row is the one to aim at and the top row is the one to do this week. They are not
+in conflict: ownership can move again later without touching the data.
+
+### Three databases, not one
+
+The gateway exposes `ABMI`, `Affect Group` and `Make By Affect`. That confirms §12 of the
+handoff — ABMI was a guess among several real candidates — and confirms `CD_Sage_Ingest` is
+bound to the right one. `Make By Affect` is a separate entity's book and is worth asking about
+before anyone assumes the portfolio is complete without it.
+
 ## What the Nerds That Care handoff document adds (read 2026-08-25)
 
 The May 20 2026 handoff (Eric Roitman, Nerds That Care) is the first full description of the
