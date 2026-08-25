@@ -79,6 +79,66 @@ Three candidates, in order of likelihood given a 3m25s runtime:
    **Event ID 17063** in the Windows Application log on `NC-AFFECT-1` — it will not appear as a
    connection error on the Fabric side.
 
+## 2026-08-25 — SAGE IS LIVE. All 8 tables landed.
+
+`CD_Sage_Ingest` completed at **09:25:10 UTC**, 3m55s, first successful run since it was
+built on 2026-08-02. All eight tables exist in `CD_Bronze_Lakehouse/Tables/dbo`, including
+**`arivln` and `apivln`** — the AR/AP line tables the existing `Build_Sage_Test` dataflow
+explicitly strips the pointer columns for, and which no one at Affect has ever queried.
+
+### The actual root cause, which was none of the three we guessed
+
+The destination failed because **the Lakehouse connection was being forced through the
+on-premises gateway.** `queryMetadata.json` carries `gatewayObjectId` at the dataflow level,
+and Power Query applies it to *every* connection in the dataflow — so Fabric was trying to
+reach OneLake by going out to a server in Affect's office and back. The connection dialog
+showed it plainly once we looked:
+
+```
+Data gateway: [On-premises][User] AffectGroup-Sage-Gateway
+[x] This connection can be used with on-premises data gateways    <- checked AND DISABLED
+    You are not signed in. Please sign in.
+```
+
+Signing in could never have worked. It was not asking *the user* to authenticate — the user
+was already signed in. It was asking *the gateway* to authenticate to OneLake, which is not
+something an on-premises gateway does.
+
+Removing `gatewayObjectId` from the definition does not fix it either: that binding is what
+routes the on-premises **source**, so without it the refresh dies in five seconds with the
+old "cannot see any gateway" signature. It is all-or-nothing at the definition level.
+
+**The fix is in the destination's own connection dialog, where the gateway is a dropdown with
+a `(none)` option.** Setting it to `(none)` detaches the Lakehouse connection from the gateway
+while the SQL source keeps using it, and the sign-in state immediately flips from "You are not
+signed in" to "You are currently signed in as…". The connection `Lakehouse cforey-c (none)` is
+created against the signed-in identity, and the refresh works.
+
+That dropdown only appears when the default destination is **re-added from scratch**. On the
+existing broken destination the same field is static text with no dropdown at all, which is
+why this looked unfixable from the UI as well as from the API.
+
+### Why Build_Sage_Test was never a useful comparison
+
+Its definition is byte-identical to ours — same `gatewayObjectId`, same SQL connection, same
+Lakehouse connection `44379bed-…` on cluster `e1e7d5c7-…`. It works because it runs as Rebecca
+and `44379bed` is **her personal connection**; `e1e7d5c7` returns 404 for us because it is a
+per-user cloud cluster. Personal connections cannot be shared. Whoever owns the dataflow needs
+their own, and ours is now `Lakehouse cforey-c`.
+
+We had copied her definition wholesale, connection ids and all, when this dataflow was
+authored — and it survived unnoticed from 2026-08-02 until now because the item had no deploy
+script. It has one now (`deploy_sage.py`).
+
+### Reproducing it, if the destination ever breaks again
+
+1. `python _local/deploy_sage.py --apply` — pushes the definition with the Lakehouse binding
+   stripped, so the destination is genuinely absent rather than broken
+2. Power Query → **Default data destination → Remove**, then **Add → Lakehouse**
+3. **Data gateway → `(none)`** — this is the whole trick
+4. Pick `CD_Bronze_Lakehouse` → `dbo`, update method **Replace**
+5. **Bind selected queries** (all 8 are pre-checked), then **Save & run**
+
 ## The two routes are broken at opposite ends (measured 2026-08-25)
 
 Both were tried against the live tenant. Neither guess would have survived contact.

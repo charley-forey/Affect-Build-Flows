@@ -59,6 +59,28 @@ DATAFLOW_ID = "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8"
 # see the module docstring.
 KEEP_CONNECTION_KINDS = {"SQL"}
 
+# Drop the dataflow-level gateway binding too.
+#
+# Seen in the Power Query UI on 2026-08-25: the "Connect to data source" dialog for the
+# LAKEHOUSE destination showed "Data gateway: [On-premises][User] AffectGroup-Sage-Gateway".
+# The top-level gatewayObjectId drags EVERY connection in the dataflow through the
+# on-premises gateway, destination included - so Fabric was trying to reach OneLake via a
+# machine in Affect's server room, and reported it as "you are not signed in".
+#
+# TRIED AND WRONG, kept as a record. Removing it made the refresh fail in five seconds -
+# the old "cannot see any gateway" signature - because the dataflow-level binding is what
+# routes the on-premises SOURCE. It is all-or-nothing: with it, the Lakehouse destination
+# gets dragged through the gateway too; without it, Sage is unreachable.
+#
+# The resolution is not here. Build_Sage_Test's definition is byte-identical to ours -
+# same gatewayObjectId, same SQL connection, same Lakehouse connection 44379bed on cluster
+# e1e7d5c7 - and it works, because it runs as Rebecca and 44379bed is HER connection.
+# e1e7d5c7 returns 404 for us: it is a per-user cloud cluster, so 44379bed is a personal
+# connection and personal connections cannot be shared. Whoever owns the dataflow needs
+# their OWN Lakehouse connection, created through the Power Query "Configure connection"
+# dialog, which is the one thing the REST API will not do.
+STRIP_GATEWAY = False
+
 
 def b64(text: str) -> str:
     return base64.b64encode(text.encode("utf-8")).decode("ascii")
@@ -68,6 +90,9 @@ def build_definition(strip_lakehouse: bool = True) -> tuple[dict, list[str]]:
     """The committed definition, with the destination binding dropped. Returns (defn, notes)."""
     notes = []
     metadata = json.loads((DATAFLOW_DIR / "queryMetadata.json").read_text(encoding="utf-8"))
+
+    if STRIP_GATEWAY and metadata.pop("gatewayObjectId", None):
+        notes.append("drop dataflow-level gatewayObjectId (the SQL connection carries it)")
 
     if strip_lakehouse:
         before = metadata.get("connections", [])
