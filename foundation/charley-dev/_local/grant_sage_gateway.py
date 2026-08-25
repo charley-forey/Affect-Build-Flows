@@ -215,6 +215,13 @@ def main() -> int:
         #   2. a Power BI Pro license on it - section 10 records it as having none, and on
         #      F2, which is below F64, any account that runs shared content needs Pro
         # Without those this returns 401 or 403, which means "ask Rebecca", not "broken".
+        #
+        # UNVERIFIED FOR GEN2. Default.Takeover is the Power BI dataflow API, and Gen2 items
+        # do not appear on that surface at all: GET /groups/{id}/dataflows returns an empty
+        # list for this workspace on 2026-08-25 while CD_Sage_Ingest plainly exists. So this
+        # may well 404. The portal is the route that is known to work - workspace item list,
+        # the item's "..." menu. Treat a failure here as "use the portal", not as a problem
+        # with the account.
         status, _ = call("POST",
                          f"/groups/{WORKSPACE_ID}/dataflows/{DATAFLOW_ID}/Default.Takeover",
                          tok)
