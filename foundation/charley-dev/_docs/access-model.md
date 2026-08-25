@@ -63,13 +63,74 @@ The fix is a non-human identity owning the items. Two forms, and the second is b
   store, nothing to rotate, nothing to leak. **Prefer this.** It needs a workspace admin to
   enable, and a Key Vault role assignment so it can read secrets.
 
+## What the Nerds That Care handoff document adds (read 2026-08-25)
+
+The May 20 2026 handoff (Eric Roitman, Nerds That Care) is the first full description of the
+Sage side we have had. Three things in it matter, and they are not the credentials.
+
+### 1. The documented connection points at the WRONG DATABASE
+
+| | Handoff document | What `CD_Sage_Ingest` queries |
+|---|---|---|
+| Connection | `Sage100-SQL-Connection` | datasource `835e72c8-…` |
+| Database | **`ABMI`** | **`Affect Group`** |
+
+`ABMI` was a guess, and the document says so — §12 records that it "was selected based on
+Rebecca's references to *Affect Build*" and lists `Affect Group` among the alternatives. The
+evidence is settled and it is not ABMI: querying `Affect Group` yields Sage job numbers that
+resolve to **15 of the 16 real Procore projects, carrying $22.5M of AR**. A wrong database does
+not join 15 of 16 projects.
+
+**So being granted "Can use" on `Sage100-SQL-Connection` would not be enough** — it is bound to
+ABMI, and a Fabric SQL connection is per (server, database). The grant has to name the
+datasource for the **`Affect Group`** database, which is `835e72c8-7995-4171-91cb-2a32fbd2050a`
+on gateway `1e798beb-…` — the one `Build_Sage_Test` already uses and the one our dataflow is
+already bound to. Asking for the wrong one would burn another round trip and look like the
+grant had failed.
+
+### 2. The Sage database blocks anything not on a whitelist
+
+§9: Sage 100 runs a **SQL Server logon trigger** that refuses any application not named in an
+XML file, and the whitelist is three entries, each locked to login `FabricReader` from
+`%LOCALHOST%`:
+
+- `.Net SqlClient Data Provider`
+- `Framework Microsoft SqlClient Data Provider`
+- `Mashup Engine (TridentDataflowNative)`
+
+Two consequences:
+
+- **Dataflow Gen2 is the sanctioned path**, and `CD_Sage_Ingest` is a Dataflow Gen2. The
+  architecture already committed to is the right one — that is now confirmed rather than
+  assumed.
+- **The "push from on-premises" fallback is dead** unless somebody edits that XML and restarts
+  the SQL Server service. A Python job on the Sage box would be blocked by the logon trigger
+  and would appear in the Event Viewer as Event ID 17063, not as a connection error. Option C
+  below is struck out accordingly.
+
+### 3. Nobody human appears to administer that gateway
+
+The gateway is registered to **`fabricconnector@affect-group.com`** (§4), a service account with
+no license and no admin role (§7, §10). In Fabric, the registering account is the gateway
+admin. §14 hands "Gateway administration within Fabric" to Affect Group going forward — but
+nothing in the document grants gateway-admin rights to Rebecca, to Cal, or to any named person.
+
+If that is right, then the only identity that can grant "Can use" on this gateway is a service
+account whose password lives in 1Password. That is a single point of failure worth fixing on
+its own merits, independent of this engagement: **add Rebecca as a gateway admin.** She is
+already the F2 capacity administrator, so it is a role she is expected to hold.
+
+It also means "ask Rebecca to grant it" may simply fail for her, through no fault of hers, and
+that is worth knowing before she is asked.
+
 ## Sage: the four honest options
+
 
 | | Option | What it costs | Verdict |
 |---|---|---|---|
 | **A** | Grant **"Can use"** on connection `nc-affect-1\sage100con;Affect Group` to the **workspace identity** (not to a person) | One ACL entry, by whoever admins the gateway | **Do this.** Smallest, durable, survives us |
 | **B** | Sign in as `fabricconnector@affect-group.com` — whose credentials are now in the vault — and make the grant ourselves | Nothing technical | **Ask before doing.** See below |
-| **C** | Skip the gateway: a scheduled job **on-prem** pushes the 8 Sage tables to OneLake using the `FabricReader` SQL login | Someone installs a scheduled task on the Sage box once | Real fallback if A keeps not landing |
+| ~~**C**~~ | ~~Skip the gateway: a scheduled job on-prem pushes to OneLake~~ | Also needs the Sage logon-trigger XML edited and the SQL service restarted | **Struck 2026-08-25.** The whitelist in §9 of the handoff blocks any client but the three named ones |
 | **D** | VNet data gateway | ExpressRoute or site-to-site VPN into their network | No. Months of work to avoid one ACL entry |
 
 ### On option B
