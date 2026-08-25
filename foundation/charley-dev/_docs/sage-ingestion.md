@@ -37,6 +37,48 @@ than the thing to wait for. See [`access-model.md`](access-model.md).
 > which makes the grant below no less urgent, and `CD_Sage_Ingest` still cannot run at all
 > without it.
 
+## 2026-08-25 — the gateway is open, and the dataflow ran for real
+
+**`GET /connections` returns 1 for `cforey-c@affect-group.com`.** It had returned 0 since
+2026-08-02. `nc-affect-1\sage100con;Affect Group` (`835e72c8-…`, connectivityType
+`OnPremisesGateway`) is now visible and usable. The access half of this is finished.
+
+How: signed in as `fabricconnector@affect-group.com` — the gateway's own registration account,
+and therefore its admin — and added `cforey-c@` as `Read` on the datasource. Rebecca and IT
+already held it. `/gateways` still returns 0 for us, which is correct and does not matter: that
+needs gateway *admin*, and nothing here does.
+
+**The dataflow then ran for 3m25s and failed** (`01bdf50b-…`, 08:26:34 → 08:29:59 UTC,
+`ActionUserFailure`, no detail). That number is the finding. Its three previous attempts on
+2026-08-02/03 all died in about **5 seconds** — too fast to be a query, which is what told us
+back then that it was failing before it reached Sage at all. Three and a half minutes is a run
+that connected, authenticated, and did work.
+
+No `cd_bronze_sage_*` tables exist in `CD_Bronze_Lakehouse` yet, so it failed before writing.
+
+### What is not yet known, and how to find out
+
+The Fabric jobs API returns only "Something went wrong, please try again later" for a Gen2
+refresh. The per-query detail is in the **portal refresh history** and nowhere else:
+
+`Build` workspace → `CD_Sage_Ingest` → **Refresh history** → the failed run → expand the
+failing query.
+
+Three candidates, in order of likelihood given a 3m25s runtime:
+
+1. **The destination write.** The dataflow writes to `CD_Bronze_Lakehouse` and Gen2 also uses a
+   staging lakehouse. Reading Sage for three minutes and then failing at the write end fits the
+   timing better than anything else.
+2. **A table or column that does not exist in `Affect Group`.** The eight table names were taken
+   from the Sage schema reference and from `Build_Sage_Test`, which queries the same instance —
+   but `Build_Sage_Test` does not query `arivln` or `apivln` at all, so those two have never
+   been proven against this database by anyone.
+3. **The Sage logon trigger.** §9 of the Nerds That Care handoff whitelists three application
+   names for `FabricReader` from `%LOCALHOST%`, one being `Mashup Engine
+   (TridentDataflowNative)`. A Gen2 dataflow should match it. If it does not, the give-away is
+   **Event ID 17063** in the Windows Application log on `NC-AFFECT-1` — it will not appear as a
+   connection error on the Fabric side.
+
 ## What it pulls
 
 Eight tables from `Sql.Database("NC-AFFECT-1\SAGE100CON", "Affect Group")` — the same source
