@@ -23,6 +23,34 @@
                       "Entity": "fct_Milestone"
                     }
                   },
+                  "Property": "ProjectKey"
+                }
+              },
+              "queryRef": "fct_Milestone.ProjectKey",
+              "nativeQueryRef": "ProjectKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "ActivityKey"
+                }
+              },
+              "queryRef": "fct_Milestone.ActivityKey",
+              "nativeQueryRef": "ActivityKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
                   "Property": "MilestoneName"
                 }
               },
@@ -84,6 +112,20 @@
               },
               "queryRef": "fct_Milestone.StatusLabel",
               "nativeQueryRef": "StatusLabel"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "HasDateInversion"
+                }
+              },
+              "queryRef": "fct_Milestone.HasDateInversion",
+              "nativeQueryRef": "HasDateInversion"
             }
           ]
         }
@@ -97,7 +139,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Critical path milestones (Outbuild). Shows MilestoneName, CurrentStart, CurrentFinish, PercentComplete, StatusLabel for the current selection.'"
+                  "Value": "'Table. Critical path milestones (Outbuild). Shows ProjectKey, ActivityKey, MilestoneName, CurrentStart, CurrentFinish, PercentComplete, StatusLabel, HasDateInversion for the current selection.'"
                 }
               }
             }
@@ -129,6 +171,21 @@
               "expr": {
                 "Literal": {
                   "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }

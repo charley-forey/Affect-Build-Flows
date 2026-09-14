@@ -13,7 +13,7 @@ table man_Survey
 
 	column QuestionNumber
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: QuestionNumber
 
 	column QuestionText
@@ -23,7 +23,7 @@ table man_Survey
 
 	column Score
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Score
 
 	column SurveyedParty

@@ -76,7 +76,7 @@ table fct_QcSubmittal
 
 	column TurnaroundDays
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: TurnaroundDays
 
 	column IsOverdue

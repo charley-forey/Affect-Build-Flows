@@ -13,7 +13,7 @@ table man_PriorityItems
 
 	column ItemNumber
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: ItemNumber
 
 	column ScheduleItem

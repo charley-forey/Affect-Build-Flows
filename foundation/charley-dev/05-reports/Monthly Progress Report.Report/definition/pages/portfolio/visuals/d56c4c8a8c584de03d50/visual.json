@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. AR outstanding, ranked. Shows AR Outstanding by ProjectName.'"
+                  "Value": "'Stacked bar chart. AR outstanding (current balance), ranked. Shows AR Outstanding by ProjectName.'"
                 }
               }
             }
@@ -72,7 +72,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'AR outstanding, ranked'"
+                  "Value": "'AR outstanding (current balance), ranked'"
                 }
               }
             },

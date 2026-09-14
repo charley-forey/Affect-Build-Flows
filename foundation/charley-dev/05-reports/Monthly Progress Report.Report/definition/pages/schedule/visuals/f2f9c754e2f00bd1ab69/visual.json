@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Open Submittals. Shows Open Submittals for the current selection.'"
+                  "Value": "'Card. Open Submittals (as of today). Shows Open Submittals for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open Submittals'"
+                  "Value": "'Open Submittals (as of today)'"
                 }
               }
             },

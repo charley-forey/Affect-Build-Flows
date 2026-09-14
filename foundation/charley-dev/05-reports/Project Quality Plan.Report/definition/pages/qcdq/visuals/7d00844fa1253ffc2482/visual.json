@@ -3,10 +3,10 @@
   "name": "7d00844fa1253ffc2482",
   "position": {
     "x": 20,
-    "y": 570,
+    "y": 544,
     "z": 0,
-    "width": 1156,
-    "height": 84,
+    "width": 568,
+    "height": 110,
     "tabOrder": 24
   },
   "visual": {
@@ -28,6 +28,20 @@
               },
               "queryRef": "fct_QcNcr.TradeLabel",
               "nativeQueryRef": "TradeLabel"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_QcNcr"
+                    }
+                  },
+                  "Property": "HasUnmappedTrade"
+                }
+              },
+              "queryRef": "fct_QcNcr.HasUnmappedTrade",
+              "nativeQueryRef": "HasUnmappedTrade"
             },
             {
               "field": {
@@ -55,7 +69,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Procore trade labels seen on observations. Shows TradeLabel, Total Observations for the current selection.'"
+                  "Value": "'Table. Procore trade labels seen on observations. Shows TradeLabel, HasUnmappedTrade, Total Observations for the current selection.'"
                 }
               }
             }

@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Percent Bought Out. Shows Percent Bought Out for the current selection.'"
+                  "Value": "'Card. Percent Bought Out (last snapshot). Shows Percent Bought Out for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Percent Bought Out'"
+                  "Value": "'Percent Bought Out (last snapshot)'"
                 }
               }
             },

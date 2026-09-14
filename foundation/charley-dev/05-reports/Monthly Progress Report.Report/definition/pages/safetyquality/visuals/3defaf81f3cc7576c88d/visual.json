@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Avg Observation Days Open"
+                  "Property": "Avg Observation Days To Close"
                 }
               },
-              "queryRef": "_Measures.Avg Observation Days Open",
-              "nativeQueryRef": "Avg Observation Days Open"
+              "queryRef": "_Measures.Avg Observation Days To Close",
+              "nativeQueryRef": "Avg Observation Days To Close"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Avg Observation Days Open. Shows Avg Observation Days Open for the current selection.'"
+                  "Value": "'Card. Avg Observation Days To Close. Shows Avg Observation Days To Close for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Avg Observation Days Open'"
+                  "Value": "'Avg Observation Days To Close'"
                 }
               }
             },

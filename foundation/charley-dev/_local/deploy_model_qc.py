@@ -101,21 +101,17 @@ DAYS = '"#,0.0"'
 PCT = '"0.0%"'
 
 dm.MEASURES = [
-    ("Last Refresh", "MAX('_Measures'[_built_at])", '"yyyy-mm-dd hh:nn:ss"',
+    ("Last Refresh", "MAX('_Measures'[_built_at])", '"yyyy-mm-dd hh:nn"',
      "nothing - the workbook could not say when it was last true"),
     # The four below are what chrome() renders in the footer on every page. Model A has
     # them; the shared page furniture needs them here too or every page loses its header.
-    ("Report Month Label",
-     'VAR L = MIN ( dim_Date[MonthStart] )\n'
-     'VAR H = MAX ( dim_Date[MonthStart] )\n'
-     'RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), '
-     'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )', "",
+    ("Report Month Label", dm.REPORT_MONTH_LABEL_DAX, "",
      "the workbook used TODAY(), so a saved copy silently re-dated itself"),
     ("Last Checked Run", "MAX ( meta_PipelineRun[RunAt] )", '"yyyy-mm-dd hh:nn"',
      "no workbook equivalent - a spreadsheet cannot say when it was last correct"),
     ("Hours Since Last Checked Run",
      "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
-     "RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+     "RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
      COUNT, "derived"),
     ("Pipeline Status",
      dm.PIPELINE_STATUS_DAX, "",
@@ -161,10 +157,12 @@ dm.MEASURES = [
     ("Overdue Submittals",
      "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsOverdue] = TRUE())", COUNT,
      "Submittals & Mockups - not computed in the workbook"),
-    ("Avg Submittal Turnaround",
-     "AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), "
+    # Closed submittals only. TurnaroundDays holds days-since-created for OPEN items, so the
+    # old average blended completed response times with the age of pending ones.
+    ("Avg Submittal Turnaround Days",
+     "AVERAGEX(FILTER(fct_QcSubmittal, NOT fct_QcSubmittal[IsOpen] && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), "
      "fct_QcSubmittal[TurnaroundDays])", DAYS,
-     "Submittals & Mockups - not computed in the workbook"),
+     "Submittals & Mockups - not computed in the workbook; closed submittals only"),
     ("Possible Mock-Ups",
      "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())", COUNT,
      "Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register."),
@@ -236,11 +234,12 @@ dm.MEASURES = [
     ("DQ Registers Awaiting Input",
      "VAR EmptyRegisters = " + " + ".join(
          f"IF(COUNTROWS({table}) = 0, 1, 0)" for table in dm.MODEL_TABLES if table.startswith("man_"))
-     + '\nRETURN FORMAT(EmptyRegisters, "0") & "/8 registers empty; completeness unverified"', "",
+     + '\nRETURN FORMAT(EmptyRegisters, "0") & "/' + str(sum(t.startswith("man_") for t in dm.MODEL_TABLES))
+     + ' registers empty in current filters; completeness unverified"', "",
      "Observed row coverage in current filters; populated registers are not certified complete"),
     ("Data Gaps", "COALESCE(COUNTROWS(dq_DataGap), 0)", COUNT,
      "nothing - rejects, unmapped trades, coverage and certificate gaps in one register"),
-    ("Data Gap Amount", "SUM(dq_DataGap[Amount])", '"$#,0.00"',
+    ("Data Gap Amount", "SUM(dq_DataGap[Amount])", '"$#,0"',
      "money carried by data gaps - today only unmatched AR invoices carry an amount"),
 ]
 

@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Checklist items per trade. Shows Checklist Items Defined by TradeName.'"
+                  "Value": "'Stacked bar chart. Checklist items per trade. Shows Checklist Items Defined by TradeName.'"
                 }
               }
             }

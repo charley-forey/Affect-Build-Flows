@@ -2,14 +2,14 @@ table _Measures
 
 	/// Replaces nothing - the workbook could not say when it was last true
 	measure 'Last Refresh' = MAX('_Measures'[_built_at])
-		formatString: "yyyy-mm-dd hh:nn:ss"
+		formatString: "yyyy-mm-dd hh:nn"
 		displayFolder: 00 Report context
 
 	/// Replaces the workbook used TODAY(), so a saved copy silently re-dated itself
 	measure 'Report Month Label' =
 			VAR L = MIN ( dim_Date[MonthStart] )
 			VAR H = MAX ( dim_Date[MonthStart] )
-			RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )
+			RETURN IF ( NOT ISFILTERED ( dim_Date ), "All months", IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) ) )
 		displayFolder: 00 Report context
 
 	/// Replaces no workbook equivalent - a spreadsheet cannot say when it was last correct
@@ -20,7 +20,7 @@ table _Measures
 	/// Replaces derived
 	measure 'Hours Since Last Checked Run' =
 			VAR Last = MAX ( meta_PipelineRun[RunAt] )
-			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )
+			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )
 		formatString: "#,0"
 		displayFolder: 00 Report context
 
@@ -118,13 +118,23 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 03 Submittals & mock-ups
 
-	/// Replaces Submittals & Mockups - not computed in the workbook
-	measure 'Avg Submittal Turnaround' = AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])
+	/// Replaces Submittals & Mockups - not computed in the workbook; closed submittals only
+	measure 'Avg Submittal Turnaround Days' = AVERAGEX(FILTER(fct_QcSubmittal, NOT fct_QcSubmittal[IsOpen] && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])
 		formatString: "#,0.0"
 		displayFolder: 03 Submittals & mock-ups
 
 	/// Replaces Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register.
 	measure 'Possible Mock-Ups' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Retrieved native Procore inspection records; month filters use inspection date. Not a certification of scope or completion.
+	measure 'Native Inspections' = COUNTROWS(fct_ProcoreInspection)
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Retrieved native items linked through the project/inspection key; source responses are not reclassified.
+	measure 'Native Inspection Items' = COUNTROWS(fct_ProcoreInspectionItem)
 		formatString: "#,0"
 		displayFolder: 03 Submittals & mock-ups
 
@@ -234,7 +244,17 @@ table _Measures
 	/// Replaces Observed row coverage in current filters; populated registers are not certified complete
 	measure 'DQ Registers Awaiting Input' =
 			VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)
-			RETURN FORMAT(EmptyRegisters, "0") & "/8 registers empty; completeness unverified"
+			RETURN FORMAT(EmptyRegisters, "0") & "/8 registers empty in current filters; completeness unverified"
+		displayFolder: 07 Data quality
+
+	/// Replaces nothing - rejects, unmapped trades, coverage and certificate gaps in one register
+	measure 'Data Gaps' = COALESCE(COUNTROWS(dq_DataGap), 0)
+		formatString: "#,0"
+		displayFolder: 07 Data quality
+
+	/// Replaces money carried by data gaps - today only unmatched AR invoices carry an amount
+	measure 'Data Gap Amount' = SUM(dq_DataGap[Amount])
+		formatString: "$#,0"
 		displayFolder: 07 Data quality
 
 	column _placeholder

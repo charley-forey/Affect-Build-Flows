@@ -45,13 +45,14 @@ table fct_Milestone
 
 	column DurationDays
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DurationDays
 
 	column PercentComplete
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: PercentComplete
+		formatString: 0%
 
 	column IsCritical
 		dataType: boolean

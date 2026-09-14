@@ -98,12 +98,12 @@ table fct_Invoice
 
 	column DaysToPayment
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysToPayment
 
 	column DaysToDue
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysToDue
 
 	column HasUnmatchedProject

@@ -64,6 +64,19 @@ THEME_NAME = "AffectGroupProjectReport"
 SCHEMA = "https://developer.microsoft.com/json-schemas/fabric/item/report/definition"
 
 
+# Card titles where the measure name alone misstates what a month selection does.
+BILLED_PCT_TITLE = "Billed To Date % Of Contract (at period end)"
+AR_TITLE = "AR Outstanding (current balance)"
+CARD_TITLES = {
+    "Total Billed": "Total Billed (selected period)",
+    "Total Paid": "Total Paid (on invoices in period)",
+    "Total Billed %": BILLED_PCT_TITLE,
+    "AR Outstanding": AR_TITLE,
+    "Percent Bought Out": "Percent Bought Out (last snapshot)",
+    "Open Submittals": "Open Submittals (as of today)",
+}
+
+
 def oid(*parts: str) -> str:
     """Deterministic 20-hex id, so redeploying does not churn every visual's identity."""
     return hashlib.sha1("|".join(parts).encode()).hexdigest()[:20]
@@ -97,8 +110,9 @@ def lit(value: str) -> dict:
 
 # What a visual type is, in words, for the alt text sentence.
 _SHAPE = {
-    "card": "Card", "tableEx": "Table", "slicer": "Slicer", "barChart": "Bar chart",
+    "card": "Card", "tableEx": "Table", "slicer": "Slicer", "barChart": "Stacked bar chart",
     "columnChart": "Column chart", "clusteredColumnChart": "Clustered column chart",
+    "clusteredBarChart": "Clustered bar chart", "pivotTable": "Matrix",
     "lineChart": "Line chart", "multiRowCard": "Card",
 }
 
@@ -114,7 +128,7 @@ def describe(vtype: str, title: str | None, projections: dict) -> str:
     names = {role: [p.get("nativeQueryRef", "?") for p in items]
              for role, items in projections.items()}
     values = names.get("Values") or names.get("Y") or []
-    category = names.get("Category") or []
+    category = names.get("Category") or [*names.get("Rows", []), *names.get("Columns", [])]
     if vtype == "slicer":
         return f"Slicer. Filters the report by {', '.join(values) or 'a field'}."
     parts = [f"{shape}. {title}." if title else f"{shape}."]
@@ -188,8 +202,49 @@ def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
     }
 
 
-def card(page: str, key: str, name: str, x, y, w=180, h=110) -> dict:
-    return visual(page, key, "card", x, y, w, h, {"Values": [measure(name)]}, title=name)
+def card(page: str, key: str, name: str, x, y, w=180, h=110, title: str | None = None) -> dict:
+    """title overrides the measure name where the name alone would misstate the scope."""
+    return visual(page, key, "card", x, y, w, h, {"Values": [measure(name)]}, title=title or name)
+
+
+def no_totals(v: dict) -> dict:
+    """Turn off the default totals row. Day counts, ordinals and per-row scores summed in a
+    totals row read as real figures ("Total 18,402" days) - there is no meaningful total."""
+    off = {"expr": {"Literal": {"Value": "false"}}}
+    objects = v["visual"].setdefault("objects", {})
+    if v["visual"]["visualType"] == "pivotTable":
+        objects["subTotals"] = [{"properties": {"rowSubtotals": off, "columnSubtotals": off}}]
+    else:
+        objects["total"] = [{"properties": {"totals": off}}]
+    return v
+
+
+def keep_true(v: dict, table: str, col: str) -> dict:
+    """Visual-level filter: only rows where table[col] is TRUE."""
+    v["filterConfig"] = {"filters": [{
+        "name": oid(v["name"], table, col),
+        "field": {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}},
+        "type": "Categorical",
+        "filter": {
+            "Version": 2,
+            "From": [{"Name": "t", "Entity": table, "Type": 0}],
+            "Where": [{"Condition": {"In": {
+                "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "t"}}, "Property": col}}],
+                "Values": [[{"Literal": {"Value": "true"}}]],
+            }}}],
+        },
+        "howCreated": "User",
+    }]}
+    return v
+
+
+def sort_desc(v: dict, table: str, col: str) -> dict:
+    v["visual"]["query"]["sortDefinition"] = {
+        "sort": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}},
+                  "direction": "Descending"}],
+        "isDefaultSort": True,
+    }
+    return v
 
 
 def chrome(page: str, slicers: bool = True) -> list[dict]:
@@ -215,8 +270,8 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
                            measure("Pipeline Status")]},
                tab=99,
                alt="Report footer. States the reporting period shown, the time the "
-                   "underlying data was last built, and whether the pipeline that built "
-                   "it has run recently enough to trust."),
+                   "underlying data was last built, and whether the last checked pipeline "
+                   "run passed its gold checks."),
     ]
     # A drill-through page receives its project from the caller. Putting a project slicer
     # on it would let a reader change that selection out from under the filter they
@@ -249,35 +304,35 @@ def page_portfolio() -> tuple[str, list[dict]]:
     same SWITCH that drives the headline number - so the answer to "which job, and what
     about it" is one screen rather than seventeen files.
 
-    This page deliberately ignores the project slicer (it is the one page that should show
-    all of them) but still honours the month slicer.
+    Like every page it carries the synced project and month slicers, so a project chosen
+    elsewhere narrows it too. The subtitle says so rather than claiming "all projects".
     """
     p = "portfolio"
     return p, [
         textbox(p, "title", "Portfolio", 20, 16, 700, 44),
         textbox(p, "sub",
-                "All projects, one screen. Scores use the same weights and bands as the "
-                "Scorecard page. A category with no data reads as blank, never as zero - "
-                "so a gap in the data cannot masquerade as bad performance.",
+                "Every project in the current slicers - clear the project slicer to compare them "
+                "all. Scores use the Scorecard page's weights and bands; no data reads as blank, "
+                "never zero. AR is today's balance on invoices in the selected period.",
                 20, 58, 720, 34, size=10, color=MUTED),
 
         card(p, "pf_projects", "Projects Reporting", 20, 100, 228, 100),
         card(p, "pf_contract", "Current Contract", 268, 100, 228, 100),
-        card(p, "pf_billed", "Total Billed %", 516, 100, 228, 100),
-        card(p, "pf_ar", "AR Outstanding", 764, 100, 228, 100),
+        card(p, "pf_billed", "Total Billed %", 516, 100, 228, 100, title=BILLED_PCT_TITLE),
+        card(p, "pf_ar", "AR Outstanding", 764, 100, 228, 100, title=AR_TITLE),
         card(p, "pf_risk", "Projects At Risk", 1012, 100, 228, 100),
 
         # THE HEATMAP. A matrix rather than a chart because the cell values are ordinal
         # scores (0/2/3) against two categorical axes - there is no magnitude to compare
         # lengths of, and conditional formatting carries the reading.
-        visual(p, "pf_heatmap", "pivotTable", 20, 216, 720, 300,
+        no_totals(visual(p, "pf_heatmap", "pivotTable", 20, 216, 720, 300,
                {"Rows": [column("dim_Project", "ProjectName")],
                 "Columns": [column("dim_ScorecardWeight", "CategoryName")],
                 "Values": [measure("Category Score")]},
                title="Scorecard by project and category (0-3, blank = not measured)",
                alt="Matrix. One row per project, one column per scorecard category, "
                    "showing each category score out of 3. Blank cells are categories with "
-                   "no data rather than a score of zero."),
+                   "no data rather than a score of zero.")),
 
         # Contract, billed and paid together per job: the gap between the bars IS the
         # exposure, and reading three separate cards never showed it.
@@ -290,7 +345,7 @@ def page_portfolio() -> tuple[str, list[dict]]:
         visual(p, "pf_ar_rank", "barChart", 20, 528, 400, 128,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("AR Outstanding")]},
-               title="AR outstanding, ranked"),
+               title="AR outstanding (current balance), ranked"),
 
         # Coverage sits on the portfolio page too, because the honest reading of any
         # cross-project comparison is "and how much of each score is real".
@@ -326,20 +381,24 @@ def page_overview() -> tuple[str, list[dict]]:
             "AR Outstanding"]
     row2 = ["Contract Growth %", "Percent Bought Out", "Pending Change Orders",
             "Open Submittals", "Critical Milestones"]
-    cards = [card(p, f"c_r1_{i}", name, xs[i], 90, w=228) for i, name in enumerate(row1)]
-    cards += [card(p, f"c_r2_{i}", name, xs[i], 216, w=228) for i, name in enumerate(row2)]
+    cards = [card(p, f"c_r1_{i}", name, xs[i], 90, w=228, title=CARD_TITLES.get(name))
+             for i, name in enumerate(row1)]
+    cards += [card(p, f"c_r2_{i}", name, xs[i], 216, w=228, title=CARD_TITLES.get(name))
+              for i, name in enumerate(row2)]
     trend = visual(p, "billed_trend", "columnChart", 20, 346, 640, 296,
                    {"Category": [column("dim_Date", "MonthYear")],
                     "Y": [measure("Total Billed")]},
                    title="Billed by month")
-    budget = visual(p, "budget_by_code", "barChart", 680, 346, 580, 296,
+    # CLUSTERED. barChart is the stacked variant, which drew budget + spend as one bar.
+    budget = visual(p, "budget_by_code", "clusteredBarChart", 680, 346, 580, 296,
                     {"Category": [column("dim_CostCode", "Division")],
                      "Y": [measure("Budget"), measure("Spent To Date")]},
-                    title="Budget vs spent by division")
+                    title="Budget vs spent by division (last budget snapshot)")
     return p, [
         textbox(p, "title", "Monthly Progress Report", 20, 16, 700, 44),
-        textbox(p, "sub", "Replaces the Excel Monthly Progress Report", 20, 58, 700, 24,
-                size=10, color=MUTED),
+        textbox(p, "sub", "Replaces the Excel Monthly Progress Report. Budget figures are the last "
+                "snapshot; open counts are as of today, grouped by creation month when a month is selected.",
+                20, 58, 700, 24, size=10, color=MUTED),
         *cards, trend, budget,
     ]
 
@@ -348,12 +407,12 @@ def page_financial() -> tuple[str, list[dict]]:
     p = "financial"
     return p, [
         textbox(p, "title", "Financial", 20, 16, 600, 44),
-        card(p, "f_budget", "Budget", 20, 80),
-        card(p, "f_forecast", "Forecast", 216, 80),
-        card(p, "f_committed", "Committed", 412, 80),
-        card(p, "f_spent", "Spent To Date", 608, 80),
-        card(p, "f_ctc", "Cost To Complete", 804, 80),
-        card(p, "f_var", "Budget Variance", 1000, 80),
+        card(p, "f_budget", "Budget", 20, 80, title="Budget (last snapshot)"),
+        card(p, "f_forecast", "Forecast", 216, 80, title="Forecast (last snapshot)"),
+        card(p, "f_committed", "Committed", 412, 80, title="Committed (last snapshot)"),
+        card(p, "f_spent", "Spent To Date", 608, 80, title="Spent To Date (last snapshot)"),
+        card(p, "f_ctc", "Cost To Complete", 804, 80, title="Cost To Complete (last snapshot)"),
+        card(p, "f_var", "Budget Variance", 1000, 80, title="Budget Variance (last snapshot)"),
         # A matrix rather than a flat table: cost codes roll up by division, so a reader
         # starts at the level they care about and expands into the detail rather than
         # scrolling 4,837 rows looking for it.
@@ -366,7 +425,7 @@ def page_financial() -> tuple[str, list[dict]]:
                 "Values": [measure("Budget"), measure("Spent To Date"),
                            measure("Budget Variance"), measure("Budget Variance %"),
                            measure("Budget Status")]},
-               title="Budget by cost code - expand for category and source line",
+               title="Budget by cost code (last snapshot) - expand for category and source line",
                alt="Matrix. Variance is budget less spend to date; status describes that spend comparison, "
                    "not a forecast of final cost. Expand through division, cost code, category, project ID and source budget line ID."),
         visual(p, "co_by_status", "clusteredColumnChart", 820, 210, 440, 210,
@@ -392,12 +451,14 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
     p = "schedule"
     items = [
         textbox(p, "title", "Schedule & Quality", 20, 16, 600, 44),
+        # Open/overdue flags are as of TODAY; the month slicer groups by start or creation
+        # month, so the titles say "today" rather than implying a month-end backlog.
         card(p, "s_crit", "Critical Milestones", 20, 80),
-        card(p, "s_overdue", "Overdue Milestones", 216, 80),
-        card(p, "s_perf", "Schedule Performance %", 412, 80),
+        card(p, "s_overdue", "Overdue Milestones", 216, 80, title="Overdue Milestones (as of today)"),
+        card(p, "s_perf", "Milestones Overdue %", 412, 80, title="Milestones Overdue % (as of today)"),
         card(p, "s_prog", "Avg Milestone Progress", 608, 80),
-        card(p, "s_open", "Open Submittals", 804, 80),
-        card(p, "s_pastdue", "Open Submittals Past Due", 1000, 80),
+        card(p, "s_open", "Open Submittals", 804, 80, title="Open Submittals (as of today)"),
+        card(p, "s_pastdue", "Open Submittals Past Due", 1000, 80, title="Submittals Past Due (as of today)"),
         # THE TIMELINE. report-spec.md calls this the single biggest visual gain over the
         # Excel, which could not draw one at all. Power BI has no native Gantt, so this is
         # the standard stacked-bar construction: an invisible bar to the milestone's start,
@@ -418,7 +479,7 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                    "date and sized by its duration in days, relative to the earliest "
                    "valid milestone start currently shown. Missing or inverted dates are "
                    "omitted from the bars and retained in the table. Baseline variance is unavailable."),
-        visual(p, "milestones", "tableEx", 20, 520, 740, 130,
+        no_totals(visual(p, "milestones", "tableEx", 20, 520, 740, 130,
                {"Values": [column("fct_Milestone", "ProjectKey"),
                            column("fct_Milestone", "ActivityKey"),
                            column("fct_Milestone", "MilestoneName"),
@@ -427,12 +488,12 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                            column("fct_Milestone", "PercentComplete"),
                            column("fct_Milestone", "StatusLabel"),
                            column("fct_Milestone", "HasDateInversion")]},
-               title="Critical path milestones (Outbuild)"),
+               title="Critical path milestones (Outbuild)")),
         # The workbook's one native chart, rebuilt - and now drillable to the items.
         visual(p, "submittals_by_status", "barChart", 780, 210, 480, 440,
                {"Category": [column("fct_RfiSubmittal", "StatusLabel")],
                 "Y": [measure("Open Submittals")]},
-               title="Open submittals by status"),
+               title="Open submittals by status (as of today)"),
     ]
     timeline = next(v["visual"] for v in items if v["name"] == oid(p, "gantt"))
     timeline["objects"] = {"dataPoint": [{
@@ -447,7 +508,7 @@ def page_data_quality() -> tuple[str, list[dict]]:
     return p, [
         textbox(p, "title", "Data Quality", 20, 16, 600, 44),
         textbox(p, "note",
-                "Unmatched AR count and amount cover all projects for the selected month. "
+                "Unmatched invoice count and billed amount cover all projects for the selected month. "
                 "Other visuals follow the project selection. Invoice identifiers link amounts to Sage. "
                 "Checks passed does not establish complete source coverage.",
                 20, 56, 1100, 40, size=10, color=MUTED),
@@ -465,7 +526,7 @@ def page_data_quality() -> tuple[str, list[dict]]:
         card(p, "dq_codes", "DQ Cost Codes Not In Source", 268, 244, 228, 100),
         card(p, "dq_inv", "DQ Milestones With Inverted Dates", 516, 244, 228, 100),
         card(p, "dq_ar", "DQ Unmatched Invoices", 764, 244, 228, 100),
-        card(p, "dq_ar_amount", "Unmatched AR Amount - All Projects", 1012, 244, 248, 100),
+        card(p, "dq_ar_amount", "Unmatched Billed Amount - All Projects", 1012, 244, 248, 100),
         visual(p, "no_crosswalk", "tableEx", 20, 356, 400, 300,
                {"Values": [column("dim_Project", "ProjectKey"),
                            column("dim_Project", "ProjectName"),
@@ -508,7 +569,10 @@ def page_scorecard() -> tuple[str, list[dict]]:
                 "retune them without a code change. A category with no data scores BLANK, "
                 "never zero.",
                 20, 56, 1000, 30, size=10, color=MUTED),
-        card(p, "sc_total", "Project Scorecard", 20, 110, 240, 130),
+        # With no single project selected the drivers pool across the portfolio, so the
+        # headline is a portfolio blend - the title says so.
+        card(p, "sc_total", "Project Scorecard", 20, 110, 240, 130,
+             title="Project Scorecard (portfolio blend unless one project is selected)"),
         card(p, "sc_cov", "Scorecard Coverage %", 276, 110, 240, 130),
         card(p, "sc_measured", "Project Scorecard (Measured Only)", 532, 110, 300, 130),
         card(p, "sc_client", "Client Satisfaction", 848, 110, 240, 130),
@@ -555,11 +619,15 @@ def page_scorecard() -> tuple[str, list[dict]]:
         # category NAME rather than the surrogate integer the previous version showed.
         # The name is a column on the band table itself, not reached through a
         # relationship; see the note in deploy_model.RELATIONSHIPS for why.
-        visual(p, "bands", "tableEx", 840, 260, 420, 390,
+        # Thresholds shown, so the band behind a score can be read, not just its label.
+        no_totals(visual(p, "bands", "tableEx", 840, 260, 420, 390,
                {"Values": [column("dim_ScorecardBand", "CategoryName"),
                            column("dim_ScorecardBand", "Score"),
-                           column("dim_ScorecardBand", "BandLabel")]},
-               title="Scoring bands - corrected (defects #1a-#1c)"),
+                           column("dim_ScorecardBand", "BandLabel"),
+                           column("dim_ScorecardBand", "MinValue"),
+                           column("dim_ScorecardBand", "MaxValue"),
+                           column("dim_ScorecardBand", "MatchValue")]},
+               title="Scoring bands - corrected (defects #1a-#1c)")),
     ]
 
 
@@ -607,7 +675,7 @@ def page_source_coverage() -> tuple[str, list[dict]]:
         textbox(p, "vendornote",
                 "An unmatched vendor may be outside the ERP scope or may need a mapping. "
                 "Review commitments and payments before deciding; an absent Sage id alone "
-                "does not establish the reason.",
+                "does not establish the reason. Crosswalk tables are company-wide and ignore both slicers.",
                 20, 488, 1100, 30, size=10, color=MUTED),
         visual(p, "vendor_cov", "tableEx", 20, 528, 620, 128,
                {"Values": [column("dim_VendorCrosswalk", "VendorName"),
@@ -643,15 +711,17 @@ def page_project_detail() -> tuple[str, list[dict]]:
                 "Every figure here is for the single project you came from.",
                 20, 56, 1000, 30, size=10, color=MUTED),
 
-        card(p, "pd_contract", "Current Contract", 20, 100, 240, 110),
-        card(p, "pd_billed", "Total Billed", 276, 100, 240, 110),
-        card(p, "pd_paid", "Total Paid", 532, 100, 240, 110),
-        card(p, "pd_ar", "AR Outstanding", 788, 100, 240, 110),
-        card(p, "pd_score", "Project Scorecard", 1044, 100, 216, 110),
+        card(p, "pd_contract", "Current Contract", 20, 100, 195, 110),
+        card(p, "pd_billed", "Total Billed", 229, 100, 195, 110),
+        card(p, "pd_paid", "Total Paid", 438, 100, 195, 110),
+        card(p, "pd_ar", "AR Outstanding", 647, 100, 195, 110, title=AR_TITLE),
+        card(p, "pd_score", "Project Scorecard", 856, 100, 195, 110),
+        # Coverage beside the score: a thinly instrumented project must not read as unhealthy.
+        card(p, "pd_cov", "Scorecard Coverage %", 1065, 100, 195, 110),
 
         # Budget by cost code: the line-item grain the portfolio pages roll up.
         visual(p, "pd_budget", "tableEx", 20, 228, 620, 232,
-               {"Values": [column("dim_CostCode", "CostCodeKey"),
+               {"Values": [column("dim_CostCode", "CostCode"),
                            column("dim_CostCode", "Division"),
                            measure("Budget"),
                            measure("Spent To Date"),
@@ -664,6 +734,9 @@ def page_project_detail() -> tuple[str, list[dict]]:
                            # Status in gold, so this visual has been broken since it was
                            # written - see test_report_refs below, which now catches it.
                            column("fct_ChangeOrder", "StatusLabel"),
+                           # Amount for every CO. Approved-only left pending rows blank, and a
+                           # table drops all-blank rows, so pending COs vanished.
+                           measure("Change Order Amount"),
                            measure("Approved Change Orders")]},
                title="Change orders"),
 
@@ -703,8 +776,8 @@ def page_safety_quality() -> tuple[str, list[dict]]:
         textbox(p, "title", "Safety & Quality", 20, 16, 600, 44),
         textbox(p, "note",
                 "Every figure is counted from Procore records - observations, punch items, "
-                "incidents and manpower logs - rather than typed each month. Status is "
-                "shown as text, never colour alone.",
+                "incidents and manpower logs - rather than typed each month. Open and past-due "
+                "counts are as of today; a month selection groups them by creation month.",
                 20, 56, 1100, 30, size=10, color=MUTED),
 
         # SAFETY. Hours first: an incident count without hours cannot be compared between a
@@ -723,7 +796,7 @@ def page_safety_quality() -> tuple[str, list[dict]]:
         # and the gap between them is what a PM does something about this week.
         card(p, "sq_pastdue", "Quality Items Past Due", 20, 262, 250, 100),
         card(p, "sq_avgpast", "Avg Days Past Due", 286, 262, 250, 100),
-        card(p, "sq_avgclose", "Avg Observation Days Open", 552, 262, 250, 100),
+        card(p, "sq_avgclose", "Avg Observation Days To Close", 552, 262, 250, 100),
 
         visual(p, "sq_by_type", "columnChart", 20, 382, 520, 274,
                {"Category": [column("fct_QualityItem", "ItemType")],
@@ -736,11 +809,13 @@ def page_safety_quality() -> tuple[str, list[dict]]:
                title="Open items by trade"),
 
         # The list a PM actually works from: what is late, and how late.
-        visual(p, "sq_overdue", "tableEx", 920, 382, 340, 274,
+        # Filtered to past-due items and sorted latest first, which is what the title says.
+        sort_desc(keep_true(no_totals(visual(p, "sq_overdue", "tableEx", 920, 382, 340, 274,
                {"Values": [column("fct_QualityItem", "Title"),
                            column("fct_QualityItem", "AssignedTo"),
                            column("fct_QualityItem", "DaysPastDue")]},
-               title="Past due, by days late"),
+               title="Past due, by days late")), "fct_QualityItem", "IsPastDue"),
+            "fct_QualityItem", "DaysPastDue"),
     ]
 
 
@@ -760,10 +835,10 @@ def page_billing() -> tuple[str, list[dict]]:
     return p, [
         textbox(p, "title", "Billing & Retainage", 20, 16, 600, 44),
         textbox(p, "note",
-                "Every figure is the CURRENT balance from the latest issued billing per "
-                "contract - not a total of every period, which would count the same "
-                "retainage once per month. Drafts are excluded from balances and counted "
-                "separately below.",
+                "Balances are CURRENT, from the latest issued billing per contract, whatever "
+                "month is selected - not a total of every period. Owner billed (selected "
+                "period) is the sum of payments due in the selected months; all months if none. "
+                "Drafts are excluded and counted separately.",
                 20, 56, 1240, 34, size=10, color=MUTED),
 
         # Retainage first. This is the new information on the page.
@@ -780,7 +855,8 @@ def page_billing() -> tuple[str, list[dict]]:
         # Shown beside the cumulative figure deliberately: this is the only sum-safe money
         # column on the fact, and the gap between the two IS the retainage above. A reader
         # who spots that has understood the table.
-        card(p, "b_period", "Billed This Period", 296, 262, 240, 100),
+        card(p, "b_period", "Billed This Period", 296, 262, 240, 100,
+             title="Owner Billed (selected period)"),
         card(p, "b_draft", "Draft Billings", 552, 262, 240, 100),
 
         # Billing over time uses the SUM-SAFE measure. A cumulative column on a trend chart
@@ -790,7 +866,8 @@ def page_billing() -> tuple[str, list[dict]]:
                 "Y": [measure("Billed This Period")]},
                title="Billed by month (period movement, not cumulative)"),
 
-        visual(p, "b_by_project", "barChart", 660, 382, 600, 274,
+        # CLUSTERED: owner and sub retainage flow in opposite directions; stacking summed them.
+        visual(p, "b_by_project", "clusteredBarChart", 660, 382, 600, 274,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Retainage Held Owner"),
                       measure("Retainage Held Sub")]},
@@ -812,7 +889,8 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
         textbox(p, "note",
                 "Direct costs are discrete transactions, so unlike the billing balances "
                 "these totals are correct at any grouping. The vendor list is Procore's "
-                "prequalification record, which is not the same as current insurance.",
+                "prequalification record, which is not the same as current insurance. Vendor "
+                "commitments and vendor counts are not month-filtered.",
                 20, 56, 1240, 34, size=10, color=MUTED),
 
         # Six across. The vendor/cost-code bridge added a sixth headline number to a row
@@ -843,16 +921,19 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
 
         # Spend by vendor AND cost code - the linkage that exists in no single Procore
         # object, and that nothing in the current reporting can slice.
-        visual(p, "c_topcodes", "barChart", 852, 208, 408, 216,
+        visual(p, "c_topcodes", "clusteredBarChart", 852, 208, 408, 216,
                {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
                 "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
                title="Committed and actual by cost code"),
 
-        visual(p, "c_matrix", "matrix", 20, 436, 610, 220,
+        # pivotTable is the PBIR matrix type. No AmountType on columns: the two measures
+        # already split it, and pivoting by it left half the cells structurally blank.
+        visual(p, "c_matrix", "pivotTable", 20, 436, 610, 220,
                {"Rows": [column("bridge_VendorCostCode", "VendorName")],
-                "Columns": [column("bridge_VendorCostCode", "AmountType")],
-                "Values": [measure("Vendor Spend"), measure("Vendor Committed")]},
-               title="Vendor: committed vs actual"),
+                "Values": [measure("Vendor Committed"), measure("Vendor Spend")]},
+               title="Vendor: committed vs actual",
+               alt="Matrix. One row per vendor showing committed and actual amounts side by "
+                   "side. Not month-filtered."),
 
         # The D8 deliverable itself: the list somebody assembles by hand today.
         # Was 300 tall at y=542, which ran 122px off the bottom of the canvas - invisible
@@ -891,8 +972,8 @@ def page_insurance() -> tuple[str, list[dict]]:
                 "Sourced from Procore's insurance records. COVERAGE (is there a "
                 "certificate at all) and CURRENCY (is it in date) are counted separately - "
                 "a vendor with no record and a vendor with a lapsed record both fail a "
-                "single compliance flag and need different follow-up. Exempt vendors are "
-                "counted apart from lapsed ones.",
+                "single compliance flag and need different follow-up. With a project selected, "
+                "every figure covers that project's vendors; the month slicer does not apply.",
                 20, 56, 1240, 46, size=10, color=MUTED),
 
         # Three coverage numbers on the left, three currency numbers on the right, one
@@ -924,15 +1005,18 @@ def page_insurance() -> tuple[str, list[dict]]:
                title="Lapsed vs in date vs exempt"),
 
         # The working list: who to chase, for what, and how overdue.
-        visual(p, "i_list", "tableEx", 20, 464, 1240, 192,
-               {"Values": [column("fct_VendorInsurance", "VendorKey"),
+        # Vendor NAME, not the surrogate key. [Certificates On File] scopes the rows to the
+        # selected project's vendors, the same way the cards above are scoped.
+        no_totals(visual(p, "i_list", "tableEx", 20, 464, 1240, 192,
+               {"Values": [column("dim_Vendor", "VendorName"),
                            column("fct_VendorInsurance", "InsuranceType"),
                            column("fct_VendorInsurance", "Provider"),
                            column("fct_VendorInsurance", "PolicyNumber"),
                            column("fct_VendorInsurance", "ExpirationDate"),
                            column("fct_VendorInsurance", "ExpiryStatus"),
-                           column("fct_VendorInsurance", "DaysUntilExpiry")]},
-               title="Certificates - what to chase, and how overdue"),
+                           column("fct_VendorInsurance", "DaysUntilExpiry"),
+                           measure("Certificates On File")]},
+               title="Certificates - what to chase, and how overdue")),
     ]
 
 
@@ -1098,7 +1182,7 @@ def build(model_id: str) -> dict[str, str]:
     # freeze whatever project was selected when it was authored, and then silently show the
     # wrong project to everyone else.
     bookmarks = [b for b in [
-        ("bmOverview", "Portfolio overview", "overview"),
+        ("bmOverview", "Monthly overview", "overview"),
         ("bmCoverage", "Where the data is missing", "sourcecoverage"),
         ("bmScorecard", "Scorecard and how it is scored", "scorecard"),
     ] if b[2] in page_names]

@@ -2,7 +2,7 @@ table dim_ScorecardWeight
 
 	column CategoryKey
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: CategoryKey
 
 	column CategoryName
@@ -12,8 +12,9 @@ table dim_ScorecardWeight
 
 	column Weight
 		dataType: decimal
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Weight
+		formatString: 0%
 
 	column SortOrder
 		dataType: int64

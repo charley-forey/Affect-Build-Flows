@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. AR Outstanding. Shows AR Outstanding for the current selection.'"
+                  "Value": "'Card. AR Outstanding (current balance). Shows AR Outstanding for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'AR Outstanding'"
+                  "Value": "'AR Outstanding (current balance)'"
                 }
               }
             },

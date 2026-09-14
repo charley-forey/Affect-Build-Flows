@@ -47,7 +47,7 @@ table fct_Billing
 
 	column PeriodNumber
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: PeriodNumber
 
 	column StatusLabel
@@ -81,8 +81,9 @@ table fct_Billing
 
 	column PercentComplete
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: PercentComplete
+		formatString: 0%
 
 	column MonthStart
 		dataType: dateTime

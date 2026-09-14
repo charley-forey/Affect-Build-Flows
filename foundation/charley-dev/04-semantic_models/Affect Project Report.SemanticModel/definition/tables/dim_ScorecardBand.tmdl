@@ -2,22 +2,22 @@ table dim_ScorecardBand
 
 	column CategoryKey
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: CategoryKey
 
 	column Score
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Score
 
 	column MinValue
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: MinValue
 
 	column MaxValue
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: MaxValue
 
 	column MatchValue

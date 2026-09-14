@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Possible mock-ups are inferred from subject text containing MOCK. Matches can be wrong or incomplete; this is not a confirmed mock-up register. Overdue submittals need review for procurement impact.",
+                    "value": "Possible mock-ups are inferred from subject text containing MOCK. Matches can be wrong or incomplete; this is not a confirmed mock-up register. Overdue submittals need review for procurement impact. Turnaround averages closed submittals only. Open and overdue counts are as of today; a month selection groups them by creation month.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Possible mock-ups are inferred from subject text containing MOCK. Matches can be wrong or incomplete; this is not a confirmed mock-up register. Overdue submittals need review for procurement impact.'"
+                  "Value": "'Possible mock-ups are inferred from subject text containing MOCK. Matches can be wrong or incomplete; this is not a confirmed mock-up register. Overdue submittals need review for procurement impact. Turnaround averages closed submittals only. Open and overdue counts are as of today; a month selection groups them by creation month.'"
                 }
               }
             }

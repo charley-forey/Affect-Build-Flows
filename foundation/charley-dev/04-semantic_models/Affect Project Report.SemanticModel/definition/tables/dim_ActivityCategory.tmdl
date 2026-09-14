@@ -2,7 +2,7 @@ table dim_ActivityCategory
 
 	column CategoryKey
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: CategoryKey
 
 	column Domain

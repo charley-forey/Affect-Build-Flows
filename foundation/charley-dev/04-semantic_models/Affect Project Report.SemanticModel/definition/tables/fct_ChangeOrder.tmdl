@@ -59,7 +59,7 @@ table fct_ChangeOrder
 
 	column DaysOpen
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysOpen
 
 	partition fct_ChangeOrder = entity

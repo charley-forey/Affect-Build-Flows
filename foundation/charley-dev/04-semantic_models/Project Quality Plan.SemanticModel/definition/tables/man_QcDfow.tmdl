@@ -22,7 +22,7 @@ table man_QcDfow
 
 	column RiskTier
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: RiskTier
 
 	column ControlMeasure

@@ -69,7 +69,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Report footer. States the reporting period shown, the time the underlying data was last built, and whether the pipeline that built it has run recently enough to trust.'"
+                  "Value": "'Report footer. States the reporting period shown, the time the underlying data was last built, and whether the last checked pipeline run passed its gold checks.'"
                 }
               }
             }

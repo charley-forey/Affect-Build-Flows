@@ -91,7 +91,7 @@ table fct_QualityItem
 
 	column DaysOpen
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysOpen
 
 	column IsPastDue
@@ -101,7 +101,7 @@ table fct_QualityItem
 
 	column DaysPastDue
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysPastDue
 
 	partition fct_QualityItem = entity

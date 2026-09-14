@@ -42,6 +42,48 @@
               },
               "queryRef": "dim_CostCode.CostCode",
               "nativeQueryRef": "CostCode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_BudgetLine"
+                    }
+                  },
+                  "Property": "Category"
+                }
+              },
+              "queryRef": "fct_BudgetLine.Category",
+              "nativeQueryRef": "Category"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_BudgetLine"
+                    }
+                  },
+                  "Property": "ProjectKey"
+                }
+              },
+              "queryRef": "fct_BudgetLine.ProjectKey",
+              "nativeQueryRef": "ProjectKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_BudgetLine"
+                    }
+                  },
+                  "Property": "BudgetLineID"
+                }
+              },
+              "queryRef": "fct_BudgetLine.BudgetLineID",
+              "nativeQueryRef": "BudgetLineID"
             }
           ]
         },
@@ -129,7 +171,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Matrix. Budget, spent to date, variance and status by cost code, grouped by division and expandable to individual codes.'"
+                  "Value": "'Matrix. Variance is budget less spend to date; status describes that spend comparison, not a forecast of final cost. Expand through division, cost code, category, project ID and source budget line ID.'"
                 }
               }
             }
@@ -142,7 +184,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget by division and cost code'"
+                  "Value": "'Budget by cost code (last snapshot) - expand for category and source line'"
                 }
               }
             },

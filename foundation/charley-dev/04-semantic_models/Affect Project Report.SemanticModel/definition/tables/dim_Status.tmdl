@@ -2,7 +2,7 @@ table dim_Status
 
 	column StatusKey
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: StatusKey
 
 	column Domain

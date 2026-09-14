@@ -13,7 +13,7 @@ table man_Wins
 
 	column WinNumber
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: WinNumber
 
 	column Description

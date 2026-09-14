@@ -41,11 +41,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Projects Fully Mapped"
+                  "Property": "Projects In Coverage"
                 }
               },
-              "queryRef": "_Measures.Projects Fully Mapped",
-              "nativeQueryRef": "Projects Fully Mapped"
+              "queryRef": "_Measures.Projects In Coverage",
+              "nativeQueryRef": "Projects In Coverage"
             }
           ]
         }
@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Projects by coverage status. Shows Projects Fully Mapped by CoverageStatus.'"
+                  "Value": "'Column chart. Projects by coverage status. Shows Projects In Coverage by CoverageStatus.'"
                 }
               }
             }

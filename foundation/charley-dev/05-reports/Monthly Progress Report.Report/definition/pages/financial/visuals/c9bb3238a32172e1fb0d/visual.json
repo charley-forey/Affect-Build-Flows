@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Forecast. Shows Forecast for the current selection.'"
+                  "Value": "'Card. Forecast (last snapshot). Shows Forecast for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Forecast'"
+                  "Value": "'Forecast (last snapshot)'"
                 }
               }
             },

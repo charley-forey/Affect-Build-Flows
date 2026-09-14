@@ -18,12 +18,12 @@ table fct_SafetyMonthly
 
 	column WorkerDays
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: WorkerDays
 
 	column DaysLogged
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysLogged
 
 	column IncidentCount

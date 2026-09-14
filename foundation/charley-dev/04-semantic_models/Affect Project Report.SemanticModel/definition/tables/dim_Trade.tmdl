@@ -2,7 +2,7 @@ table dim_Trade
 
 	column TradeKey
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: TradeKey
 
 	column TradeName

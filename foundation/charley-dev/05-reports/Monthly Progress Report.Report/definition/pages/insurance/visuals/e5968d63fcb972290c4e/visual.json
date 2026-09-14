@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_VendorInsurance"
+                      "Entity": "dim_Vendor"
                     }
                   },
-                  "Property": "VendorKey"
+                  "Property": "VendorName"
                 }
               },
-              "queryRef": "fct_VendorInsurance.VendorKey",
-              "nativeQueryRef": "VendorKey"
+              "queryRef": "dim_Vendor.VendorName",
+              "nativeQueryRef": "VendorName"
             },
             {
               "field": {
@@ -112,6 +112,20 @@
               },
               "queryRef": "fct_VendorInsurance.DaysUntilExpiry",
               "nativeQueryRef": "DaysUntilExpiry"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Certificates On File"
+                }
+              },
+              "queryRef": "_Measures.Certificates On File",
+              "nativeQueryRef": "Certificates On File"
             }
           ]
         }
@@ -125,7 +139,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Certificates - what to chase, and how overdue. Shows VendorKey, InsuranceType, Provider, PolicyNumber, ExpirationDate, ExpiryStatus, DaysUntilExpiry for the current selection.'"
+                  "Value": "'Table. Certificates - what to chase, and how overdue. Shows VendorName, InsuranceType, Provider, PolicyNumber, ExpirationDate, ExpiryStatus, DaysUntilExpiry, Certificates On File for the current selection.'"
                 }
               }
             }
@@ -157,6 +171,21 @@
               "expr": {
                 "Literal": {
                   "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "total": [
+        {
+          "properties": {
+            "totals": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }

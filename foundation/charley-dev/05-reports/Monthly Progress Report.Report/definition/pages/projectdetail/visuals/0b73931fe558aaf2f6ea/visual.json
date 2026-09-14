@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "0b73931fe558aaf2f6ea",
   "position": {
-    "x": 788,
+    "x": 647,
     "y": 100,
     "z": 0,
-    "width": 240,
+    "width": 195,
     "height": 110,
     "tabOrder": 15
   },
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. AR Outstanding. Shows AR Outstanding for the current selection.'"
+                  "Value": "'Card. AR Outstanding (current balance). Shows AR Outstanding for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'AR Outstanding'"
+                  "Value": "'AR Outstanding (current balance)'"
                 }
               }
             },

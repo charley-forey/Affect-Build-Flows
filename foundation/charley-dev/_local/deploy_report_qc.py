@@ -49,7 +49,7 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 "The workbook's DASHBOARD tab, rebuilt. Every figure is computed from the "
                 "registers rather than typed beside them - four of the workbook's own "
                 "roll-ups counted completions over a shorter row range than totals, so "
-                "their % Complete could never reach 100%.",
+                "their % Complete could never reach 100%. Open and overdue counts are as of today; a month selection groups them by creation month.",
                 20, 56, 1160, 44, size=10, color=MUTED),
 
         textbox(p, "h_ncr", "Non-conformance", 20, 104, 400, 24, size=13),
@@ -110,7 +110,7 @@ def page_punch() -> tuple[str, list[dict]]:
         textbox(p, "note",
                 "Punch is not quality control - it confirms readiness. Zero Punch is the "
                 "stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 "
-                "to the trade executive, which is why ageing is a headline here.",
+                "to the trade executive, which is why ageing is a headline here. Open and overdue counts are as of today; a month selection groups them by creation month.",
                 20, 56, 1160, 40, size=10, color=MUTED),
         card(p, "k_total", "Total Punch Items", 20, ROW1, 270, 100),
         card(p, "k_open", "Open Punch Items", 306, ROW1, 270, 100),
@@ -136,12 +136,13 @@ def page_submittals() -> tuple[str, list[dict]]:
         textbox(p, "note",
                 "Possible mock-ups are inferred from subject text containing MOCK. "
                 "Matches can be wrong or incomplete; this is not a confirmed mock-up register. "
-                "Overdue submittals need review for procurement impact.",
+                "Overdue submittals need review for procurement impact. Turnaround averages closed "
+                "submittals only. Open and overdue counts are as of today; a month selection groups them by creation month.",
                 20, 56, 1160, 40, size=10, color=MUTED),
         card(p, "k_total", "Total Submittals", 20, ROW1, 270, 100),
         card(p, "k_open", "Open Submittals", 306, ROW1, 270, 100),
         card(p, "k_late", "Overdue Submittals", 592, ROW1, 270, 100),
-        card(p, "k_turn", "Avg Submittal Turnaround", 878, ROW1, 270, 100),
+        card(p, "k_turn", "Avg Submittal Turnaround Days", 878, ROW1, 270, 100),
         card(p, "k_mock", "Possible Mock-Ups", 20, ROW2 + 10, 270, 100),
         visual(p, "list", "tableEx", 306, ROW2 + 10, 878, 290,
                {"Values": [column("fct_QcSubmittal", "SubmittalNumber"),
@@ -285,7 +286,8 @@ def page_data_quality() -> tuple[str, list[dict]]:
         card(p, "k_last", "Last Checked Run", 896, 450, 280, 80),
 
         visual(p, "unmapped", "tableEx", 20, 544, 568, 110,
-               {"Values": [column("fct_QcNcr", "TradeLabel"), measure("Total Observations")]},
+               {"Values": [column("fct_QcNcr", "TradeLabel"), column("fct_QcNcr", "HasUnmappedTrade"),
+                           measure("Total Observations")]},
                title="Procore trade labels seen on observations"),
         visual(p, "data_gaps", "tableEx", 604, 544, 572, 110,
                {"Values": [column("dq_DataGap", "GapCategory"),

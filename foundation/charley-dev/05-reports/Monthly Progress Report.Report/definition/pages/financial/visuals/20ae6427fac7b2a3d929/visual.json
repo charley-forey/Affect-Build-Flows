@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Budget. Shows Budget for the current selection.'"
+                  "Value": "'Card. Budget (last snapshot). Shows Budget for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget'"
+                  "Value": "'Budget (last snapshot)'"
                 }
               }
             },
