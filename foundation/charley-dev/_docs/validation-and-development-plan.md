@@ -2,6 +2,23 @@
 
 ## Fresh verification — 2026-09-14 14:15 UTC
 
+**Current limit, approximately 15:15 UTC:** a further independent-measure check was
+rejected by Power BI with "your organization's Fabric compute capacity has exceeded its
+limits". No result was certified from that failed query. Additional heavy validation was
+stopped. Cancellation was requested for candidate `fd431d12` to avoid additional load on
+the production capacity. Its final job status is Completed, but its run-specific
+`full_candidate_fd431d1234364ac4b3454f72dc23f4fe.json` is absent. Therefore it is **not a
+passing candidate**, regardless of the scheduler status. Its silver checkpoint passed;
+complete gold/snapshot certification remains unresolved. The PDF export remains Running
+at 91%, so no rendered-layout pass is claimed. Do not restart either job blindly.
+
+The tested production model refreshes and manual migration are live, and main commit
+`f94b3fa` passed [CI run 34860630494](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34860630494).
+Production availability is now qualified by the observed capacity rejection. Next: wait
+for measured capacity recovery, resume targeted snapshot validation rather than another
+full rebuild, inspect the existing export result, and prove one full scheduled cycle.
+Follow `capacity-operations.md`; no paid capacity increase or pause/resume was performed.
+
 GitHub main now includes the validation fixes (`2a54c8b`) and clean-CI timestamp dependency
 (`cea71f3`). [GitHub run 34859127933](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34859127933)
 passes all suites, generator checks and the email guard. The previous CI failure was a

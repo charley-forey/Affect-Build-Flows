@@ -15,7 +15,7 @@
     "@odata.context": "https://wabi-us-north-central-j-primary-redirect.analysis.windows.net/v1.0/myorg/groups/1f7caed6-f88a-4e52-bc83-9a498a165301/$metadata#exports/$entity",
     "id": "Mi9CbG9iSWRWMi1hOWVmNDI3Zi0xYTUyLTQwNWItOTBjNS02MWIxYmZmNjEyMTJWR1ktUE5aNzgxdnpFczhuTklvVE83TW16Ym5kSzhzZTM1ODNVNE1HLg==",
     "createdDateTime": "2026-09-14T15:04:52.4103853Z",
-    "lastActionDateTime": "2026-09-14T15:11:28.4246592Z",
+    "lastActionDateTime": "2026-09-14T15:15:21.6520486Z",
     "reportId": "669cca67-4ed9-429a-9618-3f9a2c55b75a",
     "reportName": "Monthly Progress Report",
     "status": "Running",

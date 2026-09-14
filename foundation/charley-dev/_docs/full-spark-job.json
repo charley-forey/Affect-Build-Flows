@@ -9,10 +9,15 @@
     "itemId": "77fe4969-f886-47c1-b1fa-750f5bebc2df",
     "jobType": "RunNotebook",
     "invokeType": "Manual",
-    "status": "InProgress",
+    "status": "Completed",
     "failureReason": null,
     "rootActivityId": "08217e7c-ee2d-48b2-aea5-12b7f40fcd00",
-    "startTimeUtc": "2026-09-14T14:56:51.1077728",
-    "endTimeUtc": null
+    "startTimeUtc": "2026-09-14T14:56:53.2121281",
+    "endTimeUtc": "2026-09-14T15:15:01.255567"
+  },
+  "cancellation": {
+    "reason": "Production Power BI queries rejected for exceeded Fabric compute capacity; stop additional candidate load.",
+    "http_status": 202,
+    "response": {}
   }
 }
