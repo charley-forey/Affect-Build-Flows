@@ -40,6 +40,7 @@ SUITES = [
     ("generated notebooks and quality gate failures", TESTS / "test_validation.py"),
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
+    ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),
 ]
 
 
