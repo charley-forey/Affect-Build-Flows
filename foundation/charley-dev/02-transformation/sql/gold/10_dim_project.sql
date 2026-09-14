@@ -33,12 +33,7 @@
 
 CREATE OR REPLACE TABLE dim_Project AS
 WITH observed AS (
-    -- Every project id that appears on any fact source.
-    SELECT DISTINCT project_id FROM sv_budgets              WHERE project_id IS NOT NULL
-    UNION SELECT DISTINCT project_id FROM sv_prime_change_orders WHERE project_id IS NOT NULL
-    UNION SELECT DISTINCT project_id FROM sv_submittals     WHERE project_id IS NOT NULL
-    UNION SELECT DISTINCT project_id FROM sv_outbuild_activities WHERE project_id IS NOT NULL
-    UNION SELECT DISTINCT project_id FROM sv_prime_contracts WHERE project_id IS NOT NULL
+    SELECT project_id FROM sv_observed_projects
 ),
 all_projects AS (
     SELECT project_id FROM sv_projects WHERE project_id IS NOT NULL

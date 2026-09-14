@@ -6,20 +6,26 @@ one gold layer. Source completeness and operational reliability are still being 
 
 ## Current state — September 14, 2026
 
-- Production model refreshes resolved previously unavailable tables and measures.
-  The monthly model passes 18 checks with 130 measures evaluating; all 48 QC measures evaluate.
-- Production gate: 211 rules, 197 passed, 14 warnings, zero blocking violations.
-- Manual-register schema migration completed; all 17 manual registers remain empty.
-- The live pipeline includes Publish Models after a successful quality gate. Both models
-  accepted automatic update OFF; browser confirmation and a successful scheduled cycle
-  remain outstanding.
-- All 21 offline suites and generator checks pass. Fabric capacity rejection interrupted
-  further certification. The expanded candidate has no final run-specific gate evidence,
-  and PDF render validation failed with capacity errors on pages 6–11. Interactive verification remains incomplete.
+- Actual production-file DQ replay: 211 rules, 197 passed, 14 warnings, zero blocking or
+  execution errors; all 69 table versions stable during the read.
+- Snapshot file replay: 21 rows match recomputation; all eight checks pass. Native
+  inspection lineage conserves 26 headers and 705 items with exact compound identities.
+- Production data exposes two defects: observation averages include closed punch items,
+  and 14 financial-period rows make unknown originals appear numeric. Source corrections
+  and regression tests are present; the capacity-limited model update/readback failed.
+- Project-source coverage, candidate fingerprint/snapshot gates and atomic snapshot
+  replacement are improved in source. Their live data/runtime validation remains pending.
+- The hardened publication notebook definition is deployed and matches readback. It has
+  not been executed. Both models previously accepted automatic update OFF; browser
+  confirmation and a successful scheduled publication remain unverified.
+- PDF render validation fails on pages 6–11. All 17 manual registers remain empty;
+  unmatched source records and business mappings remain explicit gaps.
 
-These are dated results, not a claim of current availability or complete data coverage.
-See [measured status](_docs/build-status.md) and the
-[validation record](_docs/validation-and-development-plan.md) for evidence and unresolved decisions.
+These are dated results, not a claim of complete data coverage or current availability.
+The file checks do not execute the Power BI engine or prove a common upstream source batch.
+See [measured status](_docs/build-status.md), the [validation record](_docs/validation-and-development-plan.md),
+and the three [lineage](_docs/production-lineage-audit.md), [report](_docs/production-report-audit.md)
+and [release](_docs/production-release-audit.md) audits.
 
 ## Data flow and boundaries
 

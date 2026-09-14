@@ -1,0 +1,129 @@
+{
+  "captured_at": "2026-09-14T15:43:39.866726+00:00",
+  "workspace_id": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "lakehouse_id": "812ec953-5517-447e-95aa-062f7cf89b28",
+  "snapshot_date": "2026-09-14",
+  "run_id": "20260914T083429Z",
+  "tables": {
+    "dim_Project": {
+      "version_before": 66,
+      "rows": 21,
+      "schema_sha256": "6f761811eede7c11144bedb3f2f9a0ba6fcb6b5d4521657d00e74d4406841dd0",
+      "version_after": 66
+    },
+    "fct_RfiSubmittal": {
+      "version_before": 64,
+      "rows": 3131,
+      "schema_sha256": "52cc1c1ee7f5de8e145a555eca9dfd8ecc770710b56f3c64d8f1ef5f67b97221",
+      "version_after": 64
+    },
+    "fct_QualityItem": {
+      "version_before": 46,
+      "rows": 2583,
+      "schema_sha256": "24851ebd7a84844ce47371255d5b0149f26c9734e03ee9eaf07ed64845c894e5",
+      "version_after": 46
+    },
+    "fct_Invoice": {
+      "version_before": 66,
+      "rows": 149,
+      "schema_sha256": "694977ce691bf97bf64e8fdbceadf890cdca7e30c26d417128841d2950da932d",
+      "version_after": 66
+    },
+    "fct_BudgetLine": {
+      "version_before": 66,
+      "rows": 435,
+      "schema_sha256": "9dfb809205253a4166791c66370e3ec63b3c2ce1a832513fcdf1c7a2d89c8588",
+      "version_after": 66
+    },
+    "fct_FinancialPeriod": {
+      "version_before": 65,
+      "rows": 151,
+      "schema_sha256": "aa2ee97b9c37c06f6086d2eb377aa9d158de39962d94d77cd30d59ed4d2c8ac8",
+      "version_after": 65
+    },
+    "fct_ChangeOrder": {
+      "version_before": 66,
+      "rows": 335,
+      "schema_sha256": "9c837a0994ec602f98db4d6951c99a218c6c36a18d722a2524c8443d1a49ef50",
+      "version_after": 66
+    },
+    "meta_PipelineRun": {
+      "version_before": 34,
+      "rows": 35,
+      "schema_sha256": "29d1124d11c6d8e502f4e6a98ca267390890480a3a6b10c0c6fecd6d801b4bca",
+      "version_after": 34
+    },
+    "fct_DailySnapshot": {
+      "version_before": 1,
+      "rows": 21,
+      "schema_sha256": "0f44750799935f7f3408932edd036655aaff04ce3270f0386f51520045f5ceb6",
+      "version_after": 1
+    }
+  },
+  "passed": true,
+  "scope": "Read-only Delta files replayed in local DuckDB using production snapshot SQL. Stage checks exercise the template; stored snapshot checks compare persisted values against recomputation. Current gold compared to saved capture; not Spark, semantic model, rendering, source completeness or historical-time certification.",
+  "checks": [
+    {
+      "name": "v_DailySnapshotStage.ProjectKey_SnapshotDate.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "v_DailySnapshotStage equals live facts at capture",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "v_DailySnapshotStage rows come only from passing runs",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "v_DailySnapshotStage historical rows from runs not recorded as passing",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DailySnapshot.ProjectKey_SnapshotDate.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DailySnapshot equals live facts at capture",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DailySnapshot rows come only from passing runs",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DailySnapshot historical rows from runs not recorded as passing",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    }
+  ],
+  "snapshot_rows": 21,
+  "expected_rows": 21,
+  "wrong_run_rows": 0,
+  "stable_versions": true,
+  "snapshot_sql_sha256": "9e507246d833558948c9e3b0b8f8c1e6ea3375d5145b6446e7d36269774b9250",
+  "evidence_recorded_at": "2026-09-14T15:44:29.716791+00:00"
+}

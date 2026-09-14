@@ -8,19 +8,20 @@ decisions; the [runbook](operations-runbook.md) describes operating procedures.
 
 | Area | Last verified result | Evidence |
 |---|---|---|
-| Production data run | `20260914T083429Z` | `live-heartbeat_run.json` |
-| Production quality gate | 211 rules: 197 passed, 14 warnings, zero blocking | `live-dq_run.json` |
-| Monthly model | 130 measures evaluate; 18 checks pass; zero model-to-build count differences | `production-model-validation.txt` |
-| Quality-plan model | 48 measures evaluate without errors after refresh | `production-qc-model-refresh.json` |
-| Newly bound monthly facts | 911 AP **line** rows and 21 snapshot rows | `production-model-refresh.json` |
-| Live reconciliation | Seven checks pass, three warn; no failed or unexecuted checks | `live-reconciliation/20260914T145452Z.json` |
-| Manual registers | Migration completed; 17 registers remain empty | `production-manual-migration.json` |
-| Publication | 10 pipeline activities including Publish Models after the gate; both models accepted automatic update OFF | `production-autosync.txt`; validation record |
-| Offline checks | 21 suites and generator checks passed in GitHub CI | [CI run 34861048213](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34861048213) |
-| Availability | Power BI rejected an additional query for exceeded Fabric capacity | Validation record, approximately 15:15 UTC |
-| Expanded candidate | Silver passed; final run-specific gate evidence absent. Not certified despite final Completed job status | `full-spark-job.json`; validation record |
-| Render verification | PDF export succeeded, but render validation FAILED: capacity errors on pages 6–11; no render pass | `report-export-verification.json` |
-| Scheduled operation | Latest observed scheduled run failed; a successful full cycle remains unverified | `live-pipeline-jobs.json` |
+| Offline validation | All 27 suites and generator checks passed locally | `production-audit-tests.txt` |
+| Recorded production run | `20260914T083429Z`; 211 rules, 197 pass, 14 warn, zero blocking | `live-dq_run.json` |
+| Actual production-file replay | All 211 rule results match the recorded gate; 69 stable Delta versions; no query errors | `production-dq-file-evidence.json` |
+| Stored snapshot | 21 rows match current gold recomputation; eight checks pass, nine stable versions | `production-snapshot-offline-evidence.json` |
+| Project and inspection identity | No missing non-null project identities across 40 source adapters; 26 headers and 705 items conserved | `production-lineage-file-evidence.json` |
+| Calculation defects | Observation-only average 35.06 days versus old 31.21; 14 contract rows encode unknowns numerically | `production-measure-file-evidence.json` |
+| Correction deployment | Model update and subsequent readback rejected by capacity; correction not verified live; report/gold changes pending | `production-correction-deployment.json` |
+| Publication guard | Hardened three-cell notebook deployed and read back exactly; not executed | `production-publication-gate-deployment.json` |
+| Prior model evaluation | Monthly 130 measures/18 checks and QC 48 measures previously evaluated; this did not catch the later semantic defects | `production-model-validation.txt`; report audit |
+| Candidate | Latest full candidate lacks final certificate; source fingerprint and both snapshot suites now required | `full-spark-job.json`; release audit |
+| Capacity | Constant DAX rejected; actual capacity SKU/burndown unavailable; Spark reductions remain proposals | `production-readiness-control-plane.json` |
+| Rendering | PDF export succeeded but pages 6–11 contain capacity errors; interactive sign-in pending | `report-export-verification.json` |
+| Scheduled operation | Latest observed scheduled run failed; complete cycle unverified | `production-readiness-control-plane.json` |
+| Manual registers | Schema migration complete; all 17 registers empty | `production-manual-migration.json` |
 
 The 14 warnings are not resolved by a passing gate. Known gaps include 38 unmatched AR
 invoices across 11 jobs, 373 AP line rows without a project match, 243 unlinked critical

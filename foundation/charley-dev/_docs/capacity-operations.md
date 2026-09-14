@@ -1,9 +1,30 @@
-# Capacity operations (Build workspace, F2)
+# Capacity operations (Build workspace; current SKU unverified)
 
 Written 2026-09-14 after the capacity was throttled (interactive delay) by a night of Spark.
 Investigation: five `cd_94_validate_full` runs plus the nightly pipeline used about 21-42 CU-h
 in six hours. That is 43-87% of an F2's 48 CU-h/day. SKU F2 is from `access-model.md`. The
 signed-in user is not a capacity admin, so a capacity admin must **confirm the SKU**.
+
+## Current readback — September 14, 2026
+
+Build is assigned to capacity `2cecb6d0-eba3-48ea-b369-1ad10aedd20e`. That ID is absent
+from this account’s capacity list and no Fabric capacity resource is visible in either
+accessible Azure subscription. The F2 calculations below are a planning assumption from
+older documentation, not a current SKU verification. Capacity Metrics access is required
+to establish burndown. A constant DAX query was rejected at 15:38 UTC; a later model update
+and definition readback were also rejected for capacity limits.
+
+Spark readback still shows **two nodes**, a **20-minute timeout**, and pipeline high
+concurrency **disabled**. The reductions described below remain proposals. No workspace
+setting, capacity SKU, pause/resume or paid autoscale change was made by this audit.
+See [control-plane evidence](production-readiness-control-plane.json) and
+[failed model update/readback](production-correction-deployment.json).
+
+Read-only OneLake Delta files can be inspected locally while query compute is unavailable.
+The file checks use individually pinned table versions and compare versions again at the
+end. This avoids new Spark/query jobs but does not prove service availability, a common
+source batch or upstream completeness. Successful file checks must not clear the capacity
+or rendering gates.
 
 ## How Fabric charges this workload
 

@@ -11,6 +11,7 @@ report can mix two releases. With it OFF, this notebook is the one place a frame
 and the pipeline runs it only after "Data Quality Gate" Succeeded.
 
 WHAT IT DOES, EVERY RUN, IN ORDER:
+  0. Requires matching heartbeat, complete nonblocking DQ and successful snapshot evidence.
   1. Resolves both models BY NAME in the workspace (exactly one each, or fail). Ids are not
      hardcoded: deploy_model.py --recreate issues a new id.
   2. Turns automatic update OFF on both (idempotent). A recreated model comes back with it
@@ -28,7 +29,8 @@ WHAT IT DOES, EVERY RUN, IN ORDER:
   6. Writes Files/_diag/publish_run.json before raising; alerts via fabric_common.notify.
 
 --run is deliberately separate from --apply: running it outside the pipeline frames
-whatever gold holds right now, validated or not.
+gold only when the available DQ, heartbeat and snapshot diagnostics agree.
+These file checks do not lock gold against concurrent writers.
 """
 
 from __future__ import annotations
@@ -113,7 +115,32 @@ def latest_run(tok: str, dataset_id: str) -> dict:
     return {"run_id": row.get("[RunId]"), "status": row.get("[Status]")}
 
 
-SHARED = (pbi, resolve_models, disable_autosync, latest_run)
+def require_gate(diag: str, expected: dict) -> str:
+    """Reject missing, mismatched or inconsistent gate artifacts before any model mutation."""
+    with open(f"{diag}/heartbeat_run.json", encoding="utf-8") as fh:
+        heartbeat = json.load(fh)
+    with open(f"{diag}/dq_run.json", encoding="utf-8") as fh:
+        quality = json.load(fh)
+    with open(f"{diag}/snapshot_run.json", encoding="utf-8") as fh:
+        snapshot = json.load(fh)
+    gate = heartbeat.get("run_id")
+    if not gate or quality.get("batch") != gate or snapshot.get("run_id") != gate:
+        raise RuntimeError("publication diagnostics do not identify the same gate run")
+    if heartbeat.get("snapshot_status") != "ok" or snapshot.get("status") != "ok":
+        raise RuntimeError("publication requires a verified snapshot for the gate run")
+    checks = quality.get("results", [])
+    if len(checks) != len(expected) or {c.get("name") for c in checks} != set(expected):
+        raise RuntimeError("publication quality-rule coverage does not match the current suite")
+    for check in checks:
+        rows = check.get("failing_rows")
+        if (type(rows) is not int or rows < 0 or check.get("severity") != expected[check["name"]]
+                or check.get("passed") is not (rows == 0) or check.get("blocking") is not False
+                or (rows > 0 and expected[check["name"]] == "error")):
+            raise RuntimeError("publication quality evidence is inconsistent, blocking, or unexecuted")
+    return gate
+
+
+SHARED = (pbi, resolve_models, disable_autosync, latest_run, require_gate)
 
 PUBLISH = '''
 tok = notebookutils.credentials.getToken("pbi")
@@ -121,8 +148,7 @@ record = {"started": datetime.now(timezone.utc).isoformat(), "models": [], "ok":
 os.makedirs(DIAG, exist_ok=True)
 
 try:
-    with open(f"{DIAG}/heartbeat_run.json", encoding="utf-8") as fh:
-        gate = record["gate_run_id"] = json.load(fh)["run_id"]
+    gate = record["gate_run_id"] = require_gate(DIAG, EXPECTED_RULES)
     record["models"] = [{"name": n, "id": i} for n, i in resolve_models(tok)]
     # A failure here must not skip the refreshes: gold already passed the gate, and a model
     # left unframed shows readers yesterday. Recorded, both refreshes run, then it fails.
@@ -142,6 +168,8 @@ try:
                    if isinstance(m["before"], dict) and m["before"]["run_id"] == gate]
     record["auto_framed"] = auto_framed
     for m in record["models"]:
+        if require_gate(DIAG, EXPECTED_RULES) != gate:
+            raise RuntimeError("gate run changed during publication")
         print(f"refreshing {m['name']} ...", flush=True)
         m["refresh"] = reframe(m["id"], tok, timeout=REFRESH_TIMEOUT)
         print(f"  {m['refresh'].get('status')} {m['refresh'].get('requestId')}")
@@ -197,6 +225,9 @@ print(f"published run {gate} to {len(record['models'])} model(s)")
 def build_notebook() -> dict:
     # The SAME functions validate_model.py / set_autosync.py use and the tests exercise -
     # copied in by source, not rewritten, so the notebook cannot drift from them.
+    sys.path.insert(0, str(HERE.parent / "02-transformation/dq"))
+    from expectations import build_suite
+    expected = {e.name: e.severity for e in build_suite().expectations}
     helpers = "\n\n".join(inspect.getsource(f) for f in (vm.dax, vm.reframe, vm.wait_refresh, *SHARED))
     cells = [
         cell(
@@ -219,6 +250,7 @@ dp = SimpleNamespace(FabricError=RuntimeError)
 PBI_API = GROUP_API = ''' + json.dumps(GROUP_API) + '''
 ROOT_API = ''' + json.dumps(ROOT_API) + '''
 MODEL_NAMES = ''' + json.dumps(MODEL_NAMES) + '''
+EXPECTED_RULES = ''' + json.dumps(expected) + '''
 REFRESH_TIMEOUT = ''' + str(REFRESH_TIMEOUT) + '''
 RUN_ID_DAX = ''' + json.dumps(RUN_ID_DAX) + '''
 DIAG = "/lakehouse/default/Files/_diag"

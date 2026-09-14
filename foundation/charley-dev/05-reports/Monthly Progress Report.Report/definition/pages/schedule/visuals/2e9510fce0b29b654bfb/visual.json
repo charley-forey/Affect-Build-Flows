@@ -73,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Line chart. Open and past-due submittals as saved at the last nightly capture of each month. Months before history starts have no value, not zero.'"
+                  "Value": "'Line chart. Open and past-due submittals at the last available capture in each month, which may precede month end. Months before history starts have no value, not zero. Capture date does not prove source freshness.'"
                 }
               }
             }
@@ -93,7 +93,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Submittal backlog at month end (saved history)'"
+                  "Value": "'Submittal backlog: latest capture in month'"
                 }
               }
             },

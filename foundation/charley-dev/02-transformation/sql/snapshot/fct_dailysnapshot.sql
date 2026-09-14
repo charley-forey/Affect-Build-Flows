@@ -13,9 +13,8 @@
 -- v_DailySnapshotStage with expectations.snapshot_suite, and only then runs the swap. A
 -- failed validation leaves an earlier capture of the same date untouched.
 --
--- {SNAPSHOT_DATE} is the UTC date of the DQ batch. The nightly run starts 02:00 New York
--- (06:00-07:00 UTC), so a capture dated D is the build that ran overnight into D: sources
--- as of the previous night, not the close of business on D.
+-- {SNAPSHOT_DATE} is the UTC date of the DQ batch, not a guarantee of source freshness
+-- or a close-of-business capture. Manual runs can also save a capture on that date.
 --
 -- ONE ROW-SET PER DATE. Re-running on the same {SNAPSHOT_DATE} replaces that date's rows.
 -- There is no backfill: months before the first capture are absent, and the model shows
@@ -147,16 +146,15 @@ FROM v_DailySnapshotLive;
 -- deploy_dq.snapshot_phases splits the file on the next line.
 -- ==== SWAP ====
 
--- Idempotent re-run: replace this date, never duplicate it.
--- ponytail: DELETE + INSERT is two Delta commits, not one. A failure between them leaves
--- the date EMPTY (month-end falls back to the previous capture), never duplicated or
--- fabricated. Delta's INSERT ... REPLACE WHERE is atomic but DuckDB cannot run it offline.
-DELETE FROM fct_DailySnapshot WHERE SnapshotDate = DATE '{SNAPSHOT_DATE}';
-
-INSERT INTO fct_DailySnapshot
-SELECT SnapshotDate, ProjectKey,
-       OpenSubmittals, SubmittalsPastDue, OpenRfis, OpenObservations, OpenPunchItems,
-       ArOutstanding, BilledToDate, BudgetAmount, SpentToDate, CommittedAmount,
-       CurrentContract, PendingChangeOrders, ApprovedChangeOrders,
-       RunId, CapturedAt
-FROM v_DailySnapshotStage;
+-- Replace the date in one Delta transaction: interruption cannot commit only a deletion.
+-- The scoped source-delete also removes projects no longer present in a same-date rerun.
+-- Delta SQL supports NOT MATCHED BY SOURCE from 2.4; Fabric Runtime 1.3 uses Delta 3.2.
+-- https://docs.delta.io/delta-update/#modify-all-unmatched-rows-using-merge
+-- https://learn.microsoft.com/en-us/fabric/data-engineering/runtime-1-3
+MERGE INTO fct_DailySnapshot AS target
+USING v_DailySnapshotStage AS source
+ON target.SnapshotDate = source.SnapshotDate
+   AND target.ProjectKey IS NOT DISTINCT FROM source.ProjectKey
+WHEN MATCHED THEN UPDATE SET *
+WHEN NOT MATCHED THEN INSERT *
+WHEN NOT MATCHED BY SOURCE AND target.SnapshotDate = DATE '{SNAPSHOT_DATE}' THEN DELETE;

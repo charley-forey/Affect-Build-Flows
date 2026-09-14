@@ -36,6 +36,17 @@ Succeeded-only dependencies block downstream stages after failure. With automati
 off, models retain their prior framing until an explicit refresh. This is not atomic
 publication across the two models: one can refresh successfully while the other fails.
 
+The hardened publication definition was deployed and its three cells read back byte-for-byte
+on September 14; it was not executed. It now checks the exact current DQ rule coverage,
+nonblocking result consistency and matching successful heartbeat/snapshot evidence before
+model mutation and again before each refresh. A snapshot failure therefore blocks
+publication even when the DQ activity records that failure without failing its own job.
+These checks do not lock tables or establish source freshness.
+
+Before deploying a candidate model, the validator also requires a notebook fingerprint
+matching the current source, final main/snapshot checks, and the exact completed job/run.
+An older certificate or an early evaluation diagnostic cannot authorize current code.
+
 Why the ordering is what it is:
 - Landing runs before extraction. Landing re-merges the newest batch in `Files/_landing`,
   and the live pull that runs after it must overwrite that replay. A Procore landing batch
@@ -101,7 +112,7 @@ rule count and the pass and warn counts in the commit message. `--silver` and `-
 one layer each. The candidate's scope is "silver and gold from existing bronze". It does not
 certify upstream freshness.
 
-Offline first, from the repository root: `python foundation/charley-dev/_local/run_tests.py` (21 suites, no network).
+Offline first, from the repository root: `python foundation/charley-dev/_local/run_tests.py` (all registered offline suites, no network).
 
 ## 4. Promotion order
 

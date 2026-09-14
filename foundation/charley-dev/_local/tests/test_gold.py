@@ -843,10 +843,57 @@ def test_fct_apinvoice(con) -> None:
     check("cost reconciliation gaps carry no Amount - Data Gap Amount stays unmatched AR")
 
 
+def test_observed_project_sources(con):
+    import re
+    import seedrunner
+    source_dir = seedrunner.CHARLEY_DEV / "02-transformation/sql/silver"
+    dimension = (seedrunner.CHARLEY_DEV / "02-transformation/sql/gold/10_dim_project.sql").read_text()
+    for mode in ("00_source_views.sql", "01_source_views_cd.sql"):
+        union = next(s for s in seedrunner.split_statements((source_dir / mode).read_text())
+                     if s.startswith("CREATE OR REPLACE TEMPORARY VIEW sv_observed_projects AS"))
+        sources = re.findall(r"SELECT (\w+)(?: AS project_id)? FROM (sv_\w+)", union)
+        assert len(sources) >= 17
+        for column, view in sources:
+            con.execute("BEGIN")
+            try:
+                con.execute(f"CREATE TEMP TABLE isolated_source AS SELECT * FROM {view}")
+                # Two identical identities prove the spine deduplicates sources and rows.
+                con.execute(f"INSERT INTO isolated_source ({column}) VALUES ('ONLY_HERE')")
+                if view != "sv_projects":
+                    con.execute(f"INSERT INTO isolated_source ({column}) VALUES ('ONLY_HERE')")
+                con.execute(f"CREATE OR REPLACE TEMP VIEW {view} AS SELECT * FROM isolated_source")
+                con.execute(union)
+                for sql in seedrunner.split_statements(dimension):
+                    con.execute(sql)
+                assert one(con, "SELECT COUNT(*) FROM dim_Project WHERE ProjectKey='ONLY_HERE'") == 1, (mode, view)
+            finally:
+                con.execute("ROLLBACK")
+    check("both source modes retain and deduplicate every declared project-bearing source identity")
+
+
+def test_unknown_contract(con):
+    import seedrunner
+    sql = (seedrunner.CHARLEY_DEV / "02-transformation/sql/gold/30_fct_financialperiod.sql").read_text()
+    expected_changes = one(con, "SELECT SUM(Amount) FROM fct_ChangeOrder WHERE ProjectKey='P1' AND NOT IsPending AND LOWER(StatusLabel) <> 'void'")
+    con.execute("BEGIN")
+    try:
+        con.execute("UPDATE dim_Project SET OriginalContractAmount=NULL WHERE ProjectKey='P1'")
+        for statement in seedrunner.split_statements(sql):
+            con.execute(statement)
+        assert one(con, "SELECT COUNT(*) FROM fct_FinancialPeriod WHERE ProjectKey IN ('P1','UNMATCHED') AND CurrentContract IS NOT NULL") == 0
+        con.execute("UPDATE dim_Project SET OriginalContractAmount=0 WHERE ProjectKey='P1'")
+        for statement in seedrunner.split_statements(sql):
+            con.execute(statement)
+        assert abs(one(con, "SELECT CurrentContract FROM fct_FinancialPeriod WHERE ProjectKey='P1' ORDER BY MonthStart DESC LIMIT 1") - float(expected_changes)) < .001
+    finally:
+        con.execute("ROLLBACK")
+    check("missing original contract stays unknown even with approved changes; known zero remains calculable")
+
+
 def main() -> int:
     con = build()
     for fn in (
-        test_dim_project, test_dim_vendor, test_dim_costcode,
+        test_dim_project, test_observed_project_sources, test_unknown_contract, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
         test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance, test_fct_apinvoice, test_dq_datagap):

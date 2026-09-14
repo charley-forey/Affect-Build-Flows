@@ -1,0 +1,18 @@
+{
+  "recorded_at": "2026-09-14T15:49:47.071370+00:00",
+  "monthly_model_id": "4cdfb689-232a-4f33-a6bf-d53e90e8025a",
+  "model_definition_update": {
+    "status": "FAILED",
+    "code": "Dataset_Import_FailedToImportDataset",
+    "reason": "Fabric compute capacity exceeded its limits"
+  },
+  "post_failure_readback": {
+    "status": "FAILED",
+    "operation_id": "3a3c41ee-09ee-45c6-864d-00eaa6090461",
+    "reason": "Fabric compute capacity exceeded its limits"
+  },
+  "correction_live": "UNVERIFIED",
+  "report_label_deployment": "NOT_ATTEMPTED_AFTER_MODEL_FAILURE",
+  "gold_rebuild": "NOT_STARTED",
+  "limitation": "Do not infer that the correction is live or that the old model definition was preserved. Verify actual state after capacity recovery before retrying."
+}

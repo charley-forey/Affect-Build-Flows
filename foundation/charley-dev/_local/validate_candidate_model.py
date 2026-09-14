@@ -138,6 +138,13 @@ def check_model(record):
           f"{len(evidence['count_compared_tables'])} table counts reconciled")
 
 
+def require_current_definition(handle):
+    definition = candidate.build_full(handle["run_id"], {"id": handle["lakehouse_id"], "defaultSchema": "dbo"})
+    fingerprint = hashlib.sha256(json.dumps(definition).encode()).hexdigest()
+    if handle.get("definition_sha256") != fingerprint:
+        raise RuntimeError("candidate notebook fingerprint is missing or differs from current source; validate the current build first")
+
+
 def require_passing_run(handle, job, evidence):
     if job.get("status") != "Completed" or job.get("id") != handle["location"].rstrip("/").split("/")[-1]:
         raise RuntimeError("candidate job has not completed successfully")
@@ -145,17 +152,26 @@ def require_passing_run(handle, job, evidence):
         raise RuntimeError("candidate evaluation does not match the selected run and lakehouse")
     import sys
     sys.path.insert(0, str(DOCS.parent / "02-transformation/dq"))
-    from expectations import build_suite
-    expected = {e.name: e.severity for e in build_suite().expectations}
-    checks = evidence.get("checks", [])
-    if len(checks) != len(expected) or {c.get("name") for c in checks} != set(expected):
-        raise RuntimeError("candidate quality-rule coverage does not match the current suite")
-    for check in checks:
-        rows = check.get("failing_rows")
-        if (type(rows) is not int or rows < 0 or check.get("severity") != expected[check["name"]]
-                or check.get("passed") is not (rows == 0) or check.get("blocking") is not False
-                or (rows > 0 and expected[check["name"]] == "error")):
-            raise RuntimeError("candidate quality evidence is inconsistent, blocking, or unexecuted")
+    from expectations import build_suite, snapshot_suite
+    from datetime import date
+    try:
+        snapshot_date = date.fromisoformat(evidence["snapshot_date"]).isoformat()
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("candidate snapshot date is missing or invalid") from exc
+    groups = [(evidence.get("checks", []), build_suite())]
+    snapshots = evidence.get("snapshot_checks", {})
+    for table in ("v_DailySnapshotStage", "fct_DailySnapshot"):
+        groups.append((snapshots.get(table, []), snapshot_suite(snapshot_date, table)))
+    for checks, suite in groups:
+        expected = {e.name: e.severity for e in suite.expectations}
+        if len(checks) != len(expected) or {c.get("name") for c in checks} != set(expected):
+            raise RuntimeError("candidate quality-rule coverage does not match the current suite")
+        for check in checks:
+            rows = check.get("failing_rows")
+            if (type(rows) is not int or rows < 0 or check.get("severity") != expected[check["name"]]
+                    or check.get("passed") is not (rows == 0) or check.get("blocking") is not False
+                    or (rows > 0 and expected[check["name"]] == "error")):
+                raise RuntimeError("candidate quality evidence is inconsistent, blocking, or unexecuted")
 
 
 def main():
@@ -165,6 +181,7 @@ def main():
     parser.add_argument("--check", action="store_true", help="refresh and validate the existing isolated candidate model")
     args = parser.parse_args()
     handle = json.loads((DOCS / "full-spark-job.json").read_text())
+    require_current_definition(handle)
     token = dp.token()
     _, job, _ = dp.call("GET", handle["location"], token)
     evidence = dg.fetch_diagnostics(handle["lakehouse_id"], f"full_candidate_{handle['run_id']}.json")

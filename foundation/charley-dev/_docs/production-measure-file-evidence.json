@@ -1,0 +1,57 @@
+{
+  "captured_at": "2026-09-14T15:43:54.201043+00:00",
+  "tables": {
+    "fct_qualityitem": {
+      "before": 46,
+      "rows": 2583,
+      "after": 46
+    },
+    "dim_project": {
+      "before": 66,
+      "rows": 21,
+      "after": 66
+    },
+    "fct_financialperiod": {
+      "before": 65,
+      "rows": 151,
+      "after": 65
+    }
+  },
+  "scope": "Direct OneLake Delta files, pinned versions read locally; does not prove service measures, source completeness, or a common pipeline run.",
+  "observation_duration": {
+    "old_all_closed_quality_days": 31.208935611038108,
+    "corrected_closed_observation_days": 35.059627329192544,
+    "by_project": {
+      "groups": 11,
+      "changed_groups": 7,
+      "changed_to_unknown": 1,
+      "numeric_delta_min_days": -2.1797235023041477,
+      "numeric_delta_max_days": 9.398263184584177
+    },
+    "by_creation_month": {
+      "groups": 24,
+      "changed_groups": 14,
+      "changed_to_unknown": 3,
+      "numeric_delta_min_days": -136.09615384615384,
+      "numeric_delta_max_days": 32.38666666666666
+    },
+    "by_project_creation_month": {
+      "groups": 58,
+      "changed_groups": 23,
+      "changed_to_unknown": 5,
+      "numeric_delta_min_days": -157.47058823529414,
+      "numeric_delta_max_days": 31.85714285714286
+    }
+  },
+  "unknown_contract": {
+    "named_projects_with_unknown_original": 5,
+    "unmatched_member_original_unknown": true,
+    "financial_period_rows_with_numeric_current_on_unknown_original": 14,
+    "affected_named_projects": 1,
+    "affected_unmatched_period_rows": 12,
+    "latest_affected_projects": 2,
+    "latest_numeric_amount_removed_if_unknown_preserved": 0.0
+  },
+  "versions_stable_during_read": true,
+  "status": "FINDINGS"
+}

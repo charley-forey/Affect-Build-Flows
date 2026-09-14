@@ -174,7 +174,7 @@ def test_candidate_preserves_evaluation_on_write_failure():
             pass
         else:
             raise AssertionError("candidate persistence failure was ignored")
-        evidence = json.loads((Path(temp) / "full_candidate_failure-test.json").read_text())
+        evidence = json.loads((Path(temp) / "full_evaluation_failure-test.json").read_text())
         assert evidence["checks"][0]["passed"] and evidence["run_id"] == "failure-test"
 
 
@@ -258,19 +258,27 @@ def test_heartbeat_schema_publication():
 def test_candidate_model_gate():
     import copy
     sys.path.insert(0, str(validate_candidate_model.DOCS.parent / "02-transformation/dq"))
-    from expectations import build_suite
+    from expectations import build_suite, snapshot_suite
     handle = dict(location="https://example.invalid/jobs/job", run_id="run", lakehouse_id="candidate")
     job = dict(status="Completed", id="job")
     evidence = dict(run_id="run", validation_lakehouse_id="candidate", checks=[
         dict(name=e.name, severity=e.severity, failing_rows=0, passed=True, blocking=False)
         for e in build_suite().expectations])
+    evidence["snapshot_date"] = "2026-09-14"
+    evidence["snapshot_checks"] = {table: [
+        dict(name=e.name, severity=e.severity, failing_rows=0, passed=True, blocking=False)
+        for e in snapshot_suite(evidence["snapshot_date"], table).expectations]
+        for table in ("v_DailySnapshotStage", "fct_DailySnapshot")}
     validate_candidate_model.require_passing_run(handle, job, evidence)
+    bad_snapshot = copy.deepcopy(evidence)
+    bad_snapshot["snapshot_checks"]["fct_DailySnapshot"][0].update(failing_rows=1, passed=False, blocking=True)
     wrong_check = copy.deepcopy(evidence)
     wrong_check["checks"][0].update(failing_rows=1, passed=False)
     for observed_job, observed_evidence in (
         (dict(job, status="InProgress"), evidence), (dict(job, id="other"), evidence),
         (job, dict(evidence, run_id="old")), (job, dict(evidence, validation_lakehouse_id="published")),
-        (job, dict(evidence, checks=[])), (job, wrong_check)):
+        (job, dict(evidence, checks=[])), (job, dict(evidence, snapshot_checks={})),
+        (job, dict(evidence, snapshot_date=None)), (job, bad_snapshot), (job, wrong_check)):
         try:
             validate_candidate_model.require_passing_run(handle, observed_job, observed_evidence)
         except RuntimeError:
@@ -910,11 +918,21 @@ def test_publish_models():
     setup, publish = ("".join(c["source"]) for c in nb["cells"][1:])
     gate = "20260913T060000Z"
 
-    def run(before, after=None, fail_refresh=None, names=None, settings_status=204):
+    def run(before, after=None, fail_refresh=None, names=None, settings_status=204, bad_gate=None):
         with tempfile.TemporaryDirectory() as tmp:
-            Path(tmp, "heartbeat_run.json").write_text(json.dumps({"run_id": gate}))
+            Path(tmp, "heartbeat_run.json").write_text(json.dumps({"run_id": gate, "snapshot_status": "ok"}))
+            Path(tmp, "snapshot_run.json").write_text(json.dumps({"run_id": gate, "status": "ok"}))
             scope = {}
             exec(compile(setup, "publish:setup", "exec"), scope)
+            quality = {"batch": gate, "results": [dict(name=n, severity=v, failing_rows=0,
+                       passed=True, blocking=False) for n, v in scope["EXPECTED_RULES"].items()]}
+            Path(tmp, "dq_run.json").write_text(json.dumps(quality))
+            if bad_gate:
+                file, change = bad_gate
+                path = Path(tmp, file)
+                value = json.loads(path.read_text())
+                change(value)
+                path.write_text(json.dumps(value))
             shown, calls = dict(before), []
             listing = [{"name": n, "id": n.lower()} for n in (names or deploy_publish.MODEL_NAMES)]
             def pbi(method, url, tok, body=None):
@@ -956,6 +974,20 @@ def test_publish_models():
     report, pqp = "affect project report", "project quality plan"
     error, record, calls, sent = run({report: old, pqp: RuntimeError("never framed")})
     assert error is None and record["ok"] and not sent, error
+    for filename, mutation in (
+        ("dq_run.json", lambda x: x.update(batch="old")),
+        ("dq_run.json", lambda x: x.update(results=[])),
+        ("dq_run.json", lambda x: x["results"][0].update(failing_rows=-1, passed=False)),
+        ("dq_run.json", lambda x: x["results"][0].update(failing_rows=1, passed=False, blocking=True)),
+        ("snapshot_run.json", lambda x: x.update(status="failed")),
+        ("snapshot_run.json", lambda x: x.update(run_id="old")),
+        ("heartbeat_run.json", lambda x: x.update(snapshot_status="failed"))):
+        rejected, _, attempted, _ = run({report: old, pqp: old}, bad_gate=(filename, mutation))
+        assert rejected and not any(c[0] in ("POST", "REFRESH") for c in attempted)
+    def warn(quality):
+        next(c for c in quality["results"] if c["severity"] == "warn").update(failing_rows=2, passed=False)
+    warning_error, warning_record, _, _ = run({report: old, pqp: old}, bad_gate=("dq_run.json", warn))
+    assert warning_error is None and warning_record["ok"]
     posts = [c for c in calls if c[0] == "POST"]
     assert [c[2] for c in posts] == [{"directLakeAutoSync": False}] * 2
     # autosync is off on BOTH before the FIRST refresh, and refreshes are serial in order
@@ -1295,6 +1327,8 @@ def test_candidate_count_snapshot():
         else:
             raise AssertionError("candidate certified a failed snapshot")
         assert not (Path(temp) / "candidate_counts_rejected-test.json").exists()
+        assert not (Path(temp) / "full_candidate_rejected-test.json").exists()
+        assert json.loads((Path(temp) / "full_candidate_count-test.json").read_text())["snapshot_checks"]
 
 
 def test_gold_manual_count_conservation():
@@ -1414,10 +1448,10 @@ def test_daily_snapshot():
                 "Expectations BIGINT, Failing BIGINT, Blocking BIGINT)")
 
     class DuckSpark:
-        corrupt = None  # SQL run straight after the capture INSERT, to fake a bad write
+        corrupt = None  # SQL run straight after the capture MERGE, to fake a bad write
         def sql(self, query):
             rows = con.execute(query.replace("`", '"').replace(") USING DELTA", ")")).fetchall()
-            if self.corrupt and query.lstrip().startswith("INSERT INTO fct_DailySnapshot"):
+            if self.corrupt and query.lstrip().startswith("MERGE INTO fct_DailySnapshot"):
                 con.execute(self.corrupt)
             return SimpleNamespace(count=lambda: len(rows))
         def table(self, name):

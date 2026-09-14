@@ -82,7 +82,7 @@ evidence = {{"run_id": run_id, "completed_at": datetime.now(timezone.utc).isofor
                          "failing_rows": r.failing_rows, "passed": r.passed,
                          "blocking": r.blocking}} for r in results]}}
 os.makedirs("/lakehouse/default/Files/_diag", exist_ok=True)
-with open(f"/lakehouse/default/Files/_diag/{prefix}_candidate_{{run_id}}.json", "x", encoding="utf-8") as fh:
+with open(f"/lakehouse/default/Files/_diag/{prefix}_evaluation_{{run_id}}.json", "x", encoding="utf-8") as fh:
     json.dump(evidence, fh, indent=2)
 dq._persist_results(spark, results, run_id)
 for result in results:
@@ -94,12 +94,16 @@ dq.assert_no_blocking(results)
 # Candidate certification is stricter than publication: missing history fails here.
 snapshot_date = datetime.now(timezone.utc).date().isoformat()
 snapshot_stage, snapshot_swap = {deploy_dq.snapshot_phases()!r}
+evidence["snapshot_checks"] = {{}}
+evidence["snapshot_date"] = snapshot_date
 for statements, table in ((snapshot_stage, "v_DailySnapshotStage"),
                           (snapshot_swap, "fct_DailySnapshot")):
     for statement in statements:
         spark.sql(statement.replace("{{SNAPSHOT_DATE}}", snapshot_date).replace("{{RUN_ID}}", run_id))
     snapshot_results = expectations.snapshot_suite(snapshot_date, table).run(spark, run_id, persist=False)
     dq.assert_no_blocking(snapshot_results)
+    evidence["snapshot_checks"][table] = [{{"name": r.expectation.name, "severity": r.expectation.severity,
+        "failing_rows": r.failing_rows, "passed": r.passed, "blocking": r.blocking}} for r in snapshot_results]
 dq.publish_schema(spark, "/lakehouse/default/Files/_diag", "fct_DailySnapshot")
 count_evidence = {{"run_id": run_id, "validation_lakehouse_id": {target['id']!r},
                   "gold": candidate_gold_evidence, "seeds": candidate_seed_counts,
@@ -107,6 +111,10 @@ count_evidence = {{"run_id": run_id, "validation_lakehouse_id": {target['id']!r}
                   "heartbeat": {{"meta_PipelineRun": spark.table("meta_PipelineRun").count()}}}}
 with open(f"/lakehouse/default/Files/_diag/candidate_counts_{{run_id}}.json", "x", encoding="utf-8") as fh:
     json.dump(count_evidence, fh, indent=2)
+evidence["completed_at"] = datetime.now(timezone.utc).isoformat()
+with open(f"/lakehouse/default/Files/_diag/{prefix}_candidate_{{run_id}}.json", "x", encoding="utf-8") as fh:
+    json.dump(evidence, fh, indent=2)
+
 '''))
     nb = ds.attach(notebook(cells), target, dp.WORKSPACE_ID)
     nb["metadata"]["dependencies"]["lakehouse"]["default_lakehouse_name"] = LAKEHOUSE_NAME

@@ -90,7 +90,8 @@ SELECT
     -- FINANCIALS!C4 holds and what every "% of contract" tile divides by. Both CO terms
     -- are running totals (see change_orders above), so this row is the contract as it
     -- stood that month - it never goes down unless a CO was itself negative.
-    CAST(COALESCE(p.OriginalContractAmount, 0)
+    -- Without an original contract, approved changes are only a partial amount.
+    CAST(p.OriginalContractAmount
          + COALESCE(c.ChangeOrderValue, 0)
          - COALESCE(c.PendingChangeOrders, 0) AS DOUBLE) AS CurrentContract,
     c.PendingChangeOrders,

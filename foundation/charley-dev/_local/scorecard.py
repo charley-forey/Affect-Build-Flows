@@ -162,7 +162,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             # Averaged over CLOSED items only, hence "to close" - not the age of open items. Mixing open and closed would blend "how long
             # has this been outstanding" with "how long did that take to close" - two
             # different questions with one misleading answer.
-            "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), "
+            "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] "
+            '&& fct_QualityItem[ItemType] = "Observation" ), '
             "fct_QualityItem[DaysOpen] )",
             '"#,0.0"',
             "QUALITY!D39 - typed by hand today",

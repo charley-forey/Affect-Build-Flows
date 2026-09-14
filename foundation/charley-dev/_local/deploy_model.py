@@ -187,8 +187,8 @@ SNAPSHOT_KPIS = [
     ("Approved Change Orders", "ApprovedChangeOrders", '"$#,0"'),
 ]
 # SnapshotDate semantics, stated wherever a reader meets a snapshot measure.
-SNAPSHOT_DATE_NOTE = ("SnapshotDate is the UTC date of the DQ batch that saved it: the build that "
-                      "ran overnight into that date, so sources as of the previous night")
+SNAPSHOT_DATE_NOTE = ("SnapshotDate is the UTC date of the DQ batch that saved it, not a source "
+                      "freshness guarantee. The last available capture may precede month end")
 SNAPSHOT_MEASURES = [
     (f"{name} (Month End)",
      "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\n"

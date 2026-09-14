@@ -518,3 +518,86 @@ SELECT
     CAST(payment_uid AS STRING) AS payment_uid, CAST(invoice_uid AS STRING) AS invoice_uid,
     invoice_id, payment_date, amount
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ar_payments`;
+
+-- Exact source project identities, including records arriving before the project list.
+-- Do not infer Procore identities from Sage job IDs or rejected manual input.
+CREATE OR REPLACE TEMPORARY VIEW sv_observed_projects AS
+SELECT project_id FROM sv_projects WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_prime_contracts WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_prime_change_orders WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_budgets WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_submittals WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_rfis WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_outbuild_activities WHERE project_id IS NOT NULL
+UNION
+SELECT procore_project_id AS project_id FROM sv_outbuild_projects WHERE procore_project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_observations WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_punch_items WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_incidents WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_manpower_daily WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_billing WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_direct_costs WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_project_vendors WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_direct_cost_lines WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_commitments WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_commitment_lines WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_wins WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_risks WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_priority_items WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_flags WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_survey WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_safety_monthly WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_quality_monthly WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_milestones WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_daily_log_compliance WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_qc_ncr WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_qc_punch WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_qc_submittal WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_qc_inspection WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_qc_inspection_item WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_dfow WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_itp WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_gate WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_special_inspection WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_commissioning WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_inspector_sign_in WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_checklist_result WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_man_qc_doh_result WHERE project_id IS NOT NULL;

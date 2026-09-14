@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-09-14T15:44:46.498437+00:00",
+  "item_id": "8af0dc95-fd32-42be-839a-fc8400670538",
+  "name": "cd_50_publish_models",
+  "definition_deployed": true,
+  "cell_count": 3,
+  "expected_cells_sha256": "775daebdde5d50a16485d6605304ec264641798f7beb80ba5c0d29d771c2caa3",
+  "readback_cells_sha256": "775daebdde5d50a16485d6605304ec264641798f7beb80ba5c0d29d771c2caa3",
+  "cells_match": true,
+  "executed": false,
+  "limitation": "Definition readback only; no refresh, scheduled cycle or runtime certification."
+}

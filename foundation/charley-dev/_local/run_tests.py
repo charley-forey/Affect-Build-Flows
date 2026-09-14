@@ -42,6 +42,12 @@ SUITES = [
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
     ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),
+    ("snapshot Delta file replay", TESTS / "test_snapshot_files.py"),
+    ("atomic snapshot replacement", TESTS / "test_snapshot_atomic.py"),
+    ("measure Delta file comparisons", HERE / "validate_measure_files.py", "--self-check"),
+    ("lineage Delta file comparisons", HERE / "validate_lineage_files.py", "--self-test"),
+    ("candidate source fingerprint", TESTS / "test_candidate_fingerprint.py"),
+    ("production DQ file replay", TESTS / "test_production_files.py"),
     ("data dictionary is current", TESTS / "test_data_dictionary.py"),
 ]
 

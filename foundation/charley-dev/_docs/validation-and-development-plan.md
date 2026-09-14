@@ -1,6 +1,50 @@
 # Validation and development status — 2026-09-14
 
-## Fresh verification — 2026-09-14 14:15 UTC
+## Production audit checkpoint — 2026-09-14 15:55 UTC
+
+Full certification is **not achieved**. Three parallel audits completed, independently
+reviewed the release checks, and used read-only OneLake files to validate actual data
+while Fabric query compute was unavailable.
+
+| Workstream | Accepted evidence | Remaining acceptance |
+|---|---|---|
+| Main production DQ | 211 actual-file rules: 197 pass, 14 warnings, no blocking/errors; exact agreement with recorded gate; 69 stable table versions | Source completeness and common upstream batch remain unproven |
+| Project/native lineage | 40 source adapters; all non-null project identities have members; 26 headers/705 items conserved; 42 stable table versions | 718 Outbuild activities and 12 Outbuild projects remain unattributed; no guessed mappings |
+| Saved snapshot | 21 rows equal current gold recomputation; eight checks pass; nine stable table versions | New atomic MERGE source change needs isolated Fabric runtime validation; historical rollback remains limited |
+| Measures and report | Observation average defect and numeric-unknown contracts confirmed on actual files; fixes and regressions in source | Model update/readback both rejected by capacity; correction not verified live, report label not deployed |
+| Publication and candidate | Hardened publication notebook deployed, all three cells match readback; candidate requires current source fingerprint and final snapshot proof | Notebook runtime, completed candidate and scheduled publication remain unverified |
+| Integration | All 27 offline suites and generator checks pass; public docs updated; verify published commit in GitHub Actions | Code/CI success cannot certify deployment or rendered results |
+| Capacity/browser | Constant DAX, model update and model definition export rejected; browser still at sign-in | Capacity administrator metrics/access and browser sign-in required |
+
+Evidence: [main DQ](production-dq-file-evidence.json), [lineage](production-lineage-file-evidence.json),
+[snapshot](production-snapshot-offline-evidence.json), [measure impacts](production-measure-file-evidence.json),
+[publication deployment](production-publication-gate-deployment.json),
+[rejected model update/readback](production-correction-deployment.json).
+
+No new Spark, model refresh, pipeline run or PDF export was started during this audit.
+The attempted model-definition update failed; its previous state must not be assumed
+preserved while readback is also blocked. Read back before retrying after recovery.
+The actual assigned capacity is absent from the accessible capacity inventory and both
+visible Azure subscriptions; current SKU and burndown are not verified. Live Spark
+settings still allow two nodes, 20-minute timeout and no pipeline session sharing. Cost
+reductions remain proposals. See [control-plane evidence](production-readiness-control-plane.json).
+
+File validation pins individual table versions and checks for changes during reading.
+It does not prove an atomic multi-table source batch, upstream deletion/history coverage,
+service measure execution or rendered correctness. Current-date rules ran on the replay
+date. All 17 manual registers remain empty. Business mapping and scoring-policy approval
+cannot be replaced by automated tests.
+
+Next, after measured recovery: inspect the failed update's resulting model definition;
+validate current candidate source and the atomic snapshot change in isolation; deploy
+corrected gold/model/report through the gate; verify both model run IDs, all measures and
+filter contexts; inspect every visible page and hidden drillthrough; prove a successful
+scheduled cycle and its recovery/alert behavior with authorized recipients.
+
+The earlier PDF export finished but failed rendering on pages 6–11. Its successful API
+status is not a render pass. Below are historical observations retained with their times.
+
+## Earlier verification — 2026-09-14 14:15 UTC
 
 **Current limit, approximately 15:15 UTC:** a further independent-measure check was
 rejected by Power BI with "your organization's Fabric compute capacity has exceeded its

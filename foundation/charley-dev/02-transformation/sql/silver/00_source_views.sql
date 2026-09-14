@@ -368,3 +368,42 @@ WHERE 1=0;
 -- (GOLD_CD_ONLY). `--source existing` is the pre-credentials validation path and has been
 -- superseded by `cd` since 2026-08-02; it still builds every dimension and fact that the
 -- existing warehouse can actually source.
+
+-- Exact source project identities, including records arriving before the project list.
+-- Do not infer Procore identities from Sage job IDs or rejected manual input.
+CREATE OR REPLACE TEMPORARY VIEW sv_observed_projects AS
+SELECT project_id FROM sv_projects WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_budgets WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_prime_change_orders WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_prime_contracts WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_submittals WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_outbuild_activities WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_rfis WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_observations WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_punch_items WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_incidents WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_manpower_daily WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_billing WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_direct_costs WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_project_vendors WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_direct_cost_lines WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_commitments WHERE project_id IS NOT NULL
+UNION
+SELECT project_id FROM sv_commitment_lines WHERE project_id IS NOT NULL
+UNION
+SELECT procore_project_id AS project_id FROM sv_outbuild_projects WHERE procore_project_id IS NOT NULL;

@@ -1,0 +1,1931 @@
+{
+  "started_at": "2026-09-14T15:47:41.108806+00:00",
+  "workspace_id": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "gold_lakehouse_id": "812ec953-5517-447e-95aa-062f7cf89b28",
+  "tables": {
+    "bridge_ProjectVendor": {
+      "version_before": 44,
+      "rows": 430,
+      "schema_sha256": "71b70f3ab587d4a1ecaa1ae33d2997f897207409e78adab5215edaf6919f0579",
+      "version_after": 44
+    },
+    "bridge_VendorCostCode": {
+      "version_before": 41,
+      "rows": 431,
+      "schema_sha256": "40eb64c39940a19fa9d1b58c154a71d28bfff239154f3fb166f0635e565be8ad",
+      "version_after": 41
+    },
+    "dim_CostCode": {
+      "version_before": 66,
+      "rows": 5768,
+      "schema_sha256": "f37ffd9e608edec4b40da7b34adec5f66c8e90f5085a4b57e1c7e30edcbdb7ba",
+      "version_after": 66
+    },
+    "dim_CostCodeCrosswalk": {
+      "version_before": 51,
+      "rows": 5767,
+      "schema_sha256": "301005268eb17972e9ec0ec400e17b9bc3a111bc593f1523ba652edd35399733",
+      "version_after": 51
+    },
+    "dim_Date": {
+      "version_before": 59,
+      "rows": 7670,
+      "schema_sha256": "81792a4912ec697055ce257aec17a57a41654d2b0228275fc58ce95e2a086519",
+      "version_after": 59
+    },
+    "dim_Job": {
+      "version_before": 8,
+      "rows": 0,
+      "schema_sha256": "698d45041ef78a7db493997f3db8df799b751f489c0ccecc53d964f9f60be2a3",
+      "version_after": 8
+    },
+    "dim_Project": {
+      "version_before": 66,
+      "rows": 21,
+      "schema_sha256": "6f761811eede7c11144bedb3f2f9a0ba6fcb6b5d4521657d00e74d4406841dd0",
+      "version_after": 66
+    },
+    "dim_ProjectCrosswalk": {
+      "version_before": 51,
+      "rows": 20,
+      "schema_sha256": "ad25986f586dd39569719efd3bbe2fa9b79a41ae3e4b2ad5facf8019e0a59616",
+      "version_after": 51
+    },
+    "dim_QcStatus": {
+      "version_before": 28,
+      "rows": 141,
+      "schema_sha256": "5806a603e33bd555d07ef5f8e8bd0d94c15143a8b2fa8546a4cdf0b9faa54d96",
+      "version_after": 28
+    },
+    "dim_ScorecardBand": {
+      "version_before": 59,
+      "rows": 27,
+      "schema_sha256": "c174b320f7018ad62b99c3b661e50a3b4dccc544e300fe171b071922145f0123",
+      "version_after": 59
+    },
+    "dim_ScorecardWeight": {
+      "version_before": 59,
+      "rows": 9,
+      "schema_sha256": "6a31294bcb1c8cf45f153eda2f62dffebc98d5ca7391ddc09ddfa8afec7a3cd9",
+      "version_after": 59
+    },
+    "dim_Vendor": {
+      "version_before": 66,
+      "rows": 1118,
+      "schema_sha256": "8e193eda475197199c6031b5a62da5164ea1719fc528678d61abf498fa506cd1",
+      "version_after": 66
+    },
+    "dim_VendorCrosswalk": {
+      "version_before": 51,
+      "rows": 1117,
+      "schema_sha256": "a29a2531ddafc88e20481db62355248ce6113ede68519311b9803ae29bee63db",
+      "version_after": 51
+    },
+    "dq_DataGap": {
+      "version_before": 1,
+      "rows": 1546,
+      "schema_sha256": "ad78b5576b03202f88379edeb9e1403e8281ec7ff56eae0c40e5a3f94b3c0791",
+      "version_after": 1
+    },
+    "fct_ApInvoice": {
+      "version_before": 0,
+      "rows": 911,
+      "schema_sha256": "085522a1b1c6bf6605ee8ea3384333c177e0349f199c638306e747bc43d08527",
+      "version_after": 0
+    },
+    "fct_Billing": {
+      "version_before": 44,
+      "rows": 892,
+      "schema_sha256": "fbdbee045a81ebd4209387d0517aa9783621c5d49013f4fb3acec45ce05b14d3",
+      "version_after": 44
+    },
+    "fct_BudgetLine": {
+      "version_before": 66,
+      "rows": 435,
+      "schema_sha256": "9dfb809205253a4166791c66370e3ec63b3c2ce1a832513fcdf1c7a2d89c8588",
+      "version_after": 66
+    },
+    "fct_ChangeOrder": {
+      "version_before": 66,
+      "rows": 335,
+      "schema_sha256": "9c837a0994ec602f98db4d6951c99a218c6c36a18d722a2524c8443d1a49ef50",
+      "version_after": 66
+    },
+    "fct_DirectCost": {
+      "version_before": 44,
+      "rows": 437,
+      "schema_sha256": "d6aa7109902086535874c2f01b6913837e30216391d1d80c2e975bb5cca970b9",
+      "version_after": 44
+    },
+    "fct_FinancialPeriod": {
+      "version_before": 65,
+      "rows": 151,
+      "schema_sha256": "aa2ee97b9c37c06f6086d2eb377aa9d158de39962d94d77cd30d59ed4d2c8ac8",
+      "version_after": 65
+    },
+    "fct_Invoice": {
+      "version_before": 66,
+      "rows": 149,
+      "schema_sha256": "694977ce691bf97bf64e8fdbceadf890cdca7e30c26d417128841d2950da932d",
+      "version_after": 66
+    },
+    "fct_Milestone": {
+      "version_before": 65,
+      "rows": 253,
+      "schema_sha256": "b73433171498c4858cf7e6ae731edabdd88f5cb5a79a6152eccf680888ba043f",
+      "version_after": 65
+    },
+    "fct_ProcoreInspection": {
+      "version_before": 1,
+      "rows": 26,
+      "schema_sha256": "316d83a32df0ce10d275708070cdc9f4b590c869f87173231cd5060a157dfde3",
+      "version_after": 1
+    },
+    "fct_ProcoreInspectionItem": {
+      "version_before": 1,
+      "rows": 705,
+      "schema_sha256": "29f65e35b65556cc792025676b8448ad9f267ac2611e43916f90d86d6f206f44",
+      "version_after": 1
+    },
+    "fct_QcNcr": {
+      "version_before": 16,
+      "rows": 966,
+      "schema_sha256": "39d0ec1fe554372fa2c36b3ab3a4346d778f1f5ab5b5ab0606457dc94ad04aee",
+      "version_after": 16
+    },
+    "fct_QcPunch": {
+      "version_before": 16,
+      "rows": 1617,
+      "schema_sha256": "ebd486e54c5871aa2914ae2ffd2d054c596c4112c99d1fc834474456272bbab0",
+      "version_after": 16
+    },
+    "fct_QcSubmittal": {
+      "version_before": 16,
+      "rows": 2474,
+      "schema_sha256": "4e5dda6c3f232f1cb6266245c9658debef4cb207ca64d5b2e28939321e81ea1f",
+      "version_after": 16
+    },
+    "fct_QualityItem": {
+      "version_before": 46,
+      "rows": 2583,
+      "schema_sha256": "24851ebd7a84844ce47371255d5b0149f26c9734e03ee9eaf07ed64845c894e5",
+      "version_after": 46
+    },
+    "fct_RfiSubmittal": {
+      "version_before": 64,
+      "rows": 3131,
+      "schema_sha256": "52cc1c1ee7f5de8e145a555eca9dfd8ecc770710b56f3c64d8f1ef5f67b97221",
+      "version_after": 64
+    },
+    "fct_VendorInsurance": {
+      "version_before": 41,
+      "rows": 105,
+      "schema_sha256": "9b39e716b7aac0c18b304bca54fdba903fc186bdf36694a248e146a0799556b1",
+      "version_after": 41
+    },
+    "input_cd_silver_billing": {
+      "version_before": 38,
+      "rows": 892,
+      "schema_sha256": "6c3c727283e30f402f5d80b398d05715b6866ecde02aed4c98da23fe627e154a",
+      "version_after": 38
+    },
+    "input_cd_silver_budgets": {
+      "version_before": 52,
+      "rows": 435,
+      "schema_sha256": "4fa1c767968e6e6e62959ec8e9a20ffb547d1dbe374462389f2d769e124ba4e6",
+      "version_after": 52
+    },
+    "input_cd_silver_direct_costs": {
+      "version_before": 38,
+      "rows": 437,
+      "schema_sha256": "0df46452e273586867b99809a83ad38c6cce06fe2d39a800586c51b8bdc97c2c",
+      "version_after": 38
+    },
+    "input_cd_silver_outbuild_activities": {
+      "version_before": 12,
+      "rows": 2335,
+      "schema_sha256": "661b3f61c3004fb0ae8934388505cd8947de4a0f4722ac73f7b3593907334034",
+      "version_after": 12
+    },
+    "input_cd_silver_prime_change_orders": {
+      "version_before": 52,
+      "rows": 335,
+      "schema_sha256": "bbdea372fcec2f950f45fcab83804a053fab9ca6c84fb8ccada163cab12f133d",
+      "version_after": 52
+    },
+    "input_cd_silver_project_vendors": {
+      "version_before": 38,
+      "rows": 430,
+      "schema_sha256": "63ca40e30a293b55aaa5e942fd96c89d16c5744f4c7effa6127ad83ba07d0ae2",
+      "version_after": 38
+    },
+    "input_cd_silver_projects": {
+      "version_before": 52,
+      "rows": 20,
+      "schema_sha256": "60a9389f009aea29d40ca61d8563943deff8231ccc293bf32c2060baf213967f",
+      "version_after": 52
+    },
+    "input_cd_silver_qc_inspection": {
+      "version_before": 16,
+      "rows": 26,
+      "schema_sha256": "16d648169b06bcb0cc4eb0e1a7281938622eb9f7443202ddbccb5020e5571a4f",
+      "version_after": 16
+    },
+    "input_cd_silver_qc_inspection_item": {
+      "version_before": 2,
+      "rows": 705,
+      "schema_sha256": "0682ed24aeab54dd378d2c9d6bf4f3a276cd55d8d173934e1f22cd78a6558c08",
+      "version_after": 2
+    },
+    "input_cd_silver_sage_ap_invoices": {
+      "version_before": 8,
+      "rows": 881,
+      "schema_sha256": "e210b0f9ac844f557764bec02b15680be78d50c06b70cfad0be1473db4988ef4",
+      "version_after": 8
+    },
+    "input_cd_silver_sage_ap_lines": {
+      "version_before": 8,
+      "rows": 911,
+      "schema_sha256": "e92b4bb899d73eb1c961e3e852e2ceb8904fead46feddea87b5dfb6074ffc80e",
+      "version_after": 8
+    },
+    "input_cd_silver_sage_ar_invoices": {
+      "version_before": 8,
+      "rows": 149,
+      "schema_sha256": "3f5278a0c6049bd2d0b3d6ce0a9d35d18e6ec36fb8eaa47b919c51773ead56a6",
+      "version_after": 8
+    },
+    "input_cd_silver_sage_ar_payments": {
+      "version_before": 2,
+      "rows": 86,
+      "schema_sha256": "4b58b6a89c874840d228c3125c60110f9d4e28e6a282ff2d0d04da0ca772445e",
+      "version_after": 2
+    },
+    "input_cd_silver_sage_jobs": {
+      "version_before": 8,
+      "rows": 28,
+      "schema_sha256": "c703fca50241e66fad43bb1ae988d0b1ac5504ce3d06c4dd2a92cdf8b106d7da",
+      "version_after": 8
+    },
+    "input_cd_silver_sage_vendors": {
+      "version_before": 0,
+      "rows": 1082,
+      "schema_sha256": "43bc9bb612ac892151f4ebcbe9786324ed1b7029cc299636b2bacac6576898f8",
+      "version_after": 0
+    },
+    "input_cd_silver_vendors": {
+      "version_before": 52,
+      "rows": 1117,
+      "schema_sha256": "febaec1563811142949bcbfc21bdf0c900a0f235206d60385999f07efe2ed631",
+      "version_after": 52
+    },
+    "man_DailyLogCompliance": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "479660d54857a1226900c717174c781b9cf3f7310ce427d4cbd5beffef0a433e",
+      "version_after": 116
+    },
+    "man_Flags": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "c304a8364e4ea672d4f885f7b57411a7151d41b48fb85ef73bd86cfbce9d0971",
+      "version_after": 116
+    },
+    "man_Milestones": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "90109d91fff196423d453a901d2c8d99a7cc120847e62e555588804fef9180be",
+      "version_after": 116
+    },
+    "man_PriorityItems": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "19e72dae1bf33e71bd244a80539a93620cded9d5a088f3ba0951384c6304afad",
+      "version_after": 116
+    },
+    "man_QcChecklistResult": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "46cf84f3aca82e85d9e4dae785dab035ccc9a8fe988f6daa65cd15a7103c6e29",
+      "version_after": 33
+    },
+    "man_QcCommissioning": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "8cb21504c442e6d2c3ac2bed80dd70b232068ee25dcdbac9ba7112c525d027cc",
+      "version_after": 33
+    },
+    "man_QcDfow": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "4f859f0d9f05dd34e4aac3f44333862b7bfcb500eea615945d339449957d3722",
+      "version_after": 33
+    },
+    "man_QcDohResult": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "61d8bc320d44c8fd0afa9be97f521e1f2ca48aced178d098df8d232cfe20ad19",
+      "version_after": 33
+    },
+    "man_QcGate": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "eec24f4a65a8e388ddeb64dce82e87f243f437f5cd6f7d30a895ca8884ec8dd2",
+      "version_after": 33
+    },
+    "man_QcInspectorSignIn": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "aa2c673df35ea1a546952cc1983ba66b086c53c672b6bce2eb2d7774b83a20ad",
+      "version_after": 33
+    },
+    "man_QcItp": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "fc75cb272610bf4f987466460c11cf6d4633052f8a3c69374f1072fefe80499d",
+      "version_after": 33
+    },
+    "man_QcSpecialInspection": {
+      "version_before": 33,
+      "rows": 0,
+      "schema_sha256": "1ebb14750ea18e6d4efdf61ce15835a023ba8a18df27b296087c7949072aa4bb",
+      "version_after": 33
+    },
+    "man_QualityMonthly": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "cb2de530a54baabb98ed3ab7b278928d0f565aeb596b6a13ab14aa426a1a9076",
+      "version_after": 116
+    },
+    "man_Risks": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "7cc4ee86a04e6b5c2bfe87313cd7e66ef3800e47530261806886bba96661ec8c",
+      "version_after": 116
+    },
+    "man_SafetyMonthly": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "ba03dc9ec62cfeba80d2207f14bb4d21cdd208e036af826a49af6f76ee808c44",
+      "version_after": 116
+    },
+    "man_Survey": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "5eeff6c37b3fa82b2684af7674a03c76e31f9ddb2c091265b74bac3be9ea2080",
+      "version_after": 116
+    },
+    "man_Wins": {
+      "version_before": 116,
+      "rows": 0,
+      "schema_sha256": "50a442d05b440088e021f8c20ca94c53451962ba59d336e3d3500b4e3529317b",
+      "version_after": 116
+    },
+    "qc_seed_ChecklistItem": {
+      "version_before": 28,
+      "rows": 625,
+      "schema_sha256": "c0f854be9a9e4293bbdb323f68cefcd32129ac98b7b72fe30b05fa94c3613525",
+      "version_after": 28
+    },
+    "qc_seed_DohItem": {
+      "version_before": 28,
+      "rows": 101,
+      "schema_sha256": "34f46cf20b6e0f52f82eab1eef034598772ed23552cd0405c3d853e9996af2d8",
+      "version_after": 28
+    },
+    "qc_seed_Gate": {
+      "version_before": 28,
+      "rows": 93,
+      "schema_sha256": "3b6ec07b7d373258d76dceab06cec68619a7b4399c949ec3e0bc277d1ef5cb6b",
+      "version_after": 28
+    },
+    "qc_seed_Trade": {
+      "version_before": 28,
+      "rows": 26,
+      "schema_sha256": "77e25925c85395e6e9eb9b07f14237b4dfa8df16c20540fdb709abcc229c4d0e",
+      "version_after": 28
+    },
+    "qc_seed_TradeAlias": {
+      "version_before": 27,
+      "rows": 16,
+      "schema_sha256": "e74c4f6059294cde7fd5c00800340a301e5ad61845015df8395f16eab27612ab",
+      "version_after": 27
+    },
+    "seed_ProjectCrosswalk": {
+      "version_before": 0,
+      "rows": 15,
+      "schema_sha256": "d9f692138b639de44138729210c954504cfb0fa5c4372d71431d24f70b30d18a",
+      "version_after": 0
+    }
+  },
+  "load_errors": {},
+  "view_errors": {},
+  "passed": true,
+  "source_views_sha256": "6618bbdc10d53f11169dcbd0141a440620340af09dc7c8da382e3a1aa50fba45",
+  "suite_sha256": "11f35421ad852153456b3aa2bdfddda00d2eb97c3f723e4695519cbdb96b0c46",
+  "scope": "All current main DQ rules replayed on actual production Delta files in local DuckDB. Uses current source-view SQL and compatibility macros, no synthetic fixtures. Not Spark or report/model execution, source completeness, or proof of deployed code identity. Stable table versions do not establish an atomic upstream batch. CURRENT_DATE uses replay day.",
+  "checks": [
+    {
+      "name": "dim_Project.ProjectKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Vendor.VendorKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_CostCode.CostCodeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Date.Date.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_ProjectCrosswalk.ProjectKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_VendorCrosswalk.VendorKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_CostCodeCrosswalk.CostCodeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.ItemType_ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Project.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.BudgetLineID.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.ProjectKey_BudgetLineID.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Amount.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.InvoiceKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.InvoiceKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.AmountPaid.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Balance.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Project.SageJobNumber maps to only one project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.CostCodeKey.fk_dim_CostCode",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_CostCode.Division is two digits or NULL",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Project.SageJobNumber resolves for at least one project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_project_crosswalk Sage job maps to only one project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_project_crosswalk rows exist in Procore and Sage",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "Sage jobs with AR/AP but no crosswalk mapping",
+      "severity": "warn",
+      "failing_rows": 13,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "Sage AP invoices with no job",
+      "severity": "warn",
+      "failing_rows": 309,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "sv_vendors Sage vendor id exists in actpay",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_vendors Sage vendor maps to only one Procore vendor",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "ERP-synced vendors without origin_code",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Amount is not universally zero",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Amount reconciles to AmountPaid + Balance",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice has rows",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice project match rate is not collapsing",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.PaymentsReceived conserves sv_ar_payments",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_ar_payments rows with no AR invoice",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice receipts reconcile to AmountPaid",
+      "severity": "warn",
+      "failing_rows": 3,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.PaidDate is not before SentDate",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_FinancialPeriod.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.CreatedDate has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.DueDate has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.CurrentStart has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.CurrentFinish has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.SentDate has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal: no responded submittal is counted open",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_QcSubmittal: no responded submittal is counted open",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "submittal responded before it was created",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.CurrentStart_CurrentFinish.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "every project is in Sage",
+      "severity": "warn",
+      "failing_rows": 5,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "every project is in Outbuild",
+      "severity": "warn",
+      "failing_rows": 14,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "no project maps to two ids on the far side",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "cost codes parse to a CSI division",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "no negative original budgets",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "cumulative billing never exceeds the current contract",
+      "severity": "warn",
+      "failing_rows": 2,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing.BillingKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_ProjectVendor.ProjectKey_VendorKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DirectCost.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DirectCost.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_ProjectVendor.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "one latest billing period per contract",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "billing balances reconcile to the sum of period movements",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "retainage percent is plausible",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "retainage released rather than withheld",
+      "severity": "warn",
+      "failing_rows": 6,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "direct cost grand total is at least the line amount",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.VendorCostCodeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.InsuranceKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.VendorKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.CostCodeKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.VendorKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.CostCodeKey.fk_dim_CostCode",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the vendor bridge covers most direct cost spend",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge actual spend does not exceed direct cost spend",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "committed lines are not negative",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "vendors on a project have a certificate on file",
+      "severity": "warn",
+      "failing_rows": 413,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "certificates on file are in date",
+      "severity": "warn",
+      "failing_rows": 105,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.EffectiveDate_ExpirationDate.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "billing data is not stale",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "direct cost data is not stale",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "field operations data is not stale",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_Trade.TradeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_ChecklistItem.ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_Gate.GateKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_DohItem.ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_QcStatus.Domain_Code.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_ChecklistItem.TradeKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_Gate.GateType.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the checklist template still holds all 625 items",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the gate template still holds all three paths",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the DOH checklist still holds all 101 requirements",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Wins.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Risks.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_PriorityItems.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Flags.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Survey.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_SafetyMonthly.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QualityMonthly.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Milestones.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_DailyLogCompliance.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDfow.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcCommissioning.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcInspectorSignIn.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Job.JobNumber.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Job.JobNumber.issued_past_requested",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDfow.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcCommissioning.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.ItemKey.fk_qc_seed_ChecklistItem",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.GateKey.fk_qc_seed_Gate",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.ItemKey.fk_qc_seed_DohItem",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.SubmittedDate_CompletedDate.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.PerformedDate_ReportReceivedDate.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "gates completed after their target date",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "gate results agree with their template's path",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "Procore QC statuses map to the workbook's vocabulary",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "Procore trades resolve to a seeded trade",
+      "severity": "warn",
+      "failing_rows": 237,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_TradeAlias.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "scorecard weights sum to 1.00",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey_InspectionKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.InspectionLinkKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.InspectionKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "native inspection source values are preserved",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.ProjectKey_ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.ItemKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.InspectionKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.InspectionLinkKey.fk_fct_ProcoreInspection",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "native inspection items link to the same project inspection",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "native inspection item source values are preserved",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "native inspection model link keys match source identity",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "native inspection item totals match source headers",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.ApLineKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.ApLineKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.VendorKey.fk_dim_Vendor",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice conserves sv_ap_invoices header rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_ap_invoices headers with no lines absent from fct_ApInvoice",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dq_DataGap: Cost reconciliation variance",
+      "severity": "warn",
+      "failing_rows": 8,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "dq_DataGap: ERP-only vendor cost",
+      "severity": "warn",
+      "failing_rows": 62,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "dq_DataGap: Project with no Procore budget or zero Spent To Date while AP/requisitions exist",
+      "severity": "warn",
+      "failing_rows": 4,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder conserves sv_prime_change_orders rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_prime_change_orders rows dropped from fct_ChangeOrder for having no project",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine conserves sv_budgets rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_budgets rows dropped from fct_BudgetLine for having no project",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing conserves sv_billing rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_billing rows dropped from fct_Billing for having no project",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DirectCost conserves sv_direct_costs rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_direct_costs rows dropped from fct_DirectCost for having no project",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice conserves sv_ar_invoices rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice conserves sv_ap_lines rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "unattributed Outbuild critical activities dropped from fct_Milestone",
+      "severity": "warn",
+      "failing_rows": 243,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.ChangeOrderKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.ProjectKey_ActivityKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_FinancialPeriod.ProjectKey_MonthStart.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DirectCost.DirectCostKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Wins.ProjectKey_MonthStart_WinNumber.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Risks.ProjectKey_MonthStart_RiskNumber.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_PriorityItems.ProjectKey_MonthStart_ItemNumber.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Flags.ProjectKey_MonthStart.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Survey.ProjectKey_MonthStart_QuestionNumber.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_SafetyMonthly.ProjectKey_MonthStart.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QualityMonthly.ProjectKey_MonthStart.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Milestones.ProjectKey_MilestoneName.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_DailyLogCompliance.ProjectKey_MonthStart.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDfow.ProjectKey_DfowRef.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.ProjectKey_ItpRef.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.ProjectKey_GateKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.ProjectKey_InspectionRef.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcCommissioning.ProjectKey_SystemRef.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcInspectorSignIn.ProjectKey_SignInRef.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.ProjectKey_ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.ProjectKey_ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.VendorKey.fk_dim_Vendor",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.VendorKey.fk_dim_Vendor",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_QcNcr.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_QcPunch.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_QcSubmittal.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDfow.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.ResultCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.RequiredCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.PerformedCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcCommissioning.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcInspectorSignIn.AgencyCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcInspectorSignIn.OutcomeCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.StageCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.ResultCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.ResponsibilityCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.StatusCode.fk_dim_QcStatus",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_ScorecardBand numeric bands tile with no gap or overlap",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    }
+  ],
+  "stable_versions": true,
+  "summary": {
+    "total": 211,
+    "passed": 197,
+    "warnings": 14,
+    "blocking": 0,
+    "errors": 0
+  },
+  "finished_at": "2026-09-14T15:50:56.953320+00:00",
+  "rule_sql_sha256": "cd6fdd5651550a9500791c07cb3f117cf32af9a94d1a36e431dd63a61e125c36",
+  "duckdb_version": "1.5.5",
+  "compatibility_macros_sha256": "a220e738871cd67e865be7c44dc0b7d8fffb1e920d473ca1caada7647ed4d3ee",
+  "runner_note": "Data loading, all rules, version checks and final evidence persistence completed. A duplicate stdout summary key then raised TypeError; formatting fixed without rerunning source reads.",
+  "archived_live_dq_comparison": {
+    "batch": "20260914T083429Z",
+    "rules_compared": 211,
+    "differences": 0,
+    "fields": [
+      "name",
+      "severity",
+      "failing_rows",
+      "passed",
+      "blocking"
+    ]
+  }
+}

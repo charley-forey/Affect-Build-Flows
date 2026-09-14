@@ -758,6 +758,12 @@ def split_statements(sql: str) -> list[str]:
     return [s for s in out if s]
 
 
+# Reuse the actual derived source union after its fixture inputs exist.
+SOURCE_FIXTURES += tuple(s for s in split_statements(
+    (CHARLEY_DEV / "02-transformation/sql/silver/01_source_views_cd.sql").read_text(encoding="utf-8"))
+    if s.startswith("CREATE OR REPLACE TEMPORARY VIEW sv_observed_projects AS"))
+
+
 def build(verbose: bool = False) -> Any:
     """Create an in-memory database with every seed table built."""
     import duckdb

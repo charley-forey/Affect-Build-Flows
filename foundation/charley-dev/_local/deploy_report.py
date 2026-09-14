@@ -742,10 +742,10 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                {"Category": [column("dim_Date", "MonthYear")],
                 "Y": [measure("Open Submittals (Month End)"),
                       measure("Open Submittals Past Due (Month End)")]},
-               title="Submittal backlog at month end (saved history)",
-               alt="Line chart. Open and past-due submittals as saved at the last nightly "
-                   "capture of each month. Months before history starts have no value, "
-                   "not zero."),
+               title="Submittal backlog: latest capture in month",
+               alt="Line chart. Open and past-due submittals at the last available capture "
+                   "in each month, which may precede month end. Months before history "
+                   "starts have no value, not zero. Capture date does not prove source freshness."),
     ]
     timeline = next(v["visual"] for v in items if v["name"] == oid(p, "gantt"))
     timeline["objects"] = {"dataPoint": [{

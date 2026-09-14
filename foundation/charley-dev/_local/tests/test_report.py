@@ -326,6 +326,9 @@ def test_schedule_grain():
     table = next(v["visual"] for v in items if v["name"] == dr.oid("schedule", "milestones"))
     columns = {p["field"]["Column"]["Property"] for p in table["query"]["queryState"]["Values"]["projections"]}
     assert {"ProjectKey", "ActivityKey", "CurrentStart", "CurrentFinish", "HasDateInversion"} <= columns
+    backlog = next(v for v in items if v["name"] == dr.oid("schedule", "backlog_month_end"))
+    assert "latest capture in month" in json.dumps(backlog)
+    assert "may precede month end" in json.dumps(backlog)
 
 
 def excludes_unmatched(v: dict) -> bool:
@@ -479,8 +482,27 @@ def test_export_screening():
     assert screen_pages(["Couldn't load the data"], 1)["status"] == "FAIL"
 
 
+def test_observation_close_duration():
+    import deploy_model as dm
+    import validate_model as vm
+    rows = [
+        {"ItemType": "Observation", "IsOpen": False, "DaysOpen": 4},
+        {"ItemType": "Observation", "IsOpen": False, "DaysOpen": 8},
+        {"ItemType": "Observation", "IsOpen": True, "DaysOpen": 100},
+        {"ItemType": "PunchItem", "IsOpen": False, "DaysOpen": 90},
+        {"ItemType": "Observation", "IsOpen": False, "DaysOpen": None},
+    ]
+    expected = vm.monthly_expected()["Avg Observation Days To Close"]
+    assert expected(vm.Recompute({"fct_QualityItem": rows}, []), vm.PORTFOLIO) == 6
+    assert expected(vm.Recompute({"fct_QualityItem": rows[2:4]}, []), vm.PORTFOLIO) is None
+    expression = {m[0]: m[1] for m in dm.MEASURES}["Avg Observation Days To Close"]
+    assert 'fct_QualityItem[ItemType] = "Observation"' in expression
+    assert "NOT fct_QualityItem[IsOpen]" in expression
+
+
 if __name__ == "__main__":
     test_export_screening()
+    test_observation_close_duration()
     if "--qc" in sys.argv:
         import deploy_model_qc
         import deploy_report_qc

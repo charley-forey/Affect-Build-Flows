@@ -25,21 +25,45 @@ Layers left to right: bronze, silver, source views (`sv_*`), gold. Intermediate 
 ```mermaid
 flowchart LR
   subgraph bronze_layer["Bronze"]
+    cd_bronze_man_daily_log_compliance
+    cd_bronze_man_flags
+    cd_bronze_man_milestones
+    cd_bronze_man_priority_items
+    cd_bronze_man_qc_checklist_result
+    cd_bronze_man_qc_commissioning
+    cd_bronze_man_qc_dfow
+    cd_bronze_man_qc_doh_result
+    cd_bronze_man_qc_gate
+    cd_bronze_man_qc_inspector_sign_in
+    cd_bronze_man_qc_itp
+    cd_bronze_man_qc_special_inspection
+    cd_bronze_man_quality_monthly
+    cd_bronze_man_risks
+    cd_bronze_man_safety_monthly
+    cd_bronze_man_survey
+    cd_bronze_man_wins
     cd_bronze_outbuild_activities
     cd_bronze_outbuild_projects
     cd_bronze_procore_budget_detail_rows
+    cd_bronze_procore_checklist_list_items
+    cd_bronze_procore_checklist_lists
     cd_bronze_procore_company_insurances
     cd_bronze_procore_cost_codes
     cd_bronze_procore_direct_cost_line_items
     cd_bronze_procore_direct_costs
+    cd_bronze_procore_incidents
+    cd_bronze_procore_manpower_logs
+    cd_bronze_procore_observations
     cd_bronze_procore_payment_applications
     cd_bronze_procore_prime_change_orders
     cd_bronze_procore_prime_contracts
     cd_bronze_procore_project_vendors
     cd_bronze_procore_projects
+    cd_bronze_procore_punch_items
     cd_bronze_procore_purchase_order_contract_line_items
     cd_bronze_procore_purchase_order_contracts
     cd_bronze_procore_requisitions
+    cd_bronze_procore_rfis
     cd_bronze_procore_submittals
     cd_bronze_procore_vendors
     cd_bronze_procore_work_order_contract_line_items
@@ -53,11 +77,38 @@ flowchart LR
     cd_silver_cost_codes
     cd_silver_direct_cost_lines
     cd_silver_direct_costs
+    cd_silver_incidents
+    cd_silver_man_daily_log_compliance
+    cd_silver_man_flags
+    cd_silver_man_milestones
+    cd_silver_man_priority_items
+    cd_silver_man_qc_checklist_result
+    cd_silver_man_qc_commissioning
+    cd_silver_man_qc_dfow
+    cd_silver_man_qc_doh_result
+    cd_silver_man_qc_gate
+    cd_silver_man_qc_inspector_sign_in
+    cd_silver_man_qc_itp
+    cd_silver_man_qc_special_inspection
+    cd_silver_man_quality_monthly
+    cd_silver_man_risks
+    cd_silver_man_safety_monthly
+    cd_silver_man_survey
+    cd_silver_man_wins
+    cd_silver_manpower_daily
+    cd_silver_observations
     cd_silver_outbuild_activities
     cd_silver_prime_change_orders
     cd_silver_prime_contracts
     cd_silver_project_vendors
     cd_silver_projects
+    cd_silver_punch_items
+    cd_silver_qc_inspection
+    cd_silver_qc_inspection_item
+    cd_silver_qc_ncr
+    cd_silver_qc_punch
+    cd_silver_qc_submittal
+    cd_silver_rfis
     cd_silver_submittals
     cd_silver_vendor_insurance
     cd_silver_vendors
@@ -70,12 +121,41 @@ flowchart LR
     sv_cost_codes
     sv_direct_cost_lines
     sv_direct_costs
+    sv_incidents
+    sv_man_daily_log_compliance
+    sv_man_flags
+    sv_man_milestones
+    sv_man_priority_items
+    sv_man_qc_checklist_result
+    sv_man_qc_commissioning
+    sv_man_qc_dfow
+    sv_man_qc_doh_result
+    sv_man_qc_gate
+    sv_man_qc_inspector_sign_in
+    sv_man_qc_itp
+    sv_man_qc_special_inspection
+    sv_man_quality_monthly
+    sv_man_risks
+    sv_man_safety_monthly
+    sv_man_survey
+    sv_man_wins
+    sv_manpower_daily
+    sv_observations
+    sv_observed_projects
     sv_outbuild_activities
+    sv_outbuild_projects
     sv_prime_change_orders
     sv_prime_contracts
     sv_project_crosswalk
     sv_project_vendors
     sv_projects
+    sv_punch_items
+    sv_qc_inspection
+    sv_qc_inspection_item
+    sv_qc_ncr
+    sv_qc_punch
+    sv_qc_submittal
+    sv_rfis
     sv_submittals
     sv_vendor_insurance
     sv_vendors
@@ -93,21 +173,45 @@ flowchart LR
     fct_FinancialPeriod
     fct_VendorInsurance
   end
+  cd_bronze_man_daily_log_compliance --> cd_silver_man_daily_log_compliance
+  cd_bronze_man_flags --> cd_silver_man_flags
+  cd_bronze_man_milestones --> cd_silver_man_milestones
+  cd_bronze_man_priority_items --> cd_silver_man_priority_items
+  cd_bronze_man_qc_checklist_result --> cd_silver_man_qc_checklist_result
+  cd_bronze_man_qc_commissioning --> cd_silver_man_qc_commissioning
+  cd_bronze_man_qc_dfow --> cd_silver_man_qc_dfow
+  cd_bronze_man_qc_doh_result --> cd_silver_man_qc_doh_result
+  cd_bronze_man_qc_gate --> cd_silver_man_qc_gate
+  cd_bronze_man_qc_inspector_sign_in --> cd_silver_man_qc_inspector_sign_in
+  cd_bronze_man_qc_itp --> cd_silver_man_qc_itp
+  cd_bronze_man_qc_special_inspection --> cd_silver_man_qc_special_inspection
+  cd_bronze_man_quality_monthly --> cd_silver_man_quality_monthly
+  cd_bronze_man_risks --> cd_silver_man_risks
+  cd_bronze_man_safety_monthly --> cd_silver_man_safety_monthly
+  cd_bronze_man_survey --> cd_silver_man_survey
+  cd_bronze_man_wins --> cd_silver_man_wins
   cd_bronze_outbuild_activities --> cd_silver_outbuild_activities
   cd_bronze_outbuild_projects --> cd_silver_outbuild_activities
   cd_bronze_procore_budget_detail_rows --> cd_silver_budgets
+  cd_bronze_procore_checklist_list_items --> cd_silver_qc_inspection_item
+  cd_bronze_procore_checklist_lists --> cd_silver_qc_inspection
   cd_bronze_procore_company_insurances --> cd_silver_vendor_insurance
   cd_bronze_procore_cost_codes --> cd_silver_cost_codes
   cd_bronze_procore_direct_cost_line_items --> cd_silver_direct_cost_lines
   cd_bronze_procore_direct_costs --> cd_silver_direct_costs
+  cd_bronze_procore_incidents --> cd_silver_incidents
+  cd_bronze_procore_manpower_logs --> cd_silver_manpower_daily
+  cd_bronze_procore_observations --> cd_silver_observations
   cd_bronze_procore_payment_applications --> cd_silver_billing
   cd_bronze_procore_prime_change_orders --> cd_silver_prime_change_orders
   cd_bronze_procore_prime_contracts --> cd_silver_prime_contracts
   cd_bronze_procore_project_vendors --> cd_silver_project_vendors
   cd_bronze_procore_projects --> cd_silver_projects
+  cd_bronze_procore_punch_items --> cd_silver_punch_items
   cd_bronze_procore_purchase_order_contract_line_items --> cd_silver_commitment_lines
   cd_bronze_procore_purchase_order_contracts --> cd_silver_commitments
   cd_bronze_procore_requisitions --> cd_silver_billing
+  cd_bronze_procore_rfis --> cd_silver_rfis
   cd_bronze_procore_submittals --> cd_silver_submittals
   cd_bronze_procore_vendors --> cd_silver_vendors
   cd_bronze_procore_work_order_contract_line_items --> cd_silver_commitment_lines
@@ -119,12 +223,60 @@ flowchart LR
   cd_silver_cost_codes --> sv_cost_codes
   cd_silver_direct_cost_lines --> sv_direct_cost_lines
   cd_silver_direct_costs --> sv_direct_costs
+  cd_silver_incidents --> sv_incidents
+  cd_silver_man_daily_log_compliance --> sv_man_daily_log_compliance
+  cd_silver_man_flags --> sv_man_flags
+  cd_silver_man_milestones --> sv_man_milestones
+  cd_silver_man_priority_items --> sv_man_priority_items
+  cd_silver_man_qc_checklist_result --> sv_man_qc_checklist_result
+  cd_silver_man_qc_commissioning --> sv_man_qc_commissioning
+  cd_silver_man_qc_dfow --> sv_man_qc_dfow
+  cd_silver_man_qc_doh_result --> sv_man_qc_doh_result
+  cd_silver_man_qc_gate --> sv_man_qc_gate
+  cd_silver_man_qc_inspector_sign_in --> sv_man_qc_inspector_sign_in
+  cd_silver_man_qc_itp --> sv_man_qc_itp
+  cd_silver_man_qc_special_inspection --> sv_man_qc_special_inspection
+  cd_silver_man_quality_monthly --> sv_man_quality_monthly
+  cd_silver_man_risks --> sv_man_risks
+  cd_silver_man_safety_monthly --> sv_man_safety_monthly
+  cd_silver_man_survey --> sv_man_survey
+  cd_silver_man_wins --> sv_man_wins
+  cd_silver_manpower_daily --> sv_manpower_daily
+  cd_silver_observations --> cd_silver_qc_ncr
+  cd_silver_observations --> sv_observations
   cd_silver_outbuild_activities --> sv_outbuild_activities
+  cd_silver_outbuild_activities --> sv_outbuild_projects
   cd_silver_prime_change_orders --> sv_prime_change_orders
   cd_silver_prime_contracts --> sv_prime_contracts
   cd_silver_project_vendors --> sv_project_vendors
+  cd_silver_projects --> cd_silver_man_daily_log_compliance
+  cd_silver_projects --> cd_silver_man_flags
+  cd_silver_projects --> cd_silver_man_milestones
+  cd_silver_projects --> cd_silver_man_priority_items
+  cd_silver_projects --> cd_silver_man_qc_checklist_result
+  cd_silver_projects --> cd_silver_man_qc_commissioning
+  cd_silver_projects --> cd_silver_man_qc_dfow
+  cd_silver_projects --> cd_silver_man_qc_doh_result
+  cd_silver_projects --> cd_silver_man_qc_gate
+  cd_silver_projects --> cd_silver_man_qc_inspector_sign_in
+  cd_silver_projects --> cd_silver_man_qc_itp
+  cd_silver_projects --> cd_silver_man_qc_special_inspection
+  cd_silver_projects --> cd_silver_man_quality_monthly
+  cd_silver_projects --> cd_silver_man_risks
+  cd_silver_projects --> cd_silver_man_safety_monthly
+  cd_silver_projects --> cd_silver_man_survey
+  cd_silver_projects --> cd_silver_man_wins
   cd_silver_projects --> sv_project_crosswalk
   cd_silver_projects --> sv_projects
+  cd_silver_punch_items --> cd_silver_qc_punch
+  cd_silver_punch_items --> sv_punch_items
+  cd_silver_qc_inspection --> sv_qc_inspection
+  cd_silver_qc_inspection_item --> sv_qc_inspection_item
+  cd_silver_qc_ncr --> sv_qc_ncr
+  cd_silver_qc_punch --> sv_qc_punch
+  cd_silver_qc_submittal --> sv_qc_submittal
+  cd_silver_rfis --> sv_rfis
+  cd_silver_submittals --> cd_silver_qc_submittal
   cd_silver_submittals --> sv_submittals
   cd_silver_vendor_insurance --> sv_vendor_insurance
   cd_silver_vendors --> sv_vendors
@@ -132,24 +284,61 @@ flowchart LR
   fct_BudgetLine --> fct_FinancialPeriod
   fct_ChangeOrder --> fct_FinancialPeriod
   sv_billing --> fct_Billing
+  sv_billing --> sv_observed_projects
   sv_budgets --> dim_CostCode
-  sv_budgets --> dim_Project
   sv_budgets --> fct_BudgetLine
+  sv_budgets --> sv_observed_projects
   sv_commitment_lines --> bridge_VendorCostCode
+  sv_commitment_lines --> sv_observed_projects
   sv_commitments --> bridge_VendorCostCode
+  sv_commitments --> sv_observed_projects
   sv_cost_codes --> dim_CostCode
   sv_direct_cost_lines --> bridge_VendorCostCode
+  sv_direct_cost_lines --> sv_observed_projects
   sv_direct_costs --> bridge_VendorCostCode
   sv_direct_costs --> fct_DirectCost
-  sv_outbuild_activities --> dim_Project
-  sv_prime_change_orders --> dim_Project
+  sv_direct_costs --> sv_observed_projects
+  sv_incidents --> sv_observed_projects
+  sv_man_daily_log_compliance --> sv_observed_projects
+  sv_man_flags --> sv_observed_projects
+  sv_man_milestones --> sv_observed_projects
+  sv_man_priority_items --> sv_observed_projects
+  sv_man_qc_checklist_result --> sv_observed_projects
+  sv_man_qc_commissioning --> sv_observed_projects
+  sv_man_qc_dfow --> sv_observed_projects
+  sv_man_qc_doh_result --> sv_observed_projects
+  sv_man_qc_gate --> sv_observed_projects
+  sv_man_qc_inspector_sign_in --> sv_observed_projects
+  sv_man_qc_itp --> sv_observed_projects
+  sv_man_qc_special_inspection --> sv_observed_projects
+  sv_man_quality_monthly --> sv_observed_projects
+  sv_man_risks --> sv_observed_projects
+  sv_man_safety_monthly --> sv_observed_projects
+  sv_man_survey --> sv_observed_projects
+  sv_man_wins --> sv_observed_projects
+  sv_manpower_daily --> sv_observed_projects
+  sv_observations --> sv_observed_projects
+  sv_observed_projects --> dim_Project
+  sv_outbuild_activities --> sv_observed_projects
+  sv_outbuild_projects --> sv_observed_projects
   sv_prime_change_orders --> fct_ChangeOrder
+  sv_prime_change_orders --> sv_observed_projects
   sv_prime_contracts --> dim_Project
+  sv_prime_contracts --> sv_observed_projects
   sv_project_crosswalk --> dim_Project
   sv_project_vendors --> bridge_ProjectVendor
+  sv_project_vendors --> sv_observed_projects
   sv_projects --> dim_Project
+  sv_projects --> sv_observed_projects
+  sv_punch_items --> sv_observed_projects
+  sv_qc_inspection --> sv_observed_projects
+  sv_qc_inspection_item --> sv_observed_projects
+  sv_qc_ncr --> sv_observed_projects
+  sv_qc_punch --> sv_observed_projects
+  sv_qc_submittal --> sv_observed_projects
+  sv_rfis --> sv_observed_projects
   sv_submittals --> dim_CostCode
-  sv_submittals --> dim_Project
+  sv_submittals --> sv_observed_projects
   sv_vendor_insurance --> fct_VendorInsurance
   sv_vendors --> dim_Vendor
 ```
@@ -779,7 +968,7 @@ flowchart LR
 - **Grain:** Not stated in the SQL comments.
 - **Primary key:** (ProjectKey) (DQ unique rule)
 - **Produced by:** `02-transformation/sql/gold/10_dim_project.sql`
-- **Upstream:** gold: `seed_ProjectCrosswalk`; source views: `sv_budgets`, `sv_outbuild_activities`, `sv_prime_change_orders`, `sv_prime_contracts`, `sv_project_crosswalk`, `sv_projects`, `sv_submittals`; silver: `cd_silver_budgets`, `cd_silver_outbuild_activities`, `cd_silver_prime_change_orders`, `cd_silver_prime_contracts`, `cd_silver_projects`, `cd_silver_submittals`; bronze: `cd_bronze_outbuild_activities`, `cd_bronze_outbuild_projects`, `cd_bronze_procore_budget_detail_rows`, `cd_bronze_procore_prime_change_orders`, `cd_bronze_procore_prime_contracts`, `cd_bronze_procore_projects`, `cd_bronze_procore_submittals`
+- **Upstream:** gold: `seed_ProjectCrosswalk`; source views: `sv_billing`, `sv_budgets`, `sv_commitment_lines`, `sv_commitments`, `sv_direct_cost_lines`, `sv_direct_costs`, `sv_incidents`, `sv_man_daily_log_compliance`, `sv_man_flags`, `sv_man_milestones`, `sv_man_priority_items`, `sv_man_qc_checklist_result`, `sv_man_qc_commissioning`, `sv_man_qc_dfow`, `sv_man_qc_doh_result`, `sv_man_qc_gate`, `sv_man_qc_inspector_sign_in`, `sv_man_qc_itp`, `sv_man_qc_special_inspection`, `sv_man_quality_monthly`, `sv_man_risks`, `sv_man_safety_monthly`, `sv_man_survey`, `sv_man_wins`, `sv_manpower_daily`, `sv_observations`, `sv_observed_projects`, `sv_outbuild_activities`, `sv_outbuild_projects`, `sv_prime_change_orders`, `sv_prime_contracts`, `sv_project_crosswalk`, `sv_project_vendors`, `sv_projects`, `sv_punch_items`, `sv_qc_inspection`, `sv_qc_inspection_item`, `sv_qc_ncr`, `sv_qc_punch`, `sv_qc_submittal`, `sv_rfis`, `sv_submittals`; silver: `cd_silver_billing`, `cd_silver_budgets`, `cd_silver_commitment_lines`, `cd_silver_commitments`, `cd_silver_direct_cost_lines`, `cd_silver_direct_costs`, `cd_silver_incidents`, `cd_silver_man_daily_log_compliance`, `cd_silver_man_flags`, `cd_silver_man_milestones`, `cd_silver_man_priority_items`, `cd_silver_man_qc_checklist_result`, `cd_silver_man_qc_commissioning`, `cd_silver_man_qc_dfow`, `cd_silver_man_qc_doh_result`, `cd_silver_man_qc_gate`, `cd_silver_man_qc_inspector_sign_in`, `cd_silver_man_qc_itp`, `cd_silver_man_qc_special_inspection`, `cd_silver_man_quality_monthly`, `cd_silver_man_risks`, `cd_silver_man_safety_monthly`, `cd_silver_man_survey`, `cd_silver_man_wins`, `cd_silver_manpower_daily`, `cd_silver_observations`, `cd_silver_outbuild_activities`, `cd_silver_prime_change_orders`, `cd_silver_prime_contracts`, `cd_silver_project_vendors`, `cd_silver_projects`, `cd_silver_punch_items`, `cd_silver_qc_inspection`, `cd_silver_qc_inspection_item`, `cd_silver_qc_ncr`, `cd_silver_qc_punch`, `cd_silver_qc_submittal`, `cd_silver_rfis`, `cd_silver_submittals`; bronze: `cd_bronze_man_daily_log_compliance`, `cd_bronze_man_flags`, `cd_bronze_man_milestones`, `cd_bronze_man_priority_items`, `cd_bronze_man_qc_checklist_result`, `cd_bronze_man_qc_commissioning`, `cd_bronze_man_qc_dfow`, `cd_bronze_man_qc_doh_result`, `cd_bronze_man_qc_gate`, `cd_bronze_man_qc_inspector_sign_in`, `cd_bronze_man_qc_itp`, `cd_bronze_man_qc_special_inspection`, `cd_bronze_man_quality_monthly`, `cd_bronze_man_risks`, `cd_bronze_man_safety_monthly`, `cd_bronze_man_survey`, `cd_bronze_man_wins`, `cd_bronze_outbuild_activities`, `cd_bronze_outbuild_projects`, `cd_bronze_procore_budget_detail_rows`, `cd_bronze_procore_checklist_list_items`, `cd_bronze_procore_checklist_lists`, `cd_bronze_procore_direct_cost_line_items`, `cd_bronze_procore_direct_costs`, `cd_bronze_procore_incidents`, `cd_bronze_procore_manpower_logs`, `cd_bronze_procore_observations`, `cd_bronze_procore_payment_applications`, `cd_bronze_procore_prime_change_orders`, `cd_bronze_procore_prime_contracts`, `cd_bronze_procore_project_vendors`, `cd_bronze_procore_projects`, `cd_bronze_procore_punch_items`, `cd_bronze_procore_purchase_order_contract_line_items`, `cd_bronze_procore_purchase_order_contracts`, `cd_bronze_procore_requisitions`, `cd_bronze_procore_rfis`, `cd_bronze_procore_submittals`, `cd_bronze_procore_work_order_contract_line_items`, `cd_bronze_procore_work_order_contracts`
 - **Semantic models:** Affect Project Report, Project Quality Plan
 - **Relationships:** bridge_ProjectVendor[ProjectKey] -> dim_Project[ProjectKey]; bridge_VendorCostCode[ProjectKey] -> dim_Project[ProjectKey]; dim_ProjectCrosswalk[ProjectKey] -> dim_Project[ProjectKey]; dq_DataGap[ProjectKey] -> dim_Project[ProjectKey]; fct_ApInvoice[ProjectKey] -> dim_Project[ProjectKey]; fct_Billing[ProjectKey] -> dim_Project[ProjectKey]; fct_BudgetLine[ProjectKey] -> dim_Project[ProjectKey]; fct_ChangeOrder[ProjectKey] -> dim_Project[ProjectKey]; fct_DailySnapshot[ProjectKey] -> dim_Project[ProjectKey]; fct_DirectCost[ProjectKey] -> dim_Project[ProjectKey]; fct_FinancialPeriod[ProjectKey] -> dim_Project[ProjectKey]; fct_Invoice[ProjectKey] -> dim_Project[ProjectKey]; fct_Milestone[ProjectKey] -> dim_Project[ProjectKey]; fct_ProcoreInspection[ProjectKey] -> dim_Project[ProjectKey]; fct_QcNcr[ProjectKey] -> dim_Project[ProjectKey]; fct_QcPunch[ProjectKey] -> dim_Project[ProjectKey]; fct_QcSubmittal[ProjectKey] -> dim_Project[ProjectKey]; fct_QualityItem[ProjectKey] -> dim_Project[ProjectKey]; fct_RfiSubmittal[ProjectKey] -> dim_Project[ProjectKey]; fct_SafetyMonthly[ProjectKey] -> dim_Project[ProjectKey]; man_DailyLogCompliance[ProjectKey] -> dim_Project[ProjectKey]; man_Flags[ProjectKey] -> dim_Project[ProjectKey]; man_Milestones[ProjectKey] -> dim_Project[ProjectKey]; man_PriorityItems[ProjectKey] -> dim_Project[ProjectKey]; man_QcChecklistResult[ProjectKey] -> dim_Project[ProjectKey]; man_QcCommissioning[ProjectKey] -> dim_Project[ProjectKey]; man_QcDfow[ProjectKey] -> dim_Project[ProjectKey]; man_QcDohResult[ProjectKey] -> dim_Project[ProjectKey]; man_QcGate[ProjectKey] -> dim_Project[ProjectKey]; man_QcInspectorSignIn[ProjectKey] -> dim_Project[ProjectKey]; man_QcItp[ProjectKey] -> dim_Project[ProjectKey]; man_QcSpecialInspection[ProjectKey] -> dim_Project[ProjectKey]; man_QualityMonthly[ProjectKey] -> dim_Project[ProjectKey]; man_Risks[ProjectKey] -> dim_Project[ProjectKey]; man_SafetyMonthly[ProjectKey] -> dim_Project[ProjectKey]; man_Survey[ProjectKey] -> dim_Project[ProjectKey]; man_Wins[ProjectKey] -> dim_Project[ProjectKey]
 - **Measures referencing it (Affect Project Report):** DQ Projects Without Crosswalk, Projects At Risk
@@ -1264,7 +1453,7 @@ flowchart LR
 - **Grain:** Not stated in the SQL comments.
 - **Primary key:** No DQ unique rule.
 - **Produced by:** `02-transformation/sql/snapshot/fct_dailysnapshot.sql`
-- **Upstream:** gold: `dim_Project`, `fct_BudgetLine`, `fct_ChangeOrder`, `fct_FinancialPeriod`, `fct_Invoice`, `fct_QualityItem`, `fct_RfiSubmittal`
+- **Upstream:** none (inline values or no SQL)
 - **Semantic models:** Affect Project Report
 - **Relationships:** fct_DailySnapshot[ProjectKey] -> dim_Project[ProjectKey]; fct_DailySnapshot[SnapshotDate] -> dim_Date[Date]
 - **Measures referencing it (Affect Project Report):** AR Outstanding (Month End), Approved Change Orders (Month End), Budget (Month End), Committed (Month End), Current Contract (Month End), Open Observations (Month End), Open Punch Items (Month End), Open RFIs (Month End), Open Submittals (Month End), Open Submittals Past Due (Month End), Pending Change Orders (Month End), Snapshot History Note, Snapshot History Starts, Spent To Date (Month End), Total Billed (Month End)

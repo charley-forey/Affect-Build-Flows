@@ -8,21 +8,24 @@ not supply.
 
 ## Verified state — September 14, 2026
 
-Production model fixes and the guarded manual-register schema migration are deployed.
-The monthly model's 130 measures evaluate and its 18 checks pass; all 48 quality-plan
-measures evaluate. The production quality gate recorded 211 rules: 197 passed, 14 warnings,
-and no blocking violations. These checks do not establish complete source coverage.
+**Production is not fully certified.** Read-only validation of actual production Delta
+files reproduced all 211 quality rules: 197 passed, 14 warnings, no blocking failures or
+execution errors. All 69 table versions stayed unchanged during the check. The 21 saved
+snapshot rows also match recomputed values. These checks do not establish source completeness.
 
-All 21 offline suites and generator checks passed in
-[GitHub CI](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34861048213).
-A commit or successful CI run is not proof of a production deployment.
+A deeper audit found calculation defects that the existing rules did not catch: punch
+items contaminated the observation closure average, and missing original contracts could
+appear as numeric current contracts. Corrections and regression tests are in source.
+Fabric rejected the model update and subsequent readback for capacity limits, so those
+corrections are **not verified live**. Gold and snapshot changes await controlled deployment.
+The hardened publication notebook definition was deployed and read back, but not executed.
+All 27 offline regression suites and generator checks pass.
 
-**The platform is not fully certified.** Fabric rejected additional queries because of
-capacity limits. The expanded candidate lacks its final run-specific gate evidence, the
-PDF export completed but failed render validation: pages 6–11 contain capacity-limit
-errors. A successful scheduled cycle remains
-unverified. Both models accepted automatic updates being disabled; browser confirmation
-of that setting is outstanding. These are dated observations, not a live health monitor.
+The PDF export contains capacity errors on pages 6–11. Browser verification, a successful
+scheduled publication, source mappings and empty manual registers remain unresolved.
+See the [validation record](foundation/charley-dev/_docs/validation-and-development-plan.md)
+for tested scope, deployment evidence and remaining acceptance criteria. A green CI run or
+a completed export is not production certification.
 
 ## Start here
 

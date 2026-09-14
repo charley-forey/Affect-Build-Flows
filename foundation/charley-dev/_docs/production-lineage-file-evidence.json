@@ -1,0 +1,675 @@
+{
+  "started_at": "2026-09-14T15:46:52.588341+00:00",
+  "method": "local Delta file reads; pinned individual table versions; no server query compute",
+  "source_projects": [
+    {
+      "view": "sv_projects",
+      "table": "cd_silver_projects",
+      "rows": 20,
+      "distinct_project_ids": 20,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_prime_contracts",
+      "table": "cd_silver_prime_contracts",
+      "rows": 21,
+      "distinct_project_ids": 15,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_prime_change_orders",
+      "table": "cd_silver_prime_change_orders",
+      "rows": 335,
+      "distinct_project_ids": 14,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_budgets",
+      "table": "cd_silver_budgets",
+      "rows": 435,
+      "distinct_project_ids": 15,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_submittals",
+      "table": "cd_silver_submittals",
+      "rows": 2474,
+      "distinct_project_ids": 16,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_rfis",
+      "table": "cd_silver_rfis",
+      "rows": 657,
+      "distinct_project_ids": 15,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_outbuild_activities",
+      "table": "cd_silver_outbuild_activities",
+      "rows": 2335,
+      "distinct_project_ids": 6,
+      "null_project_rows": 718,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_outbuild_projects",
+      "table": "cd_silver_outbuild_activities",
+      "rows": 18,
+      "distinct_project_ids": 6,
+      "null_project_rows": 12,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_observations",
+      "table": "cd_silver_observations",
+      "rows": 966,
+      "distinct_project_ids": 10,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_punch_items",
+      "table": "cd_silver_punch_items",
+      "rows": 1617,
+      "distinct_project_ids": 9,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_incidents",
+      "table": "cd_silver_incidents",
+      "rows": 3,
+      "distinct_project_ids": 1,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_manpower_daily",
+      "table": "cd_silver_manpower_daily",
+      "rows": 1023,
+      "distinct_project_ids": 13,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_billing",
+      "table": "cd_silver_billing",
+      "rows": 892,
+      "distinct_project_ids": 14,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_direct_costs",
+      "table": "cd_silver_direct_costs",
+      "rows": 437,
+      "distinct_project_ids": 12,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_project_vendors",
+      "table": "cd_silver_project_vendors",
+      "rows": 430,
+      "distinct_project_ids": 20,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_direct_cost_lines",
+      "table": "cd_silver_direct_cost_lines",
+      "rows": 528,
+      "distinct_project_ids": 12,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_commitments",
+      "table": "cd_silver_commitments",
+      "rows": 316,
+      "distinct_project_ids": 19,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_commitment_lines",
+      "table": "cd_silver_commitment_lines",
+      "rows": 457,
+      "distinct_project_ids": 15,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_wins",
+      "table": "cd_silver_man_wins",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_risks",
+      "table": "cd_silver_man_risks",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_priority_items",
+      "table": "cd_silver_man_priority_items",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_flags",
+      "table": "cd_silver_man_flags",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_survey",
+      "table": "cd_silver_man_survey",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_safety_monthly",
+      "table": "cd_silver_man_safety_monthly",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_quality_monthly",
+      "table": "cd_silver_man_quality_monthly",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_milestones",
+      "table": "cd_silver_man_milestones",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_daily_log_compliance",
+      "table": "cd_silver_man_daily_log_compliance",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_qc_ncr",
+      "table": "cd_silver_qc_ncr",
+      "rows": 966,
+      "distinct_project_ids": 10,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_qc_punch",
+      "table": "cd_silver_qc_punch",
+      "rows": 1617,
+      "distinct_project_ids": 9,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_qc_submittal",
+      "table": "cd_silver_qc_submittal",
+      "rows": 2474,
+      "distinct_project_ids": 16,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_qc_inspection",
+      "table": "cd_silver_qc_inspection",
+      "rows": 26,
+      "distinct_project_ids": 5,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_qc_inspection_item",
+      "table": "cd_silver_qc_inspection_item",
+      "rows": 705,
+      "distinct_project_ids": 5,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_dfow",
+      "table": "cd_silver_man_qc_dfow",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_itp",
+      "table": "cd_silver_man_qc_itp",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_gate",
+      "table": "cd_silver_man_qc_gate",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_special_inspection",
+      "table": "cd_silver_man_qc_special_inspection",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_commissioning",
+      "table": "cd_silver_man_qc_commissioning",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_inspector_sign_in",
+      "table": "cd_silver_man_qc_inspector_sign_in",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_checklist_result",
+      "table": "cd_silver_man_qc_checklist_result",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    },
+    {
+      "view": "sv_man_qc_doh_result",
+      "table": "cd_silver_man_qc_doh_result",
+      "rows": 0,
+      "distinct_project_ids": 0,
+      "null_project_rows": 0,
+      "missing_dimension_project_ids": 0,
+      "rows_without_dimension_member": 0
+    }
+  ],
+  "checks": [
+    {
+      "source": "cd_silver_qc_inspection",
+      "target": "fct_procoreinspection",
+      "source_keys": {
+        "rows": 26,
+        "distinct_keys": 26,
+        "null_key_rows": 0,
+        "duplicate_excess_rows": 0
+      },
+      "target_keys": {
+        "rows": 26,
+        "distinct_keys": 26,
+        "null_key_rows": 0,
+        "duplicate_excess_rows": 0
+      },
+      "missing_rows": 0,
+      "extra_rows": 0,
+      "passed": true
+    },
+    {
+      "source": "cd_silver_qc_inspection_item",
+      "target": "fct_procoreinspectionitem",
+      "source_keys": {
+        "rows": 705,
+        "distinct_keys": 705,
+        "null_key_rows": 0,
+        "duplicate_excess_rows": 0
+      },
+      "target_keys": {
+        "rows": 705,
+        "distinct_keys": 705,
+        "null_key_rows": 0,
+        "duplicate_excess_rows": 0
+      },
+      "missing_rows": 0,
+      "extra_rows": 0,
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "project_dimension": {
+    "rows": 21,
+    "distinct_keys": 21,
+    "null_key_rows": 0,
+    "duplicate_excess_rows": 0
+  },
+  "versions": [
+    {
+      "lakehouse": "812ec953-5517-447e-95aa-062f7cf89b28",
+      "table": "dim_project",
+      "read_version": 66,
+      "end_version": 66
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_projects",
+      "read_version": 52,
+      "end_version": 52
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_prime_contracts",
+      "read_version": 52,
+      "end_version": 52
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_prime_change_orders",
+      "read_version": 52,
+      "end_version": 52
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_budgets",
+      "read_version": 52,
+      "end_version": 52
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_submittals",
+      "read_version": 52,
+      "end_version": 52
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_rfis",
+      "read_version": 52,
+      "end_version": 52
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_outbuild_activities",
+      "read_version": 12,
+      "end_version": 12
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_observations",
+      "read_version": 44,
+      "end_version": 44
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_punch_items",
+      "read_version": 44,
+      "end_version": 44
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_incidents",
+      "read_version": 44,
+      "end_version": 44
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_manpower_daily",
+      "read_version": 44,
+      "end_version": 44
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_billing",
+      "read_version": 38,
+      "end_version": 38
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_direct_costs",
+      "read_version": 38,
+      "end_version": 38
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_project_vendors",
+      "read_version": 38,
+      "end_version": 38
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_direct_cost_lines",
+      "read_version": 36,
+      "end_version": 36
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_commitments",
+      "read_version": 35,
+      "end_version": 35
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_commitment_lines",
+      "read_version": 35,
+      "end_version": 35
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_wins",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_risks",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_priority_items",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_flags",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_survey",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_safety_monthly",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_quality_monthly",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_milestones",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_daily_log_compliance",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_qc_ncr",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_qc_punch",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_qc_submittal",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_qc_inspection",
+      "read_version": 16,
+      "end_version": 16
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_qc_inspection_item",
+      "read_version": 2,
+      "end_version": 2
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_dfow",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_itp",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_gate",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_special_inspection",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_commissioning",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_inspector_sign_in",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_checklist_result",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "8735633a-3f98-4d96-8666-abf57a1c0454",
+      "table": "cd_silver_man_qc_doh_result",
+      "read_version": 15,
+      "end_version": 15
+    },
+    {
+      "lakehouse": "812ec953-5517-447e-95aa-062f7cf89b28",
+      "table": "fct_procoreinspection",
+      "read_version": 1,
+      "end_version": 1
+    },
+    {
+      "lakehouse": "812ec953-5517-447e-95aa-062f7cf89b28",
+      "table": "fct_procoreinspectionitem",
+      "read_version": 1,
+      "end_version": 1
+    }
+  ],
+  "stable_versions": true,
+  "completed_at": "2026-09-14T15:48:01.948703+00:00",
+  "limitations": [
+    "No upstream API population verification; source deletion scope unverified.",
+    "Stable individual versions are not an atomic cross-table source snapshot.",
+    "Project identity coverage does not establish business mapping correctness."
+  ],
+  "status": "PASS"
+}
