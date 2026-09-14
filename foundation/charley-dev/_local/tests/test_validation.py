@@ -18,6 +18,7 @@ import deploy_manual
 import deploy_seeds
 import deploy_silver
 import deploy_pipeline
+import deploy_publish
 import deploy_ingestion
 import make_notebooks
 import duckdb
@@ -86,6 +87,7 @@ def test_notebooks():
         "gold candidate": validate_gold_candidate.build("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
         "silver candidate": validate_gold_candidate.build_silver("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
         "full candidate": validate_gold_candidate.build_full("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
+        "publish models": deploy_publish.build_notebook(),
     }
     count = 0
     for name, nb in notebooks.items():
@@ -111,6 +113,13 @@ def test_notebooks():
     assert deploy_gold.CD_SILVER_ABFSS not in full_source
     assert "validation-only/Tables/dbo/cd_silver_budgets" in full_source
     assert 'dq.REJECTS_TABLE = "cd_validation_gold_rejects"' in full_source
+    publish = "\n".join("".join(c["source"]) for c in notebooks["publish models"]["cells"])
+    assert 'getToken("pbi")' in publish and "publish_run.json" in publish
+    assert [m for m, _ in deploy_publish.MODELS] == ["Affect Project Report", "Project Quality Plan"]
+    # Direct Lake on OneLake has no DirectQuery fallback. On SQL endpoints it does, and a
+    # fallback query reads post-frame gold - bypassing the publish barrier.
+    expressions = deploy_model.expressions_tmdl("x")
+    assert "AzureStorage.DataLake" in expressions and "Sql.Database" not in expressions
 
 
 def test_candidate_preserves_evaluation_on_write_failure():
@@ -837,6 +846,11 @@ def test_pipeline():
     assert {"Extract Procore", "Extract Outbuild", "Ingest Sage", "Land To Bronze", "Land Manual Input"} <= silver_deps
     assert by_name["Data Quality Gate"]["dependsOn"] == [
         {"activity": "Build Gold", "dependencyConditions": ["Succeeded"]}]
+    # The only frame after autosync is off: strictly behind a passed gate, and not retried.
+    assert by_name["Publish Models"]["dependsOn"] == [
+        {"activity": "Data Quality Gate", "dependencyConditions": ["Succeeded"]}]
+    assert by_name["Publish Models"]["typeProperties"]["notebookId"] == "cd_50_publish_models"
+    assert by_name["Publish Models"]["policy"]["retry"] == 0
 
 
 def test_lineage_bindings():
