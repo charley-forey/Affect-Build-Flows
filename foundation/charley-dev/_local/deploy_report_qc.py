@@ -345,6 +345,7 @@ dr.PAGES = [
     ("Trade Checklists & DFOW", page_checklists, False),
     ("Data Quality", page_data_quality, False),
     ("Trade Mapping Decisions", page_trade_mapping, False),
+    ("KPI Definitions", dr.page_definitions, True),   # hidden; header button target
 ]
 
 

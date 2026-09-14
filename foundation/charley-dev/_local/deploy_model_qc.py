@@ -58,6 +58,8 @@ dm.MODEL_TABLES = [
     "meta_PipelineRun",
     # The RLS source, shared with Model A. Hidden; not a quality register (see below).
     dm.ACCESS_TABLE,
+    # KPI definitions and per-source freshness, for the KPI Definitions page.
+    "seed_KpiCatalog", "meta_SourceFreshness",
 ]
 
 # Quality registers only: the access register is security plumbing, not Q-Team input.

@@ -339,7 +339,7 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    # so they are readable here - but they are not in `tables`, because the
                    # seed runner already asserts their row counts.
                    "qc_seed_Trade", "qc_seed_TradeAlias", "qc_seed_TradeSynonymProposal", "qc_seed_ChecklistItem",
-                   "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
+                   "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus", "seed_KpiCatalog"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 
 # GATE-WRITTEN TABLES. The DQ gate writes these after this notebook - so on a brand-new
@@ -349,7 +349,8 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
 # gate also publishes their schema itself right after writing them (dq.publish_schema).
 #   meta_PipelineRun   the heartbeat
 #   fct_DailySnapshot  point-in-time KPIs, appended only after a passing gate
-for t in ["meta_PipelineRun", "fct_DailySnapshot"]:
+#   meta_SourceFreshness  last successful extraction per source system
+for t in ["meta_PipelineRun", "fct_DailySnapshot", "meta_SourceFreshness"]:
     try:
         schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
     except Exception:

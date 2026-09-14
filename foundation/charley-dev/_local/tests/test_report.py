@@ -260,6 +260,10 @@ def test_report_refs() -> None:
     # New model tables can be reviewed before a live build publishes their Spark schema.
     # Validate their bindings against executed local SQL; live TMDL generation still
     # requires the actual Fabric schema and is checked separately.
+    # Written by the DQ gate from a schema string, not by SQL: take its columns from that string.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "00-platform" / "lib"))
+    import dq
+    known.setdefault(dq.SOURCE_FRESHNESS_TABLE, {c.split()[0] for c in dq.SOURCE_FRESHNESS_SCHEMA.split(",")})
     missing_tables = set(dm.MODEL_TABLES) - set(known) - {"meta_PipelineRun"}
     if missing_tables:
         from seedrunner import build
@@ -491,7 +495,8 @@ def test_rls_roles():
     assert not [r for r in dm.RELATIONSHIPS if dm.ACCESS_TABLE in (r[0], r[2])], "access register must stay unrelated"
     # Written by the DQ gate and the heartbeat, not by the local gold build.
     stand_ins = {"fct_DailySnapshot": [("ProjectKey", "string"), ("SnapshotDate", "dateTime")],
-                 "meta_PipelineRun": [("RunId", "string"), ("RunAt", "dateTime")]}
+                 "meta_PipelineRun": [("RunId", "string"), ("RunAt", "dateTime")],
+                 "meta_SourceFreshness": [("Source", "string"), ("LastSuccessAt", "dateTime")]}
     con = build()
     try:
         schema = {t: stand_ins.get(t) or [(r[0], "string") for r in con.execute(f'DESCRIBE "{t}"').fetchall()]

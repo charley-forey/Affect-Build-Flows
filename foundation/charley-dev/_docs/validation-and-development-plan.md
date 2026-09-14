@@ -85,6 +85,20 @@ release2 head is required before promotion. Offline: 19/19 suites.
 2026-09-11, for $539,632.28. The 37 baseline invoices are unchanged to the cent
 (`unmatched-ar-reconciliation`).
 
+## KPI explanations (`wt/explain`, offline only, not deployed)
+
+`_local/kpi_catalog.py` defines every measure bound on either report (92 Monthly, 39 PQP):
+definition, formula, period semantics, sources, exclusions, `dq_DataGap` category, caveats.
+It generates the TMDL measure descriptions, gold `seed_KpiCatalog` (`02_seed_kpicatalog.sql`)
+and a hidden **KPI Definitions** page in both reports, reached by a header button on every
+page. The DQ gate now writes `meta_SourceFreshness`: the last successful Procore and Outbuild
+extraction, read from `Files/_diag/ingestion/*.json`, and the last Sage bronze write, read
+from the Delta history. `test_kpi_catalog.py` fails if a bound measure has no entry.
+
+Deploy order: seeds, gold (schema publication), DQ gate (first `meta_SourceFreshness`), both
+models, both reports. Unverified until then: the actionButton/visualLink JSON rendering,
+bronze read access from the gate, and Sage history as a proxy for dataflow refresh.
+
 ## Open business decisions for Affect
 
 | # | Decision | Facts | Owner (role) |
