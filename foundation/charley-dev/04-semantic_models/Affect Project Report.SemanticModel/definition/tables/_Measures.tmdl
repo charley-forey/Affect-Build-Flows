@@ -233,8 +233,8 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
 
-	/// Replaces no workbook equivalent - approved subcontractor pay apps only
-	measure 'Retainage Held Sub' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = "Subcontractor", fct_Billing[StatusLabel] IN { "APPROVED", "APPROVED_AS_NOTED" } )
+	/// Replaces no workbook equivalent - latest approved subcontractor pay app per commitment
+	measure 'Retainage Held Sub' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestApprovedPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = "Subcontractor" )
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
 

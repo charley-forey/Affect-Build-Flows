@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T05:01:53.770947+00:00",
+  "generated_at": "2026-09-14T05:06:10.884437+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -599,9 +599,9 @@
         },
         {
           "name": "Retainage Held Sub",
-          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Subcontractor\", fct_Billing[StatusLabel] IN { \"APPROVED\", \"APPROVED_AS_NOTED\" } )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestApprovedPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Subcontractor\" )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - approved subcontractor pay apps only"
+          "origin": "no workbook equivalent - latest approved subcontractor pay app per commitment"
         },
         {
           "name": "Net Retainage Position",

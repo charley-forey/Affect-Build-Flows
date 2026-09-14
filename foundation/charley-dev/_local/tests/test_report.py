@@ -408,6 +408,20 @@ def test_report_formats():
     exprs = {m[0]: m[1] for m in dm.MEASURES}
     assert "Spent To Date" not in exprs["AP Job Cost"] and "fct_ApInvoice" not in exprs["Spent To Date"]
 
+    # Held sub retainage, recomputed without the gold flag: each commitment's latest approved
+    # pay app, carried past a later unapproved one; owner rows and unapproved-only contracts
+    # contribute nothing.
+    def bill(key, contract, n, status, retainage, kind="Subcontractor"):
+        return {"ProjectKey": "a", "MonthStart": jan, "BillingKey": key, "BillingType": kind,
+                "ContractId": contract, "PeriodNumber": n, "PeriodEnd": f"2025-0{n + 4}-28T00:00:00",
+                "StatusLabel": status, "RetainageHeld": retainage}
+    billing = dict(dim_Project=[{"ProjectKey": "a"}], dim_Date=[{"Date": jan, "MonthStart": jan}],
+                   fct_Billing=[bill("S1", "SC7", 1, "APPROVED", 4000.0), bill("S2", "SC7", 2, "APPROVED_AS_NOTED", 6000.0),
+                                bill("S3", "SC7", 3, "UNDER_REVIEW", 9000.0), bill("S5", "SC8", 1, "PENDING_OWNER_APPROVAL", 700.0),
+                                bill("O1", "SC7", 3, "APPROVED", 50.0, kind="Owner")])
+    assert E["Retainage Held Sub"](vm.Recompute(billing, dm.RELATIONSHIPS), vm.PORTFOLIO) == 6000.0
+    assert "IsLatestApprovedPeriod" in exprs["Retainage Held Sub"]
+
 
 def test_qc_disclosures():
     import deploy_report_qc as qc

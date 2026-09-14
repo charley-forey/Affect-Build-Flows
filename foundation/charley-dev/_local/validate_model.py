@@ -44,8 +44,8 @@ BALANCE_QUERY = '''EVALUATE ROW(
         fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = "Owner"), fct_Billing[RetainageHeld]),
     "Sub", [Retainage Held Sub],
     "ExpectedSub", SUMX(FILTER(fct_Billing,
-        fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = "Subcontractor"
-        && fct_Billing[StatusLabel] IN {"APPROVED", "APPROVED_AS_NOTED"}), fct_Billing[RetainageHeld]),
+        fct_Billing[IsLatestApprovedPeriod] = TRUE() && fct_Billing[BillingType] = "Subcontractor"),
+        fct_Billing[RetainageHeld]),
     "Net", [Net Retainage Position],
     "ExpectedNet", [Retainage Held Owner] - [Retainage Held Sub],
     "Contract", [Current Contract],
@@ -145,7 +145,8 @@ RAW_COLUMNS = {
     "fct_QualityItem": ["ItemType", "IsOpen", "IsPastDue", "DaysPastDue", "DaysOpen"],
     "fct_SafetyMonthly": ["RecordableIncidents", "HoursWorked"],
     "fct_Billing": ["RetainageHeld", "IsLatestPeriod", "BillingType", "CompletedToDate", "ContractSumToDate",
-                    "BalanceToFinish", "CurrentPaymentDue", "StatusLabel"],
+                    "BalanceToFinish", "CurrentPaymentDue", "StatusLabel", "IsLatestApprovedPeriod",
+                    "ContractId", "PeriodEnd", "PeriodNumber", "BillingKey"],
     "fct_DirectCost": ["GrandTotal", "CostType", "IsApproved"],
     "fct_ApInvoice": ["LineTotal", "IsJobCost", "IsErpOnlyVendor", "ProjectKey"],
     "bridge_ProjectVendor": ["VendorKey", "IsMissingFromErp"],
@@ -323,6 +324,19 @@ def monthly_expected():
     true = lambda column: lambda r: r[column] is True
     false = lambda column: lambda r: not r[column]
     latest_owner = lambda r: r["IsLatestPeriod"] is True and _eq(r["BillingType"], "Owner")
+
+    def sub_retainage(c, s):
+        """Independent of the gold flag: per commitment, the approved pay app with the latest
+        (PeriodEnd, PeriodNumber, BillingKey) - the last approved balance carried forward."""
+        best = {}
+        for r in R(c, "fct_Billing", s._replace(month=None),
+                   lambda r: _eq(r["BillingType"], "Subcontractor")
+                   and (_eq(r["StatusLabel"], "APPROVED") or _eq(r["StatusLabel"], "APPROVED_AS_NOTED"))):
+            key = (r["PeriodEnd"] is not None, _ts(r["PeriodEnd"]) if r["PeriodEnd"] else 0,
+                   r["PeriodNumber"] or 0, r["BillingKey"])
+            if r["ContractId"] not in best or key > best[r["ContractId"]][0]:
+                best[r["ContractId"]] = (key, r)
+        return _sum([r for _, r in best.values()], "RetainageHeld")
     E = _shared_expected()
 
     def billed_cumulative(c, s):
@@ -506,10 +520,7 @@ def monthly_expected():
         "Latest Certificate Expiration": lambda c, s: _max(c.rows("fct_VendorInsurance", s), "ExpirationDate", key=_ts),
         "Retainage Held Owner": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), lambda r: r["IsLatestPeriod"] is True
                                                      and _eq(r["BillingType"], "Owner")), "RetainageHeld"),
-        "Retainage Held Sub": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), lambda r: r["IsLatestPeriod"] is True
-                                                   and _eq(r["BillingType"], "Subcontractor")
-                                                   and (_eq(r["StatusLabel"], "APPROVED")
-                                                        or _eq(r["StatusLabel"], "APPROVED_AS_NOTED"))), "RetainageHeld"),
+        "Retainage Held Sub": sub_retainage,
         "Net Retainage Position": lambda c, s: _add(E["Retainage Held Owner"](c, s), E["Retainage Held Sub"](c, s), -1),
         "Owner Billed To Date": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "CompletedToDate"),
         "Owner Contract Sum": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "ContractSumToDate"),

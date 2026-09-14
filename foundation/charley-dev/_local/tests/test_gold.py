@@ -542,6 +542,32 @@ def test_fct_billing(con) -> None:
     assert one(con, "SELECT CompletedToDate FROM fct_Billing WHERE BillingKey='B3'") == 600000.0
     check("the sum-safe column reconciles against the cumulative one")
 
+    # Held sub retainage is the balance on each commitment's latest APPROVED pay app. SC7's
+    # newest pay app is UNDER_REVIEW (and a DRAFT after it): the approved-as-noted balance
+    # (6,000) carries forward rather than the contract reading 0 or the unapproved 9,000.
+    # SC8 has never been approved, so it holds nothing.
+    cols = ("billing_type, project_id, billing_id, invoice_number, period_number, status_label, "
+            "vendor_id, counterparty_name, contract_id, contract_name, contract_type, billing_date, "
+            "period_start, period_end, payment_date, percent_complete, original_contract_sum, "
+            "net_change_by_change_orders, contract_sum_to_date, completed_to_date, previous_certificates, "
+            "retainage_amount, retainage_percent, stored_retainage_amount, total_retainage, "
+            "earned_less_retainage, current_payment_due, balance_to_finish")
+    def pay_app(bid, n, status, contract, end, retainage):
+        return (f"('Subcontractor','P1','{bid}','{n}',{n},'{status}','V1','Demar','{contract}','SC',"
+                f"'WorkOrderContract',DATE '{end}',DATE '{end}',DATE '{end}',NULL,10.0,100.0,0.0,100.0,"
+                f"10.0,0.0,{retainage},5.0,0.0,{retainage},0.0,0.0,90.0)")
+    rows = rebuild_with(con, "CREATE OR REPLACE VIEW sv_billing AS SELECT * FROM (VALUES " + ",".join([
+            pay_app("S1", 1, "APPROVED", "SC7", "2025-05-31", 4000.0),
+            pay_app("S2", 2, "APPROVED_AS_NOTED", "SC7", "2025-06-30", 6000.0),
+            pay_app("S3", 3, "UNDER_REVIEW", "SC7", "2025-07-31", 9000.0),
+            pay_app("S4", 4, "DRAFT", "SC7", "2025-08-31", 9500.0),
+            pay_app("S5", 1, "PENDING_OWNER_APPROVAL", "SC8", "2025-07-31", 700.0),
+        ]) + f") AS t({cols})", "27_fct_billing.sql",
+        "SELECT BillingKey, IsLatestPeriod, IsLatestApprovedPeriod FROM fct_Billing ORDER BY BillingKey")
+    assert rows == [("S1", False, False), ("S2", False, True), ("S3", True, False),
+                    ("S4", False, False), ("S5", True, False)], rows
+    check("sub retainage carries the latest approved pay app forward past an unapproved one")
+
 
 def test_fct_directcost(con) -> None:
     """Direct costs - the only self-performed labour anywhere in the platform."""

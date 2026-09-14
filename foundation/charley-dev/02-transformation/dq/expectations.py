@@ -1066,6 +1066,10 @@ def _add_ap_rules(suite: Suite) -> None:
 _BILLING_LATEST = ("(ROW_NUMBER() OVER (PARTITION BY billing_type, contract_id "
                    "ORDER BY (status_label = 'DRAFT') ASC, period_end DESC NULLS LAST, "
                    "period_number DESC, billing_id DESC) = 1 AND status_label <> 'DRAFT')")
+_APPROVED = "COALESCE(status_label IN ('APPROVED', 'APPROVED_AS_NOTED'), FALSE)"
+_BILLING_LATEST_APPROVED = (f"(ROW_NUMBER() OVER (PARTITION BY billing_type, contract_id "
+                            f"ORDER BY {_APPROVED} DESC, period_end DESC NULLS LAST, "
+                            f"period_number DESC, billing_id DESC) = 1 AND {_APPROVED})")
 
 CONSERVATION = (
     ("fct_ChangeOrder", "sv_prime_change_orders",           # 21_fct_changeorder.sql
@@ -1080,19 +1084,21 @@ CONSERVATION = (
      "ProjectKey, BudgetLineID, OriginalBudget, BudgetModifications, BudgetAmount, "
      "ForecastAmount, CommittedAmount, DirectCosts, SpentToDate, CostToComplete, BudgetVariance",
      "project_id IS NOT NULL"),
-    # IsLatestPeriod/IsRetainageReleased are derived: the rule repeats 27_fct_billing.sql's
-    # ranking (including its billing_id tie-break, so both evaluations agree).
+    # IsLatestPeriod/IsRetainageReleased/IsLatestApprovedPeriod are derived: the rule repeats
+    # 27_fct_billing.sql's rankings (including its billing_id tie-break, so both evaluations agree).
     ("fct_Billing", "sv_billing",                           # 27_fct_billing.sql:66
      "project_id, billing_type, billing_id, status_label, percent_complete, current_payment_due, "
      "original_contract_sum, net_change_by_change_orders, contract_sum_to_date, completed_to_date, "
      "previous_certificates, retainage_amount, total_retainage, stored_retainage_amount, "
      "earned_less_retainage, balance_to_finish, retainage_percent, "
      f"{_BILLING_LATEST}, "
-     f"({_BILLING_LATEST} AND COALESCE(retainage_amount, 0) = 0 AND COALESCE(percent_complete, 0) >= 100)",
+     f"({_BILLING_LATEST} AND COALESCE(retainage_amount, 0) = 0 AND COALESCE(percent_complete, 0) >= 100), "
+     f"{_BILLING_LATEST_APPROVED}",
      "ProjectKey, BillingType, BillingKey, StatusLabel, PercentComplete, CurrentPaymentDue, "
      "OriginalContractSum, NetChangeByChangeOrders, ContractSumToDate, CompletedToDate, "
      "PreviousCertificatesToDate, RetainageHeld, TotalRetainageHeld, StoredRetainageHeld, "
-     "EarnedLessRetainageToDate, BalanceToFinish, RetainagePercent, IsLatestPeriod, IsRetainageReleased",
+     "EarnedLessRetainageToDate, BalanceToFinish, RetainagePercent, IsLatestPeriod, IsRetainageReleased, "
+     "IsLatestApprovedPeriod",
      "project_id IS NOT NULL"),
     ("fct_DirectCost", "sv_direct_costs",                   # 28_fct_directcost.sql
      "project_id, direct_cost_id, amount, grand_total, status_label, "

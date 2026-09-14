@@ -61,7 +61,16 @@ WITH ranked AS (
             -- sorts before TRUE, so every issued period outranks every draft.
             ORDER BY (b.status_label = 'DRAFT') ASC,
                      b.period_end DESC NULLS LAST, b.period_number DESC, b.billing_id DESC
-        ) AS _rank
+        ) AS _rank,
+        -- The latest APPROVED pay app per contract, ranked the same way. Held retainage is
+        -- the balance on the last approved certificate: an UNDER_REVIEW or
+        -- PENDING_OWNER_APPROVAL pay app after it has not yet changed what is held, so the
+        -- approved balance carries forward instead of dropping the contract to zero.
+        ROW_NUMBER() OVER (
+            PARTITION BY b.billing_type, b.contract_id
+            ORDER BY COALESCE(b.status_label IN ('APPROVED', 'APPROVED_AS_NOTED'), FALSE) DESC,
+                     b.period_end DESC NULLS LAST, b.period_number DESC, b.billing_id DESC
+        ) AS _approved_rank
     FROM sv_billing b
     WHERE b.project_id IS NOT NULL
 )
@@ -123,5 +132,10 @@ SELECT
     -- what makes the retainage measures net correctly across a release.
     (_rank = 1 AND status_label <> 'DRAFT'
               AND COALESCE(retainage_amount, 0) = 0
-              AND COALESCE(percent_complete, 0) >= 100) AS IsRetainageReleased
+              AND COALESCE(percent_complete, 0) >= 100) AS IsRetainageReleased,
+    -- One row per contract with an approved pay app; none for a contract never approved.
+    -- [Retainage Held Sub] sums RetainageHeld over it. Same running-balance rule as
+    -- IsLatestPeriod: filter to it, never sum RetainageHeld across periods.
+    (_approved_rank = 1
+              AND COALESCE(status_label IN ('APPROVED', 'APPROVED_AS_NOTED'), FALSE)) AS IsLatestApprovedPeriod
 FROM ranked;

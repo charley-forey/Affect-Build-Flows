@@ -433,13 +433,13 @@ MEASURES = [
      'fct_Billing[BillingType] = "Owner" )',
      '"$#,0"', "no workbook equivalent - Sage holds no header retainage"),
     ("Retainage Held Sub",
-     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
-     'fct_Billing[BillingType] = "Subcontractor", '
-     'fct_Billing[StatusLabel] IN { "APPROVED", "APPROVED_AS_NOTED" } )',
+     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestApprovedPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
+     'fct_Billing[BillingType] = "Subcontractor" )',
      # Approved only: an UNDER_REVIEW or PENDING_OWNER_APPROVAL pay app is not yet money
-     # Affect holds, and those set $351K of a $408K balance. A contract whose latest pay app
-     # is unapproved contributes nothing here rather than its earlier approved balance.
-     '"$#,0"', "no workbook equivalent - approved subcontractor pay apps only"),
+     # Affect holds. Each commitment contributes the balance on its latest APPROVED /
+     # APPROVED_AS_NOTED pay app (IsLatestApprovedPeriod), so a later unapproved pay app
+     # carries the last approved balance forward instead of zeroing the contract.
+     '"$#,0"', "no workbook equivalent - latest approved subcontractor pay app per commitment"),
     # Owner retainage is money owed TO Affect, sub retainage is money Affect holds FROM
     # others. Netting them is the cash question a GC actually asks at month end.
     ("Net Retainage Position", "[Retainage Held Owner] - [Retainage Held Sub]", '"$#,0"',

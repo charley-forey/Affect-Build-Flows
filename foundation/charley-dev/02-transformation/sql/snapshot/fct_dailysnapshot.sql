@@ -102,9 +102,13 @@ pending AS (
     GROUP BY f.ProjectKey
 ),
 approved AS (
-    -- [Approved Change Orders]: NOT IsPending, where DAX reads a blank flag as FALSE.
+    -- [Approved Change Orders]: NOT IsPending, where DAX reads a blank flag as FALSE, and
+    -- not void (a void CO is not pending either, and never reaches the contract). DAX's
+    -- StatusLabel <> "void" is case-insensitive and keeps a blank label.
     SELECT ProjectKey,
-           CAST(SUM(CASE WHEN NOT COALESCE(IsPending, FALSE) THEN Amount END) AS DOUBLE) AS ApprovedChangeOrders
+           CAST(SUM(CASE WHEN NOT COALESCE(IsPending, FALSE)
+                          AND (StatusLabel IS NULL OR LOWER(StatusLabel) <> 'void')
+                         THEN Amount END) AS DOUBLE) AS ApprovedChangeOrders
     FROM fct_ChangeOrder GROUP BY ProjectKey
 )
 SELECT p.ProjectKey,

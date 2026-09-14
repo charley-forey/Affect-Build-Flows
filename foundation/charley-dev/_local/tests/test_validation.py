@@ -1382,6 +1382,17 @@ def test_daily_snapshot():
             for s in scopes:
                 assert validate_model.same_value(E[f"{name} (Month End)"](c, s), E[name](c, s)), (name, s)
 
+    # A void CO is neither pending nor approved: the capture must not count it either.
+    approved = "SELECT SUM(ApprovedChangeOrders) FROM v_DailySnapshotLive"
+    before = con.execute(approved).fetchone()[0]
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO fct_ChangeOrder SELECT * REPLACE ('COVOID' AS ChangeOrderKey, 'Void' AS StatusLabel, "
+                    "FALSE AS IsPending, 999.0 AS Amount) FROM fct_ChangeOrder LIMIT 1")
+        assert con.execute(approved).fetchone()[0] == before, "void change order captured as approved"
+    finally:
+        con.execute("ROLLBACK")
+
     # DQ rule mutations on the latest capture.
     rules = {e.name: e for e in expectations.snapshot_suite("2026-02-10").expectations}
     def failing(name, *mutations):
