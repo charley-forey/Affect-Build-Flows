@@ -971,9 +971,72 @@ def build_suite() -> Suite:
         description="a retrieved subset must not masquerade as the complete source inspection; unknown header counts remain unverified",
     ))
 
+    _add_ap_rules(suite)
     _add_conservation_rules(suite)
     _add_key_and_vocabulary_rules(suite)
     return suite
+
+
+# The three cost-reconciliation categories 45_dq_datagap.sql writes. WARN only: AP history
+# starts 2025-03-11 and Sage holds no retainage, so Procore and Sage never agree exactly.
+AP_GAP_CATEGORIES = (
+    "Cost reconciliation variance",
+    "ERP-only vendor cost",
+    "Project with no Procore budget or zero Spent To Date while AP/requisitions exist",
+)
+
+_AP_HEADER_SOURCE = ("SELECT invoice_uid, invoice_id, invoice_number, invoice_total, amount_paid, "
+                     "invoice_balance, invoice_date, status_code FROM sv_ap_invoices "
+                     "WHERE invoice_uid IN (SELECT invoice_uid FROM sv_ap_lines WHERE invoice_uid IS NOT NULL)")
+_AP_HEADER_GOLD = ("SELECT DISTINCT InvoiceKey, InvoiceID, InvoiceNumber, InvoiceTotal, AmountPaid, "
+                   "InvoiceBalance, InvoiceDate, StatusCode FROM fct_ApInvoice "
+                   "WHERE InvoiceKey IN (SELECT invoice_uid FROM sv_ap_invoices WHERE invoice_uid IS NOT NULL)")
+
+
+def _add_ap_rules(suite: Suite) -> None:
+    """fct_ApInvoice (34_fct_apinvoice.sql). Line conservation is in CONSERVATION."""
+    suite.add(
+        unique_key("fct_ApInvoice", ["ApLineKey"]),
+        not_null("fct_ApInvoice", "ApLineKey"),
+        referential("fct_ApInvoice", "ProjectKey", "dim_Project", "ProjectKey"),
+        referential("fct_ApInvoice", "VendorKey", "dim_Vendor", "VendorKey"),
+        Expectation(
+            name="fct_ApInvoice.MonthStart resolves to dim_Date",
+            table="fct_ApInvoice",
+            failing_sql=("SELECT f.* FROM fct_ApInvoice f LEFT JOIN dim_Date d ON f.MonthStart = d.Date "
+                         "WHERE f.MonthStart IS NOT NULL AND d.Date IS NULL"),
+            severity=SEVERITY_ERROR,
+            description="a MonthStart outside dim_Date makes every measure over it blank",
+        ),
+        # Header money is repeated on each line, so it is conserved per invoice: every header
+        # with lines reaches gold with identical values, and gold carries no other header.
+        Expectation(
+            name="fct_ApInvoice conserves sv_ap_invoices header rows and amounts exactly",
+            table="fct_ApInvoice",
+            failing_sql=(f"SELECT 'missing_from_gold' AS side, * FROM ({_AP_HEADER_SOURCE} EXCEPT ALL {_AP_HEADER_GOLD}) m "
+                         f"UNION ALL SELECT 'not_in_source' AS side, * FROM ({_AP_HEADER_GOLD} EXCEPT ALL {_AP_HEADER_SOURCE}) c"),
+            severity=SEVERITY_ERROR,
+            description="an AP invoice header dropped, duplicated or altered on its way to fct_ApInvoice (exact, no tolerance)",
+        ),
+        # Gold is line grain, so a header with no lines is absent by construction - a source
+        # fact (live: Sage line and header totals reconcile to the cent), counted not blocked.
+        Expectation(
+            name="sv_ap_invoices headers with no lines absent from fct_ApInvoice",
+            table="fct_ApInvoice",
+            failing_sql=("SELECT invoice_uid, invoice_id, invoice_total FROM sv_ap_invoices "
+                         "WHERE invoice_uid NOT IN (SELECT invoice_uid FROM sv_ap_lines WHERE invoice_uid IS NOT NULL)"),
+            severity=SEVERITY_WARN,
+            description="AP invoice money with no line cannot be classified as job cost",
+        ),
+    )
+    for category in AP_GAP_CATEGORIES:
+        suite.add(Expectation(
+            name=f"dq_DataGap: {category}",
+            table="dq_DataGap",
+            failing_sql=f"SELECT * FROM dq_DataGap WHERE GapCategory = '{category}'",
+            severity=SEVERITY_WARN,
+            description="Sage AP and Procore Spent To Date disagree - reviewed in dq_DataGap, never added to Spent To Date",
+        ))
 
 
 # Silver source view -> gold fact, per money-bearing fact. Each tuple is:
@@ -1027,6 +1090,13 @@ CONSERVATION = (
      "invoice_uid, invoice_total, amount_paid, invoice_balance, "
      "CASE WHEN invoice_balance IS NULL THEN NULL WHEN invoice_balance = 0 THEN TRUE ELSE FALSE END",
      "InvoiceKey, Amount, AmountPaid, Balance, IsPaid",
+     None),
+    # 34_fct_apinvoice.sql keeps every AP line (unmapped job -> NULL ProjectKey), so no filter.
+    # IsJobCost repeats the gold expression: GL 50000-50999 on a Sage job.
+    ("fct_ApInvoice", "sv_ap_lines",
+     "CAST(line_uid AS STRING), invoice_uid, sage_project_id, sage_vendor_id, ledger_account, line_total, "
+     "COALESCE(sage_project_id IS NOT NULL AND TRY_CAST(ledger_account AS INT) BETWEEN 50000 AND 50999, FALSE)",
+     "ApLineKey, InvoiceKey, SageJobId, SageVendorId, LedgerAccount, LineTotal, IsJobCost",
      None),
 )
 

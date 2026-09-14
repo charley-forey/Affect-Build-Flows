@@ -125,14 +125,16 @@ CREATE OR REPLACE TEMPORARY VIEW sv_ap_invoices AS
 SELECT
     invoice_id, invoice_number, sage_vendor_id, sage_project_id, job_name,
     invoice_date, due_date, description, invoice_total, amount_paid,
-    invoice_balance, billing_period
+    invoice_balance, billing_period,
+    -- invoice_uid (_idnum) is the header<->line key; status_code for fct_ApInvoice.
+    CAST(invoice_uid AS STRING) AS invoice_uid, status_code
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ap_invoices`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_ap_lines AS
 SELECT
     line_uid, invoice_id, sage_project_id, sage_vendor_id, line_number,
     description, quantity, unit_price, line_total, invoiced_amount,
-    ledger_account, sub_account
+    ledger_account, sub_account, CAST(invoice_uid AS STRING) AS invoice_uid
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ap_lines`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_ar_lines AS

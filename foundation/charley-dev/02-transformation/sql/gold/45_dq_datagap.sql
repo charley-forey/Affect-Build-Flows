@@ -150,6 +150,97 @@ SELECT 'AP invoice with no Sage job', 'Sage', 'sv_ap_invoices', a.invoice_id, CA
 FROM sv_ap_invoices a
 WHERE a.sage_project_id IS NULL
 
+-- ---- Cost reconciliation: Sage AP job cost vs Procore Spent To Date ----------------------
+-- Three arms over fct_ApInvoice (34_fct_apinvoice.sql). AMOUNT IS NULL ON ALL THREE: Data Gap
+-- Amount stays unmatched AR only, and AP is a comparison figure, not money missing from a
+-- total. The figures are in Reason. WARN-grade by nature - AP history starts 2025-03-11 and
+-- Sage carries no retainage, so exact agreement with Procore is not expected.
+-- The per-project figures are one derived table, repeated inline in the two project arms:
+--   ap     Sage AP job cost (IsJobCost) on the project, 0 when none
+--   spent  Procore budget Spent To Date (NULL when the project has no budget lines)
+--   req    Procore commitments total_requisitioned
+
+UNION ALL
+-- A mapped project whose AP job cost and Spent To Date differ by MORE than
+-- max($25,000, 10% of the larger side). Exactly at the threshold is not a gap. Projects with
+-- no budget or zero Spent To Date belong to the next arm instead.
+SELECT 'Cost reconciliation variance', 'Sage', 'fct_ApInvoice', r.ProjectKey, r.ProjectKey,
+       CONCAT('Sage AP job cost ', CAST(CAST(r.ap AS DECIMAL(18,2)) AS STRING),
+              ' vs Procore Spent To Date ', CAST(CAST(r.spent AS DECIMAL(18,2)) AS STRING),
+              ': variance ', CAST(CAST(r.ap - r.spent AS DECIMAL(18,2)) AS STRING),
+              ' exceeds max(25,000, 10% of the larger)'),
+       CAST(NULL AS DOUBLE),
+       concat_ws('; ', CONCAT('Sage job ', r.SageJobNumber),
+                 'AP history starts 2025-03-11; timing, retainage and ERP-only vendor bills explain most of it',
+                 'AP is not added to Spent To Date'),
+       CAST(NULL AS STRING)
+FROM (
+    SELECT p.ProjectKey, p.SageJobNumber,
+           COALESCE(ap.amount, 0) AS ap, b.spent, cm.req
+    FROM dim_Project p
+    LEFT JOIN (SELECT ProjectKey, CAST(SUM(LineTotal) AS DOUBLE) AS amount FROM fct_ApInvoice
+               WHERE IsJobCost AND ProjectKey IS NOT NULL GROUP BY ProjectKey) ap ON ap.ProjectKey = p.ProjectKey
+    LEFT JOIN (SELECT ProjectKey, CAST(SUM(SpentToDate) AS DOUBLE) AS spent FROM fct_BudgetLine
+               GROUP BY ProjectKey) b ON b.ProjectKey = p.ProjectKey
+    LEFT JOIN (SELECT project_id, CAST(SUM(total_requisitioned) AS DOUBLE) AS req FROM sv_commitments
+               GROUP BY project_id) cm ON cm.project_id = p.ProjectKey
+) r
+WHERE r.SageJobNumber IS NOT NULL
+  AND r.spent IS NOT NULL AND r.spent <> 0
+  AND ABS(r.ap - r.spent) > GREATEST(25000.0, 0.10 * GREATEST(r.ap, r.spent))
+
+UNION ALL
+-- The 25-012 / 25-013 / 25-020 / 26-023 pattern: Spent To Date is absent or zero while Sage AP
+-- job cost or Procore requisitions say money has been spent. The budget view is what every
+-- cost card reads, so these projects report no spend at all.
+SELECT 'Project with no Procore budget or zero Spent To Date while AP/requisitions exist', 'Procore',
+       'fct_BudgetLine', r.ProjectKey, r.ProjectKey,
+       CONCAT(CASE WHEN r.spent IS NULL THEN 'No Procore budget' ELSE 'Procore Spent To Date is 0' END,
+              ' while Sage AP job cost is ', CAST(CAST(r.ap AS DECIMAL(18,2)) AS STRING),
+              ' and Procore requisitioned is ', CAST(CAST(COALESCE(r.req, 0) AS DECIMAL(18,2)) AS STRING)),
+       CAST(NULL AS DOUBLE),
+       concat_ws('; ', CONCAT('Sage job ', COALESCE(r.SageJobNumber, '(unmapped)')),
+                 'update the Procore budget view so Spent To Date reflects invoiced cost'),
+       CAST(NULL AS STRING)
+FROM (
+    SELECT p.ProjectKey, p.SageJobNumber,
+           COALESCE(ap.amount, 0) AS ap, b.spent, cm.req
+    FROM dim_Project p
+    LEFT JOIN (SELECT ProjectKey, CAST(SUM(LineTotal) AS DOUBLE) AS amount FROM fct_ApInvoice
+               WHERE IsJobCost AND ProjectKey IS NOT NULL GROUP BY ProjectKey) ap ON ap.ProjectKey = p.ProjectKey
+    LEFT JOIN (SELECT ProjectKey, CAST(SUM(SpentToDate) AS DOUBLE) AS spent FROM fct_BudgetLine
+               GROUP BY ProjectKey) b ON b.ProjectKey = p.ProjectKey
+    LEFT JOIN (SELECT project_id, CAST(SUM(total_requisitioned) AS DOUBLE) AS req FROM sv_commitments
+               GROUP BY project_id) cm ON cm.project_id = p.ProjectKey
+) r
+WHERE (r.spent IS NULL OR r.spent = 0)
+  AND (r.ap <> 0 OR COALESCE(r.req, 0) <> 0)
+
+UNION ALL
+-- Job cost billed in Sage by a vendor with no Procore commitment or direct cost on that
+-- project - cost Spent To Date cannot contain. One row per project and Sage vendor, above
+-- $5,000 (exactly $5,000 is not listed).
+SELECT 'ERP-only vendor cost', 'Procore', 'fct_ApInvoice',
+       CONCAT(e.ProjectKey, ':', COALESCE(e.SageVendorId, '(no vendor)')), e.ProjectKey,
+       CONCAT('Sage vendor ', COALESCE(e.SageVendorId, '(no vendor)'), ' has AP job cost ',
+              CAST(CAST(e.amount AS DECIMAL(18,2)) AS STRING),
+              ' on this project and no Procore commitment or direct cost there'),
+       CAST(NULL AS DOUBLE),
+       concat_ws('; ', CONCAT('Sage job ', e.SageJobId),
+                 CONCAT('vendor ', COALESCE(v.sage_vendor_name, '(not in actpay)')),
+                 CONCAT('invoices ', CAST(e.n AS STRING)),
+                 'not in Procore Spent To Date'),
+       CAST(NULL AS STRING)
+FROM (
+    SELECT ProjectKey, SageJobId, SageVendorId, COUNT(DISTINCT InvoiceKey) AS n,
+           CAST(SUM(LineTotal) AS DOUBLE) AS amount
+    FROM fct_ApInvoice
+    WHERE IsErpOnlyVendor
+    GROUP BY ProjectKey, SageJobId, SageVendorId
+) e
+LEFT JOIN sv_sage_vendors v ON v.sage_vendor_id = e.SageVendorId
+WHERE e.amount > 5000
+
 UNION ALL
 SELECT 'Project missing from Outbuild', 'Outbuild', 'dim_ProjectCrosswalk', x.ProjectKey, x.ProjectKey,
        CASE WHEN x.HasAmbiguousOutbuildMatch

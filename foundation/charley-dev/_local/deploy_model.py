@@ -57,6 +57,8 @@ MODEL_TABLES = [
     "fct_BudgetLine", "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal",
     "fct_Milestone", "fct_FinancialPeriod", "fct_QualityItem", "fct_SafetyMonthly", "fct_Billing", "fct_DirectCost",
     "bridge_ProjectVendor", "bridge_VendorCostCode", "fct_VendorInsurance",
+    # Sage AP lines - the ERP side of the cost reconciliation, never added to Spent To Date.
+    "fct_ApInvoice",
     # The ~40% that lives nowhere but the spreadsheet. Empty today; bound now so the model
     # and the scorecard are complete in shape before a single row is entered.
     "man_Wins", "man_Risks", "man_PriorityItems", "man_Flags", "man_Survey",
@@ -99,6 +101,9 @@ RELATIONSHIPS = [
     ("fct_Billing", "MonthStart", "dim_Date", "Date"),
     ("fct_DirectCost", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_DirectCost", "MonthStart", "dim_Date", "Date"),
+    ("fct_ApInvoice", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_ApInvoice", "VendorKey", "dim_Vendor", "VendorKey"),
+    ("fct_ApInvoice", "MonthStart", "dim_Date", "Date"),
     ("bridge_ProjectVendor", "ProjectKey", "dim_Project", "ProjectKey"),
     ("bridge_VendorCostCode", "ProjectKey", "dim_Project", "ProjectKey"),
     ("bridge_VendorCostCode", "VendorKey", "dim_Vendor", "VendorKey"),
@@ -279,6 +284,31 @@ MEASURES = [
      'V >= -0.05, "Spend over budget up to 5%", "Spend over budget above 5%" )',
      None, "FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment"),
     ("Percent Bought Out", "DIVIDE ( [Committed], [Budget] )", '"0.0%"', "FINANCIALS!D62"),
+
+    # ---- Sage AP vs Procore cost (fct_ApInvoice) -----------------------------
+    #
+    # A CHECK ON Spent To Date, never an addition to it: most AP is the same vendor bill
+    # Procore already carries as a requisition, so summing the two counts it twice. Mapped
+    # projects only (a blank ProjectKey is an unmapped Sage job, listed in dq_DataGap), and
+    # as of the last load - REMOVEFILTERS(dim_Date) like the budget measures it is set against.
+    ("AP Job Cost",
+     "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (),\n"
+     "\t\t\tNOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "no workbook equivalent - Sage AP job cost (GL 50000-50999 on a job mapped to a Procore "
+     "project), to date. AP history starts 2025-03-11. NOT added to Spent To Date (no double counting)"),
+    ("AP vs Procore Spent Variance",
+     "VAR AP = [AP Job Cost]\nVAR Spent = [Spent To Date]\n"
+     "RETURN IF ( ISBLANK ( AP ) || ISBLANK ( Spent ), BLANK (), AP - Spent )",
+     '"$#,0"', "no workbook equivalent - [AP Job Cost] minus [Spent To Date], BLANK when either is blank. "
+     "AP history starts 2025-03-11, so older jobs read Procore-high for timing. AP is NOT added to Spent To Date"),
+    ("AP / Procore Spent Ratio", "DIVIDE ( [AP Job Cost], [Spent To Date] )", '"0.00"',
+     "no workbook equivalent - [AP Job Cost] over [Spent To Date]. AP history starts 2025-03-11; "
+     "AP is NOT added to Spent To Date"),
+    ("ERP-only Vendor Cost",
+     "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (),\n"
+     "\t\t\tNOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "no workbook equivalent - AP job cost at vendors with no Procore commitment or direct cost on "
+     "the project: cost Spent To Date cannot contain. AP history starts 2025-03-11; NOT added to Spent To Date"),
 
 
 

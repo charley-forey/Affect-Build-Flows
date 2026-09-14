@@ -900,10 +900,10 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
     return p, [
         textbox(p, "title", "Direct Costs & Vendors", 20, 16, 600, 44),
         textbox(p, "note",
-                "Direct costs are discrete transactions, so unlike the billing balances "
-                "these totals are correct at any grouping. The vendor list is Procore's "
-                "prequalification record, which is not the same as current insurance. Vendor "
-                "commitments and vendor counts are not month-filtered.",
+                "Direct costs sum at any grouping. The vendor list is Procore prequalification, "
+                "not current insurance. Vendor figures and the Sage AP table are not "
+                "month-filtered. Sage AP starts 2025-03-11 and lags or leads Procore, so it "
+                "checks Spent To Date and is never added to it.",
                 20, 56, 1240, 34, size=10, color=MUTED),
 
         # Six across. The vendor/cost-code bridge added a sixth headline number to a row
@@ -922,26 +922,26 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
         # twice. The gap between them is work in progress.
         card(p, "c_committed", "Vendor Committed", 1065, 104, 195, 92),
 
-        visual(p, "c_by_type", "columnChart", 20, 208, 400, 216,
+        visual(p, "c_by_type", "columnChart", 20, 208, 400, 140,
                {"Category": [column("fct_DirectCost", "CostCategory")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by category"),
 
-        visual(p, "c_trend", "columnChart", 436, 208, 400, 216,
+        visual(p, "c_trend", "columnChart", 436, 208, 400, 140,
                {"Category": [column("dim_Date", "MonthStart")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by month"),
 
         # Spend by vendor AND cost code - the linkage that exists in no single Procore
         # object, and that nothing in the current reporting can slice.
-        visual(p, "c_topcodes", "clusteredBarChart", 852, 208, 408, 216,
+        visual(p, "c_topcodes", "clusteredBarChart", 852, 208, 408, 140,
                {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
                 "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
                title="Committed and actual by cost code"),
 
         # pivotTable is the PBIR matrix type. No AmountType on columns: the two measures
         # already split it, and pivoting by it left half the cells structurally blank.
-        visual(p, "c_matrix", "pivotTable", 20, 436, 610, 220,
+        visual(p, "c_matrix", "pivotTable", 20, 360, 610, 150,
                {"Rows": [column("bridge_VendorCostCode", "VendorName")],
                 "Values": [measure("Vendor Committed"), measure("Vendor Spend")]},
                title="Vendor: committed vs actual",
@@ -951,7 +951,7 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
         # The D8 deliverable itself: the list somebody assembles by hand today.
         # Was 300 tall at y=542, which ran 122px off the bottom of the canvas - invisible
         # in a PDF export and clipped in the service, neither of which reports an error.
-        visual(p, "c_vendorlist", "tableEx", 646, 436, 614, 220,
+        visual(p, "c_vendorlist", "tableEx", 646, 360, 614, 150,
                {"Values": [column("bridge_ProjectVendor", "VendorName"),
                            column("bridge_ProjectVendor", "TradeName"),
                            column("bridge_ProjectVendor", "City"),
@@ -959,6 +959,19 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                            column("bridge_ProjectVendor", "IsPrequalified"),
                            column("bridge_ProjectVendor", "SyncedToErp")]},
                title="Vendor list - prequalification and ERP sync"),
+
+        # Sage AP against Procore, per project. Stops above the footer band (y 664).
+        visual(p, "c_ap_recon", "tableEx", 20, 522, 1240, 132,
+               {"Values": [column("dim_Project", "ProjectName"),
+                           measure("Spent To Date"), measure("AP Job Cost"),
+                           measure("AP vs Procore Spent Variance"), measure("AP / Procore Spent Ratio"),
+                           measure("ERP-only Vendor Cost")]},
+               title="Procore Spent To Date vs Sage AP job cost (AP from 2025-03-11; not added to Spent)",
+               alt="Table. One row per project: Procore Spent To Date, Sage AP job cost, the variance "
+                   "and ratio between them, and AP job cost at vendors with no Procore commitment or "
+                   "direct cost on the project. Sage AP history starts 2025-03-11 and timing differs "
+                   "between the systems; AP is a check and is not added to Spent To Date. Not "
+                   "month-filtered."),
     ]
 
 
