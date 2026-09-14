@@ -1,6 +1,6 @@
 {
-  "run_id": "75316de012644b2b8dfec56c1086d09e",
-  "completed_at": "2026-09-14T06:20:06.288234+00:00",
+  "run_id": "33021f06f7d24d6e94f027e99b5d05de",
+  "completed_at": "2026-09-14T12:49:31.516380+00:00",
   "validation_lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
   "scope": "candidate silver and gold from existing bronze; upstream freshness not certified",
   "checks": [
@@ -383,6 +383,13 @@
       "blocking": false
     },
     {
+      "name": "fct_ChangeOrder: status maps to a known category",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
       "name": "submittal responded before it was created",
       "severity": "warn",
       "failing_rows": 0,
@@ -590,6 +597,20 @@
       "severity": "warn",
       "failing_rows": 0,
       "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge committed equals non-void, non-draft commitment lines",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "terminated commitments counted at full value in vendor committed",
+      "severity": "warn",
+      "failing_rows": 1,
+      "passed": false,
       "blocking": false
     },
     {
@@ -1336,6 +1357,27 @@
     },
     {
       "name": "man_QcDohResult.ProjectKey_ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_ProjectAccess.UserPrincipalName_ProjectKey_EffectiveFrom.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_ProjectAccess.ProjectKey is a real project or ALL",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_ProjectAccess.UserPrincipalName is lower-case and non-blank",
       "severity": "error",
       "failing_rows": 0,
       "passed": true,

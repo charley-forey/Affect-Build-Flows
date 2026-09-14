@@ -161,6 +161,20 @@ def test_freshness() -> None:
     assert written["table"] == "meta_SourceFreshness" and len(written["data"]) == 3
     assert all(r[1] is None and r[6] == "run1" for r in written["data"])
 
+    # Candidate 33021f06 died here: text() without wholetext=True yields one row per LINE, and
+    # a bare-number line parsed to an int. Whole files must be read, and non-objects skipped.
+    manifest = json.dumps({"batch": "20260914T040238Z", "source_scope": "active_projects",
+                           "status": "complete", "counts": [3562]}, indent=1)
+    class Reader:
+        def text(self, path, wholetext=False):
+            values = [manifest] if wholetext else manifest.splitlines()
+            return type("R", (), {"collect": lambda self: [type("Row", (), {"value": v}) for v in values + ["12"]]})()
+    ReadSpark = type("ReadSpark", (Spark,), {"read": Reader()})
+    with tempfile.TemporaryDirectory() as diag:
+        (Path(diag) / "gold_schema.json").write_text("{}")
+        assert dq.persist_source_freshness(ReadSpark(), "abfss://bronze", "run2", diag) == 3
+    assert {r[0]: r[2] for r in written["data"]}["Procore"] == "20260914T040238Z"
+
     import deploy_dq
     import deploy_gold
     source = "\n".join("".join(c["source"]) for c in deploy_dq.build_notebook()["cells"])

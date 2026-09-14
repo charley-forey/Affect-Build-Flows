@@ -126,11 +126,17 @@ def persist_source_freshness(spark, bronze_root, run_id, diagnostic_dir):
 
     manifests = []
     try:
-        for row in (spark.read.option("wholetext", True)
-                    .text(f"{bronze_root}/Files/_diag/ingestion/*.json").collect()):
+        # wholetext as the text() ARGUMENT: its default False overrides .option("wholetext"),
+        # which split each pretty-printed manifest into lines and a bare-number line into an int.
+        for row in (spark.read
+                    .text(f"{bronze_root}/Files/_diag/ingestion/*.json", wholetext=True).collect()):
             try:
-                manifests.append(json.loads(row.value))
+                doc = json.loads(row.value)
             except ValueError:
+                doc = None
+            if isinstance(doc, dict):
+                manifests.append(doc)
+            else:
                 print("skipping an unparseable ingestion manifest")
     except Exception as exc:  # noqa: BLE001
         print(f"ingestion manifests unreadable ({type(exc).__name__}: {exc})")
