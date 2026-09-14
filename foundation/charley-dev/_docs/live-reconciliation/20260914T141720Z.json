@@ -1,0 +1,24 @@
+{
+ "run_at": "2026-09-14T14:17:20.022744+00:00",
+ "target": {
+  "model_id": "4cdfb689-232a-4f33-a6bf-d53e90e8025a",
+  "qc_model_id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+  "gold_lakehouse": "CD_Gold_Lakehouse",
+  "silver_lakehouse": "CD_Silver_Lakehouse",
+  "bronze_lakehouse": "CD_Bronze_Lakehouse"
+ },
+ "checks": [
+  {
+   "id": "10",
+   "severity": "WARN",
+   "name": "(Blank) members",
+   "status": "ERROR",
+   "summary": "check could not run: DAX failed (400): {\"error\":{\"code\":\"DatasetExecuteQueriesError\",\"pbi.error\":{\"code\":\"DatasetExecuteQueriesError\",\"parameters\":{},\"details\":[{\"code\":\"DetailsMessage\",\"detail\":{\"type\":1,\"value\":\"Query (1, 48) Failed to resolve name 'fct_ApInvoice'. It is not a valid table, variable, or function name.\"",
+   "detail": {}
+  }
+ ],
+ "failed": [
+  "10"
+ ],
+ "warned": []
+}

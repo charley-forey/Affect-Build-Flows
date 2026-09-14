@@ -423,10 +423,7 @@ WHERE a.ap > 5000 AND NOT EXISTS (SELECT 1 FROM pv JOIN pc ON pc.vendor_id = pv.
         orphans = {}
         for model, tables in ((self.apr, apr_tables), (self.qc, ["fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal"])):
             for t in tables:
-                try:
-                    orphans[t] = self.dax(model, f'EVALUATE ROW("n", COALESCE(CALCULATE(COUNTROWS({t}), {blank}), 0))')[0]["n"]
-                except Exception:  # table not in this model version: listed as skipped, not a finding
-                    orphans[t] = None
+                orphans[t] = self.dax(model, f'EVALUATE ROW("n", COALESCE(CALCULATE(COUNTROWS({t}), {blank}), 0))')[0]["n"]
         trade = {}
         r = self.dax(self.apr, 'EVALUATE ROW("b", COALESCE(CALCULATE(COUNTROWS(fct_QualityItem), '
                      'ISBLANK(fct_QualityItem[Trade]) || fct_QualityItem[Trade] = ""), 0), "n", COUNTROWS(fct_QualityItem))')[0]

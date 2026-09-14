@@ -727,6 +727,10 @@
     [
       "IsActual",
       "boolean"
+    ],
+    [
+      "HasTerminatedCommitment",
+      "boolean"
     ]
   ],
   "fct_VendorInsurance": [
@@ -847,6 +851,10 @@
     [
       "HasOutOfRangeDate",
       "boolean"
+    ],
+    [
+      "StatusCategory",
+      "string"
     ],
     [
       "IsPending",
@@ -1665,6 +1673,68 @@
       "string"
     ]
   ],
+  "dq_TradeMappingCandidate": [
+    [
+      "RawTrade",
+      "string"
+    ],
+    [
+      "MappingStatus",
+      "string"
+    ],
+    [
+      "ObservationCount",
+      "bigint"
+    ],
+    [
+      "PunchCount",
+      "bigint"
+    ],
+    [
+      "InspectionCount",
+      "bigint"
+    ],
+    [
+      "AffectedRecords",
+      "bigint"
+    ],
+    [
+      "ProjectCount",
+      "bigint"
+    ],
+    [
+      "FirstSeen",
+      "date"
+    ],
+    [
+      "LastSeen",
+      "date"
+    ],
+    [
+      "CurrentTradeKey",
+      "string"
+    ],
+    [
+      "ProposedTradeKeys",
+      "string"
+    ],
+    [
+      "ProposalSource",
+      "string"
+    ],
+    [
+      "ProposalReason",
+      "string"
+    ],
+    [
+      "IsDecisionNeeded",
+      "boolean"
+    ],
+    [
+      "IsNoLibraryEquivalent",
+      "boolean"
+    ]
+  ],
   "dim_Date": [
     [
       "Date",
@@ -1913,6 +1983,24 @@
       "string"
     ]
   ],
+  "qc_seed_TradeSynonymProposal": [
+    [
+      "ProcoreTrade",
+      "string"
+    ],
+    [
+      "Kind",
+      "string"
+    ],
+    [
+      "ProposedTradeKeys",
+      "string"
+    ],
+    [
+      "Reason",
+      "string"
+    ]
+  ],
   "qc_seed_ChecklistItem": [
     [
       "TradeKey",
@@ -2041,6 +2129,48 @@
       "string"
     ]
   ],
+  "seed_KpiCatalog": [
+    [
+      "ModelName",
+      "string"
+    ],
+    [
+      "KpiName",
+      "string"
+    ],
+    [
+      "Definition",
+      "string"
+    ],
+    [
+      "Formula",
+      "string"
+    ],
+    [
+      "Period",
+      "string"
+    ],
+    [
+      "Sources",
+      "string"
+    ],
+    [
+      "Exclusions",
+      "string"
+    ],
+    [
+      "GapCategory",
+      "string"
+    ],
+    [
+      "Caveats",
+      "string"
+    ],
+    [
+      "SortOrder",
+      "int"
+    ]
+  ],
   "man_DailyLogCompliance": [
     [
       "ProjectKey",
@@ -2167,6 +2297,28 @@
     [
       "Notes",
       "string"
+    ]
+  ],
+  "man_ProjectAccess": [
+    [
+      "UserPrincipalName",
+      "string"
+    ],
+    [
+      "ProjectKey",
+      "string"
+    ],
+    [
+      "Role",
+      "string"
+    ],
+    [
+      "EffectiveFrom",
+      "date"
+    ],
+    [
+      "EffectiveTo",
+      "date"
     ]
   ],
   "man_QcChecklistResult": [

@@ -123,7 +123,7 @@ def check_model(record):
         verification = [step for step in gold if step.get("step") == "verification"]
         if len(verification) != 1 or verification[0].get("findings"):
             raise RuntimeError("gold count verification is missing or ambiguous")
-        expected = {**verification[0]["counts"], **counts["seeds"], **counts["heartbeat"]}
+        expected = {**verification[0]["counts"], **counts["seeds"], **counts["heartbeat"], **counts.get("snapshots", {})}
         evidence["count_differences"] = compare_counts(evidence["queries"]["counts"][0], expected)
         evidence["count_compared_tables"] = [t for t in dm.MODEL_TABLES if t in expected]
         evidence["counts_without_build_comparison"] = [t for t in dm.MODEL_TABLES if t not in expected]

@@ -1,5 +1,86 @@
 # Validation and development status — 2026-09-14
 
+## Fresh verification — 2026-09-14 14:15 UTC
+
+Production correction at 14:54 UTC: refresh request
+`ea86810e-6c9c-4f47-9e09-e5068c35633a` Completed against validated gold run
+`20260914T083429Z`. The existing monthly model now resolves 911 AP rows and 21 snapshot
+rows (`production-model-refresh.json`). No model recreation was needed. Its 130 measures
+evaluate, all 18 model checks pass, and no model-to-build count differences remain
+(`production-model-validation.txt`). This supersedes the unresolved-table finding below.
+
+The subsequent strict live reconciliation (`live-reconciliation/20260914T145452Z.json`)
+has no FAIL or ERROR results: seven checks pass and three warn. All required project-table
+queries now execute. It exposes 373 AP rows without a matching project; these are not
+silently skipped. The manual-register migration completed successfully. Expanded candidate
+`fd431d1234364ac4b3454f72dc23f4fe`, job `0b402b03-c4bc-405e-895c-38f9ea131706`, has now
+started against the migrated inputs; full candidate certification remains pending.
+
+Candidate `536832f4` FAILED at silver: existing manual bronze tables still use nested
+SharePoint ProjectKey objects, while the current silver parser expects the new flat shape.
+Snapshot validation was not reached. The existing guarded `cd_06_land_manual` migration
+has been deployed and started; it rebuilds only empty old-shape tables and refuses to
+overwrite populated ones. Candidate validation must be rerun after successful migration.
+All 21 offline suites and all three generator drift checks pass. Browser rendering and a
+successful scheduled cycle remain unverified. Raw definition backups stay local because
+this GitHub repository is public; measured summaries and release evidence are committed.
+
+Follow-up at 14:28 UTC: all 21 offline suites pass after the candidate changes
+(`current-offline-tests.txt`). Live monthly definition readback includes both
+`fct_ApInvoice` and `fct_DailySnapshot`, including their model references
+(`live-monthly-definition-backup.json`). Thus the earlier DAX failures establish that
+the query service cannot resolve those tables, not that their definition files are absent.
+The latest three returned refresh-history entries end at 04:13 UTC, before the 08:34
+production build. A pending model refresh is a hypothesis to verify after the candidate
+passes; do not redeploy or recreate the model merely from the earlier query error.
+
+The latest scheduled pipeline job, `d9efb579-90db-45a4-bb92-7291639fd824`, ran
+06:00–08:03 UTC and Failed (`live-pipeline-jobs.json`). Newer model freshness does not
+prove a healthy scheduled cycle. Power BI in the work browser requires sign-in and terms
+acceptance; the user has been asked to complete that step for rendered verification.
+The candidate remains InProgress; no silver completion checkpoint was available yet.
+
+Follow-up at 14:24 UTC: candidate snapshot coverage is implemented using the production
+stage/swap SQL and snapshot validation suite. Both stages must pass before immutable
+candidate counts are written; the snapshot schema and row count are included. The model
+checker now reconciles that count. Targeted validation tests pass, including a deliberately
+failed snapshot that must prevent certification. Expanded full candidate
+`536832f428bb4e6782df595b45fd0159`, job `4a048969-218c-4678-b4d9-b3ea08e080a8`, started
+14:21 UTC and is InProgress. It is not yet evidence of a successful build.
+
+Live readback (`live-pipeline-definition.json`) confirms 10 activities, including Publish
+Models dependent on Data Quality Gate Succeeded. `live-snapshot_run.json` confirms
+production snapshot run `20260914T083429Z` reports ok. `publish_run.json` returned 404 from
+the gold lakehouse: successful publication through this step and automatic-update settings
+remain unverified. No production definitions were changed during this follow-up.
+
+This readback supersedes the release2-pending claims below. The repository records a
+release2 deployment in `5d30f7f`, and both live models report run `20260914T083429Z`.
+The complete live reconciliation is saved in
+`live-reconciliation/20260914T141538Z.json`: checks 1, 2, 3, 5, 6, 8 and 9 pass;
+4, 7 and 10 warn. Check 2 means unchanged unmatched AR, not resolved mappings:
+38 invoices across 11 jobs, $2,014,605.29, remain unmatched.
+
+The completed candidate `75316de012644b2b8dfec56c1086d09e` has 211 checks:
+197 passed, 14 warnings, zero blocking failures. It validates existing bronze through
+candidate silver/gold; it does not certify upstream freshness. All 21 current offline
+suites pass. After the reconciliation fix below, its targeted suite passes 46 checks.
+
+**Newly confirmed deployment/validation gap:** the live monthly model cannot resolve
+`fct_ApInvoice` or `fct_DailySnapshot`. The old blank-member check caught every query
+exception and silently skipped these tables. That exception suppression is removed;
+the fresh strict check now reports ERROR, saved in
+`live-reconciliation/20260914T141720Z.json`. A regression test confirms query failures
+propagate. Earlier passing measure checks must not be treated as full model coverage.
+
+Attempting to generate the current isolated monthly model stopped before deployment:
+`fct_DailySnapshot` is missing from the candidate's published schema. The candidate
+builder runs the main gate and heartbeat but does not execute the production gate's
+post-pass snapshot stage. Extend candidate coverage to that stage, verify its schema
+and counts, then validate the complete model before promoting it. No model was changed
+by this attempt. Publication safeguards and rendered report verification remain open;
+the deployment commit alone is not live proof of either.
+
 This section supersedes the headline statements in the 2026-09-10 assessment below: "nightly
 ingestion is failing", "published models and reports have not been replaced" and "paid date
 is unavailable". Those statements are kept for history and marked where they appear. Every

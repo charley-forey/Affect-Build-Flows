@@ -1,0 +1,3 @@
+# Local deployment backups; publish verification summaries instead of opaque payloads.
+_docs/live-monthly-definition-backup.json
+_docs/live-pipeline-definition.json

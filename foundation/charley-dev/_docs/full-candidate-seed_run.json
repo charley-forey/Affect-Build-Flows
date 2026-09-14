@@ -12,7 +12,8 @@
     "qc_seed_Gate": 93,
     "qc_seed_DohItem": 101,
     "dim_QcStatus": 141,
-    "seed_ProjectCrosswalk": 15
+    "seed_ProjectCrosswalk": 15,
+    "seed_KpiCatalog": 131
   },
   "expected": {
     "dim_Date": 7670,
@@ -27,7 +28,8 @@
     "qc_seed_Gate": 93,
     "qc_seed_DohItem": 101,
     "dim_QcStatus": 141,
-    "seed_ProjectCrosswalk": 15
+    "seed_ProjectCrosswalk": 15,
+    "seed_KpiCatalog": 131
   },
   "findings": []
 }

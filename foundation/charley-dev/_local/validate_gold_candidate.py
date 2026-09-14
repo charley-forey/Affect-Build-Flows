@@ -6,6 +6,7 @@ import deploy as dp
 import deploy_seeds as ds
 import deploy_gold as dg
 import deploy_silver
+import deploy_dq
 from make_notebooks import cell, notebook
 
 HERE = Path(__file__).resolve().parent
@@ -89,8 +90,20 @@ for result in results:
         dq._persist_rejects(spark, result.expectation, spark.sql(result.expectation.failing_sql), run_id)
 dq.persist_heartbeat(spark, results, run_id, "/lakehouse/default/Files/_diag")
 dq.assert_no_blocking(results)
+# Exercise the production snapshot SQL and both validation phases in isolation.
+# Candidate certification is stricter than publication: missing history fails here.
+snapshot_date = datetime.now(timezone.utc).date().isoformat()
+snapshot_stage, snapshot_swap = {deploy_dq.snapshot_phases()!r}
+for statements, table in ((snapshot_stage, "v_DailySnapshotStage"),
+                          (snapshot_swap, "fct_DailySnapshot")):
+    for statement in statements:
+        spark.sql(statement.replace("{{SNAPSHOT_DATE}}", snapshot_date).replace("{{RUN_ID}}", run_id))
+    snapshot_results = expectations.snapshot_suite(snapshot_date, table).run(spark, run_id, persist=False)
+    dq.assert_no_blocking(snapshot_results)
+dq.publish_schema(spark, "/lakehouse/default/Files/_diag", "fct_DailySnapshot")
 count_evidence = {{"run_id": run_id, "validation_lakehouse_id": {target['id']!r},
                   "gold": candidate_gold_evidence, "seeds": candidate_seed_counts,
+                  "snapshots": {{"fct_DailySnapshot": spark.table("fct_DailySnapshot").count()}},
                   "heartbeat": {{"meta_PipelineRun": spark.table("meta_PipelineRun").count()}}}}
 with open(f"/lakehouse/default/Files/_diag/candidate_counts_{{run_id}}.json", "x", encoding="utf-8") as fh:
     json.dump(count_evidence, fh, indent=2)

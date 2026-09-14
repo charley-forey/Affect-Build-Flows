@@ -1263,10 +1263,15 @@ def test_candidate_count_snapshot():
     result = dq.Result(dq.Expectation("checked", "table", "SELECT 1"), 0)
     with tempfile.TemporaryDirectory() as temp:
         source = source.replace("/lakehouse/default/Files/_diag", temp.replace("\\", "/"))
-        scope = dict(expectations=SimpleNamespace(build_suite=lambda: SimpleNamespace(run=lambda *a, **k: [result])),
+        phases = []
+        def snapshot_suite(day, table):
+            phases.append(table)
+            return SimpleNamespace(run=lambda *a, **k: [result])
+        scope = dict(expectations=SimpleNamespace(build_suite=lambda: SimpleNamespace(run=lambda *a, **k: [result]),
+                                                 snapshot_suite=snapshot_suite),
                      dq=SimpleNamespace(_persist_results=lambda *a: None, persist_heartbeat=lambda *a: None,
-                                        assert_no_blocking=dq.assert_no_blocking),
-                     spark=SimpleNamespace(table=lambda name: SimpleNamespace(count=lambda: 3)),
+                                        publish_schema=lambda *a: None, assert_no_blocking=dq.assert_no_blocking),
+                     spark=SimpleNamespace(sql=lambda query: None, table=lambda name: SimpleNamespace(count=lambda: 3)),
                      datetime=datetime, timezone=timezone, json=json, os=__import__("os"),
                      candidate_seed_counts={"dim_Date": 10},
                      candidate_gold_evidence=[dict(step="verification", ok=True, counts={"dim_Project": 2})])
@@ -1276,8 +1281,20 @@ def test_candidate_count_snapshot():
         assert saved["run_id"] == "count-test" and saved["validation_lakehouse_id"] == "validation-only"
         assert saved["seeds"] == {"dim_Date": 10} and saved["heartbeat"] == {"meta_PipelineRun": 3}
         assert saved["gold"][0]["counts"] == {"dim_Project": 2}
+        assert saved["snapshots"] == {"fct_DailySnapshot": 3}
+        assert phases == ["v_DailySnapshotStage", "fct_DailySnapshot"]
         scope["candidate_seed_counts"]["dim_Date"] = 99
         assert json.loads(path.read_text())["seeds"]["dim_Date"] == 10
+        failed = dq.Result(dq.Expectation("snapshot invalid", "table", "SELECT 1"), 1)
+        scope["expectations"].snapshot_suite = lambda *a: SimpleNamespace(run=lambda *a, **k: [failed])
+        rejected_source = source.replace("count-test", "rejected-test")
+        try:
+            exec(compile(rejected_source, "candidate-snapshot-failure", "exec"), scope)
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("candidate certified a failed snapshot")
+        assert not (Path(temp) / "candidate_counts_rejected-test.json").exists()
 
 
 def test_gold_manual_count_conservation():

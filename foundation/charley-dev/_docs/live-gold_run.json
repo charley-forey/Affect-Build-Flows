@@ -220,10 +220,6 @@
     "ok": true
   },
   {
-    "step": "view:55",
-    "ok": true
-  },
-  {
     "step": "10_dim_project.sql",
     "ok": true
   },
@@ -404,14 +400,6 @@
     "ok": true
   },
   {
-    "step": "40_man_tables.sql",
-    "ok": true
-  },
-  {
-    "step": "40_man_tables.sql",
-    "ok": true
-  },
-  {
     "step": "41_man_qc_tables.sql",
     "ok": true
   },
@@ -484,10 +472,6 @@
     "ok": true
   },
   {
-    "step": "46_dq_trademappingcandidate.sql",
-    "ok": true
-  },
-  {
     "step": "verification",
     "ok": true,
     "counts": {
@@ -503,7 +487,7 @@
       "fct_Billing": 892,
       "fct_DirectCost": 437,
       "bridge_ProjectVendor": 430,
-      "bridge_VendorCostCode": 422,
+      "bridge_VendorCostCode": 431,
       "fct_VendorInsurance": 105,
       "fct_ChangeOrder": 335,
       "fct_Invoice": 149,
@@ -518,12 +502,10 @@
       "fct_ProcoreInspectionItem": 705,
       "dq_DataGap": 1546,
       "dq_CrosswalkCandidate": 1,
-      "dq_TradeMappingCandidate": 45,
       "man_DailyLogCompliance": 0,
       "man_Flags": 0,
       "man_Milestones": 0,
       "man_PriorityItems": 0,
-      "man_ProjectAccess": 0,
       "man_QcChecklistResult": 0,
       "man_QcCommissioning": 0,
       "man_QcDfow": 0,

@@ -1,0 +1,487 @@
+{
+  "value": [
+    {
+      "id": "d9efb579-90db-45a4-bb92-7291639fd824",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "500",
+        "message": "InternalServerError executing request",
+        "isRetriable": false
+      },
+      "rootActivityId": "03a91aab-fb9e-4b65-83e0-1664e61fdd5d",
+      "startTimeUtc": "2026-09-14T06:00:18.4276484",
+      "endTimeUtc": "2026-09-14T08:03:37.3866667"
+    },
+    {
+      "id": "86513b54-f998-4d9b-8e22-7692ade2b295",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "71a2b6f4-f7ae-48d0-be51-dcbc1298a9e7",
+      "startTimeUtc": "2026-09-13T06:00:22.9343813",
+      "endTimeUtc": "2026-09-13T09:08:09.5133333"
+    },
+    {
+      "id": "d816dd8c-7f0f-4b1c-9b11-48bbf9e5c07b",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"RuntimeError\",\"errorValue\":\"12 of 44 endpoints failed: incident_near_misses, incident_severity_levels, manpower_daily_totals, manpower_logs, daily_log_headers, schedule, prime_contract_line_items, payment_applications, work_order_contract_line_items, purchase_order_contract_line_items, budget_detail_rows, checklist_list_items\",\"message\":\"Notebook execution is in Failed state, runId: 07dce724-185a-41a2-83fd-09c7444db786\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "df8d42bb-a34c-47a7-837a-785e9f18f6f8",
+      "startTimeUtc": "2026-09-12T06:00:20.6223309",
+      "endTimeUtc": "2026-09-12T09:04:53.6733333"
+    },
+    {
+      "id": "c5c084d4-061f-4dd2-9dd9-2ec905e20683",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"RuntimeError\",\"errorValue\":\"10 of 44 endpoints failed: manpower_daily_totals, manpower_logs, daily_log_headers, schedule, prime_contract_line_items, payment_applications, work_order_contract_line_items, purchase_order_contract_line_items, budget_detail_rows, checklist_list_items\",\"message\":\"Notebook execution is in Failed state, runId: 8973934e-82e1-4941-9465-ffc6db1ec361\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "3fda0d4f-83df-4a37-86f9-f02510883f5b",
+      "startTimeUtc": "2026-09-11T06:00:24.8677234",
+      "endTimeUtc": "2026-09-11T09:11:47.4533333"
+    },
+    {
+      "id": "7385c64e-9e6c-4e77-92e9-5d1a8b30151d",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: ee44157a-50d3-4544-9ae3-9c36d1bb60ac\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "454577cd-a589-4354-a801-e2532ae102ba",
+      "startTimeUtc": "2026-09-10T06:00:17.9056705",
+      "endTimeUtc": "2026-09-10T06:27:43.0666667"
+    },
+    {
+      "id": "dfbb562d-ff91-470f-894a-28287fab6a33",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "20302",
+        "message": "Operation on target Ingest Sage failed: Dataflow refresh job failed with status: Failed. Failure reason: { requestId: ea99d5c5-30b0-4755-b4de-7c15406fd3f7, errorCode: GatewayDataSourceOpenConnectionTimeout, message: Something went wrong, please try again later. If the error persists, please contact support. }",
+        "isRetriable": false
+      },
+      "rootActivityId": "39f87db0-75ff-4504-a9a2-66738140ea99",
+      "startTimeUtc": "2026-09-09T06:00:06.2908147",
+      "endTimeUtc": "2026-09-09T06:30:28.7866667"
+    },
+    {
+      "id": "32c1dc4e-d9ef-41d6-8998-4afc8e55e5c1",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 1dabd0cd-e3f9-45ce-898c-aae527931911\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "c51e871a-9afc-4f26-a322-a1ee9f293734",
+      "startTimeUtc": "2026-09-08T06:00:05.8448182",
+      "endTimeUtc": "2026-09-08T06:27:45.31"
+    },
+    {
+      "id": "7c53d984-5d19-4dfe-b495-be65144df121",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: b885437b-1834-40ef-b917-5d80f080fcbb\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "869e99d0-e496-4331-b6e5-ca10a022e74b",
+      "startTimeUtc": "2026-09-07T06:00:10.0114817",
+      "endTimeUtc": "2026-09-07T06:27:37.1366667"
+    },
+    {
+      "id": "d10eeb8e-2f36-458a-908b-5c95eb1f8e97",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 099bbd82-669e-4b14-ba18-60356f93f782\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "7978ae1b-7ee8-4f96-b338-3b37bfd307c1",
+      "startTimeUtc": "2026-09-06T06:00:08.9721008",
+      "endTimeUtc": "2026-09-06T06:27:42.78"
+    },
+    {
+      "id": "98b378ef-214c-4344-a1af-dce86b5b0780",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 2109935f-63e2-45b8-8fb5-02c9b8a295e0\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "9391a827-c63a-456e-a29d-5ad205057f39",
+      "startTimeUtc": "2026-09-05T06:00:17.2330043",
+      "endTimeUtc": "2026-09-05T06:27:42.4133333"
+    },
+    {
+      "id": "eb6e2c32-fcfd-4931-afa5-31fb71618eb9",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 80b5aa11-e042-47e3-afb8-5f599e88c693\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "7f02eb36-7160-4335-b12e-493d2576e5fe",
+      "startTimeUtc": "2026-09-04T06:00:16.9013043",
+      "endTimeUtc": "2026-09-04T06:27:14.0366667"
+    },
+    {
+      "id": "f17e7128-4b97-4285-9149-e0f086664f2f",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 98086100-f648-44e1-98b7-d07ca6d6695c\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "34fef117-b2c1-4fdd-9668-ee3dba964c4f",
+      "startTimeUtc": "2026-09-03T06:00:08.6729368",
+      "endTimeUtc": "2026-09-03T06:28:43.09"
+    },
+    {
+      "id": "11fcd8fa-53dc-46fb-be42-9fa1cc686a52",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: b22dcf60-11eb-458a-a8df-e854fa283c92\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "62c419b0-a5e4-4249-bf07-6b1056fb917c",
+      "startTimeUtc": "2026-09-02T06:01:03.8832408",
+      "endTimeUtc": "2026-09-02T06:26:58.69"
+    },
+    {
+      "id": "13b23568-c59b-4c99-b47b-d4169e6345d6",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 955b16cc-d83e-4719-86a3-e5a83b4033d4\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "4421c2b0-e91c-4477-aaf9-cbc8358c067d",
+      "startTimeUtc": "2026-09-01T06:00:14.0067664",
+      "endTimeUtc": "2026-09-01T06:29:32.6966667"
+    },
+    {
+      "id": "8d4ffdf0-9cf0-44d2-8471-14d18657cdac",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: d33da32c-1d4b-4c8b-aa80-0004fb79d9a7\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "342a2789-89b8-40b6-ba43-debba0e1a1fa",
+      "startTimeUtc": "2026-08-31T06:00:17.0720375",
+      "endTimeUtc": "2026-08-31T06:27:00.3866667"
+    },
+    {
+      "id": "8609208f-6d8b-4097-80d5-77810eb5a9c3",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: e28e0116-3af2-427d-9b89-fdf93adeacfc\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "ae44b779-384d-49c1-9189-4e2a9283236b",
+      "startTimeUtc": "2026-08-30T06:00:20.1047783",
+      "endTimeUtc": "2026-08-30T06:26:39.3666667"
+    },
+    {
+      "id": "b152f1ea-5fd3-4698-8cdd-0f92bcefdf96",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: a7058661-46d2-43f6-aa16-255d416e51f2\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "a2c88d90-1168-47b9-a89e-5e8b975e35b3",
+      "startTimeUtc": "2026-08-29T06:00:14.3612338",
+      "endTimeUtc": "2026-08-29T06:31:33.0266667"
+    },
+    {
+      "id": "8cd3d1b7-c6f5-43f5-80d4-83ccdc1d12c3",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "5b6db5f4-d182-476e-9d89-7479e9651a72",
+      "startTimeUtc": "2026-08-28T06:00:09.9629327",
+      "endTimeUtc": "2026-08-28T06:51:29.7933333"
+    },
+    {
+      "id": "658df29d-ad0b-4f8a-99e3-c7460be0f23c",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "6cde3f80-94b6-45ae-81e7-9dfa21bf57b3",
+      "startTimeUtc": "2026-08-27T06:00:17.9406693",
+      "endTimeUtc": "2026-08-27T06:51:43.5266667"
+    },
+    {
+      "id": "806028a0-9809-4af5-9dcd-28bcf6bb003b",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "47e377a2-a8e7-48e5-a858-c2bc18324710",
+      "startTimeUtc": "2026-08-26T06:00:02.2916905",
+      "endTimeUtc": "2026-08-26T06:54:48.3333333"
+    },
+    {
+      "id": "b3aff3cd-1481-46dc-b0c4-95b6da2260ca",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "41690371-9f96-4764-af74-13f7bc711327",
+      "startTimeUtc": "2026-08-25T11:13:52.3647379",
+      "endTimeUtc": "2026-08-25T12:06:27.8"
+    },
+    {
+      "id": "1d08f0f0-e29a-4ed0-8df1-1a3e5a624067",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Manual",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "746881a2-7393-43b7-963b-13c2ce78e80e",
+      "startTimeUtc": "2026-08-25T10:36:05.6057818",
+      "endTimeUtc": "2026-08-25T11:13:30.21"
+    },
+    {
+      "id": "23fbe090-0736-4232-8e36-d91def4f5033",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "b3e6c76d-9327-4786-9f01-69bf9c0f7f91",
+      "startTimeUtc": "2026-08-25T06:00:10.2121269",
+      "endTimeUtc": "2026-08-25T06:31:43.1566667"
+    },
+    {
+      "id": "dbad38a2-4565-4b57-98d5-bb8c8cc5caaf",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "28d3a335-84a0-4f78-b29e-c1f890c15834",
+      "startTimeUtc": "2026-08-24T06:00:17.4055564",
+      "endTimeUtc": "2026-08-24T06:14:22.4466667"
+    },
+    {
+      "id": "1bcb6213-09c2-46b9-8319-fe543cdf2b0e",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "454a4bed-3f8c-4ef7-ad56-0b8dcb1a557e",
+      "startTimeUtc": "2026-08-23T06:00:10.3227724",
+      "endTimeUtc": "2026-08-23T06:14:55.7033333"
+    },
+    {
+      "id": "10678f26-0ac0-4301-924e-f31cba444306",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "52acb33f-a132-46aa-a915-9c2e25fb6199",
+      "startTimeUtc": "2026-08-22T06:00:11.343171",
+      "endTimeUtc": "2026-08-22T06:14:07.44"
+    },
+    {
+      "id": "3cd041c5-52ea-4e23-8c3a-26128eaffedd",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "41856114-8270-450c-8810-50dbddcda336",
+      "startTimeUtc": "2026-08-21T06:00:08.189831",
+      "endTimeUtc": "2026-08-21T06:13:56.3766667"
+    },
+    {
+      "id": "b5f1f3d8-b267-436b-b826-1cb0fdad9eb2",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "5de964f8-e975-4e46-ad54-6f378678d68d",
+        "errorCode": "2451",
+        "message": "Operation on target Land To Bronze failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"AssertionError\",\"errorValue\":\"4 table(s) failed to land:\\n  cd_bronze_outbuild_roadblock_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_rfv_tasks: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_activity_tags: UnsupportedOperationException: [DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE] Cannot perform Merge as multiple source rows matched and attempted to modify the same\\ntarget row in the Delta ta\\n  cd_bronze_outbuild_task_tags: Unsupp",
+        "isRetriable": false
+      },
+      "rootActivityId": "56f9e6b4-43fc-41a1-b6a4-db963c4f0985",
+      "startTimeUtc": "2026-08-20T06:00:07.6180846",
+      "endTimeUtc": "2026-08-20T06:14:02.0266667"
+    },
+    {
+      "id": "c3088634-428f-405e-84ce-a78341ed53a1",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "cbcf35af-bb6f-4f77-87b2-d38f1c9cef6a",
+      "startTimeUtc": "2026-08-19T06:00:07.9027158",
+      "endTimeUtc": "2026-08-19T06:18:19.61"
+    },
+    {
+      "id": "67c4a50d-cd88-4453-bab9-d1f14e65d36b",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "696fca70-337d-474e-960b-19a3605fa50b",
+      "startTimeUtc": "2026-08-18T06:00:06.7389924",
+      "endTimeUtc": "2026-08-18T06:22:26.8366667"
+    },
+    {
+      "id": "b6a3ebd7-5473-4ca9-a521-73f2ebb9e345",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "2c3d4690-6895-4a7a-a426-41e25a7da1d4",
+      "startTimeUtc": "2026-08-17T06:00:03.1740715",
+      "endTimeUtc": "2026-08-17T06:23:26.4933333"
+    },
+    {
+      "id": "8017b88b-2323-43d5-94b8-6382a1fb949d",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "43c4ed6a-c04b-4b95-9616-278d8ddd7900",
+      "startTimeUtc": "2026-08-16T06:00:09.673258",
+      "endTimeUtc": "2026-08-16T06:21:54.4433333"
+    },
+    {
+      "id": "ad1759af-5b26-4658-8318-875047d81567",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "01b3bd32-71ed-40c7-b26a-cf5a1a7ef370",
+      "startTimeUtc": "2026-08-15T06:00:19.3561601",
+      "endTimeUtc": "2026-08-15T06:20:16.4233333"
+    }
+  ]
+}

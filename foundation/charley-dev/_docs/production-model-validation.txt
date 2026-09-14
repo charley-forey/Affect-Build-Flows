@@ -1,0 +1,188 @@
+model 4cdfb689-232a-4f33-a6bf-d53e90e8025a
+  not reframing production - validating the release it currently shows (--allow-production-reframe to override)
+  Projects            21  (expected 21)
+  Vendors           1118  (expected 1118)
+  CostCodes         5768  (expected 5768)
+  Dates             7670  (expected 7670)
+  BudgetLines        435  (expected 435)
+  ChangeOrders       335  (expected 335)
+  Invoices           149  (expected 149)
+  Submittals        3131  (expected 3131)
+  Milestones         253  (expected 253)
+  Periods            151  (expected 151)
+  Billings           892  (expected 892)
+  DirectCosts        437  (expected 437)
+  ProjectVendors     430  (expected 430)
+
+  [Original Contract] = 31295506.499999996
+  [Current Contract] = 36538861.11000001
+  [Contract Growth %] = 0.16754336952495116
+  [Pending Change Orders] = 49463.97
+  [Age Of Oldest Unapproved CO] = 866
+  [Approved Change Orders] = 5243354.609999999
+  [Change Order Amount] = 5292818.580000001
+  [Budget] = 35274580.42000002
+  [Forecast] = 35784021.650000006
+  [Committed] = 30193165.75000001
+  [Spent To Date] = 20268605.650000006
+  [Cost To Complete] = 9924560.100000003
+  [Budget Remaining] = 15005974.77000001
+  [Budget Remaining %] = 0.4254047699881898
+  [Forecast Variance] = -509441.2299999893
+  [Forecast Variance %] = -0.014442162711342863
+  [Budget Status] = Spend within budget
+  [Forecast Status] = Forecast over budget up to 5%
+  [Percent Bought Out] = 0.8559468430383104
+  [AP Job Cost] = 11064616.51
+  [AP vs Procore Spent Variance] = -9203989.140000006
+  [AP / Procore Spent Ratio] = 0.5458992444307582
+  [ERP-only Vendor Cost] = 3570774.67
+  [Last Checked Run] = 2026-09-14T08:40:55.85
+  [Hours Since Last Checked Run] = 6
+  [Pipeline Status] = Gold checked with warnings; source completeness unverified
+  [Blocking Violations Last Run] = 0
+  [Vendor Spend] = 1472617.1199999994
+  [Vendor Committed] = 26871687.910000008
+  [Cost Codes Per Vendor] = 286
+  [Vendors Per Cost Code] = 192
+  [Certificates On File] = 105
+  [Vendors With Insurance] = 23
+  [Expired Certificates] = 105
+  [Certificates Expiring Soon] = 0
+  [Latest Certificate Expiration] = 2025-04-01T00:00:00
+  [Vendors Without Insurance] = 265
+  [Retainage Held Owner] = 346229.50999999995
+  [Retainage Held Sub] = 434457.3999999999
+  [Net Retainage Position] = -88227.88999999996
+  [Owner Billed To Date] = 29601900.03
+  [Owner Contract Sum] = 34021855.99
+  [Balance To Finish] = 4766185.47
+  [Billed This Period] = 29255670.519999992
+  [Billing Periods] = 892
+  [Draft Billings] = 33
+  [Direct Costs] = 2072621.1300000001
+  [Self Performed Labour] = 1208733.4800000004
+  [Unapproved Direct Costs] = 32625.11
+  [Vendors On Project] = 271
+  [Vendors Missing From ERP] = 143
+  [Total Billed] = 26153291.939999998
+  [Total Paid] = 18713981.769999996
+  [Cash Received] = 18460348.21
+  [AR Outstanding] = 7439310.170000004
+  [Total Billed %] = 0.6606305154758558
+  [Total Billed MoM %] = -5.697623545071646e-16
+  [Open Submittals] = 310
+  [Open Submittals Past Due] = 226
+  [Avg Days Open] = 365.16806722689074
+  [Draft Submittals] = 467
+  [Critical Milestones] = 253
+  [Overdue Milestones] = 78
+  [Milestones Overdue %] = 0.308300395256917
+  [Avg Milestone Progress] = 0.05805243803535778
+  [Punchlist Items] = 1617
+  [Open Quality Items] = 300
+  [Quality Items Past Due] = 260
+  [Avg Days Past Due] = 96.07307692307693
+  [Projects Fully Mapped] = 4
+  [Projects In Coverage] = 20
+  [Projects Missing From Sage] = 5
+  [Projects Missing From Outbuild] = 14
+  [Source Coverage %] = 0.2
+  [Vendors Missing From Sage] = 184
+  [DQ Projects Without Crosswalk] = 5
+  [DQ Cost Codes Not In Source] = None
+  [DQ Milestones With Inverted Dates] = None
+  [DQ Unmatched Invoices] = 38
+  [Unmatched Billed Amount - All Projects] = 2014605.2899999998
+  [Data Gaps] = 1546
+  [Data Gap Amount] = 2014605.2899999998
+  [Billed Cumulative] = 29255670.519999992
+  [Billed Cumulative % Of Contract] = 0.8006727530977493
+  [Projects Reporting] = 16
+  [Projects At Risk] = 6
+  [Milestone Offset Days] = None
+  [Milestone Duration Days] = None
+  [Last Refresh] = 2026-09-14T08:33:30.51
+  [Report Month Label] = All months
+  [Open Submittals (Month End)] = 310
+  [Open Submittals Past Due (Month End)] = 226
+  [Open RFIs (Month End)] = 47
+  [Open Observations (Month End)] = 161
+  [Open Punch Items (Month End)] = 139
+  [AR Outstanding (Month End)] = 7439310.169999999
+  [Total Billed (Month End)] = 26153291.94
+  [Budget (Month End)] = 35274580.42
+  [Spent To Date (Month End)] = 20268605.65
+  [Committed (Month End)] = 30193165.75
+  [Current Contract (Month End)] = 36538861.11
+  [Pending Change Orders (Month End)] = 49463.97
+  [Approved Change Orders (Month End)] = 5243354.609999999
+  [Snapshot History Starts] = 2026-09-14T00:00:00
+  [Snapshot History Note] = History starts 2026-09-14; earlier months are unavailable, not zero
+  [Avg Days To Payment] = 31.753086419753085
+  [Cash Position %] = 2.6352091857451687
+  [Profitability Code] = None
+  [Recordable Incidents] = 0
+  [Hours Worked] = 129169.49
+  [Observations] = 966
+  [Avg Observation Days To Close] = 31.208935611038108
+  [Daily Reports Missed] = None
+  [Completion Variance Days] = None
+  [Client Satisfaction] = None
+  [Score - Accounts Receivable] = 3
+  [Score - Profitability] = None
+  [Score - Cash Position] = 3
+  [Score - Change Orders] = 0
+  [Score - Safety Incidents] = 3
+  [Score - Schedule Performance] = 0
+  [Score - Completion Variance] = None
+  [Score - Observations] = 0
+  [Score - Daily Reports] = None
+  [Project Scorecard] = 0.38000000000000006
+  [Scorecard Coverage %] = 0.7100000000000001
+  [Project Scorecard (Measured Only)] = 0.5352112676056339
+  [Category Score] = None
+  [Category Weighted] = 0.38000000000000006
+  [Category Band] = None
+
+data-quality findings surfaced by the model:
+  projects with no Sage crosswalk entry : 5
+  cost codes not in master data        : None
+  milestones with inverted dates       : None
+  AR invoices with no matching project : 38
+
+scorecard - score per category (BLANK = no data yet, NOT zero):
+  Accounts Receivable      3
+  Profitability            -- no data
+  Cash Position            3
+  Change Orders            0
+  Safety Incidents         3
+  Schedule Performance     0
+  Completion Variance      -- no data
+  Observations             0
+  Daily Reports            -- no data
+
+  [Project Scorecard]                 0.38000000000000006
+  [Scorecard Coverage %]              71% of the agreed weight
+  [Project Scorecard (Measured Only)] 0.5352112676056339
+
+  ok  all 13 tables readable through DirectLake at the expected row counts
+  ok  all 39 model tables resolve through DirectLake
+  ok  all 130 measures evaluate without error
+  ok  [Budget Remaining] equals Budget - Spent To Date
+  ok  [Total Billed] reconciles to [Total Paid] + [AR Outstanding]
+  ok  cumulative and sum-safe billing differ by exactly the retainage held
+  ok  Owner balance agrees with its fact aggregation within one cent
+  ok  Sub balance agrees with its fact aggregation within one cent
+  ok  Net balance agrees with its fact aggregation within one cent
+  ok  Contract balance agrees with its fact aggregation within one cent
+  ok  time intelligence works - DATEADD over dim_Date evaluates
+  ok  data-quality measures return real counts
+  ok  all 9 scorecard categories evaluate (6 scored, 3 awaiting data)
+  ok  [Scorecard Coverage %] = 71%, matching the scored categories' weights
+  ok  scorecard weights still sum to exactly 1.00
+  ok  [Category Weighted] sums to [Project Scorecard] - the audit table adds up
+  ok  all 9 categories resolve a band label, measured or not
+  ok  [Billed Cumulative] ends at the total of [Billed This Period]
+
+validate_model: 18 checks passed; 0 unresolved model-to-build differences

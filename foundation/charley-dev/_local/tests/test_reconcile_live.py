@@ -115,6 +115,24 @@ def test_blank_members():
     check("10 blank trade warns with share", blank["status"] == "WARN" and blank["detail"]["trade"]["t"]["share"] == 0.271)
 
 
+def test_blank_member_query_failure():
+    live = rl.Live.__new__(rl.Live)
+    live.apr, live.qc = "monthly", "qc"
+    calls = []
+    def unavailable(model, query):
+        calls.append(query)
+        if len(calls) == 1:
+            raise RuntimeError("query unavailable")
+        return [{"n": 0, "b": 0}]
+    live.dax = unavailable
+    try:
+        live.c10()
+    except RuntimeError as exc:
+        check("10 query failure propagates instead of silently skipping", str(exc) == "query unavailable")
+    else:
+        raise AssertionError("failed query was treated as a completed check")
+
+
 def test_previous_detail_matches_model():
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)

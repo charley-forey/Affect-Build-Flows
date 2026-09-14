@@ -1,0 +1,24 @@
+   1 PASS
+   2 PASS
+   3 PASS
+   4 WARN
+   5 PASS
+   6 PASS
+   7 WARN
+   8 PASS
+   9 PASS
+  10 WARN
+
+ #  SEV    STATUS  CHECK                                 SUMMARY
+ 1  ERROR  PASS    AR conservation bronze=silver=model   149 invoices, billed 26,153,291.94 equal across bronze_acrinv = silver_ar_invoices = model_fct_Invoice
+ 2  WARN   PASS    Unmatched AR by job                   38 invoices / 11 jobs / 2,014,605.29 unmatched
+ 3  ERROR  PASS    AR receipts vs paid                   receipts match paid; 3 documented opening balances excused
+ 4  WARN   WARN    AP job cost vs Procore spent          11/15 projects outside tolerance; 67 ERP-only job/vendor rows 3,583,827.05
+ 5  ERROR  PASS    Submittal sanity                      median turnaround 28 days
+ 6  ERROR  PASS    Balance measures carry forward        2026-08: balances carry forward
+ 7  WARN   WARN    Insurance expiry                      latest expiry 2025-04-01; 105/105 expired
+ 8  ERROR  PASS    Model freshness                       run 20260914T083429Z ok, 6.2h old
+ 9  ERROR  PASS    Division format                       all divisions 2-digit (114 blank codes)
+10  WARN   WARN    (Blank) members                       (Blank) project rows {'dq_DataGap': 494, 'fct_ApInvoice': 373}; blank trade share fct_QcPunch.TradeKey 49%, fct_QcNcr.TradeKey 47%
+
+wrote C:\Users\charl\Documents\Affect\foundation\charley-dev\_docs\live-reconciliation\20260914T145452Z.json
