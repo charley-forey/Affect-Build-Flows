@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T07:22:14.440446+00:00",
+  "generated_at": "2026-09-14T11:58:06.082611+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -17,7 +17,8 @@
         "scorecard": "Scorecard",
         "sourcecoverage": "Source Coverage",
         "projectdetail": "Project Detail",
-        "dataquality": "Data Quality"
+        "dataquality": "Data Quality",
+        "definitions": "KPI Definitions"
       },
       "tables": [
         "dim_Date",
@@ -58,7 +59,10 @@
         "dim_CostCodeCrosswalk",
         "dq_DataGap",
         "meta_PipelineRun",
-        "fct_DailySnapshot"
+        "fct_DailySnapshot",
+        "man_ProjectAccess",
+        "seed_KpiCatalog",
+        "meta_SourceFreshness"
       ],
       "relationships": [
         [
@@ -371,15 +375,15 @@
       "measures": [
         {
           "name": "Original Contract",
-          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\nRETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\nCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nVAR EndDate = MAX ( dim_Date[Date] )\nVAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\"@M\", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[OriginalContract] ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )\nRETURN CALCULATE ( SUM ( fct_FinancialPeriod[OriginalContract] ),\nTREATAS ( SELECTCOLUMNS ( LastRows, \"K\", fct_FinancialPeriod[ProjectKey], \"M\", [@M] ), fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),\nREMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C3"
+          "origin": "FINANCIALS!C3 - blank for months after the last loaded period"
         },
         {
           "name": "Current Contract",
-          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\nRETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\nCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nVAR EndDate = MAX ( dim_Date[Date] )\nVAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\"@M\", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[CurrentContract] ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )\nRETURN CALCULATE ( SUM ( fct_FinancialPeriod[CurrentContract] ),\nTREATAS ( SELECTCOLUMNS ( LastRows, \"K\", fct_FinancialPeriod[ProjectKey], \"M\", [@M] ), fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),\nREMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C4"
+          "origin": "FINANCIALS!C4 - blank for months after the last loaded period"
         },
         {
           "name": "Contract Growth %",
@@ -389,21 +393,27 @@
         },
         {
           "name": "Pending Change Orders",
-          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\nRETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\nCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nVAR EndDate = MAX ( dim_Date[Date] )\nVAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\"@M\", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[PendingChangeOrders] ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )\nRETURN CALCULATE ( SUM ( fct_FinancialPeriod[PendingChangeOrders] ),\nTREATAS ( SELECTCOLUMNS ( LastRows, \"K\", fct_FinancialPeriod[ProjectKey], \"M\", [@M] ), fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),\nREMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"
+          "origin": "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell; blank for months after the last loaded period"
         },
         {
           "name": "Age Of Oldest Unapproved CO",
           "expression": "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
           "format": "\"#,0\"",
-          "origin": "FINANCIALS!C6 - typed by hand"
+          "origin": "FINANCIALS!C6 - typed by hand. Pending-status COs only: Procore keeps drafts out of Pending Changes"
         },
         {
           "name": "Approved Change Orders",
-          "expression": "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> \"void\" )",
+          "expression": "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), fct_ChangeOrder[StatusCategory] = \"Approved\" )",
           "format": "\"$#,0\"",
-          "origin": "derived - approved COs, the complement of [Pending Change Orders]"
+          "origin": "derived - status Approved; Draft, Rejected, No Charge and Void are neither approved nor pending"
+        },
+        {
+          "name": "Draft Change Orders",
+          "expression": "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), fct_ChangeOrder[StatusCategory] = \"Draft\" )",
+          "format": "\"$#,0\"",
+          "origin": "derived - draft COs, not yet submitted, so excluded from [Pending Change Orders]"
         },
         {
           "name": "Change Order Amount",
@@ -413,33 +423,33 @@
         },
         {
           "name": "Budget",
-          "expression": "CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nCALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C19:C20 - as of the last budget snapshot"
+          "origin": "FINANCIALS!C19:C20 - as of the last budget snapshot; blank for months after it"
         },
         {
           "name": "Forecast",
-          "expression": "CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nCALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!D19:D20 - as of the last budget snapshot"
+          "origin": "FINANCIALS!D19:D20 - as of the last budget snapshot; blank for months after it"
         },
         {
           "name": "Committed",
-          "expression": "CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nCALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!D61 - as of the last budget snapshot"
+          "origin": "FINANCIALS!D61 - as of the last budget snapshot; blank for months after it"
         },
         {
           "name": "Spent To Date",
-          "expression": "CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nCALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!E19:E20 - as of the last budget snapshot"
+          "origin": "FINANCIALS!E19:E20 - as of the last budget snapshot; blank for months after it"
         },
         {
           "name": "Cost To Complete",
-          "expression": "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
+          "expression": "VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )\nRETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),\nCALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C15 - as of the last budget snapshot"
+          "origin": "FINANCIALS!C15 - as of the last budget snapshot; blank for months after it"
         },
         {
           "name": "Budget Remaining",
@@ -701,7 +711,7 @@
         },
         {
           "name": "Total Billed %",
-          "expression": "DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),\n\t\t\tFILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) ),\n\t\t\t[Current Contract] )",
+          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\n\t\t\tRETURN DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),\n\t\t\tREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate ),\n\t\t\t[Current Contract] )",
           "format": "\"0.0%\"",
           "origin": "DASHBOARD!AT15 - billed to date at period end over contract; was a TEXT string"
         },
@@ -913,91 +923,91 @@
           "name": "Open Submittals (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenSubmittals] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Submittals] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Open Submittals] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Open Submittals Past Due (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[SubmittalsPastDue] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Open RFIs (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenRfis] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open RFIs] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Open RFIs] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Open Observations (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenObservations] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Observations] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Open Observations] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Open Punch Items (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenPunchItems] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Punch Items] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Open Punch Items] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "AR Outstanding (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[ArOutstanding] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [AR Outstanding] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [AR Outstanding] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Total Billed (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[BilledToDate] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Total Billed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Total Billed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Budget (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[BudgetAmount] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Budget] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Budget] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Spent To Date (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[SpentToDate] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Spent To Date] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Spent To Date] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Committed (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[CommittedAmount] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Committed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Committed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Current Contract (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[CurrentContract] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Current Contract] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Current Contract] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Pending Change Orders (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[PendingChangeOrders] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Approved Change Orders (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[ApprovedChangeOrders] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Snapshot History Starts",
           "expression": "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"yyyy-mm-dd\"",
-          "origin": "no workbook equivalent - first saved capture. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
+          "origin": "no workbook equivalent - first saved capture. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Snapshot History Note",
-          "expression": "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\nRETURN IF ( ISBLANK ( F ), \"No month-end history captured yet\",\n\"History starts \" & FORMAT ( F, \"yyyy-MM-dd\" ) & \"; earlier months are unavailable, not zero\" )",
+          "expression": "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\nRETURN IF ( ISBLANK ( F ), \"No month-end history captured yet\",\n\"History starts \" & FORMAT ( F, \"yyyy-MM-dd\" ) & \"; earlier months are unavailable, not zero. CO and RFI draft rules changed 2026-09-15\" )",
           "format": null,
-          "origin": "no workbook equivalent - states where saved history begins"
+          "origin": "no workbook equivalent - states where saved history begins. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition"
         },
         {
           "name": "Avg Days To Payment",
@@ -3313,6 +3323,153 @@
           "table": "_Measures",
           "field": "Report Month Label",
           "kind": "Measure"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Caveats",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Definition",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Exclusions",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Formula",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "GapCategory",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "KpiName",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "ModelName",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Period",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Sources",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Batch",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "CheckedAt",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Evidence",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "LastSuccessAt",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Source",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Status",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "56bcf9ecc5346611f31f",
+          "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "56bcf9ecc5346611f31f",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "ed5d67f3d90ef9d9a399",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "3c394320e7482232f665",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "3c394320e7482232f665",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "3c394320e7482232f665",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
         }
       ]
     },
@@ -3328,7 +3485,9 @@
         "qcinspectionitems": "Inspection Items",
         "qcgates": "Statutory Gates",
         "qcchecklists": "Trade Checklists & DFOW",
-        "qcdq": "Data Quality"
+        "qcdq": "Data Quality",
+        "qctrademap": "Trade Mapping Decisions",
+        "definitions": "KPI Definitions"
       },
       "tables": [
         "dim_Date",
@@ -3352,7 +3511,11 @@
         "man_QcChecklistResult",
         "man_QcDohResult",
         "dq_DataGap",
-        "meta_PipelineRun"
+        "dq_TradeMappingCandidate",
+        "meta_PipelineRun",
+        "man_ProjectAccess",
+        "seed_KpiCatalog",
+        "meta_SourceFreshness"
       ],
       "relationships": [
         [
@@ -4907,6 +5070,258 @@
           "table": "_Measures",
           "field": "Report Month Label",
           "kind": "Measure"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "7717a798ea2abb4f559c",
+          "table": "dq_TradeMappingCandidate",
+          "field": "AffectedRecords",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "7717a798ea2abb4f559c",
+          "table": "dq_TradeMappingCandidate",
+          "field": "IsDecisionNeeded",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "7717a798ea2abb4f559c",
+          "table": "dq_TradeMappingCandidate",
+          "field": "MappingStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "7717a798ea2abb4f559c",
+          "table": "dq_TradeMappingCandidate",
+          "field": "ProjectCount",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "7717a798ea2abb4f559c",
+          "table": "dq_TradeMappingCandidate",
+          "field": "ProposedTradeKeys",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "7717a798ea2abb4f559c",
+          "table": "dq_TradeMappingCandidate",
+          "field": "RawTrade",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "6944ffae88c0c09ce078",
+          "table": "dq_TradeMappingCandidate",
+          "field": "AffectedRecords",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "6944ffae88c0c09ce078",
+          "table": "dq_TradeMappingCandidate",
+          "field": "IsNoLibraryEquivalent",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "6944ffae88c0c09ce078",
+          "table": "dq_TradeMappingCandidate",
+          "field": "RawTrade",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "8ed9093d61645448bd74",
+          "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "8ed9093d61645448bd74",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "99cabaa6b72eeb77d052",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "96ca8f87fa3f13a7619e",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "96ca8f87fa3f13a7619e",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Mapping Decisions",
+          "visual": "96ca8f87fa3f13a7619e",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Caveats",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Definition",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Exclusions",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Formula",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "GapCategory",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "KpiName",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "ModelName",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Period",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "856b2a0cf988c43810b4",
+          "table": "seed_KpiCatalog",
+          "field": "Sources",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Batch",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "CheckedAt",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Evidence",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "LastSuccessAt",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Source",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "a4d58c88770d72163b77",
+          "table": "meta_SourceFreshness",
+          "field": "Status",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "56bcf9ecc5346611f31f",
+          "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "56bcf9ecc5346611f31f",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "ed5d67f3d90ef9d9a399",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "3c394320e7482232f665",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "3c394320e7482232f665",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "KPI Definitions",
+          "visual": "3c394320e7482232f665",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
         }
       ]
     }
@@ -4914,6 +5329,9 @@
   "sql_producers": {
     "dim_Date": [
       "02-transformation\\sql\\gold\\00_dim_date.sql"
+    ],
+    "seed_KpiCatalog": [
+      "02-transformation\\sql\\gold\\02_seed_kpicatalog.sql"
     ],
     "dim_Owner": [
       "02-transformation\\sql\\gold\\03_dim_owner.sql"
@@ -4934,6 +5352,9 @@
       "02-transformation\\sql\\gold\\08_qc_seeds.sql"
     ],
     "qc_seed_TradeAlias": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "qc_seed_TradeSynonymProposal": [
       "02-transformation\\sql\\gold\\08_qc_seeds.sql"
     ],
     "qc_seed_ChecklistItem": [
@@ -5056,6 +5477,9 @@
     "man_DailyLogCompliance": [
       "02-transformation\\sql\\gold\\40_man_tables.sql"
     ],
+    "man_ProjectAccess": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
     "AS": [
       "02-transformation\\sql\\gold\\40_man_tables.sql"
     ],
@@ -5088,6 +5512,9 @@
     ],
     "dq_DataGap": [
       "02-transformation\\sql\\gold\\45_dq_datagap.sql"
+    ],
+    "dq_TradeMappingCandidate": [
+      "02-transformation\\sql\\gold\\46_dq_trademappingcandidate.sql"
     ],
     "sv_projects": [
       "02-transformation\\sql\\silver\\00_source_views.sql",
@@ -5222,6 +5649,9 @@
       "02-transformation\\sql\\silver\\01_source_views_cd.sql"
     ],
     "sv_man_daily_log_compliance": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_project_access": [
       "02-transformation\\sql\\silver\\01_source_views_cd.sql"
     ],
     "sv_qc_ncr": [
@@ -5432,6 +5862,12 @@
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_daily_log_compliance": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "mv_project_access": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_project_access": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_job_register": [

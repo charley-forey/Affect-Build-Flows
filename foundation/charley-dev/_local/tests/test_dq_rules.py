@@ -47,6 +47,17 @@ def main() -> int:
     con = build()
     checks = 0
 
+    name = "bridge committed equals non-void, non-draft commitment lines"
+    assert RULES[name].severity == expectations.SEVERITY_ERROR
+    check_fails(con, name, "UPDATE bridge_VendorCostCode SET Amount = Amount + 5000 "
+                           "WHERE AmountType = 'Committed' AND VendorKey = 'V1'")  # the VOID line leaking back
+    check_fails(con, name, "DELETE FROM bridge_VendorCostCode WHERE AmountType = 'Committed' AND VendorKey = 'V3'")
+    name = "terminated commitments counted at full value in vendor committed"
+    assert RULES[name].severity == expectations.SEVERITY_WARN
+    check_fails(con, name, "UPDATE bridge_VendorCostCode SET HasTerminatedCommitment = TRUE "
+                           "WHERE AmountType = 'Committed' AND VendorKey = 'V3'", clean=False)
+    checks += 3
+
     name = "dim_CostCode.Division is two digits or NULL"
     assert RULES[name].severity == expectations.SEVERITY_ERROR
     for bad in ("'1'", "'AB'", "'031'"):

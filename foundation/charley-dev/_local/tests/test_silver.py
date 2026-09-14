@@ -1250,6 +1250,32 @@ def test_qc_procore_parser(con) -> None:
                     "WHERE punch_id='PI1'") == "PUNCH_ITEM"
     check("punch items classify into the Punch & RCL vocabulary")
 
+    # Every production workflow step, and every display status with no step, maps to a
+    # seeded PUNCHRCLLOG_5 code - fct_QcPunch.StatusCode.fk_dim_QcStatus is an ERROR rule.
+    import csv
+    observed = json.loads((Path(__file__).parent / "observed_values.json").read_text(encoding="utf-8"))["fields"]
+    with open(CHARLEY_DEV / "02-transformation" / "seed" / "qc_status_vocab.csv", encoding="utf-8") as f:
+        codes = {r["Code"] for r in csv.DictReader(f) if r["Domain"] == "PUNCHRCLLOG_5"}
+    cases = [(w, "Open") for w in observed["punch_item.workflow_status"]["values"]]
+    cases += [(None, s.title()) for s in observed["punch_item.status_label"]["values"]]
+    con.execute("BEGIN")
+    try:
+        con.execute("DELETE FROM cd_bronze_procore_punch_items")
+        con.execute("INSERT INTO cd_bronze_procore_punch_items VALUES " + ", ".join(
+            bronze_row(f"PW{i}", {"id": f"PW{i}", "status": s, "workflow_status": w and w.lower()}, project_id="7")
+            for i, (w, s) in enumerate(cases)))
+        for path in SILVER_SQL:
+            for sql in split_statements(path.read_text()):
+                con.execute(sql)
+        got = dict(con.execute("SELECT punch_id, status_code FROM cd_silver_qc_punch").fetchall())
+        for i, case in enumerate(cases):
+            assert got.get(f"PW{i}") in codes, (case, got.get(f"PW{i}"))
+        assert got[f"PW{cases.index((None, 'Overdue'))}"] == "OPEN"
+        assert got[f"PW{cases.index(('READY_TO_CLOSE', 'Open'))}"] == "VERIFIED"
+    finally:
+        con.execute("ROLLBACK")
+    check(f"all {len(cases)} production punch workflow/display statuses map to a seeded code (Overdue is open)")
+
     assert one(con, "SELECT status_code FROM cd_silver_qc_submittal "
                     "WHERE submittal_id='SB1'") == "OPEN"
     check("submittal disposition maps to the Submittals & Mockups vocabulary")

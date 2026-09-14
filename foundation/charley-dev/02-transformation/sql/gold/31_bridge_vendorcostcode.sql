@@ -26,6 +26,17 @@
 -- filter to one of them. Anyone who writes SUM(Amount) without a filter gets a number that
 -- is obviously too big rather than one that is quietly wrong.
 --
+-- WHICH COMMITMENTS COUNT. Procore commitment status (2026-09-13 live: APPROVED 248,
+-- DRAFT 36, OUT FOR SIGNATURE 15, PROCESSING 7, VOID 4, CLOSED 4, TERMINATED 1, COMPLETE 1):
+--   VOID and DRAFT are excluded - a voided contract promises nothing, and a draft has not
+--     been offered. Until 2026-09-14 both were summed as Committed.
+--   TERMINATED is INCLUDED and flagged (HasTerminatedCommitment). The work done before
+--     termination is still owed, and Procore gives no terminated-at amount to cap it at; the
+--     full contract value overstates it, so a WARN DQ rule names every such row.
+--   Everything else (approved, out for signature, processing, closed, complete, NULL) counts.
+-- This is vendor-level committed only. [Committed] on fct_BudgetLine is Procore's own budget
+-- column and is not affected.
+--
 -- GRAIN: (project, vendor, cost code, amount type). Line items are rolled up - the
 -- question this answers is "what have we spent with this vendor on this code", not "what
 -- was on line 3"; fct_DirectCost still holds the transactions.
@@ -42,7 +53,8 @@ WITH direct_lines AS (
         'Actual'                            AS amount_type,
         'Direct cost'                       AS source_label,
         l.direct_cost_id                    AS parent_id,
-        COALESCE(l.total_amount, l.amount)  AS line_amount
+        COALESCE(l.total_amount, l.amount)  AS line_amount,
+        0                                   AS is_terminated
     FROM sv_direct_cost_lines l
     -- Only lines whose holder really is a direct cost. Procore reuses `holder` across
     -- object types, and a Commitment::Item joined on id alone would be attributed to
@@ -63,11 +75,13 @@ commitment_lines AS (
         'Committed'                         AS amount_type,
         c.commitment_type                   AS source_label,
         l.commitment_id                     AS parent_id,
-        COALESCE(l.total_amount, l.amount)  AS line_amount
+        COALESCE(l.total_amount, l.amount)  AS line_amount,
+        CASE WHEN UPPER(TRIM(c.status_label)) = 'TERMINATED' THEN 1 ELSE 0 END AS is_terminated
     FROM sv_commitment_lines l
     JOIN sv_commitments c ON c.commitment_id = l.commitment_id
     WHERE l.cost_code_id IS NOT NULL
       AND c.vendor_id IS NOT NULL
+      AND UPPER(TRIM(COALESCE(c.status_label, ''))) NOT IN ('VOID', 'DRAFT')
       -- The holder_type must match the endpoint the line came from. A work order id and a
       -- purchase order id are different id spaces that can collide, so joining without
       -- this can attach a subcontract line to an unrelated purchase order.
@@ -94,6 +108,7 @@ SELECT
     SUM(line_amount)                 AS Amount,
     COUNT(*)                         AS LineItemCount,
     COUNT(DISTINCT parent_id)        AS ParentCount,
-    (amount_type = 'Actual')         AS IsActual
+    (amount_type = 'Actual')         AS IsActual,
+    (MAX(is_terminated) = 1)         AS HasTerminatedCommitment
 FROM combined
 GROUP BY project_id, vendor_id, cost_code_id, amount_type;

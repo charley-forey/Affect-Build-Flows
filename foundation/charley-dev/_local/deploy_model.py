@@ -410,6 +410,8 @@ MEASURES = [
      "\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 ) )",
      '"#,0"', "derived"),
     # ---- Vendor <-> cost code (Phase 0 item 3) ------------------------------
+    # Committed rows exclude VOID and DRAFT commitments; TERMINATED ones count at full
+    # value and are flagged (31_bridge_vendorcostcode.sql, kpi_catalog.py).
     # ACTUAL only. bridge_VendorCostCode holds actual and committed as separate
     # rows, and an unfiltered SUM over Amount blends the two - counting the same
     # work once when it was committed and again when it was paid.

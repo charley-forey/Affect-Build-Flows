@@ -205,7 +205,14 @@ SOURCE_FIXTURES = (
         ('P1','SB4','004','Draft door hardware', 'Draft',   'Draft', 'CC1', DATE '2025-05-05', DATE '2025-05-10', NULL),
         -- Closed by status with neither distributed_at nor closed_at (65 live): not open,
         -- and no turnaround rather than an invented one.
-        ('P1','SB5','005','Closed, no dates',    'Closed',  'Closed','CC1', DATE '2025-04-02', DATE '2025-04-22', NULL)
+        ('P1','SB5','005','Closed, no dates',    'Closed',  'Closed','CC1', DATE '2025-04-02', DATE '2025-04-22', NULL),
+        -- The rest of production's status names, spelt as Procore sends them (see
+        -- tests/observed_values.json). All closed and answered, so open counts do not move.
+        ('P1','SB6','006','Noted door schedule', 'Approved as Noted',  'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB7','007','Record copy',         'For Record',         'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB8','008','Resubmit anchors',    'Revise and Resubmit','Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB9','009','Rejected sealant',    'Rejected',           'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB10','010','Never reviewed',     'Not Reviewed',       'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13')
     ) AS t(project_id, item_id, item_number, subject, status_label, status_category, cost_code_id,
            created_date, due_date, responded_date)""",
 
@@ -303,7 +310,16 @@ SOURCE_FIXTURES = (
         ('Subcontract','P1','SC1','SC-1','HVAC','APPROVED','V1','Demar Plumbing',
          390000.0, 30485.0, 30485.0, TRUE),
         ('Purchase Order','P1','PO1','PO-1','Equipment','APPROVED','V3','Daikin',
-         28000.0, 0.0, 0.0, TRUE)
+         28000.0, 0.0, 0.0, TRUE),
+        -- Every production commitment status (observed_values.json). VOID and DRAFT lines
+        -- must not reach Committed; TERMINATED does, flagged. The rest carry no lines.
+        ('Subcontract','P1','SC2','SC-2','Voided','VOID','V1','Demar Plumbing', 5000.0, 0.0, 0.0, FALSE),
+        ('Subcontract','P1','SC3','SC-3','Not sent','DRAFT','V1','Demar Plumbing', 6000.0, 0.0, 0.0, FALSE),
+        ('Subcontract','P1','SC4','SC-4','Ended early','TERMINATED','V1','Demar Plumbing', 2000.0, 0.0, 0.0, TRUE),
+        ('Subcontract','P1','SC5','SC-5','Signing','OUT FOR SIGNATURE','V1','Demar Plumbing', 0.0, 0.0, 0.0, FALSE),
+        ('Subcontract','P1','SC6','SC-6','Processing','PROCESSING','V1','Demar Plumbing', 0.0, 0.0, 0.0, FALSE),
+        ('Subcontract','P1','SC7','SC-7','Closed','CLOSED','V1','Demar Plumbing', 0.0, 0.0, 0.0, TRUE),
+        ('Subcontract','P1','SC8','SC-8','Complete','COMPLETE','V1','Demar Plumbing', 0.0, 0.0, 0.0, TRUE)
     ) AS t(commitment_type, project_id, commitment_id, commitment_number, title,
            status_label, vendor_id, vendor_name, grand_total, total_payments,
            total_requisitioned, is_executed)""",
@@ -317,7 +333,13 @@ SOURCE_FIXTURES = (
         -- collide, and joining without checking holder_type attaches this to the wrong
         -- contract - and so to the wrong vendor.
         ('P1','CL3','PO1','WorkOrderContract','WorkOrderContract','CC1','03-100',
-         '03-100 - CONCRETE','Mismatched','Material', 7777.0, 7777.0, 0.0, 0.0)
+         '03-100 - CONCRETE','Mismatched','Material', 7777.0, 7777.0, 0.0, 0.0),
+        ('P1','CL4','SC2','WorkOrderContract','WorkOrderContract','CC1','03-100',
+         '03-100 - CONCRETE','Void','Material', 5000.0, 5000.0, 0.0, 0.0),
+        ('P1','CL5','SC3','WorkOrderContract','WorkOrderContract','CC1','03-100',
+         '03-100 - CONCRETE','Draft','Material', 6000.0, 6000.0, 0.0, 0.0),
+        ('P1','CL6','SC4','WorkOrderContract','WorkOrderContract','CC1','03-100',
+         '03-100 - CONCRETE','Terminated','Material', 2000.0, 2000.0, 0.0, 0.0)
     ) AS t(project_id, line_item_id, commitment_id, holder_type, source_endpoint,
            cost_code_id, cost_code, cost_code_name, description, line_item_type,
            amount, total_amount, quantity, unit_cost)""",
@@ -379,7 +401,23 @@ SOURCE_FIXTURES = (
         ('Subcontractor','P2','B6','1',1,'DRAFT','V2','Orphan','C9','SC-9',
          'WorkOrderContract', DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31',
          NULL, 5.0, 100000.0, 0.0, 100000.0, 5000.0, 0.0, 7777.0, 5.0, 0.0, 7777.0,
-         0.0, 0.0, 95000.0)
+         0.0, 0.0, 95000.0),
+        -- The sub pay app statuses production carries beyond APPROVED/DRAFT, on their own
+        -- contract (C7, zero money so no balance moves). Periods 2-4 are issued but not
+        -- approved: period 4 wins IsLatestPeriod, period 1 (APPROVED_AS_NOTED) stays the
+        -- latest approved.
+        ('Subcontractor','P1','B7','1',1,'APPROVED_AS_NOTED','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ('Subcontractor','P1','B8','2',2,'REVISE_AND_RESUBMIT','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-06-30', DATE '2025-06-01', DATE '2025-06-30',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ('Subcontractor','P1','B9','3',3,'UNDER_REVIEW','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-07-31', DATE '2025-07-01', DATE '2025-07-31',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ('Subcontractor','P1','B10','4',4,'PENDING_OWNER_APPROVAL','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-08-31', DATE '2025-08-01', DATE '2025-08-31',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     ) AS t(billing_type, project_id, billing_id, invoice_number, period_number,
            status_label, vendor_id, counterparty_name, contract_id, contract_name,
            contract_type, billing_date, period_start, period_end, payment_date,

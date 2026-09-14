@@ -623,6 +623,36 @@ def build_suite() -> Suite:
             severity=SEVERITY_WARN,
             description="a negative committed line is a credit, or an inverted sign",
         ),
+        # Committed conserves the countable commitment lines: 31_bridge_vendorcostcode.sql's
+        # join and status filter repeated verbatim (change them together). A VOID or DRAFT
+        # contract leaking back in, or a line dropped or fanned out, moves the total.
+        Expectation(
+            name="bridge committed equals non-void, non-draft commitment lines",
+            table="bridge_VendorCostCode",
+            failing_sql=(
+                "SELECT * FROM ("
+                "  SELECT (SELECT COALESCE(SUM(Amount), 0) FROM bridge_VendorCostCode"
+                "          WHERE AmountType = 'Committed') AS bridge,"
+                "         (SELECT COALESCE(SUM(COALESCE(l.total_amount, l.amount)), 0)"
+                "          FROM sv_commitment_lines l JOIN sv_commitments c ON c.commitment_id = l.commitment_id"
+                "          WHERE l.cost_code_id IS NOT NULL AND c.vendor_id IS NOT NULL"
+                "            AND UPPER(TRIM(COALESCE(c.status_label, ''))) NOT IN ('VOID', 'DRAFT')"
+                "            AND ((l.holder_type = 'WorkOrderContract' AND c.commitment_type = 'Subcontract')"
+                "              OR (l.holder_type = 'PurchaseOrderContract' AND c.commitment_type = 'Purchase Order'))"
+                "         ) AS source"
+                ") WHERE ABS(bridge - source) > 0.01"),
+            severity=SEVERITY_ERROR,
+            description="vendor committed must exclude VOID and DRAFT contracts and count every other line once",
+        ),
+        # TERMINATED stays in Committed at full contract value (Procore has no terminated-at
+        # amount), which overstates what is still owed. Named, not blocked.
+        Expectation(
+            name="terminated commitments counted at full value in vendor committed",
+            table="bridge_VendorCostCode",
+            failing_sql="SELECT * FROM bridge_VendorCostCode WHERE HasTerminatedCommitment",
+            severity=SEVERITY_WARN,
+            description="a terminated contract's full value is in Vendor Committed - check what is still owed",
+        ),
         # COVERAGE, reported as a number rather than assumed. Live this fires on ~228 of
         # 251 vendors, and that IS the finding: the vendor list was never checkable before.
         Expectation(

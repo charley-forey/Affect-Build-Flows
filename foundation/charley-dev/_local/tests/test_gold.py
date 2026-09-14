@@ -230,15 +230,15 @@ def test_fct_rfisubmittal(con) -> None:
     # BOTH arms, as of 2026-08-02. RFIs are the half of the workbook's only chart that has
     # never been automated anywhere - no RFI table exists in the existing warehouse - so
     # asserting the union is asserting the new capability, not just the row count.
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 9
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 5
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 14
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 10
     assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='RFI'") == 4
     check("fct_RfiSubmittal unions submittals AND RFIs, split by ItemType")
 
     # ItemKey is only unique WITHIN an arm - Procore numbers RFIs and submittals
     # independently, so the model keys on the pair.
     assert one(con, "SELECT COUNT(*) FROM (SELECT DISTINCT ItemType, ItemKey "
-                    "FROM fct_RfiSubmittal)") == 9
+                    "FROM fct_RfiSubmittal)") == 14
     check("ItemType + ItemKey is unique across both arms")
 
     # The RFI arm must behave identically to the submittal arm - same derivations, not a
@@ -256,6 +256,8 @@ def test_fct_rfisubmittal(con) -> None:
     assert sub("SB2") == (False, False, False, False, 14)
     assert sub("SB4") == (False, True, False, False, None)
     assert sub("SB5") == (False, False, False, False, None)
+    # Every other production status name (SB6-SB10) is Closed-category and answered.
+    assert [sub(f"SB{i}") for i in range(6, 11)] == [(False, False, False, False, 10)] * 5
     check("submittal IsOpen excludes responded, Closed-category and draft items")
     check("DaysOpen is set for open items only; TurnaroundDays for responded items only")
     assert one(con, "SELECT DaysOpen FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") is None
@@ -526,8 +528,8 @@ def test_fct_billing(con) -> None:
     """
     # Drafts stay in the table. They are real pending work, and dropping a row to make a
     # flag behave is how you end up unable to answer "what is waiting to be billed?".
-    assert one(con, "SELECT COUNT(*) FROM fct_Billing") == 6
-    assert one(con, "SELECT COUNT(*) FROM fct_Billing WHERE IsLatestPeriod") == 2
+    assert one(con, "SELECT COUNT(*) FROM fct_Billing") == 10
+    assert one(con, "SELECT COUNT(*) FROM fct_Billing WHERE IsLatestPeriod") == 3
     check("every billing period is kept; exactly one per contract carries the balance")
 
     # The trap, made a number. The naive sum multiplies one contract's retainage and adds
@@ -555,6 +557,13 @@ def test_fct_billing(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_Billing "
                     "WHERE IsLatestPeriod AND ContractId='C1'") == 2
     check("billing direction partitions the ranking, so colliding ids cannot merge")
+
+    # C7 carries the production statuses beyond APPROVED/DRAFT: the newest issued pay app
+    # (PENDING_OWNER_APPROVAL) is the latest period; APPROVED_AS_NOTED stays latest approved.
+    assert q(con, "SELECT BillingKey, IsLatestPeriod, IsLatestApprovedPeriod FROM fct_Billing "
+                  "WHERE ContractId='C7' ORDER BY PeriodNumber") == [
+        ("B7", False, True), ("B8", False, False), ("B9", False, False), ("B10", True, False)]
+    check("unapproved-but-issued pay app statuses win IsLatestPeriod, never IsLatestApprovedPeriod")
 
     # The independent cross-check: CurrentPaymentDue is the only period movement here, so
     # it sums, and it must reach the same place the cumulative column reports.
@@ -639,10 +648,17 @@ def test_bridge_vendorcostcode(con) -> None:
     # COMMITTED IS NOT SPENT. V1/CC1 has both, and they must stay two rows - summing them
     # counts the same work once when committed and again when paid.
     assert one(con, "SELECT Amount FROM bridge_VendorCostCode "
-                    "WHERE VendorKey='V1' AND CostCodeKey='CC1' AND AmountType='Committed'") == 390000.0
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1' AND AmountType='Committed'") == 392000.0
     assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode "
                     "WHERE VendorKey='V1' AND CostCodeKey='CC1'") == 2
     check("actual and committed are separate rows, never a blended total")
+
+    # Commitment status: SC2 (VOID, 5000) and SC3 (DRAFT, 6000) promise nothing and are left
+    # out; SC4 (TERMINATED, 2000) still counts, flagged, so 390000 + 2000.
+    assert one(con, "SELECT HasTerminatedCommitment FROM bridge_VendorCostCode "
+                    "WHERE VendorKey='V1' AND CostCodeKey='CC1' AND AmountType='Committed'") is True
+    assert one(con, "SELECT COUNT(*) FROM bridge_VendorCostCode WHERE HasTerminatedCommitment") == 1
+    check("VOID and DRAFT commitments are not committed; TERMINATED counts and is flagged")
 
     # Procore reuses `holder` across object types and the id spaces can collide. L3 (a
     # Commitment::Item among direct cost lines) and CL3 (a WorkOrderContract line pointing
@@ -871,6 +887,11 @@ def main() -> int:
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
         test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance, test_fct_apinvoice, test_dq_datagap):
         fn(con)
+    # Production-observed values vs SQL branches and these fixtures (see that module).
+    import test_observed_values as ov
+    for fn in (ov.test_catalogue_shape, ov.test_sql_branches_accounted,
+               ov.test_observed_values_handled, ov.test_fixtures_cover_observed):
+        fn(check)
     for label in CHECKS:
         print(f"  ok  {label}")
     print(f"\ntest_gold: {len(CHECKS)} checks passed")

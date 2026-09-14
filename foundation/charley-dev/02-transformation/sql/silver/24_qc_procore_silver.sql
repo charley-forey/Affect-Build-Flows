@@ -86,14 +86,25 @@ SELECT
     cost_code_id,
     priority,
     status_label                                            AS source_status,
-    -- -> dim_QcStatus Domain='PUNCHRCLLOG_5'
-    CASE UPPER(COALESCE(status_label, ''))
+    -- -> dim_QcStatus Domain='PUNCHRCLLOG_5'. Procore has two fields: workflow_status is the
+    -- machine step (INITIATED, WORK_REQUIRED, READY_FOR_REVIEW, READY_TO_CLOSE, IN_DISPUTE,
+    -- CLOSED) and status is the display value (Open, Overdue, Closed). Map the workflow step;
+    -- fall back to the display value only when the step is absent. Overdue is an OPEN item
+    -- past its due date (IsPastDue in 33_fct_qc.sql says that), not a separate status.
+    -- READY_TO_CLOSE = the manager accepted the work, awaiting final close: the workbook's
+    -- Verified. IsOpen comes from closed_date, so this does not change open counts.
+    -- 2026-09-13 live: workflow CLOSED 1478, WORK_REQUIRED 103, READY_TO_CLOSE 17,
+    -- INITIATED 12, READY_FOR_REVIEW 6, IN_DISPUTE 1; display OVERDUE 77.
+    CASE UPPER(TRIM(COALESCE(workflow_status, status_label, '')))
          WHEN 'INITIATED'          THEN 'OPEN'
          WHEN 'OPEN'               THEN 'OPEN'
+         WHEN 'OVERDUE'            THEN 'OPEN'
          WHEN 'IN_PROGRESS'        THEN 'IN_PROGRESS'
          WHEN 'WORK_REQUIRED'      THEN 'IN_PROGRESS'
          WHEN 'WORK_NOT_ACCEPTED'  THEN 'IN_PROGRESS'
+         WHEN 'IN_DISPUTE'         THEN 'IN_PROGRESS'
          WHEN 'READY_FOR_REVIEW'   THEN 'CORRECTED'
+         WHEN 'READY_TO_CLOSE'     THEN 'VERIFIED'
          WHEN 'CLOSED'             THEN 'CLOSED'
     END                                                     AS status_code,
     -- -> dim_QcStatus Domain='PUNCHRCLLOG_3'. The workbook separates a punch item from

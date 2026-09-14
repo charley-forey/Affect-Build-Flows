@@ -329,9 +329,12 @@ MONTHLY = {
         "Project vendors not synced to Sage.",
         "DISTINCTCOUNT of bridge_ProjectVendor[VendorKey] where IsMissingFromErp", NOT_MONTH, (PROCORE, SAGE)),
     "Vendor Committed": K(
-        "Committed amount by vendor and cost code.",
+        "Committed amount by vendor and cost code, from Procore subcontract and purchase order lines.",
         "SUM of bridge_VendorCostCode[Amount] where AmountType = Committed", NOT_MONTH, (PROCORE,),
-        caveats="Never add to Vendor Spend - the same work would count twice"),
+        exclusions="VOID and DRAFT commitments",
+        caveats="Never add to Vendor Spend - the same work would count twice. TERMINATED commitments "
+                "count at full contract value (HasTerminatedCommitment, WARN DQ rule). Not the budget "
+                "Committed column"),
     "Vendor Spend": K(
         "Actual spend by vendor and cost code.",
         "SUM of bridge_VendorCostCode[Amount] where AmountType = Actual", NOT_MONTH, (PROCORE,),
