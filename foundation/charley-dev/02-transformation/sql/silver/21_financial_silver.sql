@@ -171,7 +171,8 @@ SELECT
     CAST(get_json_object(payload, '$.grand_total')          AS DOUBLE) AS grand_total,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_direct_costs
-WHERE get_json_object(payload, '$.id') IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL
+  AND _source_deleted_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- Project-vendor bridge - who is working on what, with the prequal detail

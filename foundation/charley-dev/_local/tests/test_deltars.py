@@ -21,6 +21,7 @@ from deltalake import DeltaTable
 
 import deltars
 import fabric_common
+import procore_scope
 import watermark
 
 KEYS = ["_key", "_project_id"]
@@ -50,22 +51,23 @@ def row(key, project, payload, batch="b1", at=T0):
             "payload": payload, "_batch_id": batch, "_row_hash": fabric_common.row_hash(payload)}
 
 
-def spark_merge(con, rows):
+def spark_merge(con, rows, scopes=(), deleted_at=None):
     """merge_delta's logic, executed by DuckDB."""
     con.execute("CREATE OR REPLACE TABLE src (_key VARCHAR, _project_id BIGINT, _source_endpoint VARCHAR, "
-                "_ingested_at TIMESTAMPTZ, payload VARCHAR, _batch_id VARCHAR, _row_hash VARCHAR)")
-    con.executemany("INSERT INTO src VALUES (?, ?, ?, ?, ?, ?, ?)", [[r[c] for c in COLUMNS] for r in rows])
+                "_ingested_at TIMESTAMPTZ, payload VARCHAR, _batch_id VARCHAR, _row_hash VARCHAR, "
+                "_source_deleted_at TIMESTAMPTZ)")
+    con.executemany("INSERT INTO src VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [[r.get(c) for c in COLUMNS] for r in rows])
     fabric_common.prepare_merge(Frame(con.table("src")), KEYS)
     if not con.execute("SELECT count(*) FROM information_schema.tables WHERE table_name = 'tgt'").fetchone()[0]:
         con.execute("CREATE TABLE tgt AS SELECT DISTINCT * FROM src")
         return
-    sql = fabric_common.merge_sql("tgt", "src", KEYS, COLUMNS)
+    sql = fabric_common.merge_sql("tgt", "src", KEYS, COLUMNS, scopes, deleted_at)
     sql = re.sub(r"t\.(\"[^\"]+\") = ", r"\1 = ", sql.replace("`", '"').replace("<=>", "IS NOT DISTINCT FROM"))
     con.execute(sql)
 
 
 def rows_of(relation_rows):
-    return sorted(tuple(r[c] for c in COLUMNS) for r in relation_rows)
+    return sorted((tuple(r[c] for c in COLUMNS) for r in relation_rows), key=repr)
 
 
 def test_merge_equivalence():
@@ -85,7 +87,7 @@ def test_merge_equivalence():
         for batch in batches:
             spark_merge(con, batch)
             written = deltars.merge_rows(uri, batch, KEYS)
-            assert written == len({tuple(r[c] for c in COLUMNS) for r in batch})
+            assert written == len({tuple(r.get(c) for c in COLUMNS) for r in batch})
             expected = rows_of(dict(zip(COLUMNS, r)) for r in con.execute("SELECT * FROM tgt").fetchall())
             actual = rows_of(DeltaTable(uri).to_pyarrow_table().to_pylist())
             assert actual == expected, (actual, expected)
@@ -136,6 +138,63 @@ def test_watermark_and_run_log():
     print("  delta-rs watermark: None first, newest per endpoint, overlap applied, merged; run log appends, never raises")
 
 
+def audit(mode, *scopes):
+    """The endpoint audit the extraction cell writes: (project_id, status, received_rows)."""
+    return {"mode": mode, "scopes": [{"project_id": p, "status": s, "received_rows": n} for p, s, n in scopes]}
+
+
+def test_tombstones():
+    """Deletion flags, driven by the manifest's scope audit, identical on both merge paths."""
+    ep = procore_scope.Endpoint("rfis", "/rest/v1.0/projects/{project_id}/rfis", "project", "1.0", "t")
+    days = [T0 + timedelta(days=d) for d in range(6)]
+    first = [row("1", 7, "a"), row("2", 7, "b"), row("3", 8, "c"), row("4", None, "d"), row("5", 9, "e")]
+    steps = [
+        # 0: initial load.
+        (first, audit("full", (7, "complete", 2), (8, "complete", 1), (None, "complete", 1), (9, "complete", 1)),
+         {}),
+        # 1: complete full pull: key 2 gone from 7, key 4 gone from the company scope. Project
+        # 8 failed after page one (partial) and 9 was a declared exclusion: neither tombstones.
+        ([row("1", 7, "a", "b1", days[1]), row("x", 8, "partial", "b1", days[1])],
+         audit("full", (7, "complete", 1), (8, "failed", 1), (9, "excluded_declared", 0), (None, "complete", 0)),
+         {("2", 7): days[1]}),
+        # 2: the same deletion does not re-stamp; an incremental pull tombstones nothing.
+        ([row("1", 7, "a", "b2", days[2])], audit("incremental", (7, "complete", 1), (8, "complete", 1)),
+         {("2", 7): days[1]}),
+        # 3: key 2 reappears - its tombstone clears. Company scope now complete and non-empty.
+        ([row("1", 7, "a", "b3", days[3]), row("2", 7, "b", "b3", days[3]), row("9", None, "z", "b3", days[3])],
+         audit("full", (7, "complete", 2), (None, "complete", 1)),
+         {("4", None): days[3]}),
+    ]
+    con = duckdb.connect()
+    con.execute("SET TimeZone = 'UTC'")
+    with tempfile.TemporaryDirectory() as tmp:
+        uri = str(Path(tmp) / "cd_bronze_procore_rfis")
+        # A bronze table from before the column existed: both paths must add it, not fail.
+        legacy = [r for r in first]
+        for i, (batch, manifest, expected_deleted) in enumerate(steps):
+            scopes = procore_scope.tombstone_scopes(ep, manifest) if i else []
+            at = batch[0]["_ingested_at"]
+            if i == 0:
+                old = deltars._schemas()["bronze"]
+                deltars.merge_rows(uri, legacy, KEYS, schema=old.remove(old.get_field_index("_source_deleted_at")))
+                spark_merge(con, legacy)
+                continue
+            spark_merge(con, batch, scopes, at)
+            deltars.merge_rows(uri, batch, KEYS, tombstone_scopes=scopes, deleted_at=at)
+            expected = rows_of(dict(zip(COLUMNS, r)) for r in con.execute(f"SELECT {', '.join(COLUMNS)} FROM tgt").fetchall())
+            actual = rows_of(DeltaTable(uri).to_pyarrow_table().to_pylist())
+            assert actual == expected, (i, actual, expected)
+            deleted = {(r["_key"], r["_project_id"]): r["_source_deleted_at"]
+                       for r in DeltaTable(uri).to_pyarrow_table().to_pylist() if r["_source_deleted_at"]}
+            assert deleted == expected_deleted, (i, deleted)
+        # No row is ever removed: the tombstone is a flag, the evidence stays.
+        assert DeltaTable(uri).to_pyarrow_table().num_rows == 7
+    con.close()
+    print("  tombstones: complete scopes only; partial, excluded, empty and incremental never; "
+          "stamped once; reappearing key clears; legacy table gains the column; both paths identical")
+
+
 if __name__ == "__main__":
     test_merge_equivalence()
+    test_tombstones()
     test_watermark_and_run_log()

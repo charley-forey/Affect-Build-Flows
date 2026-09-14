@@ -28,7 +28,10 @@ SELECT
     CAST(`Project ID`      AS STRING) AS project_id,
     CAST(`Project Name`    AS STRING) AS project_name,
     CAST(`Sage Project ID` AS STRING) AS sage_project_id,
-    CAST(origin_code       AS STRING) AS origin_code
+    CAST(origin_code       AS STRING) AS origin_code,
+    -- The existing warehouse records no extraction freshness: unknown, not fresh.
+    CAST(NULL AS BOOLEAN)   AS is_active_in_procore,
+    CAST(NULL AS TIMESTAMP) AS last_extracted_at
 FROM delta.`{SILVER_ABFSS}/dim_projects_procoreXsage`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_vendors AS

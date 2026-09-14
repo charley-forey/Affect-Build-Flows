@@ -986,6 +986,32 @@ def build_suite() -> Suite:
         description="a retrieved subset must not masquerade as the complete source inspection; unknown header counts remain unverified",
     ))
 
+    # ------------------------------------------------- deletions and source scope
+    #
+    # WARN: both are true of the source, not pipeline defects. A record deleted in Procore is
+    # excluded from every fact and listed in dq_DataGap; a project that fell out of the
+    # active-project scope keeps its last facts, which still count in portfolio totals.
+    # See _docs/deletion-and-scope-handling.md.
+    suite.add(
+        Expectation(
+            name="Procore records deleted at source",
+            table="dq_DataGap",
+            failing_sql="SELECT * FROM dq_DataGap WHERE GapCategory = 'Deleted at source'",
+            severity=SEVERITY_WARN,
+            description="records absent from a complete Procore pull are excluded from reporting - a spike means deletions or a pull that silently returned less",
+        ),
+        Expectation(
+            name="projects with facts extracted within 2 days",
+            table="dim_Project",
+            failing_sql=("SELECT ProjectKey, ProjectName, IsActiveInProcore, LastExtractedAt FROM dim_Project "
+                         "WHERE LastExtractedAt < now() - INTERVAL 2 DAYS AND ProjectKey IN ("
+                         "SELECT ProjectKey FROM fct_BudgetLine UNION SELECT ProjectKey FROM fct_ChangeOrder "
+                         "UNION SELECT ProjectKey FROM fct_RfiSubmittal)"),
+            severity=SEVERITY_WARN,
+            description="a project no longer extracted (usually inactive in Procore) still counts in totals with frozen figures",
+        ),
+    )
+
     _add_ap_rules(suite)
     _add_conservation_rules(suite)
     _add_key_and_vocabulary_rules(suite)

@@ -268,6 +268,17 @@ def main() -> int:
                                "WHERE ItemType = 'RFI'") == 0
     checks += 2
 
+    # Deletions and scope: WARN only. The fixture ledger holds one deleted RFI.
+    deleted = "Procore records deleted at source"
+    assert RULES[deleted].severity == expectations.SEVERITY_WARN and failing(con, deleted) == 1
+    stale = "projects with facts extracted within 2 days"
+    assert RULES[stale].severity == expectations.SEVERITY_WARN
+    check_fails(con, stale, "UPDATE dim_Project SET LastExtractedAt = CAST(now() AS TIMESTAMP) - INTERVAL 3 DAY "
+                            "WHERE ProjectKey = 'P1'")
+    # Never read (NULL) is not "stale": the existing-warehouse source has no freshness at all.
+    assert mutated(con, stale, "UPDATE dim_Project SET LastExtractedAt = NULL") == 0
+    checks += 3
+
     con.close()
     print(f"test_dq_rules: {checks} mutation checks passed")
     return 0

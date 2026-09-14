@@ -777,11 +777,15 @@ def test_dq_datagap(con) -> None:
     check("dq_DataGap[ProjectKey] only holds keys dim_Project has; unknown ids stay readable in Detail")
 
     # Each reject ledger row appears once - the register is a view of the ledgers, not a sample.
-    assert one(con, "SELECT COUNT(*) FROM dq_DataGap WHERE GapCategory LIKE 'Rejected%'") == \
+    assert one(con, "SELECT COUNT(*) FROM dq_DataGap WHERE GapCategory LIKE 'Rejected%' "
+                    "OR GapCategory = 'Deleted at source'") == \
         sum(one(con, f"SELECT COUNT(*) FROM {v}")
             for v in ("sv_dq_rejects", "sv_dq_rejects_manual", "sv_dq_rejects_qc"))
     assert one(con, "SELECT RunBatchId FROM dq_DataGap WHERE EntityKey = 'OBX'") == "batch-1"
     check("every reject ledger row reaches dq_DataGap exactly once, with its batch id")
+    assert q(con, "SELECT GapCategory, SourceSystem, EntityType, RunBatchId FROM dq_DataGap "
+                  "WHERE EntityKey = 'RDEL'") == [("Deleted at source", "Procore", "cd_silver_rfis", "batch-0")]
+    check("a record deleted at source is its own dq_DataGap category, not a rejected row")
 
 
 def test_fct_apinvoice(con) -> None:

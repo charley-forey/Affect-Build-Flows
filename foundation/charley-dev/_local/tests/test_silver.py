@@ -39,11 +39,13 @@ def check(label: str) -> None:
     CHECKS.append(label)
 
 
-def bronze_row(key: str, payload: dict, project_id: str | None = None) -> str:
+def bronze_row(key: str, payload: dict, project_id: str | None = None, deleted_at: str | None = None,
+               ingested_at: str = "2026-08-01 12:00:00") -> str:
     """One bronze row, exactly as procore_extract.to_bronze_row writes it."""
     p = json.dumps(payload).replace("'", "''")
     pid = f"'{project_id}'" if project_id else "NULL"
-    return f"('{key}', {pid}, '{p}', TIMESTAMP '2026-08-01 12:00:00', 'batch-1')"
+    deleted = f"TIMESTAMP '{deleted_at}'" if deleted_at else "CAST(NULL AS TIMESTAMP)"
+    return f"('{key}', {pid}, '{p}', TIMESTAMP '{ingested_at}', 'batch-1', {deleted})"
 
 
 BRONZE = {
@@ -341,7 +343,7 @@ BRONZE = {
     ],
 }
 
-COLUMNS = "_key, _project_id, payload, _ingested_at, _batch_id"
+COLUMNS = "_key, _project_id, payload, _ingested_at, _batch_id, _source_deleted_at"
 
 
 # --------------------------------------------------------------------------
@@ -1414,13 +1416,64 @@ def test_sage_reconciliation(con):
     check("offsetting invoice errors fail even when the portfolio total reconciles")
 
 
+# silver table -> the bronze tables that feed it, for every parser that excludes tombstones.
+DELETION_TARGETS = {
+    "cd_silver_prime_change_orders": ["prime_change_orders"],
+    "cd_silver_submittals": ["submittals"],
+    "cd_silver_rfis": ["rfis"],
+    "cd_silver_observations": ["observations"],
+    "cd_silver_punch_items": ["punch_items"],
+    "cd_silver_direct_costs": ["direct_costs"],
+    "cd_silver_commitments": ["work_order_contracts", "purchase_order_contracts"],
+    "cd_silver_commitment_lines": ["work_order_contract_line_items", "purchase_order_contract_line_items"],
+}
+
+
+def test_deleted_at_source(con) -> None:
+    """Tombstoned bronze rows leave silver and land in the reject ledger, conserving rows."""
+    con.execute("BEGIN")
+    try:
+        for sources in DELETION_TARGETS.values():
+            for source in sources:
+                payload = {"id": f"DEL-{source}", "holder": {"id": "X"}}
+                con.execute(f"INSERT INTO cd_bronze_procore_{source} VALUES "
+                            + bronze_row(f"DEL-{source}", payload, "7", deleted_at="2026-08-02 06:00:00"))
+        # A later full pull of project 7 re-merged its cost codes: freshness advances.
+        con.execute("INSERT INTO cd_bronze_procore_cost_codes VALUES "
+                    + bronze_row("CC-late", {"id": "CC-late"}, "7", ingested_at="2026-08-03 06:00:00"))
+        for path in SILVER_SQL:
+            for statement in split_statements(path.read_text(encoding="utf-8")):
+                con.execute(statement)
+        for target, sources in DELETION_TARGETS.items():
+            with_id = sum(one(con, f"SELECT COUNT(*) FROM cd_bronze_procore_{s} "
+                                   "WHERE get_json_object(payload, '$.id') IS NOT NULL") for s in sources)
+            accepted = one(con, f"SELECT COUNT(*) FROM {target}")
+            deleted = con.execute("SELECT payload FROM cd_dq_rejects WHERE target_table = ? "
+                                  "AND reason = 'deleted at source'", [target]).fetchall()
+            assert len(deleted) == len(sources), (target, deleted)
+            assert with_id == accepted + len(deleted), (target, with_id, accepted, len(deleted))
+            assert not one(con, f"SELECT COUNT(*) FROM {target} WHERE CAST(to_json({target}) AS VARCHAR) LIKE '%DEL-%'"), target
+        # The QC views read the filtered tables, and their project-less rejects skip tombstones.
+        assert one(con, "SELECT COUNT(*) FROM cd_silver_qc_ncr WHERE ncr_id LIKE 'DEL-%'") == 0
+        # Re-running 28 alone does not duplicate the ledger.
+        for statement in split_statements((SILVER_DIR / "28_source_deletions_silver.sql").read_text(encoding="utf-8")):
+            con.execute(statement)
+        assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects WHERE reason = 'deleted at source'") ==             sum(len(s) for s in DELETION_TARGETS.values())
+        assert con.execute("SELECT is_active_in_procore, CAST(last_extracted_at AS VARCHAR) "
+                           "FROM cd_silver_project_extraction WHERE project_id = '7'").fetchone() ==             (True, "2026-08-03 06:00:00")
+    finally:
+        con.execute("ROLLBACK")
+    check(f"{len(DELETION_TARGETS)} parsers exclude rows deleted at source: bronze with id = silver + 'deleted at source' rejects")
+    check("project freshness: last_extracted_at is the newest full-pull ingestion, with Procore's active flag")
+
+
 def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_submittal_dates, test_rfis,
                test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
                test_manual_parsers, test_qc_procore_parser, test_outbuild_parser,
                test_sage_parser, test_sage_reconciliation, test_manual_reject_conservation,
-               test_new_reject_arms):
+               test_new_reject_arms, test_deleted_at_source):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

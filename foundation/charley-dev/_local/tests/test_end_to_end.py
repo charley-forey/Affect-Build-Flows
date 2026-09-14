@@ -144,7 +144,8 @@ def main():
 
     # A conflicting crosswalk may not choose the lexically greatest ID as if verified.
     con.execute("CREATE OR REPLACE TABLE seed_ProjectCrosswalk AS SELECT * FROM (VALUES ('P1','S1','primary','t'),('P1','S2','primary','t')) AS t(ProcoreProjectId,SageJobNumber,Relationship,Source)")
-    con.execute("CREATE OR REPLACE TEMPORARY VIEW sv_projects AS SELECT 'P1' AS project_id, 'Test' AS project_name, 'PROCORE' AS origin_code")
+    con.execute("CREATE OR REPLACE TEMPORARY VIEW sv_projects AS SELECT 'P1' AS project_id, 'Test' AS project_name, 'PROCORE' AS origin_code, "
+                "CAST(NULL AS BOOLEAN) AS is_active_in_procore, CAST(NULL AS TIMESTAMP) AS last_extracted_at")
     for name in ("10_dim_project.sql", "15_dim_projectcrosswalk.sql"):
         for sql in seedrunner.split_statements((ROOT / "02-transformation/sql/gold" / name).read_text()):
             con.execute(sql)

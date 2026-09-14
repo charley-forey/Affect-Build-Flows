@@ -98,7 +98,8 @@ SELECT
     TRIM(get_json_object(payload, '$.status'))                  AS status,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_prime_change_orders
-WHERE get_json_object(payload, '$.id') IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL
+  AND _source_deleted_at IS NULL;
 
 -- Budget detail rows are the per-cost-code budget numbers. Procore's budget view exposes
 -- these as generic columns, so the mapping to named amounts is confirmed against a live
@@ -188,7 +189,8 @@ SELECT
                                                            AS responded_date,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_submittals
-WHERE get_json_object(payload, '$.id') IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL
+  AND _source_deleted_at IS NULL;
 
 -- RFIs. No RFI data exists ANYWHERE in the warehouse today - this is the half of the
 -- workbook's only chart that has never been automated. Shaped identically to submittals so
@@ -217,7 +219,8 @@ SELECT
                                                            AS responded_date,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_rfis
-WHERE get_json_object(payload, '$.id') IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL
+  AND _source_deleted_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- Rejects. A row that fails its key check is recorded, not discarded. Silent drops are

@@ -46,7 +46,8 @@ SELECT
     CAST(get_json_object(payload, '$.closed_at')            AS DATE)   AS closed_date,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_observations
-WHERE get_json_object(payload, '$.id') IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL
+  AND _source_deleted_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- Punch items - the defect list
@@ -79,7 +80,8 @@ SELECT
     CAST(get_json_object(payload, '$.overdue')              AS BOOLEAN) AS is_overdue,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_punch_items
-WHERE get_json_object(payload, '$.id') IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL
+  AND _source_deleted_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- Incidents - safety

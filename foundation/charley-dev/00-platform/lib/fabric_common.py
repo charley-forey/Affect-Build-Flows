@@ -201,7 +201,28 @@ def audit_columns(source_endpoint: str, batch_id: str, payload: Any = None) -> d
 # --------------------------------------------------------------------------
 
 
-def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns: Iterable[str]) -> str:
+# Set on a bronze row whose key was absent from a COMPLETE full pull of its scope; cleared
+# (NULL) whenever the key is read again. See _docs/deletion-and-scope-handling.md.
+DELETED_AT = "_source_deleted_at"
+
+
+def tombstone_predicate(scopes: Iterable[Any], column: str = "t.`_project_id`") -> str:
+    """SQL predicate matching bronze rows inside the given complete project scopes.
+
+    None is the company scope (`_project_id` IS NULL). Ids are cast to int, so nothing from
+    a payload reaches the SQL text. Shared by the Spark and delta-rs merges.
+    """
+    scopes = list(scopes)
+    ids = sorted({int(s) for s in scopes if s is not None})
+    parts = ([f"{column} IN ({', '.join(map(str, ids))})"] if ids else []) \
+        + ([f"{column} IS NULL"] if None in scopes else [])
+    if not parts:
+        raise ValueError("tombstone requires at least one complete scope")
+    return "(" + " OR ".join(parts) + ")"
+
+
+def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns: Iterable[str],
+              tombstone_scopes: Iterable[Any] = (), deleted_at: datetime | None = None) -> str:
     """Build the MERGE statement used by merge_delta.
 
     Split out from the Spark call so it can be asserted in a test without a cluster -
@@ -230,12 +251,24 @@ def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns:
     # Collapse exact duplicate rows only. Conflicting keys must be checked before
     # a write; choosing an arbitrary payload would silently corrupt evidence.
     deduped = f"(SELECT DISTINCT * FROM {source_view})"
+    # Tombstone: a target row inside a completely-read scope that the source no longer
+    # carries. Only the flag is written; the row and its last payload stay as evidence.
+    tombstone = ""
+    scopes = list(tombstone_scopes)
+    if scopes:
+        if deleted_at is None:
+            raise ValueError("tombstone requires deleted_at")
+        stamp = deleted_at.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
+        tombstone = (f"\nWHEN NOT MATCHED BY SOURCE AND t.`{DELETED_AT}` IS NULL "
+                     f"AND {tombstone_predicate(scopes)} "
+                     f"THEN UPDATE SET t.`{DELETED_AT}` = TIMESTAMP '{stamp}'")
     return (
         f"MERGE INTO {table} AS t\n"
         f"USING {deduped} AS s\n"
         f"ON {on}\n"
         f"{matched}"
         f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
+        f"{tombstone}"
     )
 
 
@@ -250,7 +283,8 @@ def prepare_merge(df: Any, key_columns: Iterable[str]) -> Any:
     return unique
 
 
-def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str]) -> int:
+def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str],
+                tombstone_scopes: Iterable[Any] = (), deleted_at: datetime | None = None) -> int:
     """Idempotent upsert of `df` into Delta `table` on `key_columns`.
 
     Creates the table on first run. Returns the row count written.
@@ -258,6 +292,10 @@ def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str]) -> 
     Why this and not overwrite: re-running a load must be safe. Incremental pulls
     deliberately overlap by an hour (clock skew is real), so the same row arrives twice
     and must not duplicate.
+
+    `tombstone_scopes`: project ids (None = company scope) whose COMPLETE key set `df`
+    holds. Target rows in those scopes that `df` lacks get `_source_deleted_at` = deleted_at.
+    Empty, the default, never tombstones.
     """
     keys = list(key_columns)
 
@@ -267,10 +305,18 @@ def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str]) -> 
         df.write.format("delta").saveAsTable(table)
         return df.count()
 
+    # A bronze table created before a column existed (_source_deleted_at) gains it here;
+    # MERGE does not evolve the target schema by itself.
+    existing = set(spark.table(table).columns)
+    missing = [f for f in df.schema.fields if f.name not in existing]
+    if missing:
+        spark.sql(f"ALTER TABLE {table} ADD COLUMNS ("
+                  + ", ".join(f"`{f.name}` {f.dataType.simpleString()}" for f in missing) + ")")
+
     view = f"_src_{uuid.uuid4().hex[:8]}"
     df.createOrReplaceTempView(view)
     try:
-        spark.sql(merge_sql(table, view, keys, df.columns))
+        spark.sql(merge_sql(table, view, keys, df.columns, tombstone_scopes, deleted_at))
     finally:
         spark.catalog.dropTempView(view)
     return df.count()
@@ -362,6 +408,27 @@ def _selftest() -> None:
     _os.environ.pop("DQ_ALERT_WEBHOOK", None)
     assert get_secret_optional("DQ_ALERT_WEBHOOK") is None, "optional secret must not raise"
     assert notify("test", "body", failing=1) is False, "unconfigured notify must return False"
+
+    # Tombstones touch only rows in the named complete scopes, and only once.
+    stamp = datetime(2026, 9, 14, 6, tzinfo=timezone.utc)
+    sql = merge_sql("t", "v", ["_key", "_project_id"], ["_key", "_project_id", "payload"], [7, None, 7], stamp)
+    assert ("WHEN NOT MATCHED BY SOURCE AND t.`_source_deleted_at` IS NULL AND "
+            "(t.`_project_id` IN (7) OR t.`_project_id` IS NULL) THEN UPDATE SET "
+            "t.`_source_deleted_at` = TIMESTAMP '2026-09-14 06:00:00.000000'") in sql, sql
+    assert "NOT MATCHED BY SOURCE" not in merge_sql("t", "v", ["id"], ["id", "x"])
+    for bad in (["7 OR 1=1"], []):
+        try:
+            tombstone_predicate(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"tombstone_predicate accepted {bad}")
+    try:
+        merge_sql("t", "v", ["id"], ["id"], [7])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("tombstone without a timestamp must raise")
 
     # All-key merge has nothing to update, so the UPDATE clause is omitted entirely.
     assert "WHEN MATCHED" not in merge_sql("t", "v", ["id"], ["id"])

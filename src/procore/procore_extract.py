@@ -390,6 +390,9 @@ def to_bronze_row(
         "_source_endpoint": endpoint.name,
         "_ingested_at": ingested_at,
         "payload": json.dumps(record, default=str),
+        # A row that was just read is not deleted: the merge writes NULL, clearing any
+        # earlier tombstone. See foundation/charley-dev/_docs/deletion-and-scope-handling.md.
+        "_source_deleted_at": None,
     }
 
 
@@ -526,6 +529,7 @@ def bronze_schema():
         StructField("payload", StringType(), True),
         StructField("_batch_id", StringType(), True),
         StructField("_row_hash", StringType(), True),
+        StructField("_source_deleted_at", TimestampType(), True),
     ])
 
 

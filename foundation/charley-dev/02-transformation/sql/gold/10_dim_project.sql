@@ -91,7 +91,12 @@ SELECT
     CASE WHEN c.project_id IS NULL THEN FALSE ELSE TRUE END AS HasPrimeContract,
     -- FALSE means no Sage mapping exists: this project cannot join to any Sage financial
     -- data until the crosswalk is extended. Surfaced on the diagnostics page.
-    CASE WHEN xw.sage_project_id IS NULL THEN FALSE ELSE TRUE END AS IsInCrosswalk
+    CASE WHEN xw.sage_project_id IS NULL THEN FALSE ELSE TRUE END AS IsInCrosswalk,
+    -- Freshness. Extraction reads ACTIVE projects only, so an inactive project's facts
+    -- freeze but still count. Show when it was last read instead of hiding that (NULL =
+    -- never read by a full pull, or unknown on the existing-warehouse source).
+    x.is_active_in_procore                        AS IsActiveInProcore,
+    x.last_extracted_at                           AS LastExtractedAt
 FROM all_projects a
 LEFT JOIN sv_projects x  ON a.project_id = x.project_id
 LEFT JOIN crosswalk   xw ON a.project_id = xw.procore_project_id
@@ -114,4 +119,6 @@ SELECT
     NULL                                       AS ContractStart,
     NULL                                       AS ContractFinish,
     FALSE                                         AS HasPrimeContract,
-    FALSE                                         AS IsInCrosswalk;
+    FALSE                                         AS IsInCrosswalk,
+    CAST(NULL AS BOOLEAN)                         AS IsActiveInProcore,
+    CAST(NULL AS TIMESTAMP)                       AS LastExtractedAt;

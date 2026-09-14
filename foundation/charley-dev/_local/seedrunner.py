@@ -112,10 +112,11 @@ SOURCE_FIXTURES = (
     # carries no Sage id. This fixture used to supply 'S100' here, which made the offline
     # suite exercise a path that cannot exist live and hid a dead Sage join for weeks.
     # The Sage id must reach dim_Project via sv_project_crosswalk. Do not repopulate this.
+    # P1 was extracted just now; P2 has never been (NULL - no full-pull rows).
     """CREATE OR REPLACE VIEW sv_projects AS SELECT * FROM (VALUES
-        ('P1', 'Tower A', NULL, 'PROCORE'),
-        ('P2', 'Depot B', NULL, 'PROCORE')
-    ) AS t(project_id, project_name, sage_project_id, origin_code)""",
+        ('P1', 'Tower A', NULL, 'PROCORE', TRUE, CAST(now() AS TIMESTAMP)),
+        ('P2', 'Depot B', NULL, 'PROCORE', CAST(NULL AS BOOLEAN), CAST(NULL AS TIMESTAMP))
+    ) AS t(project_id, project_name, sage_project_id, origin_code, is_active_in_procore, last_extracted_at)""",
 
     # 8,800,000 is FINANCIALS!C3 verbatim. Combined with the approved change order below,
     # this reproduces the workbook's own Current Contract (9,116,960.48) and Contract
@@ -648,7 +649,8 @@ SOURCE_FIXTURES = (
     # come out NULL rather than orphaned), and a conflicting PQP duplicate on a real project.
     """CREATE OR REPLACE VIEW sv_dq_rejects AS SELECT * FROM (VALUES
         ('cd_silver_submittals', 'missing id', '{"title":"No id"}', 'batch-1'),
-        ('cd_silver_qc_ncr', 'missing project', '{"id":"OBX"}', 'batch-1')
+        ('cd_silver_qc_ncr', 'missing project', '{"id":"OBX"}', 'batch-1'),
+        ('cd_silver_rfis', 'deleted at source', '{"id":"RDEL"}', 'batch-0')
     ) AS t(target_table, reason, payload, _batch_id)""",
 
     """CREATE OR REPLACE VIEW sv_dq_rejects_manual AS SELECT * FROM (VALUES

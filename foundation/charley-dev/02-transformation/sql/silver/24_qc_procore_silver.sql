@@ -244,12 +244,12 @@ WHERE target_table IN ('cd_silver_qc_ncr', 'cd_silver_qc_punch', 'cd_silver_qc_s
 INSERT INTO cd_dq_rejects
 SELECT 'cd_silver_qc_ncr', 'missing project', payload, _batch_id
 FROM cd_bronze_procore_observations
-WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL AND _source_deleted_at IS NULL
 UNION ALL
 SELECT 'cd_silver_qc_punch', 'missing project', payload, _batch_id
 FROM cd_bronze_procore_punch_items
-WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL AND _source_deleted_at IS NULL
 UNION ALL
 SELECT 'cd_silver_qc_submittal', 'missing project', payload, _batch_id
 FROM cd_bronze_procore_submittals
-WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL AND _source_deleted_at IS NULL;

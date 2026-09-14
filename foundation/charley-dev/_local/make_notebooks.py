@@ -102,8 +102,9 @@ print(f"batch {batch_id}")
 def read_since(table, endpoint):
     return wm.read_since(spark, table, endpoint)
 
-def write_bronze(rows, table, keys):
-    return fc.merge_delta(spark, spark.createDataFrame(rows, px.bronze_schema()), table, keys)
+def write_bronze(rows, table, keys, tombstone_scopes=()):
+    return fc.merge_delta(spark, spark.createDataFrame(rows, px.bronze_schema()), table, keys,
+                          tombstone_scopes, rows[0]["_ingested_at"])
 
 def write_watermark(table, endpoint, value, batch):
     wm.write_watermark(spark, table, endpoint, value, batch)
@@ -294,7 +295,11 @@ for ep in ordered:
     if rows:
         # MERGE on the natural key, not DROP + append: re-running is a no-op, so the
         # deliberate one-hour watermark overlap cannot duplicate rows.
-        audit["written_rows"] = write_bronze(rows, ep.bronze_table, px.bronze_merge_keys(ep))
+        # Keys absent from a COMPLETE full pull of a scope are tombstoned in the same merge;
+        # partial, failed, excluded, windowed and incremental scopes never tombstone.
+        audit["tombstone_scopes"] = ps.tombstone_scopes(ep, audit)
+        audit["written_rows"] = write_bronze(rows, ep.bronze_table, px.bronze_merge_keys(ep),
+                                             audit["tombstone_scopes"])
         audit["duplicate_rows_removed"] = len(rows) - audit["written_rows"]
         if audit["duplicate_rows_removed"] < 0:
             raise RuntimeError("merge reported more input rows than were received")
@@ -340,6 +345,7 @@ for ep in ordered:
         """
 total = sum(n for _, n, _ in summary)
 evidence = {"batch": batch_id, "source_scope": "active_projects",
+            "tombstone_semantics": "tombstone_scopes: projects (null = company) whose complete full pull tombstoned absent bronze keys",
             "written_rows_semantics": "Distinct input rows in a successful upsert; not inserted/updated totals",
             "normalized_rows_semantics": "Rows after expanding source groups; equals written_rows plus duplicate_rows_removed after a successful merge",
             "project_ids": project_ids, "endpoints": endpoint_audit,
@@ -430,8 +436,9 @@ print(f"batch {{batch_id}} -> {{TABLES}}")
 def read_since(table, endpoint):
     return wm.apply_overlap(dr.read_watermark(TABLES, table, endpoint, dr.onelake_options()))
 
-def write_bronze(rows, table, keys):
-    return dr.merge_rows(f"{{TABLES}}/{{table}}", rows, keys, storage_options=dr.onelake_options())
+def write_bronze(rows, table, keys, tombstone_scopes=()):
+    return dr.merge_rows(f"{{TABLES}}/{{table}}", rows, keys, storage_options=dr.onelake_options(),
+                         tombstone_scopes=tombstone_scopes, deleted_at=rows[0]["_ingested_at"])
 
 def write_watermark(table, endpoint, value, batch):
     dr.write_watermark(TABLES, table, endpoint, value, batch, dr.onelake_options())

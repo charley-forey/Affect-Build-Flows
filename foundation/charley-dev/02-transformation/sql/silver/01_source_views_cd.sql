@@ -44,11 +44,14 @@
 -- one: fct_Invoice keeps its 117 rows through the switch instead of going to zero.
 
 CREATE OR REPLACE TEMPORARY VIEW sv_projects AS
-SELECT project_id, project_name,
+SELECT p.project_id, p.project_name,
        -- The Sage id is not on the Procore project record; it comes from the crosswalk.
        CAST(NULL AS STRING) AS sage_project_id,
-       'PROCORE' AS origin_code
-FROM delta.`{CD_SILVER_ABFSS}/cd_silver_projects`;
+       'PROCORE' AS origin_code,
+       -- Freshness: extraction reads active projects only (28_source_deletions_silver.sql).
+       x.is_active_in_procore, x.last_extracted_at
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_projects` p
+LEFT JOIN delta.`{CD_SILVER_ABFSS}/cd_silver_project_extraction` x ON x.project_id = p.project_id;
 
 -- REPOINTED 2026-09-13 off dim_procore_project_vendor. sage_vendor_id is filled in
 -- 10_procore_silver.sql from the vendor's origin_code (= Sage actpay.recnum). Every Procore

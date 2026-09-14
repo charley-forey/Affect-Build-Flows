@@ -46,7 +46,7 @@ def _schemas() -> dict[str, Any]:
         "bronze": pa.schema([("_key", pa.string()), ("_project_id", pa.int64()),
                              ("_source_endpoint", pa.string()), ("_ingested_at", ts),
                              ("payload", pa.string()), ("_batch_id", pa.string()),
-                             ("_row_hash", pa.string())]),
+                             ("_row_hash", pa.string()), ("_source_deleted_at", ts)]),
         "watermark": pa.schema([("table_name", pa.string()), ("endpoint", pa.string()),
                                 ("watermark", ts), ("batch_id", pa.string()),
                                 ("updated_at", ts)]),
@@ -89,10 +89,17 @@ def prepare_rows(rows: list[dict[str, Any]], columns: Iterable[str], key_columns
 
 
 def merge_rows(uri: str, rows: list[dict[str, Any]], key_columns: Iterable[str],
-               schema: Any = None, storage_options: dict | None = None) -> int:
-    """Idempotent upsert of `rows` into the Delta table at `uri`. Returns distinct rows written."""
+               schema: Any = None, storage_options: dict | None = None,
+               tombstone_scopes: Iterable[Any] = (), deleted_at: datetime | None = None) -> int:
+    """Idempotent upsert of `rows` into the Delta table at `uri`. Returns distinct rows written.
+
+    `tombstone_scopes` / `deleted_at`: as fabric_common.merge_delta - rows of those complete
+    scopes absent from `rows` get `_source_deleted_at`; none by default.
+    """
     import pyarrow as pa
     from deltalake import DeltaTable, write_deltalake
+
+    from fabric_common import DELETED_AT, tombstone_predicate
 
     schema = schema if schema is not None else _schemas()["bronze"]
     keys = list(key_columns)
@@ -106,11 +113,26 @@ def merge_rows(uri: str, rows: list[dict[str, Any]], key_columns: Iterable[str],
         return len(unique)
 
     predicate = " AND ".join(f'(t."{k}" IS NOT DISTINCT FROM s."{k}")' for k in keys)
-    (DeltaTable(uri, storage_options=storage_options)
-        .merge(source, predicate, source_alias="s", target_alias="t")
-        .when_matched_update_all()
-        .when_not_matched_insert_all()
-        .execute())
+    # A table created before a column existed (_source_deleted_at) gains it first, as
+    # merge_delta's ALTER TABLE does on Spark: an empty append that only evolves the schema.
+    table = DeltaTable(uri, storage_options=storage_options)
+    if set(schema.names) - {f.name for f in table.schema().fields}:
+        write_deltalake(uri, source.slice(0, 0), mode="append", schema_mode="merge",
+                        storage_options=storage_options)
+        table = DeltaTable(uri, storage_options=storage_options)
+    merger = (table
+              .merge(source, predicate, source_alias="s", target_alias="t")
+              .when_matched_update_all()
+              .when_not_matched_insert_all())
+    scopes = list(tombstone_scopes)
+    if scopes:
+        if deleted_at is None:
+            raise ValueError("tombstone requires deleted_at")
+        stamp = deleted_at.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        merger = merger.when_not_matched_by_source_update(
+            {f'"{DELETED_AT}"': f"arrow_cast('{stamp}', 'Timestamp(Microsecond, Some(\"UTC\"))')"},
+            f't."{DELETED_AT}" IS NULL AND {tombstone_predicate(scopes, "t._project_id")}')
+    merger.execute()
     return len(unique)
 
 

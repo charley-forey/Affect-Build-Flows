@@ -245,6 +245,30 @@ def declared_unavailable(endpoint: Endpoint, project_id: Any) -> str | None:
     return {str(k): v for k, v in endpoint.unavailable_projects.items()}.get(str(project_id))
 
 
+def tombstone_scopes(endpoint: Endpoint, audit: dict[str, Any]) -> list[Any]:
+    """Project ids (None = company) whose bronze rows may be tombstoned by this endpoint run.
+
+    A key missing from a pull is only evidence of deletion when the pull held the COMPLETE
+    key set of that scope, so every doubt resolves to "do not tombstone":
+    - incremental pulls (`mode` != full) and date-windowed pulls list only a slice;
+    - a project is eligible only if EVERY one of its scopes (one per parent, for parent
+      endpoints) ended `complete` - failed, unavailable_* and excluded_declared never do;
+    - a scope that returned zero rows is not trusted: this tenant has answered wrong
+      parameters with 200 and an empty list (see endpoints.yml, prime_change_orders).
+      ponytail: a project whose last record is deleted keeps it; add a recycle-bin read
+      if that case matters.
+    Projects outside the run's scope (inactive) have no scopes here, so never tombstone.
+    """
+    if audit.get("mode") != "full" or getattr(endpoint, "date_range_days", None):
+        return []
+    projects: dict[Any, list[dict]] = {}
+    for scope in audit.get("scopes", []):
+        projects.setdefault(scope.get("project_id"), []).append(scope)
+    return [pid for pid, scopes in projects.items()
+            if all(s.get("status") == "complete" for s in scopes)
+            and sum(s.get("received_rows", 0) for s in scopes) > 0]
+
+
 def normalize_records(endpoint: Endpoint, record: dict[str, Any], path: str = "") -> list[dict[str, Any]]:
     """Checklist responses group inspection instances under templates; retain that context."""
     if endpoint.name == "checklist_list_items":
@@ -412,6 +436,16 @@ def _selftest() -> None:
                  "exclusion without a reason")
     expect_error(lambda: _ep("x", "/a", SCOPE_COMPANY, unavailable_projects={1: "r"}),
                  "project exclusion on a company endpoint")
+
+    # Tombstone eligibility: complete, full, non-empty scopes only.
+    def done(pid: Any, n: int = 1, status: str = "complete") -> dict:
+        return {"project_id": pid, "status": status, "received_rows": n}
+    full = {"mode": "full", "scopes": [done(7), done(8, status="failed"), done(9, 0),
+                                       done(10, 0, "excluded_declared"), done(None),
+                                       done(11), done(11, 0, "unavailable_403")]}
+    assert tombstone_scopes(project, full) == [7, None]
+    assert tombstone_scopes(project, dict(full, mode="incremental")) == []
+    assert tombstone_scopes(_ep("m", "/m", SCOPE_PROJECT, date_range_days=30), full) == []
 
     assert _ep("big", "/rest/v1.0/cost_codes", SCOPE_PROJECT, per_page=1000).per_page == 1000
     expect_error(lambda: _ep("x", "/a/{parent_id}", SCOPE_PARENT, parent=ParentRef("y"), per_page=1000),

@@ -48,6 +48,20 @@ SELECT
               CONCAT('batch ', r._batch_id))                AS Detail,
     r._batch_id                                             AS RunBatchId
 FROM sv_dq_rejects r
+WHERE r.reason <> 'deleted at source'
+
+UNION ALL
+-- A Procore record present in bronze but absent from a COMPLETE full pull of its project:
+-- deleted (or recycled) in Procore, so silver excluded it from every fact. Listed so a
+-- total that dropped overnight can be explained. See _docs/deletion-and-scope-handling.md.
+SELECT 'Deleted at source', 'Procore', r.target_table, get_json_object(r.payload, '$.id'),
+       CAST(NULL AS STRING), 'Record no longer returned by Procore - excluded from reporting',
+       CAST(NULL AS DOUBLE),
+       concat_ws('; ', CONCAT('record ', COALESCE(get_json_object(r.payload, '$.id'), '(no id)')),
+                 CONCAT('table ', r.target_table), CONCAT('last batch ', r._batch_id)),
+       r._batch_id
+FROM sv_dq_rejects r
+WHERE r.reason = 'deleted at source'
 
 UNION ALL
 SELECT 'Rejected manual entry', 'SharePoint', r.target_table, r.item_ref, p.ProjectKey,

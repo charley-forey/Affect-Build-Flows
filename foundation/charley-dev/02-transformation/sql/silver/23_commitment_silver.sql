@@ -25,7 +25,7 @@ WITH work_orders AS (
         CAST(get_json_object(payload, '$.id')        AS STRING)  AS commitment_id,
         payload, _ingested_at, _batch_id
     FROM cd_bronze_procore_work_order_contracts
-    WHERE get_json_object(payload, '$.id') IS NOT NULL
+    WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NULL
 ),
 purchase_orders AS (
     SELECT
@@ -34,7 +34,7 @@ purchase_orders AS (
         CAST(get_json_object(payload, '$.id')        AS STRING)  AS commitment_id,
         payload, _ingested_at, _batch_id
     FROM cd_bronze_procore_purchase_order_contracts
-    WHERE get_json_object(payload, '$.id') IS NOT NULL
+    WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NULL
 )
 SELECT
     commitment_type, project_id, commitment_id,
@@ -63,13 +63,13 @@ WITH wo_lines AS (
     SELECT 'WorkOrderContract' AS expected_holder, payload, _project_id,
            _ingested_at, _batch_id
     FROM cd_bronze_procore_work_order_contract_line_items
-    WHERE get_json_object(payload, '$.id') IS NOT NULL
+    WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NULL
 ),
 po_lines AS (
     SELECT 'PurchaseOrderContract' AS expected_holder, payload, _project_id,
            _ingested_at, _batch_id
     FROM cd_bronze_procore_purchase_order_contract_line_items
-    WHERE get_json_object(payload, '$.id') IS NOT NULL
+    WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NULL
 )
 SELECT
     CAST(_project_id                                       AS STRING) AS project_id,

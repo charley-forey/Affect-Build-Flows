@@ -26,6 +26,7 @@ import deploy_ingestion
 import make_notebooks
 import duckdb
 import fabric_common
+import procore_scope
 import validate_sage_spark
 import validate_gold_candidate
 import validate_model
@@ -535,7 +536,7 @@ def test_extraction_scope_evidence():
     child = SimpleNamespace(name="child", bronze_table="bronze_child", per_page=100,
                             parent=SimpleNamespace(endpoint="parent"), incremental=True)
     for scenario in ("complete", "duplicates", "disabled", "declared", "declared_now_available", "partial_page", "merge_failure", "disabled_parent", "archive_failure", "checkpoint_failure"):
-        written, watermarks = [], []
+        written, watermarks, tombstones = [], [], []
         def records(session, base, path, headers, params, per_page):
             # No changed parent since the watermark, but its child has new data.
             # Filtering parent discovery would hide the child entirely.
@@ -556,10 +557,11 @@ def test_extraction_scope_evidence():
             if scenario == "declared_now_available" and ep.name == "parent":
                 return [("good", 7), ("good", 8)]
             return [("good", 7)] + ([("disabled", 8)] if gap else [])
-        def merge(rows, table, keys):
+        def merge(rows, table, keys, tombstone_scopes=()):
             if scenario == "merge_failure" and table == "bronze_parent":
                 raise ValueError("conflicting key")
             written.append(table)
+            tombstones.append((table, list(tombstone_scopes)))
             return len({json.dumps(row, sort_keys=True) for row in rows})
         with tempfile.TemporaryDirectory() as temp:
             scope = dict(
@@ -578,7 +580,8 @@ def test_extraction_scope_evidence():
                 ps=SimpleNamespace(expand_paths=paths, collect_parent_ids=lambda records, parent: [r["id"] for r in records],
                                    declared_unavailable=lambda ep, pid: "tool not enabled" if (
                                        scenario in ("declared", "declared_now_available") and ep.name == "parent" and pid == 8) else None,
-                                   normalize_records=lambda ep, record, path: [record]),
+                                   normalize_records=lambda ep, record, path: [record],
+                                   tombstone_scopes=procore_scope.tombstone_scopes),
                 fc=SimpleNamespace(utc_now=lambda: "now", row_hash=lambda r: "hash"),
                 wm=SimpleNamespace(high_water=lambda *a: "high"))
             if scenario in ("archive_failure", "checkpoint_failure"):
@@ -619,6 +622,14 @@ def test_extraction_scope_evidence():
                 if archived:
                     assert archived[0] == {"path": "good", "project_id": 7,
                                            "record": {"id": 1, "updated_at": "2026-09-10"}}
+            # Tombstones come only from complete scopes of full pulls: the parent's project 7
+            # (and 8 once readable). An unavailable or declared-excluded 8 and the
+            # incremental child never tombstone.
+            if written and scenario != "disabled_parent":
+                complete = [7, 8] if scenario == "declared_now_available" else [7]
+                assert tombstones[0] == ("bronze_parent", complete), tombstones
+                assert all(scopes == [] for table, scopes in tombstones[1:]), tombstones
+                assert first["tombstone_scopes"] == complete
             if failed:
                 assert evidence["status"] == "failed" and not written and not watermarks
                 assert first["received_rows"] == (0 if scenario == "archive_failure" else 1)
