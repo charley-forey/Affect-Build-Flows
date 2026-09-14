@@ -1,6 +1,15 @@
 # charley-dev — what it is, how it works, and what is left
 
-The one document to read first. Everything else in `_docs/` goes deeper on one area.
+## Current reading guide — September 14, 2026
+
+Start with the [solution README](../README.md), [measured build status](build-status.md),
+and [validation record](validation-and-development-plan.md). Production model fixes are
+live, but capacity rejection, incomplete candidate/export verification, source gaps and
+scheduled-run validation prevent full certification.
+
+The narrative below is **historical implementation context**, principally August 2026.
+Its inventories, counts, access blockers and statements of completion are not current
+release evidence. Use the [operations runbook](operations-runbook.md) for current procedures.
 
 ---
 
@@ -10,7 +19,7 @@ Affect runs monthly project reporting out of a hand-filled Excel workbook: 11 ta
 manual input cells, one chart, and 14 verified defects — three of which change the numbers
 reported to leadership.
 
-`charley-dev` is a complete, self-contained Microsoft Fabric platform that replaces it. It
+`charley-dev` is a Microsoft Fabric implementation intended to replace that reporting workflow. It
 has its own ingestion, its own lakehouses, its own semantic model and its own report. It
 **does not modify anything that already exists** in the workspace; the existing reporting
 keeps running untouched while this is proven alongside it.
@@ -34,8 +43,8 @@ re-extract — which matters most for manual input, where re-extracting means as
 retype a month of work.
 
 **Silver** types, trims and validates. Anything that fails lands in `cd_dq_rejects` **with a
-reason**. Nothing is ever silently dropped; silent drops are how the workbook's defects
-survived for months.
+reason**. Coverage depends on the transform: consult current reconciliation rules and the gap register.
+Unlinked schedule activities, for example, are excluded from the milestone fact.
 
 **Gold** is a conformed star schema. Dimensions UNION in the keys observed in the facts, so
 referential integrity holds by construction rather than by hope.
@@ -45,7 +54,7 @@ is not refreshed and the report keeps yesterday's numbers. A stale report beats 
 
 ---
 
-## What is live right now
+## Historical inventory — August 2026
 
 Row counts and model figures measured out of Fabric on 2026-08-02; the item inventory and
 blocker position re-checked **2026-08-19**. `build-status.md` is the canonical page for

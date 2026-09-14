@@ -1,5 +1,9 @@
 # PQP — the Project Quality Plan subject area
 
+> Historical/reference material. For the September 14, 2026 verified state and remaining
+> limitations, use the [maintained solution README](../README.md). Counts and deployment claims
+> below apply to their original recorded dates, not current production health.
+
 The client's QA/QC workbook is 44 sheets. This is what it became, why it became that shape,
 and what is still blocked.
 

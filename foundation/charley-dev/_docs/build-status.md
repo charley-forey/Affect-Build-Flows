@@ -1,46 +1,41 @@
 # Build status
 
-What exists, what is verified, and what is not built yet.
+## Verified state — September 14, 2026
 
-**Every number on this page was read back out of Fabric**, not carried forward from the
-last edit. The core row counts and Model A figures were measured 2026-08-02; the item
-inventory, blockers, Azure position and every PQP figure were measured live on
-**2026-08-19**. Where a figure here disagrees with an older doc, this one is the measured
-value — see [`assessment.md`](assessment.md) for how each was obtained.
+This is a dated evidence summary, not a live health monitor. The
+[validation record](validation-and-development-plan.md) contains chronology and open business
+decisions; the [runbook](operations-runbook.md) describes operating procedures.
 
-**This page is the single source for two numbers that get restated elsewhere:** the
-endpoint-registry count (**44** as of 2026-08-19; 39 Procore entries on release2 as of 2026-09-14; generated into
-[`endpoint-inventory.md`](endpoint-inventory.md) — 42 before the PQP work added
-`checklist_lists` and `checklist_list_items`) and **scorecard coverage (59%** as of 2026-08-19; 71% measured 2026-09-14). Other
-documents should link here rather than repeat them.
+| Area | Last verified result | Evidence |
+|---|---|---|
+| Production data run | `20260914T083429Z` | `live-heartbeat_run.json` |
+| Production quality gate | 211 rules: 197 passed, 14 warnings, zero blocking | `live-dq_run.json` |
+| Monthly model | 130 measures evaluate; 18 checks pass; zero model-to-build count differences | `production-model-validation.txt` |
+| Quality-plan model | 48 measures evaluate without errors after refresh | `production-qc-model-refresh.json` |
+| Newly bound monthly facts | 911 AP **line** rows and 21 snapshot rows | `production-model-refresh.json` |
+| Live reconciliation | Seven checks pass, three warn; no failed or unexecuted checks | `live-reconciliation/20260914T145452Z.json` |
+| Manual registers | Migration completed; 17 registers remain empty | `production-manual-migration.json` |
+| Publication | 10 pipeline activities including Publish Models after the gate; both models accepted automatic update OFF | `production-autosync.txt`; validation record |
+| Offline checks | 21 suites and generator checks passed in GitHub CI | [CI run 34861048213](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34861048213) |
+| Availability | Power BI rejected an additional query for exceeded Fabric capacity | Validation record, approximately 15:15 UTC |
+| Expanded candidate | Silver passed; final run-specific gate evidence absent. Not certified despite final Completed job status | `full-spark-job.json`; validation record |
+| Render verification | PDF export last observed running at 91%; no render pass | `report-export-verification.json` |
+| Scheduled operation | Latest observed scheduled run failed; a successful full cycle remains unverified | `live-pipeline-jobs.json` |
 
-## Current state — measured 2026-09-14
+The 14 warnings are not resolved by a passing gate. Known gaps include 38 unmatched AR
+invoices across 11 jobs, 373 AP line rows without a project match, 243 unlinked critical
+Outbuild activities excluded from the milestone fact, stale insurance records, and
+unmapped trades. These figures have different grains and must not be added together.
+Missing inputs remain unknown, and mapping/policy decisions require business confirmation.
 
-Sections from "2026-08-25" down are **historical**. Their counts were true on the dates they
-carry and are not current. Status, open decisions and remaining work are in
-[validation-and-development-plan.md](validation-and-development-plan.md). Procedures are in
-[operations-runbook.md](operations-runbook.md).
+The [generated endpoint inventory](endpoint-inventory.md) and
+[data dictionary](data-dictionary.md) describe declared coverage. They are not proof of
+complete extraction, deleted-record coverage, historical coverage or rendered correctness.
 
-| Measure | Value | Measured | Source |
-|---|---|---|---|
-| Production build | candidate `cadcd0d8`, run `20260914T040238Z`, checked 04:08 UTC | 2026-09-14 | `a263265`, live-reconciliation check 8 |
-| Gold build statements | 117, 0 failed | 2026-09-14 | `a263265` |
-| DQ rules (production) | 189: 178 passed, 11 warned, 0 blocking | 2026-09-14 | `full-spark-evidence.json` (main) |
-| DQ rules (candidate #3 `457dbeb9`, integration `6e786a9`) | 199: 188 passed, 11 warned, 0 blocking | 2026-09-14 | `0502968` |
-| Monthly model | 13 tables match build row counts, 37 model tables resolve, 105 measures evaluate, 18 checks pass | 2026-09-14 | `validate_model.py` |
-| Scorecard coverage | 71% of the agreed weight (6 of 9 categories scored) | 2026-09-14 | `validate_model.py` |
-| `fct_Invoice` (Sage AR) | 149 rows, $26,153,291.94 billed, $18,713,981.77 paid, $7,439,310.17 balance. Bronze = silver = model. | 2026-09-14 | live-reconciliation check 1 |
-| Unmatched AR | 38 invoices, 11 jobs, $2,014,605.29 | 2026-09-14 | live-reconciliation check 2 |
-| Sage AP invoices | 879, $15,518,864.70 | 2026-09-14 | AP cost reconciliation |
-| Vendor insurance certificates | 105, all expired (latest 2025-04-01) | 2026-09-14 | live-reconciliation check 7 |
-| Procore endpoint registry | 39 entries on release2 (40 on main). Five removed 2026-09-13/14. | 2026-09-14 | `endpoints.yml` |
-| Procore requests per full extract | ~1,165 (batch `20260913T060433`) → ~954 planned. Quota 600/hour. | 2026-09-13/14 | `a2d49ef` |
-| Outbuild endpoint registry | 16 | 2026-09-14 | `endpoints.yml` |
-| Live pipeline activities | 9: serial, includes Extract Outbuild. Publish Models not yet deployed. | 2026-09-14 | pipeline definition read |
-| Offline suites | 19 on release2, 18 on main | 2026-09-14 | `run_tests.py` |
-| Manual registers | 17 SharePoint data lists + Job Register, 0 items. `CD_Manual_Ingest` never run. | 2026-09-13 | manual intake investigation |
+## Historical measurements
 
----
+The dated sections below preserve earlier observations and superseded implementation
+states. They must not be used as the current release inventory or deployment instructions.
 
 ## 2026-08-25 (historical) — Sage and Procore both live in Fabric, twelve defects fixed
 

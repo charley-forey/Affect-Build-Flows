@@ -1,5 +1,9 @@
 # AffectProjectReport.pbip
 
+> Historical/reference material. For the September 14, 2026 verified state and remaining
+> limitations, use the [maintained solution README](../foundation/charley-dev/README.md). Counts and deployment claims
+> below apply to their original recorded dates, not current production health.
+
 > **Status — superseded design artifact (2026-08-19).** This local `.pbip` was written in
 > July 2026 as the file-based proof of the model: five tables over parquet on disk. The
 > platform has since shipped **two** semantic models to Fabric from TMDL in

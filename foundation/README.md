@@ -1,5 +1,9 @@
 # Fabric "Build" Workspace — Backup
 
+> Historical/reference material. For the September 14, 2026 verified state and remaining
+> limitations, use the [maintained solution README](charley-dev/README.md). Counts and deployment claims
+> below apply to their original recorded dates, not current production health.
+
 Read-only export of the Microsoft Fabric workspace **Build**
 (`1f7caed6-f88a-4e52-bc83-9a498a165301`), taken 2026-08-01.
 

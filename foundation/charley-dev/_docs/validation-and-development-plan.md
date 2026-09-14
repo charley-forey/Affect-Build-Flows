@@ -120,7 +120,7 @@ is unavailable". Those statements are kept for history and marked where they app
 figure here comes from a commit message or an evidence file under `_docs/`. Operating
 procedures are in [operations-runbook.md](operations-runbook.md).
 
-## Live in production now
+## Earlier September 14 production assessment (superseded by verification above)
 
 - **Candidate `cadcd0d8` was promoted** (commit `a263265`) in this order: seeds, manual
   landing, silver, gold (117 statements, 0 failed), DQ gate (**189 rules, 178 passed, 11
@@ -150,7 +150,7 @@ procedures are in [operations-runbook.md](operations-runbook.md).
   - Checks 2, 4, 7 and 10 WARN (unmatched AR, AP vs Procore, insurance expiry, (Blank)
     members).
 
-## Validated but not yet promoted (`wt/release2`, head `26986b1`)
+## Historical release2 assessment before promotion (`26986b1`)
 
 | Change | Commit |
 |---|---|
@@ -213,31 +213,24 @@ release2 head is required before promotion. Offline: 19/19 suites.
 | 8 | Manual register owners | All 17 SharePoint data lists and Job Register hold 0 items. The dataflow owner/service account is undecided. | Affect admin, project managers, Q-Team, safety lead |
 | 9 | Retainage policy confirmation | Sub retainage is now the latest approved pay app per commitment (`c76830a`) | Affect finance lead |
 
-## Remaining engineering work
+## Remaining engineering work — latest verified position
 
-1. **New full candidate on the release2 head**, then promote in runbook order. After that,
-   `validate_model.py` and `reconcile_live.py` must show checks 5, 6 and 9 passing.
-2. **Publish barrier deploy.** `deploy_publish.py --apply` and `deploy_pipeline.py` (the
-   live pipeline has 9 activities and no Publish Models, read 2026-09-14). Then
-   `set_autosync.py --apply` and a portal confirmation that automatic update is off on both
-   models, since the setting cannot be read by API.
-3. **Browser verification after release2.** The render check of the promoted build found
-   clipping, alphabetical month axes, one-row slicers and (Blank) members. Offline tests do
-   not prove rendering.
-4. **Manual intake needs a human SharePoint sign-in.** `CD_Manual_Ingest` has no connection,
-   has never run and is not in the pipeline. An OAuth2 SharePoint connection needs an
-   interactive sign-in by the chosen owner. Pre-flight the struct columns (ProjectKey,
-   Editor) before the first refresh (`manual-intake-runbook`, scratch).
-5. **Outbuild landing batch cleanup.** Landing batch `20260819T234949Z` (Outbuild, 3,078
-   rows) is re-merged every night. `cd_02_extract_outbuild` now overwrites it, so archive it
-   out of `Files/_landing`.
-6. **Corrupted Outbuild link rows.** `roadblock_tasks`, `rfv_tasks`, `activity_tags` and
-   `task_tags` in bronze hold rows written under the collapsed merge key `'|'` (measured
-   2026-09-13: 55 / 2 / 5 / 10 rows, 1 distinct key each). Drop or overwrite those four tables
-   once, and re-extract with the composite keys.
-7. **Watch the quota.** The ~954-request plan still exceeds one 600/hour window.
-8. **QC status codes** that are not in `qc_status_vocab.csv` pass silver and then block the
-   gate. Move that check into silver rejects before registers go live.
+1. Recover measured Fabric capacity before further heavy validation. Prefer a targeted
+   snapshot check; the expanded candidate's final gate evidence is missing.
+2. Finish the existing report export and inspect it. Complete browser sign-in for interactive
+   filter/navigation checks and confirmation of automatic update OFF.
+3. Prove a full scheduled cycle through Publish Models, including failure notification and
+   recovery. The notebook and pipeline step are deployed; successful scheduled operation
+   is not yet demonstrated.
+4. Complete manual SharePoint authentication and ownership, then validate a representative
+   real input end to end. The schema migration succeeded, but all 17 registers remain empty.
+5. Resolve the documented accounting, trade and Outbuild mapping gaps with source evidence
+   and business owners. Do not infer project matches or complete historical coverage.
+6. Recheck older landing-batch and Outbuild link defects before closing them; their prior
+   findings are historical evidence, not proof of current correction.
+
+Production model refreshes, the migration, offline suites and generator checks are already
+verified. Do not repeat full builds simply to reproduce those completed checks.
 
 ---
 

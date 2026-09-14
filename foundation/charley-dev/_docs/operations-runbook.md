@@ -7,31 +7,34 @@ section). Measured counts are in [build-status.md](build-status.md).
 
 ## 1. Nightly pipeline (`CD_Master_Pipeline`, workspace `Build`)
 
-The stages run one after another. Parallel starts at 06:00 starved the Spark session pool:
+Notebook stages follow the dependencies below; Sage ingestion can run independently.
+Earlier parallel starts at 06:00 starved the Spark session pool:
 Land To Bronze and Land Manual Input were cancelled without starting while Extract Procore
 held a session for 80-100 minutes. This is the live definition as read on 2026-09-14:
 
 | # | Activity | Item | Depends on | Retry | Timeout |
 |---|---|---|---|---|---|
 | 1 | Land To Bronze | `cd_05_land_to_bronze` | none | 1 | 1h |
-| 1 | Seed Gold Dimensions | `cd_20_seed_gold` | none | 1 | 30m |
 | 1 | Ingest Sage | `CD_Sage_Ingest` (dataflow) | none | 1 | 1h |
 | 2 | Land Manual Input | `cd_06_land_manual` | Land To Bronze | 1 | 30m |
 | 3 | Extract Outbuild | `cd_02_extract_outbuild` | Land Manual Input | 1 | 30m |
 | 4 | Extract Procore | `cd_01_extract_procore` | Extract Outbuild | **0** | 2h |
 | 5 | Bronze To Silver | `cd_10_bronze_to_silver` | Extract Procore, Extract Outbuild, Ingest Sage, Land To Bronze, Land Manual Input | 1 | 30m |
+| 5 | Seed Gold Dimensions | `cd_20_seed_gold` | Bronze To Silver | 1 | 30m |
 | 6 | Build Gold | `cd_30_build_gold` | Bronze To Silver, Seed Gold Dimensions | 1 | 30m |
 | 7 | Data Quality Gate | `cd_40_dq_checks` | Build Gold | 1 | 30m |
 | 8 | Publish Models | `cd_50_publish_models` | Data Quality Gate | **0** | 1h |
 
-Stage 8 is in the repo (`_local/deploy_pipeline.py`, release2) but **not yet in the live
-pipeline**. The live definition has 9 activities and there is no `cd_50_publish_models`
-notebook in the workspace. Until it is deployed and automatic update is off, the models frame
-gold as it is written, before the gate. See section 5.
+The live definition read back on September 14 contains all 10 activities, including Publish
+Models after Data Quality Gate Succeeded. Seed Gold Dimensions depends on Bronze To Silver;
+Sage ingestion can run independently. Both models accepted automatic update OFF later that
+day. A successful full scheduled cycle and browser confirmation of that setting remain
+unverified. The latest observed scheduled run failed; do not equate a deployed DAG with a
+healthy schedule.
 
-Every dependency is Succeeded-only, so a failure anywhere upstream skips silver, gold and the
-gate. That is intended: the report stays on the last good build and does not show numbers
-nobody checked.
+Succeeded-only dependencies block downstream stages after failure. With automatic update
+off, models retain their prior framing until an explicit refresh. This is not atomic
+publication across the two models: one can refresh successfully while the other fails.
 
 Why the ordering is what it is:
 - Landing runs before extraction. Landing re-merges the newest batch in `Files/_landing`,
@@ -71,7 +74,17 @@ In the models, `meta_PipelineRun` holds the last checked run. The footer's Last 
 Pipeline Status read from it, and `reconcile_live.py` check 8 compares it across both
 models.
 
-## 3. Candidate validation (no production writes)
+## 3. Candidate validation (isolated data, shared capacity)
+
+Read [capacity-operations.md](capacity-operations.md) before starting a live job. The
+September 14 capacity rejection stopped further heavy validation. Do not restart full
+builds or query sweeps until measured capacity has recovered. Prefer targeted validation
+of the changed stage. Do not resubmit a job because a polling command timed out.
+
+The latest expanded candidate has a passing silver checkpoint but lacks its final
+run-specific gate evidence. Snapshot certification is still pending. The examples below
+are commands to use when capacity and prerequisites permit, not a direction to run now.
+
 
 A candidate builds silver and gold from existing bronze in the isolated validation
 lakehouse and runs the full DQ suite there:
@@ -83,12 +96,12 @@ python validate_sage_spark.py --full --status   # poll once; fetches the diagnos
 ```
 
 The evidence lands in `_docs/full-spark-evidence.json`, `full-spark-job.json` and
-`full-candidate-{seed,silver,gold}_run.json`. The bar is 0 blocking. Record the run id,
+`full-candidate-{seed,silver,gold}_run.json`. The bar is a completed job AND matching run-specific evidence with no blocking or unexecuted checks. Missing evidence is not a pass. Record the run id,
 rule count and the pass and warn counts in the commit message. `--silver` and `--gold` run
 one layer each. The candidate's scope is "silver and gold from existing bronze". It does not
 certify upstream freshness.
 
-Offline first: `python _local/run_tests.py` (19 suites on release2, no network).
+Offline first, from the repository root: `python foundation/charley-dev/_local/run_tests.py` (21 suites, no network).
 
 ## 4. Promotion order
 
@@ -109,16 +122,16 @@ Run from `_local/`, each with `--apply`, and stop at the first non-zero exit:
     `deploy_publish.py --apply --run`. Only do it after a passing gate.
 11. `deploy_pipeline.py --apply`: the nightly pipeline, including Publish Models after the
     gate and Seed Gold Dimensions after Bronze To Silver.
-12. `set_autosync.py --apply`, only after Publish Models has run successfully once and the
-    `DQ-ALERT-WEBHOOK` secret exists. Before that, automatic update off means a failed
-    publish leaves readers on stale gold with nobody told.
+12. `set_autosync.py --apply`: both models accepted OFF on September 14. Verify the
+    setting in the portal and validate Publish Models plus failure notification. A failed
+    publish can leave a stale or split release; do not re-enable automatic updates to hide it.
 13. `validate_model.py`: live row counts, measure evaluation and independent checks. It does
     not reframe production unless given `--allow-production-reframe`.
 14. `reconcile_live.py`: ten read-only checks, aggregates-only evidence to
     `_docs/live-reconciliation/<UTC>.json`, exit 1 on any ERROR-severity FAIL. For a
     candidate, pass `--model-id`, `--qc-model-id` and `--lakehouse`.
 
-The 2026-09-14 promotion (candidate `cadcd0d8`) followed what are now steps 3-9 and 13. The gold step ran
+Historical early-morning promotion: candidate `cadcd0d8` followed what are now steps 3-9 and 13. The gold step ran
 117 statements with 0 failed. The DQ gate ran 189 rules with 0 blocking, the same as the
 candidate. `validate_model.py` passed 18 checks.
 
@@ -127,8 +140,10 @@ your Direct Lake data up to date" = Off), because no API can read that setting b
 
 ## 5. Rollback
 
-Nothing is edited in place in Fabric, so rollback means redeploying from the previous
-commit:
+Owned Fabric definitions and gold tables are updated in place. Rollback requires a
+reviewed prior version, preservation of current work and data, and another validated
+publish. The following checkout example changes local files; use an isolated checkout
+or preserve uncommitted work before using it:
 
 ```bash
 git checkout <previous promoted commit> -- foundation/charley-dev
@@ -138,11 +153,12 @@ git checkout HEAD -- foundation/charley-dev
 
 - Gold tables are `CREATE OR REPLACE`, so a redeploy of the old gold SQL rebuilds the old
   shape. Redeploy the models afterwards so TMDL types match.
-- `fct_DailySnapshot` (release2) is append-only per run date. A same-date re-run replaces
+- `fct_DailySnapshot` retains captures by date. A same-date re-run replaces
   that date. Rolling back code does not delete captured history.
-- With automatic update ON (the state today), readers see gold as soon as it is written. A
-  half-finished rollback is visible. Once the barrier is live, only a publish reframes.
-- The last promoted production commit is `a263265` (main).
+- Both models accepted automatic update OFF on September 14; confirm that setting before
+  rebuilding. Gold is replaced in place, and publication across models is not atomic.
+- Select a rollback definition using the dated deployment evidence, not the latest Git
+  commit alone. Repository commits and live refreshes are separate operations.
 
 ## 6. Procore quota
 
