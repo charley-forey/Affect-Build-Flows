@@ -15,11 +15,42 @@
     "@odata.context": "https://wabi-us-north-central-j-primary-redirect.analysis.windows.net/v1.0/myorg/groups/1f7caed6-f88a-4e52-bc83-9a498a165301/$metadata#exports/$entity",
     "id": "Mi9CbG9iSWRWMi1hOWVmNDI3Zi0xYTUyLTQwNWItOTBjNS02MWIxYmZmNjEyMTJWR1ktUE5aNzgxdnpFczhuTklvVE83TW16Ym5kSzhzZTM1ODNVNE1HLg==",
     "createdDateTime": "2026-09-14T15:04:52.4103853Z",
-    "lastActionDateTime": "2026-09-14T15:15:21.6520486Z",
+    "lastActionDateTime": "2026-09-14T15:16:47.9678461Z",
     "reportId": "669cca67-4ed9-429a-9618-3f9a2c55b75a",
     "reportName": "Monthly Progress Report",
-    "status": "Running",
-    "percentComplete": 91,
-    "expirationTime": "0001-01-01T00:00:00Z"
+    "status": "Succeeded",
+    "percentComplete": 100,
+    "resourceFileExtension": ".pdf",
+    "expirationTime": "2026-09-15T15:04:52.7950996Z"
+  },
+  "local_pdf": "foundation\\charley-dev\\_local\\render-verification\\monthly-production.pdf",
+  "render_check": {
+    "status": "FAIL",
+    "page_count": 11,
+    "expected_visible_pages": 11,
+    "error_pages": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "unreadable_pages": [],
+    "limitation": "Text screening cannot certify layout, data correctness, hidden pages, or offscreen table rows.",
+    "pdf_sha256": "60e4e38130d6204618176e298503ebd8c2c0b097040e177d7ba47f4f4d9a976f",
+    "visual_review": {
+      "pages_inspected": [
+        1,
+        2,
+        10
+      ],
+      "confirmed_error": "Page 10 displays a capacity-limit dialog. Extracted text identifies model-load errors on pages 6\u201311.",
+      "limitations": [
+        "Portfolio matrix and charts have scrollbars; PDF does not include all offscreen rows or columns.",
+        "Project Detail is hidden in the report definition and requires separate drillthrough verification.",
+        "No full visual or interactive pass."
+      ]
+    }
   }
 }

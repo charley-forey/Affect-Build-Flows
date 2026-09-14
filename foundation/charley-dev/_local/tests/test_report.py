@@ -468,7 +468,19 @@ def test_qc_disclosures():
     assert "unit and scale require confirmation" in completion
 
 
+def test_export_screening():
+    from validate_report_export import screen_pages
+    assert screen_pages(["Portfolio"], 1)["status"] == "REVIEW_REQUIRED"
+    result = screen_pages(["Portfolio", "Unable to load model due to reaching\ncapacity limits"], 2)
+    assert result["status"] == "FAIL" and result["error_pages"] == [2]
+    assert screen_pages(["E r r o r fetching data"], 1)["status"] == "FAIL"
+    assert screen_pages([""], 1)["unreadable_pages"] == [1]
+    assert screen_pages(["Portfolio"], 2)["status"] == "FAIL"
+    assert screen_pages(["Couldn't load the data"], 1)["status"] == "FAIL"
+
+
 if __name__ == "__main__":
+    test_export_screening()
     if "--qc" in sys.argv:
         import deploy_model_qc
         import deploy_report_qc

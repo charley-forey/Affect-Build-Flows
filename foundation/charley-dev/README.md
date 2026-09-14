@@ -15,7 +15,7 @@ one gold layer. Source completeness and operational reliability are still being 
   remain outstanding.
 - All 21 offline suites and generator checks pass. Fabric capacity rejection interrupted
   further certification. The expanded candidate has no final run-specific gate evidence,
-  and rendered/export and interactive verification remain incomplete.
+  and PDF render validation failed with capacity errors on pages 6–11. Interactive verification remains incomplete.
 
 These are dated results, not a claim of current availability or complete data coverage.
 See [measured status](_docs/build-status.md) and the

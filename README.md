@@ -19,7 +19,8 @@ A commit or successful CI run is not proof of a production deployment.
 
 **The platform is not fully certified.** Fabric rejected additional queries because of
 capacity limits. The expanded candidate lacks its final run-specific gate evidence, the
-PDF export was unfinished at the last check, and a successful scheduled cycle remains
+PDF export completed but failed render validation: pages 6–11 contain capacity-limit
+errors. A successful scheduled cycle remains
 unverified. Both models accepted automatic updates being disabled; browser confirmation
 of that setting is outstanding. These are dated observations, not a live health monitor.
 

@@ -19,7 +19,7 @@ decisions; the [runbook](operations-runbook.md) describes operating procedures.
 | Offline checks | 21 suites and generator checks passed in GitHub CI | [CI run 34861048213](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34861048213) |
 | Availability | Power BI rejected an additional query for exceeded Fabric capacity | Validation record, approximately 15:15 UTC |
 | Expanded candidate | Silver passed; final run-specific gate evidence absent. Not certified despite final Completed job status | `full-spark-job.json`; validation record |
-| Render verification | PDF export last observed running at 91%; no render pass | `report-export-verification.json` |
+| Render verification | PDF export succeeded, but render validation FAILED: capacity errors on pages 6–11; no render pass | `report-export-verification.json` |
 | Scheduled operation | Latest observed scheduled run failed; a successful full cycle remains unverified | `live-pipeline-jobs.json` |
 
 The 14 warnings are not resolved by a passing gate. Known gaps include 38 unmatched AR

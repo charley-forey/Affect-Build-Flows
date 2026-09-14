@@ -154,3 +154,27 @@ Don't pause during the 06:00 UTC nightly window.
    faster.
 
 Steady state (nightly run only, single node, ~8 CU-h/day) fits F2 with room for reports.
+
+
+### Report export evidence — 2026-09-14
+
+The monthly PDF export completed, but offline validation found model-load capacity
+errors on pages 6–11. Page 10 was also visually confirmed to display the capacity
+error dialog. Export API `Succeeded` is not a render acceptance gate. See
+[export evidence](report-export-verification.json) for the artifact hash and limits.
+The PDF has 11 visible pages; Project Detail is a hidden drillthrough page and was
+not tested by this export. Scrollable matrices/charts export only their visible
+viewport, so the PDF is not a complete detail register.
+
+After capacity recovery, screen a fresh local export before reviewing every page:
+
+```powershell
+# Run from the repository root; requires pypdf in the local inspection environment.
+python foundation/charley-dev/_local/validate_report_export.py <local-report.pdf> --expected-pages 11
+```
+
+Exit 1 means detected errors, unreadable text, or a page-count mismatch. Exit 0
+means `REVIEW_REQUIRED`, not a pass. Visually inspect all pages, then separately
+verify filters, drillthrough, accessibility and full detail exports. This helper
+outputs only page numbers and an artifact hash; keep the client PDF untracked.
+Do not restart Spark or repeat exports merely because this check failed.
