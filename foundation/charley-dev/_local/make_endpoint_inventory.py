@@ -19,7 +19,7 @@ import procore_scope as ps  # noqa: E402
 REGISTRY = CHARLEY_DEV / "01-ingestion" / "Procore" / "config" / "endpoints.yml"
 OUT = CHARLEY_DEV / "_docs" / "endpoint-inventory.md"
 
-# Which endpoints already have an equivalent landing in Rebecca's lakehouses, from
+# Which endpoints already have an equivalent landing in the Affect reporting lead's lakehouses, from
 # foundation/03-lakehouses/*.schema.json. "new" means nothing equivalent exists today -
 # that is the actual gap this build closes.
 EXISTING = {

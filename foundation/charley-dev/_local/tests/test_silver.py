@@ -1251,7 +1251,7 @@ def test_outbuild_parser(con) -> None:
                     "WHERE activity_id='14973'") == "Unintegrated Site"
     check("an activity on a project with no procore_id keeps a NULL key and a real name")
 
-    # Outbuild has no status on an activity; Rebecca's `Status` column was hers. NULL
+    # Outbuild has no status on an activity; the Affect reporting lead's `Status` column was theirs. NULL
     # rather than derived from progress, which would be a guess dressed as data.
     assert one(con, "SELECT status FROM cd_silver_outbuild_activities "
                     "WHERE activity_id='14971'") is None

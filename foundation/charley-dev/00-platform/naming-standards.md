@@ -23,7 +23,7 @@ apart is what makes "which trades has nobody signed off" a join rather than an e
 the workbook's status vocabulary.
 
 `cd_` marks "built by charley-dev" so a table's origin is obvious in a lakehouse listing that
-also contains Rebecca's. Gold tables drop the prefix because their names are the semantic
+also contains the Affect reporting lead's. Gold tables drop the prefix because their names are the semantic
 model's contract — the DAX in `powerbi/measures.dax` reads `fct_SafetyMonthly[HoursWorked]`
 by name, so the table must be called exactly that.
 

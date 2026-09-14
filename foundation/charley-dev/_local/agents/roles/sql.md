@@ -5,7 +5,7 @@ it (`_local/tests/test_seeds.py`, `test_silver.py`, `test_gold.py`).
 
 ## What is there
 
-- `silver/00_source_views.sql` — reads Rebecca's existing `Silver_Lakehouse` read-only and
+- `silver/00_source_views.sql` — reads the Affect reporting lead's existing `Silver_Lakehouse` read-only and
   renames to clean snake_case `sv_*` views. **This is what gold currently uses.**
 - `silver/01_source_views_cd.sql` — the same `sv_*` names sourced from our own
   `cd_silver_*`. Written, tested, unused. Flipping `SOURCE_VIEWS` in `deploy_gold.py`

@@ -29,7 +29,7 @@ no line after that had ever executed. Each fix only exposed the next.
 
 | # | Defect | Why it stayed hidden |
 |---|---|---|
-| 1 | Read side asked for `procore-client-id`; the vault holds `ProcoreClientID` | Rebecca created the secrets by hand in PascalCase. Write side and read side agreed with each other and both disagreed with the vault |
+| 1 | Read side asked for `procore-client-id`; the vault holds `ProcoreClientID` | The Affect reporting lead created the secrets by hand in PascalCase. Write side and read side agreed with each other and both disagreed with the vault |
 | 2 | `PROCORE_BASE_URL` defaulted to **sandbox** | The local script set the override; the notebook did not. **Had the credentials been valid in both, this would have landed convincingly empty tables rather than failing** |
 | 3 | `spark.createDataFrame(rows)` inferred the schema | `_project_id` is `None` on all 8 company-scoped endpoints, so Spark could not type it. Which endpoint runs first decides whether it fires |
 | 4 | `watermark.py` used a relative import | The tree's last one. `00-platform/lib` uploads **flat**, so there is no parent package. Offline tests import by path and never notice |

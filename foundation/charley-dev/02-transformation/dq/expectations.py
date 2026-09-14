@@ -134,7 +134,7 @@ def build_suite() -> Suite:
     # ------------------------------------------------- owned crosswalks (2026-09-13)
     #
     # sv_project_crosswalk is our committed seed and sv_vendors carries Procore's
-    # origin_code; neither is Rebecca's warehouse any more, so their integrity is ours to
+    # origin_code; neither is the Affect reporting lead's warehouse any more, so their integrity is ours to
     # prove. A key shared by two entities BLOCKS - it attaches money to the wrong one. A key
     # that points nowhere WARNS: the usual cause is timing between systems (a job created in
     # Sage before silver refreshes, a vendor synced before actpay lands), and the join then
@@ -208,7 +208,7 @@ def build_suite() -> Suite:
 
     # ------------------------------------------------------------ Sage AR
     #
-    # fct_Invoice reads our own Sage ingestion as of 2026-08-25, not Rebecca's
+    # fct_Invoice reads our own Sage ingestion as of 2026-08-25, not the Affect reporting lead's
     # Revenue_AllTime. These guard the three ways that source can go wrong QUIETLY - each
     # one produces a report that renders perfectly and is wrong.
 

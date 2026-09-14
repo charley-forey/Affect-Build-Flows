@@ -326,7 +326,7 @@ def iter_active_projects(
 ) -> Iterator[dict[str, Any]]:
     """Company projects filtered to active.
 
-    Rebecca's notebooks loop every project regardless of status. Procore's limits are
+    the Affect reporting lead's notebooks loop every project regardless of status. Procore's limits are
     high but real, and most of those projects are closed.
     resources/procore/endpoints-cheatsheet.md:29
     """

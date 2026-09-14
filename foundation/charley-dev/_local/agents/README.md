@@ -24,7 +24,7 @@ Five gates, all in `tools.py`, all asserted by `python tools.py` (which is suite
 
 | Gate | What it stops |
 |---|---|
-| `write_file` resolves and rejects anything outside `foundation/charley-dev/` | An agent touching Rebecca's work. Checked after symlink resolution, so a link pointing out of the tree is judged on where it lands |
+| `write_file` resolves and rejects anything outside `foundation/charley-dev/` | An agent touching the Affect reporting lead's work. Checked after symlink resolution, so a link pointing out of the tree is judged on where it lands |
 | `read_file` refuses `.env` and secret-shaped names | A credential reaching a transcript |
 | `deploy` requires a harness pass **since the last write** | Deploying code that has not been tested. A pass from before the write is stale and is rejected |
 | `deploy` allow-lists nine scripts and five flags | Arbitrary subprocess, shell, `az`, Livy |

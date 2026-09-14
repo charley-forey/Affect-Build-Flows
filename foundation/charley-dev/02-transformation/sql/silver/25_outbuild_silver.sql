@@ -1,7 +1,7 @@
 -- silver: Outbuild activities - the only source of milestone data anywhere in the estate.
 --
 -- Until 2026-08-20 there was no Outbuild silver at all. `sv_outbuild_activities` read
--- Rebecca's `Silver_Lakehouse/Outbuild_activities` directly, because our own ingestion did
+-- the Affect reporting lead's `Silver_Lakehouse/Outbuild_activities` directly, because our own ingestion did
 -- not exist; the token arrived 2026-08-19 and 3,078 rows across 15 endpoints have been
 -- landing since. This is the parser that lets fct_Milestone read our own bronze.
 --
@@ -37,8 +37,8 @@
 -- Outbuild returns `progress` as a percentage: measured live, min 0.0, max 100.0.
 -- 24_fct_milestone.sql documents its contract as a fraction - "Outbuild reports progress
 -- 0-1; kept as a fraction so it formats as a percentage in the report rather than being
--- multiplied twice" - and the offline fixture uses 0.5 / 0.2 / 0.0. Rebecca's silver had
--- already normalised it, so reading her table hid the difference.
+-- multiplied twice" - and the offline fixture uses 0.5 / 0.2 / 0.0. The Affect reporting lead's silver had
+-- already normalised it, so reading their table hid the difference.
 --
 -- So it is divided by 100 exactly once, here. Getting this wrong is not a visible failure:
 -- `Avg Milestone Progress` would read 5000%, and `IsOverdue` - which tests
@@ -49,8 +49,8 @@
 -- WHAT OUTBUILD DOES NOT HAVE
 -- ---------------------------------------------------------------------------
 --
--- `status`: there is no status field on an activity. Rebecca's table has a `Status` column
--- that is hers, not Outbuild's. It is NULL here rather than derived from progress, because
+-- `status`: there is no status field on an activity. The Affect reporting lead's table has a `Status` column
+-- that is theirs, not Outbuild's. It is NULL here rather than derived from progress, because
 -- "0% means Not Started" is a guess dressed as data. Nothing reads
 -- fct_Milestone[StatusLabel] - no measure, no visual - so this costs nothing today, and
 -- inventing it would cost the day somebody trusts it.

@@ -7,44 +7,44 @@ back from Fabric exactly as committed — gateway, both connections, all 8 queri
 `DefaultDestination`.
 
 **It is inert, not missing.** The first run failed in about five seconds — too fast to be a
-query. As `cforey-c@affect-group.com`, `GET /v1/gateways` and `GET /v1/connections` both
+query. As the build account, `GET /v1/gateways` and `GET /v1/connections` both
 return empty and the gateway itself returns 404, while `Build_Sage_Test` plainly uses it. The
 identity cannot see any gateway in the tenant, so the dataflow asks to run through one it has
 no rights on and fails before reaching Sage.
 
 **The remaining work is an ownership change, and it needs nothing from Affect.** Measured
-2026-08-25 by signing in as the gateway's own registration account: `RBuckley@affect-group.com`
-and `IT@affect-group.com` **already hold "Can use"** on `nc-affect-1\sage100con;Affect Group`,
+2026-08-25 by signing in as the gateway's own registration account: the Affect reporting lead
+and the IT account **already hold "Can use"** on `nc-affect-1\sage100con;Affect Group`,
 the exact datasource this dataflow is bound to.
 
-A Dataflow Gen2 runs as its **owner**. We deployed this one owned by `cforey-c@`, which has no
+A Dataflow Gen2 runs as its **owner**. We deployed this one owned by the build account, which has no
 gateway rights — so the failure was an ownership choice on our side, not a grant withheld on
 theirs. The ask carried since 2026-08-02 was a valid fix but never the only one, and the
 framing around it was wrong.
 
-**Fastest fix, available today and costing nothing: Rebecca opens `CD_Sage_Ingest` and clicks
+**Fastest fix, available today and costing nothing: The Affect reporting lead opens `CD_Sage_Ingest` and clicks
 Take over.** It runs on the next refresh. The durable fix is to hand ownership to
-`fabricconnector@` so no named person is in the path at all — that needs the account added to
+the gateway service account so no named person is in the path at all — that needs the account added to
 the `Build` workspace and a Power BI Pro licence ($14/mo), and is the target to aim at rather
 than the thing to wait for. See [`access-model.md`](access-model.md).
 
-> **Worth raising on the same call:** re-measured live on **2026-08-19**, Rebecca's Sage data
-> now runs to **2026-07-31** — up from the **2026-07-20** we recorded on 2026-08-02, so her
+> **Worth raising on the same call:** re-measured live on **2026-08-19**, the Affect reporting lead's Sage data
+> now runs to **2026-07-31** — up from the **2026-07-20** we recorded on 2026-08-02, so their
 > feed refreshed at some point in between rather than stopping dead. It is still **~19 days
 > behind**: lag, not a dead feed. Outbuild's **2026-07-14** is as measured on 2026-08-02 and
-> has **not been re-verified since**. If her dataflows are lagging on the same gateway, the
+> has **not been re-verified since**. If their dataflows are lagging on the same gateway, the
 > *existing* reporting is running on numbers nearly three weeks old and nobody has noticed —
 > which makes the grant below no less urgent, and `CD_Sage_Ingest` still cannot run at all
 > without it.
 
 ## 2026-08-25 — the gateway is open, and the dataflow ran for real
 
-**`GET /connections` returns 1 for `cforey-c@affect-group.com`.** It had returned 0 since
+**`GET /connections` returns 1 for the build account.** It had returned 0 since
 2026-08-02. `nc-affect-1\sage100con;Affect Group` (`835e72c8-…`, connectivityType
 `OnPremisesGateway`) is now visible and usable. The access half of this is finished.
 
-How: signed in as `fabricconnector@affect-group.com` — the gateway's own registration account,
-and therefore its admin — and added `cforey-c@` as `Read` on the datasource. Rebecca and IT
+How: signed in as the gateway service account — the gateway's own registration account,
+and therefore its admin — and added the build account as `Read` on the datasource. The Affect reporting lead and IT
 already held it. `/gateways` still returns 0 for us, which is correct and does not matter: that
 needs gateway *admin*, and nothing here does.
 
@@ -123,9 +123,9 @@ So a Sage-sourced retainage figure of $0 is **correct**, and the report's retain
 correctly come from progress billing instead. Nothing to fix, and the last "we should check
 that when the gateway lands" item on this subject area is now checked.
 
-Worth one sentence to Rebecca all the same: Affect withholds retainage on Procore contracts
+Worth one sentence to the Affect reporting lead all the same: Affect withholds retainage on Procore contracts
 but records none of it in Sage, so the two systems disagree by design. That is a process
-observation, not a defect, and she is the right person to say whether it is intended.
+observation, not a defect, and they are the right person to say whether it is intended.
 
 ### The join keys, verified rather than assumed
 
@@ -181,7 +181,7 @@ old "cannot see any gateway" signature. It is all-or-nothing at the definition l
 **The fix is in the destination's own connection dialog, where the gateway is a dropdown with
 a `(none)` option.** Setting it to `(none)` detaches the Lakehouse connection from the gateway
 while the SQL source keeps using it, and the sign-in state immediately flips from "You are not
-signed in" to "You are currently signed in as…". The connection `Lakehouse cforey-c (none)` is
+signed in" to "You are currently signed in as…". The connection `Lakehouse <build account> (none)` is
 created against the signed-in identity, and the refresh works.
 
 That dropdown only appears when the default destination is **re-added from scratch**. On the
@@ -191,12 +191,12 @@ why this looked unfixable from the UI as well as from the API.
 ### Why Build_Sage_Test was never a useful comparison
 
 Its definition is byte-identical to ours — same `gatewayObjectId`, same SQL connection, same
-Lakehouse connection `44379bed-…` on cluster `e1e7d5c7-…`. It works because it runs as Rebecca
-and `44379bed` is **her personal connection**; `e1e7d5c7` returns 404 for us because it is a
+Lakehouse connection `44379bed-…` on cluster `e1e7d5c7-…`. It works because it runs as the Affect reporting lead
+and `44379bed` is **their personal connection**; `e1e7d5c7` returns 404 for us because it is a
 per-user cloud cluster. Personal connections cannot be shared. Whoever owns the dataflow needs
-their own, and ours is now `Lakehouse cforey-c`.
+their own, and ours is now `Lakehouse <build account>`.
 
-We had copied her definition wholesale, connection ids and all, when this dataflow was
+We had copied their definition wholesale, connection ids and all, when this dataflow was
 authored — and it survived unnoticed from 2026-08-02 until now because the item had no deploy
 script. It has one now (`deploy_sage.py`).
 
@@ -221,8 +221,8 @@ first time it was not understood.
 
 `build_definition()` now reads the LIVE `connections` and `gatewayObjectId` off the deployed
 item and preserves them, taking only the mashup from git. The mashup is the versioned
-artifact — it is the logic, it is diffable. The connection ids are not: `Lakehouse cforey-c`
-is a personal cloud connection, and the one originally committed here was **Rebecca's**,
+artifact — it is the logic, it is diffable. The connection ids are not: `Lakehouse <build account>`
+is a personal cloud connection, and the one originally committed here was **the Affect reporting lead's**,
 which is the root cause of the whole destination saga.
 
 **If the destination breaks again**, the repair is in the portal and takes about six clicks:
@@ -262,7 +262,7 @@ cannot enumerate them: a Power Query navigation to `INFORMATION_SCHEMA.TABLES` f
 `Expression.Error 10061` because the gateway connection exposes only `dbo`, and the pipeline
 Copy route is blocked by the logon trigger (§9).
 
-**So this needs one question answered by someone with direct database access** — Rebecca, or
+**So this needs one question answered by someone with direct database access** — the Affect reporting lead, or
 Nerds That Care: *which table holds job cost detail by cost code?* Add it to `mashup.pq`, and
 the budget fact becomes real. Until then, the honest position is that Procore is the only
 source of cost-coded actuals and Sage is the source of truth for AR/AP totals.

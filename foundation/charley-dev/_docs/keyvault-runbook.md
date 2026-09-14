@@ -1,6 +1,6 @@
 # Key Vault — state and runbook
 
-**Verified against Azure and the live Outbuild API on 2026-08-19** as `cforey-c@affect-group.com`.
+**Verified against Azure and the live Outbuild API on 2026-08-19** as the build account.
 
 Blocker #3 from the Aug 13 executive update is **resolved**. It was never one blocker: it was
 a vault we could not read plus a vault nobody had told us about. Secrets now load and are read
@@ -17,8 +17,8 @@ Every document in this repo pointed at the wrong vault.
 | Resource group | `Affect_KeyVault` | **`Affect_Data`** |
 | Our access | none — 403, `Assignment: (not found)` | **Key Vault Administrator** |
 
-The old runbook asked Rebecca for a Key Vault Secrets Officer grant on `OneLake`. That ask is
-withdrawn — it would have solved a problem we do not have. Rebecca had already added the
+The old runbook asked the Affect reporting lead for a Key Vault Secrets Officer grant on `OneLake`. That ask is
+withdrawn — it would have solved a problem we do not have. The Affect reporting lead had already added the
 Outbuild token to `AffectKeyVault`, in a different subscription, and the access we needed came
 with it. **Nothing further is required from anyone to read or write secrets.**
 
@@ -43,20 +43,20 @@ Secrets held:
 
 | Secret | Added | State |
 |---|---|---|
-| `OutbuildToken` | Rebecca, 2026-08-19 | **Live** — reads back, and authenticates against the Datahub API |
-| `ProcoreClientID` | Rebecca, 2026-08-22 | **Live** — verified 2026-08-24 against `https://api.procore.com`, 19 active projects |
-| `ProcoreClientSecret` | Rebecca, 2026-08-22 | **Live** — same probe |
-| `ProcoreCompanyID` | Rebecca, 2026-08-22 | **Live** — same probe |
-| `Fabric-SQL-Login-Username` | Rebecca, 2026-08-22 | Held, unused — the `FabricReader` SQL login |
-| `Fabric-SQL-Login-Password` | Rebecca, 2026-08-22 | Held, unused |
-| `Fabric-Gateway-Service-Account-Username` | Rebecca, 2026-08-22 | Held, unused — `fabricconnector@` |
-| `Fabric-Gateway-Service-Account-Password` | Rebecca, 2026-08-22 | Held, unused |
-| `Sage-Data-Gateway-Recovery-Key` | Rebecca, 2026-08-22 | Held, unused |
+| `OutbuildToken` | The Affect reporting lead, 2026-08-19 | **Live** — reads back, and authenticates against the Datahub API |
+| `ProcoreClientID` | The Affect reporting lead, 2026-08-22 | **Live** — verified 2026-08-24 against `https://api.procore.com`, 19 active projects |
+| `ProcoreClientSecret` | The Affect reporting lead, 2026-08-22 | **Live** — same probe |
+| `ProcoreCompanyID` | The Affect reporting lead, 2026-08-22 | **Live** — same probe |
+| `Fabric-SQL-Login-Username` | The Affect reporting lead, 2026-08-22 | Held, unused — the `FabricReader` SQL login |
+| `Fabric-SQL-Login-Password` | The Affect reporting lead, 2026-08-22 | Held, unused |
+| `Fabric-Gateway-Service-Account-Username` | The Affect reporting lead, 2026-08-22 | Held, unused — the gateway service account |
+| `Fabric-Gateway-Service-Account-Password` | The Affect reporting lead, 2026-08-22 | Held, unused |
+| `Sage-Data-Gateway-Recovery-Key` | The Affect reporting lead, 2026-08-22 | Held, unused |
 
 ### The five Sage/gateway secrets do not unblock Sage
 
 They close a **different** gap — the one at the bottom of this document: the 1Password share
-links holding the gateway recovery key, the `FabricReader` SQL login and the `fabricconnector@`
+links holding the gateway recovery key, the `FabricReader` SQL login and the the gateway service account
 credentials expired 2026-05-28, and those three things now live somewhere durable. That is
 worth having.
 
@@ -65,7 +65,7 @@ They are not what `CD_Sage_Ingest` is waiting for. Sage 100 is **on-premises**
 reaches it through the on-premises data gateway, which authenticates with the credential
 **stored in the gateway connection** — not with anything in Key Vault. Re-checked
 2026-08-24: `GET /gateways` and `GET /connections` both still return **0** for
-`cforey-c@affect-group.com`. The ask is unchanged and is still one line: **"Can use" on
+the build account. The ask is unchanged and is still one line: **"Can use" on
 connection `nc-affect-1\sage100con;Affect Group`** in *Manage connections and gateways*.
 
 The full identity picture — what this account can and cannot do (verified, not assumed), why
@@ -91,7 +91,7 @@ the secret name**. `setup_keyvault.py` assumed a mechanical kebab-case translati
 have written `procore-client-id`; the read side originally passed `PROCORE_CLIENT_ID` straight
 through, which is not a legal secret name at all.
 
-Both were wrong about the same thing, and reality settled it on 2026-08-22: Rebecca created
+Both were wrong about the same thing, and reality settled it on 2026-08-22: The Affect reporting lead created
 every secret **by hand in the portal, in PascalCase** — `ProcoreClientID`, not
 `procore-client-id`. So all four are now mapped explicitly rather than derived, and the
 mechanical fallback survives only for a secret nobody has created yet. Mapped, not renamed:
@@ -136,8 +136,8 @@ leaves the live credential in Fabric's item-definition history with nothing revo
 reads as fixed and is not.
 
 1. **Regenerate in Procore.** Developer Portal → the Data Connector app → regenerate the client
-   secret. This invalidates the old one immediately, so expect Rebecca's `procore_auth`
-   notebook to start failing from this moment — that is the point, and it is worth telling her
+   secret. This invalidates the old one immediately, so expect the Affect reporting lead's `procore_auth`
+   notebook to start failing from this moment — that is the point, and it is worth telling them
    before rather than after.
 
 2. **Put the new values in `.env`** at `C:\Users\charl\Documents\Affect\.env`:
@@ -171,7 +171,7 @@ reads as fixed and is not.
    Its last four runs all failed on `Secret 'PROCORE_CLIENT_ID' not found` (2026-08-02). A
    green run here is the real proof — steps 3 and 4 do not touch `notebookutils`.
 
-6. **Only then, clear the literals from Rebecca's `procore_auth` notebook** — finding F1 in
+6. **Only then, clear the literals from the Affect reporting lead's `procore_auth` notebook** — finding F1 in
    `security-findings.md`. Workspace `1f7caed6-…`, folder `594bfe88-…`, lines 21 and 23. The
    old secret is dead by now, so this is tidying rather than remediation, but leaving a
    credential-shaped string in a live notebook trains everyone who reads it that this is normal.
@@ -204,7 +204,7 @@ could reveal. Recorded here because each one failed in a way that pointed somewh
 nothing downstream reads it yet.
 
 ~~**Still not wired**~~ — **done 2026-08-20** (commit `31cb72c`). `sv_outbuild_activities` now
-reads our own `cd_bronze_outbuild_*` rather than Rebecca's `Silver_Lakehouse/Outbuild_activities`
+reads our own `cd_bronze_outbuild_*` rather than the Affect reporting lead's `Silver_Lakehouse/Outbuild_activities`
 dataflow, and `fct_Milestone` went **52 → 126** milestones. The regression risk was real and the
 change was measured either side rather than predicted.
 
@@ -216,7 +216,7 @@ change was measured either side rather than predicted.
   the widest available role is worth questioning with Outbuild — a read-only, shorter-lived
   token would do everything the Datahub API is used for here.
 - ~~**The 1Password share links in the Sage handoff document expired 2026-05-28.**~~
-  **CLOSED 2026-08-22** — Rebecca put all three in `AffectKeyVault`: the gateway recovery key,
-  the `FabricReader` SQL login and the `fabricconnector@` service account credentials. Nothing
+  **CLOSED 2026-08-22** — the Affect reporting lead put all three in `AffectKeyVault`: the gateway recovery key,
+  the `FabricReader` SQL login and the the gateway service account service account credentials. Nothing
   reads them, which is correct; they exist so the day the gateway is down is not also the day
   nobody can find the recovery key.

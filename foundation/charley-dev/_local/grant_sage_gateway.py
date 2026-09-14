@@ -12,26 +12,26 @@ it: there is no ACL entry to maintain and no named person in the data path to br
 they leave the engagement. `--grant` ties Sage to whoever is named in --grantee, which is a
 consultant's account by default, and that is a grant somebody has to redo later.
 
---take-ownership needs two things first, both Rebecca's to do and neither ours:
+--take-ownership needs two things first, both the Affect reporting lead's to do and neither ours:
 
-  1. `fabricconnector@affect-group.com` added to the **Build** workspace (Contributor)
+  1. the gateway service account added to the **Build** workspace (Contributor)
   2. a **Power BI Pro** license on it - section 10 of the handoff records it as having
      none, and on F2 (below F64) any account that runs shared content needs Pro, $14/month
 
-Until those land, --take-ownership returns 401/403. That means "ask Rebecca", not "broken".
+Until those land, --take-ownership returns 401/403. That means "ask the Affect reporting lead", not "broken".
 
 WHY THIS EXISTS
 ---------------
 CD_Sage_Ingest is deployed, correct and inert. It fails in about five seconds because
-cforey-c@affect-group.com cannot see any gateway in the tenant - GET /gateways and
+The build account cannot see any gateway in the tenant - GET /gateways and
 GET /connections both return 0 - so the dataflow asks to run through a gateway it has no
 rights on. The fix is one ACL entry, and it has been the single outstanding ask since
 2026-08-02.
 
 The Nerds That Care handoff (2026-05-20) records that the gateway is registered to
-fabricconnector@affect-group.com. In Fabric the registering account IS the gateway admin,
-and nothing in that document grants gateway-admin rights to any human - not Rebecca, not
-Cal. So this service account is, as far as we can tell, the only identity in the tenant
+the gateway service account. In Fabric the registering account IS the gateway admin,
+and nothing in that document grants gateway-admin rights to any human - not the Affect reporting lead, not
+any other Affect staff member. So this service account is, as far as we can tell, the only identity in the tenant
 that can make the grant.
 
 Its password is in AffectKeyVault, put there by Affect's own technical lead on 2026-08-22.
@@ -49,7 +49,7 @@ does not alter Build_Sage_Test or anything else.
 THE ONE REAL RISK, STATED PLAINLY
 ---------------------------------
 Section 7 of the handoff: if this account's password changes without the gateway being
-reconfigured on the server, THE GATEWAY GOES OFFLINE - and Rebecca's existing Sage
+reconfigured on the server, THE GATEWAY GOES OFFLINE - and the Affect reporting lead's existing Sage
 reporting stops with it. This script never changes the password. But a service account's
 first interactive sign-in can be met with a forced MFA-registration or password-change
 prompt. If you see one: STOP. Do not complete it. Close it and tell Nerds That Care.
@@ -210,11 +210,11 @@ def main() -> int:
         # permission question disappears rather than being answered - no "Can use" entry to
         # maintain, and no named consultant in the data path to break when they leave.
         #
-        # Needs two things first, both Rebecca's to do and neither ours:
+        # Needs two things first, both the Affect reporting lead's to do and neither ours:
         #   1. fabricconnector@ added to the Build workspace (Contributor or Member)
         #   2. a Power BI Pro license on it - section 10 records it as having none, and on
         #      F2, which is below F64, any account that runs shared content needs Pro
-        # Without those this returns 401 or 403, which means "ask Rebecca", not "broken".
+        # Without those this returns 401 or 403, which means "ask the Affect reporting lead", not "broken".
         #
         # UNVERIFIED FOR GEN2. Default.Takeover is the Power BI dataflow API, and Gen2 items
         # do not appear on that surface at all: GET /groups/{id}/dataflows returns an empty

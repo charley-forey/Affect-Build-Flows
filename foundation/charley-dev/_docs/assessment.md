@@ -143,8 +143,8 @@ two halves: **Sage data is on the dashboard, and we are not the ones pulling it.
 | Source | Who pulls it | Into | Latest data | Ours? |
 |---|---|---|---|---|
 | **Procore** | **us** — the endpoint registry (42 at this audit, 44 since the PQP work), run locally, landed as NDJSON | `CD_Bronze` → `CD_Silver` | 2026-08-02 04:44 | **yes** |
-| **Sage 100** | Rebecca's `Build_Sage_Test` dataflow | existing `Silver_Lakehouse` | invoice **2026-07-31** (re-measured 2026-08-19; was 2026-07-20 on 2026-08-02) | no |
-| **Outbuild** | Rebecca's `Outbuild_activities` dataflow | existing `Silver_Lakehouse` | updated 2026-07-14 *(as measured 2026-08-02, not re-verified)* | no |
+| **Sage 100** | The Affect reporting lead's `Build_Sage_Test` dataflow | existing `Silver_Lakehouse` | invoice **2026-07-31** (re-measured 2026-08-19; was 2026-07-20 on 2026-08-02) | no |
+| **Outbuild** | The Affect reporting lead's `Outbuild_activities` dataflow | existing `Silver_Lakehouse` | updated 2026-07-14 *(as measured 2026-08-02, not re-verified)* | no |
 
 `01_source_views_cd.sql` points 18 of its views at our own `CD_Silver` and leaves 8 reading
 the existing warehouse — deliberately, per-view rather than all-or-nothing, because a view
@@ -155,10 +155,10 @@ three that matter:
 - `sv_outbuild_activities` → Outbuild. **All 52 rows of `fct_Milestone` come from here.**
 - `sv_vendors` → carries `sage_vendor_id`, which Procore does not put on a vendor record.
 
-**So if Rebecca's dataflows stop, our dashboard's financial and schedule data stops with
+**So if the Affect reporting lead's dataflows stop, our dashboard's financial and schedule data stops with
 them** — and it would not error, it would just quietly stop moving. Nothing currently alerts
 on that. Sage is running **~19 days behind** as re-measured on 2026-08-19: max `SentDate`
-reached **2026-07-31**, up from the **2026-07-20** recorded on 2026-08-02, so her feed did
+reached **2026-07-31**, up from the **2026-07-20** recorded on 2026-08-02, so their feed did
 refresh at some point in between rather than stopping dead in July. The Outbuild figure of
 **2026-07-14** is as measured on 2026-08-02 and has **not been re-verified since** —
 `fct_Milestone` is unchanged at 52 rows, and the only date the table carries
@@ -170,7 +170,7 @@ gateway.
 source. `[Invoices]` failed at 117 when the model returned 122, and `[Periods]` moved 130 →
 142 alongside it — `Periods` is derived from the fact date range, so eleven more days of Sage
 AR widened it by twelve project-months. Both expectations are updated. Asserting an exact
-count against somebody else's warehouse is fragile by design — it moves whenever Rebecca's
+count against somebody else's warehouse is fragile by design — it moves whenever the Affect reporting lead's
 dataflow runs — and that fragility is exactly what surfaced the change; nothing else would
 have.
 
@@ -205,7 +205,7 @@ Fabric exactly as committed — gateway, both connections, all 8 queries, `Defau
 The first run **failed in 5 seconds**, which is too fast to be a query. The cause is not our
 code:
 
-| Call as `cforey-c@affect-group.com` | Result |
+| Call as the build account | Result |
 |---|---|
 | `GET /v1/gateways` | `{"value": []}` |
 | `GET /v1/connections` | `{"value": []}` |
@@ -216,14 +216,14 @@ cannot see any gateway or connection in the tenant.** The dataflow asks to run t
 gateway its runner has no rights on, and fails before reaching Sage.
 
 **The ask, precisely:** whoever administers the on-premises data gateway grants
-`cforey-c@affect-group.com` the **"Can use"** permission on the connection
+the build account the **"Can use"** permission on the connection
 `nc-affect-1\sage100con;Affect Group`. That is a single grant in *Manage connections and
 gateways*. No subscription, no vault, no code change — the dataflow runs the moment it lands.
 
 Leaving the failed dataflow deployed is deliberate: it is correct, it is inert until run,
 and it turns the remaining work into one permission grant plus one refresh.
 
-**Worth raising on the same call:** Rebecca's Sage data reached 2026-07-31 when re-measured
+**Worth raising on the same call:** the Affect reporting lead's Sage data reached 2026-07-31 when re-measured
 on 2026-08-19 — it moved on from the 2026-07-20 recorded on 2026-08-02, so it is lagging
 ~19 days rather than dead. Outbuild's 2026-07-14 is as measured on 2026-08-02 and has not
 been re-verified. If those dataflows are lagging on the same gateway, the existing reporting
@@ -234,7 +234,7 @@ connection binding. They are separate asks with separate owners, and conflating 
 costing us the one that could have been done weeks ago.
 
 **Outbuild was the genuine blocker** — `OUTBUILD_API_TOKEN` had never been issued and no
-workaround exists. As of Aug 11 Rebecca has offered to send it by email, so it is now
+workaround exists. As of Aug 11 the Affect reporting lead has offered to send it by email, so it is now
 pending a transfer rather than a decision. It remains the highest-value gap until it
 arrives: 17 of 19 projects have no milestones, and Outbuild is the only milestone source
 anywhere.
@@ -248,7 +248,7 @@ anywhere.
    18:27 UTC. 3,078 rows across 15 endpoints landed in bronze.
 3. ~~**Grant Key Vault Secrets Officer on vault `OneLake`.**~~ **Withdrawn 2026-08-19 — this
    ask named the wrong vault.** The vault in use is `AffectKeyVault` (RG `Affect_Data`,
-   subscription `73932b34-…`), where `cforey-c@affect-group.com` already held *Key Vault
+   subscription `73932b34-…`), where the build account already held *Key Vault
    Administrator* inherited at resource-group scope. Nobody needed to grant anything.
 4. **Rotate the Procore credential** (F1), then edit the notebook — in that order. Rotation
    should not wait for the vault: the old pair has been readable by anyone with Viewer on

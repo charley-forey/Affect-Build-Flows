@@ -211,7 +211,7 @@ def create(name: str, kind: str, tok: str, attempts: int = 12, delay: int = 20) 
 
 
 def check_schemas(tok: str) -> int:
-    """Every CD_ lakehouse must be schema-enabled, like the two Rebecca built.
+    """Every CD_ lakehouse must be schema-enabled, like the two built by the Affect reporting lead.
 
     Checked rather than assumed because it is unfixable in place: a lakehouse created
     without it has to be dropped and recreated, which is free today and expensive once
