@@ -68,3 +68,4 @@ jobs:
         run: |
           python make_qc_seeds.py --check
           python make_sharepoint.py --check
+          python make_data_dictionary.py --check
