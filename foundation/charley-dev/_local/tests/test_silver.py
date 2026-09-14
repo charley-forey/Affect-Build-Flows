@@ -498,8 +498,9 @@ def manual_bronze() -> dict[str, str]:
         names = ", ".join(c for c, _ in cols) + ", Modified, Editor"
         rows = []
         for project in (GOOD_PROJECT, BAD_PROJECT):
-            values = [f"{{'Title': '{project}'}}"]
-            values += [_literal(v, t) for (c, t), v in zip(cols, example) if c != "ProjectKey"]
+            # In column order: ProjectKey is not always first (man_ProjectAccess leads with UPN).
+            values = [f"{{'Title': '{project}'}}" if c == "ProjectKey" else _literal(v, t)
+                      for (c, t), v in zip(cols, example)]
             values.append("TIMESTAMP '2026-08-01 12:00:00'")
             values.append("{'Title': 'csv:fixture'}")
             rows.append("(" + ", ".join(values) + ")")
@@ -978,15 +979,42 @@ def test_manual_parsers(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_qc "
                     "WHERE reason LIKE 'unknown project%'") == 8
     assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_manual "
-                    "WHERE reason LIKE 'unknown project%'") == 9
-    check("rows for an unknown project are rejected with a reason on all 17 manual lists")
+                    "WHERE reason LIKE 'unknown project%'") == 10
+    check("rows for an unknown project are rejected with a reason on all 18 manual lists")
+
+    # The RLS register. A reject is a denial, so each malformed shape must reject WITH a
+    # reason, and the two legitimate shapes (ALL, a mixed-case UPN) must survive.
+    con.execute("BEGIN")
+    try:
+        editor = "{'Title': 'csv:fixture'}"
+        for upn, project, start, end in (
+            ("Exec@Example.com", "all", "NULL", "NULL"),                          # accepted as ALL
+            ("not-an-upn", GOOD_PROJECT, "NULL", "NULL"),                         # malformed
+            ("two words@example.com", GOOD_PROJECT, "NULL", "NULL"),              # malformed
+            ("late@example.com", GOOD_PROJECT, "DATE '2026-02-01'", "DATE '2026-01-01'"),
+        ):
+            con.execute(f"INSERT INTO cd_bronze_man_project_access VALUES ('{upn}', "
+                        f"{{'Title': '{project}'}}, 'PM', {start}, {end}, "
+                        f"TIMESTAMP '2026-08-01 12:00:00', {editor})")
+        _rerun_manual(con)
+        assert one(con, "SELECT project_id FROM cd_silver_man_project_access "
+                        "WHERE user_principal_name = 'exec@example.com'") == "ALL"
+        reasons = {r[0] for r in con.execute(
+            "SELECT reason FROM cd_dq_rejects_manual WHERE target_table = 'cd_silver_man_project_access'").fetchall()}
+        assert sum(r.startswith("malformed UserPrincipalName") for r in reasons) == 2, reasons
+        assert "EffectiveTo is before EffectiveFrom" in reasons, reasons
+        assert one(con, "SELECT COUNT(*) FROM cd_silver_man_project_access") == 2
+    finally:
+        con.execute("ROLLBACK")
+        _rerun_manual(con)
+    check("access register: ALL and mixed-case UPNs accepted, malformed UPNs and inverted windows rejected")
 
 
 # Natural-key and domain columns: never mutated to manufacture a conflicting version.
 _MANUAL_KEYS = {"ProjectKey", "MonthStart", "WinNumber", "RiskNumber", "ItemNumber",
                 "QuestionNumber", "MilestoneName", "DfowRef", "ItpRef", "GateKey",
                 "InspectionRef", "SystemRef", "SignInRef", "ItemKey", "WinType", "ImpactCode",
-                "GateType"}
+                "GateType", "UserPrincipalName"}
 
 
 def _manual_lists():

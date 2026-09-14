@@ -389,6 +389,10 @@ CREATE OR REPLACE TEMPORARY VIEW sv_man_daily_log_compliance AS
 SELECT project_id, month_start, logs_expected, logs_missed_same_day
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_daily_log_compliance`;
 
+CREATE OR REPLACE TEMPORARY VIEW sv_man_project_access AS
+SELECT user_principal_name, project_id, role, effective_from, effective_to
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_project_access`;
+
 
 -- ---------------------------------------------------------------------------
 -- PQP - the Project Quality Plan subject area

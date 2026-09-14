@@ -108,8 +108,8 @@ def test_list_names_agree_across_writers() -> None:
 def test_every_column_is_provisioned() -> None:
     script = ms.OUT.read_text(encoding="utf-8")
     defs = ms.tables()
-    # 9 monthly-report lists + 8 PQP lists.
-    assert len(defs) == 17, f"{len(defs)} man_ tables parsed, expected 17"
+    # 9 monthly-report lists + the RLS access register + 8 PQP lists.
+    assert len(defs) == 18, f"{len(defs)} man_ tables parsed, expected 18"
 
     for table, cols in defs.items():
         name = ms.list_name(table)
@@ -135,6 +135,31 @@ def test_project_key_is_a_lookup_everywhere() -> None:
         )
         assert "LookupField = \"Title\"" in block, f"{name}: lookup does not target Title"
     check("ProjectKey is a lookup on every list, never free text")
+
+
+def test_project_access_register() -> None:
+    """The RLS register rides the same generator, so its four writers cannot drift either.
+
+    ProjectKey stays a lookup; "every project" is the ALL item the PS1 adds to CD Projects,
+    which is the only way a lookup column can offer it.
+    """
+    import deploy_manual as dm
+    import deploy_model
+
+    script = ms.OUT.read_text(encoding="utf-8")
+    mashup = ms.OUT_PQ.read_text(encoding="utf-8")
+    table = deploy_model.ACCESS_TABLE
+    cols = [c for c, _ in ms.tables()[table]]
+    assert cols == ["UserPrincipalName", "ProjectKey", "Role", "EffectiveFrom", "EffectiveTo"], cols
+    assert ms.list_name(table) == "CD Project Access" and ms.bronze_table(table) == "cd_bronze_man_project_access"
+    assert '[Title = "CD Project Access"]' in mashup
+    assert [c for c, _ in dm.LISTS["project_access"]] == cols
+    assert len(dm.EXAMPLES["project_access"]) == len(cols)
+    assert f"Title = '{ms.ALL_PROJECTS}'" in script, "CD Projects never offers ALL"
+    block = script.split('$list = Ensure-List "CD Project Access"', 1)[1].split("Ensure-List", 1)[0]
+    assert '-InternalName "Role" -Type Choice -Choices "PM",' in block
+    assert '-InternalName "UserPrincipalName" -Type Text' in block
+    check("CD Project Access is generated with the DDL's columns, a Role choice and an ALL lookup item")
 
 
 def test_choice_values_match_the_dimensions() -> None:
@@ -222,6 +247,7 @@ def main() -> int:
     test_list_names_agree_across_writers()
     test_every_column_is_provisioned()
     test_project_key_is_a_lookup_everywhere()
+    test_project_access_register()
     test_choice_values_match_the_dimensions()
     test_pqp_choices_come_from_the_seed_vocabulary()
     test_versioning_is_on()

@@ -445,6 +445,58 @@ FROM mv_daily_log_compliance
 WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
+-- Project access register - the RLS source (user x project, NOT monthly)
+-- ---------------------------------------------------------------------------
+--
+-- A REJECT HERE IS A DENIAL, which is the safe direction: a mistyped UPN or a stale project
+-- grants nothing rather than something unintended, and the reject log says why the user
+-- sees an empty report. 'ALL' is the only non-project value accepted as ProjectKey - it is
+-- an item in CD Projects so the lookup column can offer it. UPN is lower-cased so the
+-- natural key cannot split on case. No regex: LIKE is identical in Spark and DuckDB.
+
+CREATE OR REPLACE TEMPORARY VIEW mv_project_access AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, user_principal_name, project_id) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, user_principal_name, project_id, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, user_principal_name, project_id
+                              ORDER BY role, effective_from, effective_to) AS _version
+    FROM (
+        SELECT
+            LOWER(TRIM(b.UserPrincipalName))                     AS user_principal_name,
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.Role)                                         AS role,
+            CAST(b.EffectiveFrom AS DATE)                        AS effective_from,
+            CAST(b.EffectiveTo AS DATE)                          AS effective_to,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.UserPrincipalName IS NULL
+                     THEN 'missing ProjectKey or UserPrincipalName'
+                WHEN TRIM(b.UserPrincipalName) NOT LIKE '%_@_%._%'
+                     OR TRIM(b.UserPrincipalName) LIKE '% %'
+                     OR TRIM(b.UserPrincipalName) LIKE '%@%@%'
+                     THEN CONCAT('malformed UserPrincipalName: ', b.UserPrincipalName)
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) <> 'ALL'
+                     THEN 'unknown project - is CD Projects stale?'
+                WHEN CAST(b.EffectiveTo AS DATE) < CAST(b.EffectiveFrom AS DATE)
+                     THEN 'EffectiveTo is before EffectiveFrom'
+            END AS _reject_reason
+        FROM cd_bronze_man_project_access b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
+CREATE OR REPLACE TABLE cd_silver_man_project_access AS
+SELECT user_principal_name,
+       CASE WHEN UPPER(project_id) = 'ALL' THEN 'ALL' ELSE project_id END AS project_id,
+       role, effective_from, effective_to, last_modified, last_modified_by
+FROM mv_project_access
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
+
+-- ---------------------------------------------------------------------------
 -- Job Register - the BUILD site, not the reporting site
 -- ---------------------------------------------------------------------------
 --
@@ -579,6 +631,14 @@ SELECT 'cd_silver_man_daily_log_compliance' AS target_table, project_id, month_s
        COALESCE(_reject_reason, 'conflicting duplicate - (project, month) has more than one version; resolve in SharePoint') AS reason,
        last_modified, last_modified_by
 FROM mv_daily_log_compliance
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+SELECT 'cd_silver_man_project_access' AS target_table, project_id, CAST(NULL AS DATE) AS month_start,
+       CONCAT('access for ', COALESCE(user_principal_name, '(blank)')) AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (user, project) has more than one version; access DENIED until resolved in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_project_access
 WHERE _reject_reason IS NOT NULL OR _versions > 1
 
 UNION ALL

@@ -57,6 +57,11 @@
       "queryName": "cd_bronze_man_daily_log_compliance",
       "loadEnabled": true
     },
+    "cd_bronze_man_project_access": {
+      "queryId": "7d78c7b5-bf3d-5742-83a2-2232c3a8915f",
+      "queryName": "cd_bronze_man_project_access",
+      "loadEnabled": true
+    },
     "cd_bronze_man_qc_dfow": {
       "queryId": "1b9ace1d-97e7-5282-8d4b-54b4ea527ee4",
       "queryName": "cd_bronze_man_qc_dfow",

@@ -25,7 +25,7 @@ def compare_counts(actual, expected):
 def check_register_coverage(model_id, token):
     """Exercise the generated DAX with empty, partial and fully populated synthetic inputs."""
     import validate_model as vm
-    tables = [t for t in dm.MODEL_TABLES if t.startswith("man_")]
+    tables = [t for t in dm.MODEL_TABLES if t.startswith("man_") and t != dm.ACCESS_TABLE]
     expression = next(m[1] for m in dm.MEASURES if m[0] == "DQ Registers Awaiting Input")
     tested = expression
     for table in tables:

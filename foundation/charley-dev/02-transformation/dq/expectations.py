@@ -1187,8 +1187,33 @@ def _add_key_and_vocabulary_rules(suite: Suite) -> None:
         ("man_QcInspectorSignIn", ["ProjectKey", "SignInRef"]),
         ("man_QcChecklistResult", ["ProjectKey", "ItemKey"]),
         ("man_QcDohResult", ["ProjectKey", "ItemKey"]),
+        ("man_ProjectAccess", ["UserPrincipalName", "ProjectKey"]),
     ):
         suite.add(unique_key(table, cols))
+
+    # The RLS register. ERROR: silver already rejects both shapes, so a hit means that parser
+    # broke - and a grant to a project that is not in dim_Project (UNMATCHED included) or to
+    # a blank user is a security row nobody can reason about.
+    suite.add(
+        Expectation(
+            name="man_ProjectAccess.ProjectKey is a real project or ALL",
+            table="man_ProjectAccess",
+            failing_sql=("SELECT a.* FROM man_ProjectAccess a WHERE a.ProjectKey IS NULL "
+                         "OR (a.ProjectKey <> 'ALL' AND (a.ProjectKey = 'UNMATCHED' OR NOT EXISTS "
+                         "(SELECT 1 FROM dim_Project p WHERE p.ProjectKey = a.ProjectKey)))"),
+            severity=SEVERITY_ERROR,
+            description="a grant must name a real dim_Project key or ALL",
+        ),
+        Expectation(
+            name="man_ProjectAccess.UserPrincipalName is lower-case and non-blank",
+            table="man_ProjectAccess",
+            failing_sql=("SELECT * FROM man_ProjectAccess WHERE UserPrincipalName IS NULL "
+                         "OR UserPrincipalName <> LOWER(TRIM(UserPrincipalName)) "
+                         "OR UserPrincipalName NOT LIKE '%_@_%._%'"),
+            severity=SEVERITY_ERROR,
+            description="silver lower-cases and validates the UPN the RLS filter compares",
+        ),
+    )
 
     # Vendor keys. WARN: dim_Vendor is the Procore company vendor directory only
     # (11_dim_vendor.sql), not a union of observed keys, so a certificate or commitment

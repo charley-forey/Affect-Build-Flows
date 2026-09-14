@@ -40,7 +40,7 @@ def main():
             sql = re.sub(r"delta\.`\{CD_SILVER_ABFSS\}/(\w+)`", r"\1", sql)
             con.execute(sql)
             count += 1
-    assert count == 55, "source-view contract changed; review the linked integration scope"
+    assert count == 56, "source-view contract changed; review the linked integration scope"
     assert con.execute("SELECT * FROM sv_project_crosswalk").fetchall() == [("7", "11", "Tower A")]
     assert con.execute("SELECT procore_vendor_id, sage_vendor_id FROM sv_vendors").fetchall() == [("V1", "55")]
     for path in seedrunner.gold_files():
