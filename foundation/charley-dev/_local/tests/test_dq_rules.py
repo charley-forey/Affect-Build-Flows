@@ -268,6 +268,16 @@ def main() -> int:
                                "WHERE ItemType = 'RFI'") == 0
     checks += 2
 
+    # RLS register: the ALL grant is clean, a grant to UNMATCHED or an unknown key and a
+    # mixed-case UPN each fire.
+    grant = "man_ProjectAccess.ProjectKey is a real project or ALL"
+    for bad in ("'UNMATCHED'", "'P404'", "NULL"):
+        check_fails(con, grant, f"UPDATE man_ProjectAccess SET ProjectKey = {bad} WHERE ProjectKey = 'P1'")
+        checks += 1
+    check_fails(con, "man_ProjectAccess.UserPrincipalName is lower-case and non-blank",
+                "UPDATE man_ProjectAccess SET UserPrincipalName = 'PM@Example.com' WHERE ProjectKey = 'P1'")
+    checks += 1
+
     con.close()
     print(f"test_dq_rules: {checks} mutation checks passed")
     return 0

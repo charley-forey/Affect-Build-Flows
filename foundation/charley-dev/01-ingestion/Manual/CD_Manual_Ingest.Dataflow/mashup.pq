@@ -116,6 +116,13 @@ in
   Navigation;
 
 [BindToDefaultDestination = true]
+shared cd_bronze_man_project_access = let
+  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
+  Navigation = Source{[Title = "CD Project Access"]}[Items]
+in
+  Navigation;
+
+[BindToDefaultDestination = true]
 shared cd_bronze_man_qc_dfow = let
   Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
   Navigation = Source{[Title = "CD QC DFOW"]}[Items]

@@ -88,6 +88,14 @@ if (Test-Path $csv) {
     Write-Host "cd-projects.csv not found - populate CD Projects by hand"
 }
 
+# The access register's 'every project' grant. Picking it on any OTHER list is rejected
+# in silver as an unknown project, with a reason on the DQ page.
+if (-not ((Get-PnPListItem -List "CD Projects" -PageSize 500).FieldValues.Title -contains 'ALL')) {
+    Add-PnPListItem -List "CD Projects" -Values @{
+        Title = 'ALL'; ProjectName = 'All projects (CD Project Access only)'; IsActive = $true
+    } | Out-Null
+}
+
 # --------------------------------------------------------------------------
 # CD Wins  ->  man_Wins
 $list = Ensure-List "CD Wins"
@@ -250,6 +258,22 @@ try {
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
     Add-PnPField -List $list -DisplayName "LogsExpected" -InternalName "LogsExpected" -Type Number -AddToDefaultView | Out-Null
     Add-PnPField -List $list -DisplayName "LogsMissedSameDay" -InternalName "LogsMissedSameDay" -Type Number -AddToDefaultView | Out-Null
+} catch [System.Management.Automation.RuntimeException] {
+    # Add-PnPField throws if the column already exists. That is the idempotent
+    # path, not a failure - anything else rethrows.
+    if ($_.Exception.Message -notmatch 'already exists') { throw }
+}
+
+# --------------------------------------------------------------------------
+# CD Project Access  ->  man_ProjectAccess
+$list = Ensure-List "CD Project Access"
+try {
+    Add-PnPField -List $list -DisplayName "UserPrincipalName" -InternalName "UserPrincipalName" -Type Text -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
+    Add-PnPField -List $list -DisplayName "Role" -InternalName "Role" -Type Choice -Choices "PM","SUPERINTENDENT","QTEAM","EXECUTIVE","FINANCE","OTHER" -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "EffectiveFrom" -InternalName "EffectiveFrom" -Type DateTime -AddToDefaultView | Out-Null
+    Add-PnPField -List $list -DisplayName "EffectiveTo" -InternalName "EffectiveTo" -Type DateTime -AddToDefaultView | Out-Null
 } catch [System.Management.Automation.RuntimeException] {
     # Add-PnPField throws if the column already exists. That is the idempotent
     # path, not a failure - anything else rethrows.
@@ -424,6 +448,6 @@ try {
 }
 
 Write-Host ''
-Write-Host 'Done. 17 lists plus CD Projects.'
+Write-Host 'Done. 18 lists plus CD Projects.'
 Write-Host 'Next: populate CD Projects from dim_Project, then point'
 Write-Host 'CD_Manual_Ingest at this site and run it.'

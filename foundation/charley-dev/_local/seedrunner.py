@@ -475,6 +475,12 @@ SOURCE_FIXTURES = (
     ) AS t(project_id, activity_key, milestone_name, contract_start, contract_finish,
            baseline_start, baseline_finish, is_substantial_completion)""",
 
+    # One project grant and one ALL grant: the two shapes the RLS filter DAX distinguishes.
+    """CREATE OR REPLACE VIEW sv_man_project_access AS SELECT * FROM (VALUES
+        ('pm@example.com', 'P1', 'PM', DATE '2025-01-01', CAST(NULL AS DATE)),
+        ('exec@example.com', 'ALL', 'EXECUTIVE', CAST(NULL AS DATE), CAST(NULL AS DATE))
+    ) AS t(user_principal_name, project_id, role, effective_from, effective_to)""",
+
     """CREATE OR REPLACE VIEW sv_man_daily_log_compliance AS SELECT * FROM (VALUES
         ('P1', DATE '2025-05-01', 22, 3)
     ) AS t(project_id, month_start, logs_expected, logs_missed_same_day)""",

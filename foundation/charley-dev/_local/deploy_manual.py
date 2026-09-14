@@ -89,6 +89,8 @@ EXAMPLES: dict[str, list[str]] = {
     "milestones": ["26-001", "A1042", "Substantial Completion", "2027-03-01",
                    "2027-03-31", "2027-03-01", "2027-03-31", "TRUE"],
     "daily_log_compliance": ["26-001", "2026-07-01", "22", "3"],
+    # ProjectKey is a project key or ALL. Blank EffectiveTo = open-ended.
+    "project_access": ["jane.doe@example.com", "26-001", "PM", "2026-09-01", ""],
 
     # PQP. Every code below is a real value from seed/qc_status_vocab.csv, and every key a
     # real value from seed/qc_trades.csv or qc_gate_template.csv - because the example row

@@ -154,6 +154,21 @@ CREATE OR REPLACE TABLE man_DailyLogCompliance (
 );
 
 -- ---------------------------------------------------------------------------
+-- Access register. NOT report content: the row-level security source for both semantic
+-- models ("Project Viewer" role, _local/deploy_model.py roles_tmdl). One row grants one user
+-- one project, or every real project when ProjectKey = 'ALL' (an 'ALL' item in CD Projects).
+-- Unknown projects, malformed UPNs and conflicting duplicates are rejected in silver, and a
+-- rejected grant is a DENIED grant - fail closed. See _docs/rls-activation.md.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE TABLE man_ProjectAccess (
+    UserPrincipalName STRING,     -- lower-cased; compared to USERPRINCIPALNAME()
+    ProjectKey    STRING,         -- a dim_Project key, or 'ALL'
+    Role          STRING,         -- why the grant exists (PM, QTEAM, ...); not a model role
+    EffectiveFrom DATE,           -- NULL = no start bound
+    EffectiveTo   DATE            -- NULL = open-ended; inclusive
+);
+
+-- ---------------------------------------------------------------------------
 -- POPULATE. The silver -> gold link, and the only place the case flips.
 -- ---------------------------------------------------------------------------
 --
@@ -211,3 +226,7 @@ SELECT project_id, activity_key, milestone_name, contract_start, contract_finish
 INSERT INTO man_DailyLogCompliance (ProjectKey, MonthStart, LogsExpected, LogsMissedSameDay)
 SELECT project_id, month_start, logs_expected, logs_missed_same_day
 FROM sv_man_daily_log_compliance;
+
+INSERT INTO man_ProjectAccess (UserPrincipalName, ProjectKey, Role, EffectiveFrom, EffectiveTo)
+SELECT user_principal_name, project_id, role, effective_from, effective_to
+FROM sv_man_project_access;

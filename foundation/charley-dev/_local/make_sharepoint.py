@@ -105,7 +105,14 @@ CHOICES = {
         "Out of Range, but has a plan",
         "Margin fade but no plan",
     ],
+    # man_ProjectAccess: why a grant exists. Informational only - the model role is chosen by
+    # role MEMBERSHIP in the Power BI service, never by this value (_docs/rls-activation.md).
+    "Role": ["PM", "SUPERINTENDENT", "QTEAM", "EXECUTIVE", "FINANCE", "OTHER"],
 }
+
+# The one CD Projects item that is not a project. man_ProjectAccess needs "every project" as a
+# pickable lookup value; every other list rejects it in silver as an unknown project.
+ALL_PROJECTS = "ALL"
 
 # The PQP choice columns, read out of seed/qc_status_vocab.csv rather than retyped. That
 # CSV is the workbook's own dropdown vocabulary and it also builds dim_QcStatus
@@ -385,6 +392,15 @@ def build() -> str:
         "    }",
         "} else {",
         "    Write-Host \"cd-projects.csv not found - populate CD Projects by hand\"",
+        "}",
+        "",
+        "# The access register's 'every project' grant. Picking it on any OTHER list is rejected",
+        "# in silver as an unknown project, with a reason on the DQ page.",
+        "if (-not ((Get-PnPListItem -List \"" + LOOKUP_LIST + "\" -PageSize 500).FieldValues.Title "
+        f"-contains '{ALL_PROJECTS}')) {{",
+        "    Add-PnPListItem -List \"" + LOOKUP_LIST + "\" -Values @{",
+        f"        Title = '{ALL_PROJECTS}'; ProjectName = 'All projects (CD Project Access only)'; IsActive = $true",
+        "    } | Out-Null",
         "}",
         "",
     ]

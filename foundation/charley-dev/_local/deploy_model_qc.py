@@ -54,7 +54,12 @@ dm.MODEL_TABLES = [
     "dq_DataGap",
     # The pipeline heartbeat - how the report answers "are these numbers from last night?".
     "meta_PipelineRun",
+    # The RLS source, shared with Model A. Hidden; not a quality register (see below).
+    dm.ACCESS_TABLE,
 ]
+
+# Quality registers only: the access register is security plumbing, not Q-Team input.
+REGISTERS = [t for t in dm.MODEL_TABLES if t.startswith("man_") and t != dm.ACCESS_TABLE]
 
 # fact.column -> dimension.column, single direction. Note TradeKey resolves to
 # qc_seed_Trade, NOT dim_Trade: the PQP uses the workbook's controlled trade vocabulary
@@ -242,8 +247,8 @@ dm.MEASURES = [
      "nothing - Excel drops unmatched rows from a lookup silently"),
     ("DQ Registers Awaiting Input",
      "VAR EmptyRegisters = " + " + ".join(
-         f"IF(COUNTROWS({table}) = 0, 1, 0)" for table in dm.MODEL_TABLES if table.startswith("man_"))
-     + '\nRETURN FORMAT(EmptyRegisters, "0") & "/' + str(sum(t.startswith("man_") for t in dm.MODEL_TABLES))
+         f"IF(COUNTROWS({table}) = 0, 1, 0)" for table in REGISTERS)
+     + '\nRETURN FORMAT(EmptyRegisters, "0") & "/' + str(len(REGISTERS))
      + ' registers empty in current filters; completeness unverified"', "",
      "Observed row coverage in current filters; populated registers are not certified complete"),
     ("Data Gaps", "COALESCE(COUNTROWS(dq_DataGap), 0)", COUNT,

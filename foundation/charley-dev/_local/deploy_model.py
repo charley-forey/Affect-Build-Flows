@@ -74,6 +74,8 @@ MODEL_TABLES = [
     # Saved point-in-time KPIs, one row-set per passing nightly run. The only honest source
     # for "as of month X": every other fact is current state.
     "fct_DailySnapshot",
+    # The RLS source. Hidden, unrelated, read only by the role filters below.
+    "man_ProjectAccess",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -790,7 +792,8 @@ PERCENT_COLUMNS = re.compile(r"^(PercentComplete|Weight)$")
 
 
 def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
-    lines = [f"table {name}", ""]
+    # The access register is plumbing for the role filters, not something to put on a page.
+    lines = [f"table {name}", *(["\tisHidden"] if name == ACCESS_TABLE else []), ""]
     present = {col for col, _ in columns}
     for col, dtype in columns:
         quoted = f"'{col}'" if not col.isidentifier() else col
@@ -921,6 +924,85 @@ def relationships_tmdl() -> str:
     return "\n".join(out)
 
 
+# ---- Row-level security ----------------------------------------------------
+#
+# Two roles, ready to activate (_docs/rls-activation.md). RLS binds only users WITHOUT Write
+# on the model - workspace Viewers and App audiences - so today's Contributor+ users are
+# unaffected either way.
+#
+#   Portfolio Viewer  no filter.
+#   Project Viewer    DENY BY DEFAULT, decided per table from its PUBLISHED columns:
+#     - ProjectKey column -> explicit filter to the user's granted projects. Explicit on
+#       every such table rather than trusting propagation from dim_Project, so a NULL,
+#       unmapped (fct_ApInvoice, dq_DataGap) or UNMATCHED key never rides the blank member.
+#     - VendorKey but no ProjectKey -> vendors that appear on a granted project.
+#     - PUBLIC_TABLES -> unfiltered reference data.
+#     - anything else -> FALSE(). A new table is invisible until someone classifies it.
+#
+# UNMATCHED is excluded even for an ALL grant: it pools rows that belong to SOME project
+# nobody could identify. Users who need it (and blank-project data gaps) get Portfolio Viewer.
+ACCESS_TABLE = "man_ProjectAccess"
+ROLE_PROJECT = "Project Viewer"
+ROLE_PORTFOLIO = "Portfolio Viewer"
+PUBLIC_TABLES = {
+    "dim_Date", "dim_CostCode", "dim_Trade", "dim_Status", "dim_Owner", "dim_ActivityCategory",
+    "dim_ScorecardWeight", "dim_ScorecardBand", "dim_CostCodeCrosswalk", "meta_PipelineRun",
+    "qc_seed_Trade", "qc_seed_ChecklistItem", "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus",
+}
+
+# The user's granted projects as a one-column table. TODAY() is the service's UTC date.
+# Comparing to LOWER(USERPRINCIPALNAME()) matches silver's lower-cased register; DAX `=` is
+# case-insensitive anyway, so this is belt and braces.
+ALLOWED_PROJECTS_DAX = f'''VAR _today = TODAY ()
+VAR _grants = SELECTCOLUMNS ( FILTER ( ALL ( {ACCESS_TABLE} ),
+{ACCESS_TABLE}[UserPrincipalName] = LOWER ( USERPRINCIPALNAME () )
+&& ( ISBLANK ( {ACCESS_TABLE}[EffectiveFrom] ) || {ACCESS_TABLE}[EffectiveFrom] <= _today )
+&& ( ISBLANK ( {ACCESS_TABLE}[EffectiveTo] ) || {ACCESS_TABLE}[EffectiveTo] >= _today ) ),
+"ProjectKey", {ACCESS_TABLE}[ProjectKey] )
+VAR _projects = FILTER ( ALL ( dim_Project[ProjectKey] ),
+NOT ISBLANK ( dim_Project[ProjectKey] ) && dim_Project[ProjectKey] <> "UNMATCHED"
+&& ( dim_Project[ProjectKey] IN _grants || "ALL" IN _grants ) )'''
+
+
+def rls_filter(table: str, schema: dict[str, list[tuple[str, str]]]) -> str | None:
+    """The Project Viewer filter DAX for one table; None means unfiltered (public)."""
+    cols = {c for c, _ in schema[table]}
+    if table == ACCESS_TABLE:
+        return f"{ACCESS_TABLE}[UserPrincipalName] = LOWER ( USERPRINCIPALNAME () )"
+    if "ProjectKey" in cols:
+        return f"{ALLOWED_PROJECTS_DAX}\nRETURN {table}[ProjectKey] IN _projects"
+    if "VendorKey" in cols:
+        sources = [t for t, c in schema.items() if t != ACCESS_TABLE
+                   and {"ProjectKey", "VendorKey"} <= {n for n, _ in c}]
+        if not sources:
+            return "FALSE ()"
+        parts = [f'SELECTCOLUMNS ( FILTER ( ALL ( {t} ), {t}[ProjectKey] IN _projects ), "VendorKey", {t}[VendorKey] )'
+                 for t in sources]
+        vendors = parts[0] if len(parts) == 1 else "UNION ( " + ",\n".join(parts) + " )"
+        return f"{ALLOWED_PROJECTS_DAX}\nVAR _vendors = DISTINCT ( {vendors} )\nRETURN {table}[VendorKey] IN _vendors"
+    return None if table in PUBLIC_TABLES else "FALSE ()"
+
+
+def roles_tmdl(schema: dict[str, list[tuple[str, str]]]) -> dict[str, str]:
+    """definition/roles/*.tmdl. Members are NOT in the definition - see rls-activation.md."""
+    lines = [f"role '{ROLE_PROJECT}'", "\tmodelPermission: read", ""]
+    for table in schema:
+        expression = rls_filter(table, schema)
+        if expression is None:
+            continue
+        if "\n" in expression:
+            # Same TMDL rule as measures: `=` ends the line, the DAX sits indented beneath.
+            lines.append(f"\ttablePermission {table} =")
+            lines += [f"\t\t\t{line}" for line in expression.split("\n")]
+        else:
+            lines.append(f"\ttablePermission {table} = {expression}")
+        lines.append("")
+    return {
+        f"definition/roles/{ROLE_PROJECT}.tmdl": "\n".join(lines),
+        f"definition/roles/{ROLE_PORTFOLIO}.tmdl": f"role '{ROLE_PORTFOLIO}'\n\tmodelPermission: read\n",
+    }
+
+
 def expressions_tmdl(lakehouse_id: str) -> str:
     url = f"https://onelake.dfs.fabric.microsoft.com/{dp.WORKSPACE_ID}/{lakehouse_id}"
     return (
@@ -954,6 +1036,7 @@ def write_files(lakehouse_id: str, output_dir: Path | None = None,
         "definition/expressions.tmdl": expressions_tmdl(lakehouse_id),
         "definition/relationships.tmdl": relationships_tmdl(),
         "definition/tables/_Measures.tmdl": measures_tmdl(),
+        **roles_tmdl(schema),
     }
     for table, cols in schema.items():
         files[f"definition/tables/{table}.tmdl"] = table_tmdl(table, cols)

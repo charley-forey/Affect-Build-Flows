@@ -468,6 +468,86 @@ def test_qc_disclosures():
     assert "unit and scale require confirmation" in completion
 
 
+def test_rls_roles():
+    """Project Viewer is deny-by-default, and its filter DAX is well-formed at string level.
+
+    Every model table is classified from its columns: ProjectKey -> granted projects (NULL,
+    unmapped and UNMATCHED keys never pass), VendorKey -> vendors on granted projects, the
+    reference allowlist -> unfiltered, anything else -> FALSE(). Nothing here needs Fabric.
+    Runs once per model: under --qc, deploy_model_qc has swapped in Model B's tables.
+    """
+    import re
+
+    import deploy_model as dm
+    from seedrunner import build
+
+    assert dm.ACCESS_TABLE in dm.MODEL_TABLES
+    assert not [r for r in dm.RELATIONSHIPS if dm.ACCESS_TABLE in (r[0], r[2])], "access register must stay unrelated"
+    # Written by the DQ gate and the heartbeat, not by the local gold build.
+    stand_ins = {"fct_DailySnapshot": [("ProjectKey", "string"), ("SnapshotDate", "dateTime")],
+                 "meta_PipelineRun": [("RunId", "string"), ("RunAt", "dateTime")]}
+    con = build()
+    try:
+        schema = {t: stand_ins.get(t) or [(r[0], "string") for r in con.execute(f'DESCRIBE "{t}"').fetchall()]
+                  for t in dm.MODEL_TABLES}
+    finally:
+        con.close()
+    # Deny by default: an unclassified table with no key is hidden entirely, and a table
+    # with a ProjectKey but no relationship is filtered anyway.
+    schema["zz_unclassified"] = [("Amount", "double")]
+    schema["zz_unrelated_fact"] = [("ProjectKey", "string"), ("Amount", "double")]
+
+    files = dm.roles_tmdl(schema)
+    viewer = files[f"definition/roles/{dm.ROLE_PROJECT}.tmdl"]
+    portfolio = files[f"definition/roles/{dm.ROLE_PORTFOLIO}.tmdl"]
+    assert "tablePermission" not in portfolio and "modelPermission: read" in portfolio
+    assert viewer.startswith(f"role '{dm.ROLE_PROJECT}'\n\tmodelPermission: read\n")
+
+    blocks = dict(re.findall(r"^\ttablePermission (\w+) =\s?(.*?)(?=\n\n|\Z)", viewer, re.M | re.S))
+    for table, cols in schema.items():
+        if table in dm.PUBLIC_TABLES and not {c for c, _ in cols} & {"ProjectKey", "VendorKey"}:
+            assert table not in blocks, f"{table} is reference data and must stay unfiltered"
+            continue
+        assert table in blocks, f"{table} has no Project Viewer filter - it would leak"
+    assert blocks["zz_unclassified"].strip() == "FALSE ()"
+    for table in ("dim_Project", "dq_DataGap", "zz_unrelated_fact",
+                  *[t for t in ("fct_ApInvoice", "fct_QcNcr") if t in schema]):
+        dax = blocks[table]
+        assert f"RETURN {table}[ProjectKey] IN _projects" in dax, table
+        assert '<> "UNMATCHED"' in dax and "NOT ISBLANK ( dim_Project[ProjectKey] )" in dax, table
+        assert '"ALL" IN _grants' in dax and "USERPRINCIPALNAME ()" in dax and "_today" in dax, table
+    assert blocks[dm.ACCESS_TABLE].strip() == \
+        f"{dm.ACCESS_TABLE}[UserPrincipalName] = LOWER ( USERPRINCIPALNAME () )"
+    if "dim_Vendor" in schema:
+        vendor = blocks["dim_Vendor"]
+        assert "RETURN dim_Vendor[VendorKey] IN _vendors" in vendor and "UNION (" in vendor
+        assert "fct_ApInvoice[ProjectKey] IN _projects" in vendor
+
+    # String-level DAX parse: balanced brackets and quotes, one RETURN per VAR block, every
+    # variable defined before use, every Table[Column] a real model column, and TMDL's
+    # indentation rule (expression lines three tabs deep under `=`).
+    for table, dax in blocks.items():
+        lines = dax.rstrip("\n").split("\n")
+        assert all(line.startswith("\t\t\t") for line in lines[1:]), table
+        text = " ".join(line.strip() for line in lines)
+        assert text.count("(") == text.count(")") and text.count("[") == text.count("]"), table
+        assert text.count('"') % 2 == 0, table
+        if "VAR " in text:
+            assert text.count("RETURN ") == 1, table
+            defined = re.findall(r"VAR (_\w+) =", text)
+            for used in set(re.findall(r"\b(_[a-z]\w*)\b", text)):
+                assert used in defined and text.index(f"VAR {used} =") < text.rindex(used), (table, used)
+        for entity, column in re.findall(r"\b([A-Za-z]\w*)\[(\w+)\]", text):
+            assert column in {c for c, _ in schema.get(entity, [])}, f"{table}: unknown {entity}[{column}]"
+
+    assert "\tisHidden" in dm.table_tmdl(dm.ACCESS_TABLE, [("ProjectKey", "string")])
+    assert "isHidden" not in dm.table_tmdl("dim_Project", [("ProjectKey", "string")])
+    with tempfile.TemporaryDirectory() as temp, patch.object(dm, "introspect", return_value=schema):
+        written = dm.write_files("rls-test", Path(temp))
+    assert written[f"definition/roles/{dm.ROLE_PROJECT}.tmdl"] == viewer
+    print(f"  rls: {len(blocks)} Project Viewer table filters, deny-by-default, DAX well-formed")
+
+
 if __name__ == "__main__":
     if "--qc" in sys.argv:
         import deploy_model_qc
@@ -475,6 +555,7 @@ if __name__ == "__main__":
     test_report()
     test_text_fit()
     test_report_refs()
+    test_rls_roles()
     if "--qc" not in sys.argv:
         test_schedule_grain()
         test_report_formats()
