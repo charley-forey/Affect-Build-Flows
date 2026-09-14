@@ -130,7 +130,7 @@ def test_real_registry_round_trips() -> None:
         px.build_headers("tok", "1", ep)
         px.watermark_params(ep, datetime(2026, 7, 1, tzinfo=timezone.utc))
         px.to_bronze_row({ep.key: "x"}, ep, None, datetime.now(timezone.utc))
-        ps.expand_paths(ep, "1", [7], parent_ids=[3])
+        ps.expand_paths(ep, "1", [7], parent_ids=[(3, 7)])
     check(f"all {len(endpoints)} registry endpoints round-trip through procore_extract")
 
     # Only endpoints the cheatsheet confirms may declare filters[updated_at]. Incrementing

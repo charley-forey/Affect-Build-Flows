@@ -1,0 +1,93 @@
+{
+  "run_id": "d23486dc4ca14583bfc07540a65d08f6",
+  "started_at": "2026-09-10T06:48:03.406214+00:00",
+  "source_sql_sha256": "1f652406a52e7f0c89b7f2edd2eb6a209b0cbd6bba96b6404bfaf54a8e6cc63d",
+  "mode": "candidate temporary views; published tables untouched",
+  "checks": [
+    {
+      "name": "sage_ar.header_keys",
+      "query": "\nSELECT invoice_uid FROM cd_silver_sage_ar_invoices\nGROUP BY invoice_uid HAVING invoice_uid IS NULL OR COUNT(*) > 1\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ar.line_keys",
+      "query": "\nSELECT line_uid FROM cd_silver_sage_ar_lines\nGROUP BY line_uid HAVING line_uid IS NULL OR COUNT(*) > 1\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ar.orphan_lines",
+      "query": "\nSELECT l.* FROM cd_silver_sage_ar_lines l\nLEFT JOIN cd_silver_sage_ar_invoices h ON l.invoice_uid = h.invoice_uid\nWHERE h.invoice_uid IS NULL\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ar.headers_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_acrinv) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ar_invoices) s\nWHERE b.n <> s.n\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ar.lines_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_arivln) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ar_lines) s\nWHERE b.n <> s.n\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ar.invoice_line_amounts",
+      "query": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM cd_silver_sage_ar_invoices h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM cd_silver_sage_ar_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ap.header_keys",
+      "query": "\nSELECT invoice_uid FROM cd_silver_sage_ap_invoices\nGROUP BY invoice_uid HAVING invoice_uid IS NULL OR COUNT(*) > 1\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ap.line_keys",
+      "query": "\nSELECT line_uid FROM cd_silver_sage_ap_lines\nGROUP BY line_uid HAVING line_uid IS NULL OR COUNT(*) > 1\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ap.orphan_lines",
+      "query": "\nSELECT l.* FROM cd_silver_sage_ap_lines l\nLEFT JOIN cd_silver_sage_ap_invoices h ON l.invoice_uid = h.invoice_uid\nWHERE h.invoice_uid IS NULL\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ap.headers_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_acpinv) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ap_invoices) s\nWHERE b.n <> s.n\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ap.lines_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_apivln) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ap_lines) s\nWHERE b.n <> s.n\n",
+      "rows": [],
+      "status": "passed"
+    },
+    {
+      "name": "sage_ap.invoice_line_amounts",
+      "query": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM cd_silver_sage_ap_invoices h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM cd_silver_sage_ap_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "rows": [],
+      "status": "passed"
+    }
+  ],
+  "counts": {
+    "cd_bronze_sage_acpinv": 879,
+    "cd_bronze_sage_acrinv": 148,
+    "cd_bronze_sage_actrec": 27,
+    "cd_bronze_sage_apivln": 909,
+    "cd_bronze_sage_arivln": 258,
+    "cd_silver_sage_jobs": 27,
+    "cd_silver_sage_ar_invoices": 148,
+    "cd_silver_sage_ar_lines": 258,
+    "cd_silver_sage_ap_invoices": 879,
+    "cd_silver_sage_ap_lines": 909
+  },
+  "completed_at": "2026-09-10T06:48:57.774638+00:00"
+}

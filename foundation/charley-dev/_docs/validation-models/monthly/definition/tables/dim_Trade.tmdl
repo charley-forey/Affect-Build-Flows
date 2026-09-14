@@ -1,0 +1,23 @@
+table dim_Trade
+
+	column TradeKey
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: TradeKey
+
+	column TradeName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeName
+
+	column SortOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SortOrder
+
+	partition dim_Trade = entity
+		mode: directLake
+		source
+			entityName: dim_trade
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

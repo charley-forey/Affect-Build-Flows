@@ -1,0 +1,12 @@
+{
+  "scope": "Read-only isolated installed Azure MCP command, then direct CLI token timing; no global configuration changes",
+  "mcp_version": "3.0.0-beta.42",
+  "credential": "AzureCliCredential",
+  "mcp_status": 401,
+  "mcp_error": "AzureCliCredential is not available: Azure CLI authentication timed out.",
+  "mcp_duration_ms": 14840,
+  "cli_exit_code": 0,
+  "cli_elapsed_seconds": 2.11,
+  "cli_token_expiry": "2026-09-10 06:13:33.000000",
+  "cli_error": ""
+}

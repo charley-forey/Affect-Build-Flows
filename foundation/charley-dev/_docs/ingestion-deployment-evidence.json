@@ -1,0 +1,43 @@
+{
+  "verified_at": "2026-09-10T08:07:22.129008+00:00",
+  "files": [
+    {
+      "path": "Files/lib/procore_extract.py",
+      "sha256": "d615054ab0c5742234d763649a1faa500c4f657a1a78c14d3357054f81f58b29",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/procore_scope.py",
+      "sha256": "186381b654981b456818143de4437e5f87632cc158dcb23031c74aa78d0ce079",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/fabric_common.py",
+      "sha256": "9c5bfe6f59255f353c1afad94b101860301c56097e19885fcdba2f95e8ded10e",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/watermark.py",
+      "sha256": "ffe175bb3f0264e2b121c840bb63d5c951971098873f12c0bb197ff141101779",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/ratelimit.py",
+      "sha256": "031e4dad7a5bf52fba952793a2d1e34360a51a0f750a653ccd4d6569f1777e6b",
+      "matches_local": true
+    },
+    {
+      "path": "Files/config/endpoints.yml",
+      "sha256": "86f6367746040ccda0051d74f02548270b3066398578c93d6a6b5e5ab3a67b4d",
+      "matches_local": true
+    }
+  ],
+  "notebook_features": {
+    "RateLimitedSession": true,
+    "full_parent_discovery": true,
+    "raw_archive_complete": true
+  },
+  "notebook_sha256": "90478ad01ddf19728244beae86aef6bae0514e6a4e9930c335ed315ec9aadd0c",
+  "runtime": "not started",
+  "transport": "Fabric REST and OneLake; not MCP"
+}

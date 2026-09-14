@@ -6,7 +6,7 @@
     "y": 570,
     "z": 0,
     "width": 1156,
-    "height": 130,
+    "height": 84,
     "tabOrder": 24
   },
   "visual": {
@@ -37,11 +37,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Total NCRs"
+                  "Property": "Total Observations"
                 }
               },
-              "queryRef": "_Measures.Total NCRs",
-              "nativeQueryRef": "Total NCRs"
+              "queryRef": "_Measures.Total Observations",
+              "nativeQueryRef": "Total Observations"
             }
           ]
         }
@@ -55,7 +55,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Procore trade labels seen on NCRs. Shows TradeLabel, Total NCRs for the current selection.'"
+                  "Value": "'Table. Procore trade labels seen on observations. Shows TradeLabel, Total Observations for the current selection.'"
                 }
               }
             }
@@ -68,7 +68,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Procore trade labels seen on NCRs'"
+                  "Value": "'Procore trade labels seen on observations'"
                 }
               }
             },

@@ -1,0 +1,5 @@
+{
+  "http_status": 200,
+  "body": "{\"result\":{\"capabilities\":{\"tools\":{\"listChanged\":false}},\"serverInfo\":{\"name\":\"FabricMCPServer\",\"version\":\"13.0.28515.454\",\"description\":\"Microsoft Fabric MCP server. Provides tools for managing Microsoft Fabric resources including workspaces, items, folders, and capacities.\"},\"protocolVersion\":\"2025-06-18\"},\"jsonrpc\":\"2.0\",\"id\":1}",
+  "session_id": null
+}

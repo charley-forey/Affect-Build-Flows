@@ -54,7 +54,8 @@ crosswalk AS (
     --
     -- Collapsed to one row per project: a duplicate would fan out the project spine
     -- itself, which is the same guard 15_dim_projectcrosswalk.sql applies.
-    SELECT procore_project_id, MAX(sage_project_id) AS sage_project_id
+    SELECT procore_project_id,
+           CASE WHEN COUNT(DISTINCT sage_project_id) = 1 THEN MAX(sage_project_id) END AS sage_project_id
     FROM sv_project_crosswalk
     WHERE sage_project_id IS NOT NULL
     GROUP BY procore_project_id
@@ -90,7 +91,7 @@ SELECT
     CASE WHEN c.project_id IS NULL THEN FALSE ELSE TRUE END AS HasPrimeContract,
     -- FALSE means no Sage mapping exists: this project cannot join to any Sage financial
     -- data until the crosswalk is extended. Surfaced on the diagnostics page.
-    CASE WHEN xw.procore_project_id IS NULL THEN FALSE ELSE TRUE END AS IsInCrosswalk
+    CASE WHEN xw.sage_project_id IS NULL THEN FALSE ELSE TRUE END AS IsInCrosswalk
 FROM all_projects a
 LEFT JOIN sv_projects x  ON a.project_id = x.project_id
 LEFT JOIN crosswalk   xw ON a.project_id = xw.procore_project_id

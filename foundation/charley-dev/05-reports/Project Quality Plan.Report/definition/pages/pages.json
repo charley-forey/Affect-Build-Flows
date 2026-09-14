@@ -5,6 +5,8 @@
     "qcncr",
     "qcpunch",
     "qcsubmittals",
+    "qcinspections",
+    "qcinspectionitems",
     "qcgates",
     "qcchecklists",
     "qcdq"

@@ -46,6 +46,7 @@ UPLOADS = [
     (CHARLEY_DEV / "00-platform" / "lib" / "procore_scope.py", "Files/lib/procore_scope.py"),
     (CHARLEY_DEV / "00-platform" / "lib" / "fabric_common.py", "Files/lib/fabric_common.py"),
     (CHARLEY_DEV / "00-platform" / "lib" / "watermark.py", "Files/lib/watermark.py"),
+    (CHARLEY_DEV / "00-platform" / "lib" / "ratelimit.py", "Files/lib/ratelimit.py"),
     (CHARLEY_DEV / "01-ingestion" / "Procore" / "config" / "endpoints.yml",
      "Files/config/endpoints.yml"),
 ]

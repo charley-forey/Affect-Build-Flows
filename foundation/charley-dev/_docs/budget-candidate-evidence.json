@@ -1,0 +1,8 @@
+{
+  "scope": "Revised SQL in DuckDB against 480 captured live bronze rows; not Fabric runtime proof",
+  "silver_rows": 404,
+  "original_budget": 30209672.17999998,
+  "updated_budget": 34031395.199999996,
+  "invoiced": 19160549.829999994,
+  "conflicting_keys": []
+}

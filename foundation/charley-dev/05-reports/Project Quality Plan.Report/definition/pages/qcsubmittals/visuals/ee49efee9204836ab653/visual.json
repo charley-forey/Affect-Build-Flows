@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Mock-Ups Registered"
+                  "Property": "Possible Mock-Ups"
                 }
               },
-              "queryRef": "_Measures.Mock-Ups Registered",
-              "nativeQueryRef": "Mock-Ups Registered"
+              "queryRef": "_Measures.Possible Mock-Ups",
+              "nativeQueryRef": "Possible Mock-Ups"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Mock-Ups Registered. Shows Mock-Ups Registered for the current selection.'"
+                  "Value": "'Card. Possible Mock-Ups. Shows Possible Mock-Ups for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Mock-Ups Registered'"
+                  "Value": "'Possible Mock-Ups'"
                 }
               }
             },

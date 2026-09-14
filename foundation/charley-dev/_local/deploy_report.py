@@ -14,7 +14,7 @@ Eleven pages, following powerbi/report-spec.md:
    8. Scorecard       - and the table showing how the score is built
    9. Source Coverage - which projects exist in all three systems
   10. Project Detail  - drill-through target
-  11. Data Quality    - hidden; surfaces bad data instead of letting it flow into a rollup
+  11. Data Quality    - visible; surfaces bad data instead of letting it flow into a rollup
 
 Every page carries the same two synced slicers and a footer naming the reporting period
 and the gold build time.
@@ -162,6 +162,12 @@ def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
 
 def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
             color: str = INK, tab: int | None = None) -> dict:
+    # Reserve the shared header's right side for slicers and keep introductory text
+    # below the title. Every report uses this furniture, so fix the geometry once.
+    if key == "title":
+        h = min(h, 40)
+    if y in (56, 58):
+        y, w = 60, min(w, 728)
     position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
     if tab is not None:
         position["tabOrder"] = tab
@@ -199,7 +205,7 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
     saved copy silently re-dated itself every time anyone opened it.
     """
     items = [
-        # [Pipeline Status] is here rather than only on the hidden Data Quality page. It
+        # [Pipeline Status] is here rather than only on the Data Quality page. It
         # answers "are these numbers from last night or from three weeks ago", which is a
         # question about every page, not about the DQ page - and the failure it guards
         # against went unnoticed for a month, with the nightly pipeline failing every
@@ -353,16 +359,19 @@ def page_financial() -> tuple[str, list[dict]]:
         # scrolling 4,837 rows looking for it.
         visual(p, "budget_table", "pivotTable", 20, 210, 780, 440,
                {"Rows": [column("dim_CostCode", "Division"),
-                         column("dim_CostCode", "CostCode")],
+                         column("dim_CostCode", "CostCode"),
+                         column("fct_BudgetLine", "Category"),
+                         column("fct_BudgetLine", "ProjectKey"),
+                         column("fct_BudgetLine", "BudgetLineID")],
                 "Values": [measure("Budget"), measure("Spent To Date"),
                            measure("Budget Variance"), measure("Budget Variance %"),
                            measure("Budget Status")]},
-               title="Budget by division and cost code",
-               alt="Matrix. Budget, spent to date, variance and status by cost code, "
-                   "grouped by division and expandable to individual codes."),
+               title="Budget by cost code - expand for category and source line",
+               alt="Matrix. Variance is budget less spend to date; status describes that spend comparison, "
+                   "not a forecast of final cost. Expand through division, cost code, category, project ID and source budget line ID."),
         visual(p, "co_by_status", "clusteredColumnChart", 820, 210, 440, 210,
                {"Category": [column("fct_ChangeOrder", "StatusLabel")],
-                "Y": [measure("Pending Change Orders")]},
+                "Y": [measure("Change Order Amount")]},
                title="Change orders by status"),
         # THE S-CURVE. Cumulative billing against the contract line is the chart a GC reads
         # to answer "are we billing at the pace we said we would" - and it is the one thing
@@ -381,7 +390,7 @@ def page_financial() -> tuple[str, list[dict]]:
 
 def page_schedule_quality() -> tuple[str, list[dict]]:
     p = "schedule"
-    return p, [
+    items = [
         textbox(p, "title", "Schedule & Quality", 20, 16, 600, 44),
         card(p, "s_crit", "Critical Milestones", 20, 80),
         card(p, "s_overdue", "Overdue Milestones", 216, 80),
@@ -395,27 +404,29 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
         # then a visible bar for its duration, both measured in days from the earliest
         # start on screen.
         #
-        # TO FINISH IN THE SERVICE: set the "Offset" series fill to transparent. That is a
-        # data-colour setting on one series, and it is the whole trick.
-        #
         # WHAT THIS CANNOT SHOW: drift against a baseline. fct_Milestone carries
         # CurrentStart/CurrentFinish only - there is no baseline and no actual anywhere in
         # gold, because Outbuild is not supplying them. A baseline-vs-current timeline is
         # the version Affect actually wants, and it needs that data first.
-        visual(p, "gantt", "stackedBarChart", 20, 210, 740, 300,
-               {"Category": [column("fct_Milestone", "MilestoneName")],
+        visual(p, "gantt", "barChart", 20, 210, 740, 300,
+               {"Category": [dict(column("fct_Milestone", c), active=True)
+                             for c in ("ProjectKey", "ActivityKey", "MilestoneName")],
                 "Y": [measure("Milestone Offset Days"),
                       measure("Milestone Duration Days")]},
-               title="Schedule timeline - current dates (set Offset series transparent)",
+               title="Current schedule - elapsed days from earliest valid start",
                alt="Stacked bar timeline. One bar per milestone, positioned by its start "
                    "date and sized by its duration in days, relative to the earliest "
-                   "milestone start currently shown."),
+                   "valid milestone start currently shown. Missing or inverted dates are "
+                   "omitted from the bars and retained in the table. Baseline variance is unavailable."),
         visual(p, "milestones", "tableEx", 20, 520, 740, 130,
-               {"Values": [column("fct_Milestone", "MilestoneName"),
+               {"Values": [column("fct_Milestone", "ProjectKey"),
+                           column("fct_Milestone", "ActivityKey"),
+                           column("fct_Milestone", "MilestoneName"),
                            column("fct_Milestone", "CurrentStart"),
                            column("fct_Milestone", "CurrentFinish"),
                            column("fct_Milestone", "PercentComplete"),
-                           column("fct_Milestone", "StatusLabel")]},
+                           column("fct_Milestone", "StatusLabel"),
+                           column("fct_Milestone", "HasDateInversion")]},
                title="Critical path milestones (Outbuild)"),
         # The workbook's one native chart, rebuilt - and now drillable to the items.
         visual(p, "submittals_by_status", "barChart", 780, 210, 480, 440,
@@ -423,6 +434,12 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                 "Y": [measure("Open Submittals")]},
                title="Open submittals by status"),
     ]
+    timeline = next(v["visual"] for v in items if v["name"] == oid(p, "gantt"))
+    timeline["objects"] = {"dataPoint": [{
+        "selector": {"metadata": "_Measures.Milestone Offset Days"},
+        "properties": {"fillTransparency": {"expr": {"Literal": {"Value": "100D"}}}},
+    }]}
+    return p, items
 
 
 def page_data_quality() -> tuple[str, list[dict]]:
@@ -430,10 +447,9 @@ def page_data_quality() -> tuple[str, list[dict]]:
     return p, [
         textbox(p, "title", "Data Quality", 20, 16, 600, 44),
         textbox(p, "note",
-                "Surfacing bad data rather than letting it flow silently into a rollup. "
-                "This page is how the Excel's defects would have been caught.  Status is "
-                "always shown as TEXT, never colour alone - around 8% of men have some "
-                "colour-vision deficiency, and this report goes to leadership.",
+                "Unmatched AR count and amount cover all projects for the selected month. "
+                "Other visuals follow the project selection. Invoice identifiers link amounts to Sage. "
+                "Checks passed does not establish complete source coverage.",
                 20, 56, 1100, 40, size=10, color=MUTED),
 
         # FIRST band on the page, deliberately. Every other number here describes the data;
@@ -445,21 +461,34 @@ def page_data_quality() -> tuple[str, list[dict]]:
         card(p, "dq_hb_last", "Last Checked Run", 612, 132, 260, 100),
         card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 132, 260, 100),
 
-        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 244, 260, 100),
-        card(p, "dq_codes", "DQ Cost Codes Not In Source", 296, 244, 260, 100),
-        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 572, 244, 260, 100),
-        card(p, "dq_ar", "DQ Unmatched Invoices", 848, 244, 260, 100),
-        visual(p, "no_crosswalk", "tableEx", 20, 356, 600, 300,
+        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 244, 228, 100),
+        card(p, "dq_codes", "DQ Cost Codes Not In Source", 268, 244, 228, 100),
+        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 516, 244, 228, 100),
+        card(p, "dq_ar", "DQ Unmatched Invoices", 764, 244, 228, 100),
+        card(p, "dq_ar_amount", "Unmatched AR Amount - All Projects", 1012, 244, 248, 100),
+        visual(p, "no_crosswalk", "tableEx", 20, 356, 400, 300,
                {"Values": [column("dim_Project", "ProjectKey"),
                            column("dim_Project", "ProjectName"),
                            column("dim_Project", "IsInCrosswalk"),
                            column("dim_Project", "HasPrimeContract")]},
                title="Projects - crosswalk and contract coverage"),
-        visual(p, "unmatched_ar", "tableEx", 640, 356, 620, 300,
-               {"Values": [column("fct_Invoice", "SageJobNumber"),
-                           column("fct_Invoice", "Description"),
+        visual(p, "unmatched_ar", "tableEx", 436, 356, 400, 300,
+               {"Values": [column("fct_Invoice", "InvoiceID"),
+                           column("fct_Invoice", "InvoiceNumber"),
+                           column("fct_Invoice", "SageJobNumber"),
+                           column("fct_Invoice", "HasUnmatchedProject"),
                            measure("Total Billed")]},
-               title="AR invoices by Sage job"),
+               title="AR invoice trace - selected project and month"),
+        # The whole gap register, one row per category. Gaps with no project (rejected
+        # source rows, expired certificates, empty registers) drop out when a project is
+        # selected, which the alt text says so it is not read as "no gaps".
+        visual(p, "data_gaps", "tableEx", 852, 356, 408, 300,
+               {"Values": [column("dq_DataGap", "GapCategory"),
+                           measure("Data Gaps"), measure("Data Gap Amount")]},
+               title="Data gap register by category",
+               alt="Table. Count of known data gaps and the money they carry, by gap "
+                   "category. Gaps not tied to a project are hidden while a project is "
+                   "selected."),
     ]
 
 
@@ -512,18 +541,15 @@ def page_scorecard() -> tuple[str, list[dict]]:
         # A measure claiming to reproduce it would have to be arithmetic that is always
         # zero, which reads as confirmation the two agree.
         textbox(p, "correction",
-                "WHY THIS DIFFERS FROM THE 0.59 IN THE WORKBOOK.  Two scoring bands are "
-                "wrong there: Schedule Performance uses 5/10 where the data is a fraction "
-                "(0.05/0.10), so it always scored 3; Completion Variance never matched any "
-                "band, so it always scored 0. On the sample project those two errors cancel "
-                "exactly - which is why nobody noticed. On a project where they do not "
-                "cancel, the workbook's score is wrong by the difference.  The bands here "
-                "are corrected (dim_ScorecardBand). Affect decides when to switch the "
-                "number reported to leadership.",
+                "The workbook's 0.59 is not a reliable comparison: its schedule bands used "
+                "whole numbers instead of percentages, and its completion-variance band "
+                "never matched. Those errors happened to cancel in the sample project. "
+                "This report uses corrected bands. Review category scores and missing "
+                "inputs before comparing results with earlier workbook reports.",
                 # Ends at y=664, the top of the footer band, so it can run the full width
                 # of the canvas. It previously ran to 742 on a 720-high page, and then to
                 # x=940, which the widened footer would have covered.
-                20, 588, 1240, 76, size=10, color=MUTED),
+                20, 588, 800, 76, size=10, color=MUTED),
 
         # The band table stays, as the reference behind the Band column - but keyed by the
         # category NAME rather than the surrogate integer the previous version showed.
@@ -554,9 +580,9 @@ def page_source_coverage() -> tuple[str, list[dict]]:
     return p, [
         textbox(p, "title", "Source Coverage", 20, 16, 700, 44),
         textbox(p, "note",
-                "A project missing from Sage reads as ZERO revenue everywhere - it does not "
-                "error, it just looks like a project that never billed. Every project below "
-                "appears exactly once; the status says what is missing.",
+                "Missing Sage coverage means project revenue is not verified. A blank or zero "
+                "does not establish that nothing was billed. Review the source mappings below "
+                "and the unmatched invoices on Data Quality.",
                 20, 56, 1100, 44, size=10, color=MUTED),
 
         # Counts first, so the shape of the problem is legible before the detail.
@@ -567,7 +593,7 @@ def page_source_coverage() -> tuple[str, list[dict]]:
 
         visual(p, "cov_status", "columnChart", 20, 252, 540, 232,
                {"Category": [column("dim_ProjectCrosswalk", "CoverageStatus")],
-                "Y": [measure("Projects Fully Mapped")]},
+                "Y": [measure("Projects In Coverage")]},
                title="Projects by coverage status"),
 
         # The list is the actionable artifact: it names the projects to go fix.
@@ -579,10 +605,10 @@ def page_source_coverage() -> tuple[str, list[dict]]:
                title="Every project, and what it is missing"),
 
         textbox(p, "vendornote",
-                "Vendors below are expected to be mostly unmatched - a vendor invited to bid "
-                "is not a vendor who was paid. What matters is a vendor WITH commitments and "
-                "no Sage id.",
-                20, 566, 1100, 30, size=10, color=MUTED),
+                "An unmatched vendor may be outside the ERP scope or may need a mapping. "
+                "Review commitments and payments before deciding; an absent Sage id alone "
+                "does not establish the reason.",
+                20, 488, 1100, 30, size=10, color=MUTED),
         visual(p, "vendor_cov", "tableEx", 20, 528, 620, 128,
                {"Values": [column("dim_VendorCrosswalk", "VendorName"),
                            column("dim_VendorCrosswalk", "IsInSage"),
@@ -924,7 +950,7 @@ PAGES = [
     ("Scorecard", page_scorecard, False),
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target
-    ("Data Quality", page_data_quality, True),   # hidden
+    ("Data Quality", page_data_quality, False),
 ]
 
 
@@ -1071,11 +1097,11 @@ def build(model_id: str) -> dict[str, str]:
     # Each captures the TARGET PAGE ONLY. A bookmark that also captured filter state would
     # freeze whatever project was selected when it was authored, and then silently show the
     # wrong project to everyone else.
-    bookmarks = [
+    bookmarks = [b for b in [
         ("bmOverview", "Portfolio overview", "overview"),
         ("bmCoverage", "Where the data is missing", "sourcecoverage"),
         ("bmScorecard", "Scorecard and how it is scored", "scorecard"),
-    ]
+    ] if b[2] in page_names]
     files["definition/bookmarks/bookmarks.json"] = json.dumps({
         "$schema": f"{SCHEMA}/bookmarksMetadata/1.0.0/schema.json",
         # Items carry the NAME only; the display name lives in the bookmark file itself.

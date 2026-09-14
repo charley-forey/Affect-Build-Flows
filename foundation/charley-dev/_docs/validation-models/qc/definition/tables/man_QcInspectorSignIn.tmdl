@@ -1,0 +1,59 @@
+table man_QcInspectorSignIn
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column SignInRef
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SignInRef
+
+	column VisitDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: VisitDate
+		formatString: yyyy-mm-dd
+
+	column InspectorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectorName
+
+	column AgencyCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AgencyCode
+
+	column Purpose
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Purpose
+
+	column AreaInspected
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AreaInspected
+
+	column OutcomeCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: OutcomeCode
+
+	column FollowUpRequired
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: FollowUpRequired
+
+	column Notes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Notes
+
+	partition man_QcInspectorSignIn = entity
+		mode: directLake
+		source
+			entityName: man_qcinspectorsignin
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

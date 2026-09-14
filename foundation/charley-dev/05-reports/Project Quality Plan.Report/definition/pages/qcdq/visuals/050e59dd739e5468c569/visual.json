@@ -3,9 +3,9 @@
   "name": "050e59dd739e5468c569",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1160,
+    "width": 728,
     "height": 40,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "What this report cannot yet tell you, said out loud. An empty register and a complete register look identical in a spreadsheet; here they do not.",
+                    "value": "Coverage reflects rows available under the current filters. Empty registers are unverified inputs; populated registers are not proof of complete submissions. Confirm source intake and project applicability.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'What this report cannot yet tell you, said out loud. An empty register and a complete register look identical in a spreadsheet; here they do not.'"
+                  "Value": "'Coverage reflects rows available under the current filters. Empty registers are unverified inputs; populated registers are not proof of complete submissions. Confirm source intake and project applicability.'"
                 }
               }
             }

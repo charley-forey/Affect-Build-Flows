@@ -1,0 +1,58 @@
+table dim_VendorCrosswalk
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column VendorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorName
+
+	column ProcoreVendorId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProcoreVendorId
+
+	column SageVendorId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageVendorId
+
+	column SageVendorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageVendorName
+
+	column IsInProcore
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInProcore
+
+	column IsInSage
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInSage
+
+	column SageMatchMethod
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageMatchMethod
+
+	column HasAmbiguousSageMatch
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasAmbiguousSageMatch
+
+	column HasNameMismatch
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasNameMismatch
+
+	partition dim_VendorCrosswalk = entity
+		mode: directLake
+		source
+			entityName: dim_vendorcrosswalk
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

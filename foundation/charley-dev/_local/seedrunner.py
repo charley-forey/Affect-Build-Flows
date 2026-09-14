@@ -144,11 +144,11 @@ SOURCE_FIXTURES = (
     ) AS t(cost_code_id, cost_code, cost_code_name)""",
 
     """CREATE OR REPLACE VIEW sv_budgets AS SELECT * FROM (VALUES
-        ('P1','CC1','03-100','Materials', DATE '2025-05-01',
+        ('B1','P1','CC1','03-100','Materials', DATE '2025-05-01',
          1000000.0, 50000.0, 1050000.0, 1100000.0, 900000.0, 400000.0, 350000.0, 550000.0),
-        ('P1','CC2','General','Labor',    DATE '2025-05-01',
+        ('B2','P1','CC2','General','Labor',    DATE '2025-05-01',
           500000.0,      0.0,  500000.0,  500000.0, 480000.0, 200000.0, 150000.0, 330000.0)
-    ) AS t(project_id, cost_code_id, cost_code, category, snapshot_date,
+    ) AS t(budget_line_id, project_id, cost_code_id, cost_code, category, snapshot_date,
            original_budget, budget_modifications, updated_budget, forecast_budget,
            committed_to_date, direct_costs, invoiced_to_date, cost_to_complete)""",
 
@@ -167,11 +167,21 @@ SOURCE_FIXTURES = (
     ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES
-        ('S100', DATE '2025-05-05', DATE '2025-06-04', 'App 1', 500000.0, 500000.0,      0.0, '5'),
-        ('S100', DATE '2025-05-25', DATE '2025-06-24', 'App 2', 300000.0,      0.0, 300000.0, '5'),
-        ('S999', DATE '2025-05-05', DATE '2025-06-04', 'Orphan', 1000.0,       0.0,   1000.0, '5')
-    ) AS t(sage_project_id, invoice_date, due_date, description,
+        ('INV1', '901', 'AIA 1', 'S100', DATE '2025-05-05', DATE '2025-06-04', 'App 1', 500000.0, 500000.0,      0.0, '5'),
+        ('INV2', '902', 'AIA 2', 'S100', DATE '2025-05-25', DATE '2025-06-24', 'App 2', 300000.0,      0.0, 300000.0, '5'),
+        ('INV3', '903', 'AIA 3', 'S999', DATE '2025-05-05', DATE '2025-06-04', 'Orphan', 1000.0,       0.0,   1000.0, '5')
+    ) AS t(invoice_uid, invoice_id, invoice_number, sage_project_id, invoice_date, due_date, description,
            invoice_total, amount_paid, invoice_balance, billing_period)""",
+
+    # Receipts (Sage acrpmt). INV1 is paid in two instalments, so PaidDate is the SECOND
+    # date, not the first. INV2 carries a same-day receipt and its reversal - the live
+    # shape - which must net to nothing rather than mark the invoice paid.
+    """CREATE OR REPLACE VIEW sv_ar_payments AS SELECT * FROM (VALUES
+        ('PMT1', 'INV1', '901', DATE '2025-05-20', 200000.0),
+        ('PMT2', 'INV1', '901', DATE '2025-06-10', 300000.0),
+        ('PMT3', 'INV2', '902', DATE '2025-06-01', 300000.0),
+        ('PMT4', 'INV2', '902', DATE '2025-06-01', -300000.0)
+    ) AS t(payment_uid, invoice_uid, invoice_id, payment_date, amount)""",
 
     """CREATE OR REPLACE VIEW sv_submittals AS SELECT * FROM (VALUES
         ('P1','SB1','001','Rebar shop drawings','Open',    'CC1', DATE '2025-05-01', DATE '2025-05-20', NULL),
@@ -497,16 +507,24 @@ SOURCE_FIXTURES = (
            source_status, status_code, submittal_type_code, created_date, due_date,
            responded_date)""",
 
-    # Not read by any gold file yet - landed and typed so the "could Procore Inspections
-    # replace the 26 checklist sheets" question can be answered against real data rather
-    # than argued about. Declared here so the view contract is verified either way.
+    # Native inspection register; no equivalence to the manual templates is assumed.
     """CREATE OR REPLACE VIEW sv_qc_inspection AS SELECT * FROM (VALUES
         ('P1','IN1','1','Slab pour pre-check','Quality','Concrete Pre-Pour',
          'Concrete Formwork','J. Alvarez','CLOSED', DATE '2025-05-08',
-         DATE '2025-05-08', 100.0)
+         DATE '2025-05-08', NULL, 'T1', '[{"id":1,"name":"Inspector One"}]',
+         16, 1, 0, 15, 0, NULL)
     ) AS t(project_id, inspection_id, inspection_number, name, inspection_type,
            template_name, trade, inspector_name, source_status, inspection_date,
-           due_date, percent_complete)""",
+           due_date, percent_complete, template_id, inspectors_json,
+           item_count, conforming_item_count, deficient_item_count,
+           not_inspected_item_count, na_item_count, neutral_item_count)""",
+
+    """CREATE OR REPLACE VIEW sv_qc_inspection_item AS SELECT * FROM (VALUES """
+    + ",".join(f"('P1','II{i}','IN1','SEC1','Check',"
+               f"'{('yes' if i == 1 else 'none')}','{('Pass' if i == 1 else 'No Response')}',"
+               "'multiple_choice','default',NULL,NULL)" for i in range(1, 17))
+    + """ ) AS t(project_id,item_id,inspection_id,section_id,name,source_status,
+           source_response,response_category,response_type,response_json,item_response_json)""",
 
     # ----------------------------------------------------------------------
     # PQP - SharePoint half. Keys are REAL values from the seed CSVs (EXCAVATION-001,
@@ -579,6 +597,26 @@ SOURCE_FIXTURES = (
     ) AS t(project_id, trade_key, item_key, stage_code, result_code, inspected_date,
            inspected_by, notes)""",
 
+    # The three silver reject ledgers, read only by dq_DataGap. One row each: a Procore row
+    # with no id, a manual row for a project gold has never heard of (so its ProjectKey must
+    # come out NULL rather than orphaned), and a conflicting PQP duplicate on a real project.
+    """CREATE OR REPLACE VIEW sv_dq_rejects AS SELECT * FROM (VALUES
+        ('cd_silver_submittals', 'missing id', '{"title":"No id"}', 'batch-1'),
+        ('cd_silver_qc_ncr', 'missing project', '{"id":"OBX"}', 'batch-1')
+    ) AS t(target_table, reason, payload, _batch_id)""",
+
+    """CREATE OR REPLACE VIEW sv_dq_rejects_manual AS SELECT * FROM (VALUES
+        ('cd_silver_man_risks', 'P9', DATE '2025-05-01', 'risk #4',
+         'unknown project - is CD Projects stale?', TIMESTAMP '2025-05-03 10:00:00', 'PM')
+    ) AS t(target_table, project_id, month_start, item_ref, reason, last_modified,
+           last_modified_by)""",
+
+    """CREATE OR REPLACE VIEW sv_dq_rejects_qc AS SELECT * FROM (VALUES
+        ('cd_silver_man_qc_gate', 'P1', 'TCO-A3',
+         'conflicting duplicate - (project, GateKey) has more than one version; resolve in SharePoint',
+         TIMESTAMP '2025-05-03 10:00:00', 'QA Manager')
+    ) AS t(target_table, project_id, item_ref, reason, last_modified, last_modified_by)""",
+
     """CREATE OR REPLACE VIEW sv_man_qc_doh_result AS SELECT * FROM (VALUES
         ('P1','H-01','OWNER_DOH_CONSULTANT','VERIFIED', DATE '2025-07-20','QA Manager',
          CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR)),
@@ -586,6 +624,23 @@ SOURCE_FIXTURES = (
          CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR))
     ) AS t(project_id, item_key, responsibility_code, status_code, verified_date,
            verified_by, evidence_link, notes)""",
+)
+
+# The three {SILVER_ABFSS} lookups (sv_vendors, sv_project_crosswalk, sv_sage_vendors) keyed
+# to the ids the INTEGRATED bronze fixture uses (test_silver.BRONZE: Procore project 7,
+# Sage job recnum 11, vendor V1). SOURCE_FIXTURES key them to P1, which is right for the
+# gold suite and makes the integrated run look like a dead Sage join that production
+# cannot have while the crosswalk holds its real rows.
+INTEGRATED_EXTERNAL_FIXTURES = (
+    """CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM (VALUES
+        ('7', '11', 'Tower A')
+    ) AS t(procore_project_id, sage_project_id, project_name)""",
+    """CREATE OR REPLACE VIEW sv_vendors AS SELECT * FROM (VALUES
+        ('V1', 'SV1', 'Acme Concrete')
+    ) AS t(procore_vendor_id, sage_vendor_id, vendor_name)""",
+    """CREATE OR REPLACE VIEW sv_sage_vendors AS SELECT * FROM (VALUES
+        ('SV1', 'ACME CONCRETE LLC')
+    ) AS t(sage_vendor_id, sage_vendor_name)""",
 )
 
 # dim_Status is not a pure seed: it unions its 32 static rows with Procore's OWN status

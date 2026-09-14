@@ -43,7 +43,7 @@ ROW1, ROW2 = 132, 250
 def page_portfolio() -> tuple[str, list[dict]]:
     """The DASHBOARD tab, computed. One row per register, across every project."""
     p = "qcportfolio"
-    return p, chrome(p) + [
+    return p, [
         textbox(p, "title", "Quality Portfolio", 20, 16, 600, 44),
         textbox(p, "note",
                 "The workbook's DASHBOARD tab, rebuilt. Every figure is computed from the "
@@ -53,24 +53,24 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 20, 56, 1160, 44, size=10, color=MUTED),
 
         textbox(p, "h_ncr", "Non-conformance", 20, 104, 400, 24, size=13),
-        card(p, "k_ncr_open", "Open NCRs", 20, ROW1, 270, 100),
-        card(p, "k_ncr_due", "NCRs Past Due", 306, ROW1, 270, 100),
-        card(p, "k_ncr_days", "Avg Days To Close NCR", 592, ROW1, 270, 100),
-        card(p, "k_ncr_rate", "NCR Closure Rate", 878, ROW1, 270, 100),
+        card(p, "k_ncr_open", "Open Observations", 20, ROW1, 270, 100),
+        card(p, "k_ncr_due", "Observations Past Due", 306, ROW1, 270, 100),
+        card(p, "k_ncr_days", "Avg Observation Closure Days", 592, ROW1, 270, 100),
+        card(p, "k_ncr_rate", "Observation Closure Rate", 878, ROW1, 270, 100),
 
-        textbox(p, "h_punch", "Punch & submittals", 20, 222, 400, 24, size=13),
+        textbox(p, "h_punch", "Punch & submittals", 20, 236, 400, 24, size=13),
         card(p, "k_punch_open", "Open Punch Items", 20, ROW2 + 20, 270, 100),
         card(p, "k_punch_aged", "Punch Items Aged Over 7 Days", 306, ROW2 + 20, 270, 100),
         card(p, "k_sub_open", "Open Submittals", 592, ROW2 + 20, 270, 100),
         card(p, "k_sub_late", "Overdue Submittals", 878, ROW2 + 20, 270, 100),
 
-        visual(p, "by_project", "barChart", 20, 392, 560, 290,
+        visual(p, "by_project", "barChart", 20, 392, 560, 260,
                {"Category": [column("dim_Project", "ProjectName")],
-                "Y": [measure("Open NCRs")]},
-               title="Open NCRs by project"),
-        visual(p, "reg_state", "tableEx", 600, 392, 560, 290,
+                "Y": [measure("Open Observations")]},
+               title="Open Observations by project"),
+        visual(p, "reg_state", "tableEx", 600, 392, 560, 260,
                {"Values": [column("dim_Project", "ProjectName"),
-                           measure("Total NCRs"), measure("Open Punch Items"),
+                           measure("Total Observations"), measure("Open Punch Items"),
                            measure("Open Submittals")]},
                title="Register state by project"),
     ]
@@ -78,34 +78,34 @@ def page_portfolio() -> tuple[str, list[dict]]:
 
 def page_ncr() -> tuple[str, list[dict]]:
     p = "qcncr"
-    return p, chrome(p) + [
-        textbox(p, "title", "Non-Conformance (NCR)", 20, 16, 600, 44),
+    return p, [
+        textbox(p, "title", "Procore Observations", 20, 16, 600, 44),
         textbox(p, "note",
-                "Read from Procore Observations - the client's workbook names Procore as "
-                "the mandatory system of record for quality, so these are not retyped. "
-                "NCRs are meant to close before the next progress billing is approved.",
+                "Includes all retrieved Procore observations, not only confirmed NCRs. "
+                "NCR classification requires review. The monthly chart groups currently "
+                "open records by creation month; it is not historical month-end backlog.",
                 20, 56, 1160, 40, size=10, color=MUTED),
-        card(p, "k_total", "Total NCRs", 20, ROW1, 220, 100),
-        card(p, "k_open", "Open NCRs", 256, ROW1, 220, 100),
-        card(p, "k_closed", "Closed NCRs", 492, ROW1, 220, 100),
-        card(p, "k_due", "NCRs Past Due", 728, ROW1, 220, 100),
-        card(p, "k_days", "Avg Days To Close NCR", 964, ROW1, 220, 100),
+        card(p, "k_total", "Total Observations", 20, ROW1, 220, 100),
+        card(p, "k_open", "Open Observations", 256, ROW1, 220, 100),
+        card(p, "k_closed", "Closed Observations", 492, ROW1, 220, 100),
+        card(p, "k_due", "Observations Past Due", 728, ROW1, 220, 100),
+        card(p, "k_days", "Avg Observation Closure Days", 964, ROW1, 220, 100),
         visual(p, "by_month", "columnChart", 20, ROW2 + 10, 560, 280,
                {"Category": [column("dim_Date", "MonthYear")],
-                "Y": [measure("Open NCRs")]},
-               title="Open NCRs by month"),
+                "Y": [measure("Open Observations")]},
+               title="Open Observations by month"),
         visual(p, "list", "tableEx", 600, ROW2 + 10, 584, 280,
                {"Values": [column("fct_QcNcr", "NcrNumber"),
                            column("fct_QcNcr", "Title"),
                            column("fct_QcNcr", "StatusCode"),
                            column("fct_QcNcr", "DaysOpen")]},
-               title="NCR register"),
+               title="Observation register"),
     ]
 
 
 def page_punch() -> tuple[str, list[dict]]:
     p = "qcpunch"
-    return p, chrome(p) + [
+    return p, [
         textbox(p, "title", "Punch & Completion", 20, 16, 600, 44),
         textbox(p, "note",
                 "Punch is not quality control - it confirms readiness. Zero Punch is the "
@@ -131,23 +131,61 @@ def page_punch() -> tuple[str, list[dict]]:
 
 def page_submittals() -> tuple[str, list[dict]]:
     p = "qcsubmittals"
-    return p, chrome(p) + [
+    return p, [
         textbox(p, "title", "Submittals & Mock-Ups", 20, 16, 600, 44),
         textbox(p, "note",
-                "No fabrication or procurement begins before written approval, so an "
-                "overdue submittal is a procurement risk rather than a paperwork one.",
+                "Possible mock-ups are inferred from subject text containing MOCK. "
+                "Matches can be wrong or incomplete; this is not a confirmed mock-up register. "
+                "Overdue submittals need review for procurement impact.",
                 20, 56, 1160, 40, size=10, color=MUTED),
         card(p, "k_total", "Total Submittals", 20, ROW1, 270, 100),
         card(p, "k_open", "Open Submittals", 306, ROW1, 270, 100),
         card(p, "k_late", "Overdue Submittals", 592, ROW1, 270, 100),
         card(p, "k_turn", "Avg Submittal Turnaround", 878, ROW1, 270, 100),
-        card(p, "k_mock", "Mock-Ups Registered", 20, ROW2 + 10, 270, 100),
+        card(p, "k_mock", "Possible Mock-Ups", 20, ROW2 + 10, 270, 100),
         visual(p, "list", "tableEx", 306, ROW2 + 10, 878, 290,
                {"Values": [column("fct_QcSubmittal", "SubmittalNumber"),
                            column("fct_QcSubmittal", "Subject"),
                            column("fct_QcSubmittal", "StatusCode"),
                            column("fct_QcSubmittal", "TurnaroundDays")]},
                title="Submittal register"),
+    ]
+
+
+def page_native_inspections() -> tuple[str, list[dict]]:
+    p = "qcinspections"
+    return p, [
+        textbox(p, "title", "Procore Inspections", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Native inspections are not mapped to manual checklist templates. Closed does not "
+                "mean every item was inspected. Blanks are unknown. Month filters use inspection "
+                "date and exclude undated records; clear the month filter to include them.",
+                20, 56, 1160, 44, size=10, color=MUTED),
+        card(p, "total", "Native Inspections", 20, ROW1, 270, 100),
+        visual(p, "register", "tableEx", 20, ROW2 + 10, 1164, 360,
+               {"Values": [column("fct_ProcoreInspection", c) for c in
+                           ("ProjectKey", "InspectionKey", "InspectionName", "SourceTemplateName",
+                            "InspectionDate", "DueDate", "SourceStatus", "SourceItemCount",
+                            "ConformingItemCount", "DeficientItemCount", "NotInspectedItemCount")]},
+               title="Native inspection register — source counts"),
+    ]
+
+
+def page_native_inspection_items() -> tuple[str, list[dict]]:
+    p = "qcinspectionitems"
+    return p, [
+        textbox(p, "title", "Inspection Items", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Original Procore responses include multiple-choice, text and signatures. "
+                "No Response is a source label, not a failed check. Project and month filters "
+                "follow the parent inspection; undated inspections require clearing the month filter.",
+                20, 56, 1160, 44, size=10, color=MUTED),
+        card(p, "total", "Native Inspection Items", 20, ROW1, 270, 100),
+        visual(p, "items", "tableEx", 20, ROW2 + 10, 1164, 360,
+               {"Values": [column("fct_ProcoreInspectionItem", c) for c in
+                           ("ProjectKey", "InspectionKey", "ItemKey", "ItemName",
+                            "ResponseCategory", "ResponseType", "SourceStatus", "SourceResponse")]},
+               title="Inspection item responses — unchanged source labels"),
     ]
 
 
@@ -158,18 +196,17 @@ def page_gates() -> tuple[str, list[dict]]:
     one register with a GateType, which is what makes a single readiness number possible.
     """
     p = "qcgates"
-    return p, chrome(p) + [
+    return p, [
         textbox(p, "title", "Statutory Gates", 20, 16, 600, 44),
         textbox(p, "note",
-                "93 gates: 46 on the Path to TCO, 23 on the FDNY Letter of Approval "
-                "pathway, 24 statutory inspections. The template is seeded from the "
-                "workbook; the per-project answers come from the intake list, which is "
-                "empty until SharePoint is provisioned.",
+                "93 template gates: 46 TCO, 23 fire alarm, 24 statutory. Select one project "
+                "for recorded completion against this template. Missing input or invalid counts "
+                "leave the percentage blank. Applicability and readiness are not certified.",
                 20, 56, 1160, 44, size=10, color=MUTED),
         card(p, "k_def", "Gates Defined", 20, ROW1, 270, 100),
         card(p, "k_rec", "Gates Recorded", 306, ROW1, 270, 100),
         card(p, "k_done", "Gates Complete", 592, ROW1, 270, 100),
-        card(p, "k_ready", "Gate Readiness", 878, ROW1, 270, 100),
+        card(p, "k_ready", "Gate Template Completion", 878, ROW1, 270, 100),
         visual(p, "by_type", "columnChart", 20, ROW2 + 10, 480, 290,
                {"Category": [column("qc_seed_Gate", "GateType")],
                 "Y": [measure("Gates Defined")]},
@@ -185,12 +222,12 @@ def page_gates() -> tuple[str, list[dict]]:
 
 def page_checklists() -> tuple[str, list[dict]]:
     p = "qcchecklists"
-    return p, chrome(p) + [
+    return p, [
         textbox(p, "title", "Trade Checklists & DFOW", 20, 16, 600, 44),
         textbox(p, "note",
-                "26 trade checklists sharing one schema, 625 items, held once as a "
-                "versioned library rather than copied into every project workbook. Adding "
-                "a 27th trade is a row, not a new tab.",
+                "26 trade templates define 625 items. Counts use the manual registers; Procore "
+                "inspection results are not linked to these templates. Completion requires one "
+                "project and valid input; missing input stays blank. Applicability is unverified.",
                 20, 56, 1160, 40, size=10, color=MUTED),
         card(p, "k_def", "Checklist Items Defined", 20, ROW1, 270, 100),
         card(p, "k_rec", "Checklist Items Recorded", 306, ROW1, 270, 100),
@@ -200,11 +237,11 @@ def page_checklists() -> tuple[str, list[dict]]:
         card(p, "k_tier", "Tier 3 And 4 DFOWs", 306, ROW2 + 10, 270, 100),
         card(p, "k_itp", "ITP Tests Defined", 592, ROW2 + 10, 270, 100),
         card(p, "k_si", "Special Inspections Logged", 878, ROW2 + 10, 270, 100),
-        visual(p, "by_trade", "barChart", 20, 392, 560, 290,
+        visual(p, "by_trade", "barChart", 20, 392, 560, 260,
                {"Category": [column("qc_seed_Trade", "TradeName")],
                 "Y": [measure("Checklist Items Defined")]},
                title="Checklist items per trade"),
-        visual(p, "trades", "tableEx", 600, 392, 584, 290,
+        visual(p, "trades", "tableEx", 600, 392, 584, 260,
                {"Values": [column("qc_seed_Trade", "TradeName"),
                            column("qc_seed_Trade", "CsiCode"),
                            column("qc_seed_Trade", "DfowRef"),
@@ -214,14 +251,14 @@ def page_checklists() -> tuple[str, list[dict]]:
 
 
 def page_data_quality() -> tuple[str, list[dict]]:
-    """Hidden. What the numbers on the other pages do not cover, stated plainly."""
+    """Visible coverage limitations for the numbers on the other pages."""
     p = "qcdq"
     return p, [
         textbox(p, "title", "Data Quality", 20, 16, 600, 44),
         textbox(p, "note",
-                "What this report cannot yet tell you, said out loud. An empty register "
-                "and a complete register look identical in a spreadsheet; here they do "
-                "not.",
+                "Coverage reflects rows available under the current filters. Empty registers "
+                "are unverified inputs; populated registers are not proof of complete "
+                "submissions. Confirm source intake and project applicability.",
                 20, 56, 1160, 40, size=10, color=MUTED),
 
         textbox(p, "h_trade", "Trade resolution", 20, 104, 400, 24, size=13),
@@ -234,7 +271,7 @@ def page_data_quality() -> tuple[str, list[dict]]:
                 "guessing whether \"Concrete Superstructure\" is CIP concrete or slab on "
                 "deck would attach a defect to the wrong trade.",
                 20, ROW1, 560, 120, size=10, color=MUTED),
-        card(p, "k_ncr_un", "DQ NCRs With Unmapped Trade", 600, ROW1, 280, 100),
+        card(p, "k_ncr_un", "DQ Observations With Unmapped Trade", 600, ROW1, 280, 100),
         card(p, "k_punch_un", "DQ Punch With Unmapped Trade", 896, ROW1, 280, 100),
 
         textbox(p, "h_manual", "Manual registers", 20, 270, 400, 24, size=13),
@@ -243,24 +280,33 @@ def page_data_quality() -> tuple[str, list[dict]]:
         card(p, "k_check_rec", "Checklist Items Recorded", 896, 300, 280, 100),
 
         textbox(p, "h_pipe", "Pipeline", 20, 420, 400, 24, size=13),
-        card(p, "k_status", "Pipeline Status", 20, 450, 560, 100),
-        card(p, "k_hours", "Hours Since Last Checked Run", 600, 450, 280, 100),
-        card(p, "k_last", "Last Checked Run", 896, 450, 280, 100),
+        card(p, "k_status", "Pipeline Status", 20, 450, 560, 80),
+        card(p, "k_hours", "Hours Since Last Checked Run", 600, 450, 280, 80),
+        card(p, "k_last", "Last Checked Run", 896, 450, 280, 80),
 
-        visual(p, "unmapped", "tableEx", 20, 570, 1156, 130,
-               {"Values": [column("fct_QcNcr", "TradeLabel"), measure("Total NCRs")]},
-               title="Procore trade labels seen on NCRs"),
+        visual(p, "unmapped", "tableEx", 20, 544, 568, 110,
+               {"Values": [column("fct_QcNcr", "TradeLabel"), measure("Total Observations")]},
+               title="Procore trade labels seen on observations"),
+        visual(p, "data_gaps", "tableEx", 604, 544, 572, 110,
+               {"Values": [column("dq_DataGap", "GapCategory"),
+                           measure("Data Gaps"), measure("Data Gap Amount")]},
+               title="Data gap register by category",
+               alt="Table. Count of known data gaps and the money they carry, by gap "
+                   "category. Gaps not tied to a project are hidden while a project is "
+                   "selected."),
     ]
 
 
 dr.PAGES = [
     ("Quality Portfolio", page_portfolio, False),
-    ("Non-Conformance", page_ncr, False),
+    ("Observations", page_ncr, False),
     ("Punch & Completion", page_punch, False),
     ("Submittals & Mock-Ups", page_submittals, False),
+    ("Procore Inspections", page_native_inspections, False),
+    ("Inspection Items", page_native_inspection_items, False),
     ("Statutory Gates", page_gates, False),
     ("Trade Checklists & DFOW", page_checklists, False),
-    ("Data Quality", page_data_quality, True),   # hidden
+    ("Data Quality", page_data_quality, False),
 ]
 
 

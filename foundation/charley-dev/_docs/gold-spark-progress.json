@@ -1,0 +1,62 @@
+{
+  "session_id": "9784deb9-cab4-44e7-bcbd-992e0a4b351b",
+  "application_id": "application_1789022962919_0001",
+  "job_instance_id": "eb0a05b0-b61a-4aff-a030-3028e07e9895",
+  "session_state": "InProgress",
+  "counts": {
+    "RUNNING": 1,
+    "SUCCEEDED": 838
+  },
+  "recent_jobs": [
+    {
+      "jobId": 838,
+      "name": "collect at /tmp/ipykernel_8866/3991269513.py:26",
+      "status": "RUNNING",
+      "submissionTime": "2026-09-10T07:03:06.776GMT",
+      "completionTime": null,
+      "numTasks": 51,
+      "numCompletedTasks": 0,
+      "numFailedTasks": 0
+    },
+    {
+      "jobId": 837,
+      "name": "collect at /tmp/ipykernel_8866/3991269513.py:26",
+      "status": "SUCCEEDED",
+      "submissionTime": "2026-09-10T07:03:06.515GMT",
+      "completionTime": "2026-09-10T07:03:06.567GMT",
+      "numTasks": 1,
+      "numCompletedTasks": 1,
+      "numFailedTasks": 0
+    },
+    {
+      "jobId": 836,
+      "name": "collect at /tmp/ipykernel_8866/3991269513.py:26",
+      "status": "SUCCEEDED",
+      "submissionTime": "2026-09-10T07:03:05.989GMT",
+      "completionTime": "2026-09-10T07:03:06.003GMT",
+      "numTasks": 52,
+      "numCompletedTasks": 1,
+      "numFailedTasks": 0
+    },
+    {
+      "jobId": 835,
+      "name": "collect at /tmp/ipykernel_8866/3991269513.py:26",
+      "status": "SUCCEEDED",
+      "submissionTime": "2026-09-10T07:03:05.473GMT",
+      "completionTime": "2026-09-10T07:03:05.976GMT",
+      "numTasks": 51,
+      "numCompletedTasks": 50,
+      "numFailedTasks": 0
+    },
+    {
+      "jobId": 834,
+      "name": "collect at /tmp/ipykernel_8866/3991269513.py:26",
+      "status": "SUCCEEDED",
+      "submissionTime": "2026-09-10T07:03:04.941GMT",
+      "completionTime": "2026-09-10T07:03:04.992GMT",
+      "numTasks": 1,
+      "numCompletedTasks": 1,
+      "numFailedTasks": 0
+    }
+  ]
+}

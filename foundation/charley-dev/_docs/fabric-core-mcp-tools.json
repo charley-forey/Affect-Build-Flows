@@ -1,0 +1,1090 @@
+{
+  "result": {
+    "tools": [
+      {
+        "name": "list_workspaces",
+        "description": "Lists all Microsoft fabric workspaces user has access to. Provides details about the workspaces, including id, display name, description.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "Roles": {
+              "type": "string",
+              "description": "A list of workspace roles to filter by. Separate values using a comma. Valid roles are: Admin, Member, Contributor, Viewer. If not provided, all workspaces are returned."
+            },
+            "ContinuationToken": {
+              "type": "string",
+              "description": "A token for retrieving the next page of results."
+            }
+          }
+        },
+        "annotations": {
+          "title": "List Workspaces",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_workspace",
+        "description": "Gets detailed information about a specific Microsoft fabric workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Workspace",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "create_workspace",
+        "description": "Creates a new Microsoft fabric workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": "The display name of the workspace. Maximum length is 256 characters."
+            },
+            "description": {
+              "type": "string",
+              "description": "The description of the workspace. Maximum length is 4000 characters."
+            },
+            "capacityId": {
+              "type": "string",
+              "description": "The capacity ID to create workspace in (optional). uuid format"
+            }
+          },
+          "required": [
+            "displayName"
+          ]
+        },
+        "annotations": {
+          "title": "Create Workspace",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        }
+      },
+      {
+        "name": "update_workspace",
+        "description": "Updates a Microsoft fabric workspace display name or description.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "type": "string",
+                  "description": "The new display name of the workspace (optional)."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The new description of the workspace (optional)."
+                }
+              }
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Update Workspace",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "delete_workspace",
+        "description": "Permanently deletes a Microsoft fabric workspace and all its contents.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace to delete. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId"
+          ]
+        },
+        "annotations": {
+          "title": "Delete Workspace",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "list_workspace_roles",
+        "description": "List all role assignments for a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ContinuationToken": {
+              "type": "string",
+              "description": "A token for retrieving the next page of results."
+            }
+          },
+          "required": [
+            "WorkspaceId"
+          ]
+        },
+        "annotations": {
+          "title": "List Workspace Roles",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_workspace_role",
+        "description": "Get details of a specific role assignment in a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "RoleAssignmentId": {
+              "type": "string",
+              "description": "The role assignment ID. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "RoleAssignmentId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Workspace Role",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "add_workspace_role",
+        "description": "Grant a user, group, or service principal access to a workspace with a specific role.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "principal": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Principal ID (User, Group, or Service Principal)"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "User",
+                        "Group",
+                        "ServicePrincipal"
+                      ],
+                      "description": "The type of principal"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ]
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "Admin",
+                    "Member",
+                    "Contributor",
+                    "Viewer"
+                  ],
+                  "description": "Workspace role to assign"
+                }
+              },
+              "required": [
+                "principal",
+                "role"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Add Workspace Role",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        }
+      },
+      {
+        "name": "update_workspace_role",
+        "description": "Update an existing role assignment for a user, group, or service principal in a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "RoleAssignmentId": {
+              "type": "string",
+              "description": "The existing role assignment ID to update. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "Admin",
+                    "Member",
+                    "Contributor",
+                    "Viewer"
+                  ],
+                  "description": "New role to assign"
+                }
+              },
+              "required": [
+                "role"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "RoleAssignmentId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Update Workspace Role",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "delete_workspace_role",
+        "description": "Revoke a user, group, or service principal's access to a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "RoleAssignmentId": {
+              "type": "string",
+              "description": "The role assignment ID to delete. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "RoleAssignmentId"
+          ]
+        },
+        "annotations": {
+          "title": "Delete Workspace Role",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "list_items",
+        "description": "Lists all Microsoft fabric items user has access to. Provides details about the items, including id, display name, description.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ContinuationToken": {
+              "type": "string",
+              "description": "A token for retrieving the next page of results."
+            },
+            "Type": {
+              "type": "string",
+              "description": "The item type.",
+              "enum": [
+                "Dashboard",
+                "Report",
+                "SemanticModel",
+                "PaginatedReport",
+                "Datamart",
+                "Lakehouse",
+                "Eventhouse",
+                "Environment",
+                "KQLDatabase",
+                "KQLQueryset",
+                "KQLDashboard",
+                "DataPipeline",
+                "Notebook",
+                "SparkJobDefinition",
+                "MLExperiment",
+                "MLModel",
+                "Warehouse",
+                "Eventstream",
+                "SQLEndpoint",
+                "MirroredWarehouse",
+                "MirroredDatabase",
+                "Reflex",
+                "GraphQLApi",
+                "MountedDataFactory",
+                "SQLDatabase",
+                "CopyJob",
+                "VariableLibrary",
+                "Dataflow",
+                "ApacheAirflowJob",
+                "WarehouseSnapshot",
+                "DigitalTwinBuilder",
+                "DigitalTwinBuilderFlow",
+                "MirroredAzureDatabricksCatalog",
+                "Map",
+                "AnomalyDetector",
+                "UserDataFunction",
+                "GraphModel",
+                "GraphQuerySet",
+                "SnowflakeDatabase",
+                "OperationsAgent",
+                "CosmosDBDatabase"
+              ]
+            },
+            "RootFolderId": {
+              "type": "string",
+              "description": "Filter items by root folder ID (optional). uuid format"
+            },
+            "Recursive": {
+              "type": "boolean",
+              "description": "True to include nested folders, false to restrict to the specified folder only. Defaults to true."
+            }
+          },
+          "required": [
+            "WorkspaceId"
+          ]
+        },
+        "annotations": {
+          "title": "List Items",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_item",
+        "description": "Get metadata for a specific Microsoft fabric item.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ItemId": {
+              "type": "string",
+              "description": "The ID of the item. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "ItemId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Item",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "create_item",
+        "description": "Creates a new Microsoft fabric item.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "type": "string",
+                  "description": "The item display name. The display name must follow naming rules according to item type."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The item description. Maximum length is 256 characters."
+                },
+                "type": {
+                  "type": "string",
+                  "description": "The item type.",
+                  "enum": [
+                    "Dashboard",
+                    "Report",
+                    "SemanticModel",
+                    "PaginatedReport",
+                    "Datamart",
+                    "Lakehouse",
+                    "Eventhouse",
+                    "Environment",
+                    "KQLDatabase",
+                    "KQLQueryset",
+                    "KQLDashboard",
+                    "DataPipeline",
+                    "Notebook",
+                    "SparkJobDefinition",
+                    "MLExperiment",
+                    "MLModel",
+                    "Warehouse",
+                    "Eventstream",
+                    "SQLEndpoint",
+                    "MirroredWarehouse",
+                    "MirroredDatabase",
+                    "Reflex",
+                    "GraphQLApi",
+                    "MountedDataFactory",
+                    "SQLDatabase",
+                    "CopyJob",
+                    "VariableLibrary",
+                    "Dataflow",
+                    "ApacheAirflowJob",
+                    "WarehouseSnapshot",
+                    "DigitalTwinBuilder",
+                    "DigitalTwinBuilderFlow",
+                    "MirroredAzureDatabricksCatalog",
+                    "Map",
+                    "AnomalyDetector",
+                    "UserDataFunction",
+                    "GraphModel",
+                    "GraphQuerySet",
+                    "SnowflakeDatabase",
+                    "OperationsAgent",
+                    "CosmosDBDatabase"
+                  ]
+                },
+                "folderId": {
+                  "type": "string",
+                  "description": "Folder ID to create the item in (optional). uuid format"
+                },
+                "creationPayload": {
+                  "type": "object",
+                  "description": "Item-type specific payload. Use either creationPayload or definition, but not both."
+                },
+                "definition": {
+                  "type": "object",
+                  "description": "The item definition. The Create Item page of the relevant type indicates whether the definition is supported and details its structure. Use definition or creationPayload. You can't use both at the same time.",
+                  "properties": {
+                    "format": {
+                      "type": "string",
+                      "description": "The format of the item definition."
+                    },
+                    "parts": {
+                      "type": "array",
+                      "description": "A list of definition parts.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "description": "The item part path."
+                          },
+                          "payload": {
+                            "type": "string",
+                            "description": "The item part payload."
+                          },
+                          "payloadType": {
+                            "type": "string",
+                            "description": "The content of the definition part.",
+                            "enum": [
+                              "InlineBase64"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "payload",
+                          "payloadType"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "parts"
+                  ]
+                }
+              },
+              "required": [
+                "displayName",
+                "type"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Create Item",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        }
+      },
+      {
+        "name": "update_item",
+        "description": "Update item metadata (display name, description).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ItemId": {
+              "type": "string",
+              "description": "The ID of the item. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "type": "string",
+                  "description": "The new display name of the item (optional)."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "The new description of the item (optional)."
+                }
+              }
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "ItemId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Update Item",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "delete_item",
+        "description": "Permanently delete an item from a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ItemId": {
+              "type": "string",
+              "description": "The ID of the item. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "ItemId"
+          ]
+        },
+        "annotations": {
+          "title": "Delete Item",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "get_item_definition",
+        "description": "Retrieves the definition of a Microsoft fabric item. this definition is a representation of the item and its state without the data.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ItemId": {
+              "type": "string",
+              "description": "The ID of the item. uuid format"
+            },
+            "Format": {
+              "type": "string",
+              "description": "The format of the item definition (optional)."
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "ItemId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Item Definition",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "update_item_definition",
+        "description": "Updates the definition of a Microsoft fabric item. item definition is a representation of the item and its state without the data.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "ItemId": {
+              "type": "string",
+              "description": "The ID of the item. uuid format"
+            },
+            "UpdateMetadata": {
+              "type": "boolean",
+              "description": "True to apply metadata updates when the .platform part is provided."
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "definition": {
+                  "type": "object",
+                  "description": "The item definition. The Create Item page of the relevant type indicates whether the definition is supported and details its structure. Use definition or creationPayload. You can't use both at the same time. If using item definition, You must submit all the required parts, not a partial patch.",
+                  "properties": {
+                    "format": {
+                      "type": "string",
+                      "description": "The format of the item definition."
+                    },
+                    "parts": {
+                      "type": "array",
+                      "description": "A list of definition parts.",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "description": "The item part path."
+                          },
+                          "payload": {
+                            "type": "string",
+                            "description": "The item part payload."
+                          },
+                          "payloadType": {
+                            "type": "string",
+                            "description": "The content of the definition part.",
+                            "enum": [
+                              "InlineBase64"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "payload",
+                          "payloadType"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "parts"
+                  ]
+                }
+              },
+              "required": [
+                "definition"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "ItemId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Update Item Definition",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "bulk_move_items",
+        "description": "Move multiple Microsoft fabric items to a workspace folder in a single operation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "items": {
+                  "type": "array",
+                  "description": "A list of item IDs to move.",
+                  "items": {
+                    "type": "string",
+                    "description": "The ID of an item to move. uuid format"
+                  }
+                },
+                "targetFolderId": {
+                  "type": "string",
+                  "description": "Destination folder ID. If omitted, items move to the workspace root. uuid format"
+                }
+              },
+              "required": [
+                "items"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Bulk Move Items",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "create_folder",
+        "description": "Creates a folder within a Microsoft fabric workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "type": "string",
+                  "description": "The folder display name."
+                },
+                "parentFolderId": {
+                  "type": "string",
+                  "description": "Optional parent folder ID. uuid format"
+                }
+              },
+              "required": [
+                "displayName"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Create Folder",
+          "readOnlyHint": false,
+          "destructiveHint": false
+        }
+      },
+      {
+        "name": "list_folders",
+        "description": "Lists folders within a Microsoft fabric workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "RootFolderId": {
+              "type": "string",
+              "description": "Optional root folder ID to scope results. uuid format"
+            },
+            "Recursive": {
+              "type": "boolean",
+              "description": "True to include folders within nested folders; false to list only direct children. Defaults to true."
+            },
+            "ContinuationToken": {
+              "type": "string",
+              "description": "Token for retrieving the next page of folder results."
+            }
+          },
+          "required": [
+            "WorkspaceId"
+          ]
+        },
+        "annotations": {
+          "title": "List Folders",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_folder",
+        "description": "Gets the metadata for a single folder in a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "FolderId": {
+              "type": "string",
+              "description": "The ID of the folder. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "FolderId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Folder",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "update_folder",
+        "description": "Updates the display name of a workspace folder.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "FolderId": {
+              "type": "string",
+              "description": "The ID of the folder. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "type": "string",
+                  "description": "The new folder display name."
+                }
+              },
+              "required": [
+                "displayName"
+              ]
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "FolderId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Update Folder",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "delete_folder",
+        "description": "Deletes an empty folder from a workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "FolderId": {
+              "type": "string",
+              "description": "The ID of the folder to delete. uuid format"
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "FolderId"
+          ]
+        },
+        "annotations": {
+          "title": "Delete Folder",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "move_folder",
+        "description": "Moves a folder to a different parent within the same workspace.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "WorkspaceId": {
+              "type": "string",
+              "description": "The ID of the workspace. uuid format"
+            },
+            "FolderId": {
+              "type": "string",
+              "description": "The ID of the folder to move. uuid format"
+            },
+            "Details": {
+              "type": "object",
+              "properties": {
+                "targetFolderId": {
+                  "type": "string",
+                  "description": "Destination folder ID. uuid format"
+                }
+              }
+            }
+          },
+          "required": [
+            "WorkspaceId",
+            "FolderId",
+            "Details"
+          ]
+        },
+        "annotations": {
+          "title": "Move Folder",
+          "readOnlyHint": false,
+          "destructiveHint": true
+        }
+      },
+      {
+        "name": "list_capacities",
+        "description": "List all Fabric capacities accessible to the authenticated user.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "ContinuationToken": {
+              "type": "string",
+              "description": "A token for retrieving the next page of results."
+            }
+          }
+        },
+        "annotations": {
+          "title": "List Capacities",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_operation_state",
+        "description": "Returns the current state of the long running operation. You get the operationId from the x-ms-operation-id header returned by the API that initiated the operation, you should use the Retry-After header to determine when to check the operation status again. Once the operation status is 'Succeeded' use the Get Operation Result API to retrieve the result.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "operationId": {
+              "type": "string",
+              "description": "The ID of the operation. uuid format"
+            }
+          },
+          "required": [
+            "operationId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Operation State",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_operation_result",
+        "description": "Returns the result of the long running operation. You get the operationId from the x-ms-operation-id header returned by the API that initiated the operation.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "operationId": {
+              "type": "string",
+              "description": "The ID of the operation. uuid format"
+            }
+          },
+          "required": [
+            "operationId"
+          ]
+        },
+        "annotations": {
+          "title": "Get Operation Result",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "search_catalog",
+        "description": "Searches the Microsoft Fabric OneLake catalog for items matching the specified criteria. Supports cross-workspace search over catalog metadata and returns results filtered to entries the calling principal is authorized to access.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "The text query for the search. Supports searching across display name, description and workspace name of the catalog entry."
+            },
+            "pageSize": {
+              "type": "integer",
+              "description": "The page size that needs to be returned."
+            },
+            "filter": {
+              "type": "string",
+              "description": "The filter for the search. Supports filtering by type of entries. Supported operators: eq (Equals), ne (Not Equals), or (Logical OR), () (Parentheses for grouping). Example: \"Type eq 'Report' or Type eq 'Lakehouse'\". Supported item types: Dashboard, Report, SemanticModel, PaginatedReport, Datamart, Lakehouse, Eventhouse, Environment, KQLDatabase, KQLQueryset, KQLDashboard, DataPipeline, Notebook, SparkJobDefinition, MLExperiment, MLModel, Warehouse, Eventstream, SQLEndpoint, MirroredWarehouse, MirroredDatabase, Reflex, GraphQLApi, MountedDataFactory, SQLDatabase, CopyJob, VariableLibrary, Dataflow, ApacheAirflowJob, WarehouseSnapshot, DigitalTwinBuilder, DigitalTwinBuilderFlow, MirroredAzureDatabricksCatalog, Map, AnomalyDetector, UserDataFunction, GraphModel, GraphQuerySet, SnowflakeDatabase, OperationsAgent, CosmosDBDatabase, Ontology, EventSchemaSet (additional types may be added over time)."
+            },
+            "continuationToken": {
+              "type": "string",
+              "description": "A token for retrieving the next page of results."
+            }
+          },
+          "required": [
+            "search"
+          ]
+        },
+        "annotations": {
+          "title": "Search Catalog",
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "get_knowledge",
+        "description": "Use this tool for gathering knowledge on specific topics. The output will be in markdown format.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "topics": {
+              "type": "array",
+              "description": "Include the list of topics you need context for. The allowed topics and the summary of the context they provide are as follows:\r\n- Notebook: Provides context on the Notebook Item Definition which is used when creating or updating a Notebook Artifact.\r\n- Dataflow: Provides context on the Dataflows Item Definition which is used when creating or updating a Dataflow Artifact.\r\n- Lakehouse: Provides context on the Lakehouse Item Definition which is used when creating or updating a Lakehouse Artifact.\r\n- Report: Provides context on the Report Item Definition which is used when creating or updating a Report Artifact.\r\n- SemanticModel: Provides context on the Semantic Model Item Definition which is used when creating or updating a Semantic Model Artifact.",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "Notebook",
+                  "Dataflow",
+                  "Lakehouse",
+                  "Report",
+                  "SemanticModel"
+                ]
+              }
+            }
+          },
+          "required": [
+            "topics"
+          ]
+        },
+        "annotations": {
+          "title": "Get Knowledge",
+          "readOnlyHint": true
+        }
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 2
+}

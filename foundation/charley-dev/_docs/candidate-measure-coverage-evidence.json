@@ -1,0 +1,2387 @@
+{
+ "captured_at": "2026-09-14T02:26:46.387935+00:00",
+ "workspace_id": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+ "lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
+ "sql_endpoint_id": "ceaf23be-a574-41f2-9025-b789a940bdc1",
+ "method": "Raw columns read through the model; expected values recomputed in Python (validate_model.monthly_expected/qc_expected) with filter propagation re-derived from RELATIONSHIPS; compared to each measure at portfolio, every project, every month, and scorecard category grain. NOW()/UTCNOW() are captured in the same query as the measure, so time-relative measures compare exactly. A SQL-endpoint cross-check re-aggregates the Delta tables independently of Direct Lake for a subset (a SQL SUM(CASE) over 0 matching rows is recorded as BLANK for COUNTROWS measures).",
+ "sql_crosscheck_queries": "SUM/COUNT/AVG over fct_budgetline, fct_billing, fct_changeorder, fct_directcost, bridge_vendorcostcode, fct_vendorinsurance, fct_qualityitem, fct_milestone, dim_projectcrosswalk, fct_rfisubmittal, fct_qcncr, fct_qcpunch, fct_qcsubmittal, man_qcgate, meta_pipelinerun, measures_anchor; portfolio and one project key",
+ "models": {
+  "monthly": {
+   "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+   "results": {
+    "Original Contract": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 31295506.499999996,
+     "independent_value": 31295506.5,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Current Contract": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 36492842.65,
+     "independent_value": 36492842.65,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Contract Growth %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.16607292008518867,
+     "independent_value": 0.16607292008518854,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Pending Change Orders": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 49463.97,
+     "independent_value": 49463.97,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Age Of Oldest Unapproved CO": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 862,
+     "independent_value": 862,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Approved Change Orders": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 5197336.15,
+     "independent_value": 5197336.15,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Change Order Amount": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 5246800.12,
+     "independent_value": 5246800.12,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Budget": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 35242877.960000016,
+     "independent_value": 35242877.96,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Forecast": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 35736117.94000002,
+     "independent_value": 35736117.94,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Committed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 29724156.66,
+     "independent_value": 29724156.66,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Spent To Date": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 20101624.42,
+     "independent_value": 20101624.42,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Cost To Complete": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 9622532.24,
+     "independent_value": 9622532.24,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Budget Variance": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 15141253.540000014,
+     "independent_value": 15141253.54,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Budget Variance %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.4296259107211688,
+     "independent_value": 0.42962591072116857,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Budget Status": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [
+      {
+       "grain": "portfolio",
+       "scope": {
+        "project": null,
+        "month": null,
+        "category": null
+       },
+       "measure": "On Track",
+       "independent": "Spend within budget"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955375634",
+        "month": null,
+        "category": null
+       },
+       "measure": "On Track",
+       "independent": "Spend within budget"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955064640",
+        "month": null,
+        "category": null
+       },
+       "measure": "On Track",
+       "independent": "Spend within budget"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955118102",
+        "month": null,
+        "category": null
+       },
+       "measure": "On Track",
+       "independent": "Spend within budget"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949954971827",
+        "month": null,
+        "category": null
+       },
+       "measure": "On Track",
+       "independent": "Spend within budget"
+      }
+     ],
+     "measure_value": "On Track",
+     "independent_value": "Spend within budget",
+     "status": "FAIL",
+     "mismatch_count": 26
+    },
+    "Percent Bought Out": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.8434088922515449,
+     "independent_value": 0.8434088922515453,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Last Checked Run": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": "2026-09-10T11:24:08.757",
+     "independent_value": "2026-09-10T11:24:08.757",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Hours Since Last Checked Run": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 87,
+     "independent_value": 87,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Pipeline Status": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": "STALE - no checked run in over 72 hours",
+     "independent_value": "STALE - no checked run in over 72 hours",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Blocking Violations Last Run": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendor Spend": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 1472617.1199999994,
+     "independent_value": 1472617.1199999999,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendor Committed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 26418132.60000001,
+     "independent_value": 26418132.6,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Cost Codes Per Vendor": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 278,
+     "independent_value": 278,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendors Per Cost Code": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 189,
+     "independent_value": 189,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Certificates On File": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 105,
+     "independent_value": 105,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendors With Insurance": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 23,
+     "independent_value": 23,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Expired Certificates": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 105,
+     "independent_value": 105,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Certificates Expiring Soon": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendors Without Insurance": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 263,
+     "independent_value": 263,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Retainage Held Owner": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 346229.50999999995,
+     "independent_value": 346229.51,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Retainage Held Sub": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 404444.69999999995,
+     "independent_value": 404444.7,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Net Retainage Position": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": -58215.19,
+     "independent_value": -58215.19,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Owner Billed To Date": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 29601900.03,
+     "independent_value": 29601900.03,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Owner Contract Sum": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 34021855.99,
+     "independent_value": 34021855.99,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Balance To Finish": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 4766185.47,
+     "independent_value": 4766185.47,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Billed This Period": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 29255670.519999992,
+     "independent_value": 29255670.52,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Billing Periods": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 876,
+     "independent_value": 876,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Draft Billings": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 31,
+     "independent_value": 31,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Direct Costs": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 2072621.1300000001,
+     "independent_value": 2072621.1300000001,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Self Performed Labour": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 1208733.4800000004,
+     "independent_value": 1208733.48,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Unapproved Direct Costs": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 32625.11,
+     "independent_value": 32625.11,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendors On Project": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 269,
+     "independent_value": 269,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendors Missing From ERP": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 141,
+     "independent_value": 141,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Total Billed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 25613659.66,
+     "independent_value": 25613659.66,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Total Paid": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 18713981.769999996,
+     "independent_value": 18713981.77,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "AR Outstanding": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 6899677.8900000015,
+     "independent_value": 6899677.89,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Total Billed %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.7018817335130236,
+     "independent_value": 0.7018817335130236,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Total Billed MoM %": {
+     "grains": {
+      "month": 252
+     },
+     "mismatches": [],
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Open Submittals": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 2366,
+     "independent_value": 2366,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Open Submittals Past Due": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 29,
+     "independent_value": 29,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Days Open": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 308.12448,
+     "independent_value": 308.12448,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Critical Milestones": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 126,
+     "independent_value": 126,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Overdue Milestones": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 111,
+     "independent_value": 111,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Schedule Performance %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.8809523809523809,
+     "independent_value": 0.8809523809523809,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Milestone Progress": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.13133518642549352,
+     "independent_value": 0.13133518642549352,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Punchlist Items": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 1580,
+     "independent_value": 1580,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Open Quality Items": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 265,
+     "independent_value": 265,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Quality Items Past Due": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 178,
+     "independent_value": 178,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Days Past Due": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 135.5505617977528,
+     "independent_value": 135.5505617977528,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects Fully Mapped": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 2,
+     "independent_value": 2,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects In Coverage": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 20,
+     "independent_value": 20,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects Missing From Sage": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 5,
+     "independent_value": 5,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects Missing From Outbuild": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 17,
+     "independent_value": 17,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Source Coverage %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.1,
+     "independent_value": 0.1,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Vendors Missing From Sage": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "DQ Projects Without Crosswalk": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 5,
+     "independent_value": 5,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "DQ Cost Codes Not In Source": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "DQ Milestones With Inverted Dates": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "DQ Unmatched Invoices": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 37,
+     "independent_value": 37,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Unmatched AR Amount - All Projects": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 1474973.0099999998,
+     "independent_value": 1474973.01,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Billed Cumulative": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 29255670.519999992,
+     "independent_value": 29255670.52,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Billed Cumulative % Of Contract": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.8016824230600187,
+     "independent_value": 0.8016824230600189,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects Reporting": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 20,
+     "independent_value": 20,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects At Risk": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 8,
+     "independent_value": 8,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Last Refresh": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": "2026-09-10T11:21:44.79",
+     "independent_value": "2026-09-10T11:21:44.79",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Report Month Label": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": "January 2015 - December 2035",
+     "independent_value": "January 2015 - December 2035",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Days To Payment": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Cash Position %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 2.6618419165722633,
+     "independent_value": 2.6618419165722638,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Profitability Code": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_Flags empty)",
+     "mismatch_count": 0
+    },
+    "Recordable Incidents": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Hours Worked": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 128848.49,
+     "independent_value": 128848.49,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Observations": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 962,
+     "independent_value": 962,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Observation Days Open": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 31.26701800614844,
+     "independent_value": 31.26701800614844,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Daily Reports Missed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_DailyLogCompliance empty)",
+     "mismatch_count": 0
+    },
+    "Completion Variance Days": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_Milestones empty)",
+     "mismatch_count": 0
+    },
+    "Client Satisfaction": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_Survey empty)",
+     "mismatch_count": 0
+    },
+    "Score - Accounts Receivable": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Profitability": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Cash Position": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 3,
+     "independent_value": 3,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Change Orders": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Safety Incidents": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 3,
+     "independent_value": 3,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Schedule Performance": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Completion Variance": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Observations": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0,
+     "independent_value": 0,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Score - Daily Reports": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Project Scorecard": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949954973730",
+        "month": null,
+        "category": null
+       },
+       "measure": 0.3267,
+       "independent": 0.32666666666666666
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955286476",
+        "month": null,
+        "category": null
+       },
+       "measure": 0.3133,
+       "independent": 0.31333333333333335
+      },
+      {
+       "grain": "month",
+       "scope": {
+        "project": null,
+        "month": "2026-07-01T00:00:00",
+        "category": null
+       },
+       "measure": 0.2067,
+       "independent": 0.2066666666666667
+      },
+      {
+       "grain": "month",
+       "scope": {
+        "project": null,
+        "month": "2024-11-01T00:00:00",
+        "category": null
+       },
+       "measure": 0.2067,
+       "independent": 0.2066666666666667
+      }
+     ],
+     "measure_value": 0.26,
+     "independent_value": 0.26,
+     "status": "FAIL",
+     "mismatch_count": 4
+    },
+    "Scorecard Coverage %": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": 0.59,
+     "independent_value": 0.59,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Project Scorecard (Measured Only)": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949954973730",
+        "month": null,
+        "category": null
+       },
+       "measure": 0.7425,
+       "independent": 0.7424242424242424
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955286476",
+        "month": null,
+        "category": null
+       },
+       "measure": 0.7120454545454545,
+       "independent": 0.7121212121212122
+      },
+      {
+       "grain": "month",
+       "scope": {
+        "project": null,
+        "month": "2026-07-01T00:00:00",
+        "category": null
+       },
+       "measure": 0.4397872340425532,
+       "independent": 0.4397163120567376
+      },
+      {
+       "grain": "month",
+       "scope": {
+        "project": null,
+        "month": "2024-11-01T00:00:00",
+        "category": null
+       },
+       "measure": 0.6459375,
+       "independent": 0.6458333333333334
+      }
+     ],
+     "measure_value": 0.4406779661016949,
+     "independent_value": 0.44067796610169496,
+     "status": "FAIL",
+     "mismatch_count": 4
+    },
+    "Category Score": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Category Weighted": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Category Band": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252,
+      "category": 9
+     },
+     "mismatches": [],
+     "measure_value": "Not measured",
+     "independent_value": "Not measured",
+     "status": "PASS",
+     "mismatch_count": 0
+    }
+   },
+   "not_deployed": [
+    "Data Gap Amount",
+    "Data Gaps"
+   ],
+   "tables_not_deployed": [
+    "dq_DataGap"
+   ],
+   "deployed_not_generated": [],
+   "without_independent_check": [],
+   "fixture_only": [
+    "Milestone Duration Days",
+    "Milestone Offset Days"
+   ],
+   "blank_member_rows_skipped": 12,
+   "raw_row_counts": {
+    "_Measures": 1,
+    "dim_Date": 7670,
+    "dim_Project": 20,
+    "dim_CostCode": 5768,
+    "dim_ScorecardWeight": 9,
+    "dim_ScorecardBand": 27,
+    "fct_BudgetLine": 435,
+    "fct_ChangeOrder": 330,
+    "fct_Invoice": 148,
+    "fct_RfiSubmittal": 3125,
+    "fct_Milestone": 126,
+    "fct_FinancialPeriod": 150,
+    "fct_QualityItem": 2542,
+    "fct_SafetyMonthly": 68,
+    "fct_Billing": 876,
+    "fct_DirectCost": 437,
+    "bridge_ProjectVendor": 422,
+    "bridge_VendorCostCode": 421,
+    "fct_VendorInsurance": 105,
+    "man_Flags": 0,
+    "man_Survey": 0,
+    "man_Milestones": 0,
+    "man_DailyLogCompliance": 0,
+    "dim_ProjectCrosswalk": 20,
+    "dim_VendorCrosswalk": 125,
+    "meta_PipelineRun": 4
+   },
+   "failed": [
+    "Budget Status",
+    "Project Scorecard",
+    "Project Scorecard (Measured Only)"
+   ],
+   "sql_crosscheck": [
+    {
+     "measure": "Forecast",
+     "grain": "portfolio",
+     "sql": 35736117.94,
+     "model": 35736117.94000002,
+     "agrees": true
+    },
+    {
+     "measure": "Forecast",
+     "grain": "project",
+     "sql": 1124786.08,
+     "model": 1124786.08,
+     "agrees": true
+    },
+    {
+     "measure": "Committed",
+     "grain": "portfolio",
+     "sql": 29724156.66,
+     "model": 29724156.66,
+     "agrees": true
+    },
+    {
+     "measure": "Committed",
+     "grain": "project",
+     "sql": 590458.48,
+     "model": 590458.4800000001,
+     "agrees": true
+    },
+    {
+     "measure": "Cost To Complete",
+     "grain": "portfolio",
+     "sql": 9622532.24,
+     "model": 9622532.24,
+     "agrees": true
+    },
+    {
+     "measure": "Cost To Complete",
+     "grain": "project",
+     "sql": 178651.86,
+     "model": 178651.85999999996,
+     "agrees": true
+    },
+    {
+     "measure": "Owner Contract Sum",
+     "grain": "portfolio",
+     "sql": 34021855.99,
+     "model": 34021855.99,
+     "agrees": true
+    },
+    {
+     "measure": "Owner Contract Sum",
+     "grain": "project",
+     "sql": 1125465.08,
+     "model": 1125465.08,
+     "agrees": true
+    },
+    {
+     "measure": "Balance To Finish",
+     "grain": "portfolio",
+     "sql": 4766185.47,
+     "model": 4766185.47,
+     "agrees": true
+    },
+    {
+     "measure": "Balance To Finish",
+     "grain": "project",
+     "sql": 0,
+     "model": 0.0,
+     "agrees": true
+    },
+    {
+     "measure": "Billing Periods",
+     "grain": "portfolio",
+     "sql": 876,
+     "model": 876,
+     "agrees": true
+    },
+    {
+     "measure": "Billing Periods",
+     "grain": "project",
+     "sql": 17,
+     "model": 17,
+     "agrees": true
+    },
+    {
+     "measure": "Draft Billings",
+     "grain": "portfolio",
+     "sql": 31,
+     "model": 31,
+     "agrees": true
+    },
+    {
+     "measure": "Draft Billings",
+     "grain": "project",
+     "sql": 0,
+     "model": 0,
+     "agrees": true
+    },
+    {
+     "measure": "Change Order Amount",
+     "grain": "portfolio",
+     "sql": 5246800.12,
+     "model": 5246800.12,
+     "agrees": true
+    },
+    {
+     "measure": "Change Order Amount",
+     "grain": "project",
+     "sql": -55639.92,
+     "model": -55639.920000000006,
+     "agrees": true
+    },
+    {
+     "measure": "Approved Change Orders",
+     "grain": "portfolio",
+     "sql": 5197336.15,
+     "model": 5197336.15,
+     "agrees": true
+    },
+    {
+     "measure": "Approved Change Orders",
+     "grain": "project",
+     "sql": -55639.92,
+     "model": -55639.920000000006,
+     "agrees": true
+    },
+    {
+     "measure": "Direct Costs",
+     "grain": "portfolio",
+     "sql": 2072621.13,
+     "model": 2072621.1300000001,
+     "agrees": true
+    },
+    {
+     "measure": "Direct Costs",
+     "grain": "project",
+     "sql": 40720.54,
+     "model": 40720.54000000001,
+     "agrees": true
+    },
+    {
+     "measure": "Self Performed Labour",
+     "grain": "portfolio",
+     "sql": 1208733.48,
+     "model": 1208733.4800000004,
+     "agrees": true
+    },
+    {
+     "measure": "Self Performed Labour",
+     "grain": "project",
+     "sql": 15741.02,
+     "model": 15741.019999999999,
+     "agrees": true
+    },
+    {
+     "measure": "Vendor Spend",
+     "grain": "portfolio",
+     "sql": 1472617.12,
+     "model": 1472617.1199999994,
+     "agrees": true
+    },
+    {
+     "measure": "Vendor Spend",
+     "grain": "project",
+     "sql": 23084.09,
+     "model": 23084.089999999997,
+     "agrees": true
+    },
+    {
+     "measure": "Vendor Committed",
+     "grain": "portfolio",
+     "sql": 26418132.6,
+     "model": 26418132.60000001,
+     "agrees": true
+    },
+    {
+     "measure": "Vendor Committed",
+     "grain": "project",
+     "sql": 532380.96,
+     "model": 532380.9600000001,
+     "agrees": true
+    },
+    {
+     "measure": "Vendors Per Cost Code",
+     "grain": "portfolio",
+     "sql": 189,
+     "model": 189,
+     "agrees": true
+    },
+    {
+     "measure": "Vendors Per Cost Code",
+     "grain": "project",
+     "sql": 17,
+     "model": 17,
+     "agrees": true
+    },
+    {
+     "measure": "Certificates On File",
+     "grain": "portfolio",
+     "sql": 105,
+     "model": 105,
+     "agrees": true
+    },
+    {
+     "measure": "Expired Certificates",
+     "grain": "portfolio",
+     "sql": 105,
+     "model": 105,
+     "agrees": true
+    },
+    {
+     "measure": "Vendors With Insurance",
+     "grain": "portfolio",
+     "sql": 23,
+     "model": 23,
+     "agrees": true
+    },
+    {
+     "measure": "Open Quality Items",
+     "grain": "portfolio",
+     "sql": 265,
+     "model": 265,
+     "agrees": true
+    },
+    {
+     "measure": "Quality Items Past Due",
+     "grain": "portfolio",
+     "sql": 178,
+     "model": 178,
+     "agrees": true
+    },
+    {
+     "measure": "Punchlist Items",
+     "grain": "portfolio",
+     "sql": 1580,
+     "model": 1580,
+     "agrees": true
+    },
+    {
+     "measure": "Critical Milestones",
+     "grain": "portfolio",
+     "sql": 126,
+     "model": 126,
+     "agrees": true
+    },
+    {
+     "measure": "Overdue Milestones",
+     "grain": "portfolio",
+     "sql": 111,
+     "model": 111,
+     "agrees": true
+    },
+    {
+     "measure": "Avg Milestone Progress",
+     "grain": "portfolio",
+     "sql": 0.13133518642549352,
+     "model": 0.13133518642549352,
+     "agrees": true
+    },
+    {
+     "measure": "Projects Fully Mapped",
+     "grain": "portfolio",
+     "sql": 2,
+     "model": 2,
+     "agrees": true
+    },
+    {
+     "measure": "Projects Missing From Sage",
+     "grain": "portfolio",
+     "sql": 5,
+     "model": 5,
+     "agrees": true
+    },
+    {
+     "measure": "Projects In Coverage",
+     "grain": "portfolio",
+     "sql": 20,
+     "model": 20,
+     "agrees": true
+    },
+    {
+     "measure": "Avg Days Open",
+     "grain": "portfolio",
+     "sql": 308.12448,
+     "model": 308.12448,
+     "agrees": true
+    },
+    {
+     "measure": "Open Submittals Past Due",
+     "grain": "portfolio",
+     "sql": 29,
+     "model": 29,
+     "agrees": true
+    }
+   ]
+  },
+  "qc": {
+   "model_id": "5b66f1ab-51ba-4eda-8646-7705b1ba9084",
+   "results": {
+    "Last Refresh": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": "2026-09-10T11:21:44.79",
+     "independent_value": "2026-09-10T11:21:44.79",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Report Month Label": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": "January 2015 - December 2035",
+     "independent_value": "January 2015 - December 2035",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Last Checked Run": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": "2026-09-10T11:24:08.757",
+     "independent_value": "2026-09-10T11:24:08.757",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Hours Since Last Checked Run": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 87,
+     "independent_value": 87,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Pipeline Status": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": "STALE - no checked run in over 72 hours",
+     "independent_value": "STALE - no checked run in over 72 hours",
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Projects With Quality Data": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 10,
+     "independent_value": 10,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Total Punch Items": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 1580,
+     "independent_value": 1580,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Open Punch Items": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 102,
+     "independent_value": 102,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Punch Items Aged Over 7 Days": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 102,
+     "independent_value": 102,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Punch Closure Rate": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 0.9354430379746835,
+     "independent_value": 0.9354430379746835,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Days Punch Open": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 102.29411764705883,
+     "independent_value": 102.29411764705883,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Total Submittals": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 2471,
+     "independent_value": 2471,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Open Submittals": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 2366,
+     "independent_value": 2366,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Overdue Submittals": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 29,
+     "independent_value": 29,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Avg Submittal Turnaround": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 380.6600566572238,
+     "independent_value": 380.6600566572238,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Gates Defined": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 93,
+     "independent_value": 93,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Gates Recorded": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcGate empty)",
+     "mismatch_count": 0
+    },
+    "Gates Complete": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcGate empty)",
+     "mismatch_count": 0
+    },
+    "Checklist Items Defined": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 625,
+     "independent_value": 625,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "Checklist Items Recorded": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcChecklistResult empty)",
+     "mismatch_count": 0
+    },
+    "Checklist Items Passed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcChecklistResult empty)",
+     "mismatch_count": 0
+    },
+    "Checklist Items Failed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcChecklistResult empty)",
+     "mismatch_count": 0
+    },
+    "DFOWs Registered": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcDfow empty)",
+     "mismatch_count": 0
+    },
+    "Tier 3 And 4 DFOWs": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcDfow empty)",
+     "mismatch_count": 0
+    },
+    "ITP Tests Defined": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcItp empty)",
+     "mismatch_count": 0
+    },
+    "ITP Tests Passed": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcItp empty)",
+     "mismatch_count": 0
+    },
+    "Special Inspections Logged": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcSpecialInspection empty)",
+     "mismatch_count": 0
+    },
+    "Inspector Visits Logged": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcInspectorSignIn empty)",
+     "mismatch_count": 0
+    },
+    "Systems Accepted": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcCommissioning empty)",
+     "mismatch_count": 0
+    },
+    "DOH Items Verified": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": null,
+     "independent_value": null,
+     "status": "PASS",
+     "note": "unmeasured - no input (man_QcDohResult empty)",
+     "mismatch_count": 0
+    },
+    "DQ Punch With Unmapped Trade": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [],
+     "measure_value": 309,
+     "independent_value": 309,
+     "status": "PASS",
+     "mismatch_count": 0
+    },
+    "DQ Registers Awaiting Input": {
+     "grains": {
+      "portfolio": 1,
+      "project": 20,
+      "month": 252
+     },
+     "mismatches": [
+      {
+       "grain": "portfolio",
+       "scope": {
+        "project": null,
+        "month": null,
+        "category": null
+       },
+       "measure": "No manual quality data entered yet",
+       "independent": "8/8 registers empty; completeness unverified"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955257421",
+        "month": null,
+        "category": null
+       },
+       "measure": "No manual quality data entered yet",
+       "independent": "8/8 registers empty; completeness unverified"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955375634",
+        "month": null,
+        "category": null
+       },
+       "measure": "No manual quality data entered yet",
+       "independent": "8/8 registers empty; completeness unverified"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955064640",
+        "month": null,
+        "category": null
+       },
+       "measure": "No manual quality data entered yet",
+       "independent": "8/8 registers empty; completeness unverified"
+      },
+      {
+       "grain": "project",
+       "scope": {
+        "project": "562949955118102",
+        "month": null,
+        "category": null
+       },
+       "measure": "No manual quality data entered yet",
+       "independent": "8/8 registers empty; completeness unverified"
+      }
+     ],
+     "measure_value": "No manual quality data entered yet",
+     "independent_value": "8/8 registers empty; completeness unverified",
+     "status": "FAIL",
+     "mismatch_count": 273
+    }
+   },
+   "not_deployed": [
+    "Avg Observation Closure Days",
+    "Checklist Template Completion",
+    "Closed Observations",
+    "DQ Observations With Unmapped Trade",
+    "Data Gap Amount",
+    "Data Gaps",
+    "Gate Template Completion",
+    "Native Inspection Items",
+    "Native Inspections",
+    "Observation Closure Rate",
+    "Observations Past Due",
+    "Open Observations",
+    "Possible Mock-Ups",
+    "Total Observations"
+   ],
+   "tables_not_deployed": [
+    "dq_DataGap",
+    "fct_ProcoreInspection",
+    "fct_ProcoreInspectionItem"
+   ],
+   "deployed_not_generated": [
+    "Avg Days To Close NCR",
+    "Checklist Completion",
+    "Closed NCRs",
+    "DQ NCRs With Unmapped Trade",
+    "Gate Readiness",
+    "Mock-Ups Registered",
+    "NCR Closure Rate",
+    "NCRs Past Due",
+    "Open NCRs",
+    "Total NCRs"
+   ],
+   "without_independent_check": [],
+   "fixture_only": [],
+   "blank_member_rows_skipped": 4,
+   "raw_row_counts": {
+    "_Measures": 1,
+    "dim_Date": 7670,
+    "dim_Project": 20,
+    "qc_seed_Trade": 26,
+    "qc_seed_ChecklistItem": 625,
+    "qc_seed_Gate": 93,
+    "fct_QcNcr": 962,
+    "fct_QcPunch": 1580,
+    "fct_QcSubmittal": 2471,
+    "man_QcDfow": 0,
+    "man_QcItp": 0,
+    "man_QcGate": 0,
+    "man_QcSpecialInspection": 0,
+    "man_QcCommissioning": 0,
+    "man_QcInspectorSignIn": 0,
+    "man_QcChecklistResult": 0,
+    "man_QcDohResult": 0,
+    "meta_PipelineRun": 4
+   },
+   "failed": [
+    "DQ Registers Awaiting Input"
+   ],
+   "sql_crosscheck": [
+    {
+     "measure": "Total Punch Items",
+     "grain": "portfolio",
+     "sql": 1580,
+     "model": 1580,
+     "agrees": true
+    },
+    {
+     "measure": "Punch Items Aged Over 7 Days",
+     "grain": "portfolio",
+     "sql": 102,
+     "model": 102,
+     "agrees": true
+    },
+    {
+     "measure": "Avg Days Punch Open",
+     "grain": "portfolio",
+     "sql": 102.29411764705883,
+     "model": 102.29411764705883,
+     "agrees": true
+    },
+    {
+     "measure": "Total Punch Items",
+     "grain": "project",
+     "sql": 25,
+     "model": 25,
+     "agrees": true
+    },
+    {
+     "measure": "Punch Items Aged Over 7 Days",
+     "grain": "project",
+     "sql": null,
+     "model": null,
+     "agrees": true
+    },
+    {
+     "measure": "Avg Days Punch Open",
+     "grain": "project",
+     "sql": null,
+     "model": null,
+     "agrees": true
+    },
+    {
+     "measure": "Total Submittals",
+     "grain": "portfolio",
+     "sql": 2471,
+     "model": 2471,
+     "agrees": true
+    },
+    {
+     "measure": "Overdue Submittals",
+     "grain": "portfolio",
+     "sql": 29,
+     "model": 29,
+     "agrees": true
+    },
+    {
+     "measure": "Avg Submittal Turnaround",
+     "grain": "portfolio",
+     "sql": 380.6600566572238,
+     "model": 380.6600566572238,
+     "agrees": true
+    },
+    {
+     "measure": "Gates Recorded",
+     "grain": "portfolio",
+     "sql": null,
+     "model": null,
+     "agrees": true
+    }
+   ]
+  }
+ }
+}

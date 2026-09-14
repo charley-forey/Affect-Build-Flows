@@ -1,0 +1,29 @@
+{
+  "job_instance": "456e992b-9ef8-4e12-a04d-9157d1726b1b",
+  "states": {
+    "RUNNING": 1,
+    "SUCCEEDED": 1393
+  },
+  "recent": [
+    {
+      "jobId": 1693,
+      "name": "$anonfun$recordDeltaOperationInternal$1 at SynapseLoggingShim.scala:111",
+      "status": "RUNNING",
+      "submissionTime": "2026-09-10T07:40:23.240GMT",
+      "completionTime": null,
+      "numTasks": 52,
+      "numCompletedTasks": 13,
+      "numFailedTasks": 0
+    },
+    {
+      "jobId": 1692,
+      "name": "$anonfun$recordDeltaOperationInternal$1 at SynapseLoggingShim.scala:111",
+      "status": "SUCCEEDED",
+      "submissionTime": "2026-09-10T07:40:22.840GMT",
+      "completionTime": "2026-09-10T07:40:22.932GMT",
+      "numTasks": 2,
+      "numCompletedTasks": 2,
+      "numFailedTasks": 0
+    }
+  ]
+}

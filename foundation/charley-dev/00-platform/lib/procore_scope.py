@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 SCOPE_COMPANY = "company"
 SCOPE_PROJECT = "project"
@@ -67,7 +68,16 @@ class Endpoint:
     # while you are sending the other spelling.
     date_param_prefix: str = ""
 
+    # Declared per-project exclusions: {project_id: reason}. A 403/404 on one of these
+    # scopes is recorded as `excluded_declared` instead of blocking the run. An undeclared
+    # 403/404 still blocks - the declaration is the justification the gate asks for.
+    unavailable_projects: dict = field(default_factory=dict, hash=False)
+
     def __post_init__(self) -> None:
+        if any(not str(r).strip() for r in self.unavailable_projects.values()):
+            raise ValueError(f"{self.name}: every unavailable_projects entry needs a reason")
+        if self.unavailable_projects and self.scope == SCOPE_COMPANY:
+            raise ValueError(f"{self.name}: unavailable_projects needs a project or parent scope")
         if self.scope not in VALID_SCOPES:
             raise ValueError(f"{self.name}: unknown scope {self.scope!r}")
         if self.scope == SCOPE_PARENT and self.parent is None:
@@ -209,11 +219,37 @@ def expand_paths(
     out = []
     for entry in (parent_ids or []):
         parent_id, project_id = entry if isinstance(entry, tuple) else (entry, None)
-        path = endpoint.path.format(company_id=company_id, parent_id=parent_id)
-        if project_id is not None and "project_id=" not in path:
+        if "{project_id}" in endpoint.path and project_id is None:
+            raise ValueError(f"{endpoint.name}: parent record is missing its project id")
+        path = endpoint.path.format(company_id=company_id, parent_id=parent_id, project_id=project_id)
+        if project_id is not None and "project_id=" not in path and "{project_id}" not in endpoint.path:
             path += ("&" if "?" in path else "?") + f"project_id={project_id}"
         out.append((path, project_id))
     return out
+
+
+def declared_unavailable(endpoint: Endpoint, project_id: Any) -> str | None:
+    """The declared reason this (endpoint, project) scope may 403/404, or None."""
+    if project_id is None:
+        return None
+    return {str(k): v for k, v in endpoint.unavailable_projects.items()}.get(str(project_id))
+
+
+def normalize_records(endpoint: Endpoint, record: dict[str, Any], path: str = "") -> list[dict[str, Any]]:
+    """Checklist responses group inspection instances under templates; retain that context."""
+    if endpoint.name == "checklist_list_items":
+        requested = parse_qs(urlsplit(path).query).get("filters[list_id][]", [])
+        if len(requested) != 1 or str(record.get("list_id")) != requested[0]:
+            raise ValueError("inspection item does not match the requested inspection filter")
+    if endpoint.name != "checklist_lists" or "lists" not in record:
+        if endpoint.name == "checklist_lists" and not record.get("id"):
+            raise ValueError("checklist response has neither inspection id nor lists")
+        return [record]
+    inspections = record["lists"]
+    if not isinstance(inspections, list) or any(not isinstance(r, dict) or not r.get("id") for r in inspections):
+        raise ValueError("checklist template contains invalid inspection records")
+    context = {key: value for key, value in record.items() if key != "lists"}
+    return [dict(inspection, _source_group=context) for inspection in inspections]
 
 
 def collect_parent_ids(records: list[dict[str, Any]], ref: ParentRef,
@@ -357,6 +393,15 @@ def _selftest() -> None:
         except ValueError:
             return
         raise AssertionError(f"{label} should raise")
+
+    declared = _ep("pc", "/rest/v1.0/prime_contracts?project_id={project_id}", SCOPE_PROJECT,
+                   unavailable_projects={562949955173068: "tool not enabled"})
+    assert declared_unavailable(declared, "562949955173068") == "tool not enabled"
+    assert declared_unavailable(declared, 7) is None and declared_unavailable(declared, None) is None
+    expect_error(lambda: _ep("x", "/a", SCOPE_PROJECT, unavailable_projects={1: " "}),
+                 "exclusion without a reason")
+    expect_error(lambda: _ep("x", "/a", SCOPE_COMPANY, unavailable_projects={1: "r"}),
+                 "project exclusion on a company endpoint")
 
     expect_error(lambda: _ep("x", "/a", "galaxy"), "unknown scope")
     expect_error(

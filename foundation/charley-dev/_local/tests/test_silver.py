@@ -285,6 +285,15 @@ BRONZE = {
     # Procore Inspections. The one genuinely new payload the PQP work landed, and the
     # candidate that could eventually retire the 26 hand-kept trade checklist sheets -
     # it IS a per-project instance of a checklist template.
+    "cd_bronze_procore_checklist_list_items": [
+        bronze_row("II1", {"id": "II1", "list_id": "IN1", "section_id": "SEC1",
+                           "name": "Check", "status": "none", "responded_with": "No Response",
+                           "type": {"category": "multiple_choice", "name": "default"}}, "7"),
+        bronze_row("II2", {"id": "II2", "list_id": "IN1", "name": "Comment",
+                           "status": "neutral", "responded_with": "Custom text",
+                           "type": {"category": "open_ended", "name": "text"},
+                           "item_response": {"value": "Custom text"}}, "7"),
+    ],
     "cd_bronze_procore_checklist_lists": [
         bronze_row("IN1", {"id": "IN1", "number": "1", "name": "  Slab pour pre-check  ",
                            "inspection_type": {"name": "Quality"},
@@ -427,6 +436,22 @@ def sage_bronze() -> dict[str, str]:
               "3000.0", "0.0", "3000.0", "50200", "1", "TIMESTAMP '2026-08-01 09:00:00'")
         + ") AS t(_idnum, _idref, invrec, linnum, prtdsc, linqty, linprc, extttl, "
           "hldamt, invamt, actnum, subact, upddte)"
+    )
+
+    # AR receipts, in the live shape: typed columns, `_idref` -> acrinv._idnum, and
+    # `recnum` repeating the INVOICE's recnum. AR-UID-1 has a same-day receipt and its
+    # reversal (+1000/-1000) on top of a real 4000 - the reversal is kept as its own row.
+    out["cd_bronze_sage_acrpmt"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_acrpmt AS SELECT * FROM (VALUES "
+        + ", ".join(row(f"'{uid}'", f"'{ref}'", rec, "' 1001 '", f"DATE '{d}'", amt, "0.0", "0.0",
+                        "'Receipt'", "TIMESTAMP '2026-08-01 09:00:00'")
+                    for uid, ref, rec, d, amt in (
+                        ("PMT-UID-1", "AR-UID-1", "901", "2026-04-15", "4000.0"),
+                        ("PMT-UID-2", "AR-UID-1", "901", "2026-04-20", "1000.0"),
+                        ("PMT-UID-3", "AR-UID-1", "901", "2026-04-20", "-1000.0"),
+                        ("PMT-UID-4", "AR-UID-2", "902", "2026-05-10", "2000.0"),
+                        ("PMT-UID-5", "AR-UID-2", "902", "2026-05-20", "3000.0")))
+        + ") AS t(_idnum, _idref, recnum, chknum, chkdte, amount, dsctkn, aplcrd, dscrpt, upddte)"
     )
     return out
 
@@ -589,10 +614,62 @@ def test_sentinel_dates(con) -> None:
 def test_rejects(con) -> None:
     # The project with no id must be RECORDED, not dropped. Silent drops are how the
     # workbook's defects survived for months.
-    assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects") == 1
-    assert one(con, "SELECT target_table FROM cd_dq_rejects") == "cd_silver_projects"
-    assert one(con, "SELECT reason FROM cd_dq_rejects") == "missing id"
+    assert con.execute("SELECT reason FROM cd_dq_rejects WHERE target_table='cd_silver_projects'").fetchall() == [("missing id",)]
     check("a row missing its natural key is rejected with a reason, not dropped")
+    con.execute("BEGIN")
+    try:
+        sources = ("projects", "vendors", "cost_codes", "prime_contracts",
+                   "prime_change_orders", "submittals", "rfis")
+        for name in sources:
+            con.execute(f"INSERT INTO cd_bronze_procore_{name} VALUES "
+                        + bronze_row("missing-" + name, {"source": name}, "7"))
+        for statement in split_statements((SILVER_DIR / "10_procore_silver.sql").read_text()):
+            con.execute(statement)
+        for name in sources:
+            target = "cd_silver_" + name
+            source_count = one(con, f"SELECT COUNT(*) FROM cd_bronze_procore_{name}")
+            accepted = one(con, f"SELECT COUNT(*) FROM {target}")
+            rejected = con.execute("SELECT payload, _batch_id FROM cd_dq_rejects "
+                                   "WHERE target_table=? AND reason='missing id'", [target]).fetchall()
+            assert source_count == accepted + len(rejected), name
+            assert (json.dumps({"source": name}), "batch-1") in rejected, name
+    finally:
+        con.execute("ROLLBACK")
+    check("all seven core ID-filtered parsers conserve accepted plus rejected rows and retain rejected payloads")
+    con.execute("BEGIN")
+    try:
+        signature = "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)"
+        cases = [("no-project", {signature: 10}, None, "missing project"),
+                 ("no-signature", {"cost_code_id": "CC1"}, "7", "missing CM budget signature"),
+                 ("both", {}, None, "missing project and CM budget signature")]
+        for key, payload, project, reason in cases:
+            con.execute("INSERT INTO cd_bronze_procore_budget_detail_rows VALUES " + bronze_row(key, payload, project))
+        for statement in split_statements((SILVER_DIR / "10_procore_silver.sql").read_text()):
+            con.execute(statement)
+        rejected = con.execute("SELECT reason,payload,_batch_id FROM cd_dq_rejects WHERE target_table='cd_silver_budgets'").fetchall()
+        assert sorted(rejected) == sorted((reason, json.dumps(payload), "batch-1") for _, payload, _, reason in cases)
+        assert one(con, "SELECT COUNT(*) FROM cd_bronze_procore_budget_detail_rows") == one(con, "SELECT COUNT(*) FROM cd_silver_budgets") + len(rejected)
+    finally:
+        con.execute("ROLLBACK")
+    check("budget exclusions retain payloads and distinguish missing project, signature, or both without double-counting")
+    con.execute("BEGIN")
+    try:
+        sources = ("observations", "punch_items", "incidents", "requisitions", "payment_applications",
+                   "direct_costs", "direct_cost_line_items", "checklist_lists", "work_order_contracts",
+                   "purchase_order_contracts", "work_order_contract_line_items", "purchase_order_contract_line_items",
+                   "manpower_logs", "project_vendors", "company_insurances")
+        for source in sources:
+            payload = {"fixture_source": source}
+            con.execute(f"INSERT INTO cd_bronze_procore_{source} VALUES " + bronze_row("rejected-" + source, payload, "7"))
+        for path in SILVER_SQL:
+            for statement in split_statements(path.read_text()):
+                con.execute(statement)
+        for source in sources:
+            rows = con.execute("SELECT reason,_batch_id FROM cd_dq_rejects WHERE payload=?", [json.dumps({"fixture_source": source})]).fetchall()
+            assert len(rows) == 1 and rows[0][0].startswith("missing ") and rows[0][1] == "batch-1", (source, rows)
+    finally:
+        con.execute("ROLLBACK")
+    check("15 additional Procore input rejection paths retain the original payload and batch exactly once")
 
 
 def test_rfis(con) -> None:
@@ -622,36 +699,18 @@ def test_column_contract(con) -> None:
     #     FROM delta.`{CD_SILVER_ABFSS}/cd_silver_projects`
     import re
 
-    required = {}
-    for statement in split_statements(SWITCH_SQL.read_text(encoding="utf-8")):
-        match = re.search(r"FROM\s+\S*?(cd_silver_\w+)", statement)
-        if not match:
-            continue                     # a view still sourced from the existing warehouse
-        table = match.group(1).removeprefix("cd_silver_")
-        body = statement.split("SELECT", 1)[1].split("FROM")[0]
-        cols = {
-            part.split(" AS ")[-1].strip() if " AS " in part else part.strip()
-            for part in body.split(",")
-            if part.strip() and "CAST(NULL" not in part and "'PROCORE'" not in part
-        }
-        required.setdefault(f"cd_silver_{table}", set()).update(cols)
-
     checked = 0
-    for table, cols in required.items():
-        actual = {
-            r[0] for r in con.execute(
-                "SELECT column_name FROM information_schema.columns "
-                f"WHERE table_name = '{table}'"
-            ).fetchall()
-        }
-        if not actual:
-            continue  # sourced elsewhere (Sage AR, Outbuild) - not built by this file
-        missing = {c for c in cols if c and c not in actual}
-        assert not missing, f"{table} is missing {sorted(missing)} required by the switch"
+    for statement in split_statements(SWITCH_SQL.read_text(encoding="utf-8")):
+        if "{CD_SILVER_ABFSS}" not in statement:
+            continue                     # a view still sourced from the existing warehouse
+        # Let the SQL engine validate aliases, casts, DISTINCT and all input columns.
+        # Splitting SELECT text mistakes an output alias for a required source column.
+        sql = re.sub(r"delta\.`\{CD_SILVER_ABFSS\}/(\w+)`", r"\1", statement)
+        con.execute(sql)
         checked += 1
 
     assert checked >= 6, f"only {checked} tables cross-checked"
-    check(f"all {checked} silver tables satisfy the sv_* column contract")
+    check(f"all {checked} owned-source views execute against the silver column contract")
 
 
 
@@ -861,11 +920,183 @@ def test_manual_parsers(con) -> None:
         "no fixture row is past Requested without a number, so nothing should reject"
     check("a healthy register produces no job-register rejects")
 
-    # An unknown project is REJECTED WITH A REASON, not dropped. Two of the eight PQP
-    # lists log it, plus the gate collapse's own new failure mode.
+    # An unknown project is REJECTED WITH A REASON, not dropped - on all eight PQP lists
+    # (it used to be three, and the other five dropped the row silently).
     assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_qc "
-                    "WHERE reason LIKE 'unknown project%'") == 3
-    check("PQP rows for an unknown project land in cd_dq_rejects_qc with a reason")
+                    "WHERE reason LIKE 'unknown project%'") == 8
+    assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_manual "
+                    "WHERE reason LIKE 'unknown project%'") == 9
+    check("rows for an unknown project are rejected with a reason on all 17 manual lists")
+
+
+# Natural-key and domain columns: never mutated to manufacture a conflicting version.
+_MANUAL_KEYS = {"ProjectKey", "MonthStart", "WinNumber", "RiskNumber", "ItemNumber",
+                "QuestionNumber", "MilestoneName", "DfowRef", "ItpRef", "GateKey",
+                "InspectionRef", "SystemRef", "SignInRef", "ItemKey", "WinType", "ImpactCode",
+                "GateType"}
+
+
+def _manual_lists():
+    """(bronze, silver, reject ledger, a mutable business column, its type) per list."""
+    import make_sharepoint as ms
+    for table, cols in ms.tables().items():
+        bronze = ms.bronze_table(table)
+        silver = bronze.replace("cd_bronze_", "cd_silver_")
+        ledger = "cd_dq_rejects_qc" if "_qc_" in bronze else "cd_dq_rejects_manual"
+        name, kind = next((c, t) for c, t in cols
+                          if c not in _MANUAL_KEYS and t in ("STRING", "INT", "DOUBLE"))
+        yield bronze, silver, ledger, name, kind
+
+
+def _rerun_manual(con) -> None:
+    for name in ("30_manual_silver.sql", "31_qc_manual_silver.sql"):
+        for sql in split_statements((SILVER_DIR / name).read_text()):
+            con.execute(sql)
+
+
+def _rejected(con, ledger, silver, reason_like="%"):
+    return con.execute(f"SELECT COUNT(*) FROM {ledger} WHERE target_table = ? AND reason LIKE ? "
+                       "AND reason NOT LIKE 'MonthStart was not the 1st%'",
+                       [silver, reason_like]).fetchone()[0]
+
+
+def test_manual_reject_conservation(con) -> None:
+    """Every manual row is accepted, rejected with a reason, or an exact copy collapsed."""
+    good = f"ProjectKey.Title = '{GOOD_PROJECT}'"
+    con.execute("BEGIN")
+    try:
+        for bronze, *_ in _manual_lists():
+            # An exact copy re-landed later, and a row whose ProjectKey was never filled in.
+            con.execute(f"INSERT INTO {bronze} SELECT * REPLACE (Modified + INTERVAL 1 DAY AS Modified) "
+                        f"FROM {bronze} WHERE {good}")
+            con.execute(f"INSERT INTO {bronze} SELECT * REPLACE "
+                        f"(CAST(NULL AS STRUCT(Title VARCHAR)) AS ProjectKey) FROM {bronze} "
+                        f"WHERE {good} AND Modified = TIMESTAMP '2026-08-01 12:00:00'")
+        con.execute("INSERT INTO cd_bronze_man_survey SELECT * REPLACE "
+                    "(CAST(NULL AS INTEGER) AS Score) FROM cd_bronze_man_survey "
+                    f"WHERE {good} AND Modified = TIMESTAMP '2026-08-01 12:00:00'")
+        _rerun_manual(con)
+        for bronze, silver, ledger, *_ in _manual_lists():
+            source = one(con, f"SELECT COUNT(*) FROM {bronze}")
+            accepted = one(con, f"SELECT COUNT(*) FROM {silver}")
+            rejected = _rejected(con, ledger, silver)
+            assert accepted == 1, (silver, accepted)
+            assert source == accepted + rejected + 1, (silver, source, accepted, rejected)
+            assert _rejected(con, ledger, silver, "missing ProjectKey%") == 1, silver
+        assert _rejected(con, "cd_dq_rejects_manual", "cd_silver_man_survey", "missing Score") == 1
+    finally:
+        con.execute("ROLLBACK")
+    check("manual lists: source rows = accepted + rejected + collapsed exact copies; "
+          "missing keys and scores are rejected, not dropped")
+
+    con.execute("BEGIN")
+    try:
+        for bronze, _, _, column, kind in _manual_lists():
+            value = "'a conflicting value'" if kind == "STRING" else f"CAST(987 AS {kind})"
+            con.execute(f"INSERT INTO {bronze} SELECT * REPLACE ({value} AS {column}) "
+                        f"FROM {bronze} WHERE {good}")
+        _rerun_manual(con)
+        for bronze, silver, ledger, column, _ in _manual_lists():
+            source = one(con, f"SELECT COUNT(*) FROM {bronze}")
+            assert one(con, f"SELECT COUNT(*) FROM {silver}") == 0, \
+                f"{silver}: a conflicting {column} was resolved by picking one version"
+            assert _rejected(con, ledger, silver, "conflicting duplicate%") == 2, silver
+            assert source == _rejected(con, ledger, silver), silver
+    finally:
+        con.execute("ROLLBACK")
+    check("conflicting versions of one natural key are all rejected on every manual list, "
+          "never resolved to the latest edit")
+
+
+def test_new_reject_arms(con) -> None:
+    """QC Procore, Outbuild and Sage filters: source count equals accepted plus rejected."""
+    con.execute("BEGIN")
+    try:
+        for source in ("observations", "punch_items", "submittals"):
+            con.execute(f"INSERT INTO cd_bronze_procore_{source} VALUES "
+                        + bronze_row("np-" + source, {"id": "np-" + source, "title": "no project"}))
+        for path in SILVER_SQL:
+            for sql in split_statements(path.read_text()):
+                con.execute(sql)
+        for source, target in (("observations", "cd_silver_qc_ncr"),
+                               ("punch_items", "cd_silver_qc_punch"),
+                               ("submittals", "cd_silver_qc_submittal")):
+            upstream = one(con, f"SELECT COUNT(*) FROM cd_silver_{source}")
+            accepted = one(con, f"SELECT COUNT(*) FROM {target}")
+            rows = con.execute("SELECT payload, _batch_id FROM cd_dq_rejects "
+                               "WHERE target_table = ? AND reason = 'missing project'",
+                               [target]).fetchall()
+            assert upstream == accepted + len(rows), (target, upstream, accepted, rows)
+            assert rows == [(json.dumps({"id": "np-" + source, "title": "no project"}), "batch-1")]
+        # Re-running one file alone must not duplicate its arms.
+        for sql in split_statements((SILVER_DIR / "24_qc_procore_silver.sql").read_text()):
+            con.execute(sql)
+        assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects WHERE reason = 'missing project' "
+                        "AND target_table LIKE 'cd_silver_qc_%'") == 3
+    finally:
+        con.execute("ROLLBACK")
+    check("QC NCR, punch and submittal parsers conserve rows: project-less items are rejected with payload")
+
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO cd_bronze_outbuild_activities VALUES "
+                    + bronze_row("A-noid", {"name": "No id", "schedule_id": 9001}))
+        con.execute("INSERT INTO cd_bronze_outbuild_projects VALUES "
+                    + bronze_row("OB3", {"id": 4003, "name": "No schedules", "schedules": []}) + ", "
+                    + bronze_row("OB4", {"id": 4004, "name": "Schedules missing"}))
+        for sql in split_statements((SILVER_DIR / "25_outbuild_silver.sql").read_text()):
+            con.execute(sql)
+        source = one(con, "SELECT COUNT(*) FROM cd_bronze_outbuild_activities")
+        accepted = one(con, "SELECT COUNT(*) FROM cd_silver_outbuild_activities")
+        rejected = one(con, "SELECT COUNT(*) FROM cd_dq_rejects "
+                            "WHERE target_table = 'cd_silver_outbuild_activities'")
+        assert source == accepted + rejected and rejected == 1, (source, accepted, rejected)
+        names = sorted(json.loads(p)["name"] for (p,) in con.execute(
+            "SELECT payload FROM cd_dq_rejects WHERE target_table = 'outbuild_schedule_map'").fetchall())
+        assert names == ["No schedules", "Schedules missing"], names
+    finally:
+        con.execute("ROLLBACK")
+    check("Outbuild: id-less activities and schedule-less projects are rejected, not dropped")
+
+    con.execute("BEGIN")
+    try:
+        for table in ("actrec", "acrinv", "acpinv"):
+            con.execute(f"INSERT INTO cd_bronze_sage_{table} SELECT * REPLACE "
+                        f"('NULL-RECNUM-{table}' AS _idnum, CAST(NULL AS INTEGER) AS recnum) "
+                        f"FROM cd_bronze_sage_{table} LIMIT 1")
+        for name in ("26_sage_silver.sql", "27_sage_rejects.sql"):
+            for sql in split_statements((SILVER_DIR / name).read_text()):
+                con.execute(sql)
+        for table, target in (("actrec", "cd_silver_sage_jobs"),
+                              ("acrinv", "cd_silver_sage_ar_invoices"),
+                              ("acpinv", "cd_silver_sage_ap_invoices")):
+            source = one(con, f"SELECT COUNT(*) FROM cd_bronze_sage_{table}")
+            accepted = one(con, f"SELECT COUNT(*) FROM {target}")
+            rows = con.execute("SELECT payload FROM cd_dq_rejects WHERE target_table = ? "
+                               "AND reason = 'missing recnum'", [target]).fetchall()
+            assert source == accepted + len(rows), (target, source, accepted, rows)
+            assert json.loads(rows[0][0]) == {"_idnum": f"NULL-RECNUM-{table}"}
+    finally:
+        con.execute("ROLLBACK")
+    check("Sage job and invoice headers without recnum are rejected with their _idnum")
+
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO cd_bronze_sage_acrpmt SELECT * REPLACE "
+                    "('NULL-IDREF' AS _idnum, CAST(NULL AS VARCHAR) AS _idref) "
+                    "FROM cd_bronze_sage_acrpmt LIMIT 1")
+        for name in ("26_sage_silver.sql", "27_sage_rejects.sql"):
+            for sql in split_statements((SILVER_DIR / name).read_text()):
+                con.execute(sql)
+        source = one(con, "SELECT COUNT(*) FROM cd_bronze_sage_acrpmt")
+        accepted = one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_payments")
+        rows = con.execute("SELECT payload FROM cd_dq_rejects WHERE target_table = "
+                           "'cd_silver_sage_ar_payments' AND reason = 'missing _idref'").fetchall()
+        assert source == accepted + len(rows) and len(rows) == 1, (source, accepted, rows)
+        assert json.loads(rows[0][0]) == {"_idnum": "NULL-IDREF"}
+    finally:
+        con.execute("ROLLBACK")
+    check("Sage AR receipts without _idref are rejected with their _idnum")
 
 
 def test_qc_procore_parser(con) -> None:
@@ -902,6 +1133,36 @@ def test_qc_procore_parser(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM cd_silver_qc_inspection") == 1
     assert one(con, "SELECT trade FROM cd_silver_qc_inspection") == "Concrete Formwork"
     check("Procore Inspections (checklist/lists) parses, trimmed, keyless rows dropped")
+    con.execute("BEGIN")
+    try:
+        payload = {"id": "IN1", "list_template_name": "  Captured template  ",
+                   "due_at": "2026-04-16T04:00:00Z", "list_template_id": 123,
+                   "inspectors": [{"id": 1, "name": "First inspector"},
+                                  {"id": 2, "name": "Second inspector"}],
+                   "status": "Closed", "item_count": 16, "conforming_item_count": 1,
+                   "deficient_item_count": 0, "not_inspected_item_count": 15,
+                   "na_item_count": 0}
+        con.execute("UPDATE cd_bronze_procore_checklist_lists SET payload=? WHERE _key='IN1'", [json.dumps(payload)])
+        for sql in split_statements((SILVER_DIR / "24_qc_procore_silver.sql").read_text()):
+            con.execute(sql)
+        assert con.execute("SELECT template_name, CAST(due_date AS VARCHAR) FROM cd_silver_qc_inspection").fetchone() == (
+            "Captured template", "2026-04-16")
+        assert one(con, "SELECT percent_complete FROM cd_silver_qc_inspection") is None
+        assert json.loads(one(con, "SELECT inspectors_json FROM cd_silver_qc_inspection")) == payload["inspectors"]
+        assert con.execute("SELECT template_id, item_count, conforming_item_count, "
+                           "deficient_item_count, not_inspected_item_count, na_item_count, "
+                           "neutral_item_count, source_status FROM cd_silver_qc_inspection").fetchone() == (
+                               "123", 16, 1, 0, 15, 0, None, "CLOSED")
+    finally:
+        con.execute("ROLLBACK")
+    check("captured inspection template/date fields survive; missing completion stays unknown")
+    assert con.execute("SELECT project_id, item_id, inspection_id, source_status, source_response, "
+                       "response_category, response_type FROM cd_silver_qc_inspection_item "
+                       "ORDER BY item_id").fetchall() == [
+                           ("7", "II1", "IN1", "none", "No Response", "multiple_choice", "default"),
+                           ("7", "II2", "IN1", "neutral", "Custom text", "open_ended", "text")]
+    assert json.loads(one(con, "SELECT item_response_json FROM cd_silver_qc_inspection_item WHERE item_id='II2'")) == {"value": "Custom text"}
+    check("inspection item identities, no-response labels and custom text survive without pass/fail inference")
 
 
 def test_outbuild_parser(con) -> None:
@@ -1012,10 +1273,84 @@ def test_sage_parser(con) -> None:
     assert one(con, "SELECT SUM(hold_amount) FROM cd_silver_sage_ap_lines") == 0.0
     check("retainage is carried through Sage silver even though it is zero everywhere")
 
+    # AR receipts: every bronze row kept (reversals included), amount conserved, and each
+    # resolves its invoice through _idref.
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_payments") == \
+        one(con, "SELECT COUNT(*) FROM cd_bronze_sage_acrpmt") == 5
+    assert one(con, "SELECT SUM(amount) FROM cd_silver_sage_ar_payments") == \
+        one(con, "SELECT SUM(amount) FROM cd_bronze_sage_acrpmt") == 9000.0
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_payments WHERE amount < 0") == 1
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_payments WHERE invoice_id IS NULL") == 0
+    assert one(con, "SELECT check_number FROM cd_silver_sage_ar_payments WHERE payment_uid = 'PMT-UID-1'") == "1001"
+    # Receipts per invoice equal the header's amtpad, as on 82 of 85 live paid invoices.
+    assert con.execute("SELECT h.invoice_id, h.amount_paid, SUM(p.amount) FROM cd_silver_sage_ar_invoices h "
+                       "JOIN cd_silver_sage_ar_payments p USING (invoice_uid) GROUP BY 1, 2 "
+                       "HAVING ABS(h.amount_paid - SUM(p.amount)) > 0.005").fetchall() == []
+    check("Sage AR receipts keep every row, conserve amounts and resolve invoices via _idref")
+
     # AR cost-code coverage is partial and must stay honest: 1 of 2 fixture lines has one.
     assert one(con, "SELECT COUNT(*) FROM cd_silver_sage_ar_lines "
                     "WHERE cost_code IS NOT NULL") == 1
     check("AR lines keep a NULL cost code rather than inventing one")
+
+
+def test_sage_reconciliation(con):
+    from sage_validation import checks
+    rules = checks()
+    violations = {name: con.execute(sql).fetchall() for name, sql in rules.items()}
+    # The fixture deliberately contains a fully paid AR header with no detail.
+    assert len(violations["sage_ar.invoice_line_amounts"]) == 1
+    assert all(not rows for name, rows in violations.items() if name != "sage_ar.invoice_line_amounts")
+    for direction, source in (("ar", "arivln"), ("ap", "apivln")):
+        con.execute("BEGIN")
+        try:
+            con.execute(f"UPDATE cd_bronze_sage_{source} SET _idref = 'missing-header'")
+            for sql in split_statements((SILVER_DIR / "26_sage_silver.sql").read_text()):
+                con.execute(sql)
+            assert one(con, f"SELECT COUNT(*) FROM cd_silver_sage_{direction}_lines") == 2
+            assert len(con.execute(rules[f"sage_{direction}.orphan_lines"]).fetchall()) == 2
+            assert not con.execute(rules[f"sage_{direction}.lines_row_conservation"]).fetchall()
+        finally:
+            con.execute("ROLLBACK")
+    check("orphan AR/AP lines survive the real transform and fail reconciliation")
+    for mutation, rule in (
+        ("UPDATE cd_silver_sage_ap_lines SET line_total=NULL WHERE line_number=1", "invoice_line_amounts"),
+        ("UPDATE cd_silver_sage_ap_invoices SET invoice_total=NULL", "invoice_line_amounts"),
+        ("UPDATE cd_silver_sage_ap_invoices SET invoice_total=invoice_total+1", "invoice_line_amounts"),
+        ("INSERT INTO cd_silver_sage_ap_invoices SELECT * FROM cd_silver_sage_ap_invoices", "header_keys"),
+        ("INSERT INTO cd_silver_sage_ap_lines SELECT * FROM cd_silver_sage_ap_lines", "line_keys"),
+        ("DELETE FROM cd_silver_sage_ap_lines WHERE line_number=1", "lines_row_conservation"),
+    ):
+        con.execute("BEGIN")
+        try:
+            con.execute(mutation)
+            assert con.execute(rules[f"sage_ap.{rule}"]).fetchall(), mutation
+        finally:
+            con.execute("ROLLBACK")
+    check("missing money, amount differences, duplicate keys and lost rows fail Sage checks")
+    con.execute("BEGIN")
+    try:
+        con.execute("UPDATE cd_silver_sage_ap_invoices SET invoice_total=-invoice_total")
+        con.execute("UPDATE cd_silver_sage_ap_lines SET line_total=-line_total")
+        assert not con.execute(rules["sage_ap.invoice_line_amounts"]).fetchall()
+    finally:
+        con.execute("ROLLBACK")
+    check("reconciled credit amounts remain valid rather than being rejected for their sign")
+    con.execute("BEGIN")
+    try:
+        con.execute("""INSERT INTO cd_silver_sage_ar_lines
+            SELECT * REPLACE ('ARL-UID-3' AS line_uid, 'AR-UID-2' AS invoice_uid,
+                              '902' AS invoice_id, 5000.0 AS line_total)
+            FROM cd_silver_sage_ar_lines LIMIT 1""")
+        assert not con.execute(rules["sage_ar.invoice_line_amounts"]).fetchall()
+        con.execute("""UPDATE cd_silver_sage_ar_invoices SET invoice_total = invoice_total
+                       + CASE WHEN invoice_id='901' THEN 100 ELSE -100 END""")
+        assert one(con, "SELECT SUM(invoice_total) FROM cd_silver_sage_ar_invoices") == one(
+            con, "SELECT SUM(line_total) FROM cd_silver_sage_ar_lines")
+        assert len(con.execute(rules["sage_ar.invoice_line_amounts"]).fetchall()) == 2
+    finally:
+        con.execute("ROLLBACK")
+    check("offsetting invoice errors fail even when the portfolio total reconciles")
 
 
 def main() -> int:
@@ -1023,7 +1358,8 @@ def main() -> int:
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
                test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
                test_manual_parsers, test_qc_procore_parser, test_outbuild_parser,
-               test_sage_parser):
+               test_sage_parser, test_sage_reconciliation, test_manual_reject_conservation,
+               test_new_reject_arms):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

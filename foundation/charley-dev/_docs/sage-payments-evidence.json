@@ -1,0 +1,76 @@
+{
+  "captured_at": "2026-09-13",
+  "source": "Build / CD_Bronze_Lakehouse SQL endpoint, read-only aggregates (no names, no emails)",
+  "bronze_columns": {
+    "cd_bronze_sage_acrpmt": ["_idnum", "_idref", "recnum", "dscrpt", "chknum", "chkdte", "actper", "amount", "dsctkn", "aplcrd", "lgrrec", "postyr", "insdte", "upddte"],
+    "cd_bronze_sage_acppmt": ["_idnum", "_idref", "recnum", "dscrpt", "chknum", "chkdte", "actper", "amount", "dsctkn", "aplcrd", "lgrrec", "achbch", "postyr", "insdte", "upddte", "depdte"],
+    "cd_bronze_sage_actpay": "vendor master (77 columns incl. contact/bank fields) - NOT a payment table",
+    "note": "the live acrpmt has no invdte/jobnum, unlike OBSERVED-SCHEMA.md"
+  },
+  "ar_receipts_acrpmt": {
+    "rows": 86,
+    "distinct_idnum": 86,
+    "distinct_idref": 83,
+    "null_idref": 0,
+    "null_chkdte": 0,
+    "sum_amount": 18486314.23,
+    "negative_rows": 1,
+    "zero_rows": 0,
+    "rows_with_discount_taken": 0,
+    "rows_with_applied_credit": 0,
+    "chkdte_min": "2025-01-07",
+    "chkdte_max": "2026-08-20"
+  },
+  "join_key": {
+    "acrpmt._idref -> acrinv._idnum orphans": 0,
+    "acrpmt.recnum -> acrinv.recnum orphans": 0,
+    "rows where the two keys point at different invoices": 0,
+    "interpretation": "recnum on a receipt is the invoice recnum, not a receipt id; _idref used, consistent with the line tables"
+  },
+  "reconciliation_receipts_vs_acrinv_amtpad": {
+    "ar_invoices": 149,
+    "sum_amtpad": 18713981.77,
+    "invoices_with_amtpad_nonzero": 85,
+    "invoices_with_receipts": 83,
+    "paid_invoices_matching_to_the_cent": 82,
+    "mismatched_invoices": 3,
+    "mismatched_amount": 227667.54,
+    "mismatch_detail": [
+      {"invoice_recnum": 20, "invdte": "2024-12-31", "amtpad": 113716.90, "receipts": 0},
+      {"invoice_recnum": 21, "invdte": "2024-12-31", "amtpad": 9190.68, "receipts": 0},
+      {"invoice_recnum": 22, "invdte": "2024-12-31", "amtpad": 104759.96, "receipts": 0}
+    ],
+    "mismatch_interpretation": "opening balances dated before the first receipt (2025-01-07); no receipt rows exist, so no PaidDate",
+    "total_check": "18,713,981.77 amtpad - 227,667.54 = 18,486,314.23 = SUM(acrpmt.amount)"
+  },
+  "special_cases": {
+    "reversal": {"invoice_recnum": 55, "status": 5, "receipts": [200000.00, -200000.00], "same_day": "2025-12-31", "amtpad": 0, "invbal": 200000.00},
+    "multi_receipt_invoices": [
+      {"invoice_recnum": 69, "receipts": 2, "total": 62599.70, "fully_paid": true},
+      {"invoice_recnum": 121, "receipts": 2, "total": 197971.60, "fully_paid": true}
+    ],
+    "partial": {"invoice_recnum": 127, "amtpad": 25966.02, "invbal": 11001.40, "receipts": 25966.02}
+  },
+  "paid_date_simulation_bronze_tsql": {
+    "rule": "net receipts per day; PaidDate = first day running total >= invoice total (amtpad+invbal) - 0.005 and never falls back below",
+    "invoices_with_receipts": 83,
+    "with_paid_date": 81,
+    "without_paid_date": 2,
+    "without_paid_date_reason": "recnum 55 reversed to zero; recnum 127 partial",
+    "header_fully_paid_invoices": 84,
+    "header_fully_paid_without_paid_date": 3,
+    "paid_date_but_header_open": 0,
+    "paid_before_invoice_date": 0,
+    "avg_days_to_payment": 31.75,
+    "min_days": 0,
+    "max_days": 173,
+    "workbook_FINANCIALS_F56_for_reference": 8.82
+  },
+  "ap_payments_acppmt_not_built": {
+    "rows": 621,
+    "sum_amount": 11014923.31,
+    "sum_acpinv_amtpad": 11014923.31,
+    "idref_orphans": 0,
+    "note": "reconciles exactly in aggregate; no silver/gold built - no AP measure needs it yet"
+  }
+}

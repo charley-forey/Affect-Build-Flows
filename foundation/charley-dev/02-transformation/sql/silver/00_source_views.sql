@@ -48,6 +48,7 @@ FROM delta.`{SILVER_ABFSS}/dim_procore_cost_codes`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_budgets AS
 SELECT
+    CAST(NULL AS STRING) AS budget_line_id, -- legacy source identity is not verified
     CAST(`Project ID`   AS STRING) AS project_id,
     CAST(`Cost Code ID` AS STRING) AS cost_code_id,
     CAST(cost_code      AS STRING) AS cost_code,
@@ -87,6 +88,10 @@ FROM delta.`{SILVER_ABFSS}/procore_prime_contracts_silver`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_ar_invoices AS
 SELECT
+    -- Legacy source contract does not establish invoice identity. Never fabricate it.
+    CAST(NULL AS STRING) AS invoice_uid,
+    CAST(NULL AS STRING) AS invoice_id,
+    CAST(NULL AS STRING) AS invoice_number,
     CAST(`Job Number`      AS STRING) AS sage_project_id,
     CAST(`Invoice Date`    AS DATE)   AS invoice_date,
     CAST(`Due Date`        AS DATE)   AS due_date,

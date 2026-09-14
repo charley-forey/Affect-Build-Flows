@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Closed NCRs"
+                  "Property": "Closed Observations"
                 }
               },
-              "queryRef": "_Measures.Closed NCRs",
-              "nativeQueryRef": "Closed NCRs"
+              "queryRef": "_Measures.Closed Observations",
+              "nativeQueryRef": "Closed Observations"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Closed NCRs. Shows Closed NCRs for the current selection.'"
+                  "Value": "'Card. Closed Observations. Shows Closed Observations for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Closed NCRs'"
+                  "Value": "'Closed Observations'"
                 }
               }
             },

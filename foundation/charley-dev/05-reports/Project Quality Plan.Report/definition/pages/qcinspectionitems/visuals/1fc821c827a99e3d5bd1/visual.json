@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "1fc821c827a99e3d5bd1",
+  "position": {
+    "x": 20,
+    "y": 60,
+    "z": 0,
+    "width": 728,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Original Procore responses include multiple-choice, text and signatures. No Response is a source label, not a failed check. Project and month filters follow the parent inspection; undated inspections require clearing the month filter.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Original Procore responses include multiple-choice, text and signatures. No Response is a source label, not a failed check. Project and month filters follow the parent inspection; undated inspections require clearing the month filter.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -26,8 +26,21 @@ table _Measures
 
 	/// Replaces nothing - text not colour, so it survives greyscale and colour-blindness
 	measure 'Pipeline Status' =
-			VAR Hrs = [Hours Since Last Checked Run]
-			RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", "STALE - these numbers may be weeks old" )
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			VAR Built = [Last Refresh]
+			VAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )
+			VAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> "ok" || meta_PipelineRun[Blocking] > 0 ) )
+			VAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )
+			VAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )
+			RETURN SWITCH ( TRUE (),
+			ISBLANK ( Last ), "Unknown - no checked run",
+			Built > Last, "Unvalidated - data built after last check",
+			Blocked > 0, "BLOCKED - validation failed",
+			Hrs < 0, "Unknown - check timestamp is in the future",
+			Hrs > 72, "STALE - no checked run in over 72 hours",
+			Hrs > 30, "Late - no checked run in over 30 hours",
+			Warnings > 0, "Gold checked with warnings; source completeness unverified",
+			"Gold checks passed; source completeness unverified" )
 		displayFolder: 00 Report context
 
 	/// Replaces nothing - the workbook is one project per file
@@ -36,32 +49,32 @@ table _Measures
 		displayFolder: 00 Report context
 
 	/// Replaces NCR Log!B4 (Total Raised)
-	measure 'Total NCRs' = COUNTROWS(fct_QcNcr)
+	measure 'Total Observations' = COUNTROWS(fct_QcNcr)
 		formatString: "#,0"
 		displayFolder: 01 Non-conformance
 
 	/// Replaces NCR Log!D4 (Open)
-	measure 'Open NCRs' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = TRUE())
+	measure 'Open Observations' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = TRUE())
 		formatString: "#,0"
 		displayFolder: 01 Non-conformance
 
 	/// Replaces NCR Log!F4 (Closed)
-	measure 'Closed NCRs' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = FALSE())
+	measure 'Closed Observations' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = FALSE())
 		formatString: "#,0"
 		displayFolder: 01 Non-conformance
 
 	/// Replaces NCR Log!H4 (Overdue)
-	measure 'NCRs Past Due' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsPastDue] = TRUE())
+	measure 'Observations Past Due' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsPastDue] = TRUE())
 		formatString: "#,0"
 		displayFolder: 01 Non-conformance
 
 	/// Replaces NCR Log!K4 (Avg Days to Close)
-	measure 'Avg Days To Close NCR' = AVERAGEX(FILTER(fct_QcNcr, fct_QcNcr[IsOpen] = FALSE()), fct_QcNcr[DaysOpen])
+	measure 'Avg Observation Closure Days' = AVERAGEX(FILTER(fct_QcNcr, fct_QcNcr[IsOpen] = FALSE()), fct_QcNcr[DaysOpen])
 		formatString: "#,0.0"
 		displayFolder: 01 Non-conformance
 
 	/// Replaces NCR Log - not computed in the workbook
-	measure 'NCR Closure Rate' = DIVIDE([Closed NCRs], [Total NCRs])
+	measure 'Observation Closure Rate' = DIVIDE([Closed Observations], [Total Observations])
 		formatString: "0.0%"
 		displayFolder: 01 Non-conformance
 
@@ -110,8 +123,8 @@ table _Measures
 		formatString: "#,0.0"
 		displayFolder: 03 Submittals & mock-ups
 
-	/// Replaces Project Identifiers!B15 (8 project mock-ups)
-	measure 'Mock-Ups Registered' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())
+	/// Replaces Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register.
+	measure 'Possible Mock-Ups' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())
 		formatString: "#,0"
 		displayFolder: 03 Submittals & mock-ups
 
@@ -130,8 +143,12 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 04 Statutory gates
 
-	/// Replaces Path to TCO!K4 (TCO Readiness)
-	measure 'Gate Readiness' = DIVIDE([Gates Complete], [Gates Defined])
+	/// Replaces Recorded completion against the template for one project; applicability and readiness are not certified
+	measure 'Gate Template Completion' =
+			VAR Recorded = [Gates Recorded]
+			VAR Completed = COALESCE([Gates Complete], 0)
+			VAR Defined = [Gates Defined]
+			RETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined))
 		formatString: "0.0%"
 		displayFolder: 04 Statutory gates
 
@@ -155,8 +172,12 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 05 Trade checklists
 
-	/// Replaces DASHBOARD!G59 (% Complete)
-	measure 'Checklist Completion' = DIVIDE([Checklist Items Passed], [Checklist Items Defined])
+	/// Replaces Recorded passes against the template for one project; applicability and submission completeness are unverified
+	measure 'Checklist Template Completion' =
+			VAR Recorded = [Checklist Items Recorded]
+			VAR Completed = COALESCE([Checklist Items Passed], 0)
+			VAR Defined = [Checklist Items Defined]
+			RETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined))
 		formatString: "0.0%"
 		displayFolder: 05 Trade checklists
 
@@ -201,7 +222,7 @@ table _Measures
 		displayFolder: 06 DFOW, ITP & inspections
 
 	/// Replaces nothing - Excel drops unmatched rows from a lookup silently
-	measure 'DQ NCRs With Unmapped Trade' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[HasUnmappedTrade] = TRUE())
+	measure 'DQ Observations With Unmapped Trade' = CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[HasUnmappedTrade] = TRUE())
 		formatString: "#,0"
 		displayFolder: 07 Data quality
 
@@ -210,8 +231,10 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 07 Data quality
 
-	/// Replaces nothing - an empty tab and a complete tab look identical in Excel
-	measure 'DQ Registers Awaiting Input' = IF([Gates Recorded] + [Checklist Items Recorded] + [DFOWs Registered] = 0, "No manual quality data entered yet", "")
+	/// Replaces Observed row coverage in current filters; populated registers are not certified complete
+	measure 'DQ Registers Awaiting Input' =
+			VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)
+			RETURN FORMAT(EmptyRegisters, "0") & "/8 registers empty; completeness unverified"
 		displayFolder: 07 Data quality
 
 	column _placeholder

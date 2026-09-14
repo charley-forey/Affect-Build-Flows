@@ -30,6 +30,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -125,15 +126,39 @@ def wait_for_operation(headers: dict, tok: str, timeout: int = 180) -> None:
     raise FabricError(f"operation did not finish within {timeout}s")
 
 
+def list_collection(path: str, tok: str) -> list[dict]:
+    """Read every page of a Fabric collection without leaving its endpoint."""
+    base = API + path
+    url, seen, identifiers, items = base, set(), set(), []
+    while url:
+        parsed, original = urllib.parse.urlsplit(url), urllib.parse.urlsplit(base)
+        if (parsed.scheme, parsed.netloc, parsed.path) != (original.scheme, original.netloc, original.path) or parsed.fragment:
+            raise FabricError("collection continuation points outside its endpoint")
+        if url in seen:
+            raise FabricError("collection continuation repeated; listing is incomplete")
+        seen.add(url)
+        status, body, _ = call("GET", url, tok)
+        rows = body.get("value") if isinstance(body, dict) else None
+        if status != 200 or not isinstance(rows, list):
+            raise FabricError("invalid collection response; listing is unverified")
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"] or row["id"] in identifiers:
+                raise FabricError("collection contains missing or repeated item IDs")
+            identifiers.add(row["id"])
+            items.append(row)
+        url = body.get("continuationUri")
+        if not url and body.get("continuationToken"):
+            url = base + "?" + urllib.parse.urlencode({"continuationToken": body["continuationToken"]})
+    return items
+
+
 def list_items(tok: str) -> list[dict]:
-    _, body, _ = call("GET", f"/workspaces/{WORKSPACE_ID}/items", tok)
-    return body.get("value", [])
+    return list_collection(f"/workspaces/{WORKSPACE_ID}/items", tok)
 
 
 def assert_folder(tok: str) -> None:
     """The folder id must resolve, and it must be the folder we think it is."""
-    _, body, _ = call("GET", f"/workspaces/{WORKSPACE_ID}/folders", tok)
-    folders = {f["id"]: f["displayName"] for f in body.get("value", [])}
+    folders = {f["id"]: f["displayName"] for f in list_collection(f"/workspaces/{WORKSPACE_ID}/folders", tok)}
     name = folders.get(FOLDER_ID)
     if name is None:
         raise FabricError(f"folder {FOLDER_ID} not found in workspace {WORKSPACE_ID}")

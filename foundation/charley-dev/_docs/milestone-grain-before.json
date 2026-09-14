@@ -1,0 +1,201 @@
+{
+  "query": "EVALUATE FILTER(SUMMARIZECOLUMNS(fct_Milestone[MilestoneName],\"Rows\",COUNTROWS(fct_Milestone),\"Projects\",DISTINCTCOUNT(fct_Milestone[ProjectKey]),\"Start\",MIN(fct_Milestone[CurrentStart]),\"Finish\",MAX(fct_Milestone[CurrentFinish])),[Rows]>1)",
+  "result": [
+    {
+      "fct_Milestone[MilestoneName]": "Contingency",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-06-20T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install Millwork planters",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "CW Woodcraft Fabrication",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-03-17T00:00:00",
+      "[Finish]": "2026-06-08T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Construction - 8th Suite",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-01-12T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Final Completion",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "360Lex 8th Amenity and 8th & 20th Suite",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2025-12-23T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Millwork surrounds @ vestibule entrance install",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install elevator lanterns",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-07-20T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Reception Desk Install",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Embankment",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Tiling - Lobby",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-07-27T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install millwork planter",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-09-02T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install entrance mat",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Embankment 1st Floor (Phase C)",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-07-31T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install elevator surround",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-20T00:00:00",
+      "[Finish]": "2026-08-25T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Revetment",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Embankment & Revetment Phase III",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "360Lex 8th & 20th Suite",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2025-12-26T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install lights at elevators",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "MEP/FP Overhead Rough",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-02-27T00:00:00",
+      "[Finish]": "2026-09-11T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Finish painting",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-08-14T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Handover",
+      "[Rows]": 2,
+      "[Projects]": 1,
+      "[Start]": "2026-06-24T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install elevator panels",
+      "[Rows]": 3,
+      "[Projects]": 1,
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Construction",
+      "[Rows]": 3,
+      "[Projects]": 2,
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Substantial Completion",
+      "[Rows]": 3,
+      "[Projects]": 1,
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Patching gyp",
+      "[Rows]": 3,
+      "[Projects]": 1,
+      "[Start]": "2026-07-23T00:00:00",
+      "[Finish]": "2026-08-24T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Install stone baseboard",
+      "[Rows]": 3,
+      "[Projects]": 1,
+      "[Start]": "2026-08-24T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00"
+    },
+    {
+      "fct_Milestone[MilestoneName]": "Punchlist",
+      "[Rows]": 5,
+      "[Projects]": 2,
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-11-02T00:00:00"
+    }
+  ]
+}

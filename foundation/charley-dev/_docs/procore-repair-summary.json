@@ -1,0 +1,259 @@
+{
+  "batch": "20260910T081211-fb70763e",
+  "manifest_sha256": "6322c9d3b953fcffadffddb302ea19bb31b20a1013a7c0d13f40fcc6f45b1dab",
+  "batch_status": "failed",
+  "source_scope": "active_projects",
+  "active_projects": 20,
+  "endpoint_status_counts": {
+    "complete": 34,
+    "incomplete_scope": 7,
+    "failed": 3
+  },
+  "received_source_records": 21673,
+  "archived_source_records_reported": 21673,
+  "distinct_upsert_inputs_reported": 21663,
+  "gaps": [
+    {
+      "endpoint": "standard_cost_codes",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": [
+        {
+          "path": "/rest/v1.0/standard_cost_codes",
+          "project_id": null,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        }
+      ]
+    },
+    {
+      "endpoint": "prime_contracts",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": [
+        {
+          "path": "/rest/v1.0/prime_contracts?project_id=562949955173068",
+          "project_id": 562949955173068,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        }
+      ]
+    },
+    {
+      "endpoint": "change_order_requests",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": [
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955001573",
+          "project_id": 562949955001573,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955118102",
+          "project_id": 562949955118102,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955455437",
+          "project_id": 562949955455437,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955225798",
+          "project_id": 562949955225798,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955257421",
+          "project_id": 562949955257421,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955318524",
+          "project_id": 562949955318524,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955423662",
+          "project_id": 562949955423662,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955286476",
+          "project_id": 562949955286476,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955375634",
+          "project_id": 562949955375634,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949954973730",
+          "project_id": 562949954973730,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949954973684",
+          "project_id": 562949954973684,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949954971827",
+          "project_id": 562949954971827,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955365267",
+          "project_id": 562949955365267,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949953807474",
+          "project_id": 562949953807474,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949954507004",
+          "project_id": 562949954507004,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949955173068",
+          "project_id": 562949955173068,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/change_order_requests?project_id=562949954997327",
+          "project_id": 562949954997327,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        }
+      ]
+    },
+    {
+      "endpoint": "punch_item_types",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": [
+        {
+          "path": "/rest/v1.0/punch_item_types",
+          "project_id": null,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        }
+      ]
+    },
+    {
+      "endpoint": "checklist_lists",
+      "status": "failed",
+      "error_type": "ValueError",
+      "unavailable_or_failed_scopes": []
+    },
+    {
+      "endpoint": "incident_injuries",
+      "status": "failed",
+      "error_type": "ReadTimeout",
+      "unavailable_or_failed_scopes": [
+        {
+          "path": "/rest/v1.0/projects/562949955455437/incidents/injuries",
+          "project_id": 562949955455437,
+          "status": "failed",
+          "received_rows": 0,
+          "error_type": "ReadTimeout"
+        }
+      ]
+    },
+    {
+      "endpoint": "schedule",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": [
+        {
+          "path": "/rest/v1.0/projects/562949955173068/schedule",
+          "project_id": 562949955173068,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        }
+      ]
+    },
+    {
+      "endpoint": "prime_contract_line_items",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": []
+    },
+    {
+      "endpoint": "payment_applications",
+      "status": "incomplete_scope",
+      "error_type": null,
+      "unavailable_or_failed_scopes": []
+    },
+    {
+      "endpoint": "checklist_list_items",
+      "status": "failed",
+      "error_type": "RuntimeError",
+      "unavailable_or_failed_scopes": []
+    }
+  ],
+  "limit": "Counts reconciled from the manifest; raw archive contents and target tables are separate verification. Endpoint complete covers only requested active-project/time-window scope, not all history or deletions."
+}

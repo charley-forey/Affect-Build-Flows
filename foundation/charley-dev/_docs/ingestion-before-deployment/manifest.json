@@ -1,0 +1,31 @@
+[
+  {
+    "path": "Files/lib/procore_extract.py",
+    "present": true,
+    "sha256": "d615054ab0c5742234d763649a1faa500c4f657a1a78c14d3357054f81f58b29"
+  },
+  {
+    "path": "Files/lib/procore_scope.py",
+    "present": true,
+    "sha256": "186381b654981b456818143de4437e5f87632cc158dcb23031c74aa78d0ce079"
+  },
+  {
+    "path": "Files/lib/fabric_common.py",
+    "present": true,
+    "sha256": "176027552fda0ff4498189044a733939bc29c0df925584dc74a942bd96fbf4ae"
+  },
+  {
+    "path": "Files/lib/watermark.py",
+    "present": true,
+    "sha256": "ffe175bb3f0264e2b121c840bb63d5c951971098873f12c0bb197ff141101779"
+  },
+  {
+    "path": "Files/lib/ratelimit.py",
+    "present": false
+  },
+  {
+    "path": "Files/config/endpoints.yml",
+    "present": true,
+    "sha256": "86f6367746040ccda0051d74f02548270b3066398578c93d6a6b5e5ab3a67b4d"
+  }
+]

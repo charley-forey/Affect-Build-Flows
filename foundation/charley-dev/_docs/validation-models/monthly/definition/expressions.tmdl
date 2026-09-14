@@ -1,0 +1,5 @@
+expression 'DirectLake - CD_Gold_Lakehouse' =
+		let
+		    Source = AzureStorage.DataLake("https://onelake.dfs.fabric.microsoft.com/1f7caed6-f88a-4e52-bc83-9a498a165301/0c26a970-705b-44c2-8366-9101cd6f4e7f", [HierarchicalNavigation=true])
+		in
+		    Source

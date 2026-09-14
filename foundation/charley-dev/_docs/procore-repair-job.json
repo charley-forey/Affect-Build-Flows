@@ -1,0 +1,23 @@
+{
+  "item_id": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+  "location": "https://api.fabric.microsoft.com/v1/workspaces/1f7caed6-f88a-4e52-bc83-9a498a165301/items/c27ccac5-8185-4ed9-8603-7959f7598a74/jobs/instances/f310bd55-4b1f-4418-b3d5-b3153fe22978",
+  "started_request_at": "2026-09-10T08:08:53.094531+00:00",
+  "deployment_evidence": "ingestion-deployment-evidence.json",
+  "scope": "Procore read and owned bronze writes; no downstream model refresh requested",
+  "latest_job": {
+    "id": "f310bd55-4b1f-4418-b3d5-b3153fe22978",
+    "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+    "jobType": "RunNotebook",
+    "invokeType": "Manual",
+    "status": "Failed",
+    "failureReason": {
+      "requestId": "e660546e-0c2f-4724-8134-d0054b14f4a5",
+      "errorCode": "System_Cancelled_Session_Statements_Failed",
+      "message": "System cancelled the Spark session due to statement execution failures",
+      "isRetriable": false
+    },
+    "rootActivityId": "f0576d48-bc26-4d31-869c-ba45e2fe59a2",
+    "startTimeUtc": "2026-09-10T08:11:51.2177067",
+    "endTimeUtc": "2026-09-10T09:33:12.0859701"
+  }
+}

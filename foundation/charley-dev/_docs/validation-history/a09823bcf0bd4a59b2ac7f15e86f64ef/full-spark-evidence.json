@@ -1,0 +1,876 @@
+{
+  "run_id": "a09823bcf0bd4a59b2ac7f15e86f64ef",
+  "completed_at": "2026-09-10T11:02:32.038828+00:00",
+  "validation_lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
+  "scope": "candidate silver and gold from existing bronze; upstream freshness not certified",
+  "checks": [
+    {
+      "name": "dim_Project.ProjectKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Vendor.VendorKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_CostCode.CostCodeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Date.Date.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_ProjectCrosswalk.ProjectKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_VendorCrosswalk.VendorKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_CostCodeCrosswalk.CostCodeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.ItemType_ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Project.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.BudgetLineID.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.ProjectKey_BudgetLineID.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Amount.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.InvoiceKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.InvoiceKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.AmountPaid.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Balance.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Project.SageJobNumber maps to only one project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.CostCodeKey.fk_dim_CostCode",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Project.SageJobNumber resolves for at least one project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Amount is not universally zero",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.Amount reconciles to AmountPaid + Balance",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice has rows",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice project match rate is not collapsing",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_BudgetLine.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ChangeOrder.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_FinancialPeriod.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.CreatedDate has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal.DueDate has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.CurrentStart has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.CurrentFinish has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.SentDate has no sentinel dates",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Milestone.CurrentStart_CurrentFinish.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "every project is in Sage",
+      "severity": "warn",
+      "failing_rows": 5,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "every project is in Outbuild",
+      "severity": "warn",
+      "failing_rows": 17,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "no project maps to two ids on the far side",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "cost codes parse to a CSI division",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "no negative original budgets",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "cumulative billing never exceeds the current contract",
+      "severity": "warn",
+      "failing_rows": 2,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing.BillingKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_ProjectVendor.ProjectKey_VendorKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DirectCost.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Billing.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_DirectCost.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_ProjectVendor.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "one latest billing period per contract",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "billing balances reconcile to the sum of period movements",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "retainage percent is plausible",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "retainage released rather than withheld",
+      "severity": "warn",
+      "failing_rows": 6,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "direct cost grand total is at least the line amount",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.VendorCostCodeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.InsuranceKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.VendorKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.CostCodeKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.VendorKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge_VendorCostCode.CostCodeKey.fk_dim_CostCode",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the vendor bridge covers most direct cost spend",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "bridge actual spend does not exceed direct cost spend",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "committed lines are not negative",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "vendors on a project have a certificate on file",
+      "severity": "warn",
+      "failing_rows": 405,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "certificates on file are in date",
+      "severity": "warn",
+      "failing_rows": 105,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_VendorInsurance.EffectiveDate_ExpirationDate.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "billing data is not stale",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "direct cost data is not stale",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "field operations data is not stale",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_Trade.TradeKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_ChecklistItem.ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_Gate.GateKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_DohItem.ItemKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_QcStatus.Domain_Code.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_ChecklistItem.TradeKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_Gate.GateType.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the checklist template still holds all 625 items",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the gate template still holds all three paths",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "the DOH checklist still holds all 101 requirements",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Wins.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Risks.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_PriorityItems.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Flags.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Survey.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_SafetyMonthly.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QualityMonthly.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_Milestones.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_DailyLogCompliance.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDfow.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcCommissioning.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcInspectorSignIn.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Job.JobNumber.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dim_Job.JobNumber.issued_past_requested",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDfow.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcItp.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcCommissioning.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcChecklistResult.ItemKey.fk_qc_seed_ChecklistItem",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.GateKey.fk_qc_seed_Gate",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcDohResult.ItemKey.fk_qc_seed_DohItem",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcGate.SubmittedDate_CompletedDate.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "man_QcSpecialInspection.PerformedDate_ReportReceivedDate.order",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "gates completed after their target date",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "gate results agree with their template's path",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "Procore QC statuses map to the workbook's vocabulary",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "Procore trades resolve to a seeded trade",
+      "severity": "warn",
+      "failing_rows": 236,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "qc_seed_TradeAlias.TradeKey.fk_qc_seed_Trade",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "scorecard weights sum to 1.00",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey_InspectionKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.InspectionKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "native inspection source values are preserved",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    }
+  ]
+}

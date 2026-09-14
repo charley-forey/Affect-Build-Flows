@@ -1,0 +1,71 @@
+{
+  "checked_at": "2026-09-10T11:00:20.774527+00:00",
+  "batch": "20260910T095953-d161e967",
+  "headers": 21,
+  "items": 563,
+  "all_item_fields_match_source": true,
+  "quality_checks": [
+    {
+      "name": "fct_ProcoreInspection.ProjectKey_InspectionKey.unique",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspection.InspectionLinkKey.unique",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspection.ProjectKey.not_null",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspection.InspectionKey.not_null",
+      "failing_rows": 0
+    },
+    {
+      "name": "native inspection source values are preserved",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.ProjectKey_ItemKey.unique",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.ProjectKey.not_null",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.ItemKey.not_null",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.InspectionKey.not_null",
+      "failing_rows": 0
+    },
+    {
+      "name": "fct_ProcoreInspectionItem.InspectionLinkKey.fk_fct_ProcoreInspection",
+      "failing_rows": 0
+    },
+    {
+      "name": "native inspection items link to the same project inspection",
+      "failing_rows": 0
+    },
+    {
+      "name": "native inspection item source values are preserved",
+      "failing_rows": 0
+    },
+    {
+      "name": "native inspection model link keys match source identity",
+      "failing_rows": 0
+    },
+    {
+      "name": "native inspection item totals match source headers",
+      "failing_rows": 0
+    }
+  ],
+  "sql_sha256": {
+    "02-transformation/sql/silver/24_qc_procore_silver.sql": "591358cdae7fc48e674b247944ea5c56d4f2642d1faa1ff188d61c1afb565869",
+    "02-transformation/sql/gold/33_fct_qc.sql": "64c4763d25ceb23e56a3b8f634ff5e8cfc4da58839b4791e92deebce2054ab1c"
+  },
+  "scope": "Captured real records replayed through current SQL in DuckDB; not Spark, DAX or rendered report proof",
+  "excluded_check": "Reference to live dim_Project requires live candidate validation"
+}

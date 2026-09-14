@@ -60,7 +60,7 @@ WITH ranked AS (
             -- as the real pending work they are while never winning the ranking. FALSE
             -- sorts before TRUE, so every issued period outranks every draft.
             ORDER BY (b.status_label = 'DRAFT') ASC,
-                     b.period_end DESC NULLS LAST, b.period_number DESC
+                     b.period_end DESC NULLS LAST, b.period_number DESC, b.billing_id DESC
         ) AS _rank
     FROM sv_billing b
     WHERE b.project_id IS NOT NULL

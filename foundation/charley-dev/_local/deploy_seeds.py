@@ -149,10 +149,12 @@ def attach(nb: dict, lh: dict, workspace_id: str) -> dict:
 
 
 def find_item(tok: str, name: str, kind: str) -> dict | None:
-    for item in dp.list_items(tok):
-        if item["displayName"] == name and item["type"] == kind:
-            return item
-    return None
+    matches = [item for item in dp.list_items(tok) if item["displayName"] == name and item["type"] == kind]
+    if len(matches) > 1:
+        raise dp.FabricError(f"ambiguous {kind} name {name!r}; refusing to choose a deployment target")
+    if matches and matches[0].get("folderId") != dp.FOLDER_ID:
+        raise dp.FabricError(f"{kind} {name!r} is outside charley-dev")
+    return matches[0] if matches else None
 
 
 def run_notebook(tok: str, item_id: str, timeout: int = 900) -> str:

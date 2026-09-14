@@ -1,0 +1,92 @@
+[
+  {
+    "measure": "Milestone Offset Days",
+    "query": "DEFINE TABLE __Milestones = UNION(\n        ROW(\"ID\",\"first\",\"CurrentStart\",DATE(2026,9,1),\"CurrentFinish\",DATE(2026,9,3)),\n        ROW(\"ID\",\"second\",\"CurrentStart\",DATE(2026,9,4),\"CurrentFinish\",DATE(2026,9,6)),\n        ROW(\"ID\",\"same_day\",\"CurrentStart\",DATE(2026,9,9),\"CurrentFinish\",DATE(2026,9,9)),\n        ROW(\"ID\",\"missing_start\",\"CurrentStart\",BLANK(),\"CurrentFinish\",DATE(2026,9,10)),\n        ROW(\"ID\",\"missing_finish\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",BLANK()),\n        ROW(\"ID\",\"inverted\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",DATE(2026,7,1))) EVALUATE SUMMARIZECOLUMNS(__Milestones[ID],\"Actual\",VAR StartDate = SELECTEDVALUE ( __Milestones[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( __Milestones[CurrentFinish] )\nVAR Origin = MINX ( FILTER ( ALLSELECTED ( __Milestones ), NOT ISBLANK ( __Milestones[CurrentStart] ) && NOT ISBLANK ( __Milestones[CurrentFinish] ) && __Milestones[CurrentFinish] >= __Milestones[CurrentStart] ), __Milestones[CurrentStart] )\nRETURN IF ( COUNTROWS ( __Milestones ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), DATEDIFF ( Origin, StartDate, DAY ), BLANK () ),\"Keep\",1)",
+    "result": [
+      {
+        "__Milestones[ID]": "first",
+        "[Actual]": 0,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "second",
+        "[Actual]": 3,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "same_day",
+        "[Actual]": 8,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "missing_start",
+        "[Actual]": null,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "missing_finish",
+        "[Actual]": null,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "inverted",
+        "[Actual]": null,
+        "[Keep]": 1
+      }
+    ],
+    "totals_query": "DEFINE TABLE __Milestones = UNION(\n        ROW(\"ID\",\"first\",\"CurrentStart\",DATE(2026,9,1),\"CurrentFinish\",DATE(2026,9,3)),\n        ROW(\"ID\",\"second\",\"CurrentStart\",DATE(2026,9,4),\"CurrentFinish\",DATE(2026,9,6)),\n        ROW(\"ID\",\"same_day\",\"CurrentStart\",DATE(2026,9,9),\"CurrentFinish\",DATE(2026,9,9)),\n        ROW(\"ID\",\"missing_start\",\"CurrentStart\",BLANK(),\"CurrentFinish\",DATE(2026,9,10)),\n        ROW(\"ID\",\"missing_finish\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",BLANK()),\n        ROW(\"ID\",\"inverted\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",DATE(2026,7,1))) EVALUATE ROW(\"all\",VAR StartDate = SELECTEDVALUE ( __Milestones[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( __Milestones[CurrentFinish] )\nVAR Origin = MINX ( FILTER ( ALLSELECTED ( __Milestones ), NOT ISBLANK ( __Milestones[CurrentStart] ) && NOT ISBLANK ( __Milestones[CurrentFinish] ) && __Milestones[CurrentFinish] >= __Milestones[CurrentStart] ), __Milestones[CurrentStart] )\nRETURN IF ( COUNTROWS ( __Milestones ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), DATEDIFF ( Origin, StartDate, DAY ), BLANK () ),\"absent\",CALCULATE(VAR StartDate = SELECTEDVALUE ( __Milestones[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( __Milestones[CurrentFinish] )\nVAR Origin = MINX ( FILTER ( ALLSELECTED ( __Milestones ), NOT ISBLANK ( __Milestones[CurrentStart] ) && NOT ISBLANK ( __Milestones[CurrentFinish] ) && __Milestones[CurrentFinish] >= __Milestones[CurrentStart] ), __Milestones[CurrentStart] )\nRETURN IF ( COUNTROWS ( __Milestones ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), DATEDIFF ( Origin, StartDate, DAY ), BLANK () ),FILTER(__Milestones,FALSE())))",
+    "totals": [
+      {
+        "[all]": null,
+        "[absent]": null
+      }
+    ],
+    "scenarios": 8,
+    "passed": true
+  },
+  {
+    "measure": "Milestone Duration Days",
+    "query": "DEFINE TABLE __Milestones = UNION(\n        ROW(\"ID\",\"first\",\"CurrentStart\",DATE(2026,9,1),\"CurrentFinish\",DATE(2026,9,3)),\n        ROW(\"ID\",\"second\",\"CurrentStart\",DATE(2026,9,4),\"CurrentFinish\",DATE(2026,9,6)),\n        ROW(\"ID\",\"same_day\",\"CurrentStart\",DATE(2026,9,9),\"CurrentFinish\",DATE(2026,9,9)),\n        ROW(\"ID\",\"missing_start\",\"CurrentStart\",BLANK(),\"CurrentFinish\",DATE(2026,9,10)),\n        ROW(\"ID\",\"missing_finish\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",BLANK()),\n        ROW(\"ID\",\"inverted\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",DATE(2026,7,1))) EVALUATE SUMMARIZECOLUMNS(__Milestones[ID],\"Actual\",VAR StartDate = SELECTEDVALUE ( __Milestones[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( __Milestones[CurrentFinish] )\nRETURN IF ( COUNTROWS ( __Milestones ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () ),\"Keep\",1)",
+    "result": [
+      {
+        "__Milestones[ID]": "first",
+        "[Actual]": 2,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "second",
+        "[Actual]": 2,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "same_day",
+        "[Actual]": 0,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "missing_start",
+        "[Actual]": null,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "missing_finish",
+        "[Actual]": null,
+        "[Keep]": 1
+      },
+      {
+        "__Milestones[ID]": "inverted",
+        "[Actual]": null,
+        "[Keep]": 1
+      }
+    ],
+    "totals_query": "DEFINE TABLE __Milestones = UNION(\n        ROW(\"ID\",\"first\",\"CurrentStart\",DATE(2026,9,1),\"CurrentFinish\",DATE(2026,9,3)),\n        ROW(\"ID\",\"second\",\"CurrentStart\",DATE(2026,9,4),\"CurrentFinish\",DATE(2026,9,6)),\n        ROW(\"ID\",\"same_day\",\"CurrentStart\",DATE(2026,9,9),\"CurrentFinish\",DATE(2026,9,9)),\n        ROW(\"ID\",\"missing_start\",\"CurrentStart\",BLANK(),\"CurrentFinish\",DATE(2026,9,10)),\n        ROW(\"ID\",\"missing_finish\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",BLANK()),\n        ROW(\"ID\",\"inverted\",\"CurrentStart\",DATE(2026,8,1),\"CurrentFinish\",DATE(2026,7,1))) EVALUATE ROW(\"all\",VAR StartDate = SELECTEDVALUE ( __Milestones[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( __Milestones[CurrentFinish] )\nRETURN IF ( COUNTROWS ( __Milestones ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () ),\"absent\",CALCULATE(VAR StartDate = SELECTEDVALUE ( __Milestones[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( __Milestones[CurrentFinish] )\nRETURN IF ( COUNTROWS ( __Milestones ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () ),FILTER(__Milestones,FALSE())))",
+    "totals": [
+      {
+        "[all]": null,
+        "[absent]": null
+      }
+    ],
+    "scenarios": 8,
+    "passed": true
+  }
+]

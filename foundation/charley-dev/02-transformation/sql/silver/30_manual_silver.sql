@@ -12,7 +12,16 @@
 --      shows up on a data-quality page.
 --   2. ONE ROW PER NATURAL KEY. SharePoint cannot enforce a composite unique constraint, so
 --      it is enforced here. A duplicated (project, month, number) is rejected rather than
---      double-counted into a total that nobody can reconcile.
+--      double-counted into a total that nobody can reconcile. EXACT duplicates (same
+--      business values, e.g. one CSV landed twice) collapse to one row; CONFLICTING
+--      versions of one key are ALL rejected, never resolved by picking the latest - the
+--      latest edit is not evidence of the right value.
+--
+-- THE SHAPE, per list: a staging view (mv_<list>) types every bronze row and gives it at
+-- most one _reject_reason, _versions (distinct business versions of its natural key) and
+-- _copy (exact-duplicate ordinal). The silver table is the rows with no reason, one
+-- version and _copy = 1; cd_dq_rejects_manual is the rows with a reason or >1 version.
+-- So bronze rows = silver rows + rejected rows + collapsed exact copies, by construction.
 --   3. MONTHSTART IS FLOORED TO THE 1st. The report groups by month; 2025-05-14 and
 --      2025-05-01 are different rows and would split one project's month in two.
 --      Spelled date_trunc('MONTH', ...) rather than Spark's trunc(d, 'MM'): both engines
@@ -40,82 +49,129 @@ SELECT DISTINCT project_id FROM cd_silver_projects;
 -- Wins
 -- ---------------------------------------------------------------------------
 
+CREATE OR REPLACE TEMPORARY VIEW mv_wins AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start, win_number) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, win_number, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start, win_number
+                              ORDER BY description, win_type) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.WinNumber AS INT)                             AS win_number,
+            TRIM(b.Description)                                  AS description,
+            UPPER(TRIM(b.WinType))                               AS win_type,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+                WHEN UPPER(TRIM(COALESCE(b.WinType, ''))) NOT IN ('REALIZED', 'FOCUSAREA')
+                     THEN CONCAT('invalid WinType: ', COALESCE(b.WinType, '(blank)'))
+            END AS _reject_reason
+        FROM cd_bronze_man_wins b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_wins AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(WinNumber AS INT)                              AS win_number,
-        TRIM(Description)                                   AS description,
-        UPPER(TRIM(WinType))                                AS win_type,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
-                                        CAST(WinNumber AS INT)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_wins
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects)
-  AND win_type IN ('REALIZED', 'FOCUSAREA');
+SELECT project_id, month_start, win_number, description, win_type,
+       last_modified, last_modified_by
+FROM mv_wins
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Risks
 -- ---------------------------------------------------------------------------
 
+CREATE OR REPLACE TEMPORARY VIEW mv_risks AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start, risk_number) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, risk_number, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start, risk_number
+                              ORDER BY description, impact_code, mitigation, owner_role, status_code) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.RiskNumber AS INT)                            AS risk_number,
+            TRIM(b.Description)                                  AS description,
+            UPPER(TRIM(b.ImpactCode))                            AS impact_code,
+            TRIM(b.Mitigation)                                   AS mitigation,
+            TRIM(b.OwnerRole)                                    AS owner_role,
+            UPPER(TRIM(b.StatusCode))                            AS status_code,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+                WHEN UPPER(TRIM(COALESCE(b.ImpactCode, ''))) NOT IN ('HIGH', 'MEDIUM', 'LOW')
+                     THEN CONCAT('invalid ImpactCode: ', COALESCE(b.ImpactCode, '(blank)'))
+            END AS _reject_reason
+        FROM cd_bronze_man_risks b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_risks AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(RiskNumber AS INT)                             AS risk_number,
-        TRIM(Description)                                   AS description,
-        UPPER(TRIM(ImpactCode))                             AS impact_code,
-        TRIM(Mitigation)                                    AS mitigation,
-        TRIM(OwnerRole)                                     AS owner_role,
-        UPPER(TRIM(StatusCode))                             AS status_code,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
-                                        CAST(RiskNumber AS INT)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_risks
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects)
-  AND impact_code IN ('HIGH', 'MEDIUM', 'LOW');
+SELECT project_id, month_start, risk_number, description, impact_code, mitigation, owner_role, status_code,
+       last_modified, last_modified_by
+FROM mv_risks
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Priority items
 -- ---------------------------------------------------------------------------
 
+CREATE OR REPLACE TEMPORARY VIEW mv_priority_items AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start, item_number) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, item_number, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start, item_number
+                              ORDER BY schedule_item, status_code, critical_delays, recovery_plan, forecast_impact, notes) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.ItemNumber AS INT)                            AS item_number,
+            TRIM(b.ScheduleItem)                                 AS schedule_item,
+            UPPER(TRIM(b.StatusCode))                            AS status_code,
+            TRIM(b.CriticalDelays)                               AS critical_delays,
+            TRIM(b.RecoveryPlan)                                 AS recovery_plan,
+            TRIM(b.ForecastImpact)                               AS forecast_impact,
+            TRIM(b.Notes)                                        AS notes,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+            END AS _reject_reason
+        FROM cd_bronze_man_priority_items b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_priority_items AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(ItemNumber AS INT)                             AS item_number,
-        TRIM(ScheduleItem)                                  AS schedule_item,
-        UPPER(TRIM(StatusCode))                             AS status_code,
-        TRIM(CriticalDelays)                                AS critical_delays,
-        TRIM(RecoveryPlan)                                  AS recovery_plan,
-        TRIM(ForecastImpact)                                AS forecast_impact,
-        TRIM(Notes)                                         AS notes,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
-                                        CAST(ItemNumber AS INT)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_priority_items
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects);
+SELECT project_id, month_start, item_number, schedule_item, status_code, critical_delays, recovery_plan, forecast_impact, notes,
+       last_modified, last_modified_by
+FROM mv_priority_items
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Flags (one row per project-month)
@@ -130,104 +186,169 @@ WHERE _rn = 1
 --
 -- ProfitabilityCode is NOT upper-cased: it matches dim_ScorecardBand[MatchValue], which
 -- holds LABELS ("Out of Range, but has a plan"). Upper-casing it matches nothing.
+
+CREATE OR REPLACE TEMPORARY VIEW mv_flags AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start
+                              ORDER BY profitability_code, contingency_remaining, baseline_approved, baseline_revision, month_end_closed_out, forecasting_in_line, resources_updated) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            TRIM(b.ProfitabilityCode)                            AS profitability_code,
+            CAST(b.ContingencyRemaining AS DOUBLE)               AS contingency_remaining,
+            CAST(b.BaselineApproved AS BOOLEAN)                  AS baseline_approved,
+            TRIM(b.BaselineRevision)                             AS baseline_revision,
+            CAST(b.MonthEndClosedOut AS BOOLEAN)                 AS month_end_closed_out,
+            CAST(b.ForecastingInLine AS BOOLEAN)                 AS forecasting_in_line,
+            CAST(b.ResourcesUpdated AS BOOLEAN)                  AS resources_updated,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+            END AS _reject_reason
+        FROM cd_bronze_man_flags b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_flags AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        TRIM(ProfitabilityCode)                             AS profitability_code,
-        CAST(ContingencyRemaining AS DOUBLE)                AS contingency_remaining,
-        CAST(BaselineApproved AS BOOLEAN)                   AS baseline_approved,
-        TRIM(BaselineRevision)                              AS baseline_revision,
-        CAST(MonthEndClosedOut AS BOOLEAN)                  AS month_end_closed_out,
-        CAST(ForecastingInLine AS BOOLEAN)                  AS forecasting_in_line,
-        CAST(ResourcesUpdated AS BOOLEAN)                   AS resources_updated,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_flags
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects);
+SELECT project_id, month_start, profitability_code, contingency_remaining, baseline_approved, baseline_revision, month_end_closed_out, forecasting_in_line, resources_updated,
+       last_modified, last_modified_by
+FROM mv_flags
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Survey (one row per question)
 -- ---------------------------------------------------------------------------
 
+CREATE OR REPLACE TEMPORARY VIEW mv_survey AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start, question_number) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, question_number, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start, question_number
+                              ORDER BY question_text, score, surveyed_party) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.QuestionNumber AS INT)                        AS question_number,
+            -- The workbook stores the six scores but NOT the question text, so nobody now
+            -- knows what question 3 asked (open question 6). Capturing it here fixes that
+            -- permanently, which is why it is carried even though no measure reads it yet.
+            TRIM(b.QuestionText)                                 AS question_text,
+            CAST(b.Score AS INT)                                 AS score,
+            -- 'ANONYMOUS' in the workbook today (SCORECARD CALC!C34). Captured rather than
+            -- assumed: an attributed survey and an anonymous one are different instruments,
+            -- and gold has always had the column.
+            TRIM(b.SurveyedParty)                                AS surveyed_party,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+                WHEN b.Score IS NULL
+                     THEN 'missing Score'
+            END AS _reject_reason
+        FROM cd_bronze_man_survey b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_survey AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(QuestionNumber AS INT)                         AS question_number,
-        -- The workbook stores the six scores but NOT the question text, so nobody now
-        -- knows what question 3 asked (open question 6). Capturing it here fixes that
-        -- permanently, which is why it is carried even though no measure reads it yet.
-        TRIM(QuestionText)                                  AS question_text,
-        CAST(Score AS INT)                                  AS score,
-        -- 'ANONYMOUS' in the workbook today (SCORECARD CALC!C34). Captured rather than
-        -- assumed: an attributed survey and an anonymous one are different instruments,
-        -- and gold has always had the column.
-        TRIM(SurveyedParty)                                 AS surveyed_party,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE),
-                                        CAST(QuestionNumber AS INT)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_survey
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects)
-  AND score IS NOT NULL;
+SELECT project_id, month_start, question_number, question_text, score, surveyed_party,
+       last_modified, last_modified_by
+FROM mv_survey
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Safety and quality (BOTH TEMPORARY - retire when Procore feeds them)
 -- ---------------------------------------------------------------------------
 
+CREATE OR REPLACE TEMPORARY VIEW mv_safety_monthly AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start
+                              ORDER BY hours_worked, recordable_incidents, orientations, ot_hours) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.HoursWorked AS DOUBLE)                        AS hours_worked,
+            CAST(b.RecordableIncidents AS INT)                   AS recordable_incidents,
+            CAST(b.Orientations AS INT)                          AS orientations,
+            CAST(b.OtHours AS DOUBLE)                            AS ot_hours,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+            END AS _reject_reason
+        FROM cd_bronze_man_safety_monthly b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_safety_monthly AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(HoursWorked AS DOUBLE)                         AS hours_worked,
-        CAST(RecordableIncidents AS INT)                    AS recordable_incidents,
-        CAST(Orientations AS INT)                           AS orientations,
-        CAST(OtHours AS DOUBLE)                             AS ot_hours,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_safety_monthly
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects);
+SELECT project_id, month_start, hours_worked, recordable_incidents, orientations, ot_hours,
+       last_modified, last_modified_by
+FROM mv_safety_monthly
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
+
+CREATE OR REPLACE TEMPORARY VIEW mv_quality_monthly AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start
+                              ORDER BY observations, punchlist_items, avg_days_past_due, avg_days_to_close) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.Observations AS INT)                          AS observations,
+            CAST(b.PunchlistItems AS INT)                        AS punchlist_items,
+            CAST(b.AvgDaysPastDue AS DOUBLE)                     AS avg_days_past_due,
+            CAST(b.AvgDaysToClose AS DOUBLE)                     AS avg_days_to_close,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+            END AS _reject_reason
+        FROM cd_bronze_man_quality_monthly b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
 
 CREATE OR REPLACE TABLE cd_silver_man_quality_monthly AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(Observations AS INT)                           AS observations,
-        CAST(PunchlistItems AS INT)                         AS punchlist_items,
-        CAST(AvgDaysPastDue AS DOUBLE)                      AS avg_days_past_due,
-        CAST(AvgDaysToClose AS DOUBLE)                      AS avg_days_to_close,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_quality_monthly
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects);
+SELECT project_id, month_start, observations, punchlist_items, avg_days_past_due, avg_days_to_close,
+       last_modified, last_modified_by
+FROM mv_quality_monthly
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Milestones (project x milestone - NOT monthly)
@@ -241,53 +362,87 @@ WHERE _rn = 1
 --
 -- ActivityKey is what joins to fct_Milestone (Outbuild's activity id). Without it the
 -- contract dates sit next to the schedule rather than against it.
+
+CREATE OR REPLACE TEMPORARY VIEW mv_milestones AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, milestone_name) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, milestone_name, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, milestone_name
+                              ORDER BY activity_key, contract_start, contract_finish, baseline_start, baseline_finish, is_substantial_completion) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.MilestoneName)                                AS milestone_name,
+            TRIM(b.ActivityKey)                                  AS activity_key,
+            CAST(b.ContractStart AS DATE)                        AS contract_start,
+            CAST(b.ContractFinish AS DATE)                       AS contract_finish,
+            CAST(b.BaselineStart AS DATE)                        AS baseline_start,
+            CAST(b.BaselineFinish AS DATE)                       AS baseline_finish,
+            CAST(b.IsSubstantialCompletion AS BOOLEAN)           AS is_substantial_completion,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MilestoneName IS NULL
+                     THEN 'missing ProjectKey or MilestoneName'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+            END AS _reject_reason
+        FROM cd_bronze_man_milestones b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_milestones AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        TRIM(ActivityKey)                                   AS activity_key,
-        TRIM(MilestoneName)                                 AS milestone_name,
-        CAST(ContractStart AS DATE)                         AS contract_start,
-        CAST(ContractFinish AS DATE)                        AS contract_finish,
-        CAST(BaselineStart AS DATE)                         AS baseline_start,
-        CAST(BaselineFinish AS DATE)                        AS baseline_finish,
-        CAST(IsSubstantialCompletion AS BOOLEAN)            AS is_substantial_completion,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title), TRIM(MilestoneName)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_milestones
-    WHERE ProjectKey.Title IS NOT NULL AND MilestoneName IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects);
+SELECT project_id, milestone_name, activity_key, contract_start, contract_finish, baseline_start, baseline_finish, is_substantial_completion,
+       last_modified, last_modified_by
+FROM mv_milestones
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Daily log compliance
 -- ---------------------------------------------------------------------------
 
+CREATE OR REPLACE TEMPORARY VIEW mv_daily_log_compliance AS
+SELECT *,
+       MAX(_version) OVER (PARTITION BY _reject_reason, project_id, month_start) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, project_id, month_start, _version
+                          ORDER BY last_modified DESC) AS _copy
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, project_id, month_start
+                              ORDER BY logs_expected, logs_missed_same_day) AS _version
+    FROM (
+        SELECT
+            TRIM(b.ProjectKey.Title)                             AS project_id,
+            CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
+            CAST(b.LogsExpected AS INT)                          AS logs_expected,
+            -- MISSED SAME DAY, not submitted. SCORECARD CALC!E28 scores whether the log went
+            -- in on the day of the work; a log typed up three days later is submitted and is
+            -- still a miss. This parser used to read LogsSubmitted, which measures a different
+            -- and easier thing - and gold, the model and the scorecard have always asked for
+            -- the harder one.
+            CAST(b.LogsMissedSameDay AS INT)                     AS logs_missed_same_day,
+            CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
+            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            CASE
+                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                     THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL
+                     THEN 'unknown project - is CD Projects stale?'
+            END AS _reject_reason
+        FROM cd_bronze_man_daily_log_compliance b
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+    )
+);
+
 CREATE OR REPLACE TABLE cd_silver_man_daily_log_compliance AS
-SELECT * FROM (
-    SELECT
-        TRIM(ProjectKey.Title)                              AS project_id,
-        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)               AS month_start,
-        CAST(LogsExpected AS INT)                           AS logs_expected,
-        -- MISSED SAME DAY, not submitted. SCORECARD CALC!E28 scores whether the log went
-        -- in on the day of the work; a log typed up three days later is submitted and is
-        -- still a miss. This parser used to read LogsSubmitted, which measures a different
-        -- and easier thing - and gold, the model and the scorecard have always asked for
-        -- the harder one.
-        CAST(LogsMissedSameDay AS INT)                      AS logs_missed_same_day,
-        CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
-        ROW_NUMBER() OVER (PARTITION BY TRIM(ProjectKey.Title),
-                                        CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
-                           ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
-    FROM cd_bronze_man_daily_log_compliance
-    WHERE ProjectKey.Title IS NOT NULL AND MonthStart IS NOT NULL
-)
-WHERE _rn = 1
-  AND project_id IN (SELECT project_id FROM mv_valid_projects);
+SELECT project_id, month_start, logs_expected, logs_missed_same_day,
+       last_modified, last_modified_by
+FROM mv_daily_log_compliance
+WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 -- ---------------------------------------------------------------------------
 -- Job Register - the BUILD site, not the reporting site
@@ -355,34 +510,79 @@ WHERE _rn = 1;
 -- the project, the month and what was wrong with it.
 
 CREATE OR REPLACE TABLE cd_dq_rejects_manual AS
-SELECT 'cd_silver_man_risks' AS target_table,
-       TRIM(ProjectKey.Title) AS project_id,
-       CAST(MonthStart AS DATE) AS month_start,
-       CONCAT('risk #', CAST(RiskNumber AS STRING)) AS item_ref,
-       'unknown project - is CD Projects stale?' AS reason,
-       CAST(Modified AS TIMESTAMP) AS last_modified,
-       TRIM(Editor.Title) AS last_modified_by
-FROM cd_bronze_man_risks
-WHERE ProjectKey.Title IS NOT NULL
-  AND TRIM(ProjectKey.Title) NOT IN (SELECT project_id FROM mv_valid_projects)
+SELECT 'cd_silver_man_wins' AS target_table, project_id, month_start AS month_start,
+       CONCAT('win #', CAST(win_number AS STRING)) AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month, win number) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_wins
+WHERE _reject_reason IS NOT NULL OR _versions > 1
 
 UNION ALL
-SELECT 'cd_silver_man_risks', TRIM(ProjectKey.Title), CAST(MonthStart AS DATE),
-       CONCAT('risk #', CAST(RiskNumber AS STRING)),
-       CONCAT('invalid ImpactCode: ', COALESCE(ImpactCode, '(blank)')),
-       CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
-FROM cd_bronze_man_risks
-WHERE UPPER(TRIM(COALESCE(ImpactCode, ''))) NOT IN ('HIGH', 'MEDIUM', 'LOW')
+SELECT 'cd_silver_man_risks' AS target_table, project_id, month_start AS month_start,
+       CONCAT('risk #', CAST(risk_number AS STRING)) AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month, risk number) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_risks
+WHERE _reject_reason IS NOT NULL OR _versions > 1
 
 UNION ALL
-SELECT 'cd_silver_man_wins', TRIM(ProjectKey.Title), CAST(MonthStart AS DATE),
-       CONCAT('win #', CAST(WinNumber AS STRING)),
-       CONCAT('invalid WinType: ', COALESCE(WinType, '(blank)')),
-       CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
-FROM cd_bronze_man_wins
-WHERE UPPER(TRIM(COALESCE(WinType, ''))) NOT IN ('REALIZED', 'FOCUSAREA')
+SELECT 'cd_silver_man_priority_items' AS target_table, project_id, month_start AS month_start,
+       CONCAT('priority item #', CAST(item_number AS STRING)) AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month, item number) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_priority_items
+WHERE _reject_reason IS NOT NULL OR _versions > 1
 
 UNION ALL
+SELECT 'cd_silver_man_flags' AS target_table, project_id, month_start AS month_start,
+       'monthly flags' AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_flags
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+SELECT 'cd_silver_man_survey' AS target_table, project_id, month_start AS month_start,
+       CONCAT('question #', CAST(question_number AS STRING)) AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month, question number) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_survey
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+SELECT 'cd_silver_man_safety_monthly' AS target_table, project_id, month_start AS month_start,
+       'monthly safety' AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_safety_monthly
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+SELECT 'cd_silver_man_quality_monthly' AS target_table, project_id, month_start AS month_start,
+       'monthly quality' AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_quality_monthly
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+SELECT 'cd_silver_man_milestones' AS target_table, project_id, CAST(NULL AS DATE) AS month_start,
+       CONCAT('milestone "', milestone_name, '"') AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, milestone name) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_milestones
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+SELECT 'cd_silver_man_daily_log_compliance' AS target_table, project_id, month_start AS month_start,
+       'daily log compliance' AS item_ref,
+       COALESCE(_reject_reason, 'conflicting duplicate - (project, month) has more than one version; resolve in SharePoint') AS reason,
+       last_modified, last_modified_by
+FROM mv_daily_log_compliance
+WHERE _reject_reason IS NOT NULL OR _versions > 1
+
+UNION ALL
+
 -- A MonthStart that is not the 1st is corrected, not rejected - but it is recorded, because
 -- a silent correction is still a difference between what someone typed and what the report
 -- shows.

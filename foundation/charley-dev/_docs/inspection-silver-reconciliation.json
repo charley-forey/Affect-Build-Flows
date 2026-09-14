@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-09-10T10:37:44.455115+00:00",
+  "batch": "20260910T095953-d161e967",
+  "candidate_run": "4a59bed595504fd69a859e78121e507c",
+  "inspections": 21,
+  "all_keys_match": true,
+  "compared_fields": [
+    "item_count",
+    "conforming_item_count",
+    "deficient_item_count",
+    "not_inspected_item_count",
+    "na_item_count",
+    "neutral_item_count",
+    "percent_complete",
+    "template_id",
+    "inspectors_json"
+  ],
+  "errors": [],
+  "scope": "Independent SQL endpoint silver values versus raw archived inspections; no model/report consumer yet"
+}

@@ -1,0 +1,49 @@
+table man_QcDohResult
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ItemKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemKey
+
+	column ResponsibilityCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ResponsibilityCode
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column VerifiedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: VerifiedDate
+		formatString: yyyy-mm-dd
+
+	column VerifiedBy
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VerifiedBy
+
+	column EvidenceLink
+		dataType: string
+		summarizeBy: none
+		sourceColumn: EvidenceLink
+
+	column Notes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Notes
+
+	partition man_QcDohResult = entity
+		mode: directLake
+		source
+			entityName: man_qcdohresult
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -1,0 +1,47 @@
+{
+  "captured_at": "2026-09-10T08:43:15.131535+00:00",
+  "model_id": "5b66f1ab-51ba-4eda-8646-7705b1ba9084",
+  "scope": "Revised expressions evaluated read-only with synthetic counts and actual candidate project filters; model definitions not deployed",
+  "checks": [
+    {
+      "measure": "Gate Template Completion",
+      "query": "EVALUATE ROW(\"no_project\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(0,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"multiple_projects\",CALCULATE(VAR Recorded = 20\nVAR Completed = COALESCE(20, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(2,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"unknown_project\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),FILTER(ALL(dim_Project),ISBLANK(dim_Project[ProjectKey]))),\"no_input\",CALCULATE(VAR Recorded = 0\nVAR Completed = COALESCE(BLANK(), 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"zero_completed\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(BLANK(), 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"partial\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"complete\",CALCULATE(VAR Recorded = 10\nVAR Completed = COALESCE(10, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"too_many_records\",CALCULATE(VAR Recorded = 11\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"too_many_completions\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(6, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"no_template\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 0\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)))",
+      "result": [
+        {
+          "[no_project]": null,
+          "[multiple_projects]": null,
+          "[unknown_project]": null,
+          "[no_input]": null,
+          "[zero_completed]": 0.0,
+          "[partial]": 0.3,
+          "[complete]": 1.0,
+          "[too_many_records]": null,
+          "[too_many_completions]": null,
+          "[no_template]": null
+        }
+      ],
+      "scenarios": 10,
+      "passed": true
+    },
+    {
+      "measure": "Checklist Template Completion",
+      "query": "EVALUATE ROW(\"no_project\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(0,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"multiple_projects\",CALCULATE(VAR Recorded = 20\nVAR Completed = COALESCE(20, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(2,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"unknown_project\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),FILTER(ALL(dim_Project),ISBLANK(dim_Project[ProjectKey]))),\"no_input\",CALCULATE(VAR Recorded = 0\nVAR Completed = COALESCE(BLANK(), 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"zero_completed\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(BLANK(), 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"partial\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"complete\",CALCULATE(VAR Recorded = 10\nVAR Completed = COALESCE(10, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"too_many_records\",CALCULATE(VAR Recorded = 11\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"too_many_completions\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(6, 0)\nVAR Defined = 10\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)),\"no_template\",CALCULATE(VAR Recorded = 5\nVAR Completed = COALESCE(3, 0)\nVAR Defined = 0\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined)),TOPN(1,FILTER(ALL(dim_Project),NOT ISBLANK(dim_Project[ProjectKey])),dim_Project[ProjectKey],ASC)))",
+      "result": [
+        {
+          "[no_project]": null,
+          "[multiple_projects]": null,
+          "[unknown_project]": null,
+          "[no_input]": null,
+          "[zero_completed]": 0.0,
+          "[partial]": 0.3,
+          "[complete]": 1.0,
+          "[too_many_records]": null,
+          "[too_many_completions]": null,
+          "[no_template]": null
+        }
+      ],
+      "scenarios": 10,
+      "passed": true
+    }
+  ]
+}

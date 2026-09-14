@@ -1,0 +1,44 @@
+table meta_PipelineRun
+
+	column RunId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RunId
+
+	column RunAt
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: RunAt
+		formatString: yyyy-mm-dd
+
+	column Stage
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Stage
+
+	column Status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Status
+
+	column Expectations
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Expectations
+
+	column Failing
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Failing
+
+	column Blocking
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Blocking
+
+	partition meta_PipelineRun = entity
+		mode: directLake
+		source
+			entityName: meta_pipelinerun
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

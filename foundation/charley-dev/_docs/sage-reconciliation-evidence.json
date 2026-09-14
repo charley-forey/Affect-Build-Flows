@@ -1,0 +1,214 @@
+{
+  "started_at": "2026-09-10T06:25:26.6026388Z",
+  "source": "Fabric SQL analytics endpoint; current visible bronze and silver tables",
+  "limitation": "Endpoint synchronization and upstream source freshness are not certified by these queries.",
+  "workspace_id": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "database": "CD_Silver_Lakehouse",
+  "checks": [
+    {
+      "name": "sage_ar.header_keys",
+      "query": "\nSELECT invoice_uid FROM cd_silver_sage_ar_invoices\nGROUP BY invoice_uid HAVING invoice_uid IS NULL OR COUNT(*) > 1\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.line_keys",
+      "query": "\nSELECT line_uid FROM cd_silver_sage_ar_lines\nGROUP BY line_uid HAVING line_uid IS NULL OR COUNT(*) > 1\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.orphan_lines",
+      "query": "\nSELECT l.* FROM cd_silver_sage_ar_lines l\nLEFT JOIN cd_silver_sage_ar_invoices h ON l.invoice_uid = h.invoice_uid\nWHERE h.invoice_uid IS NULL\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.headers_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acrinv) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ar_invoices) s\nWHERE b.n <> s.n\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.lines_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_arivln) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ar_lines) s\nWHERE b.n <> s.n\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.invoice_line_amounts",
+      "query": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM cd_silver_sage_ar_invoices h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM cd_silver_sage_ar_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ap.header_keys",
+      "query": "\nSELECT invoice_uid FROM cd_silver_sage_ap_invoices\nGROUP BY invoice_uid HAVING invoice_uid IS NULL OR COUNT(*) > 1\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ap.line_keys",
+      "query": "\nSELECT line_uid FROM cd_silver_sage_ap_lines\nGROUP BY line_uid HAVING line_uid IS NULL OR COUNT(*) > 1\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ap.orphan_lines",
+      "query": "\nSELECT l.* FROM cd_silver_sage_ap_lines l\nLEFT JOIN cd_silver_sage_ap_invoices h ON l.invoice_uid = h.invoice_uid\nWHERE h.invoice_uid IS NULL\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ap.headers_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acpinv) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ap_invoices) s\nWHERE b.n <> s.n\n",
+      "status": "violations",
+      "rows": [
+        {
+          "bronze_rows": 879,
+          "silver_rows": 875
+        }
+      ],
+      "failing_rows": 1
+    },
+    {
+      "name": "sage_ap.lines_row_conservation",
+      "query": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_apivln) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ap_lines) s\nWHERE b.n <> s.n\n",
+      "status": "violations",
+      "rows": [
+        {
+          "bronze_rows": 909,
+          "silver_rows": 905
+        }
+      ],
+      "failing_rows": 1
+    },
+    {
+      "name": "sage_ap.invoice_line_amounts",
+      "query": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM cd_silver_sage_ap_invoices h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM cd_silver_sage_ap_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.bronze_orphan_lines",
+      "query": "\nSELECT l._idnum AS line_uid, l._idref AS invoice_uid\nFROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_arivln l\nLEFT JOIN cd_silver_sage_ar_invoices h ON l._idref = h.invoice_uid\nWHERE h.invoice_uid IS NULL",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.bronze_invoice_line_amounts",
+      "query": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM (SELECT _idnum AS invoice_uid, recnum AS invoice_id, COALESCE(NULLIF(invamt,0), amtpad+invbal) AS invoice_total FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acrinv) h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM (SELECT _idref AS invoice_uid, extprc AS line_total FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_arivln) AS bronze_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.missing_silver_headers",
+      "query": "\nSELECT b._idnum AS invoice_uid, b.recnum AS invoice_id, b.jobnum AS sage_job,\n       b.amtpad AS paid, b.invbal AS balance, b.upddte AS updated_at,\n       COALESCE(NULLIF(b.invamt, 0), b.amtpad + b.invbal) AS invoice_total\nFROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acrinv b\nLEFT JOIN cd_silver_sage_ar_invoices s ON b._idnum = s.invoice_uid\nWHERE s.invoice_uid IS NULL",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ar.bronze_header_orphans",
+      "query": "\nSELECT l._idnum AS line_uid, l._idref AS invoice_uid\nFROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_arivln l\nLEFT JOIN [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acrinv h ON l._idref = h._idnum\nWHERE h._idnum IS NULL",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ap.bronze_orphan_lines",
+      "query": "\nSELECT l._idnum AS line_uid, l._idref AS invoice_uid\nFROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_apivln l\nLEFT JOIN cd_silver_sage_ap_invoices h ON l._idref = h.invoice_uid\nWHERE h.invoice_uid IS NULL",
+      "status": "violations",
+      "rows": [
+        {
+          "line_uid": "DE1B2745-FDA6-F111-B285-7CED8D1CADD7",
+          "invoice_uid": "DD1B2745-FDA6-F111-B285-7CED8D1CADD7"
+        },
+        {
+          "line_uid": "772F2824-8DAC-F111-B285-7CED8D1CADD7",
+          "invoice_uid": "762F2824-8DAC-F111-B285-7CED8D1CADD7"
+        },
+        {
+          "line_uid": "25253D5F-FDA2-F111-B285-7CED8D1CADD7",
+          "invoice_uid": "24253D5F-FDA2-F111-B285-7CED8D1CADD7"
+        },
+        {
+          "line_uid": "567FFDD5-FDA6-F111-B285-7CED8D1CADD7",
+          "invoice_uid": "557FFDD5-FDA6-F111-B285-7CED8D1CADD7"
+        }
+      ],
+      "failing_rows": 4
+    },
+    {
+      "name": "sage_ap.bronze_invoice_line_amounts",
+      "query": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM (SELECT _idnum AS invoice_uid, recnum AS invoice_id, COALESCE(NULLIF(invamt,0), amtpad+invbal) AS invoice_total FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acpinv) h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM (SELECT _idref AS invoice_uid, extttl AS line_total FROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_apivln) AS bronze_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    },
+    {
+      "name": "sage_ap.missing_silver_headers",
+      "query": "\nSELECT b._idnum AS invoice_uid, b.recnum AS invoice_id, b.jobnum AS sage_job,\n       b.amtpad AS paid, b.invbal AS balance, b.upddte AS updated_at,\n       COALESCE(NULLIF(b.invamt, 0), b.amtpad + b.invbal) AS invoice_total\nFROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acpinv b\nLEFT JOIN cd_silver_sage_ap_invoices s ON b._idnum = s.invoice_uid\nWHERE s.invoice_uid IS NULL",
+      "status": "violations",
+      "rows": [
+        {
+          "invoice_uid": "24253D5F-FDA2-F111-B285-7CED8D1CADD7",
+          "invoice_id": 876,
+          "sage_job": null,
+          "paid": 1325.000000,
+          "balance": 0.000000,
+          "updated_at": "2026-08-28T16:29:34.303",
+          "invoice_total": 1325.000000
+        },
+        {
+          "invoice_uid": "DD1B2745-FDA6-F111-B285-7CED8D1CADD7",
+          "invoice_id": 877,
+          "sage_job": null,
+          "paid": 1169.780000,
+          "balance": 0.000000,
+          "updated_at": "2026-09-02T18:44:08.353",
+          "invoice_total": 1169.780000
+        },
+        {
+          "invoice_uid": "557FFDD5-FDA6-F111-B285-7CED8D1CADD7",
+          "invoice_id": 878,
+          "sage_job": null,
+          "paid": 3333.000000,
+          "balance": 0.000000,
+          "updated_at": "2026-09-02T18:44:08.47",
+          "invoice_total": 3333.000000
+        },
+        {
+          "invoice_uid": "762F2824-8DAC-F111-B285-7CED8D1CADD7",
+          "invoice_id": 879,
+          "sage_job": null,
+          "paid": 1169.780000,
+          "balance": 0.000000,
+          "updated_at": "2026-09-09T20:31:56.907",
+          "invoice_total": 1169.780000
+        }
+      ],
+      "failing_rows": 4
+    },
+    {
+      "name": "sage_ap.bronze_header_orphans",
+      "query": "\nSELECT l._idnum AS line_uid, l._idref AS invoice_uid\nFROM [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_apivln l\nLEFT JOIN [CD_Bronze_Lakehouse].[dbo].cd_bronze_sage_acpinv h ON l._idref = h._idnum\nWHERE h._idnum IS NULL",
+      "status": "passed",
+      "rows": [],
+      "failing_rows": 0
+    }
+  ],
+  "completed_at": "2026-09-10T06:26:08.0254398Z"
+}

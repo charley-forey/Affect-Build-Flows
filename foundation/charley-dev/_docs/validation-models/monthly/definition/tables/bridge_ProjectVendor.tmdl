@@ -1,0 +1,83 @@
+table bridge_ProjectVendor
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column VendorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorName
+
+	column TradeName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeName
+
+	column City
+		dataType: string
+		summarizeBy: none
+		sourceColumn: City
+
+	column StateCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StateCode
+
+	column BusinessPhone
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BusinessPhone
+
+	column EmailAddress
+		dataType: string
+		summarizeBy: none
+		sourceColumn: EmailAddress
+
+	column LicenseNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: LicenseNumber
+
+	column LaborUnion
+		dataType: string
+		summarizeBy: none
+		sourceColumn: LaborUnion
+
+	column IsPrequalified
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsPrequalified
+
+	column IsActive
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsActive
+
+	column IsUnionMember
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsUnionMember
+
+	column SyncedToErp
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: SyncedToErp
+
+	column IsMissingFromErp
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsMissingFromErp
+
+	partition bridge_ProjectVendor = entity
+		mode: directLake
+		source
+			entityName: bridge_projectvendor
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

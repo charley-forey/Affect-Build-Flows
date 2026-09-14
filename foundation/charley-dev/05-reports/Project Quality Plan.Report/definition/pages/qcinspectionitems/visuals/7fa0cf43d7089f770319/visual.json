@@ -1,0 +1,182 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "7fa0cf43d7089f770319",
+  "position": {
+    "x": 20,
+    "y": 260,
+    "z": 0,
+    "width": 1164,
+    "height": 360,
+    "tabOrder": 13
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "ProjectKey"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.ProjectKey",
+              "nativeQueryRef": "ProjectKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "InspectionKey"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.InspectionKey",
+              "nativeQueryRef": "InspectionKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "ItemKey"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.ItemKey",
+              "nativeQueryRef": "ItemKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "ItemName"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.ItemName",
+              "nativeQueryRef": "ItemName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "ResponseCategory"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.ResponseCategory",
+              "nativeQueryRef": "ResponseCategory"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "ResponseType"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.ResponseType",
+              "nativeQueryRef": "ResponseType"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "SourceStatus"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.SourceStatus",
+              "nativeQueryRef": "SourceStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspectionItem"
+                    }
+                  },
+                  "Property": "SourceResponse"
+                }
+              },
+              "queryRef": "fct_ProcoreInspectionItem.SourceResponse",
+              "nativeQueryRef": "SourceResponse"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Inspection item responses \u2014 unchanged source labels. Shows ProjectKey, InspectionKey, ItemKey, ItemName, ResponseCategory, ResponseType, SourceStatus, SourceResponse for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Inspection item responses \u2014 unchanged source labels'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

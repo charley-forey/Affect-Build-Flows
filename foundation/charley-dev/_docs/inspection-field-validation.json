@@ -1,0 +1,16 @@
+{
+  "checked_at_utc": "2026-09-10T10:16:31.356977+00:00",
+  "targeted_silver_checks_passed": 70,
+  "full_test_suites_passed": 17,
+  "deployed": false,
+  "files": {
+    "02-transformation/sql/silver/24_qc_procore_silver.sql": "33dbcd0ab3add5f908a1dd6a77b5154cd660bf1ca2951e1bb4512c47f64063ae",
+    "02-transformation/sql/silver/01_source_views_cd.sql": "222c250637f25adf686a89ede2b4514383a2b18f66a82a3a6454efeafd75dd8e",
+    "_local/tests/test_silver.py": "8770d6f34ae5ea5fe4ca188c1197181e91a80a1c0cd9afe13bf06cce59ae6355"
+  },
+  "limitations": [
+    "Local SQL execution and contract tests, not a fresh Spark build",
+    "Inspection data has no gold/model/report consumer yet",
+    "No inspection completion percentage inferred from status or response counts"
+  ]
+}

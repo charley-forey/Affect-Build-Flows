@@ -1,0 +1,32 @@
+{
+  "captured_at": "2026-09-10T08:36:57.397877+00:00",
+  "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+  "source_run_id": "78ea309feb6047cabfc7cf58f7521997",
+  "queries": {
+    "empty": [],
+    "unknown": [
+      {
+        "[Unknown]": null,
+        "[Zero]": 0
+      }
+    ],
+    "balances": [
+      {
+        "[Owner]": 889664.45,
+        "[ExpectedOwner]": 889664.45,
+        "[Sub]": 404444.69999999995,
+        "[ExpectedSub]": 404444.69999999995,
+        "[Net]": 485219.75,
+        "[ExpectedNet]": 485219.75,
+        "[Contract]": 35451887.39,
+        "[ExpectedContract]": 35451887.39
+      }
+    ]
+  },
+  "checks": [
+    "Owner balance agrees with its fact aggregation within one cent",
+    "Sub balance agrees with its fact aggregation within one cent",
+    "Net balance agrees with its fact aggregation within one cent",
+    "Contract balance agrees with its fact aggregation within one cent"
+  ]
+}

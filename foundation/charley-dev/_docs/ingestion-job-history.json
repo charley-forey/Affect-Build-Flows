@@ -1,0 +1,983 @@
+{
+  "cd_01_extract_procore": {
+    "value": [
+      {
+        "id": "ee44157a-50d3-4544-9ae3-9c36d1bb60ac",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "99a10aa5-4e93-4a8b-9e83-3f58b674ca09",
+        "startTimeUtc": "2026-09-10T06:26:52.5622492",
+        "endTimeUtc": "2026-09-10T06:27:28.968053"
+      },
+      {
+        "id": "5dbfd2bd-58bd-4343-817a-b2fb5d7e366a",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "2fbeec98-bac5-4e8f-9bfc-194973e96987",
+        "startTimeUtc": "2026-09-10T06:10:30.6142637",
+        "endTimeUtc": "2026-09-10T06:25:44.8569342"
+      },
+      {
+        "id": "a7d362e0-2fea-42ff-8b66-f0ed41b4b523",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "bb94d3f0-0f8d-497c-b981-c9e0fa590f76",
+        "startTimeUtc": "2026-09-09T06:25:28.9861165",
+        "endTimeUtc": "2026-09-09T06:26:25.0713504"
+      },
+      {
+        "id": "a3eb8dc3-7000-4c35-bc8b-e463cba07f32",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "message": "RuntimeError: 12 of 44 endpoints failed: incident_injuries, incident_near_misses, incident_severity_levels, manpower_daily_totals, manpower_logs, daily_log_headers, schedule, prime_contract_line_items, payment_applications, work_order_contract_line_items, purchase_order_contract_line_items, budget_detail_rows\n---------------------------------------------------------------------------\nRuntimeError                              Traceback (most recent call last)\nCell In[20], line 19\n     14     print(f\"  {name:<32} {detail}\")\n     15 # Raise only now. Everything that could land has landed and been merged, so the rerun\n     16 # after a fix is incremental rather than a full re-pull - and the pipeline still goes\n     17 # red, which is the point. Silently succeeding on 43 of 44 is how one endpoint stays\n     18 # broken for a month.\n---> 19 raise RuntimeError(\n     20     f\"{len(failures)} of {len(summary)} endpoints failed: \"\n     21     + \", \".join(name for name, _ in failures)\n     22 )\n\nRuntimeError: 12 of 44 e",
+          "isRetriable": false
+        },
+        "rootActivityId": "b82ec361-4c0d-4f7f-9d43-754d05316060",
+        "startTimeUtc": "2026-09-09T06:00:59.1048656",
+        "endTimeUtc": "2026-09-09T06:17:00.5377612"
+      },
+      {
+        "id": "1dabd0cd-e3f9-45ce-898c-aae527931911",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "aa969e44-1be3-4a68-8b49-d339573921f4",
+        "startTimeUtc": "2026-09-08T06:26:53.7702315",
+        "endTimeUtc": "2026-09-08T06:27:25.8630513"
+      },
+      {
+        "id": "c9f7bffe-b7cc-49dc-bb45-415a18a991c3",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "6d2c8068-8653-40dc-a0be-1f8e702ccdc5",
+        "startTimeUtc": "2026-09-08T06:11:25.7958631",
+        "endTimeUtc": "2026-09-08T06:25:32.4805134"
+      },
+      {
+        "id": "b885437b-1834-40ef-b917-5d80f080fcbb",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "f182b09f-c9fa-4ca1-be07-f15cccff5c4f",
+        "startTimeUtc": "2026-09-07T06:26:13.5986031",
+        "endTimeUtc": "2026-09-07T06:27:27.9776439"
+      },
+      {
+        "id": "5f0dd80a-8067-4e28-9eec-8ca66cd03a70",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "39815dc8-a5ae-46ac-ba29-b0fefa2c7fe4",
+        "startTimeUtc": "2026-09-07T06:00:45.6949892",
+        "endTimeUtc": "2026-09-07T06:16:09.3066994"
+      },
+      {
+        "id": "099bbd82-669e-4b14-ba18-60356f93f782",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "f17b958a-cd08-43d5-9df4-773356626e63",
+        "startTimeUtc": "2026-09-06T06:26:52.0368466",
+        "endTimeUtc": "2026-09-06T06:27:26.4708463"
+      },
+      {
+        "id": "bbf13280-3caa-4c3c-bfb0-f79146c18e37",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "a7bc19b4-570a-4842-880f-5cf7325fba3d",
+        "startTimeUtc": "2026-09-06T06:10:30.7092838",
+        "endTimeUtc": "2026-09-06T06:25:26.6849466"
+      },
+      {
+        "id": "2109935f-63e2-45b8-8fb5-02c9b8a295e0",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "e60d0818-6bc8-4da5-bfbe-a37f2f6a193e",
+        "startTimeUtc": "2026-09-05T06:26:50.7203719",
+        "endTimeUtc": "2026-09-05T06:27:30.7480905"
+      },
+      {
+        "id": "b089ed72-4bd7-4671-874d-e7cbf315960a",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "116bd116-9c71-4742-bf34-5d9d459b3ec1",
+        "startTimeUtc": "2026-09-05T06:11:21.128091",
+        "endTimeUtc": "2026-09-05T06:25:37.9612276"
+      },
+      {
+        "id": "80b5aa11-e042-47e3-afb8-5f599e88c693",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "41dad152-5c7c-4ffb-be04-42224c611dfd",
+        "startTimeUtc": "2026-09-04T06:26:19.4421295",
+        "endTimeUtc": "2026-09-04T06:27:04.9247961"
+      },
+      {
+        "id": "5fd34ff4-9b02-45c8-acfd-6edc37350ce3",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "b958a244-c408-4b4c-a2fe-57c4b5360269",
+        "startTimeUtc": "2026-09-04T06:07:24.2264691",
+        "endTimeUtc": "2026-09-04T06:21:43.0839129"
+      },
+      {
+        "id": "98086100-f648-44e1-98b7-d07ca6d6695c",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "ee1f9f6e-f9b6-41eb-a3aa-68002ea25fb3",
+        "startTimeUtc": "2026-09-03T06:27:52.4252818",
+        "endTimeUtc": "2026-09-03T06:28:24.8575902"
+      },
+      {
+        "id": "cd4782af-5d48-4756-ad84-21b641b5b30f",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "3c0f7376-3b4d-4e4c-8da3-109876f39535",
+        "startTimeUtc": "2026-09-03T06:11:14.4330312",
+        "endTimeUtc": "2026-09-03T06:26:47.025651"
+      },
+      {
+        "id": "b22dcf60-11eb-458a-a8df-e854fa283c92",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "1d8a9ea9-2bfd-42bc-93d6-22a455c0595c",
+        "startTimeUtc": "2026-09-02T06:21:41.6869666",
+        "endTimeUtc": "2026-09-02T06:22:25.3389794"
+      },
+      {
+        "id": "96aeab22-1a19-4a7d-85e3-520101b0e091",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "b1d77701-91c0-4d52-a528-299c8de8f28c",
+        "startTimeUtc": "2026-09-02T06:03:47.358133",
+        "endTimeUtc": "2026-09-02T06:18:10.3156865"
+      },
+      {
+        "id": "955b16cc-d83e-4719-86a3-e5a83b4033d4",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "328b6b95-bdab-4f9a-8a4f-e16278e4a368",
+        "startTimeUtc": "2026-09-01T06:27:55.4746963",
+        "endTimeUtc": "2026-09-01T06:29:25.9658331"
+      },
+      {
+        "id": "8fb9f17c-75c2-4741-ada7-e0d0c9b1d3a0",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "d2f97bc5-0b44-4b4e-81ed-fd119e442d80",
+        "startTimeUtc": "2026-09-01T06:03:42.7466781",
+        "endTimeUtc": "2026-09-01T06:19:12.9856652"
+      },
+      {
+        "id": "d33da32c-1d4b-4c8b-aa80-0004fb79d9a7",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "ee15ef5c-2842-4dd7-beb4-f6c4aab577b0",
+        "startTimeUtc": "2026-08-31T06:22:29.3226592",
+        "endTimeUtc": "2026-08-31T06:23:21.213631"
+      },
+      {
+        "id": "f7f92b70-3d04-4ba7-8e42-f07a86656f80",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "d99bbc27-cf55-4a73-9b85-a06e10cc6474",
+        "startTimeUtc": "2026-08-31T06:00:38.7091836",
+        "endTimeUtc": "2026-08-31T06:14:14.0078261"
+      },
+      {
+        "id": "e28e0116-3af2-427d-9b89-fdf93adeacfc",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "6c73b62f-8150-48b4-baa7-0863d47c2969",
+        "startTimeUtc": "2026-08-30T06:25:23.6330025",
+        "endTimeUtc": "2026-08-30T06:26:20.2430666"
+      },
+      {
+        "id": "335580a5-df75-487f-8d52-c402f8399906",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "5d34733b-ff97-4b4e-81ca-a9386e5275c9",
+        "startTimeUtc": "2026-08-30T06:06:39.7464002",
+        "endTimeUtc": "2026-08-30T06:21:54.3965756"
+      },
+      {
+        "id": "a7058661-46d2-43f6-aa16-255d416e51f2",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "503a1de2-e6fc-4f13-a251-40e36982c5f8",
+        "startTimeUtc": "2026-08-29T06:30:03.5290806",
+        "endTimeUtc": "2026-08-29T06:31:22.1439093"
+      },
+      {
+        "id": "499f8432-7e82-4b2c-9928-c9fa9ef8b9e0",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "8eceac03-258f-4889-a946-744db5ef880c",
+        "startTimeUtc": "2026-08-29T06:06:28.4213154",
+        "endTimeUtc": "2026-08-29T06:21:10.8094287"
+      },
+      {
+        "id": "949590d3-bf57-472b-af97-325f39862c79",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "cb6ae51d-2237-4aed-b56a-23d8e2bef55f",
+        "startTimeUtc": "2026-08-28T06:03:56.996097",
+        "endTimeUtc": "2026-08-28T06:21:47.1047808"
+      },
+      {
+        "id": "f26cc42c-1a80-4d6b-8871-c1328745350c",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "c0c303e6-8af1-4b5a-9afc-04e67026c1e3",
+        "startTimeUtc": "2026-08-27T06:00:40.1062882",
+        "endTimeUtc": "2026-08-27T06:20:59.96455"
+      },
+      {
+        "id": "68136d53-1f4f-4cd9-9608-0cbaeddbf0e3",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "51f185ef-2b0b-4bd5-af73-8b3e6899d3a9",
+        "startTimeUtc": "2026-08-26T06:00:41.572038",
+        "endTimeUtc": "2026-08-26T06:19:53.9629591"
+      },
+      {
+        "id": "b1a16a7a-9a8d-41f9-9ce1-45cdf9eb837c",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "c0c7cefa-1aae-476f-a649-17dfc21a3fab",
+        "startTimeUtc": "2026-08-25T11:17:01.8620326",
+        "endTimeUtc": "2026-08-25T11:33:55.5480007"
+      },
+      {
+        "id": "a0f0d6b1-fea6-4e03-ae69-3cc572db0b8e",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "9dc7ab13-ca84-4710-b486-4e965469e3ea",
+        "startTimeUtc": "2026-08-25T10:36:25.2224553",
+        "endTimeUtc": "2026-08-25T10:52:08.0773989"
+      },
+      {
+        "id": "5e250b39-c280-4d43-a32d-3e7a92404f44",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "PipelineRunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "f5528b6f-6c24-4be6-8eb3-0852d9254a30",
+        "startTimeUtc": "2026-08-25T06:12:00.4072665",
+        "endTimeUtc": "2026-08-25T06:27:28.2452356"
+      },
+      {
+        "id": "721191fe-2204-4cb7-8a9b-b9fc7b6df9ed",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "8c20a9bd-48ac-4c0a-87dd-c76584d520ba",
+        "startTimeUtc": "2026-08-25T03:30:47.5961091",
+        "endTimeUtc": "2026-08-25T03:45:44.5227808"
+      },
+      {
+        "id": "b217e7dc-9f28-4fa1-8361-e6356f4910b0",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "4ec1fd53-3366-4e6a-8d55-0cd9d10ed75b",
+        "startTimeUtc": "2026-08-25T03:12:08.9595007",
+        "endTimeUtc": "2026-08-25T03:27:34.5541355"
+      },
+      {
+        "id": "9b975931-df54-46a1-aef8-8f4f3b47a026",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "3e243ddf-fe2d-46d5-9a34-fcfef0798659",
+        "startTimeUtc": "2026-08-25T02:47:04.413064",
+        "endTimeUtc": "2026-08-25T03:01:33.6770549"
+      },
+      {
+        "id": "0726cfa3-76af-4a11-9415-bd444b9a0936",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "3bb41f0b-8d5b-4d44-9ef4-780e3e75b82d",
+        "startTimeUtc": "2026-08-25T02:33:46.6104408",
+        "endTimeUtc": "2026-08-25T02:45:50.5422648"
+      },
+      {
+        "id": "c16fdb72-979f-4cae-a026-050409a1e964",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "ef859dc0-d579-41e4-bfa4-30f610de4754",
+        "startTimeUtc": "2026-08-25T02:20:23.7446872",
+        "endTimeUtc": "2026-08-25T02:32:57.2348466"
+      },
+      {
+        "id": "62f9e5f1-f9a4-4c22-b3ba-f8a3927a6954",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "a5935101-056f-4be8-b4b5-2fcc65f944f5",
+        "startTimeUtc": "2026-08-25T02:08:31.1694186",
+        "endTimeUtc": "2026-08-25T02:19:40.2139569"
+      },
+      {
+        "id": "3afd58ce-5275-44b9-99f0-ebfbf467147d",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "d6bfc45f-185c-41f0-89c7-20b27852d480",
+        "startTimeUtc": "2026-08-25T02:01:25.6291709",
+        "endTimeUtc": "2026-08-25T02:05:13.1918833"
+      },
+      {
+        "id": "8d18ff26-12c0-459d-b543-1684bbdd0967",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "d94591bd-e401-425f-93da-e2f53dcb6e8a",
+        "startTimeUtc": "2026-08-25T01:56:44.6178576",
+        "endTimeUtc": "2026-08-25T01:58:48.2232166"
+      },
+      {
+        "id": "1639a763-5ded-4272-9564-3f3c8eba6cdc",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "5a342ce7-1a1e-48b2-8a45-f40fd5b63cff",
+        "startTimeUtc": "2026-08-25T01:48:14.2759929",
+        "endTimeUtc": "2026-08-25T01:49:40.6960619"
+      },
+      {
+        "id": "f4945c95-db0c-4bc5-b197-805b9a94ad9b",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "3c8868b4-e6f4-4c9d-96a9-5d4176bdfa22",
+        "startTimeUtc": "2026-08-25T01:43:02.7730392",
+        "endTimeUtc": "2026-08-25T01:43:44.2934308"
+      },
+      {
+        "id": "d7819d8a-0454-4699-8702-f02aeb9d539a",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "de6e5a6d-cc73-4880-97dd-dde610ed8032",
+        "startTimeUtc": "2026-08-25T01:38:46.2657841",
+        "endTimeUtc": "2026-08-25T01:39:07.8965844"
+      },
+      {
+        "id": "42c8f074-cefb-43a3-a053-9c44f1508eca",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "jobType": "RunNotebook",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "e9d405cb-3834-4854-b4d1-aaad01b94ffc",
+          "errorCode": "System_Cancelled_Session_Statements_Failed",
+          "message": "System cancelled the Spark session due to statement execution failures",
+          "isRetriable": false
+        },
+        "rootActivityId": "d544dafe-2725-48d4-9a55-939b0bf498d3",
+        "startTimeUtc": "2026-08-25T01:35:52.4532928",
+        "endTimeUtc": "2026-08-25T01:36:25.9060684"
+      }
+    ]
+  },
+  "CD_Sage_Ingest": {
+    "value": [
+      {
+        "id": "27888c53-3654-4606-8052-ada28827a09e",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "a254c16d-2996-4d2d-a58d-40e2eecac451",
+        "startTimeUtc": "2026-09-10T06:00:36.6130856",
+        "endTimeUtc": "2026-09-10T06:04:13.7881151"
+      },
+      {
+        "id": "24cdeed9-15a6-4082-96e5-bf75c8924f8c",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "b4942368-3550-424a-8249-718af64146f2",
+          "errorCode": "GatewayDataSourceOpenConnectionTimeout",
+          "message": "Something went wrong, please try again later. If the error persists, please contact support.",
+          "isRetriable": false
+        },
+        "rootActivityId": "6844e525-6521-4d8b-81aa-58d9dd23d9e9",
+        "startTimeUtc": "2026-09-09T06:06:29.3671381",
+        "endTimeUtc": "2026-09-09T06:08:36.6208685"
+      },
+      {
+        "id": "e62cb54f-eb27-4301-bbb9-0178c16c7d85",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "b4942368-3550-424a-8249-718af64146f2",
+          "errorCode": "ActionUserFailure",
+          "message": "Something went wrong, please try again later. If the error persists, please contact support.",
+          "isRetriable": false
+        },
+        "rootActivityId": "1007d623-7972-45a5-80e4-311770490e9b",
+        "startTimeUtc": "2026-09-09T06:00:59.9394126",
+        "endTimeUtc": "2026-09-09T06:05:07.1723793"
+      },
+      {
+        "id": "01a30437-3dee-4586-a2df-8af212c80814",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "9f6c129d-e904-41e4-9325-91a7f14036c1",
+        "startTimeUtc": "2026-09-08T06:00:37.6870555",
+        "endTimeUtc": "2026-09-08T06:03:44.8977537"
+      },
+      {
+        "id": "af79a8dc-893b-48d8-a2fe-1891b05f4343",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "74ce580f-c4c8-4113-969a-b80495910e8e",
+        "startTimeUtc": "2026-09-07T06:00:43.5402381",
+        "endTimeUtc": "2026-09-07T06:04:20.700473"
+      },
+      {
+        "id": "5fa4de3e-eed2-48fb-8f4c-9b8712ff855a",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "bc58187f-c4ec-45fd-90e6-1ff8c0a40d00",
+        "startTimeUtc": "2026-09-06T06:00:37.074719",
+        "endTimeUtc": "2026-09-06T06:04:14.2397461"
+      },
+      {
+        "id": "8a8b0662-eafa-4aff-b93d-3671b78a0405",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "b6b6d947-5560-448d-8a9d-6aac88ec89eb",
+        "startTimeUtc": "2026-09-05T06:00:36.0785864",
+        "endTimeUtc": "2026-09-05T06:03:43.2537019"
+      },
+      {
+        "id": "e2909e41-21d9-490d-94bc-5340603ae8fe",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "eb0adc73-85c8-469a-8901-88b471f5a82f",
+        "startTimeUtc": "2026-09-04T06:00:36.8450634",
+        "endTimeUtc": "2026-09-04T06:03:44.0138703"
+      },
+      {
+        "id": "cf90652e-1740-406d-b2e4-669a31f5bad9",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "909bf4a8-cea1-4065-8159-9b3e4765e257",
+        "startTimeUtc": "2026-09-03T06:01:06.8882486",
+        "endTimeUtc": "2026-09-03T06:04:14.0743261"
+      },
+      {
+        "id": "58bdea2c-cc3b-4ba5-bde0-5357b067bc9d",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "00f9372d-fd54-4ab7-864d-1514aa6e752a",
+        "startTimeUtc": "2026-09-02T06:01:40.9085324",
+        "endTimeUtc": "2026-09-02T06:04:18.0767588"
+      },
+      {
+        "id": "07275220-abc5-4de7-a3e1-ebfd4fecc98a",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "e1a9d31e-f2cd-4905-9edb-92a87b5da46d",
+        "startTimeUtc": "2026-09-01T06:00:38.0325928",
+        "endTimeUtc": "2026-09-01T06:03:45.1966645"
+      },
+      {
+        "id": "3153417c-e4e0-4913-888c-b81a8c13b1d4",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "edfd4cfe-c1e7-419b-8b76-2ff387215530",
+        "startTimeUtc": "2026-08-31T06:00:36.4941324",
+        "endTimeUtc": "2026-08-31T06:04:43.704314"
+      },
+      {
+        "id": "7ba2147f-613d-493c-b3ac-db969a3aaff5",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "a4512f48-9c6a-42e0-9c77-2dee52f34c3c",
+        "startTimeUtc": "2026-08-30T06:00:38.422536",
+        "endTimeUtc": "2026-08-30T06:05:03.6087248"
+      },
+      {
+        "id": "b0aa75ba-e23f-4d3e-a216-e1cd93a30199",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "b4b026eb-2316-4ff7-b866-6aca392cf362",
+        "startTimeUtc": "2026-08-29T06:00:36.9869546",
+        "endTimeUtc": "2026-08-29T06:03:32.1113549"
+      },
+      {
+        "id": "36145cde-6d6c-4914-a793-2ab689577450",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "9233044c-4395-4cc4-8482-8a81bc1dbee5",
+        "startTimeUtc": "2026-08-28T06:00:33.3923161",
+        "endTimeUtc": "2026-08-28T06:03:58.5655992"
+      },
+      {
+        "id": "744529b8-7f6c-4cd5-b673-ad4bed569337",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "bf9da26a-a195-413b-b6fe-758dbde17890",
+        "startTimeUtc": "2026-08-27T06:00:41.5024199",
+        "endTimeUtc": "2026-08-27T06:03:36.7356295"
+      },
+      {
+        "id": "54522173-cbe1-4dd2-b40a-beda84a9e223",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "341f563c-5de7-48a6-af7b-649d21249324",
+        "startTimeUtc": "2026-08-26T06:00:39.5792686",
+        "endTimeUtc": "2026-08-26T06:06:04.7849058"
+      },
+      {
+        "id": "aa332ed2-cb9a-4cdd-bd3c-56ab6935dbd0",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "eb4c7440-d02c-439a-bca7-4d531de300fe",
+        "startTimeUtc": "2026-08-25T22:16:47.6138316",
+        "endTimeUtc": "2026-08-25T22:22:12.8828551"
+      },
+      {
+        "id": "29b46e29-a6f5-4dfd-b796-8be9d5c9a0df",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "b4942368-3550-424a-8249-718af64146f2",
+          "errorCode": "JobInstanceStatusFailed",
+          "message": "Job instance failed without detail error",
+          "isRetriable": false
+        },
+        "rootActivityId": "bbae71e9-4a65-4ce4-ad41-73995f7d5024",
+        "startTimeUtc": "2026-08-25T12:14:14.1515188",
+        "endTimeUtc": "2026-08-25T12:15:09.5592801"
+      },
+      {
+        "id": "10903235-a2b7-41c5-ab17-f168e8243b9b",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "2c54fe57-bc5e-4027-b76e-dca074e838fb",
+        "startTimeUtc": "2026-08-25T11:14:04.5982372",
+        "endTimeUtc": "2026-08-25T11:16:29.7345767"
+      },
+      {
+        "id": "ee588590-07be-4cb0-9cdd-9d949301b69f",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "7a62c5d6-9dcb-4402-8eab-1ae8be39e1cb",
+        "startTimeUtc": "2026-08-25T10:36:25.3188006",
+        "endTimeUtc": "2026-08-25T10:39:20.4609837"
+      },
+      {
+        "id": "0cba8dbe-802e-4305-b8c8-b8dd1d0c7267",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Completed",
+        "failureReason": null,
+        "rootActivityId": "fc79eda5-9ad6-430a-b8ea-6c4fb264357f",
+        "startTimeUtc": "2026-08-25T09:21:14.9505217",
+        "endTimeUtc": "2026-08-25T09:25:10.1803128"
+      },
+      {
+        "id": "1345b360-e7c1-4a7a-a21c-6f77db9147e4",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "b4942368-3550-424a-8249-718af64146f2",
+          "errorCode": "JobInstanceStatusFailed",
+          "message": "Job instance failed without detail error",
+          "isRetriable": false
+        },
+        "rootActivityId": "f526e790-a636-480d-bbdb-76d95b662e79",
+        "startTimeUtc": "2026-08-25T09:14:06.5648251",
+        "endTimeUtc": "2026-08-25T09:14:11.807208"
+      },
+      {
+        "id": "d9f57c31-717e-41c5-abe1-9e71b56c9f41",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "b4942368-3550-424a-8249-718af64146f2",
+          "errorCode": "ActionUserFailure",
+          "message": "Something went wrong, please try again later. If the error persists, please contact support.",
+          "isRetriable": false
+        },
+        "rootActivityId": "f48c49e0-bb98-4e7b-95bc-7ebe0be95b4a",
+        "startTimeUtc": "2026-08-25T08:45:58.1707163",
+        "endTimeUtc": "2026-08-25T08:49:53.3672382"
+      },
+      {
+        "id": "01bdf50b-78f9-49c1-b83e-e1dbcc1e5817",
+        "itemId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+        "jobType": "Refresh",
+        "invokeType": "Manual",
+        "status": "Failed",
+        "failureReason": {
+          "requestId": "b4942368-3550-424a-8249-718af64146f2",
+          "errorCode": "ActionUserFailure",
+          "message": "Something went wrong, please try again later. If the error persists, please contact support.",
+          "isRetriable": false
+        },
+        "rootActivityId": "542746e8-37ce-4312-afee-bb14f8f38d2c",
+        "startTimeUtc": "2026-08-25T08:26:34.5112003",
+        "endTimeUtc": "2026-08-25T08:29:59.7638663"
+      }
+    ]
+  }
+}

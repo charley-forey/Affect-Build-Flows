@@ -1,0 +1,76 @@
+[
+  {
+    "item_id": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+    "name": "cd_01_extract_procore",
+    "mcp_response": {
+      "result": {
+        "content": [
+          {
+            "text": "null",
+            "type": "text"
+          },
+          {
+            "text": "Retry-After: 20\r\nx-ms-operation-id: 857e255d-32c6-4994-83cb-94c7caf85d00\r\nRequestId: 0d153611-0c93-47f6-8208-dca46b7f3c61\r\nDate: Thu, 10 Sep 2026 10:30:20 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/857e255d-32c6-4994-83cb-94c7caf85d00",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      },
+      "jsonrpc": "2.0",
+      "id": 10
+    },
+    "operation": "https://api.fabric.microsoft.com/v1/operations/857e255d-32c6-4994-83cb-94c7caf85d00",
+    "status": "Failed: missing explicit ipynb format"
+  },
+  {
+    "item_id": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+    "name": "cd_01_extract_procore",
+    "mcp_response": {
+      "result": {
+        "content": [
+          {
+            "text": "null",
+            "type": "text"
+          },
+          {
+            "text": "Retry-After: 20\r\nx-ms-operation-id: 53e43d01-e47b-438f-b9a0-2aec8bb1e6f8\r\nRequestId: 6cc05c93-0858-44dc-8853-ee868828d034\r\nDate: Thu, 10 Sep 2026 10:32:10 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/53e43d01-e47b-438f-b9a0-2aec8bb1e6f8",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      },
+      "jsonrpc": "2.0",
+      "id": 11
+    },
+    "operation": "https://api.fabric.microsoft.com/v1/operations/53e43d01-e47b-438f-b9a0-2aec8bb1e6f8",
+    "cells_readback_equal": true
+  },
+  {
+    "item_id": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+    "name": "cd_95_repair_procore_scopes",
+    "mcp_response": {
+      "result": {
+        "content": [
+          {
+            "text": "null",
+            "type": "text"
+          },
+          {
+            "text": "Retry-After: 20\r\nx-ms-operation-id: 9e0793ac-1c7f-4ece-88f3-50fdb30fcedc\r\nRequestId: b488586a-1c53-4116-b4a9-2572bdd166df\r\nDate: Thu, 10 Sep 2026 10:32:18 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/9e0793ac-1c7f-4ece-88f3-50fdb30fcedc",
+            "type": "text"
+          }
+        ],
+        "isError": false
+      },
+      "jsonrpc": "2.0",
+      "id": 11
+    },
+    "operation": "https://api.fabric.microsoft.com/v1/operations/9e0793ac-1c7f-4ece-88f3-50fdb30fcedc",
+    "cells_readback_equal": true
+  },
+  {
+    "helper_readback_equal": true,
+    "sha256": "ddf588bbbd95603988a4779eff380ee9c1984d7b07cebec4eaad6d1871d9b20c",
+    "execution_requested": false
+  }
+]

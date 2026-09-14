@@ -28,14 +28,16 @@ sage AS (
     -- One row per Procore project. The crosswalk should already be unique, but a duplicate
     -- would silently fan out every financial fact joined through it, so it is collapsed
     -- here rather than trusted.
-    SELECT procore_project_id, MAX(sage_project_id) AS sage_project_id,
+    SELECT procore_project_id,
+           CASE WHEN COUNT(DISTINCT sage_project_id) = 1 THEN MAX(sage_project_id) END AS sage_project_id,
            COUNT(DISTINCT sage_project_id) AS sage_match_count
     FROM sv_project_crosswalk
     WHERE sage_project_id IS NOT NULL
     GROUP BY procore_project_id
 ),
 outbuild AS (
-    SELECT procore_project_id, MAX(outbuild_project_id) AS outbuild_project_id,
+    SELECT procore_project_id,
+           CASE WHEN COUNT(DISTINCT outbuild_project_id) = 1 THEN MAX(outbuild_project_id) END AS outbuild_project_id,
            COUNT(DISTINCT outbuild_project_id) AS outbuild_match_count
     FROM sv_outbuild_projects
     WHERE procore_project_id IS NOT NULL
@@ -63,9 +65,11 @@ SELECT
     -- HOW the match was made, never inferred later. Everything here is an exact key join -
     -- if a name-similarity fallback is ever added, it must land as a different value so a
     -- fuzzy match can never be mistaken for a certain one on a financial report.
-    CASE WHEN s.sage_project_id IS NOT NULL THEN 'CROSSWALK_TABLE' ELSE 'UNMATCHED' END
+    CASE WHEN s.sage_match_count > 1 THEN 'AMBIGUOUS'
+         WHEN s.sage_project_id IS NOT NULL THEN 'CROSSWALK_TABLE' ELSE 'UNMATCHED' END
                                                    AS SageMatchMethod,
-    CASE WHEN o.outbuild_project_id IS NOT NULL THEN 'EMBEDDED_PROCORE_ID' ELSE 'UNMATCHED' END
+    CASE WHEN o.outbuild_match_count > 1 THEN 'MULTIPLE_LINKS'
+         WHEN o.outbuild_project_id IS NOT NULL THEN 'EMBEDDED_PROCORE_ID' ELSE 'UNMATCHED' END
                                                    AS OutbuildMatchMethod,
 
     -- A project mapping to more than one id on the far side is a data problem, not a
@@ -76,6 +80,8 @@ SELECT
 
     -- Plain-language, for the report. A status column beats three booleans in a visual.
     CASE
+        WHEN s.sage_match_count > 1 THEN 'Ambiguous Sage mapping - unresolved'
+        WHEN o.outbuild_match_count > 1 THEN 'Multiple Outbuild links - review mapping'
         WHEN s.sage_project_id IS NULL AND o.outbuild_project_id IS NULL
             THEN 'Procore only - no financials, no schedule'
         WHEN s.sage_project_id IS NULL  THEN 'Missing from Sage - reads as zero revenue'

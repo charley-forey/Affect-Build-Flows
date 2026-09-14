@@ -1,0 +1,50 @@
+{
+  "sparkApplicationId": "application_1789034013599_0001",
+  "state": "InProgress",
+  "livyId": "3eb04292-5af7-47d6-916c-63456856732d",
+  "origin": "SubmittedJob",
+  "attemptNumber": 0,
+  "maxNumberOfAttempts": 0,
+  "livyName": "cd_95_repair_procore_scopes_3eb04292-5af7-47d6-916c-63456856732d",
+  "submitter": {
+    "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+    "type": "User"
+  },
+  "item": {
+    "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+    "itemId": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+    "referenceType": "ById"
+  },
+  "itemName": "cd_95_repair_procore_scopes",
+  "itemType": "notebook",
+  "jobType": "SparkSession",
+  "submittedDateTime": "2026-09-10T09:59:43Z",
+  "startDateTime": "2026-09-10T09:53:38Z",
+  "endDateTime": "0001-01-01T00:00:00Z",
+  "queuedDuration": {
+    "value": 0,
+    "timeUnit": "Seconds"
+  },
+  "runningDuration": {
+    "value": 286,
+    "timeUnit": "Seconds"
+  },
+  "totalDuration": {
+    "value": 286,
+    "timeUnit": "Seconds"
+  },
+  "jobInstanceId": "c369b3aa-d255-45ec-898c-28cfcaf6ba99",
+  "creatorItem": {
+    "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+    "itemId": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+    "referenceType": "ById"
+  },
+  "isHighConcurrency": false,
+  "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+  "operationName": "Notebook Scheduled Run",
+  "consumerIdentity": {
+    "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+    "type": "User"
+  },
+  "runtimeVersion": "1.3"
+}

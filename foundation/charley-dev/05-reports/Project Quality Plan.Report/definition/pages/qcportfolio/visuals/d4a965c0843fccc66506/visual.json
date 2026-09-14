@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "NCR Closure Rate"
+                  "Property": "Observation Closure Rate"
                 }
               },
-              "queryRef": "_Measures.NCR Closure Rate",
-              "nativeQueryRef": "NCR Closure Rate"
+              "queryRef": "_Measures.Observation Closure Rate",
+              "nativeQueryRef": "Observation Closure Rate"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. NCR Closure Rate. Shows NCR Closure Rate for the current selection.'"
+                  "Value": "'Card. Observation Closure Rate. Shows Observation Closure Rate for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'NCR Closure Rate'"
+                  "Value": "'Observation Closure Rate'"
                 }
               }
             },

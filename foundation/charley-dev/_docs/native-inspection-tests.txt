@@ -1,0 +1,36 @@
+  ok  08_qc_seeds.sql matches seed/*.csv
+  ok  625 checklist items across 26 trades, in one table
+  ok  qc_seed_ChecklistItem[ItemKey] is unique across all 26 trades
+  ok  every checklist item resolves to a seeded trade
+  ok  every trade carries a risk tier in 1..4, five of them the tier-4 life-safety trades
+  ok  93 gates in one table, split 46 TCO / 23 fire alarm / 24 statutory
+  ok  qc_seed_Gate[GateKey] is unique across all three paths
+  ok  all 21 cross-path links resolve to a real TCO step
+  ok  the workbook's em-dash placeholder becomes NULL, not a value
+  ok  101 DOH checklist items, uniquely keyed
+  ok  dim_QcStatus de-duplicates 143 extracted rows to 141 unique (Domain, Code)
+  ok  all 17 man_* tables are populated from silver
+  ok  the four drifted columns now arrive in gold with values
+  ok  gold man_Qc* columns are PascalCase, as the semantic model reads them
+  ok  dim_Job is populated from the Job Register, so the job flows reach Fabric
+  ok  a duplicated job number fails the DQ gate, which is what guards flow concurrency
+  ok  a job still awaiting its number does not trip the gate
+  ok  no orphaned ProjectKey across 17 manual tables
+  ok  every checklist, gate and DOH result resolves to its seeded template
+  ok  no orphaned TradeKey on any PQP table
+  ok  every gate result's GateType agrees with its template
+  ok  all 8 PQP result tables are unique on their natural key
+  ok  all 11 PQP code columns resolve to dim_QcStatus
+  ok  gate statuses resolve against the three paths' vocabularies unioned
+  ok  native inspections preserve source identity, assignments and counts without assuming completion
+  ok  native inspection conservation rejects altered, missing and duplicate rows
+  ok  inspection items cannot borrow a parent from another project
+  ok  reused inspection IDs and embedded delimiters do not fan out model joins
+  ok  the three Procore QC facts are uniquely keyed and fully attributed
+  ok  an unmatched Procore trade is flagged, never guessed into a seeded one
+  ok  IsOpen and DaysOpen derive from the dates, not from status text
+  ok  an unmapped Procore status is visible as NULL beside its source text
+  ok  mockups are identifiable without a second place to record them
+  ok  every QC fact's MonthStart resolves to dim_Date
+
+test_qc: 34 checks passed

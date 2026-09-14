@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "214ec2a84d8a5821a0bc",
+  "position": {
+    "x": 20,
+    "y": 60,
+    "z": 0,
+    "width": 728,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Native inspections are not mapped to manual checklist templates. Closed does not mean every item was inspected. Blanks are unknown. Month filters use inspection date and exclude undated records; clear the month filter to include them.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Native inspections are not mapped to manual checklist templates. Closed does not mean every item was inspected. Blanks are unknown. Month filters use inspection date and exclude undated records; clear the month filter to include them.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

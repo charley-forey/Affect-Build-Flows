@@ -38,9 +38,10 @@ from __future__ import annotations
 
 import time
 from typing import Any
+from requests.exceptions import ConnectionError as RequestConnectionError, Timeout
 
 RESERVE = 20            # stop this many requests short, so a retry has room to land
-MAX_SLEEP = 2400        # 40 min: longer than Procore's hour-long window can leave to run
+MAX_SLEEP = 3600        # allow one full hourly quota window, including a cold start at zero
 LIMIT_HEADER = "X-Rate-Limit-Limit"
 REMAINING_HEADER = "X-Rate-Limit-Remaining"
 RESET_HEADER = "X-Rate-Limit-Reset"
@@ -119,8 +120,8 @@ class RateLimitedSession:
 
     def _send(self, method: str, url: str, **kwargs: Any) -> Any:
         self._gate()
-        response = getattr(self.session, method)(url, **kwargs)
         self.requests_made += 1
+        response = getattr(self.session, method)(url, **kwargs)
         self._observe(response)
 
         # A 429 that slipped past the gate: honour the reset header, then retry once.
@@ -131,15 +132,28 @@ class RateLimitedSession:
                 self._sleep(wait_for + 1)
                 self.waited_seconds += wait_for + 1
                 self.remaining = None
-                response = getattr(self.session, method)(url, **kwargs)
                 self.requests_made += 1
+                response = getattr(self.session, method)(url, **kwargs)
                 self._observe(response)
             else:
                 raise QuotaExhausted(self.reset_epoch, self.remaining or 0)
         return response
 
     def get(self, url: str, **kwargs: Any) -> Any:
-        return self._send("get", url, **kwargs)
+        # Only idempotent reads retry transport failures; pagination advances only after
+        # this returns a complete response. Exhaustion still fails the endpoint.
+        for attempt in range(3):
+            try:
+                return self._send("get", url, **kwargs)
+            except (Timeout, RequestConnectionError):
+                if self.remaining is not None:
+                    self.remaining -= 1  # A timed-out request may have spent quota.
+                if attempt == 2:
+                    raise
+                delay = 2 ** attempt
+                print(f"      transient read failure; retry {attempt + 1}/2 in {delay}s")
+                self._sleep(delay)
+                self.waited_seconds += delay
 
     def post(self, url: str, **kwargs: Any) -> Any:
         # Token exchange is not rate-limited the same way and must never be gated - a

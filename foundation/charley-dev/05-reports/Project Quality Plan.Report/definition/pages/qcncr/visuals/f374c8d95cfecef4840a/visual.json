@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Total NCRs"
+                  "Property": "Total Observations"
                 }
               },
-              "queryRef": "_Measures.Total NCRs",
-              "nativeQueryRef": "Total NCRs"
+              "queryRef": "_Measures.Total Observations",
+              "nativeQueryRef": "Total Observations"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Total NCRs. Shows Total NCRs for the current selection.'"
+                  "Value": "'Card. Total Observations. Shows Total Observations for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Total NCRs'"
+                  "Value": "'Total Observations'"
                 }
               }
             },

@@ -1,0 +1,473 @@
+{
+  "batch": "20260910T093949-7db12c99",
+  "source_scope": "active_projects_selected_endpoints",
+  "written_rows_semantics": "Distinct input rows in a successful upsert; not inserted/updated totals",
+  "normalized_rows_semantics": "Rows after expanding source groups; equals written_rows plus duplicate_rows_removed after a successful merge",
+  "project_ids": [
+    562949955001573,
+    562949954833574,
+    562949955118102,
+    562949955455437,
+    562949955225798,
+    562949955257421,
+    562949955064640,
+    562949955318524,
+    562949955423662,
+    562949955286476,
+    562949955375634,
+    562949954973730,
+    562949954973684,
+    562949954971827,
+    562949953807489,
+    562949955365267,
+    562949953807474,
+    562949954507004,
+    562949955173068,
+    562949954997327
+  ],
+  "endpoints": [
+    {
+      "endpoint": "checklist_lists",
+      "table": "cd_bronze_procore_checklist_lists",
+      "status": "complete",
+      "received_rows": 10,
+      "normalized_rows": 21,
+      "written_rows": 21,
+      "scopes": [
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955001573",
+          "project_id": 562949955001573,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 4
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955118102",
+          "project_id": 562949955118102,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955455437",
+          "project_id": 562949955455437,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955225798",
+          "project_id": 562949955225798,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955257421",
+          "project_id": 562949955257421,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 3
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955318524",
+          "project_id": 562949955318524,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955423662",
+          "project_id": 562949955423662,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955286476",
+          "project_id": 562949955286476,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955375634",
+          "project_id": 562949955375634,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954973730",
+          "project_id": 562949954973730,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954973684",
+          "project_id": 562949954973684,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954971827",
+          "project_id": 562949954971827,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 2
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955365267",
+          "project_id": 562949955365267,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949953807474",
+          "project_id": 562949953807474,
+          "status": "complete",
+          "received_rows": 1
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954507004",
+          "project_id": 562949954507004,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955173068",
+          "project_id": 562949955173068,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954997327",
+          "project_id": 562949954997327,
+          "status": "complete",
+          "received_rows": 0
+        }
+      ],
+      "duplicate_rows_removed": 0,
+      "watermark_advanced": false,
+      "full_parent_discovery": true,
+      "mode": "full",
+      "since": null,
+      "raw_archive": "/lakehouse/default/Files/_diag/ingestion/20260910T093949-7db12c99/checklist_lists.jsonl",
+      "archived_rows": 10,
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "incident_injuries",
+      "table": "cd_bronze_procore_incident_injuries",
+      "status": "complete",
+      "received_rows": 0,
+      "normalized_rows": 0,
+      "written_rows": 0,
+      "scopes": [
+        {
+          "path": "/rest/v1.0/projects/562949955001573/incidents/injuries",
+          "project_id": 562949955001573,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954833574/incidents/injuries",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955118102/incidents/injuries",
+          "project_id": 562949955118102,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955455437/incidents/injuries",
+          "project_id": 562949955455437,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955225798/incidents/injuries",
+          "project_id": 562949955225798,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955257421/incidents/injuries",
+          "project_id": 562949955257421,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/incidents/injuries",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955318524/incidents/injuries",
+          "project_id": 562949955318524,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955423662/incidents/injuries",
+          "project_id": 562949955423662,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955286476/incidents/injuries",
+          "project_id": 562949955286476,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955375634/incidents/injuries",
+          "project_id": 562949955375634,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954973730/incidents/injuries",
+          "project_id": 562949954973730,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954973684/incidents/injuries",
+          "project_id": 562949954973684,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954971827/incidents/injuries",
+          "project_id": 562949954971827,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/incidents/injuries",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955365267/incidents/injuries",
+          "project_id": 562949955365267,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807474/incidents/injuries",
+          "project_id": 562949953807474,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954507004/incidents/injuries",
+          "project_id": 562949954507004,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955173068/incidents/injuries",
+          "project_id": 562949955173068,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954997327/incidents/injuries",
+          "project_id": 562949954997327,
+          "status": "complete",
+          "received_rows": 0
+        }
+      ],
+      "duplicate_rows_removed": 0,
+      "watermark_advanced": false,
+      "full_parent_discovery": false,
+      "mode": "full",
+      "since": null,
+      "raw_archive": "/lakehouse/default/Files/_diag/ingestion/20260910T093949-7db12c99/incident_injuries.jsonl",
+      "archived_rows": 0,
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "checklist_list_items",
+      "table": "cd_bronze_procore_checklist_list_items",
+      "status": "incomplete_scope",
+      "received_rows": 0,
+      "normalized_rows": 0,
+      "written_rows": 0,
+      "scopes": [
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965697864/items?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949966506952/items?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949966374270/items?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949966332795/items?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965619659/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965619686/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965619786/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965619803/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965440819/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965458230/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965458271/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965440778/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965440789/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949965440796/items?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949968619796/items?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949968620112/items?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949968661044/items?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949968765489/items?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949968765525/items?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949954571372/items?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists/562949959102645/items?project_id=562949953807474",
+          "project_id": 562949953807474,
+          "status": "unavailable_403_404",
+          "received_rows": 0,
+          "error_type": "HTTPError"
+        }
+      ],
+      "duplicate_rows_removed": 0,
+      "watermark_advanced": false,
+      "parent_scope_incomplete": false,
+      "full_parent_discovery": false,
+      "mode": "full",
+      "since": null,
+      "raw_archive": "/lakehouse/default/Files/_diag/ingestion/20260910T093949-7db12c99/checklist_list_items.jsonl",
+      "archived_rows": 0,
+      "raw_archive_complete": true
+    }
+  ],
+  "status": "incomplete_scope"
+}

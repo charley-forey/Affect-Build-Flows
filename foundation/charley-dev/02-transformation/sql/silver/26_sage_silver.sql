@@ -98,7 +98,7 @@ SELECT
     TRIM(h.dscrpt)                      AS description,
     -- See the header note: invamt is 0 everywhere, so the total is paid + outstanding.
     CAST(COALESCE(NULLIF(h.invamt, 0),
-                  COALESCE(h.amtpad, 0) + COALESCE(h.invbal, 0)) AS DOUBLE)
+                  h.amtpad + h.invbal) AS DOUBLE)
                                         AS invoice_total,
     CAST(h.amtpad AS DOUBLE)            AS amount_paid,
     CAST(h.invbal AS DOUBLE)            AS invoice_balance,
@@ -114,6 +114,8 @@ LEFT JOIN cd_silver_sage_jobs j
 WHERE h.recnum IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
+-- Lines without a matching header remain visible with unresolved header fields.
+-- The silver reconciliation gate blocks orphan lines; it must not erase them.
 -- AR invoice lines. 258 rows, $25.6M. Only 25 carry a cost code, so revenue-by-cost-code
 -- is NOT available from this source and must not be promised - the coverage is 10%.
 -- ---------------------------------------------------------------------------
@@ -138,7 +140,7 @@ SELECT
     CAST(l.lgract AS STRING)            AS ledger_account,
     CAST(l.upddte AS TIMESTAMP)         AS updated_at
 FROM cd_bronze_sage_arivln l
-JOIN cd_silver_sage_ar_invoices h
+LEFT JOIN cd_silver_sage_ar_invoices h
   ON l._idref = h.invoice_uid;
 
 -- ---------------------------------------------------------------------------
@@ -157,7 +159,7 @@ SELECT
     TRIM(h.dscrpt)                      AS description,
     -- See the header note: invamt is 0 everywhere, so the total is paid + outstanding.
     CAST(COALESCE(NULLIF(h.invamt, 0),
-                  COALESCE(h.amtpad, 0) + COALESCE(h.invbal, 0)) AS DOUBLE)
+                  h.amtpad + h.invbal) AS DOUBLE)
                                         AS invoice_total,
     CAST(h.amtpad AS DOUBLE)            AS amount_paid,
     CAST(h.invbal AS DOUBLE)            AS invoice_balance,
@@ -197,5 +199,43 @@ SELECT
     CAST(l.subact AS STRING)            AS sub_account,
     CAST(l.upddte AS TIMESTAMP)         AS updated_at
 FROM cd_bronze_sage_apivln l
-JOIN cd_silver_sage_ap_invoices h
+LEFT JOIN cd_silver_sage_ap_invoices h
   ON l._idref = h.invoice_uid;
+
+-- ---------------------------------------------------------------------------
+-- AR payments (cash receipts). WHERE THE PAID DATE LIVES.
+--
+-- The AR header carries amtpad but no date, so Avg Days To Payment was BLANK. acrpmt has
+-- the date (`chkdte`) and the amount, one row per receipt applied to one invoice. Measured
+-- 2026-09-13 (_docs/sage-payments-evidence.json):
+--
+--   * key: `_idref` -> acrinv._idnum, 0 of 86 orphaned. `recnum` on a payment is the
+--     INVOICE's recnum (not a payment id) and agrees with _idref on all 86 rows; _idref is
+--     used for the same reason as the line tables.
+--   * reconciliation: per invoice, SUM(amount) = acrinv.amtpad on 82 of 85 paid invoices
+--     to the cent. The 3 exceptions ($227,667.54) are invoices dated 2024-12-31 with no
+--     receipts at all - opening balances that predate the payment history (first receipt
+--     2025-01-07). Not a join failure.
+--   * reversals are NEGATIVE ROWS, not a flag: one invoice has +200,000 and -200,000 on
+--     the same day and amtpad 0. Every row is kept; gold nets them.
+--   * dsctkn and aplcrd are 0 on all 86 rows. Carried so a non-zero value shows up.
+--
+-- Rows without `_idref` cannot reach an invoice and are recorded in 27_sage_rejects.sql.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE TABLE cd_silver_sage_ar_payments AS
+SELECT
+    p._idnum                            AS payment_uid,
+    p._idref                            AS invoice_uid,
+    h.invoice_id                        AS invoice_id,
+    h.sage_project_id                   AS sage_project_id,
+    TRIM(p.chknum)                      AS check_number,
+    CAST(p.chkdte AS DATE)              AS payment_date,
+    CAST(p.amount AS DOUBLE)            AS amount,
+    CAST(p.dsctkn AS DOUBLE)            AS discount_taken,
+    CAST(p.aplcrd AS DOUBLE)            AS applied_credit,
+    TRIM(p.dscrpt)                      AS description,
+    CAST(p.upddte AS TIMESTAMP)         AS updated_at
+FROM cd_bronze_sage_acrpmt p
+LEFT JOIN cd_silver_sage_ar_invoices h
+  ON p._idref = h.invoice_uid
+WHERE p._idref IS NOT NULL;

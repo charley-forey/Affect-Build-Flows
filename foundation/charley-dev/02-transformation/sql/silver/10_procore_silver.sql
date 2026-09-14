@@ -115,11 +115,11 @@ WHERE get_json_object(payload, '$.id') IS NOT NULL;
 -- budget measures returned blank in a model that otherwise looked healthy. Reading the raw
 -- payload means reading the raw names.
 --
--- Bracket notation is required: these names contain spaces, parentheses, apostrophes and
--- "=". get_json_object supports $['...'] for exactly this.
+-- Keep distinct source lines, including separate cost categories on one cost code.
+-- Exact duplicate projected records collapse; conflicting versions survive for DQ to block.
 CREATE OR REPLACE TABLE cd_silver_budgets AS
-WITH ranked AS (
-SELECT
+SELECT DISTINCT
+    CAST(_key AS STRING) AS budget_line_id,
     CAST(_project_id                                    AS STRING) AS project_id,
     -- Flat cost_code_id, not a nested object. cost_code is the readable "01-00-00 - NAME".
     CAST(get_json_object(payload, '$.cost_code_id')     AS STRING) AS cost_code_id,
@@ -145,40 +145,7 @@ SELECT
     _ingested_at, _batch_id
 FROM cd_bronze_procore_budget_detail_rows
 WHERE _project_id IS NOT NULL
-  -- REQUIRE THE CM VIEW'S SIGNATURE. Bronze is append-and-merge, so rows pulled before the
-  -- registry pinned the view are still there - 76 of them, from "Procore Standard
-  -- Forecast", which has none of these money columns. They merge in with NULL budgets and
-  -- inflate the fact (480 rows where 404 are real) while dragging every budget measure
-  -- toward zero.
-  --
-  -- Filtering on a signature column rather than cleaning bronze is deliberate: bronze is
-  -- meant to be an append-only record of what the API returned, including supersededed
-  -- shapes. Silver is where a shape is chosen. This also stays correct if a second view is
-  -- ever added to the registry by mistake.
-  AND json_field(payload, 'UPDATED PRIME CONTRACT BUDGET (D = A+B+C)') IS NOT NULL
-)
--- ONE ROW PER PROJECT + COST CODE, LATEST SNAPSHOT WINS.
---
--- Bronze is append-and-merge and keeps every shape the API ever returned - including rows
--- pulled before the registry pinned the budget view. Those merge in under different row
--- ids and inflate the fact (480 rows where 404 are real), dragging every budget measure
--- toward zero without failing anything.
---
--- Deduping here rather than cleaning bronze is deliberate on both counts: bronze is meant
--- to be an append-only record of what the API said, and "one budget row per cost code, as
--- of the latest snapshot" is what this table means anyway. It is the correct semantic, not
--- a workaround that happens to fix a count.
-SELECT project_id, cost_code_id, cost_code, category,
-       original_budget, budget_modifications, updated_budget, forecast_budget,
-       committed_to_date, direct_costs, invoiced_to_date, cost_to_complete,
-       snapshot_date, _ingested_at, _batch_id
-FROM (
-    SELECT *, ROW_NUMBER() OVER (
-        PARTITION BY project_id, cost_code_id ORDER BY _ingested_at DESC
-    ) AS _rn
-    FROM ranked
-)
-WHERE _rn = 1;
+  AND json_field(payload, 'UPDATED PRIME CONTRACT BUDGET (D = A+B+C)') IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- Project management
@@ -246,8 +213,83 @@ UNION ALL
 SELECT 'cd_silver_vendors', 'missing id', payload, _batch_id
 FROM cd_bronze_procore_vendors WHERE get_json_object(payload, '$.id') IS NULL
 UNION ALL
+SELECT 'cd_silver_cost_codes', 'missing id', payload, _batch_id
+FROM cd_bronze_procore_cost_codes WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_prime_contracts', 'missing id', payload, _batch_id
+FROM cd_bronze_procore_prime_contracts WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_prime_change_orders', 'missing id', payload, _batch_id
+FROM cd_bronze_procore_prime_change_orders WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
 SELECT 'cd_silver_submittals', 'missing id', payload, _batch_id
 FROM cd_bronze_procore_submittals WHERE get_json_object(payload, '$.id') IS NULL
 UNION ALL
 SELECT 'cd_silver_rfis', 'missing id', payload, _batch_id
-FROM cd_bronze_procore_rfis WHERE get_json_object(payload, '$.id') IS NULL;
+FROM cd_bronze_procore_rfis WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_budgets',
+       CASE WHEN _project_id IS NULL
+                 AND json_field(payload, 'UPDATED PRIME CONTRACT BUDGET (D = A+B+C)') IS NULL
+            THEN 'missing project and CM budget signature'
+            WHEN _project_id IS NULL THEN 'missing project'
+            ELSE 'missing CM budget signature' END,
+       payload, _batch_id
+FROM cd_bronze_procore_budget_detail_rows
+WHERE _project_id IS NULL
+   OR json_field(payload, 'UPDATED PRIME CONTRACT BUDGET (D = A+B+C)') IS NULL
+UNION ALL
+SELECT 'cd_silver_observations', 'missing id (observations)', payload, _batch_id
+FROM cd_bronze_procore_observations WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_punch_items', 'missing id (punch_items)', payload, _batch_id
+FROM cd_bronze_procore_punch_items WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_incidents', 'missing id (incidents)', payload, _batch_id
+FROM cd_bronze_procore_incidents WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_billing', 'missing id (requisitions)', payload, _batch_id
+FROM cd_bronze_procore_requisitions WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_billing', 'missing id (payment_applications)', payload, _batch_id
+FROM cd_bronze_procore_payment_applications WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_direct_costs', 'missing id (direct_costs)', payload, _batch_id
+FROM cd_bronze_procore_direct_costs WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_direct_cost_lines', 'missing id (direct_cost_line_items)', payload, _batch_id
+FROM cd_bronze_procore_direct_cost_line_items WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_qc_inspection', 'missing id (checklist_lists)', payload, _batch_id
+FROM cd_bronze_procore_checklist_lists WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_commitments', 'missing id (work_order_contracts)', payload, _batch_id
+FROM cd_bronze_procore_work_order_contracts WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_commitments', 'missing id (purchase_order_contracts)', payload, _batch_id
+FROM cd_bronze_procore_purchase_order_contracts WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_commitment_lines', 'missing id (work_order_contract_line_items)', payload, _batch_id
+FROM cd_bronze_procore_work_order_contract_line_items WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_commitment_lines', 'missing id (purchase_order_contract_line_items)', payload, _batch_id
+FROM cd_bronze_procore_purchase_order_contract_line_items WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'cd_silver_manpower_daily', 'missing date', payload, _batch_id
+FROM cd_bronze_procore_manpower_logs WHERE get_json_object(payload, '$.date') IS NULL
+UNION ALL
+SELECT 'cd_silver_project_vendors',
+       CASE WHEN get_json_object(payload, '$.id') IS NULL AND _project_id IS NULL
+            THEN 'missing id and project'
+            WHEN get_json_object(payload, '$.id') IS NULL THEN 'missing id'
+            ELSE 'missing project' END, payload, _batch_id
+FROM cd_bronze_procore_project_vendors
+WHERE get_json_object(payload, '$.id') IS NULL OR _project_id IS NULL
+UNION ALL
+SELECT 'cd_silver_vendor_insurance',
+       CASE WHEN get_json_object(payload, '$.id') IS NULL AND get_json_object(payload, '$.vendor_id') IS NULL
+            THEN 'missing id and vendor id'
+            WHEN get_json_object(payload, '$.id') IS NULL THEN 'missing id'
+            ELSE 'missing vendor id' END, payload, _batch_id
+FROM cd_bronze_procore_company_insurances
+WHERE get_json_object(payload, '$.id') IS NULL OR get_json_object(payload, '$.vendor_id') IS NULL;

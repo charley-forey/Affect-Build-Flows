@@ -1,0 +1,140 @@
+{
+  "batch": "20260910T095953-d161e967",
+  "raw_sha256": {
+    "checklist_lists": "ae1b9f1131f46906396281d818fd9a18b99b2cb276e36d30b9656e43c81f3e98",
+    "checklist_list_items": "144966526013e78ee4d959f62b9cf404bad60756a113dcb7bffba73c59b21e30"
+  },
+  "source_groups": 10,
+  "inspections": 21,
+  "items": 563,
+  "all_parent_scopes_requested": true,
+  "errors": [],
+  "counts": [
+    {
+      "project_id": "562949954833574",
+      "inspection_id": "562949965697864",
+      "source_item_count": 16,
+      "received_items": 16
+    },
+    {
+      "project_id": "562949954833574",
+      "inspection_id": "562949966506952",
+      "source_item_count": 15,
+      "received_items": 15
+    },
+    {
+      "project_id": "562949954833574",
+      "inspection_id": "562949966374270",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949954833574",
+      "inspection_id": "562949966332795",
+      "source_item_count": 32,
+      "received_items": 32
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965619659",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965619686",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965619786",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965619803",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965440819",
+      "source_item_count": 26,
+      "received_items": 26
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965458230",
+      "source_item_count": 26,
+      "received_items": 26
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965458271",
+      "source_item_count": 26,
+      "received_items": 26
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965440778",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965440789",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949955064640",
+      "inspection_id": "562949965440796",
+      "source_item_count": 17,
+      "received_items": 17
+    },
+    {
+      "project_id": "562949953807489",
+      "inspection_id": "562949968619796",
+      "source_item_count": 29,
+      "received_items": 29
+    },
+    {
+      "project_id": "562949953807489",
+      "inspection_id": "562949968620112",
+      "source_item_count": 29,
+      "received_items": 29
+    },
+    {
+      "project_id": "562949953807489",
+      "inspection_id": "562949968661044",
+      "source_item_count": 56,
+      "received_items": 56
+    },
+    {
+      "project_id": "562949953807489",
+      "inspection_id": "562949968765489",
+      "source_item_count": 56,
+      "received_items": 56
+    },
+    {
+      "project_id": "562949953807489",
+      "inspection_id": "562949968765525",
+      "source_item_count": 56,
+      "received_items": 56
+    },
+    {
+      "project_id": "562949953807489",
+      "inspection_id": "562949954571372",
+      "source_item_count": 18,
+      "received_items": 18
+    },
+    {
+      "project_id": "562949953807474",
+      "inspection_id": "562949959102645",
+      "source_item_count": 42,
+      "received_items": 42
+    }
+  ]
+}

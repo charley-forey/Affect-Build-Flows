@@ -1,0 +1,71 @@
+table man_QcSpecialInspection
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column InspectionRef
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionRef
+
+	column Category
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Category
+
+	column Agency
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Agency
+
+	column InspectorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectorName
+
+	column RequiredCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RequiredCode
+
+	column PerformedCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PerformedCode
+
+	column ScheduledDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ScheduledDate
+		formatString: yyyy-mm-dd
+
+	column PerformedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PerformedDate
+		formatString: yyyy-mm-dd
+
+	column ReportReceivedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ReportReceivedDate
+		formatString: yyyy-mm-dd
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column Notes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Notes
+
+	partition man_QcSpecialInspection = entity
+		mode: directLake
+		source
+			entityName: man_qcspecialinspection
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

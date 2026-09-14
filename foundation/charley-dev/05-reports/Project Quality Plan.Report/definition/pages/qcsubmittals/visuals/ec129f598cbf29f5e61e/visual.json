@@ -3,9 +3,9 @@
   "name": "ec129f598cbf29f5e61e",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1160,
+    "width": 728,
     "height": 40,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "No fabrication or procurement begins before written approval, so an overdue submittal is a procurement risk rather than a paperwork one.",
+                    "value": "Possible mock-ups are inferred from subject text containing MOCK. Matches can be wrong or incomplete; this is not a confirmed mock-up register. Overdue submittals need review for procurement impact.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'No fabrication or procurement begins before written approval, so an overdue submittal is a procurement risk rather than a paperwork one.'"
+                  "Value": "'Possible mock-ups are inferred from subject text containing MOCK. Matches can be wrong or incomplete; this is not a confirmed mock-up register. Overdue submittals need review for procurement impact.'"
                 }
               }
             }

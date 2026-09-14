@@ -1,0 +1,75 @@
+table man_QcItp
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ItpRef
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItpRef
+
+	column TradeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeKey
+
+	column Activity
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Activity
+
+	column InspectionType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionType
+
+	column AcceptanceCriteria
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AcceptanceCriteria
+
+	column HoldPointType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: HoldPointType
+
+	column Responsible
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Responsible
+
+	column PlannedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PlannedDate
+		formatString: yyyy-mm-dd
+
+	column ActualDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ActualDate
+		formatString: yyyy-mm-dd
+
+	column ResultCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ResultCode
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column Notes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Notes
+
+	partition man_QcItp = entity
+		mode: directLake
+		source
+			entityName: man_qcitp
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

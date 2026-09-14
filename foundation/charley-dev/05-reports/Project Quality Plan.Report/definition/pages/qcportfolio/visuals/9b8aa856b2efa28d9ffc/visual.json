@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Open NCRs"
+                  "Property": "Open Observations"
                 }
               },
-              "queryRef": "_Measures.Open NCRs",
-              "nativeQueryRef": "Open NCRs"
+              "queryRef": "_Measures.Open Observations",
+              "nativeQueryRef": "Open Observations"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Open NCRs. Shows Open NCRs for the current selection.'"
+                  "Value": "'Card. Open Observations. Shows Open Observations for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open NCRs'"
+                  "Value": "'Open Observations'"
                 }
               }
             },

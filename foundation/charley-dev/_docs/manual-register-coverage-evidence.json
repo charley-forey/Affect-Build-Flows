@@ -1,0 +1,42 @@
+{
+  "captured_at": "2026-09-10T08:39:28.086455+00:00",
+  "model_id": "5b66f1ab-51ba-4eda-8646-7705b1ba9084",
+  "expression": "VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty; completeness unverified\"",
+  "scenarios": [
+    {
+      "populated_registers": 0,
+      "query": "DEFINE TABLE __Input = DATATABLE(\"Register\",STRING,{{\"other\"}}) EVALUATE ROW(\"Status\",VAR EmptyRegisters = IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcDfow\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcItp\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcGate\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcSpecialInspection\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcCommissioning\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcInspectorSignIn\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcChecklistResult\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcDohResult\")) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty; completeness unverified\")",
+      "result": [
+        {
+          "[Status]": "8/8 registers empty; completeness unverified"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "populated_registers": 1,
+      "query": "DEFINE TABLE __Input = DATATABLE(\"Register\",STRING,{{\"man_QcDfow\"}}) EVALUATE ROW(\"Status\",VAR EmptyRegisters = IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcDfow\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcItp\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcGate\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcSpecialInspection\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcCommissioning\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcInspectorSignIn\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcChecklistResult\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcDohResult\")) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty; completeness unverified\")",
+      "result": [
+        {
+          "[Status]": "7/8 registers empty; completeness unverified"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "populated_registers": 8,
+      "query": "DEFINE TABLE __Input = DATATABLE(\"Register\",STRING,{{\"man_QcDfow\"},{\"man_QcItp\"},{\"man_QcGate\"},{\"man_QcSpecialInspection\"},{\"man_QcCommissioning\"},{\"man_QcInspectorSignIn\"},{\"man_QcChecklistResult\"},{\"man_QcDohResult\"}}) EVALUATE ROW(\"Status\",VAR EmptyRegisters = IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcDfow\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcItp\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcGate\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcSpecialInspection\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcCommissioning\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcInspectorSignIn\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcChecklistResult\")) = 0, 1, 0) + IF(COUNTROWS(FILTER(__Input,[Register]=\"man_QcDohResult\")) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty; completeness unverified\")",
+      "result": [
+        {
+          "[Status]": "0/8 registers empty; completeness unverified"
+        }
+      ],
+      "passed": true
+    }
+  ],
+  "actual_candidate": [
+    {
+      "[Status]": "8/8 registers empty; completeness unverified"
+    }
+  ]
+}

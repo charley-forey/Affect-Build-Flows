@@ -227,31 +227,9 @@ def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns:
     # UPDATE clause is omitted when every column is a key - "matched" then means the row
     # is byte-identical and there is nothing to write.
     matched = f"WHEN MATCHED THEN UPDATE SET {updates}\n" if updates else ""
-    # DEDUPE THE SOURCE IN THE STATEMENT ITSELF, not at the call site.
-    #
-    # Delta refuses a MERGE where two source rows match the same target row - it cannot know
-    # which should win - and raises DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE.
-    # There are TWO merge paths here: merge_delta() below, and the landing notebook, which
-    # builds its own DataFrame and calls this function directly. Fixing it in merge_delta on
-    # 2026-08-25 therefore fixed exactly half of them, and the nightly run failed that
-    # evening on four Outbuild tables that go through the other half.
-    #
-    # Putting it here covers every caller, including the next one somebody writes.
-    #
-    # It only ever fires on the SECOND run: with an empty target there is nothing to match,
-    # so duplicates insert quietly and the bug waits. That is the worst schedule a defect can
-    # keep, and it is why this belongs in the shared builder rather than in whichever call
-    # site last got bitten.
-    #
-    # Rows sharing a natural key inside one batch are the same record fetched twice - an
-    # incremental pull deliberately overlaps by an hour, and a paginated list can repeat a
-    # row across page boundaries - so keeping one is correct, not lossy.
-    partition = ", ".join(f"`{k}`" for k in keys)
-    deduped = (
-        f"(SELECT * FROM (SELECT *, ROW_NUMBER() OVER "
-        f"(PARTITION BY {partition} ORDER BY 1) AS _dedupe_rn FROM {source_view}) "
-        f"WHERE _dedupe_rn = 1)"
-    )
+    # Collapse exact duplicate rows only. Conflicting keys must be checked before
+    # a write; choosing an arbitrary payload would silently corrupt evidence.
+    deduped = f"(SELECT DISTINCT * FROM {source_view})"
     return (
         f"MERGE INTO {table} AS t\n"
         f"USING {deduped} AS s\n"
@@ -259,6 +237,17 @@ def merge_sql(table: str, source_view: str, key_columns: Iterable[str], columns:
         f"{matched}"
         f"WHEN NOT MATCHED THEN INSERT ({insert_cols}) VALUES ({insert_vals})"
     )
+
+
+def prepare_merge(df: Any, key_columns: Iterable[str]) -> Any:
+    """Accept exact repeats, but never guess between different rows with one key."""
+    keys = list(key_columns)
+    if not keys or any(key not in df.columns for key in keys):
+        raise ValueError("merge requires existing key columns")
+    unique = df.dropDuplicates()
+    if unique.groupBy(*keys).count().filter("count > 1").limit(1).count():
+        raise ValueError("conflicting records share a merge key; source batch must be resolved before writing")
+    return unique
 
 
 def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str]) -> int:
@@ -272,21 +261,7 @@ def merge_delta(spark: Any, df: Any, table: str, key_columns: Iterable[str]) -> 
     """
     keys = list(key_columns)
 
-    # Delta refuses a MERGE where two source rows match the same target row, and it is
-    # right to: it cannot know which one should win. So the source is made unique on the
-    # key first, which is what the Delta docs tell you to do.
-    #
-    # This is not hypothetical tidiness. Bronze hits it two different ways: an incremental
-    # pull deliberately overlaps by an hour, so the same record legitimately arrives twice
-    # in one batch; and a paginated list can repeat a row across page boundaries while
-    # records are being written underneath it. `checklist_lists` failed exactly here on
-    # 2026-08-25 - and only once its target table was non-empty, because with nothing to
-    # match, duplicates insert quietly instead of raising. A bug that appears on the SECOND
-    # run and not the first is the worst kind to leave to production.
-    #
-    # Deduplicating rather than raising is safe because rows sharing a natural key inside
-    # one batch are the same record fetched twice, not two different records.
-    df = df.dropDuplicates(keys)
+    df = prepare_merge(df, keys)
 
     if not spark.catalog.tableExists(table):
         df.write.format("delta").saveAsTable(table)
@@ -379,13 +354,8 @@ def _selftest() -> None:
     assert "= s.`id`" not in sql.split("WHEN")[0], "join must be null-safe"
     assert "WHEN NOT MATCHED THEN INSERT" in sql
 
-    # The source is deduplicated INSIDE the statement, so every caller gets it - not just
-    # merge_delta. This bug landed twice: once in bronze, then again the same evening in the
-    # landing notebook, which calls merge_sql directly. It only fires on the second run,
-    # because an empty target has nothing to match.
-    assert "ROW_NUMBER() OVER (PARTITION BY `id`, `project_id`" in sql
-    assert "_dedupe_rn = 1" in sql
-    assert "USING v_src AS s" not in sql, "source must be wrapped, not used raw"
+    assert "SELECT DISTINCT * FROM v_src" in sql
+    assert "ROW_NUMBER" not in sql, "conflicting records must never be chosen arbitrarily"
 
     # Alerting is inert without its secret, and must SAY so rather than failing silently.
     # An alert path that is never exercised until the night it matters is not an alert path.

@@ -6,8 +6,8 @@ boolean you then have to go investigate.
 
 TWO SEVERITIES, AND THE DIFFERENCE MATTERS:
 
-  ERROR  stops the pipeline. The model is not refreshed and the report keeps yesterday's
-         numbers. Reserved for things that make a number WRONG rather than incomplete -
+  ERROR  stops Succeeded-dependent pipeline activities. Direct Lake publication isolation
+         must be verified separately. Reserved for things that make a number WRONG -
          a duplicate key double-counts a total, a fact with no matching dimension row
          silently drops out of every filtered visual.
 
@@ -62,7 +62,21 @@ def build_suite() -> Suite:
         unique_key("fct_RfiSubmittal", ["ItemType", "ItemKey"]),
         not_null("dim_Project", "ProjectKey"),
         not_null("fct_BudgetLine", "ProjectKey"),
+        not_null("fct_BudgetLine", "BudgetLineID"),
+        unique_key("fct_BudgetLine", ["ProjectKey", "BudgetLineID"]),
         not_null("fct_ChangeOrder", "ProjectKey"),
+        not_null("fct_Invoice", "Amount"),
+        not_null("fct_Invoice", "InvoiceKey"),
+        unique_key("fct_Invoice", ["InvoiceKey"]),
+        not_null("fct_Invoice", "AmountPaid"),
+        not_null("fct_Invoice", "Balance"),
+        Expectation(
+            name="dim_Project.SageJobNumber maps to only one project",
+            table="dim_Project",
+            failing_sql=("SELECT SageJobNumber, COUNT(*) AS n FROM dim_Project "
+                         "WHERE SageJobNumber IS NOT NULL GROUP BY SageJobNumber HAVING COUNT(*) > 1"),
+            description="a Sage job assigned to multiple projects duplicates invoice amounts",
+        ),
     )
 
     # ---------------------------------------------------- referential integrity
@@ -162,6 +176,56 @@ def build_suite() -> Suite:
         ),
         severity=SEVERITY_WARN,
         description="not one AR invoice resolves to a project - the crosswalk join broke",
+    ))
+
+    # AR receipts -> fct_Invoice payment columns (sv_ar_payments, 22_fct_invoice.sql).
+    #
+    # ERROR: every receipt on a known invoice reaches PaymentsReceived exactly. A mismatch
+    # is our aggregation (a fan-out or dropped join), and PaidDate is built from the same sums.
+    suite.add(Expectation(
+        name="fct_Invoice.PaymentsReceived conserves sv_ar_payments",
+        table="fct_Invoice",
+        failing_sql=(
+            "SELECT f.InvoiceKey, f.PaymentsReceived, s.amount FROM fct_Invoice f "
+            "FULL OUTER JOIN (SELECT p.invoice_uid, SUM(p.amount) AS amount FROM sv_ar_payments p "
+            "  WHERE p.invoice_uid IN (SELECT invoice_uid FROM sv_ar_invoices) GROUP BY p.invoice_uid) s "
+            "ON s.invoice_uid = f.InvoiceKey "
+            "WHERE (f.InvoiceKey IS NULL AND s.amount IS NOT NULL) "
+            "   OR (s.invoice_uid IS NULL AND f.PaymentsReceived IS NOT NULL) "
+            "   OR ABS(COALESCE(f.PaymentsReceived, 0) - COALESCE(s.amount, 0)) > 0.005"
+        ),
+        severity=SEVERITY_ERROR,
+        description="receipt amounts on fct_Invoice no longer sum to the source receipts",
+    ))
+    # WARN: a receipt whose invoice is not in AR is money no invoice shows.
+    suite.add(Expectation(
+        name="sv_ar_payments rows with no AR invoice",
+        table="fct_Invoice",
+        failing_sql=("SELECT * FROM sv_ar_payments "
+                     "WHERE invoice_uid NOT IN (SELECT invoice_uid FROM sv_ar_invoices)"),
+        severity=SEVERITY_WARN,
+        description="receipts that apply to no known AR invoice are absent from fct_Invoice",
+    ))
+    # WARN, with the amounts: receipts disagreeing with the header's amtpad is a SOURCE fact.
+    # Live on 2026-09-13: 3 opening-balance invoices, $227,667.54 paid with no receipt rows,
+    # so they carry no PaidDate (_docs/sage-payments-evidence.json).
+    suite.add(Expectation(
+        name="fct_Invoice receipts reconcile to AmountPaid",
+        table="fct_Invoice",
+        failing_sql=(
+            "SELECT InvoiceKey, InvoiceID, SentDate, AmountPaid, PaymentsReceived, "
+            "AmountPaid - COALESCE(PaymentsReceived, 0) AS Difference FROM fct_Invoice "
+            "WHERE ABS(COALESCE(AmountPaid, 0) - COALESCE(PaymentsReceived, 0)) > 0.005"
+        ),
+        severity=SEVERITY_WARN,
+        description="Sage receipts do not sum to the header's amount paid; PaidDate is unreliable there",
+    ))
+    suite.add(Expectation(
+        name="fct_Invoice.PaidDate is not before SentDate",
+        table="fct_Invoice",
+        failing_sql="SELECT * FROM fct_Invoice WHERE PaidDate < SentDate",
+        severity=SEVERITY_WARN,
+        description="paid before invoiced - a receipt dated wrongly in Sage, and a negative day count",
     ))
 
     # ------------------------------------------------------------ dates
@@ -733,7 +797,275 @@ def build_suite() -> Suite:
         description="weights that do not sum to 1.00 make every score meaningless",
     ))
 
+    # Native inspections are source records, not instances of the manual QC templates.
+    suite.add(
+        unique_key("fct_ProcoreInspection", ["ProjectKey", "InspectionKey"]),
+        unique_key("fct_ProcoreInspection", ["InspectionLinkKey"]),
+        not_null("fct_ProcoreInspection", "ProjectKey"),
+        not_null("fct_ProcoreInspection", "InspectionKey"),
+        referential("fct_ProcoreInspection", "ProjectKey", "dim_Project", "ProjectKey"),
+    )
+    inspection_source = ("SELECT project_id, inspection_id, inspection_number, name, template_id, "
+                         "template_name, trade, inspector_name, inspectors_json, source_status, "
+                         "inspection_date, due_date, item_count, conforming_item_count, "
+                         "deficient_item_count, not_inspected_item_count, na_item_count, "
+                         "neutral_item_count, percent_complete FROM sv_qc_inspection")
+    inspection_gold = ("SELECT ProjectKey, InspectionKey, InspectionNumber, InspectionName, SourceTemplateId, "
+                       "SourceTemplateName, SourceTrade, LegacyInspectorName, InspectorsJson, SourceStatus, "
+                       "InspectionDate, DueDate, SourceItemCount, ConformingItemCount, DeficientItemCount, "
+                       "NotInspectedItemCount, NotApplicableItemCount, NeutralItemCount, "
+                       "SourcePercentComplete FROM fct_ProcoreInspection")
+    suite.add(Expectation(
+        name="native inspection source values are preserved",
+        table="fct_ProcoreInspection",
+        failing_sql=f"SELECT * FROM ({inspection_source} EXCEPT ALL {inspection_gold}) missing "
+                    f"UNION ALL SELECT * FROM ({inspection_gold} EXCEPT ALL {inspection_source}) changed",
+        description="both directions retain every source row, assignment, count and unknown value",
+    ))
+    suite.add(
+        unique_key("fct_ProcoreInspectionItem", ["ProjectKey", "ItemKey"]),
+        not_null("fct_ProcoreInspectionItem", "ProjectKey"),
+        not_null("fct_ProcoreInspectionItem", "ItemKey"),
+        not_null("fct_ProcoreInspectionItem", "InspectionKey"),
+        referential("fct_ProcoreInspectionItem", "InspectionLinkKey", "fct_ProcoreInspection", "InspectionLinkKey"),
+        Expectation(
+            name="native inspection items link to the same project inspection",
+            table="fct_ProcoreInspectionItem",
+            failing_sql="SELECT i.* FROM fct_ProcoreInspectionItem i LEFT JOIN fct_ProcoreInspection p "
+                        "ON i.ProjectKey=p.ProjectKey AND i.InspectionKey=p.InspectionKey "
+                        "WHERE p.InspectionKey IS NULL",
+            description="an item cannot borrow an inspection ID from a different project",
+        ),
+    )
+    item_source = ("SELECT project_id,item_id,inspection_id,section_id,name,source_status,"
+                   "source_response,response_category,response_type,response_json,item_response_json "
+                   "FROM sv_qc_inspection_item")
+    item_gold = ("SELECT ProjectKey,ItemKey,InspectionKey,SourceSectionId,ItemName,SourceStatus,"
+                 "SourceResponse,ResponseCategory,ResponseType,ResponseJson,ItemResponseJson "
+                 "FROM fct_ProcoreInspectionItem")
+    suite.add(Expectation(
+        name="native inspection item source values are preserved",
+        table="fct_ProcoreInspectionItem",
+        failing_sql=f"SELECT * FROM ({item_source} EXCEPT ALL {item_gold}) missing "
+                    f"UNION ALL SELECT * FROM ({item_gold} EXCEPT ALL {item_source}) changed",
+        description="all native item records and response types survive without reinterpretation",
+    ))
+    suite.add(Expectation(
+        name="native inspection model link keys match source identity",
+        table="fct_ProcoreInspectionItem",
+        failing_sql="SELECT * FROM (SELECT ProjectKey, InspectionKey, InspectionLinkKey FROM fct_ProcoreInspection "
+                    "UNION ALL SELECT ProjectKey, InspectionKey, InspectionLinkKey FROM fct_ProcoreInspectionItem) k "
+                    "WHERE InspectionLinkKey IS NULL OR InspectionLinkKey <> "
+                    "CONCAT(CAST(LENGTH(ProjectKey) AS STRING), ':', ProjectKey, InspectionKey)",
+        description="model relationships must use the same unambiguous project/inspection identity as source joins",
+    ))
+    suite.add(Expectation(
+        name="native inspection item totals match source headers",
+        table="fct_ProcoreInspection",
+        failing_sql="SELECT p.ProjectKey, p.InspectionKey, p.SourceItemCount, COALESCE(i.n, 0) AS RetrievedItemCount "
+                    "FROM fct_ProcoreInspection p LEFT JOIN "
+                    "(SELECT ProjectKey, InspectionKey, COUNT(*) AS n FROM fct_ProcoreInspectionItem "
+                    "GROUP BY ProjectKey, InspectionKey) i "
+                    "ON p.ProjectKey=i.ProjectKey AND p.InspectionKey=i.InspectionKey "
+                    "WHERE p.SourceItemCount IS NOT NULL AND p.SourceItemCount <> COALESCE(i.n, 0)",
+        description="a retrieved subset must not masquerade as the complete source inspection; unknown header counts remain unverified",
+    ))
+
+    _add_conservation_rules(suite)
+    _add_key_and_vocabulary_rules(suite)
     return suite
+
+
+# Silver source view -> gold fact, per money-bearing fact. Each tuple is:
+#   (gold table, source view, source columns, gold columns, gold's own row filter)
+# The filter is copied from the gold SQL's WHERE, so the comparison is "source minus what
+# gold EXPLICITLY drops"; the dropped rows get their own WARN below so they stay visible.
+#
+# EXACT, NO TOLERANCE. Gold copies these values (or derives them with the same expression), so a DOUBLE that
+# changed at all was changed by a transform. Row-level EXCEPT ALL in both directions
+# catches a dropped row, a fanned-out duplicate and an altered amount - offsetting errors
+# cannot cancel the way they can in a SUM comparison.
+_BILLING_LATEST = ("(ROW_NUMBER() OVER (PARTITION BY billing_type, contract_id "
+                   "ORDER BY (status_label = 'DRAFT') ASC, period_end DESC NULLS LAST, "
+                   "period_number DESC, billing_id DESC) = 1 AND status_label <> 'DRAFT')")
+
+CONSERVATION = (
+    ("fct_ChangeOrder", "sv_prime_change_orders",           # 21_fct_changeorder.sql
+     "project_id, change_order_id, amount, TRIM(status), "
+     "CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed') THEN FALSE ELSE TRUE END",
+     "ProjectKey, ChangeOrderKey, Amount, StatusLabel, IsPending",
+     "project_id IS NOT NULL"),
+    ("fct_BudgetLine", "sv_budgets",                        # 20_fct_budgetline.sql
+     "project_id, budget_line_id, original_budget, budget_modifications, updated_budget, "
+     "forecast_budget, committed_to_date, direct_costs, invoiced_to_date, cost_to_complete, "
+     "updated_budget - invoiced_to_date",
+     "ProjectKey, BudgetLineID, OriginalBudget, BudgetModifications, BudgetAmount, "
+     "ForecastAmount, CommittedAmount, DirectCosts, SpentToDate, CostToComplete, BudgetVariance",
+     "project_id IS NOT NULL"),
+    # IsLatestPeriod/IsRetainageReleased are derived: the rule repeats 27_fct_billing.sql's
+    # ranking (including its billing_id tie-break, so both evaluations agree).
+    ("fct_Billing", "sv_billing",                           # 27_fct_billing.sql:66
+     "project_id, billing_type, billing_id, status_label, percent_complete, current_payment_due, "
+     "original_contract_sum, net_change_by_change_orders, contract_sum_to_date, completed_to_date, "
+     "previous_certificates, retainage_amount, total_retainage, stored_retainage_amount, "
+     "earned_less_retainage, balance_to_finish, retainage_percent, "
+     f"{_BILLING_LATEST}, "
+     f"({_BILLING_LATEST} AND COALESCE(retainage_amount, 0) = 0 AND COALESCE(percent_complete, 0) >= 100)",
+     "ProjectKey, BillingType, BillingKey, StatusLabel, PercentComplete, CurrentPaymentDue, "
+     "OriginalContractSum, NetChangeByChangeOrders, ContractSumToDate, CompletedToDate, "
+     "PreviousCertificatesToDate, RetainageHeld, TotalRetainageHeld, StoredRetainageHeld, "
+     "EarnedLessRetainageToDate, BalanceToFinish, RetainagePercent, IsLatestPeriod, IsRetainageReleased",
+     "project_id IS NOT NULL"),
+    ("fct_DirectCost", "sv_direct_costs",                   # 28_fct_directcost.sql
+     "project_id, direct_cost_id, amount, grand_total, status_label, "
+     "(UPPER(COALESCE(status_label, '')) = 'APPROVED')",
+     "ProjectKey, DirectCostKey, Amount, GrandTotal, StatusLabel, IsApproved",
+     "project_id IS NOT NULL"),
+    # 22_fct_invoice.sql keeps every AR row (unmatched jobs become 'UNMATCHED'), so there
+    # is no filter and no dropped-row warning: a missing invoice here is always a defect.
+    ("fct_Invoice", "sv_ar_invoices",
+     "invoice_uid, invoice_total, amount_paid, invoice_balance, "
+     "CASE WHEN invoice_balance IS NULL THEN NULL WHEN invoice_balance = 0 THEN TRUE ELSE FALSE END",
+     "InvoiceKey, Amount, AmountPaid, Balance, IsPaid",
+     None),
+)
+
+
+def _add_conservation_rules(suite: Suite) -> None:
+    for gold, view, src_cols, gold_cols, keep in CONSERVATION:
+        src = f"SELECT {src_cols} FROM {view}" + (f" WHERE {keep}" if keep else "")
+        dst = f"SELECT {gold_cols} FROM {gold}"
+        suite.add(Expectation(
+            name=f"{gold} conserves {view} rows and amounts exactly",
+            table=gold,
+            failing_sql=(f"SELECT 'missing_from_gold' AS side, * FROM ({src} EXCEPT ALL {dst}) m "
+                         f"UNION ALL SELECT 'not_in_source' AS side, * FROM ({dst} EXCEPT ALL {src}) c"),
+            severity=SEVERITY_ERROR,
+            description=("every kept source row reaches gold once with identical amounts; "
+                         "a drop, fan-out or altered value makes totals wrong (exact, no tolerance)"),
+        ))
+        if keep:
+            # WARN: a row with no project is a source fact (Procore line not yet attributed),
+            # not our defect - but it is money absent from every report total, so the rows
+            # themselves (count and amounts) land in the rejects table rather than vanishing.
+            suite.add(Expectation(
+                name=f"{view} rows dropped from {gold} for having no project",
+                table=gold,
+                failing_sql=f"SELECT * FROM {view} WHERE NOT ({keep})",
+                severity=SEVERITY_WARN,
+                description="source money excluded from gold because it has no project",
+            ))
+
+    # 24_fct_milestone.sql:44 keeps critical activities only where the Outbuild project maps
+    # to Procore. WARN: the unmapped Outbuild projects are an onboarding gap, not a defect.
+    suite.add(Expectation(
+        name="unattributed Outbuild critical activities dropped from fct_Milestone",
+        table="fct_Milestone",
+        failing_sql="SELECT * FROM sv_outbuild_activities WHERE is_critical = TRUE AND project_id IS NULL",
+        severity=SEVERITY_WARN,
+        description="a critical-path activity with no Procore project is absent from every schedule view",
+    ))
+
+
+def _add_key_and_vocabulary_rules(suite: Suite) -> None:
+    # Keys. Procore ids are company-global, so change orders and direct costs key alone;
+    # Outbuild activities are keyed within the project gold assigns them to.
+    suite.add(
+        unique_key("fct_ChangeOrder", ["ChangeOrderKey"]),
+        unique_key("fct_Milestone", ["ProjectKey", "ActivityKey"]),
+        unique_key("fct_FinancialPeriod", ["ProjectKey", "MonthStart"]),
+        unique_key("fct_DirectCost", ["DirectCostKey"]),
+    )
+    # Manual natural keys, exactly the PARTITION BY each silver dedupe enforces
+    # (30_manual_silver.sql, 31_qc_manual_silver.sql). A duplicate means that dedupe broke.
+    for table, cols in (
+        ("man_Wins", ["ProjectKey", "MonthStart", "WinNumber"]),
+        ("man_Risks", ["ProjectKey", "MonthStart", "RiskNumber"]),
+        ("man_PriorityItems", ["ProjectKey", "MonthStart", "ItemNumber"]),
+        ("man_Flags", ["ProjectKey", "MonthStart"]),
+        ("man_Survey", ["ProjectKey", "MonthStart", "QuestionNumber"]),
+        ("man_SafetyMonthly", ["ProjectKey", "MonthStart"]),
+        ("man_QualityMonthly", ["ProjectKey", "MonthStart"]),
+        ("man_Milestones", ["ProjectKey", "MilestoneName"]),
+        ("man_DailyLogCompliance", ["ProjectKey", "MonthStart"]),
+        ("man_QcDfow", ["ProjectKey", "DfowRef"]),
+        ("man_QcItp", ["ProjectKey", "ItpRef"]),
+        ("man_QcGate", ["ProjectKey", "GateKey"]),
+        ("man_QcSpecialInspection", ["ProjectKey", "InspectionRef"]),
+        ("man_QcCommissioning", ["ProjectKey", "SystemRef"]),
+        ("man_QcInspectorSignIn", ["ProjectKey", "SignInRef"]),
+        ("man_QcChecklistResult", ["ProjectKey", "ItemKey"]),
+        ("man_QcDohResult", ["ProjectKey", "ItemKey"]),
+    ):
+        suite.add(unique_key(table, cols))
+
+    # Vendor keys. WARN: dim_Vendor is the Procore company vendor directory only
+    # (11_dim_vendor.sql), not a union of observed keys, so a certificate or commitment
+    # naming a vendor outside that extract is a source-scope fact rather than a transform
+    # bug - and neither table relates to dim_Vendor in the model yet, so no visual drops it.
+    suite.add(
+        referential("fct_VendorInsurance", "VendorKey", "dim_Vendor", "VendorKey", severity=SEVERITY_WARN),
+        referential("bridge_VendorCostCode", "VendorKey", "dim_Vendor", "VendorKey", severity=SEVERITY_WARN),
+    )
+
+    # QC codes -> dim_QcStatus, per domain (a code is only meaningful inside its list).
+    # ERROR for both halves: Procore codes are emitted by OUR CASE mappings in
+    # 24_qc_procore_silver.sql (unmapped source text is NULL, which is excluded), so an
+    # unseeded code is a mapping typo; manual codes come from SharePoint choice columns
+    # generated from the same qc_status_vocab.csv (make_sharepoint.py), so a miss means the
+    # seed and the lists drifted. Either way the row silently leaves every status slicer.
+    for table, column, domains in (
+        ("fct_QcNcr", "StatusCode", ("NCRLOG_5",)),
+        ("fct_QcPunch", "StatusCode", ("PUNCHRCLLOG_5",)),
+        ("fct_QcSubmittal", "StatusCode", ("SUBMITTALSMOCKUPS_6",)),
+        ("man_QcDfow", "StatusCode", ("DFOWRISKREGISTER_4",)),
+        ("man_QcItp", "ResultCode", ("ITP_4",)),
+        ("man_QcItp", "StatusCode", ("ITP_6",)),
+        ("man_QcGate", "StatusCode", ("PATHTOTCO_6", "PATHTOFIREALARM_7", "STATUTORYINSPECTIONS_5")),
+        ("man_QcSpecialInspection", "RequiredCode", ("SPECIALINSPECTIONS_3",)),
+        ("man_QcSpecialInspection", "PerformedCode", ("SPECIALINSPECTIONS_2",)),
+        ("man_QcSpecialInspection", "StatusCode", ("SPECIALINSPECTIONS_5",)),
+        ("man_QcCommissioning", "StatusCode", ("COMMISSIONING_6",)),
+        ("man_QcInspectorSignIn", "AgencyCode", ("INSPECTORSIGNIN_11",)),
+        ("man_QcInspectorSignIn", "OutcomeCode", ("INSPECTORSIGNIN_5",)),
+        ("man_QcChecklistResult", "StageCode", ("EXCAVATION_4",)),
+        ("man_QcChecklistResult", "ResultCode", ("EXCAVATION_3",)),
+        ("man_QcDohResult", "ResponsibilityCode", ("DOHCHECKLIST_4",)),
+        ("man_QcDohResult", "StatusCode", ("DOHCHECKLIST_6",)),
+    ):
+        in_list = ", ".join(f"'{d}'" for d in domains)
+        suite.add(Expectation(
+            name=f"{table}.{column}.fk_dim_QcStatus",
+            table=table,
+            failing_sql=(f"SELECT t.* FROM {table} t WHERE t.{column} IS NOT NULL AND NOT EXISTS "
+                         f"(SELECT 1 FROM dim_QcStatus s WHERE s.Domain IN ({in_list}) AND s.Code = t.{column})"),
+            severity=SEVERITY_ERROR,
+            description=f"{column} must be a code in dim_QcStatus[{in_list}]",
+        ))
+
+    # Numeric score bands must tile: ordered by MinValue (inclusive), each band starts where
+    # the previous ends (MaxValue exclusive), bands are non-empty, only the lowest may be
+    # unbounded below and the highest must be unbounded above. A first band with a finite
+    # floor is allowed - incident counts cannot go below 0. Text-matched categories carry no
+    # bounds. ERROR: we own this seed, and a gap scores a project as nothing.
+    suite.add(Expectation(
+        name="dim_ScorecardBand numeric bands tile with no gap or overlap",
+        table="dim_ScorecardBand",
+        failing_sql=(
+            "SELECT CategoryKey, Score, MinValue, MaxValue, MatchValue FROM ("
+            "  SELECT *, LAG(MaxValue) OVER (PARTITION BY CategoryKey ORDER BY MinValue NULLS FIRST, MaxValue) AS PrevMax,"
+            "         ROW_NUMBER() OVER (PARTITION BY CategoryKey ORDER BY MinValue NULLS FIRST, MaxValue) AS rn,"
+            "         COUNT(*) OVER (PARTITION BY CategoryKey) AS cnt"
+            "  FROM dim_ScorecardBand WHERE MatchValue IS NULL) b "
+            "WHERE (rn = cnt AND MaxValue IS NOT NULL) "
+            "   OR (rn > 1 AND (MinValue IS NULL OR PrevMax IS NULL OR MinValue <> PrevMax)) "
+            "   OR (MinValue IS NOT NULL AND MaxValue IS NOT NULL AND MinValue >= MaxValue) "
+            "UNION ALL SELECT CategoryKey, Score, MinValue, MaxValue, MatchValue FROM dim_ScorecardBand "
+            "WHERE MatchValue IS NOT NULL AND (MinValue IS NOT NULL OR MaxValue IS NOT NULL "
+            "   OR CategoryKey IN (SELECT CategoryKey FROM dim_ScorecardBand WHERE MatchValue IS NULL))"),
+        severity=SEVERITY_ERROR,
+        description="a gap leaves a value unscored and an overlap scores it twice",
+    ))
 
 
 def summarise(results) -> str:

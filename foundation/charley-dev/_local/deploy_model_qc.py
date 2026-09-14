@@ -43,12 +43,15 @@ dm.MODEL_TABLES = [
     "dim_QcStatus",
     # Read from Procore, which the client's own workbook names as the mandatory system of
     # record for quality. These carry real data today.
-    "fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal",
+    "fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal", "fct_ProcoreInspection",
+    "fct_ProcoreInspectionItem",
     # The registers Procore does not hold. Typed and empty until the SharePoint lists exist;
     # bound now so the model is complete in shape before a single row is entered.
     "man_QcDfow", "man_QcItp", "man_QcGate", "man_QcSpecialInspection",
     "man_QcCommissioning", "man_QcInspectorSignIn", "man_QcChecklistResult",
     "man_QcDohResult",
+    # Every known data gap in one register - silver rejects included - for the DQ page.
+    "dq_DataGap",
     # The pipeline heartbeat - how the report answers "are these numbers from last night?".
     "meta_PipelineRun",
 ]
@@ -66,6 +69,9 @@ dm.RELATIONSHIPS = [
     ("fct_QcPunch", "TradeKey", "qc_seed_Trade", "TradeKey"),
     ("fct_QcSubmittal", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_QcSubmittal", "MonthStart", "dim_Date", "Date"),
+    ("fct_ProcoreInspection", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_ProcoreInspection", "InspectionDate", "dim_Date", "Date"),
+    ("fct_ProcoreInspectionItem", "InspectionLinkKey", "fct_ProcoreInspection", "InspectionLinkKey"),
 
     ("qc_seed_ChecklistItem", "TradeKey", "qc_seed_Trade", "TradeKey"),
 
@@ -83,6 +89,7 @@ dm.RELATIONSHIPS = [
     ("man_QcChecklistResult", "ItemKey", "qc_seed_ChecklistItem", "ItemKey"),
     ("man_QcDohResult", "ProjectKey", "dim_Project", "ProjectKey"),
     ("man_QcDohResult", "ItemKey", "qc_seed_DohItem", "ItemKey"),
+    ("dq_DataGap", "ProjectKey", "dim_Project", "ProjectKey"),
 ]
 
 # `origin` names the workbook cell each measure replaces, and is emitted as a /// comment so
@@ -111,28 +118,25 @@ dm.MEASURES = [
      "RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
      COUNT, "derived"),
     ("Pipeline Status",
-     "VAR Hrs = [Hours Since Last Checked Run]\n"
-     'RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", '
-     'Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", '
-     '"STALE - these numbers may be weeks old" )', "",
+     dm.PIPELINE_STATUS_DAX, "",
      "nothing - text not colour, so it survives greyscale and colour-blindness"),
     ("Projects With Quality Data",
      "CALCULATE(DISTINCTCOUNT(fct_QcNcr[ProjectKey]), ALL(dim_Project))", COUNT,
      "nothing - the workbook is one project per file"),
 
     # --- NCR / Observations -------------------------------------------------------
-    ("Total NCRs", "COUNTROWS(fct_QcNcr)", COUNT, "NCR Log!B4 (Total Raised)"),
-    ("Open NCRs", "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = TRUE())", COUNT,
+    ("Total Observations", "COUNTROWS(fct_QcNcr)", COUNT, "NCR Log!B4 (Total Raised)"),
+    ("Open Observations", "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = TRUE())", COUNT,
      "NCR Log!D4 (Open)"),
-    ("Closed NCRs", "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = FALSE())", COUNT,
+    ("Closed Observations", "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = FALSE())", COUNT,
      "NCR Log!F4 (Closed)"),
-    ("NCRs Past Due", "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsPastDue] = TRUE())", COUNT,
+    ("Observations Past Due", "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsPastDue] = TRUE())", COUNT,
      "NCR Log!H4 (Overdue)"),
-    ("Avg Days To Close NCR",
+    ("Avg Observation Closure Days",
      "AVERAGEX(FILTER(fct_QcNcr, fct_QcNcr[IsOpen] = FALSE()), fct_QcNcr[DaysOpen])", DAYS,
      "NCR Log!K4 (Avg Days to Close)"),
-    ("NCR Closure Rate",
-     "DIVIDE([Closed NCRs], [Total NCRs])", PCT, "NCR Log - not computed in the workbook"),
+    ("Observation Closure Rate",
+     "DIVIDE([Closed Observations], [Total Observations])", PCT, "NCR Log - not computed in the workbook"),
 
     # --- Punch & Rolling Completion ----------------------------------------------
     ("Total Punch Items", "COUNTROWS(fct_QcPunch)", COUNT, "Punch & RCL Log!B4 (Total Items)"),
@@ -161,9 +165,14 @@ dm.MEASURES = [
      "AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), "
      "fct_QcSubmittal[TurnaroundDays])", DAYS,
      "Submittals & Mockups - not computed in the workbook"),
-    ("Mock-Ups Registered",
+    ("Possible Mock-Ups",
      "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())", COUNT,
-     "Project Identifiers!B15 (8 project mock-ups)"),
+     "Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register."),
+
+    ("Native Inspections", "COUNTROWS(fct_ProcoreInspection)", COUNT,
+     "Retrieved native Procore inspection records; month filters use inspection date. Not a certification of scope or completion."),
+    ("Native Inspection Items", "COUNTROWS(fct_ProcoreInspectionItem)", COUNT,
+     "Retrieved native items linked through the project/inspection key; source responses are not reclassified."),
 
     # --- Statutory gates (TCO / Fire Alarm / Statutory, one table) ----------------
     ("Gates Defined", "COUNTROWS(qc_seed_Gate)", COUNT,
@@ -172,8 +181,12 @@ dm.MEASURES = [
     ("Gates Complete",
      "CALCULATE(COUNTROWS(man_QcGate), man_QcGate[StatusCode] = \"COMPLETE\")", COUNT,
      "Path to TCO!G4 (Complete)"),
-    ("Gate Readiness", "DIVIDE([Gates Complete], [Gates Defined])", PCT,
-     "Path to TCO!K4 (TCO Readiness)"),
+    ("Gate Template Completion",
+     "VAR Recorded = [Gates Recorded]\nVAR Completed = COALESCE([Gates Complete], 0)\n"
+     "VAR Defined = [Gates Defined]\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) "
+     "&& NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 "
+     "&& Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined))", PCT,
+     "Recorded completion against the template for one project; applicability and readiness are not certified"),
 
     # --- Trade QC checklists ------------------------------------------------------
     ("Checklist Items Defined", "COUNTROWS(qc_seed_ChecklistItem)", COUNT,
@@ -186,9 +199,12 @@ dm.MEASURES = [
     ("Checklist Items Failed",
      "CALCULATE(COUNTROWS(man_QcChecklistResult), man_QcChecklistResult[ResultCode] = \"FAIL\")",
      COUNT, "DASHBOARD!F59 (Fail)"),
-    ("Checklist Completion",
-     "DIVIDE([Checklist Items Passed], [Checklist Items Defined])", PCT,
-     "DASHBOARD!G59 (% Complete)"),
+    ("Checklist Template Completion",
+     "VAR Recorded = [Checklist Items Recorded]\nVAR Completed = COALESCE([Checklist Items Passed], 0)\n"
+     "VAR Defined = [Checklist Items Defined]\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) "
+     "&& NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 "
+     "&& Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined))", PCT,
+     "Recorded passes against the template for one project; applicability and submission completeness are unverified"),
 
     # --- DFOW risk, ITP, inspections ----------------------------------------------
     ("DFOWs Registered", "COUNTROWS(man_QcDfow)", COUNT, "DFOW Risk Register!A5:A36"),
@@ -211,28 +227,33 @@ dm.MEASURES = [
      "DOH Checklist!D4 (Verified)"),
 
     # --- Data quality -------------------------------------------------------------
-    ("DQ NCRs With Unmapped Trade",
+    ("DQ Observations With Unmapped Trade",
      "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[HasUnmappedTrade] = TRUE())", COUNT,
      "nothing - Excel drops unmatched rows from a lookup silently"),
     ("DQ Punch With Unmapped Trade",
      "CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[HasUnmappedTrade] = TRUE())", COUNT,
      "nothing - Excel drops unmatched rows from a lookup silently"),
     ("DQ Registers Awaiting Input",
-     "IF([Gates Recorded] + [Checklist Items Recorded] + [DFOWs Registered] = 0, "
-     "\"No manual quality data entered yet\", \"\")", "",
-     "nothing - an empty tab and a complete tab look identical in Excel"),
+     "VAR EmptyRegisters = " + " + ".join(
+         f"IF(COUNTROWS({table}) = 0, 1, 0)" for table in dm.MODEL_TABLES if table.startswith("man_"))
+     + '\nRETURN FORMAT(EmptyRegisters, "0") & "/8 registers empty; completeness unverified"', "",
+     "Observed row coverage in current filters; populated registers are not certified complete"),
+    ("Data Gaps", "COALESCE(COUNTROWS(dq_DataGap), 0)", COUNT,
+     "nothing - rejects, unmapped trades, coverage and certificate gaps in one register"),
+    ("Data Gap Amount", "SUM(dq_DataGap[Amount])", '"$#,0.00"',
+     "money carried by data gaps - today only unmatched AR invoices carry an amount"),
 ]
 
 # Forward-filled positionally over MEASURES, so each entry names the FIRST measure of a group.
 dm.FOLDER_STARTS = [
     ("Last Refresh", "00 Report context"),
-    ("Total NCRs", "01 Non-conformance"),
+    ("Total Observations", "01 Non-conformance"),
     ("Total Punch Items", "02 Punch & completion"),
     ("Total Submittals", "03 Submittals & mock-ups"),
     ("Gates Defined", "04 Statutory gates"),
     ("Checklist Items Defined", "05 Trade checklists"),
     ("DFOWs Registered", "06 DFOW, ITP & inspections"),
-    ("DQ NCRs With Unmapped Trade", "07 Data quality"),
+    ("DQ Observations With Unmapped Trade", "07 Data quality"),
 ]
 
 

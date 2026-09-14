@@ -1,0 +1,55 @@
+table man_QcCommissioning
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column SystemRef
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SystemRef
+
+	column SystemName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SystemName
+
+	column TradeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeKey
+
+	column Responsible
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Responsible
+
+	column PlannedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PlannedDate
+		formatString: yyyy-mm-dd
+
+	column ActualDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ActualDate
+		formatString: yyyy-mm-dd
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column Notes
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Notes
+
+	partition man_QcCommissioning = entity
+		mode: directLake
+		source
+			entityName: man_qccommissioning
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -9,11 +9,19 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import deploy_report as dr  # noqa: E402
+
+
+def build_report():
+    # Generation writes files; test IDs must never overwrite a deployable report binding.
+    with tempfile.TemporaryDirectory() as tmp, patch.object(dr, "REPORT_DIR", Path(tmp)):
+        return dr.build("00000000-0000-0000-0000-000000000000")
 
 
 def _pages(files: dict[str, str]) -> dict[str, list[dict]]:
@@ -28,9 +36,17 @@ def _pages(files: dict[str, str]) -> dict[str, list[dict]]:
 
 
 def test_report() -> None:
-    files = dr.build("00000000-0000-0000-0000-000000000000")
+    files = build_report()
     pages = _pages(files)
     assert len(pages) == len(dr.PAGES), f"{len(pages)} pages built, expected {len(dr.PAGES)}"
+    for _, builder, _ in dr.PAGES:
+        pid, visuals = builder()
+        names = [v["name"] for v in visuals + dr.chrome(pid, slicers=pid not in dr.DRILLTHROUGH)]
+        assert len(names) == len(set(names)), f"{pid}: duplicate visual IDs overwrite content"
+    for rel, content in files.items():
+        if rel.endswith(".bookmark.json"):
+            target = json.loads(content)["explorationState"]["activeSection"]
+            assert target in pages, f"{rel}: bookmark targets missing page {target}"
 
     drill = set(dr.DRILLTHROUGH)
     total = 0
@@ -64,9 +80,17 @@ def test_report() -> None:
         for v in visuals:
             pos = v["position"]
             right, bottom = pos["x"] + pos["width"], pos["y"] + pos["height"]
+            assert pos["x"] >= 0 and pos["y"] >= 0 and pos["width"] > 0 and pos["height"] > 0
             assert right <= 1280 and bottom <= 720, (
                 f"{pid}: visual {v['name']} runs off canvas "
                 f"(to {right}x{bottom}, canvas is 1280x720)")
+        for i, left in enumerate(visuals):
+            a = left["position"]
+            for right in visuals[i + 1:]:
+                b = right["position"]
+                overlaps = (a["x"] < b["x"] + b["width"] and a["x"] + a["width"] > b["x"]
+                            and a["y"] < b["y"] + b["height"] and a["y"] + a["height"] > b["y"])
+                assert not overlaps, f"{pid}: overlapping visuals {left['name']} and {right['name']}"
 
         # 5. The footer, so an exported page states what it is a snapshot of - and nothing
         #    sitting underneath it. The footer is new, so any visual already occupying that
@@ -127,11 +151,32 @@ def test_report_refs() -> None:
             re.findall(r"^\tcolumn\s+(.+)$", text, re.M)
         )
 
+    # New model tables can be reviewed before a live build publishes their Spark schema.
+    # Validate their bindings against executed local SQL; live TMDL generation still
+    # requires the actual Fabric schema and is checked separately.
+    missing_tables = set(dm.MODEL_TABLES) - set(known) - {"meta_PipelineRun"}
+    if missing_tables:
+        from seedrunner import build
+        con = build()
+        try:
+            for table in missing_tables:
+                known[table] = {r[0] for r in con.execute(f'DESCRIBE "{table}"').fetchall()}
+        finally:
+            con.close()
+
     # Measures come from the generator rather than the committed tmdl, so a measure added
     # to MEASURES counts immediately instead of only after the next deploy writes it out.
     known.setdefault("_Measures", set()).update(m[0] for m in dm.MEASURES)
+    assert len({m[0] for m in dm.MEASURES}) == len(dm.MEASURES), "duplicate measure name"
+    for child, fk, parent, pk in dm.RELATIONSHIPS:
+        assert fk in known.get(child, set()), f"missing relationship field {child}[{fk}]"
+        assert pk in known.get(parent, set()), f"missing relationship field {parent}[{pk}]"
+    for name, expression, _, _ in dm.MEASURES:
+        for quoted, bare, prop in re.findall(r"(?:'([^']+)'|\b([A-Za-z_]\w*))\[([^\]]+)\]", expression):
+            entity = quoted or bare
+            assert prop in known.get(entity, set()), f"{name}: unknown field {entity}[{prop}]"
 
-    files = dr.build("00000000-0000-0000-0000-000000000000")
+    files = build_report()
     pattern = re.compile(
         r'"Entity"\s*:\s*"([^"]+)"[^}]*\}\s*\}\s*,\s*"Property"\s*:\s*"([^"]+)"'
     )
@@ -150,11 +195,56 @@ def test_report_refs() -> None:
     assert not broken, "report references fields the model does not have:\n  " + "\n  ".join(
         sorted(set(broken))
     )
-    assert len(seen) > 100, f"only {len(seen)} refs found - the pattern stopped matching"
+    minimum = 50 if "--qc" in sys.argv else 100
+    assert len(seen) > minimum, f"only {len(seen)} refs found - the pattern stopped matching"
     print(f"  {len(seen)} field references, all resolve against the model")
 
 
+def test_schedule_grain():
+    _, items = dr.page_schedule_quality()
+    timeline = next(v["visual"] for v in items if v["name"] == dr.oid("schedule", "gantt"))
+    assert timeline["visualType"] == "barChart"
+    categories = timeline["query"]["queryState"]["Category"]["projections"]
+    assert [p["field"]["Column"]["Property"] for p in categories] == ["ProjectKey", "ActivityKey", "MilestoneName"]
+    assert all(p["active"] for p in categories)
+    offset = timeline["objects"]["dataPoint"][0]
+    assert offset["selector"]["metadata"] == timeline["query"]["queryState"]["Y"]["projections"][0]["queryRef"]
+    assert offset["properties"]["fillTransparency"]["expr"]["Literal"]["Value"] == "100D"
+    table = next(v["visual"] for v in items if v["name"] == dr.oid("schedule", "milestones"))
+    columns = {p["field"]["Column"]["Property"] for p in table["query"]["queryState"]["Values"]["projections"]}
+    assert {"ProjectKey", "ActivityKey", "CurrentStart", "CurrentFinish", "HasDateInversion"} <= columns
+
+
+def test_qc_disclosures():
+    import deploy_report_qc as qc
+    import deploy_model as dm
+    observations = json.dumps(qc.page_ncr())
+    mockups = json.dumps(qc.page_submittals())
+    assert "not only confirmed NCRs" in observations
+    assert "not historical month-end backlog" in observations
+    assert "not a confirmed mock-up register" in mockups
+    names = {m[0] for m in dm.MEASURES}
+    assert {"Total Observations", "Possible Mock-Ups"} <= names
+    assert not {"Total NCRs", "Mock-Ups Registered"} & names
+    native = json.dumps(qc.page_native_inspections())
+    assert "not mapped to manual checklist templates" in native
+    assert "exclude undated records" in native
+    assert ("fct_ProcoreInspection", "InspectionDate", "dim_Date", "Date") in dm.RELATIONSHIPS
+    assert ("fct_ProcoreInspectionItem", "InspectionLinkKey", "fct_ProcoreInspection", "InspectionLinkKey") in dm.RELATIONSHIPS
+    assert "not a failed check" in json.dumps(qc.page_native_inspection_items())
+    completion = dm.table_tmdl("fct_ProcoreInspection", [("SourcePercentComplete", "double")])
+    assert "summarizeBy: none" in completion and "formatString: 0.##\n" in completion
+    assert "unit and scale require confirmation" in completion
+
+
 if __name__ == "__main__":
+    if "--qc" in sys.argv:
+        import deploy_model_qc
+        import deploy_report_qc
     test_report()
     test_report_refs()
+    if "--qc" not in sys.argv:
+        test_schedule_grain()
+    else:
+        test_qc_disclosures()
     print("report checks passed")

@@ -24,6 +24,29 @@ RESULTS_TABLE = "cd_dq_results"
 REJECTS_TABLE = "cd_dq_rejects"
 
 
+def persist_heartbeat(spark, results, run_id, diagnostic_dir):
+    """Record evaluated status and publish the runtime table's actual schema for model generation."""
+    import json
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    failing = sum(not r.passed for r in results)
+    blocking = sum(r.blocking for r in results)
+    heartbeat = spark.createDataFrame(
+        [(run_id, datetime.now(timezone.utc).replace(tzinfo=None), "dq_gate",
+          "blocked" if blocking else "ok", len(results), failing, blocking)],
+        "RunId STRING, RunAt TIMESTAMP, Stage STRING, Status STRING, Expectations BIGINT, Failing BIGINT, Blocking BIGINT")
+    heartbeat.write.format("delta").mode("append").saveAsTable("meta_PipelineRun")
+    path = Path(diagnostic_dir) / "gold_schema.json"
+    schema = json.loads(path.read_text(encoding="utf-8"))
+    schema["meta_PipelineRun"] = [(f.name, f.dataType.simpleString())
+                                  for f in spark.table("meta_PipelineRun").schema.fields]
+    path.write_text(json.dumps(schema, indent=1), encoding="utf-8")
+    (Path(diagnostic_dir) / "heartbeat_run.json").write_text(json.dumps({
+        "run_id": run_id, "counts": {"meta_PipelineRun": spark.table("meta_PipelineRun").count()}
+    }, indent=2), encoding="utf-8")
+
+
 @dataclass(frozen=True)
 class Expectation:
     """One check against one table.
@@ -53,7 +76,8 @@ class Result:
 
     @property
     def blocking(self) -> bool:
-        return not self.passed and self.expectation.severity == SEVERITY_ERROR
+        # An unevaluated rule is unknown, even when a known violation would only warn.
+        return self.failing_rows < 0 or (not self.passed and self.expectation.severity == SEVERITY_ERROR)
 
 
 # --------------------------------------------------------------------------
@@ -139,7 +163,8 @@ def freshness(table: str, column: str, max_age_hours: int, severity: str = SEVER
         table=table,
         failing_sql=(
             f"SELECT MAX(`{column}`) AS newest FROM {table} "
-            f"HAVING MAX(`{column}`) < CURRENT_TIMESTAMP() - INTERVAL {max_age_hours} HOURS"
+            f"HAVING MAX(`{column}`) IS NULL OR "
+            f"MAX(`{column}`) < CURRENT_TIMESTAMP() - INTERVAL {max_age_hours} HOURS"
         ),
         severity=severity,
         description=f"{table} refreshed within {max_age_hours}h",
@@ -203,7 +228,9 @@ def _persist_rejects(spark: Any, exp: Expectation, failing: Any, batch_id: str) 
     from pyspark.sql import functions as F  # noqa: N812 - Spark convention
 
     (
-        failing.limit(1000)
+        # Retain every rejected row. A silent sample cannot support reconciliation
+        # between the check's failing_rows count and the persisted audit evidence.
+        failing
         .withColumn("_dq_expectation", F.lit(exp.name))
         .withColumn("_dq_reason", F.lit(exp.description or exp.name))
         .withColumn("_batch_id", F.lit(batch_id))

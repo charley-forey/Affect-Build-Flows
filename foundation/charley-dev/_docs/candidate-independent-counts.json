@@ -1,0 +1,200 @@
+{
+  "database": "CD_Validation_Lakehouse",
+  "lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
+  "captured_at": "2026-09-10T08:30:55.4248971Z",
+  "scope": "Independent SQL endpoint count read; not a build diagnostic or upstream completeness proof",
+  "counts": {
+    "man_QcItp": 0,
+    "man_QcInspectorSignIn": 0,
+    "man_Survey": 0,
+    "man_PriorityItems": 0,
+    "man_Flags": 0,
+    "man_SafetyMonthly": 0,
+    "man_QcSpecialInspection": 0,
+    "man_Milestones": 0,
+    "man_QcChecklistResult": 0,
+    "man_QcGate": 0,
+    "man_QualityMonthly": 0,
+    "man_DailyLogCompliance": 0,
+    "man_Risks": 0,
+    "man_Wins": 0,
+    "man_QcCommissioning": 0,
+    "man_QcDfow": 0,
+    "man_QcDohResult": 0,
+    "meta_PipelineRun": 1
+  },
+  "comparisons": [
+    {
+      "model": "monthly",
+      "table": "man_Wins",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_Risks",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_PriorityItems",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_Flags",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_Survey",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_SafetyMonthly",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_QualityMonthly",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_Milestones",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "man_DailyLogCompliance",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "monthly",
+      "table": "meta_PipelineRun",
+      "dax_count": 1,
+      "sql_count": 1,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:22:33.907913+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcDfow",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcItp",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcGate",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcSpecialInspection",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcCommissioning",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcInspectorSignIn",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcChecklistResult",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "man_QcDohResult",
+      "dax_count": 0,
+      "sql_count": 0,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    },
+    {
+      "model": "qc",
+      "table": "meta_PipelineRun",
+      "dax_count": 1,
+      "sql_count": 1,
+      "passed": true,
+      "model_query_captured_at": "2026-09-10T08:23:12.695506+00:00",
+      "source_run_id": "78ea309feb6047cabfc7cf58f7521997"
+    }
+  ],
+  "limitation": "Model query and SQL count reads occurred at different recorded times. These are independent current-state comparisons, not evidence of source intake completeness or automatic build-count coverage."
+}

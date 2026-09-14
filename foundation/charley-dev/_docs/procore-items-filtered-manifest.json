@@ -1,0 +1,314 @@
+{
+  "batch": "20260910T095953-d161e967",
+  "source_scope": "active_projects_discovered_inspections",
+  "written_rows_semantics": "Distinct input rows in a successful upsert; not inserted/updated totals",
+  "normalized_rows_semantics": "Rows after expanding source groups; equals written_rows plus duplicate_rows_removed after a successful merge",
+  "project_ids": [
+    562949955001573,
+    562949954833574,
+    562949955118102,
+    562949955455437,
+    562949955225798,
+    562949955257421,
+    562949955064640,
+    562949955318524,
+    562949955423662,
+    562949955286476,
+    562949955375634,
+    562949954973730,
+    562949954973684,
+    562949954971827,
+    562949953807489,
+    562949955365267,
+    562949953807474,
+    562949954507004,
+    562949955173068,
+    562949954997327
+  ],
+  "endpoints": [
+    {
+      "endpoint": "checklist_lists",
+      "table": "cd_bronze_procore_checklist_lists",
+      "status": "complete",
+      "received_rows": 10,
+      "normalized_rows": 21,
+      "written_rows": 21,
+      "scopes": [
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955001573",
+          "project_id": 562949955001573,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954833574",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 4
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955118102",
+          "project_id": 562949955118102,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955455437",
+          "project_id": 562949955455437,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955225798",
+          "project_id": 562949955225798,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955257421",
+          "project_id": 562949955257421,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955064640",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 3
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955318524",
+          "project_id": 562949955318524,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955423662",
+          "project_id": 562949955423662,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955286476",
+          "project_id": 562949955286476,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955375634",
+          "project_id": 562949955375634,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954973730",
+          "project_id": 562949954973730,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954973684",
+          "project_id": 562949954973684,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954971827",
+          "project_id": 562949954971827,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949953807489",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 2
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955365267",
+          "project_id": 562949955365267,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949953807474",
+          "project_id": 562949953807474,
+          "status": "complete",
+          "received_rows": 1
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954507004",
+          "project_id": 562949954507004,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949955173068",
+          "project_id": 562949955173068,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/checklist/lists?project_id=562949954997327",
+          "project_id": 562949954997327,
+          "status": "complete",
+          "received_rows": 0
+        }
+      ],
+      "duplicate_rows_removed": 0,
+      "watermark_advanced": false,
+      "full_parent_discovery": true,
+      "mode": "full",
+      "since": null,
+      "raw_archive": "/lakehouse/default/Files/_diag/ingestion/20260910T095953-d161e967/checklist_lists.jsonl",
+      "archived_rows": 10,
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "checklist_list_items",
+      "table": "cd_bronze_procore_checklist_list_items",
+      "status": "complete",
+      "received_rows": 563,
+      "normalized_rows": 563,
+      "written_rows": 563,
+      "scopes": [
+        {
+          "path": "/rest/v1.0/projects/562949954833574/checklist/list_items?filters[list_id][]=562949965697864",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 16
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954833574/checklist/list_items?filters[list_id][]=562949966506952",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 15
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954833574/checklist/list_items?filters[list_id][]=562949966374270",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954833574/checklist/list_items?filters[list_id][]=562949966332795",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 32
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965619659",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965619686",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965619786",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965619803",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965440819",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 26
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965458230",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 26
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965458271",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 26
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965440778",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965440789",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items?filters[list_id][]=562949965440796",
+          "project_id": 562949955064640,
+          "status": "complete",
+          "received_rows": 17
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/checklist/list_items?filters[list_id][]=562949968619796",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 29
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/checklist/list_items?filters[list_id][]=562949968620112",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 29
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/checklist/list_items?filters[list_id][]=562949968661044",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 56
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/checklist/list_items?filters[list_id][]=562949968765489",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 56
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/checklist/list_items?filters[list_id][]=562949968765525",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 56
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807489/checklist/list_items?filters[list_id][]=562949954571372",
+          "project_id": 562949953807489,
+          "status": "complete",
+          "received_rows": 18
+        },
+        {
+          "path": "/rest/v1.0/projects/562949953807474/checklist/list_items?filters[list_id][]=562949959102645",
+          "project_id": 562949953807474,
+          "status": "complete",
+          "received_rows": 42
+        }
+      ],
+      "duplicate_rows_removed": 0,
+      "watermark_advanced": false,
+      "parent_scope_incomplete": false,
+      "full_parent_discovery": false,
+      "mode": "full",
+      "since": null,
+      "raw_archive": "/lakehouse/default/Files/_diag/ingestion/20260910T095953-d161e967/checklist_list_items.jsonl",
+      "archived_rows": 563,
+      "raw_archive_complete": true
+    }
+  ],
+  "status": "complete"
+}

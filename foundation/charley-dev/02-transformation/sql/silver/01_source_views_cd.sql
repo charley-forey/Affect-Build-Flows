@@ -25,10 +25,12 @@
 -- abfss rather than by bare name because gold's notebook runs with CD_Gold_Lakehouse as its
 -- default catalog - an unqualified cd_silver_projects does not resolve from there.
 --
--- ONE view still reads the existing warehouse, for a reason that is not laziness:
+-- Three lookup views still read the existing warehouse:
 --
 --   sv_vendors              carries sage_vendor_id, which Procore does not put on the vendor
 --                           record; it comes from the existing crosswalk.
+--   sv_project_crosswalk    owns the explicit Procore-to-Sage project association.
+--   sv_sage_vendors         owns the Sage vendor names used to check name drift.
 --
 -- sv_ar_invoices was the other one until 2026-08-25. CD_Sage_Ingest now runs, so it reads
 -- cd_silver_sage_ar_invoices and the Sage subject area is ours end to end.
@@ -75,7 +77,7 @@ SELECT project_id, change_order_id, contract_id, created_date, amount, co_number
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_prime_change_orders`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_budgets AS
-SELECT project_id, cost_code_id, cost_code, category, snapshot_date,
+SELECT budget_line_id, project_id, cost_code_id, cost_code, category, snapshot_date,
        original_budget, budget_modifications, updated_budget, forecast_budget,
        committed_to_date, direct_costs, invoiced_to_date, cost_to_complete
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_budgets`;
@@ -103,9 +105,10 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_budgets`;
 --   * `Billing Period` was a column there and does not exist in Sage; it is derived from
 --     the invoice date at the same monthly grain the workbook reports at.
 --
--- The column contract is unchanged, so gold did not need editing.
+-- Source invoice identity is carried through gold for traceability back to Sage.
 CREATE OR REPLACE TEMPORARY VIEW sv_ar_invoices AS
 SELECT
+    CAST(invoice_uid AS STRING) AS invoice_uid, invoice_id, invoice_number,
     sage_project_id,
     invoice_date,
     due_date,
@@ -214,10 +217,10 @@ FROM delta.`{SILVER_ABFSS}/dim_projects_procoreXsage`;
 -- needing a third mapping. One row per Outbuild project.
 CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_projects AS
 SELECT DISTINCT
-    CAST(`Outbuild Project ID` AS STRING) AS outbuild_project_id,
-    CAST(`Procore Project ID`  AS STRING) AS procore_project_id
-FROM delta.`{SILVER_ABFSS}/Outbuild_activities`
-WHERE `Outbuild Project ID` IS NOT NULL;
+    outbuild_project_id,
+    project_id AS procore_project_id
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`
+WHERE outbuild_project_id IS NOT NULL;
 
 -- Sage's own vendor master, for names on the Sage side of the vendor crosswalk.
 CREATE OR REPLACE TEMPORARY VIEW sv_sage_vendors AS
@@ -412,8 +415,16 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_submittal`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_qc_inspection AS
 SELECT project_id, inspection_id, inspection_number, name, inspection_type, template_name,
-       trade, inspector_name, source_status, inspection_date, due_date, percent_complete
+       trade, inspector_name, inspectors_json, template_id, item_count,
+       conforming_item_count, deficient_item_count, not_inspected_item_count,
+       na_item_count, neutral_item_count,
+       source_status, inspection_date, due_date, percent_complete
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_inspection`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_qc_inspection_item AS
+SELECT project_id, item_id, inspection_id, section_id, name, source_status,
+       source_response, response_category, response_type, response_json, item_response_json
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_inspection_item`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_man_qc_dfow AS
 SELECT project_id, dfow_ref, dfow_description, trade_key, risk_tier, control_measure,
@@ -464,3 +475,35 @@ SELECT register_id, project_name, job_year, job_seq, job_number, stage,
        estimating_folder_url, project_folder_url, requested_by, requested_at, completed_at,
        copy_job_status, error_detail, last_modified, last_modified_by
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_man_job_register`;
+
+
+-- ---------------------------------------------------------------------------
+-- SILVER REJECT LEDGERS - read by gold dq_DataGap
+-- ---------------------------------------------------------------------------
+--
+-- Every row a silver parser excluded, with its reason. Until these views existed the three
+-- ledgers were written every night and read by nothing: not gold, not a model, not the DQ
+-- gate. A reject nobody can see is a silent drop with extra steps.
+
+CREATE OR REPLACE TEMPORARY VIEW sv_dq_rejects AS
+SELECT target_table, reason, payload, _batch_id
+FROM delta.`{CD_SILVER_ABFSS}/cd_dq_rejects`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_dq_rejects_manual AS
+SELECT target_table, project_id, month_start, item_ref, reason, last_modified, last_modified_by
+FROM delta.`{CD_SILVER_ABFSS}/cd_dq_rejects_manual`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_dq_rejects_qc AS
+SELECT target_table, project_id, item_ref, reason, last_modified, last_modified_by
+FROM delta.`{CD_SILVER_ABFSS}/cd_dq_rejects_qc`;
+
+
+-- ---------------------------------------------------------------------------
+-- SAGE AR PAYMENTS - read by gold 22_fct_invoice.sql for PaidDate / DaysToPayment
+-- ---------------------------------------------------------------------------
+-- One row per receipt, reversals as negative rows. See 26_sage_silver.sql.
+CREATE OR REPLACE TEMPORARY VIEW sv_ar_payments AS
+SELECT
+    CAST(payment_uid AS STRING) AS payment_uid, CAST(invoice_uid AS STRING) AS invoice_uid,
+    invoice_id, payment_date, amount
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ar_payments`;

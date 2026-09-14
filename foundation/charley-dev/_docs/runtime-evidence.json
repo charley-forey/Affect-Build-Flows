@@ -1,0 +1,1202 @@
+{
+  "CD_Master_Pipeline": [
+    {
+      "id": "dfbb562d-ff91-470f-894a-28287fab6a33",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "d1169cfb-77bd-477a-beb1-80bcdc1be1a6",
+        "errorCode": "20302",
+        "message": "Operation on target Ingest Sage failed: Dataflow refresh job failed with status: Failed. Failure reason: { requestId: ea99d5c5-30b0-4755-b4de-7c15406fd3f7, errorCode: GatewayDataSourceOpenConnectionTimeout, message: Something went wrong, please try again later. If the error persists, please contact support. }",
+        "isRetriable": false
+      },
+      "rootActivityId": "39f87db0-75ff-4504-a9a2-66738140ea99",
+      "startTimeUtc": "2026-09-09T06:00:06.2908147",
+      "endTimeUtc": "2026-09-09T06:30:28.7866667"
+    },
+    {
+      "id": "32c1dc4e-d9ef-41d6-8998-4afc8e55e5c1",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "d1169cfb-77bd-477a-beb1-80bcdc1be1a6",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 1dabd0cd-e3f9-45ce-898c-aae527931911\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "c51e871a-9afc-4f26-a322-a1ee9f293734",
+      "startTimeUtc": "2026-09-08T06:00:05.8448182",
+      "endTimeUtc": "2026-09-08T06:27:45.31"
+    },
+    {
+      "id": "7c53d984-5d19-4dfe-b495-be65144df121",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "d1169cfb-77bd-477a-beb1-80bcdc1be1a6",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: b885437b-1834-40ef-b917-5d80f080fcbb\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "869e99d0-e496-4331-b6e5-ca10a022e74b",
+      "startTimeUtc": "2026-09-07T06:00:10.0114817",
+      "endTimeUtc": "2026-09-07T06:27:37.1366667"
+    },
+    {
+      "id": "d10eeb8e-2f36-458a-908b-5c95eb1f8e97",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "d1169cfb-77bd-477a-beb1-80bcdc1be1a6",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 099bbd82-669e-4b14-ba18-60356f93f782\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "7978ae1b-7ee8-4f96-b338-3b37bfd307c1",
+      "startTimeUtc": "2026-09-06T06:00:08.9721008",
+      "endTimeUtc": "2026-09-06T06:27:42.78"
+    },
+    {
+      "id": "98b378ef-214c-4344-a1af-dce86b5b0780",
+      "itemId": "510a8d44-85d0-4e45-bcf5-f3760c0eafeb",
+      "jobType": "Pipeline",
+      "invokeType": "Scheduled",
+      "status": "Failed",
+      "failureReason": {
+        "requestId": "d1169cfb-77bd-477a-beb1-80bcdc1be1a6",
+        "errorCode": "2451",
+        "message": "Operation on target Extract Procore failed: Notebook execution failed at Notebook service with http status code - '200', please check the Run logs on Notebook, additional details - '{\"errorCode\":\"200\",\"errorName\":\"HTTPError\",\"errorValue\":\"429 Client Error: Too Many Requests for url: https://api.procore.com/rest/v1.0/projects?company_id=[REDACTED]&filters%5Bby_status%5D=Active&page=1&per_page=100\",\"message\":\"Notebook execution is in Failed state, runId: 2109935f-63e2-45b8-8fb5-02c9b8a295e0\"}' : ",
+        "isRetriable": false
+      },
+      "rootActivityId": "9391a827-c63a-456e-a29d-5ad205057f39",
+      "startTimeUtc": "2026-09-05T06:00:17.2330043",
+      "endTimeUtc": "2026-09-05T06:27:42.4133333"
+    }
+  ],
+  "cd_40_dq_checks": [
+    {
+      "id": "f16f4a2a-013f-4070-ba5f-d5a303ba7579",
+      "itemId": "4940d038-fa40-4402-a315-e2ec85f02f38",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "fd42fa44-7105-4bc0-ac05-79ca01877c1a",
+      "startTimeUtc": "2026-08-28T06:47:25.6601866",
+      "endTimeUtc": "2026-08-28T06:51:32.2389856"
+    },
+    {
+      "id": "af8adb15-4ab5-4154-a5f2-bf0fe10f24a8",
+      "itemId": "4940d038-fa40-4402-a315-e2ec85f02f38",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "5cfaecb5-d181-4de5-b095-c23a032b58ad",
+      "startTimeUtc": "2026-08-27T06:47:24.8889437",
+      "endTimeUtc": "2026-08-27T06:51:29.7195999"
+    },
+    {
+      "id": "d2060e65-1323-4117-8691-c1e81dbdb718",
+      "itemId": "4940d038-fa40-4402-a315-e2ec85f02f38",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "1e88ed7b-2826-42d8-b449-565b22fc2eb0",
+      "startTimeUtc": "2026-08-26T06:50:29.8734455",
+      "endTimeUtc": "2026-08-26T06:54:38.0114437"
+    },
+    {
+      "id": "96586b88-4261-4d70-9679-24614c1d27a7",
+      "itemId": "4940d038-fa40-4402-a315-e2ec85f02f38",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "84f95430-58cf-4267-b6b8-507e76bd60f6",
+      "startTimeUtc": "2026-08-25T12:02:01.65157",
+      "endTimeUtc": "2026-08-25T12:06:10.1312475"
+    },
+    {
+      "id": "0e2865ee-660b-405d-8d80-73c03625d065",
+      "itemId": "4940d038-fa40-4402-a315-e2ec85f02f38",
+      "jobType": "RunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "6f38d1bc-aa08-4238-896e-0b4c549e11b2",
+      "startTimeUtc": "2026-08-25T10:27:03.6193298",
+      "endTimeUtc": "2026-08-25T10:30:58.9340598"
+    }
+  ],
+  "cd_30_build_gold": [
+    {
+      "id": "ecd5b149-4ffe-455e-949f-d54cc6e9b3b8",
+      "itemId": "64cb0737-9928-4964-8bd5-965e0e2f19b5",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "d4507d1a-2739-4eee-bc7e-5203a3ecbe61",
+      "startTimeUtc": "2026-08-28T06:37:34.0371596",
+      "endTimeUtc": "2026-08-28T06:46:58.5252161"
+    },
+    {
+      "id": "2732d4c2-3f9a-4ba6-8c17-a628e2af601b",
+      "itemId": "64cb0737-9928-4964-8bd5-965e0e2f19b5",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "ee71bb4d-536c-47a0-b3dc-5e2df1689572",
+      "startTimeUtc": "2026-08-27T06:37:01.7859475",
+      "endTimeUtc": "2026-08-27T06:46:53.529756"
+    },
+    {
+      "id": "afd3f68d-49c6-4d26-9847-71ed590feb46",
+      "itemId": "64cb0737-9928-4964-8bd5-965e0e2f19b5",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "baae1d28-775f-42d2-b8cc-0a7e61afec6c",
+      "startTimeUtc": "2026-08-26T06:41:40.7697171",
+      "endTimeUtc": "2026-08-26T06:49:59.6456488"
+    },
+    {
+      "id": "8c5c7e19-7e5c-4096-a030-d885ffd97c73",
+      "itemId": "64cb0737-9928-4964-8bd5-965e0e2f19b5",
+      "jobType": "PipelineRunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "79ab0f93-0fba-4e29-93bd-ed5e3c9e9e05",
+      "startTimeUtc": "2026-08-25T11:51:56.1237514",
+      "endTimeUtc": "2026-08-25T12:00:26.5886266"
+    },
+    {
+      "id": "908f3035-8f89-4fa7-a4b7-9bbbdabd863a",
+      "itemId": "64cb0737-9928-4964-8bd5-965e0e2f19b5",
+      "jobType": "RunNotebook",
+      "invokeType": "Manual",
+      "status": "Completed",
+      "failureReason": null,
+      "rootActivityId": "435213ad-ea32-4b50-a11c-a91b2b5e8c9a",
+      "startTimeUtc": "2026-08-25T10:15:17.1844964",
+      "endTimeUtc": "2026-08-25T10:25:01.1562472"
+    }
+  ],
+  "dq_diagnostics": {
+    "batch": "20260828T064735Z",
+    "results": [
+      {
+        "name": "dim_Project.ProjectKey.unique",
+        "table": "dim_Project",
+        "severity": "error",
+        "description": "(ProjectKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_Vendor.VendorKey.unique",
+        "table": "dim_Vendor",
+        "severity": "error",
+        "description": "(VendorKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_CostCode.CostCodeKey.unique",
+        "table": "dim_CostCode",
+        "severity": "error",
+        "description": "(CostCodeKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_Date.Date.unique",
+        "table": "dim_Date",
+        "severity": "error",
+        "description": "(Date) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_ProjectCrosswalk.ProjectKey.unique",
+        "table": "dim_ProjectCrosswalk",
+        "severity": "error",
+        "description": "(ProjectKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_VendorCrosswalk.VendorKey.unique",
+        "table": "dim_VendorCrosswalk",
+        "severity": "error",
+        "description": "(VendorKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_CostCodeCrosswalk.CostCodeKey.unique",
+        "table": "dim_CostCodeCrosswalk",
+        "severity": "error",
+        "description": "(CostCodeKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_RfiSubmittal.ItemType_ItemKey.unique",
+        "table": "fct_RfiSubmittal",
+        "severity": "error",
+        "description": "(ItemType, ItemKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_Project.ProjectKey.not_null",
+        "table": "dim_Project",
+        "severity": "error",
+        "description": "ProjectKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_BudgetLine.ProjectKey.not_null",
+        "table": "fct_BudgetLine",
+        "severity": "error",
+        "description": "ProjectKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_ChangeOrder.ProjectKey.not_null",
+        "table": "fct_ChangeOrder",
+        "severity": "error",
+        "description": "ProjectKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_BudgetLine.ProjectKey.fk_dim_Project",
+        "table": "fct_BudgetLine",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_BudgetLine.CostCodeKey.fk_dim_CostCode",
+        "table": "fct_BudgetLine",
+        "severity": "error",
+        "description": "CostCodeKey must resolve to dim_CostCode.CostCodeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_ChangeOrder.ProjectKey.fk_dim_Project",
+        "table": "fct_ChangeOrder",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_RfiSubmittal.ProjectKey.fk_dim_Project",
+        "table": "fct_RfiSubmittal",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Milestone.ProjectKey.fk_dim_Project",
+        "table": "fct_Milestone",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_Project.SageJobNumber resolves for at least one project",
+        "table": "dim_Project",
+        "severity": "error",
+        "description": "no project maps to Sage - the crosswalk join is broken, not sparse",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Invoice.Amount is not universally zero",
+        "table": "fct_Invoice",
+        "severity": "error",
+        "description": "every invoice totals zero - invamt was trusted instead of paid+balance",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Invoice.Amount reconciles to AmountPaid + Balance",
+        "table": "fct_Invoice",
+        "severity": "error",
+        "description": "invoice total no longer equals paid plus outstanding",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Invoice has rows",
+        "table": "fct_Invoice",
+        "severity": "error",
+        "description": "no AR invoices at all - the Sage gateway or dataflow has stopped",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Invoice project match rate is not collapsing",
+        "table": "fct_Invoice",
+        "severity": "warn",
+        "description": "not one AR invoice resolves to a project - the crosswalk join broke",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_BudgetLine.MonthStart resolves to dim_Date",
+        "table": "fct_BudgetLine",
+        "severity": "error",
+        "description": "a MonthStart outside dim_Date makes every measure over it blank",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_ChangeOrder.MonthStart resolves to dim_Date",
+        "table": "fct_ChangeOrder",
+        "severity": "error",
+        "description": "a MonthStart outside dim_Date makes every measure over it blank",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Invoice.MonthStart resolves to dim_Date",
+        "table": "fct_Invoice",
+        "severity": "error",
+        "description": "a MonthStart outside dim_Date makes every measure over it blank",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_RfiSubmittal.MonthStart resolves to dim_Date",
+        "table": "fct_RfiSubmittal",
+        "severity": "error",
+        "description": "a MonthStart outside dim_Date makes every measure over it blank",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Milestone.MonthStart resolves to dim_Date",
+        "table": "fct_Milestone",
+        "severity": "error",
+        "description": "a MonthStart outside dim_Date makes every measure over it blank",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_FinancialPeriod.MonthStart resolves to dim_Date",
+        "table": "fct_FinancialPeriod",
+        "severity": "error",
+        "description": "a MonthStart outside dim_Date makes every measure over it blank",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_RfiSubmittal.CreatedDate has no sentinel dates",
+        "table": "fct_RfiSubmittal",
+        "severity": "error",
+        "description": "pre-1990 dates are 'unknown' placeholders, not real dates",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_RfiSubmittal.DueDate has no sentinel dates",
+        "table": "fct_RfiSubmittal",
+        "severity": "error",
+        "description": "pre-1990 dates are 'unknown' placeholders, not real dates",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Milestone.CurrentStart has no sentinel dates",
+        "table": "fct_Milestone",
+        "severity": "error",
+        "description": "pre-1990 dates are 'unknown' placeholders, not real dates",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Milestone.CurrentFinish has no sentinel dates",
+        "table": "fct_Milestone",
+        "severity": "error",
+        "description": "pre-1990 dates are 'unknown' placeholders, not real dates",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Invoice.SentDate has no sentinel dates",
+        "table": "fct_Invoice",
+        "severity": "error",
+        "description": "pre-1990 dates are 'unknown' placeholders, not real dates",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Milestone.CurrentStart_CurrentFinish.order",
+        "table": "fct_Milestone",
+        "severity": "warn",
+        "description": "CurrentStart <= CurrentFinish",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "every project is in Sage",
+        "table": "dim_ProjectCrosswalk",
+        "severity": "warn",
+        "description": "a project missing from Sage reads as ZERO revenue everywhere",
+        "failing_rows": 4,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "every project is in Outbuild",
+        "table": "dim_ProjectCrosswalk",
+        "severity": "warn",
+        "description": "no Outbuild project means no milestones - the only source there is",
+        "failing_rows": 17,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "no project maps to two ids on the far side",
+        "table": "dim_ProjectCrosswalk",
+        "severity": "error",
+        "description": "an ambiguous mapping was resolved by picking one - unsafe",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "cost codes parse to a CSI division",
+        "table": "dim_CostCodeCrosswalk",
+        "severity": "warn",
+        "description": "unparseable codes cannot roll up by division",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "no negative original budgets",
+        "table": "fct_BudgetLine",
+        "severity": "warn",
+        "description": "a negative budget usually means a sign convention was misread",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "cumulative billing never exceeds the current contract",
+        "table": "fct_FinancialPeriod",
+        "severity": "warn",
+        "description": "cumulative billing above contract by >1% is a reconciliation gap",
+        "failing_rows": 2,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "fct_Billing.BillingKey.unique",
+        "table": "fct_Billing",
+        "severity": "error",
+        "description": "(BillingKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Billing.ProjectKey.not_null",
+        "table": "fct_Billing",
+        "severity": "error",
+        "description": "ProjectKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_ProjectVendor.ProjectKey_VendorKey.unique",
+        "table": "bridge_ProjectVendor",
+        "severity": "error",
+        "description": "(ProjectKey, VendorKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_DirectCost.ProjectKey.not_null",
+        "table": "fct_DirectCost",
+        "severity": "error",
+        "description": "ProjectKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_Billing.ProjectKey.fk_dim_Project",
+        "table": "fct_Billing",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_DirectCost.ProjectKey.fk_dim_Project",
+        "table": "fct_DirectCost",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_ProjectVendor.ProjectKey.fk_dim_Project",
+        "table": "bridge_ProjectVendor",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "one latest billing period per contract",
+        "table": "fct_Billing",
+        "severity": "error",
+        "description": "a duplicate latest period double-counts that contract's retainage",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "billing balances reconcile to the sum of period movements",
+        "table": "fct_Billing",
+        "severity": "warn",
+        "description": "cumulative and period-movement billing disagree by more than 1%",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "retainage percent is plausible",
+        "table": "fct_Billing",
+        "severity": "warn",
+        "description": "retainage above 20% suggests a percent/fraction mix-up",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "retainage released rather than withheld",
+        "table": "fct_Billing",
+        "severity": "warn",
+        "description": "negative retainage is a release being paid out, not a defect",
+        "failing_rows": 6,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "direct cost grand total is at least the line amount",
+        "table": "fct_DirectCost",
+        "severity": "warn",
+        "description": "grand total below the line amount means the two are transposed",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_VendorCostCode.VendorCostCodeKey.unique",
+        "table": "bridge_VendorCostCode",
+        "severity": "error",
+        "description": "(VendorCostCodeKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_VendorInsurance.InsuranceKey.unique",
+        "table": "fct_VendorInsurance",
+        "severity": "error",
+        "description": "(InsuranceKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_VendorCostCode.VendorKey.not_null",
+        "table": "bridge_VendorCostCode",
+        "severity": "error",
+        "description": "VendorKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_VendorCostCode.CostCodeKey.not_null",
+        "table": "bridge_VendorCostCode",
+        "severity": "error",
+        "description": "CostCodeKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "fct_VendorInsurance.VendorKey.not_null",
+        "table": "fct_VendorInsurance",
+        "severity": "error",
+        "description": "VendorKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_VendorCostCode.ProjectKey.fk_dim_Project",
+        "table": "bridge_VendorCostCode",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge_VendorCostCode.CostCodeKey.fk_dim_CostCode",
+        "table": "bridge_VendorCostCode",
+        "severity": "error",
+        "description": "CostCodeKey must resolve to dim_CostCode.CostCodeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "the vendor bridge covers most direct cost spend",
+        "table": "bridge_VendorCostCode",
+        "severity": "warn",
+        "description": "bridge covers under half of direct spend - lines are not joining",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "bridge actual spend does not exceed direct cost spend",
+        "table": "bridge_VendorCostCode",
+        "severity": "error",
+        "description": "bridge spend above direct cost spend means lines fanned out",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "committed lines are not negative",
+        "table": "bridge_VendorCostCode",
+        "severity": "warn",
+        "description": "a negative committed line is a credit, or an inverted sign",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "vendors on a project have a certificate on file",
+        "table": "bridge_ProjectVendor",
+        "severity": "warn",
+        "description": "a vendor with no certificate on file cannot be shown as compliant",
+        "failing_rows": 394,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "certificates on file are in date",
+        "table": "fct_VendorInsurance",
+        "severity": "warn",
+        "description": "an expired certificate is not coverage - chase the renewal",
+        "failing_rows": 105,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "fct_VendorInsurance.EffectiveDate_ExpirationDate.order",
+        "table": "fct_VendorInsurance",
+        "severity": "warn",
+        "description": "EffectiveDate <= ExpirationDate",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "billing data is not stale",
+        "table": "fct_Billing",
+        "severity": "warn",
+        "description": "no billing period closed in 75 days - has the extract been run?",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "direct cost data is not stale",
+        "table": "fct_DirectCost",
+        "severity": "warn",
+        "description": "no direct cost posted in 45 days - has the extract been run?",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "field operations data is not stale",
+        "table": "fct_QualityItem",
+        "severity": "warn",
+        "description": "no observation or punch item raised in 45 days on any project",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_Trade.TradeKey.unique",
+        "table": "qc_seed_Trade",
+        "severity": "error",
+        "description": "(TradeKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_ChecklistItem.ItemKey.unique",
+        "table": "qc_seed_ChecklistItem",
+        "severity": "error",
+        "description": "(ItemKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_Gate.GateKey.unique",
+        "table": "qc_seed_Gate",
+        "severity": "error",
+        "description": "(GateKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_DohItem.ItemKey.unique",
+        "table": "qc_seed_DohItem",
+        "severity": "error",
+        "description": "(ItemKey) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_QcStatus.Domain_Code.unique",
+        "table": "dim_QcStatus",
+        "severity": "error",
+        "description": "(Domain, Code) must be unique",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_ChecklistItem.TradeKey.not_null",
+        "table": "qc_seed_ChecklistItem",
+        "severity": "error",
+        "description": "TradeKey must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_Gate.GateType.not_null",
+        "table": "qc_seed_Gate",
+        "severity": "error",
+        "description": "GateType must be populated",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "the checklist template still holds all 625 items",
+        "table": "qc_seed_ChecklistItem",
+        "severity": "error",
+        "description": "26 trade sheets collapsed into one table - 625 items across 26 trades",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "the gate template still holds all three paths",
+        "table": "qc_seed_Gate",
+        "severity": "error",
+        "description": "Path to TCO / Fire Alarm / Statutory collapsed to one table: 46/23/24",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "the DOH checklist still holds all 101 requirements",
+        "table": "qc_seed_DohItem",
+        "severity": "error",
+        "description": "a missing DOH requirement is one nobody is tracking against",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_Wins.ProjectKey.fk_dim_Project",
+        "table": "man_Wins",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_Risks.ProjectKey.fk_dim_Project",
+        "table": "man_Risks",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_PriorityItems.ProjectKey.fk_dim_Project",
+        "table": "man_PriorityItems",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_Flags.ProjectKey.fk_dim_Project",
+        "table": "man_Flags",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_Survey.ProjectKey.fk_dim_Project",
+        "table": "man_Survey",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_SafetyMonthly.ProjectKey.fk_dim_Project",
+        "table": "man_SafetyMonthly",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QualityMonthly.ProjectKey.fk_dim_Project",
+        "table": "man_QualityMonthly",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_Milestones.ProjectKey.fk_dim_Project",
+        "table": "man_Milestones",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_DailyLogCompliance.ProjectKey.fk_dim_Project",
+        "table": "man_DailyLogCompliance",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcDfow.ProjectKey.fk_dim_Project",
+        "table": "man_QcDfow",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcItp.ProjectKey.fk_dim_Project",
+        "table": "man_QcItp",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcGate.ProjectKey.fk_dim_Project",
+        "table": "man_QcGate",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcSpecialInspection.ProjectKey.fk_dim_Project",
+        "table": "man_QcSpecialInspection",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcCommissioning.ProjectKey.fk_dim_Project",
+        "table": "man_QcCommissioning",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcInspectorSignIn.ProjectKey.fk_dim_Project",
+        "table": "man_QcInspectorSignIn",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcChecklistResult.ProjectKey.fk_dim_Project",
+        "table": "man_QcChecklistResult",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcDohResult.ProjectKey.fk_dim_Project",
+        "table": "man_QcDohResult",
+        "severity": "error",
+        "description": "ProjectKey must resolve to dim_Project.ProjectKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_Job.JobNumber.unique",
+        "table": "dim_Job",
+        "severity": "error",
+        "description": "two jobs issued the same number - trigger concurrency is off on the Power Automate flows",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "dim_Job.JobNumber.issued_past_requested",
+        "table": "dim_Job",
+        "severity": "warn",
+        "description": "a job past Requested with no number - the flow did not finish",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcDfow.TradeKey.fk_qc_seed_Trade",
+        "table": "man_QcDfow",
+        "severity": "error",
+        "description": "TradeKey must resolve to qc_seed_Trade.TradeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcItp.TradeKey.fk_qc_seed_Trade",
+        "table": "man_QcItp",
+        "severity": "error",
+        "description": "TradeKey must resolve to qc_seed_Trade.TradeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcCommissioning.TradeKey.fk_qc_seed_Trade",
+        "table": "man_QcCommissioning",
+        "severity": "error",
+        "description": "TradeKey must resolve to qc_seed_Trade.TradeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcChecklistResult.TradeKey.fk_qc_seed_Trade",
+        "table": "man_QcChecklistResult",
+        "severity": "error",
+        "description": "TradeKey must resolve to qc_seed_Trade.TradeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcChecklistResult.ItemKey.fk_qc_seed_ChecklistItem",
+        "table": "man_QcChecklistResult",
+        "severity": "error",
+        "description": "ItemKey must resolve to qc_seed_ChecklistItem.ItemKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcGate.GateKey.fk_qc_seed_Gate",
+        "table": "man_QcGate",
+        "severity": "error",
+        "description": "GateKey must resolve to qc_seed_Gate.GateKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcDohResult.ItemKey.fk_qc_seed_DohItem",
+        "table": "man_QcDohResult",
+        "severity": "error",
+        "description": "ItemKey must resolve to qc_seed_DohItem.ItemKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcGate.SubmittedDate_CompletedDate.order",
+        "table": "man_QcGate",
+        "severity": "warn",
+        "description": "SubmittedDate <= CompletedDate",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "man_QcSpecialInspection.PerformedDate_ReportReceivedDate.order",
+        "table": "man_QcSpecialInspection",
+        "severity": "warn",
+        "description": "PerformedDate <= ReportReceivedDate",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "gates completed after their target date",
+        "table": "man_QcGate",
+        "severity": "warn",
+        "description": "a TCO or fire alarm gate closed late - the critical path moved",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "gate results agree with their template's path",
+        "table": "man_QcGate",
+        "severity": "error",
+        "description": "a gate result filed under the wrong path skews both paths' progress",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "Procore QC statuses map to the workbook's vocabulary",
+        "table": "fct_QcSubmittal",
+        "severity": "warn",
+        "description": "an unmapped Procore status drops the row out of every status slicer",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "Procore trades resolve to a seeded trade",
+        "table": "fct_QcNcr",
+        "severity": "warn",
+        "description": "an unmapped trade cannot roll up by trade - alias it or fix Procore",
+        "failing_rows": 221,
+        "passed": false,
+        "blocking": false
+      },
+      {
+        "name": "qc_seed_TradeAlias.TradeKey.fk_qc_seed_Trade",
+        "table": "qc_seed_TradeAlias",
+        "severity": "error",
+        "description": "TradeKey must resolve to qc_seed_Trade.TradeKey",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      },
+      {
+        "name": "scorecard weights sum to 1.00",
+        "table": "dim_ScorecardWeight",
+        "severity": "error",
+        "description": "weights that do not sum to 1.00 make every score meaningless",
+        "failing_rows": 0,
+        "passed": true,
+        "blocking": false
+      }
+    ]
+  }
+}

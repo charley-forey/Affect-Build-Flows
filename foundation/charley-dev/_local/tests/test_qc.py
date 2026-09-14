@@ -303,6 +303,85 @@ def test_procore_facts(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_QcNcr") == 3
     assert one(con, "SELECT COUNT(*) FROM fct_QcPunch") == 2
     assert one(con, "SELECT COUNT(*) FROM fct_QcSubmittal") == 3
+    assert con.execute("SELECT ProjectKey, InspectionKey, SourceTemplateId, SourceStatus, "
+                       "SourceItemCount, ConformingItemCount, DeficientItemCount, "
+                       "NotInspectedItemCount, NeutralItemCount, SourcePercentComplete "
+                       "FROM fct_ProcoreInspection").fetchone() == (
+                           "P1", "IN1", "T1", "CLOSED", 16, 1, 0, 15, None, None)
+    assert one(con, "SELECT InspectorsJson FROM fct_ProcoreInspection") == '[{"id":1,"name":"Inspector One"}]'
+    assert one(con, "SELECT COUNT(*) FROM fct_ProcoreInspection") == one(con, "SELECT COUNT(*) FROM sv_qc_inspection")
+    check("native inspections preserve source identity, assignments and counts without assuming completion")
+    import expectations
+    rule = next(e for e in expectations.build_suite().expectations
+                if e.name == "native inspection source values are preserved")
+    assert not con.execute(rule.failing_sql).fetchall()
+    for mutation in ["UPDATE fct_ProcoreInspection SET NotInspectedItemCount=0",
+                     "DELETE FROM fct_ProcoreInspection",
+                     "INSERT INTO fct_ProcoreInspection SELECT * FROM fct_ProcoreInspection"]:
+        con.execute("BEGIN")
+        try:
+            con.execute(mutation)
+            assert con.execute(rule.failing_sql).fetchall(), mutation
+        finally:
+            con.execute("ROLLBACK")
+    check("native inspection conservation rejects altered, missing and duplicate rows")
+    item_rules = [e for e in expectations.build_suite().expectations
+                  if e.table == "fct_ProcoreInspectionItem"]
+    assert all(not con.execute(e.failing_sql.replace("`", '"')).fetchall() for e in item_rules)
+    parent_rule = next(e for e in item_rules if "same project" in e.name)
+    preserve_rule = next(e for e in item_rules if "source values" in e.name)
+    con.execute("BEGIN")
+    try:
+        con.execute("UPDATE fct_ProcoreInspectionItem SET ProjectKey='WRONG_PROJECT'")
+        assert con.execute(parent_rule.failing_sql).fetchall()
+        assert con.execute(preserve_rule.failing_sql).fetchall()
+    finally:
+        con.execute("ROLLBACK")
+    check("inspection items cannot borrow a parent from another project")
+    assert one(con, "SELECT InspectionLinkKey FROM fct_ProcoreInspection") == "2:P1IN1"
+    # Execute the shipped transforms with reused IDs and delimiter-bearing identities.
+    con.execute("BEGIN")
+    try:
+        for view in ("sv_qc_inspection", "sv_qc_inspection_item"):
+            con.execute(f"CREATE TEMPORARY TABLE {view}_snapshot AS SELECT * FROM {view}")
+            con.execute(f"CREATE OR REPLACE VIEW {view} AS SELECT s.* REPLACE "
+                        "(k.project_id AS project_id, k.inspection_id AS inspection_id) "
+                        f"FROM {view}_snapshot s CROSS JOIN "
+                        "(VALUES ('P1','IN1'),('P2','IN1'),('A:B','C'),('A','B:C')) "
+                        "k(project_id,inspection_id)")
+        from seedrunner import split_statements
+        for sql in split_statements((CHARLEY_DEV / "02-transformation/sql/gold/33_fct_qc.sql").read_text()):
+            if sql.startswith("CREATE OR REPLACE TABLE fct_ProcoreInspection"):
+                con.execute(sql)
+        assert one(con, "SELECT COUNT(DISTINCT InspectionLinkKey) FROM fct_ProcoreInspection") == 4
+        linked = con.execute("SELECT i.ProjectKey, p.ProjectKey FROM fct_ProcoreInspectionItem i "
+                             "JOIN fct_ProcoreInspection p ON i.InspectionLinkKey=p.InspectionLinkKey").fetchall()
+        assert len(linked) == 64 and all(a == b for a, b in linked)
+    finally:
+        con.execute("ROLLBACK")
+    check("reused inspection IDs and embedded delimiters do not fan out model joins")
+    count_rule = next(e for e in expectations.build_suite().expectations
+                      if e.name == "native inspection item totals match source headers")
+    assert not con.execute(count_rule.failing_sql).fetchall()
+    con.execute("BEGIN")
+    try:
+        con.execute("DELETE FROM fct_ProcoreInspectionItem WHERE ItemKey='II1'")
+        assert con.execute(count_rule.failing_sql).fetchone() == ("P1", "IN1", 16, 15)
+        con.execute("DELETE FROM fct_ProcoreInspectionItem")
+        assert con.execute(count_rule.failing_sql).fetchone() == ("P1", "IN1", 16, 0)
+        con.execute("UPDATE fct_ProcoreInspection SET SourceItemCount=NULL")
+        assert not con.execute(count_rule.failing_sql).fetchall()
+    finally:
+        con.execute("ROLLBACK")
+    check("partial and absent item feeds fail header reconciliation; unknown totals remain unknown")
+    con.execute("BEGIN")
+    try:
+        con.execute("UPDATE fct_ProcoreInspectionItem SET InspectionLinkKey='bad-link'")
+        link_rule = next(e for e in expectations.build_suite().expectations
+                         if e.name == "native inspection model link keys match source identity")
+        assert con.execute(link_rule.failing_sql).fetchall()
+    finally:
+        con.execute("ROLLBACK")
     for table, key in (("fct_QcNcr", "NcrKey"), ("fct_QcPunch", "PunchKey"),
                        ("fct_QcSubmittal", "SubmittalKey")):
         n = one(con, f"SELECT COUNT(*) FROM {table}")

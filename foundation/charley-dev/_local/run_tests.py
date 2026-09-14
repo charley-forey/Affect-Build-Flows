@@ -33,17 +33,21 @@ SUITES = [
     ("bronze to silver", TESTS / "test_silver.py"),
     ("gold dimensions and facts", TESTS / "test_gold.py"),
     ("PQP quality plan", TESTS / "test_qc.py"),
+    ("raw inputs to model columns", TESTS / "test_end_to_end.py"),
+    ("dq rule mutations", TESTS / "test_dq_rules.py"),
     ("extractor compatibility", TESTS / "test_extractor_compat.py"),
     ("report accessibility and chrome", TESTS / "test_report.py"),
+    ("generated notebooks and quality gate failures", TESTS / "test_validation.py"),
+    ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
 ]
 
 
 def main() -> int:
     failures = []
-    for label, path in SUITES:
+    for label, path, *args in SUITES:
         print(f"\n=== {label} ===")
-        result = subprocess.run([sys.executable, str(path)], cwd=path.parent)
+        result = subprocess.run([sys.executable, str(path), *args], cwd=path.parent)
         if result.returncode != 0:
             failures.append(label)
 

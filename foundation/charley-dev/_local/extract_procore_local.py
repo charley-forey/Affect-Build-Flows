@@ -207,9 +207,10 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
         try:
             for record in px.iter_records(session, settings.base_url, path, headers,
                                           params=params):
-                record = px.stamp_project(record, project_id)
-                raw.append(record)
-                rows.append(px.to_bronze_row(record, endpoint, project_id, ingested_at))
+                for normalized in ps.normalize_records(endpoint, record, path):
+                    normalized = px.stamp_project(normalized, project_id)
+                    raw.append(normalized)
+                    rows.append(px.to_bronze_row(normalized, endpoint, project_id, ingested_at))
         except Exception as exc:                                    # noqa: BLE001
             # A 404/403 on ONE project means that project does not have the tool enabled -
             # normal across a 19-project portfolio, and not a reason to lose the other 18.

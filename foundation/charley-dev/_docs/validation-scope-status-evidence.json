@@ -1,0 +1,24 @@
+{
+  "captured_at": "2026-09-10T08:58:13.334533+00:00",
+  "scope": "Read-only preview of shared status expression; no model deployment",
+  "models": [
+    {
+      "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+      "query": "EVALUATE ROW(\"Status\",VAR Last = MAX ( meta_PipelineRun[RunAt] )\nVAR Built = [Last Refresh]\nVAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )\nVAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> \"ok\" || meta_PipelineRun[Blocking] > 0 ) )\nVAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )\nVAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )\nRETURN SWITCH ( TRUE (),\n    ISBLANK ( Last ), \"Unknown - no checked run\",\n    Built > Last, \"Unvalidated - data built after last check\",\n    Blocked > 0, \"BLOCKED - validation failed\",\n    Hrs < 0, \"Unknown - check timestamp is in the future\",\n    Hrs > 72, \"STALE - no checked run in over 72 hours\",\n    Hrs > 30, \"Late - no checked run in over 30 hours\",\n    Warnings > 0, \"Gold checked with warnings; source completeness unverified\",\n    \"Gold checks passed; source completeness unverified\" ))",
+      "result": [
+        {
+          "[Status]": "Gold checked with warnings; source completeness unverified"
+        }
+      ]
+    },
+    {
+      "model_id": "5b66f1ab-51ba-4eda-8646-7705b1ba9084",
+      "query": "EVALUATE ROW(\"Status\",VAR Last = MAX ( meta_PipelineRun[RunAt] )\nVAR Built = [Last Refresh]\nVAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )\nVAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> \"ok\" || meta_PipelineRun[Blocking] > 0 ) )\nVAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )\nVAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )\nRETURN SWITCH ( TRUE (),\n    ISBLANK ( Last ), \"Unknown - no checked run\",\n    Built > Last, \"Unvalidated - data built after last check\",\n    Blocked > 0, \"BLOCKED - validation failed\",\n    Hrs < 0, \"Unknown - check timestamp is in the future\",\n    Hrs > 72, \"STALE - no checked run in over 72 hours\",\n    Hrs > 30, \"Late - no checked run in over 30 hours\",\n    Warnings > 0, \"Gold checked with warnings; source completeness unverified\",\n    \"Gold checks passed; source completeness unverified\" ))",
+      "result": [
+        {
+          "[Status]": "Gold checked with warnings; source completeness unverified"
+        }
+      ]
+    }
+  ]
+}

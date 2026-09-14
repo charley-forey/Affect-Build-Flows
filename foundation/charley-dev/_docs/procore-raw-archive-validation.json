@@ -1,0 +1,356 @@
+{
+  "batch": "20260910T081211-fb70763e",
+  "captured_at": "2026-09-10T09:41:45.435642+00:00",
+  "checks": [
+    {
+      "endpoint": "projects",
+      "status": "archive_count_and_scopes_match",
+      "rows": 1,
+      "sha256": "e6be2a51fe82dfd08e792160141f7afb64234911c73881ad61cb65c0a8e6ec16",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "vendors",
+      "status": "archive_count_and_scopes_match",
+      "rows": 1114,
+      "sha256": "3e75b267399a3cac82a6852e27b486268f186c504d23f9f444abd5892a5e14a6",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "project_vendors",
+      "status": "archive_count_and_scopes_match",
+      "rows": 422,
+      "sha256": "25682fe83f38c69025ceddeeb67320440f92d6fd6e508258df9567c45edce365",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "company_insurances",
+      "status": "archive_count_and_scopes_match",
+      "rows": 105,
+      "sha256": "701cc1f5d6feeb94f4ef4fc3f6a7ed44018f7c49bcc0cc0a4bb7dde99f8eccd7",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "cost_codes",
+      "status": "archive_count_and_scopes_match",
+      "rows": 5767,
+      "sha256": "4a1032940576e68502bcb1dc4f907e77f80cc4f0018f4b205bfb8c07878f539b",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "standard_cost_codes",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "prime_contracts",
+      "status": "archive_count_and_scopes_match",
+      "rows": 21,
+      "sha256": "e9beda39c684fef3dedabe8da312f4f207e29adbb6373e3d9ff5c9ca285d7690",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "requisitions",
+      "status": "archive_count_and_scopes_match",
+      "rows": 735,
+      "sha256": "b4013746e2f789b403c79754723b7ce11aaaaa64eed7a05fb33943a030c63049",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "work_order_contracts",
+      "status": "archive_count_and_scopes_match",
+      "rows": 197,
+      "sha256": "4620d3b896cef402467629751e6b2323bcd95191acc6b0895c6a659148d36fe0",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "purchase_order_contracts",
+      "status": "archive_count_and_scopes_match",
+      "rows": 112,
+      "sha256": "74d0a97daa834abc322ef3cb98b0089ae087844f704464136ee0005c12a9cc6a",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "commitments",
+      "status": "archive_count_and_scopes_match",
+      "rows": 309,
+      "sha256": "e7813f0e256e6a31f0a795b9ce173e35e75519656ac92658b81e6ec569d4e10e",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "commitment_contracts",
+      "status": "archive_count_and_scopes_match",
+      "rows": 309,
+      "sha256": "0cb17516975ede32b160619a25fe3d71f10f72ed82511e2f7d69d4f64c24c48d",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "budget",
+      "status": "archive_count_and_scopes_match",
+      "rows": 20,
+      "sha256": "ee7bd9c3c47b84892c1702e380d7e13f4b8ebf6791244a6cb63d6ea5177c1095",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "budget_views",
+      "status": "archive_count_and_scopes_match",
+      "rows": 106,
+      "sha256": "77a7a3b23e0458726a31a72f0e579f6186b2b5780bd96faff9e1f56d8883bd72",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "prime_change_orders",
+      "status": "archive_count_and_scopes_match",
+      "rows": 330,
+      "sha256": "5bf5ac65c2058ef0ad7734c03794a5bd9254ebc9c3e902dc1ccbc194afdd0b68",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "direct_costs",
+      "status": "archive_count_and_scopes_match",
+      "rows": 437,
+      "sha256": "3e03867954843597ddfd53e6a693d7b3898ea497c3586a62cd0988d20a0c30bd",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "direct_cost_line_items",
+      "status": "archive_count_and_scopes_match",
+      "rows": 1,
+      "sha256": "94dbd69b41552d572a9f782aa217136f502fc0c1c53584427e019ba34a9ded55",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "potential_change_orders",
+      "status": "archive_count_and_scopes_match",
+      "rows": 1,
+      "sha256": "7d62d5c7cc63c82b68292990190ce3f04f15d5b48be530d1fe7d70938b4ab9df",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "change_order_requests",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "change_order_statuses",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "rfis",
+      "status": "archive_count_and_scopes_match",
+      "rows": 653,
+      "sha256": "9f2440dc4f5541648607258d3e05a0e3a6a22f984b9e3094087fbfbbfc44bacc",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "rfi_statuses",
+      "status": "archive_count_and_scopes_match",
+      "rows": 100,
+      "sha256": "4f8a408527cada5b475e98268d82a94968bec37a0fd4d63c95fc8ebcd5129bf2",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "rfi_priorities",
+      "status": "archive_count_and_scopes_match",
+      "rows": 80,
+      "sha256": "5b75f61045f0de62005c878e5dd9ad8f65a83e77143a013fb0bacf21b4f5f7b6",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "submittals",
+      "status": "archive_count_and_scopes_match",
+      "rows": 2455,
+      "sha256": "6056d55ab146efdf5633cc4ed8e6f2b8df1c6c546dd874f801ef9def5c5a8aab",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "observations",
+      "status": "archive_count_and_scopes_match",
+      "rows": 949,
+      "sha256": "1663e65d1bb959fd9b9001a98f8200efe573e400dbfc5ca22b19cd457bef99c9",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "observation_types",
+      "status": "archive_count_and_scopes_match",
+      "rows": 27,
+      "sha256": "4336bee5c1e71190d27895400b5c2f71b5ef7c0abf656600795a6f2bc732427e",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "punch_items",
+      "status": "archive_count_and_scopes_match",
+      "rows": 1580,
+      "sha256": "9ed239ef9355eb7fd83d0b112dba91df74dc2c3385bb925f927194b1567a2dae",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "punch_item_types",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "inspection_logs",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "checklist_lists",
+      "status": "archive_count_and_scopes_match",
+      "rows": 10,
+      "sha256": "ae1b9f1131f46906396281d818fd9a18b99b2cb276e36d30b9656e43c81f3e98",
+      "source_endpoint_status": "failed",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "incidents",
+      "status": "archive_count_and_scopes_match",
+      "rows": 1,
+      "sha256": "3a2c309fe5ea153bbcc27414c97437f523fa7108429cfe6991e377daf066d4b4",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "incident_injuries",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "failed",
+      "raw_archive_complete": false
+    },
+    {
+      "endpoint": "incident_near_misses",
+      "status": "archive_count_and_scopes_match",
+      "rows": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "incident_severity_levels",
+      "status": "archive_count_and_scopes_match",
+      "rows": 5,
+      "sha256": "c569b82a9b734086618cd7e87f4d5c823fcceae1a2c72105d147ab8dee70b304",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "manpower_daily_totals",
+      "status": "archive_count_and_scopes_match",
+      "rows": 20,
+      "sha256": "8a654a88483e1870b2f18a1ef920a25d866fbaef9f0a3353001d1c93d6c588cf",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "manpower_logs",
+      "status": "archive_count_and_scopes_match",
+      "rows": 4722,
+      "sha256": "aadb6da7b15c520ef30ed17cb152a51dcb0543c3a8fc51b28a2a02d193257227",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "daily_log_headers",
+      "status": "archive_count_and_scopes_match",
+      "rows": 20,
+      "sha256": "6f87d0c9ccffada2dcfb4d7f80b37a3065130cb9e064126b4572ec100678b2fe",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "schedule",
+      "status": "archive_count_and_scopes_match",
+      "rows": 19,
+      "sha256": "b9ca4ec6da0b75d0da64ecd7f0031f4f4d711bc7a5fae797efc2159609c811f1",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "prime_contract_line_items",
+      "status": "archive_count_and_scopes_match",
+      "rows": 28,
+      "sha256": "aeab7aa3148b802798e1794955afbbb7883a3224a68bfe157623770184be77d1",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "payment_applications",
+      "status": "archive_count_and_scopes_match",
+      "rows": 137,
+      "sha256": "785a547f27481f3072c278cbad745b6188e7bf4a661fba73ec3c7f032f74a52e",
+      "source_endpoint_status": "incomplete_scope",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "work_order_contract_line_items",
+      "status": "archive_count_and_scopes_match",
+      "rows": 267,
+      "sha256": "5374b7df1fc2d84fba61ae5f1d298ff3d064d624c45880918d3b75a8ba4fb65f",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "purchase_order_contract_line_items",
+      "status": "archive_count_and_scopes_match",
+      "rows": 178,
+      "sha256": "100aaa9b8502796f1f709aabeb5f48a0c54f124e300f45c4312678f5d6c397a0",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "budget_detail_rows",
+      "status": "archive_count_and_scopes_match",
+      "rows": 435,
+      "sha256": "bec0eb74d7ec75a60d5ad7e391479ad3e8c308ca1881be7b0576275bf5cd4b49",
+      "source_endpoint_status": "complete",
+      "raw_archive_complete": true
+    },
+    {
+      "endpoint": "checklist_list_items",
+      "status": "not_created",
+      "received_rows": 0
+    }
+  ],
+  "scope": "Raw archive JSON parsing, record count, per-scope count and content hash; does not establish API completeness or bronze merge correctness"
+}

@@ -1,0 +1,15 @@
+{
+  "captured_at": "2026-09-10T07:57:20.0264432Z",
+  "query": "SELECT b._key, JSON_VALUE(b.payload,'$.id') AS source_project_id,\n JSON_VALUE(b.payload,'$.name') AS project_name, JSON_VALUE(b.payload,'$.active') AS is_active,\n b._ingested_at, b._batch_id\nFROM [CD_Bronze_Lakehouse].[dbo].[cd_bronze_procore_projects] b\nLEFT JOIN dbo.cd_silver_projects s ON JSON_VALUE(b.payload,'$.id') = s.project_id\nWHERE s.project_id IS NULL",
+  "rows": [
+    {
+      "_key": "562949955455437",
+      "source_project_id": "562949955455437",
+      "project_name": "360 Lexington 15th Floor Fitout",
+      "is_active": "true",
+      "_ingested_at": "2026-09-10T06:11:32.153778",
+      "_batch_id": "20260910T061113-68bc9642"
+    }
+  ],
+  "limitation": "Current SQL endpoint view; upstream completeness and endpoint synchronization not certified"
+}

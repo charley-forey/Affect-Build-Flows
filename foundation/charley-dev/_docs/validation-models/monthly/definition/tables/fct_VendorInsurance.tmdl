@@ -1,0 +1,101 @@
+table fct_VendorInsurance
+
+	column InsuranceKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InsuranceKey
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column InsuranceType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InsuranceType
+
+	column Provider
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Provider
+
+	column PolicyNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PolicyNumber
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column EffectiveDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: EffectiveDate
+		formatString: yyyy-mm-dd
+
+	column ExpirationDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ExpirationDate
+		formatString: yyyy-mm-dd
+
+	column CoverageLimitRaw
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CoverageLimitRaw
+
+	column IsExempt
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsExempt
+
+	column InfoReceived
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: InfoReceived
+
+	column AdditionalInsured
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: AdditionalInsured
+
+	column IsExpired
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsExpired
+
+	column DaysUntilExpiry
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysUntilExpiry
+
+	column ExpiryStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ExpiryStatus
+
+	column ComplianceState
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ComplianceState
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HasOutOfRangeDate
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasOutOfRangeDate
+
+	partition fct_VendorInsurance = entity
+		mode: directLake
+		source
+			entityName: fct_vendorinsurance
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

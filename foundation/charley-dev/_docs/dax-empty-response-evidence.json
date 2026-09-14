@@ -1,0 +1,15 @@
+{
+  "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+  "query": "EVALUATE FILTER(ROW(\"n\", 1), FALSE())",
+  "response": {
+    "results": [
+      {
+        "tables": [
+          {
+            "rows": []
+          }
+        ]
+      }
+    ]
+  }
+}

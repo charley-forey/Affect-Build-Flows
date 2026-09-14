@@ -11,6 +11,9 @@ runs in the right order and stops when a stage fails:
                            ├─► cd_10_bronze_to_silver ─► cd_30_build_gold ─► cd_40_dq_checks
     cd_20_seed_gold ───────┘
 
+(Current, serial: Land To Bronze -> Land Manual Input -> Extract Outbuild -> Extract Procore
+-> Bronze To Silver; see STAGES.)
+
 Landing and seeding are independent and run in parallel. Silver waits for landing. Gold
 waits for BOTH, because it needs the seed dimensions and the silver facts.
 
@@ -30,7 +33,7 @@ The condition this file always stated has been met: extraction is in the DAG the
 actually authenticate, and not one day earlier. Everything downstream now gates on real data
 having been fetched rather than on whatever a laptop last landed.
 
-cd_05_land_to_bronze stays, and stays parallel rather than downstream. It merges anything in
+cd_05_land_to_bronze stays, and (since 2026-09-13) runs BEFORE extraction - see STAGES. It merges anything in
 Files/_landing and needs no credential, so it remains the way a one-off backfill or a manual
 re-land reaches bronze. It is no longer the only way new data arrives.
 
@@ -85,11 +88,14 @@ PIPELINE_NAME = "CD_Master_Pipeline"
 
 # (activity name, notebook, [upstream activities])
 STAGES = [
-    # Extraction. Reads Key Vault, calls Procore, merges straight into bronze.
-    ("Extract Procore", "cd_01_extract_procore", []),
-    # Kept, and deliberately NOT downstream of extraction: it merges whatever sits in
-    # Files/_landing and needs no credential, so a manual backfill still has a way in even
-    # on a night when Procore is unreachable.
+    # SERIAL, not parallel (2026-09-13). All notebooks starting at 06:00 starved the Spark
+    # session pool: Extract holds a session for 80-100 min (mostly sleeping on Procore
+    # quota) and Land To Bronze / Land Manual Input were cancelled without ever starting.
+    # Landing re-merges the NEWEST landing batch every night, and merge_sql overwrites
+    # matched rows - so it can overwrite fresher payloads in any table that batch touches.
+    # What keeps that safe today: the current landing batches are Outbuild-only, and
+    # extraction (Procore) runs after landing. A Procore landing batch must never be left
+    # as the newest one in Files/_landing, or it replays stale Procore rows over live ones.
     ("Land To Bronze", "cd_05_land_to_bronze", []),
     ("Seed Gold Dimensions", "cd_20_seed_gold", []),
     # Silver PARSES cd_bronze_man_*, and this notebook is what creates them - typed and
@@ -99,14 +105,25 @@ STAGES = [
     # data, because nothing errors - the report just keeps showing yesterday's answer.
     # Same ordering that, run by hand in the wrong order, fails with
     # System_Cancelled_Session_Statements_Failed and names no table.
-    ("Land Manual Input", "cd_06_land_manual", []),
+    ("Land Manual Input", "cd_06_land_manual", ["Land To Bronze"]),
+    # Outbuild extraction (2026-09-13): the ONLY milestone source, previously refreshed
+    # only by a laptop script. Serial, before Procore: it takes minutes, so it does not
+    # compete with Procore's long session, and it runs AFTER Land To Bronze so a replayed
+    # Outbuild landing batch is overwritten by the live pull rather than the reverse.
+    # Now that this exists, replaying Outbuild landing batches is redundant - Land To Bronze
+    # stays for manual backfill. Coupling: Succeeded-only means a blocking Outbuild failure
+    # (a consumed endpoint: projects/activities) skips Procore that night; unconsumed
+    # endpoint failures are warnings and do not.
+    ("Extract Outbuild", "cd_02_extract_outbuild", ["Land Manual Input"]),
+    # Extraction. Reads Key Vault, calls Procore, merges straight into bronze.
+    ("Extract Procore", "cd_01_extract_procore", ["Extract Outbuild"]),
     ("Bronze To Silver", "cd_10_bronze_to_silver",
-     ["Extract Procore", "Ingest Sage", "Land To Bronze", "Land Manual Input"]),
+     ["Extract Procore", "Extract Outbuild", "Ingest Sage", "Land To Bronze", "Land Manual Input"]),
     ("Build Gold", "cd_30_build_gold", ["Bronze To Silver", "Seed Gold Dimensions"]),
     # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
     # means the numbers were checked - not merely that the tables were written. Anything
     # downstream (a model refresh, a subscription) hangs off this rather than off Build
-    # Gold, which is the difference between "published" and "published and correct".
+    # Gold. This dependency does not isolate existing Direct Lake readers from gold writes.
     ("Data Quality Gate", "cd_40_dq_checks", ["Build Gold"]),
 ]
 
@@ -116,6 +133,9 @@ STAGES = [
 # cold start plus the retry.
 TIMEOUTS = {"cd_01_extract_procore": "0.02:00:00", "cd_05_land_to_bronze": "0.01:00:00"}
 DEFAULT_TIMEOUT = "0.00:30:00"
+# No retry on extraction: attempt 1 spends the hourly Procore quota, so a retry 60s later
+# can only fail on 429s while holding a Spark session for another hour.
+RETRIES = {"cd_01_extract_procore": 0}
 
 
 # Dataflow Gen2 stages. Separate from STAGES because a dataflow activity is a different
@@ -151,7 +171,7 @@ def dataflow_activity(name: str, dataflow_id: str, upstream: list[str]) -> dict:
     }
 
 
-def activity(name: str, notebook_id: str, upstream: list[str], timeout: str) -> dict:
+def activity(name: str, notebook_id: str, upstream: list[str], timeout: str, retry: int = 1) -> dict:
     return {
         "name": name,
         "type": "TridentNotebook",
@@ -162,7 +182,7 @@ def activity(name: str, notebook_id: str, upstream: list[str], timeout: str) -> 
             "timeout": timeout,
             # One retry, because a Spark session can fail to start for reasons that have
             # nothing to do with the code. More than one just delays a real failure.
-            "retry": 1,
+            "retry": retry,
             "retryIntervalInSeconds": 60,
             "secureOutput": False,
             "secureInput": False,
@@ -176,7 +196,7 @@ def activity(name: str, notebook_id: str, upstream: list[str], timeout: str) -> 
 
 def build(notebook_ids: dict[str, str]) -> dict[str, str]:
     activities = [
-        activity(name, notebook_ids[nb], upstream, TIMEOUTS.get(nb, DEFAULT_TIMEOUT))
+        activity(name, notebook_ids[nb], upstream, TIMEOUTS.get(nb, DEFAULT_TIMEOUT), RETRIES.get(nb, 1))
         for name, nb, upstream in STAGES
     ] + [
         dataflow_activity(name, dataflow_id, upstream)

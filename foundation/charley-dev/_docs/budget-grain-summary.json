@@ -1,0 +1,62 @@
+{
+  "input_rows": 480,
+  "distinct_project_source_keys": 404,
+  "duplicate_extra_rows": 76,
+  "conflicting_source_keys": [],
+  "cost_code_groups": 402,
+  "multi_source_line_groups": [
+    {
+      "project": "562949954973730",
+      "cost_code": "562950355920640",
+      "rows": [
+        {
+          "key": "562949970796244",
+          "category": "Labor",
+          "amounts": {
+            "original_budget_amount": "0.00",
+            "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)": "26685.63",
+            "INVOICED TO DATE (P)": "0.00"
+          }
+        },
+        {
+          "key": "562949971817381",
+          "category": "Hard Costs",
+          "amounts": {
+            "original_budget_amount": "0.00",
+            "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)": "3780.13",
+            "INVOICED TO DATE (P)": "2031.62"
+          }
+        }
+      ]
+    },
+    {
+      "project": "562949955286476",
+      "cost_code": "562950458358764",
+      "rows": [
+        {
+          "key": "562949972796645",
+          "category": "Subcontract",
+          "amounts": {
+            "original_budget_amount": "33960.74",
+            "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)": "33960.74",
+            "INVOICED TO DATE (P)": "57449.00"
+          }
+        },
+        {
+          "key": "562949973755776",
+          "category": "Material",
+          "amounts": {
+            "original_budget_amount": "0.00",
+            "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)": "0.00",
+            "INVOICED TO DATE (P)": "0.00"
+          }
+        }
+      ]
+    }
+  ],
+  "distinct_source_totals": {
+    "original_budget_amount": "30209672.18",
+    "UPDATED PRIME CONTRACT BUDGET (D = A+B+C)": "34031395.20",
+    "INVOICED TO DATE (P)": "19160549.83"
+  }
+}

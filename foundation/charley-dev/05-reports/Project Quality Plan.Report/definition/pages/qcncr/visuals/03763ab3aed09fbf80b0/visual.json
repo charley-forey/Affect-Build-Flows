@@ -83,7 +83,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. NCR register. Shows NcrNumber, Title, StatusCode, DaysOpen for the current selection.'"
+                  "Value": "'Table. Observation register. Shows NcrNumber, Title, StatusCode, DaysOpen for the current selection.'"
                 }
               }
             }
@@ -96,7 +96,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'NCR register'"
+                  "Value": "'Observation register'"
                 }
               }
             },

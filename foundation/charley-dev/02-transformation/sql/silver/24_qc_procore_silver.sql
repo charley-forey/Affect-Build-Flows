@@ -187,13 +187,68 @@ SELECT
     CAST(get_json_object(payload, '$.number')               AS STRING)  AS inspection_number,
     TRIM(get_json_object(payload, '$.name'))                            AS name,
     TRIM(get_json_object(payload, '$.inspection_type.name'))            AS inspection_type,
-    TRIM(get_json_object(payload, '$.list_template.name'))              AS template_name,
+    TRIM(COALESCE(get_json_object(payload, '$.list_template_name'),
+                  get_json_object(payload, '$.list_template.name')))    AS template_name,
     TRIM(get_json_object(payload, '$.trade.name'))                      AS trade,
     TRIM(get_json_object(payload, '$.inspector.name'))                  AS inspector_name,
+    -- Keep every inspector and source ID; selecting the first would hide assignments.
+    get_json_object(payload, '$.inspectors')                           AS inspectors_json,
+    CAST(get_json_object(payload, '$.list_template_id') AS STRING)      AS template_id,
+    CAST(get_json_object(payload, '$.item_count') AS BIGINT)            AS item_count,
+    CAST(get_json_object(payload, '$.conforming_item_count') AS BIGINT) AS conforming_item_count,
+    CAST(get_json_object(payload, '$.deficient_item_count') AS BIGINT)  AS deficient_item_count,
+    CAST(get_json_object(payload, '$.not_inspected_item_count') AS BIGINT) AS not_inspected_item_count,
+    CAST(get_json_object(payload, '$.na_item_count') AS BIGINT)         AS na_item_count,
+    CAST(get_json_object(payload, '$.neutral_item_count') AS BIGINT)    AS neutral_item_count,
     UPPER(TRIM(get_json_object(payload, '$.status')))                   AS source_status,
     CAST(get_json_object(payload, '$.inspection_date')      AS DATE)    AS inspection_date,
-    CAST(get_json_object(payload, '$.due_date')             AS DATE)    AS due_date,
+    CAST(SUBSTR(COALESCE(get_json_object(payload, '$.due_at'),
+                        get_json_object(payload, '$.due_date')), 1, 10) AS DATE) AS due_date,
     CAST(get_json_object(payload, '$.percent_complete')     AS DOUBLE)  AS percent_complete,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_checklist_lists
 WHERE get_json_object(payload, '$.id') IS NOT NULL;
+
+-- Keep malformed identities visible; downstream quality checks block publication.
+CREATE OR REPLACE TABLE cd_silver_qc_inspection_item AS
+SELECT CAST(_project_id AS STRING) AS project_id,
+       get_json_object(payload, '$.id') AS item_id,
+       get_json_object(payload, '$.list_id') AS inspection_id,
+       get_json_object(payload, '$.section_id') AS section_id,
+       get_json_object(payload, '$.name') AS name,
+       get_json_object(payload, '$.status') AS source_status,
+       get_json_object(payload, '$.responded_with') AS source_response,
+       get_json_object(payload, '$.type.category') AS response_category,
+       get_json_object(payload, '$.type.name') AS response_type,
+       get_json_object(payload, '$.response') AS response_json,
+       get_json_object(payload, '$.item_response') AS item_response_json,
+       _ingested_at, _batch_id
+FROM cd_bronze_procore_checklist_list_items;
+
+-- ---------------------------------------------------------------------------
+-- Rejects: the three project-less filters above, recorded rather than dropped
+-- ---------------------------------------------------------------------------
+-- A Procore item with an id but no project cannot be attributed to a quality plan, so it
+-- leaves these tables - and lands in cd_dq_rejects with its original payload. Rows missing
+-- an id are already rejected by 10/20, so they are excluded here to avoid double counting:
+-- cd_silver_observations = cd_silver_qc_ncr + these rejects, and likewise for the others.
+--
+-- DELETE then INSERT, not CREATE: cd_dq_rejects is created by 10_procore_silver.sql, which
+-- runs first. Deleting this file's own arms first keeps a re-run of this file alone
+-- idempotent instead of duplicating its rejects.
+
+DELETE FROM cd_dq_rejects
+WHERE target_table IN ('cd_silver_qc_ncr', 'cd_silver_qc_punch', 'cd_silver_qc_submittal');
+
+INSERT INTO cd_dq_rejects
+SELECT 'cd_silver_qc_ncr', 'missing project', payload, _batch_id
+FROM cd_bronze_procore_observations
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL
+UNION ALL
+SELECT 'cd_silver_qc_punch', 'missing project', payload, _batch_id
+FROM cd_bronze_procore_punch_items
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL
+UNION ALL
+SELECT 'cd_silver_qc_submittal', 'missing project', payload, _batch_id
+FROM cd_bronze_procore_submittals
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _project_id IS NULL;

@@ -1,0 +1,117 @@
+table fct_QcPunch
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column PunchKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PunchKey
+
+	column PunchNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PunchNumber
+
+	column Title
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Title
+
+	column PunchItemType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PunchItemType
+
+	column TradeLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeLabel
+
+	column TradeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TradeKey
+
+	column HasUnmappedTrade
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasUnmappedTrade
+
+	column AssignedTo
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AssignedTo
+
+	column CostCodeKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CostCodeKey
+
+	column Priority
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Priority
+
+	column SourceStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceStatus
+
+	column StatusCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCode
+
+	column ItemClassCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemClassCode
+
+	column CreatedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CreatedDate
+		formatString: yyyy-mm-dd
+
+	column DueDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: DueDate
+		formatString: yyyy-mm-dd
+
+	column ClosedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: ClosedDate
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column IsOpen
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsOpen
+
+	column DaysOpen
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysOpen
+
+	column IsPastDue
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsPastDue
+
+	partition fct_QcPunch = entity
+		mode: directLake
+		source
+			entityName: fct_qcpunch
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

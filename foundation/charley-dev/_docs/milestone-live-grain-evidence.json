@@ -1,0 +1,1268 @@
+{
+  "query": "EVALUATE SUMMARIZECOLUMNS(fct_Milestone[ProjectKey],fct_Milestone[ActivityKey],fct_Milestone[MilestoneName],\"Start\",MIN(fct_Milestone[CurrentStart]),\"Finish\",MAX(fct_Milestone[CurrentFinish]),\"Rows\",COUNTROWS(fct_Milestone),\"Milestone Offset Days\",VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\nVAR Origin = MINX ( FILTER ( ALLSELECTED ( fct_Milestone ), NOT ISBLANK ( fct_Milestone[CurrentStart] ) && NOT ISBLANK ( fct_Milestone[CurrentFinish] ) && fct_Milestone[CurrentFinish] >= fct_Milestone[CurrentStart] ), fct_Milestone[CurrentStart] )\nRETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), DATEDIFF ( Origin, StartDate, DAY ), BLANK () ),\"Milestone Duration Days\",VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\nRETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () ))",
+  "result": [
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797758",
+      "fct_Milestone[MilestoneName]": "360Lex 8th Amenity and 8th & 20th Suite",
+      "[Start]": "2025-12-24T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 1,
+      "[Milestone Duration Days]": 182
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797844",
+      "fct_Milestone[MilestoneName]": "360Lex 8th & 20th Suite",
+      "[Start]": "2025-12-26T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 3,
+      "[Milestone Duration Days]": 180
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797877",
+      "fct_Milestone[MilestoneName]": "Construction - 8th Suite",
+      "[Start]": "2026-01-12T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 20,
+      "[Milestone Duration Days]": 163
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797908",
+      "fct_Milestone[MilestoneName]": "Install Carpet Tiling",
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-06-20T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 176,
+      "[Milestone Duration Days]": 3
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797924",
+      "fct_Milestone[MilestoneName]": "Punchlist",
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-06-20T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 168,
+      "[Milestone Duration Days]": 11
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797925",
+      "fct_Milestone[MilestoneName]": "Contingency",
+      "[Start]": "2026-06-20T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 179,
+      "[Milestone Duration Days]": 4
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797929",
+      "fct_Milestone[MilestoneName]": "MEP/FP Overhead Rough",
+      "[Start]": "2026-02-27T00:00:00",
+      "[Finish]": "2026-05-18T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 66,
+      "[Milestone Duration Days]": 80
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "17797977",
+      "fct_Milestone[MilestoneName]": "Handover",
+      "[Start]": "2026-06-24T00:00:00",
+      "[Finish]": "2026-06-24T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 183,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684344",
+      "fct_Milestone[MilestoneName]": "360Lex 8th Amenity and 8th & 20th Suite",
+      "[Start]": "2025-12-23T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 0,
+      "[Milestone Duration Days]": 174
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684345",
+      "fct_Milestone[MilestoneName]": "360Lex 8th & 20th Suite",
+      "[Start]": "2025-12-26T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 3,
+      "[Milestone Duration Days]": 171
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684378",
+      "fct_Milestone[MilestoneName]": "Install Partition Wall (CW Woodcraft)",
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 168,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684381",
+      "fct_Milestone[MilestoneName]": "Install Millwork",
+      "[Start]": "2026-05-08T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 136,
+      "[Milestone Duration Days]": 38
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684414",
+      "fct_Milestone[MilestoneName]": "Construction - 8th Suite",
+      "[Start]": "2026-01-12T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 20,
+      "[Milestone Duration Days]": 154
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684419",
+      "fct_Milestone[MilestoneName]": "CW Woodcraft Fabrication",
+      "[Start]": "2026-03-17T00:00:00",
+      "[Finish]": "2026-06-08T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 84,
+      "[Milestone Duration Days]": 83
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684424",
+      "fct_Milestone[MilestoneName]": "Long Lead Items",
+      "[Start]": "2026-02-02T00:00:00",
+      "[Finish]": "2026-06-08T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 41,
+      "[Milestone Duration Days]": 126
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684444",
+      "fct_Milestone[MilestoneName]": "Tagwall Partition Shop Drawings - 8th & 20th Suite",
+      "[Start]": "2026-01-19T00:00:00",
+      "[Finish]": "2026-03-20T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 27,
+      "[Milestone Duration Days]": 60
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684477",
+      "fct_Milestone[MilestoneName]": "Install Fluted Lobby Wall (CW Woodcraft)",
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 168,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684478",
+      "fct_Milestone[MilestoneName]": "Install Slatted Ceiling (CW Woodcraft)",
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 168,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684481",
+      "fct_Milestone[MilestoneName]": "Millwork",
+      "[Start]": "2026-04-30T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 128,
+      "[Milestone Duration Days]": 46
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684519",
+      "fct_Milestone[MilestoneName]": "Construction - 8th Amenity",
+      "[Start]": "2026-01-13T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 21,
+      "[Milestone Duration Days]": 153
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684524",
+      "fct_Milestone[MilestoneName]": "CW Woodcraft Fabrication",
+      "[Start]": "2026-03-17T00:00:00",
+      "[Finish]": "2026-06-08T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 84,
+      "[Milestone Duration Days]": 83
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684538",
+      "fct_Milestone[MilestoneName]": "Light Fixtures/Controls - 8th Amenity",
+      "[Start]": "2026-01-28T00:00:00",
+      "[Finish]": "2026-03-25T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 36,
+      "[Milestone Duration Days]": 56
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684558",
+      "fct_Milestone[MilestoneName]": "Millwork Shop Drawings - 8th Amenity",
+      "[Start]": "2026-01-28T00:00:00",
+      "[Finish]": "2026-03-04T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 36,
+      "[Milestone Duration Days]": 35
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "18684571",
+      "fct_Milestone[MilestoneName]": "360Lex 8th Amenity",
+      "[Start]": "2025-12-23T00:00:00",
+      "[Finish]": "2026-06-15T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 0,
+      "[Milestone Duration Days]": 174
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949953807489",
+      "fct_Milestone[ActivityKey]": "19766754",
+      "fct_Milestone[MilestoneName]": "Core and Shell",
+      "[Start]": "2026-08-07T00:00:00",
+      "[Finish]": "2026-10-06T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 227,
+      "[Milestone Duration Days]": 60
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949953807489",
+      "fct_Milestone[ActivityKey]": "19767374",
+      "fct_Milestone[MilestoneName]": "Steel Structure",
+      "[Start]": "2026-08-07T00:00:00",
+      "[Finish]": "2026-09-08T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 227,
+      "[Milestone Duration Days]": 32
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949953807489",
+      "fct_Milestone[ActivityKey]": "19767375",
+      "fct_Milestone[MilestoneName]": "Decking",
+      "[Start]": "2026-09-09T00:00:00",
+      "[Finish]": "2026-10-06T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 260,
+      "[Milestone Duration Days]": 27
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670343",
+      "fct_Milestone[MilestoneName]": "360Lex 15th & 17th Suites",
+      "[Start]": "2026-06-10T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 169,
+      "[Milestone Duration Days]": 152
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670362",
+      "fct_Milestone[MilestoneName]": "Install Lighting Fixtures",
+      "[Start]": "2026-09-14T00:00:00",
+      "[Finish]": "2026-10-19T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 265,
+      "[Milestone Duration Days]": 35
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670379",
+      "fct_Milestone[MilestoneName]": "Punchlist",
+      "[Start]": "2026-10-20T00:00:00",
+      "[Finish]": "2026-11-02T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 301,
+      "[Milestone Duration Days]": 13
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670384",
+      "fct_Milestone[MilestoneName]": "Install ACT Tiles",
+      "[Start]": "2026-10-05T00:00:00",
+      "[Finish]": "2026-10-19T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 286,
+      "[Milestone Duration Days]": 14
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670388",
+      "fct_Milestone[MilestoneName]": "Install ACT Grid",
+      "[Start]": "2026-09-21T00:00:00",
+      "[Finish]": "2026-10-02T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 272,
+      "[Milestone Duration Days]": 11
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670393",
+      "fct_Milestone[MilestoneName]": "MEP Coordination Submittals",
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-07-01T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 176,
+      "[Milestone Duration Days]": 14
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670396",
+      "fct_Milestone[MilestoneName]": "Mechanical Equipment Submittals",
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-07-01T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 176,
+      "[Milestone Duration Days]": 14
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670419",
+      "fct_Milestone[MilestoneName]": "Submittals Review & Approval",
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-07-01T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 176,
+      "[Milestone Duration Days]": 14
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670446",
+      "fct_Milestone[MilestoneName]": "MEP/FP Overhead Rough",
+      "[Start]": "2026-07-02T00:00:00",
+      "[Finish]": "2026-09-11T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 191,
+      "[Milestone Duration Days]": 71
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670449",
+      "fct_Milestone[MilestoneName]": "MEP Finishes",
+      "[Start]": "2026-07-24T00:00:00",
+      "[Finish]": "2026-10-19T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 213,
+      "[Milestone Duration Days]": 87
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670457",
+      "fct_Milestone[MilestoneName]": "Preconstruction",
+      "[Start]": "2026-06-10T00:00:00",
+      "[Finish]": "2026-07-01T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 169,
+      "[Milestone Duration Days]": 21
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670463",
+      "fct_Milestone[MilestoneName]": "Light Fixtures/Controls  Submittals",
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-07-01T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 176,
+      "[Milestone Duration Days]": 14
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670485",
+      "fct_Milestone[MilestoneName]": "Light Fixtures/Controls",
+      "[Start]": "2026-07-02T00:00:00",
+      "[Finish]": "2026-08-13T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 191,
+      "[Milestone Duration Days]": 42
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670487",
+      "fct_Milestone[MilestoneName]": "Construction",
+      "[Start]": "2026-06-17T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 176,
+      "[Milestone Duration Days]": 145
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670488",
+      "fct_Milestone[MilestoneName]": "Install Ductwork",
+      "[Start]": "2026-07-31T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 220,
+      "[Milestone Duration Days]": 27
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670489",
+      "fct_Milestone[MilestoneName]": "Install Mechanical Piping",
+      "[Start]": "2026-08-14T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 234,
+      "[Milestone Duration Days]": 13
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670491",
+      "fct_Milestone[MilestoneName]": "Install Lighting/Controls",
+      "[Start]": "2026-08-14T00:00:00",
+      "[Finish]": "2026-09-11T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 234,
+      "[Milestone Duration Days]": 28
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670550",
+      "fct_Milestone[MilestoneName]": "Contingency",
+      "[Start]": "2026-11-03T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 315,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670559",
+      "fct_Milestone[MilestoneName]": "Architectural Finishes",
+      "[Start]": "2026-07-24T00:00:00",
+      "[Finish]": "2026-10-19T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 213,
+      "[Milestone Duration Days]": 87
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670561",
+      "fct_Milestone[MilestoneName]": "Drywall/Taping",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-09-18T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 21
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670564",
+      "fct_Milestone[MilestoneName]": "Execute contract",
+      "[Start]": "2026-06-10T00:00:00",
+      "[Finish]": "2026-06-10T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 169,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670565",
+      "fct_Milestone[MilestoneName]": "Subcontractor Award",
+      "[Start]": "2026-06-10T00:00:00",
+      "[Finish]": "2026-06-16T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 169,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670573",
+      "fct_Milestone[MilestoneName]": "Duct Fabrication",
+      "[Start]": "2026-07-02T00:00:00",
+      "[Finish]": "2026-07-30T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 191,
+      "[Milestone Duration Days]": 28
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20670574",
+      "fct_Milestone[MilestoneName]": "Mechanical Equipment",
+      "[Start]": "2026-07-02T00:00:00",
+      "[Finish]": "2026-08-13T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 191,
+      "[Milestone Duration Days]": 42
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955225798",
+      "fct_Milestone[ActivityKey]": "20671024",
+      "fct_Milestone[MilestoneName]": "Handover",
+      "[Start]": "2026-11-09T00:00:00",
+      "[Finish]": "2026-11-09T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 321,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853557",
+      "fct_Milestone[MilestoneName]": "Embankment & Revetment Phase III",
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 168,
+      "[Milestone Duration Days]": 90
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853558",
+      "fct_Milestone[MilestoneName]": "Submittals",
+      "[Start]": "2026-06-12T00:00:00",
+      "[Finish]": "2026-07-14T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 171,
+      "[Milestone Duration Days]": 32
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853560",
+      "fct_Milestone[MilestoneName]": "Lighting Controls Wiring Diagram",
+      "[Start]": "2026-06-22T00:00:00",
+      "[Finish]": "2026-06-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 181,
+      "[Milestone Duration Days]": 4
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853561",
+      "fct_Milestone[MilestoneName]": "Tile & Stone Samples Approved",
+      "[Start]": "2026-06-12T00:00:00",
+      "[Finish]": "2026-06-12T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 171,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853564",
+      "fct_Milestone[MilestoneName]": "Approve Paint Samples",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-07-06T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 7
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853574",
+      "fct_Milestone[MilestoneName]": "Construction",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 70
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853575",
+      "fct_Milestone[MilestoneName]": "Mobilization",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-06-29T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853576",
+      "fct_Milestone[MilestoneName]": "Revetment",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 70
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853586",
+      "fct_Milestone[MilestoneName]": "Install elevator lanterns",
+      "[Start]": "2026-07-20T00:00:00",
+      "[Finish]": "2026-07-20T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 209,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853630",
+      "fct_Milestone[MilestoneName]": "Embankment",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 70
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853643",
+      "fct_Milestone[MilestoneName]": "Embankment 1st Floor (Phase C)",
+      "[Start]": "2026-08-10T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 230,
+      "[Milestone Duration Days]": 28
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853644",
+      "fct_Milestone[MilestoneName]": "Install zip walls, protect all doors, stairs & surfaces",
+      "[Start]": "2026-08-10T00:00:00",
+      "[Finish]": "2026-08-11T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 230,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853645",
+      "fct_Milestone[MilestoneName]": "Remove reception desk & FF&E - By others",
+      "[Start]": "2026-08-12T00:00:00",
+      "[Finish]": "2026-08-12T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 232,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853647",
+      "fct_Milestone[MilestoneName]": "Open sheetrock walls and ceilings as needed",
+      "[Start]": "2026-08-13T00:00:00",
+      "[Finish]": "2026-08-14T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 233,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853648",
+      "fct_Milestone[MilestoneName]": "Remove existing light fixtures and associated wiring",
+      "[Start]": "2026-08-17T00:00:00",
+      "[Finish]": "2026-08-17T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 237,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853650",
+      "fct_Milestone[MilestoneName]": "Demo tile",
+      "[Start]": "2026-08-18T00:00:00",
+      "[Finish]": "2026-08-18T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 238,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853655",
+      "fct_Milestone[MilestoneName]": "Demo tile - Lobby",
+      "[Start]": "2026-08-18T00:00:00",
+      "[Finish]": "2026-08-19T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 238,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853668",
+      "fct_Milestone[MilestoneName]": "Patching gyp",
+      "[Start]": "2026-08-19T00:00:00",
+      "[Finish]": "2026-08-24T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 239,
+      "[Milestone Duration Days]": 5
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853671",
+      "fct_Milestone[MilestoneName]": "Finish painting",
+      "[Start]": "2026-08-24T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 244,
+      "[Milestone Duration Days]": 2
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853672",
+      "fct_Milestone[MilestoneName]": "Install elevator panels",
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 246,
+      "[Milestone Duration Days]": 2
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853673",
+      "fct_Milestone[MilestoneName]": "Install lights at elevators",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 3
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853681",
+      "fct_Milestone[MilestoneName]": "Punchlist",
+      "[Start]": "2026-09-01T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 252,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853682",
+      "fct_Milestone[MilestoneName]": "Substantial Completion",
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 258,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "21853683",
+      "fct_Milestone[MilestoneName]": "Final Completion",
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 258,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248631",
+      "fct_Milestone[MilestoneName]": "Stone Fabrication",
+      "[Start]": "2026-07-29T00:00:00",
+      "[Finish]": "2026-08-25T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 218,
+      "[Milestone Duration Days]": 27
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248632",
+      "fct_Milestone[MilestoneName]": "Install millwork planter",
+      "[Start]": "2026-09-01T00:00:00",
+      "[Finish]": "2026-09-02T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 252,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248637",
+      "fct_Milestone[MilestoneName]": "Install elevator panels",
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 246,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248638",
+      "fct_Milestone[MilestoneName]": "Punchlist",
+      "[Start]": "2026-09-01T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 252,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248639",
+      "fct_Milestone[MilestoneName]": "Install elevator panels",
+      "[Start]": "2026-08-27T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 247,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248640",
+      "fct_Milestone[MilestoneName]": "Embankment 1st Floor (Phase C)",
+      "[Start]": "2026-07-31T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 220,
+      "[Milestone Duration Days]": 38
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248641",
+      "fct_Milestone[MilestoneName]": "Embankment",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 70
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248642",
+      "fct_Milestone[MilestoneName]": "Revetment",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 70
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248643",
+      "fct_Milestone[MilestoneName]": "Construction",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 70
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248644",
+      "fct_Milestone[MilestoneName]": "Embankment & Revetment Phase III",
+      "[Start]": "2026-06-09T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 168,
+      "[Milestone Duration Days]": 90
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248648",
+      "fct_Milestone[MilestoneName]": "Install frosted film windows",
+      "[Start]": "2026-08-31T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 251,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248649",
+      "fct_Milestone[MilestoneName]": "Patching gyp",
+      "[Start]": "2026-08-11T00:00:00",
+      "[Finish]": "2026-08-14T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 231,
+      "[Milestone Duration Days]": 3
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248650",
+      "fct_Milestone[MilestoneName]": "Install lights at elevators",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 3
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248651",
+      "fct_Milestone[MilestoneName]": "Install Millwork planters",
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 245,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248652",
+      "fct_Milestone[MilestoneName]": "Millwork surrounds @ vestibule entrance install",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 3
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248653",
+      "fct_Milestone[MilestoneName]": "Stone Signage by Others",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248654",
+      "fct_Milestone[MilestoneName]": "Substantial Completion",
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 258,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248655",
+      "fct_Milestone[MilestoneName]": "Final Completion",
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 258,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248668",
+      "fct_Milestone[MilestoneName]": "Millwork Fabrication",
+      "[Start]": "2026-07-15T00:00:00",
+      "[Finish]": "2026-08-11T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 204,
+      "[Milestone Duration Days]": 27
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248681",
+      "fct_Milestone[MilestoneName]": "Install stone baseboard",
+      "[Start]": "2026-08-24T00:00:00",
+      "[Finish]": "2026-08-25T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 244,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248683",
+      "fct_Milestone[MilestoneName]": "Install elevator surround",
+      "[Start]": "2026-08-20T00:00:00",
+      "[Finish]": "2026-08-21T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 240,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248684",
+      "fct_Milestone[MilestoneName]": "1st floor (Phase B)",
+      "[Start]": "2026-07-14T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 203,
+      "[Milestone Duration Days]": 55
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248696",
+      "fct_Milestone[MilestoneName]": "Elevator",
+      "[Start]": "2026-07-31T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 220,
+      "[Milestone Duration Days]": 31
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248700",
+      "fct_Milestone[MilestoneName]": "Demo tiles in elevator 2",
+      "[Start]": "2026-08-27T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 247,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248701",
+      "fct_Milestone[MilestoneName]": "Install tiles in elevator 2 & grout",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248702",
+      "fct_Milestone[MilestoneName]": "Rebalancing Elevator by Others",
+      "[Start]": "2026-08-31T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 251,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248707",
+      "fct_Milestone[MilestoneName]": "Patching gyp",
+      "[Start]": "2026-07-23T00:00:00",
+      "[Finish]": "2026-07-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 212,
+      "[Milestone Duration Days]": 4
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248711",
+      "fct_Milestone[MilestoneName]": "Install stone baseboard",
+      "[Start]": "2026-08-31T00:00:00",
+      "[Finish]": "2026-08-31T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 251,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248712",
+      "fct_Milestone[MilestoneName]": "Install Millwork planters",
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-25T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 245,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248713",
+      "fct_Milestone[MilestoneName]": "Millwork surrounds @ vestibule entrance install",
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-25T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 245,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248714",
+      "fct_Milestone[MilestoneName]": "Reception Desk Install",
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 246,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248717",
+      "fct_Milestone[MilestoneName]": "Punchlist",
+      "[Start]": "2026-09-01T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 252,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248718",
+      "fct_Milestone[MilestoneName]": "Substantial Completion",
+      "[Start]": "2026-09-07T00:00:00",
+      "[Finish]": "2026-09-07T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 258,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248719",
+      "fct_Milestone[MilestoneName]": "Embankment 2nd Floor (Phase A)",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 59
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248727",
+      "fct_Milestone[MilestoneName]": "Install millwork planter",
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 245,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248728",
+      "fct_Milestone[MilestoneName]": "Install stone baseboard",
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 246,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248729",
+      "fct_Milestone[MilestoneName]": "Install elevator surround",
+      "[Start]": "2026-08-24T00:00:00",
+      "[Finish]": "2026-08-25T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 244,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248730",
+      "fct_Milestone[MilestoneName]": "Install elevator lanterns",
+      "[Start]": "2026-08-26T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 246,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248736",
+      "fct_Milestone[MilestoneName]": "Mailroom",
+      "[Start]": "2026-08-10T00:00:00",
+      "[Finish]": "2026-08-21T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 230,
+      "[Milestone Duration Days]": 11
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248740",
+      "fct_Milestone[MilestoneName]": "Install tiles - lay & grout NO ACCESS WHILE THINSET IS DRYING",
+      "[Start]": "2026-08-13T00:00:00",
+      "[Finish]": "2026-08-19T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 233,
+      "[Milestone Duration Days]": 6
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248741",
+      "fct_Milestone[MilestoneName]": "Paint",
+      "[Start]": "2026-08-20T00:00:00",
+      "[Finish]": "2026-08-20T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 240,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248744",
+      "fct_Milestone[MilestoneName]": "Tiling - Lobby",
+      "[Start]": "2026-08-12T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 232,
+      "[Milestone Duration Days]": 16
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248746",
+      "fct_Milestone[MilestoneName]": "Revetment 2nd Floor (Phase A)",
+      "[Start]": "2026-06-29T00:00:00",
+      "[Finish]": "2026-09-02T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 188,
+      "[Milestone Duration Days]": 65
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248750",
+      "fct_Milestone[MilestoneName]": "Install entrance mat",
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 245,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248751",
+      "fct_Milestone[MilestoneName]": "Reception Desk Install",
+      "[Start]": "2026-08-27T00:00:00",
+      "[Finish]": "2026-08-27T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 247,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248753",
+      "fct_Milestone[MilestoneName]": "Tiling - Lobby",
+      "[Start]": "2026-07-27T00:00:00",
+      "[Finish]": "2026-07-30T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 216,
+      "[Milestone Duration Days]": 3
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248761",
+      "fct_Milestone[MilestoneName]": "Finish painting",
+      "[Start]": "2026-08-14T00:00:00",
+      "[Finish]": "2026-08-18T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 234,
+      "[Milestone Duration Days]": 4
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248762",
+      "fct_Milestone[MilestoneName]": "Remove zip walls",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 0
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248763",
+      "fct_Milestone[MilestoneName]": "Install entrance mat",
+      "[Start]": "2026-08-25T00:00:00",
+      "[Finish]": "2026-08-26T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 245,
+      "[Milestone Duration Days]": 1
+    },
+    {
+      "fct_Milestone[ProjectKey]": "562949955375634",
+      "fct_Milestone[ActivityKey]": "23248764",
+      "fct_Milestone[MilestoneName]": "Reception Desk Electrical Roughing",
+      "[Start]": "2026-08-28T00:00:00",
+      "[Finish]": "2026-08-28T00:00:00",
+      "[Rows]": 1,
+      "[Milestone Offset Days]": 248,
+      "[Milestone Duration Days]": 0
+    }
+  ],
+  "rows_checked": 126,
+  "passed": true,
+  "scope": "Generated expressions evaluated in isolated candidate; not a model deployment or rendered visual check"
+}

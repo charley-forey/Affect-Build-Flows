@@ -1,0 +1,355 @@
+{
+  "run_id": "4a59bed595504fd69a859e78121e507c",
+  "completed_at": "2026-09-10T10:25:53.781717+00:00",
+  "validation_lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
+  "scope": "candidate silver writes from existing bronze; upstream completeness not certified",
+  "results": [
+    {
+      "step": "10_procore_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:3",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:4",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:5",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:6",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:7",
+      "ok": true
+    },
+    {
+      "step": "10_procore_silver.sql:8",
+      "ok": true
+    },
+    {
+      "step": "20_fieldops_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "20_fieldops_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "20_fieldops_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "20_fieldops_silver.sql:3",
+      "ok": true
+    },
+    {
+      "step": "21_financial_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "21_financial_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "21_financial_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "22_vendor_costcode_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "22_vendor_costcode_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "23_commitment_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "23_commitment_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "24_qc_procore_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "24_qc_procore_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "24_qc_procore_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "24_qc_procore_silver.sql:3",
+      "ok": true
+    },
+    {
+      "step": "25_outbuild_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "26_sage_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "26_sage_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "26_sage_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "26_sage_silver.sql:3",
+      "ok": true
+    },
+    {
+      "step": "26_sage_silver.sql:4",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:3",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:4",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:5",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:6",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:7",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:8",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:9",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:10",
+      "ok": true
+    },
+    {
+      "step": "30_manual_silver.sql:11",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:0",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:1",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:2",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:3",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:4",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:5",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:6",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:7",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:8",
+      "ok": true
+    },
+    {
+      "step": "31_qc_manual_silver.sql:9",
+      "ok": true
+    },
+    {
+      "step": "sage_ar.header_keys",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT invoice_uid FROM cd_silver_sage_ar_invoices\nGROUP BY invoice_uid HAVING invoice_uid IS NULL OR COUNT(*) > 1\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ar.line_keys",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT line_uid FROM cd_silver_sage_ar_lines\nGROUP BY line_uid HAVING line_uid IS NULL OR COUNT(*) > 1\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ar.orphan_lines",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT l.* FROM cd_silver_sage_ar_lines l\nLEFT JOIN cd_silver_sage_ar_invoices h ON l.invoice_uid = h.invoice_uid\nWHERE h.invoice_uid IS NULL\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ar.headers_row_conservation",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_acrinv) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ar_invoices) s\nWHERE b.n <> s.n\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ar.lines_row_conservation",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_arivln) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ar_lines) s\nWHERE b.n <> s.n\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ar.invoice_line_amounts",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM cd_silver_sage_ar_invoices h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM cd_silver_sage_ar_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ap.header_keys",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT invoice_uid FROM cd_silver_sage_ap_invoices\nGROUP BY invoice_uid HAVING invoice_uid IS NULL OR COUNT(*) > 1\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ap.line_keys",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT line_uid FROM cd_silver_sage_ap_lines\nGROUP BY line_uid HAVING line_uid IS NULL OR COUNT(*) > 1\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ap.orphan_lines",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT l.* FROM cd_silver_sage_ap_lines l\nLEFT JOIN cd_silver_sage_ap_invoices h ON l.invoice_uid = h.invoice_uid\nWHERE h.invoice_uid IS NULL\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ap.headers_row_conservation",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_acpinv) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ap_invoices) s\nWHERE b.n <> s.n\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ap.lines_row_conservation",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT b.n AS bronze_rows, s.n AS silver_rows\nFROM (SELECT COUNT(*) AS n FROM cd_bronze_sage_apivln) b\nCROSS JOIN (SELECT COUNT(*) AS n FROM cd_silver_sage_ap_lines) s\nWHERE b.n <> s.n\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "sage_ap.invoice_line_amounts",
+      "ok": true,
+      "failing_rows": 0,
+      "sql": "\nSELECT h.invoice_uid, h.invoice_id, h.invoice_total,\n       l.line_count, l.known_amounts, l.line_total,\n       h.invoice_total - l.line_total AS difference\nFROM cd_silver_sage_ap_invoices h\nLEFT JOIN (\n    SELECT invoice_uid, COUNT(*) AS line_count, COUNT(line_total) AS known_amounts,\n           SUM(line_total) AS line_total\n    FROM cd_silver_sage_ap_lines GROUP BY invoice_uid\n) l ON h.invoice_uid = l.invoice_uid\nWHERE h.invoice_total IS NULL OR l.line_count IS NULL\n   OR l.known_amounts <> l.line_count\n   OR ABS(h.invoice_total - l.line_total) > 0.01\n",
+      "error": "0 reconciliation violation(s)"
+    },
+    {
+      "step": "verification",
+      "ok": true,
+      "counts": {
+        "cd_silver_billing": 876,
+        "cd_silver_budgets": 435,
+        "cd_silver_commitment_lines": 445,
+        "cd_silver_commitments": 309,
+        "cd_silver_cost_codes": 5767,
+        "cd_silver_direct_cost_lines": 528,
+        "cd_silver_direct_costs": 437,
+        "cd_silver_incidents": 3,
+        "cd_silver_man_daily_log_compliance": 0,
+        "cd_silver_man_flags": 0,
+        "cd_silver_man_job_register": 0,
+        "cd_silver_man_milestones": 0,
+        "cd_silver_man_priority_items": 0,
+        "cd_silver_man_qc_checklist_result": 0,
+        "cd_silver_man_qc_commissioning": 0,
+        "cd_silver_man_qc_dfow": 0,
+        "cd_silver_man_qc_doh_result": 0,
+        "cd_silver_man_qc_gate": 0,
+        "cd_silver_man_qc_inspector_sign_in": 0,
+        "cd_silver_man_qc_itp": 0,
+        "cd_silver_man_qc_special_inspection": 0,
+        "cd_silver_man_quality_monthly": 0,
+        "cd_silver_man_risks": 0,
+        "cd_silver_man_safety_monthly": 0,
+        "cd_silver_man_survey": 0,
+        "cd_silver_man_wins": 0,
+        "cd_silver_manpower_daily": 1016,
+        "cd_silver_observations": 962,
+        "cd_silver_outbuild_activities": 1860,
+        "cd_silver_prime_change_orders": 330,
+        "cd_silver_prime_contracts": 21,
+        "cd_silver_project_vendors": 422,
+        "cd_silver_projects": 20,
+        "cd_silver_punch_items": 1580,
+        "cd_silver_qc_inspection": 21,
+        "cd_silver_qc_ncr": 962,
+        "cd_silver_qc_punch": 1580,
+        "cd_silver_qc_submittal": 2471,
+        "cd_silver_rfis": 654,
+        "cd_silver_sage_ap_invoices": 879,
+        "cd_silver_sage_ap_lines": 909,
+        "cd_silver_sage_ar_invoices": 148,
+        "cd_silver_sage_ar_lines": 258,
+        "cd_silver_sage_jobs": 27,
+        "cd_silver_submittals": 2471,
+        "cd_silver_vendor_insurance": 105,
+        "cd_silver_vendors": 1114
+      },
+      "rejects": 9,
+      "error": "one or more table counts failed"
+    }
+  ]
+}

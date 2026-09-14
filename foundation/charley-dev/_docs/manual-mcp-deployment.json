@@ -1,0 +1,45 @@
+{
+  "item_id": "4eff5de6-3c4a-4238-9af2-79fb69f07709",
+  "response": {
+    "result": {
+      "content": [
+        {
+          "text": "null",
+          "type": "text"
+        },
+        {
+          "text": "Retry-After: 20\r\nx-ms-operation-id: 198e5187-6f21-4044-bb4b-d44b26800d4a\r\nRequestId: 265fd8d9-2eca-4cff-bc4c-67c4c2fab08e\r\nDate: Thu, 10 Sep 2026 10:12:49 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/198e5187-6f21-4044-bb4b-d44b26800d4a",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    },
+    "jsonrpc": "2.0",
+    "id": 6
+  },
+  "intended_sha256": "4f33a846243d595ab895ddd72a4d622c99d214198ea37294b26a20f950e9bc83",
+  "execution_requested": false,
+  "operation_state": {
+    "result": {
+      "content": [
+        {
+          "text": "{\"status\":\"Succeeded\",\"createdTimeUtc\":\"2026-09-10T10:12:49.6283556\",\"lastUpdatedTimeUtc\":\"2026-09-10T10:12:50.455981\",\"percentComplete\":100,\"error\":null,\"blobInfoId\":null,\"resultContentType\":null}",
+          "type": "text"
+        },
+        {
+          "text": "x-ms-operation-id: 198e5187-6f21-4044-bb4b-d44b26800d4a\r\nRequestId: 9030f76a-1910-4b42-b074-1b901d73dd59\r\nDate: Thu, 10 Sep 2026 10:13:28 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/198e5187-6f21-4044-bb4b-d44b26800d4a/result",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    },
+    "jsonrpc": "2.0",
+    "id": 7
+  },
+  "readback_verified": {
+    "all_cells_match": true,
+    "lakehouse_dependencies_match": true,
+    "cell_count": 5,
+    "readback_notebook_sha256": "4f33a846243d595ab895ddd72a4d622c99d214198ea37294b26a20f950e9bc83"
+  }
+}

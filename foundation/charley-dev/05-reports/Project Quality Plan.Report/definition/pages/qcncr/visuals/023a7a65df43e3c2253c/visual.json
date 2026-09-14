@@ -41,11 +41,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Open NCRs"
+                  "Property": "Open Observations"
                 }
               },
-              "queryRef": "_Measures.Open NCRs",
-              "nativeQueryRef": "Open NCRs"
+              "queryRef": "_Measures.Open Observations",
+              "nativeQueryRef": "Open Observations"
             }
           ]
         }
@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Open NCRs by month. Shows Open NCRs by MonthYear.'"
+                  "Value": "'Column chart. Open Observations by month. Shows Open Observations by MonthYear.'"
                 }
               }
             }
@@ -72,7 +72,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open NCRs by month'"
+                  "Value": "'Open Observations by month'"
                 }
               }
             },

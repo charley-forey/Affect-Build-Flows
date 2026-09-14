@@ -6,7 +6,7 @@
     "y": 392,
     "z": 0,
     "width": 560,
-    "height": 290,
+    "height": 260,
     "tabOrder": 23
   },
   "visual": {
@@ -37,11 +37,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Total NCRs"
+                  "Property": "Total Observations"
                 }
               },
-              "queryRef": "_Measures.Total NCRs",
-              "nativeQueryRef": "Total NCRs"
+              "queryRef": "_Measures.Total Observations",
+              "nativeQueryRef": "Total Observations"
             },
             {
               "field": {
@@ -83,7 +83,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Register state by project. Shows ProjectName, Total NCRs, Open Punch Items, Open Submittals for the current selection.'"
+                  "Value": "'Table. Register state by project. Shows ProjectName, Total Observations, Open Punch Items, Open Submittals for the current selection.'"
                 }
               }
             }

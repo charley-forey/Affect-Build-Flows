@@ -1,0 +1,93 @@
+{
+  "batch": "20260910T095138-bb78d688",
+  "source_scope": "active_projects_selected_endpoints",
+  "written_rows_semantics": "Distinct input rows in a successful upsert; not inserted/updated totals",
+  "normalized_rows_semantics": "Rows after expanding source groups; equals written_rows plus duplicate_rows_removed after a successful merge",
+  "project_ids": [
+    562949955001573,
+    562949954833574,
+    562949955118102,
+    562949955455437,
+    562949955225798,
+    562949955257421,
+    562949955064640,
+    562949955318524,
+    562949955423662,
+    562949955286476,
+    562949955375634,
+    562949954973730,
+    562949954973684,
+    562949954971827,
+    562949953807489,
+    562949955365267,
+    562949953807474,
+    562949954507004,
+    562949955173068,
+    562949954997327
+  ],
+  "endpoints": [
+    {
+      "endpoint": "checklist_list_items",
+      "table": "cd_bronze_procore_checklist_list_items",
+      "status": "failed",
+      "received_rows": 80,
+      "normalized_rows": 80,
+      "written_rows": 0,
+      "scopes": [
+        {
+          "path": "/rest/v1.0/projects/562949955001573/checklist/list_items",
+          "project_id": 562949955001573,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949954833574/checklist/list_items",
+          "project_id": 562949954833574,
+          "status": "complete",
+          "received_rows": 80
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955118102/checklist/list_items",
+          "project_id": 562949955118102,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955455437/checklist/list_items",
+          "project_id": 562949955455437,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955225798/checklist/list_items",
+          "project_id": 562949955225798,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955257421/checklist/list_items",
+          "project_id": 562949955257421,
+          "status": "complete",
+          "received_rows": 0
+        },
+        {
+          "path": "/rest/v1.0/projects/562949955064640/checklist/list_items",
+          "project_id": 562949955064640,
+          "status": "failed",
+          "received_rows": 0,
+          "error_type": "ReadTimeout"
+        }
+      ],
+      "duplicate_rows_removed": null,
+      "watermark_advanced": false,
+      "full_parent_discovery": false,
+      "mode": "full",
+      "since": null,
+      "raw_archive": "/lakehouse/default/Files/_diag/ingestion/20260910T095138-bb78d688/checklist_list_items.jsonl",
+      "archived_rows": 80,
+      "raw_archive_complete": false,
+      "error_type": "ReadTimeout"
+    }
+  ],
+  "status": "failed"
+}

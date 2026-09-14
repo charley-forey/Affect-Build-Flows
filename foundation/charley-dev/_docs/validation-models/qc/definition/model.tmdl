@@ -1,0 +1,28 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	discourageImplicitMeasures
+
+annotation PBI_QueryOrder = ["DirectLake - CD_Gold_Lakehouse"]
+
+ref table _Measures
+ref table dim_Date
+ref table dim_Project
+ref table qc_seed_Trade
+ref table qc_seed_ChecklistItem
+ref table qc_seed_Gate
+ref table qc_seed_DohItem
+ref table dim_QcStatus
+ref table fct_QcNcr
+ref table fct_QcPunch
+ref table fct_QcSubmittal
+ref table man_QcDfow
+ref table man_QcItp
+ref table man_QcGate
+ref table man_QcSpecialInspection
+ref table man_QcCommissioning
+ref table man_QcInspectorSignIn
+ref table man_QcChecklistResult
+ref table man_QcDohResult
+ref table meta_PipelineRun

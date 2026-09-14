@@ -1,0 +1,20 @@
+[
+  {
+    "id": 248,
+    "status": "COMPLETED",
+    "description": "Job group for statement 4:\n# --- 10_procore_silver.sql ---\nrun_sql(\"10_procore_silver.sql:0\", \"CREATE OR REPLACE TABLE cd_silver_projects AS\nSELECT\n    CAST(get_json_object(payload, '$.id')            AS STRING) AS proje",
+    "submissionTime": "2026-09-10T07:27:21.473GMT"
+  },
+  {
+    "id": 247,
+    "status": "COMPLETED",
+    "description": "Job group for statement 4:\n# --- 10_procore_silver.sql ---\nrun_sql(\"10_procore_silver.sql:0\", \"CREATE OR REPLACE TABLE cd_silver_projects AS\nSELECT\n    CAST(get_json_object(payload, '$.id')            AS STRING) AS proje",
+    "submissionTime": "2026-09-10T07:27:21.194GMT"
+  },
+  {
+    "id": 246,
+    "status": "COMPLETED",
+    "description": "Job group for statement 4:\n# --- 10_procore_silver.sql ---\nrun_sql(\"10_procore_silver.sql:0\", \"CREATE OR REPLACE TABLE cd_silver_projects AS\nSELECT\n    CAST(get_json_object(payload, '$.id')            AS STRING) AS proje",
+    "submissionTime": "2026-09-10T07:27:19.914GMT"
+  }
+]

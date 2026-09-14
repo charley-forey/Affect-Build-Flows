@@ -1,0 +1,143 @@
+{
+  "source_run_id": "78ea309feb6047cabfc7cf58f7521997",
+  "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+  "checks": [
+    {
+      "measure": "Budget",
+      "context": "project",
+      "total": 34031395.2,
+      "portfolio": 34031395.19999999,
+      "difference": 1.4901161193847656e-08,
+      "passed": true
+    },
+    {
+      "measure": "Budget",
+      "context": "month",
+      "total": 34031395.19999999,
+      "portfolio": 34031395.19999999,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Spent To Date",
+      "context": "project",
+      "total": 19160549.83,
+      "portfolio": 19160549.83000001,
+      "difference": -1.1175870895385742e-08,
+      "passed": true
+    },
+    {
+      "measure": "Spent To Date",
+      "context": "month",
+      "total": 19160549.83000001,
+      "portfolio": 19160549.83000001,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Budget Variance",
+      "context": "project",
+      "total": 14870845.370000003,
+      "portfolio": 14870845.369999979,
+      "difference": 2.421438694000244e-08,
+      "passed": true
+    },
+    {
+      "measure": "Budget Variance",
+      "context": "month",
+      "total": 14870845.369999979,
+      "portfolio": 14870845.369999979,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Total Billed",
+      "context": "project",
+      "total": 25613659.66,
+      "portfolio": 25613659.66,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Total Billed",
+      "context": "month",
+      "total": 25613659.66,
+      "portfolio": 25613659.66,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Total Paid",
+      "context": "project",
+      "total": 18713981.77,
+      "portfolio": 18713981.769999996,
+      "difference": 3.725290298461914e-09,
+      "passed": true
+    },
+    {
+      "measure": "Total Paid",
+      "context": "month",
+      "total": 18713981.77,
+      "portfolio": 18713981.769999996,
+      "difference": 3.725290298461914e-09,
+      "passed": true
+    },
+    {
+      "measure": "AR Outstanding",
+      "context": "project",
+      "total": 6899677.89,
+      "portfolio": 6899677.8900000015,
+      "difference": -1.862645149230957e-09,
+      "passed": true
+    },
+    {
+      "measure": "AR Outstanding",
+      "context": "month",
+      "total": 6899677.89,
+      "portfolio": 6899677.8900000015,
+      "difference": -1.862645149230957e-09,
+      "passed": true
+    },
+    {
+      "measure": "Open Submittals",
+      "context": "project",
+      "total": 2366.0,
+      "portfolio": 2366,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Open Submittals",
+      "context": "month",
+      "total": 2366.0,
+      "portfolio": 2366,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Current Contract",
+      "context": "project",
+      "total": 35451887.39,
+      "portfolio": 35451887.39,
+      "difference": 0.0,
+      "passed": true
+    },
+    {
+      "measure": "Budget",
+      "context": "captured distinct bronze budget lines",
+      "actual": 34031395.19999999,
+      "expected": 34031395.2,
+      "difference": -1.4901161193847656e-08,
+      "passed": true
+    },
+    {
+      "measure": "Spent To Date",
+      "context": "captured distinct bronze budget lines",
+      "actual": 19160549.83000001,
+      "expected": 19160549.83,
+      "difference": 1.1175870895385742e-08,
+      "passed": true
+    }
+  ],
+  "scope": "Additive project/month reconciliation includes the blank/unassigned group. Budget source totals use the captured 480-row bronze extract, not a fresh Procore API completeness proof. Current Contract is compared across projects only because it is not additive across months."
+}

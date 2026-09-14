@@ -1,0 +1,17 @@
+{
+  "result": {
+    "content": [
+      {
+        "text": "null",
+        "type": "text"
+      },
+      {
+        "text": "Retry-After: 20\r\nx-ms-operation-id: d02ca1ed-50f2-42d3-86ee-02577dd396be\r\nRequestId: 033a3b6f-aae3-4e7f-82c8-3aab40edeb12\r\nDate: Thu, 10 Sep 2026 10:13:28 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/d02ca1ed-50f2-42d3-86ee-02577dd396be",
+        "type": "text"
+      }
+    ],
+    "isError": false
+  },
+  "jsonrpc": "2.0",
+  "id": 7
+}

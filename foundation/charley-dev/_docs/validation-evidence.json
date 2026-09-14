@@ -1,0 +1,380 @@
+{
+  "checked_at": "2026-09-10T04:53:56.658616+00:00",
+  "scope": "Read-only deployed aggregates and candidate status DAX; no deployment performed.",
+  "models": {
+    "Affect Project Report": {
+      "model_id": "4cdfb689-232a-4f33-a6bf-d53e90e8025a",
+      "queries": {
+        "deployed_measures_0": [
+          {
+            "[Original Contract]": 30254551.24,
+            "[Current Contract]": 35281359.89,
+            "[Contract Growth %]": 0.1661504945197793,
+            "[Pending Change Orders]": 49463.97,
+            "[Age Of Oldest Unapproved CO]": 849,
+            "[Approved Change Orders]": 5026808.649999997,
+            "[Budget]": 34027615.07000003,
+            "[Forecast]": 34520832.10000003,
+            "[Committed]": 29641142.910000004,
+            "[Spent To Date]": 19158518.20999999,
+            "[Cost To Complete]": 10482624.700000001,
+            "[Budget Variance]": 14869096.86000004,
+            "[Budget Variance %]": 0.4369714665401035,
+            "[Budget Status]": "On Track",
+            "[Percent Bought Out]": 0.871090814005731,
+            "[Last Checked Run]": "2026-08-28T06:51:21.65",
+            "[Hours Since Last Checked Run]": 310,
+            "[Pipeline Status]": "STALE - these numbers may be weeks old",
+            "[Blocking Violations Last Run]": 0,
+            "[Vendor Spend]": 1472617.1199999994
+          }
+        ],
+        "deployed_measures_20": [
+          {
+            "[Vendor Committed]": 26302483.570000008,
+            "[Cost Codes Per Vendor]": 275,
+            "[Vendors Per Cost Code]": 188,
+            "[Certificates On File]": 105,
+            "[Vendors With Insurance]": 23,
+            "[Expired Certificates]": 105,
+            "[Certificates Expiring Soon]": 0,
+            "[Vendors Without Insurance]": 258,
+            "[Retainage Held Owner]": 889664.45,
+            "[Retainage Held Sub]": 393332.5,
+            "[Net Retainage Position]": 496331.94999999995,
+            "[Owner Billed To Date]": 28881574.21,
+            "[Owner Contract Sum]": 33939265.92,
+            "[Balance To Finish]": 5947356.16,
+            "[Billed This Period]": 27991909.759999994,
+            "[Billing Periods]": 865,
+            "[Draft Billings]": 34,
+            "[Direct Costs]": 2072621.1299999987,
+            "[Self Performed Labour]": 1208733.48,
+            "[Unapproved Direct Costs]": 32625.110000000004
+          }
+        ],
+        "deployed_measures_40": [
+          {
+            "[Vendors On Project]": 264,
+            "[Vendors Missing From ERP]": 138,
+            "[Total Billed]": 25613659.66,
+            "[Total Paid]": 18713981.769999996,
+            "[AR Outstanding]": 6899677.8900000015,
+            "[Total Billed %]": 0.725982777870754,
+            "[Total Billed MoM %]": -4.363246425437097e-16,
+            "[Open Submittals]": 2211,
+            "[Open Submittals Past Due]": 60,
+            "[Avg Days Open]": 320.9996557659208,
+            "[Critical Milestones]": 126,
+            "[Overdue Milestones]": 75,
+            "[Schedule Performance %]": 0.5952380952380952,
+            "[Avg Milestone Progress]": 0.13133518642549352,
+            "[Punchlist Items]": 1580,
+            "[Open Quality Items]": 211,
+            "[Quality Items Past Due]": 204,
+            "[Avg Days Past Due]": 115.75,
+            "[Projects Fully Mapped]": 1,
+            "[Projects Missing From Sage]": 4
+          }
+        ],
+        "deployed_measures_60": [
+          {
+            "[Projects Missing From Outbuild]": 17,
+            "[Source Coverage %]": 0.05263157894736842,
+            "[Vendors Missing From Sage]": 0,
+            "[DQ Projects Without Crosswalk]": 4,
+            "[DQ Cost Codes Not In Source]": null,
+            "[DQ Milestones With Inverted Dates]": null,
+            "[DQ Unmatched Invoices]": 37,
+            "[Billed Cumulative]": 27991909.759999994,
+            "[Billed Cumulative % Of Contract]": 0.7933908967021961,
+            "[Projects Reporting]": 19,
+            "[Projects At Risk]": 6,
+            "[Milestone Offset Days]": 0,
+            "[Milestone Duration Days]": 321,
+            "[Last Refresh]": "2026-09-09T06:29:00.767",
+            "[Report Month Label]": "January 2015 - December 2035",
+            "[Avg Days To Payment]": null,
+            "[Cash Position %]": 2.443439538572815,
+            "[Profitability Code]": null,
+            "[Recordable Incidents]": 0,
+            "[Hours Worked]": 126750.33
+          }
+        ],
+        "deployed_measures_80": [
+          {
+            "[Observations]": 865,
+            "[Avg Observation Days Open]": 30.85541629364369,
+            "[Daily Reports Missed]": null,
+            "[Completion Variance Days]": null,
+            "[Client Satisfaction]": null,
+            "[Score - Accounts Receivable]": null,
+            "[Score - Profitability]": null,
+            "[Score - Cash Position]": 3,
+            "[Score - Change Orders]": 0,
+            "[Score - Safety Incidents]": 3,
+            "[Score - Schedule Performance]": 0,
+            "[Score - Completion Variance]": null,
+            "[Score - Observations]": 0,
+            "[Score - Daily Reports]": null,
+            "[Project Scorecard]": 0.26,
+            "[Scorecard Coverage %]": 0.59,
+            "[Project Scorecard (Measured Only)]": 0.4406779661016949,
+            "[Category Score]": null,
+            "[Category Weighted]": null,
+            "[Category Band]": "Not measured"
+          }
+        ],
+        "table_counts": [
+          {
+            "[dim_Date]": 7670,
+            "[dim_Project]": 19,
+            "[dim_Vendor]": 126,
+            "[dim_CostCode]": 5434,
+            "[dim_Trade]": 29,
+            "[dim_Status]": 32,
+            "[dim_Owner]": 10,
+            "[dim_ActivityCategory]": 28,
+            "[dim_ScorecardWeight]": 9,
+            "[dim_ScorecardBand]": 27,
+            "[fct_BudgetLine]": 402,
+            "[fct_ChangeOrder]": 327,
+            "[fct_Invoice]": 148,
+            "[fct_RfiSubmittal]": 2905,
+            "[fct_Milestone]": 126,
+            "[fct_FinancialPeriod]": 143,
+            "[fct_QualityItem]": 2445,
+            "[fct_SafetyMonthly]": 64,
+            "[fct_Billing]": 865,
+            "[fct_DirectCost]": 437,
+            "[bridge_ProjectVendor]": 411,
+            "[bridge_VendorCostCode]": 418,
+            "[fct_VendorInsurance]": 105,
+            "[man_Wins]": null,
+            "[man_Risks]": null,
+            "[man_PriorityItems]": null,
+            "[man_Flags]": null,
+            "[man_Survey]": null,
+            "[man_SafetyMonthly]": null,
+            "[man_QualityMonthly]": null,
+            "[man_Milestones]": null,
+            "[man_DailyLogCompliance]": null,
+            "[dim_ProjectCrosswalk]": 19,
+            "[dim_VendorCrosswalk]": 125,
+            "[dim_CostCodeCrosswalk]": 5433,
+            "[meta_PipelineRun]": 33
+          }
+        ],
+        "latest_checks": [
+          {
+            "meta_PipelineRun[RunId]": "20260825T102713Z",
+            "meta_PipelineRun[RunAt]": "2026-08-25T10:30:48.57",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 111,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260826T065039Z",
+            "meta_PipelineRun[RunAt]": "2026-08-26T06:54:22.533",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 111,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260825T120217Z",
+            "meta_PipelineRun[RunAt]": "2026-08-25T12:06:00.933",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 111,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260828T064735Z",
+            "meta_PipelineRun[RunAt]": "2026-08-28T06:51:21.65",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 111,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260827T064733Z",
+            "meta_PipelineRun[RunAt]": "2026-08-27T06:51:20.077",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 111,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          }
+        ],
+        "candidate_pipeline_status": [
+          {
+            "[Status]": "Unvalidated - data built after last check"
+          }
+        ],
+        "financial_reconciliation": [
+          {
+            "[InvoiceDifference]": 2.7939677238464355e-09,
+            "[BudgetDifference]": 0.0,
+            "[UnmatchedInvoiceAmount]": 1474973.0099999998,
+            "[UnmatchedInvoices]": 37,
+            "[ActualOpenSubmittals]": 2156,
+            "[ActualOpenRFIs]": 55,
+            "[DisplayedOpenSubmittals]": 2211
+          }
+        ]
+      },
+      "errors": {},
+      "reconciliation": {
+        "InvoiceDifference": {
+          "difference": 2.7939677238464355e-09,
+          "passed": true
+        },
+        "BudgetDifference": {
+          "difference": 0.0,
+          "passed": true
+        }
+      }
+    },
+    "Project Quality Plan": {
+      "model_id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+      "queries": {
+        "deployed_measures_0": [
+          {
+            "[Last Refresh]": "2026-08-21T06:04:47.89",
+            "[Report Month Label]": "January 2015 - December 2035",
+            "[Last Checked Run]": "2026-08-19T23:39:11.93",
+            "[Hours Since Last Checked Run]": 509,
+            "[Pipeline Status]": "STALE - these numbers may be weeks old",
+            "[Projects With Quality Data]": 9,
+            "[Total NCRs]": 850,
+            "[Open NCRs]": 78,
+            "[Closed NCRs]": 772,
+            "[NCRs Past Due]": 78,
+            "[Avg Days To Close NCR]": 34.08031088082902,
+            "[NCR Closure Rate]": 0.908235294117647,
+            "[Total Punch Items]": 1469,
+            "[Open Punch Items]": 30,
+            "[Punch Items Aged Over 7 Days]": 30,
+            "[Punch Closure Rate]": 0.9795779441797141,
+            "[Avg Days Punch Open]": 262.4,
+            "[Total Submittals]": 2245,
+            "[Open Submittals]": 2142,
+            "[Overdue Submittals]": 24
+          }
+        ],
+        "deployed_measures_20": [
+          {
+            "[Avg Submittal Turnaround]": 398.0708240534521,
+            "[Mock-Ups Registered]": 9,
+            "[Gates Defined]": 93,
+            "[Gates Recorded]": null,
+            "[Gates Complete]": null,
+            "[Gate Readiness]": null,
+            "[Checklist Items Defined]": 625,
+            "[Checklist Items Recorded]": null,
+            "[Checklist Items Passed]": null,
+            "[Checklist Items Failed]": null,
+            "[Checklist Completion]": null,
+            "[DFOWs Registered]": null,
+            "[Tier 3 And 4 DFOWs]": null,
+            "[ITP Tests Defined]": null,
+            "[ITP Tests Passed]": null,
+            "[Special Inspections Logged]": null,
+            "[Inspector Visits Logged]": null,
+            "[Systems Accepted]": null,
+            "[DOH Items Verified]": null,
+            "[DQ NCRs With Unmapped Trade]": 215
+          }
+        ],
+        "deployed_measures_40": [
+          {
+            "[DQ Punch With Unmapped Trade]": 291,
+            "[DQ Registers Awaiting Input]": "No manual quality data entered yet"
+          }
+        ],
+        "table_counts": [
+          {
+            "[dim_Date]": 7670,
+            "[dim_Project]": 19,
+            "[qc_seed_Trade]": 26,
+            "[qc_seed_ChecklistItem]": 625,
+            "[qc_seed_Gate]": 93,
+            "[qc_seed_DohItem]": 101,
+            "[dim_QcStatus]": 141,
+            "[fct_QcNcr]": 850,
+            "[fct_QcPunch]": 1469,
+            "[fct_QcSubmittal]": 2245,
+            "[man_QcDfow]": null,
+            "[man_QcItp]": null,
+            "[man_QcGate]": null,
+            "[man_QcSpecialInspection]": null,
+            "[man_QcCommissioning]": null,
+            "[man_QcInspectorSignIn]": null,
+            "[man_QcChecklistResult]": null,
+            "[man_QcDohResult]": null,
+            "[meta_PipelineRun]": 28
+          }
+        ],
+        "latest_checks": [
+          {
+            "meta_PipelineRun[RunId]": "20260819T130355Z",
+            "meta_PipelineRun[RunAt]": "2026-08-19T13:07:27.693",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 104,
+            "meta_PipelineRun[Failing]": 8,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260819T133139Z",
+            "meta_PipelineRun[RunAt]": "2026-08-19T13:35:19.1",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 104,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260819T233537Z",
+            "meta_PipelineRun[RunAt]": "2026-08-19T23:39:11.93",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 105,
+            "meta_PipelineRun[Failing]": 8,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260819T140147Z",
+            "meta_PipelineRun[RunAt]": "2026-08-19T14:05:36.387",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 104,
+            "meta_PipelineRun[Failing]": 9,
+            "meta_PipelineRun[Blocking]": 0
+          },
+          {
+            "meta_PipelineRun[RunId]": "20260819T142447Z",
+            "meta_PipelineRun[RunAt]": "2026-08-19T14:28:44.163",
+            "meta_PipelineRun[Stage]": "dq_gate",
+            "meta_PipelineRun[Status]": "ok",
+            "meta_PipelineRun[Expectations]": 104,
+            "meta_PipelineRun[Failing]": 7,
+            "meta_PipelineRun[Blocking]": 0
+          }
+        ],
+        "candidate_pipeline_status": [
+          {
+            "[Status]": "Unvalidated - data built after last check"
+          }
+        ]
+      },
+      "errors": {}
+    }
+  }
+}

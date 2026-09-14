@@ -1,0 +1,74 @@
+[
+  {
+    "id": 102,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 2609,
+    "submissionTime": "2026-09-10T06:57:19.357GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 106,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 329,
+    "submissionTime": "2026-09-10T06:57:20.435GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 107,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 418,
+    "submissionTime": "2026-09-10T06:57:20.439GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 108,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 92,
+    "submissionTime": "2026-09-10T06:57:21.079GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 109,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 2715,
+    "submissionTime": "2026-09-10T06:57:22.246GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 110,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 2,
+    "submissionTime": "2026-09-10T06:57:22.432GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 111,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 440,
+    "submissionTime": "2026-09-10T06:57:22.736GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  },
+  {
+    "id": 112,
+    "status": "COMPLETED",
+    "description": "Job group for statement 12:\n# --- 08_qc_seeds.sql ---\nspark.sql(\"CREATE OR REPLACE TABLE qc_seed_Trade AS\nSELECT CAST(c1 AS STRING) AS TradeKey,\n       CAST(c2 AS STRING) AS TradeName,\n       CAST(c3 AS STRING) AS SheetName,\n       CAST(c4 AS STRING) AS CsiCode,\n       CAST(c5 AS STRING) AS DfowRef,\n       CAST(c6 AS INT) AS RiskTier,\n       CAST(c7 AS INT) AS SortOrder\nFROM (VALUES\n    ('EXCAVATION', 'Excavation', 'Excavation', '31 20 00', 'D-08', '3', '1'),\n    ('CONCRETE_FORMWORK', 'Concrete Formwork', 'Concrete Formwork', '03 10 00', 'D-07', '3', '2'),\n    ('CONC_REINFORCEMENT', 'Conc Reinforcement', 'Conc Reinforcement', '03 20 00', 'D-07', '3', '3'),\n    ('CIP_CONCRETE', 'CIP Concrete', 'CIP Concrete', '03 30 00', 'D-07', '3', '4'),\n    ('PRECAST_CONCRETE', 'Precast Concrete', 'Precast Concrete', '03 40 00', 'D-07', '3', '5'),\n    ('UNIT_MASONRY', 'Unit Masonry', 'Unit Masonry', '04 20 00', 'D-19', '2', '6'),\n    ('METAL_DECK', 'Metal Deck', 'Metal Deck', '05 31 00', 'D-18', '2', '7'),\n    ('SLAB_ON_GRADE', 'Slab o...",
+    "duration": 38,
+    "submissionTime": "2026-09-10T06:57:23.254GMT",
+    "completionTime": null,
+    "failedJobIds": []
+  }
+]

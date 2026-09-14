@@ -1,0 +1,13 @@
+{
+  "captured_at": "2026-09-10T06:33:24.523794+00:00",
+  "candidate_only": true,
+  "query": "DEFINE\nMEASURE _Measures[Candidate DQ Unmatched Invoices] = CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )\nMEASURE _Measures[Candidate Unmatched AR Amount - All Projects] = CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )\nEVALUATE\nVAR Project = TOPN(1, FILTER(ALL(dim_Project[ProjectKey]), dim_Project[ProjectKey] <> \"UNMATCHED\"), dim_Project[ProjectKey], ASC)\nRETURN ROW(\n\"CountAll\", [Candidate DQ Unmatched Invoices],\n\"CountSelectedProject\", CALCULATE([Candidate DQ Unmatched Invoices], Project),\n\"AmountAll\", [Candidate Unmatched AR Amount - All Projects],\n\"AmountSelectedProject\", CALCULATE([Candidate Unmatched AR Amount - All Projects], Project))\n",
+  "rows": [
+    {
+      "[CountAll]": 37,
+      "[CountSelectedProject]": 37,
+      "[AmountAll]": 1474973.0099999998,
+      "[AmountSelectedProject]": 1474973.0099999998
+    }
+  ]
+}

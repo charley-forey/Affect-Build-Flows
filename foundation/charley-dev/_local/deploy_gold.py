@@ -88,7 +88,7 @@ statements = split_statements
 # The gold SQL stays byte-identical across both sources. Only the SELECTION differs, which
 # is what --source has always been for.
 GOLD_CD_ONLY = ("13_dim_job.sql", "33_fct_qc.sql", "40_man_tables.sql",
-                "41_man_qc_tables.sql")
+                "41_man_qc_tables.sql", "45_dq_datagap.sql")
 
 
 def gold_files(source: str = "cd") -> list[Path]:
@@ -97,7 +97,7 @@ def gold_files(source: str = "cd") -> list[Path]:
                   and not (source == "existing" and p.name in GOLD_CD_ONLY))
 
 
-def build_notebook(source_views: Path, source: str = "cd") -> dict:
+def build_notebook(source_views: Path, source: str = "cd", silver_abfss: str = CD_SILVER_ABFSS) -> dict:
     cells = [
         cell(
             f"""
@@ -179,7 +179,7 @@ def write_diag():
 
     view_sql = (source_views.read_text(encoding="utf-8")
                 .replace("{SILVER_ABFSS}", SILVER_ABFSS)
-                .replace("{CD_SILVER_ABFSS}", CD_SILVER_ABFSS))
+                .replace("{CD_SILVER_ABFSS}", silver_abfss))
     body = "\n".join(
         f"run_sql({json.dumps('view:' + str(i))}, {json.dumps(s)})\n"
         for i, s in enumerate(statements(view_sql))
@@ -225,7 +225,7 @@ for t in manual_tables:
     df.unpersist()
 
 for t, n in loaded.items():
-    print(f"  {{t:<26}} {{n:>5}} rows" + ("" if n else "   (nobody has typed into this yet)"))
+    print(f"  {{t:<26}} {{n:>5}} rows" + ("" if n else "   (no gold rows; input completeness not established)"))
 print(f"manual rows: {{sum(loaded.values())}} across {{len(loaded)}} table(s)")
 """
         )
@@ -257,15 +257,22 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           # else AND so their schema is published - a gold table missing from
           # gold_schema.json cannot be typed by deploy_model.py, so it silently cannot
           # appear in any semantic model.
-          "fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal"]
+          "fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal", "fct_ProcoreInspection",
+          "fct_ProcoreInspectionItem",
+          # The data-gap register. Listed so its schema is published and its count is
+          # evidence for model validation - but exempt from the empty guard below, because
+          # zero gaps is the goal, not a failed build.
+          "dq_DataGap"]
 
 counts, bad = {}, []
-for t in tables:
+for t in tables + manual_tables:
     n = spark.sql(f"SELECT COUNT(*) AS n FROM {t}").collect()[0]["n"]
     counts[t] = n
     print(f"  {t:<24} {n:>7} rows")
-    if n == 0:
+    if t in tables and n == 0 and t != "dq_DataGap":
         bad.append(f"{t} is EMPTY")
+    if t in loaded and n != loaded[t]:
+        bad.append(f"{t}: materialisation changed row count from {loaded[t]} to {n}")
 
 # Referential integrity: a fact key that does not resolve means the report silently
 # drops rows. Checked here rather than discovered in a dashboard.
@@ -345,6 +352,7 @@ write_diag()
 
 if bad:
     raise AssertionError("gold verification failed:\\n  " + "\\n  ".join(bad))
+spark.sql("UPDATE measures_anchor SET _built_at = CURRENT_TIMESTAMP()")
 print("\\nall gold tables built and verified in Fabric")
 """
         )

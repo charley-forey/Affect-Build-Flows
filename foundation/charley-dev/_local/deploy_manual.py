@@ -105,7 +105,7 @@ EXAMPLES: dict[str, list[str]] = {
     "qc_special_inspection": ["26-001", "SI-006", "Structural steel welding", "SIA",
                               "R. Patel", "YES", "YES", "2026-07-02", "2026-07-02",
                               "2026-07-09", "CLOSED", ""],
-    "qc_commissioning": ["26-001", "CX-003", "Smoke purge fans", "HVAC", "MEP Manager",
+    "qc_commissioning": ["26-001", "CX-003", "Smoke purge fans", "HVAC_DUCTWORK", "MEP Manager",
                          "2026-10-01", "", "NOT_STARTED", ""],
     "qc_inspector_sign_in": ["26-001", "SI-2026-041", "2026-07-16", "T. Nguyen",
                              "NYC_DOB", "Facade progress inspection", "Levels 4-6",
@@ -175,13 +175,18 @@ loaded = {}
 for name, cols in SPEC.items():
     path = f"{MANUAL_DIR}/{name}.csv"
     schema = StructType([StructField(c, TYPES[t], True) for c, t in cols])
-    try:
-        exists = len(notebookutils.fs.ls(path)) > 0
-    except Exception:
-        exists = False
+    # A missing CSV is not an instruction to delete SharePoint data. Filesystem errors
+    # must fail the run rather than masquerade as an empty source.
+    exists = notebookutils.fs.exists(path)
+    table = f"cd_bronze_man_{name}"
+    if not exists and spark.catalog.tableExists(table):
+        loaded[name] = {"rows": spark.table(table).count(), "source": "existing bronze preserved"}
+        print(f"  {table}: no CSV; existing bronze preserved")
+        continue
 
     if exists:
-        df = (spark.read.option("header", True).option("mode", "PERMISSIVE")
+        df = (spark.read.option("header", True).option("mode", "FAILFAST")
+              .option("enforceSchema", False)
               .schema(schema).csv(path))
         source = "csv"
     else:
@@ -190,6 +195,9 @@ for name, cols in SPEC.items():
         # populated, which would mean it never runs at all.
         df = spark.createDataFrame([], schema)
         source = "empty"
+
+    if exists and spark.catalog.tableExists(table) and not df.take(1) and spark.table(table).take(1):
+        raise ValueError(f"{table}: empty CSV would erase existing records; existing table preserved")
 
     out = (df
            .withColumn("ProjectKey", F.struct(F.col("ProjectKey").alias("Title")))

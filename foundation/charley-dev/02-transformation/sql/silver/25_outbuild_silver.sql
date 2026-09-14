@@ -125,3 +125,31 @@ FROM cd_bronze_outbuild_activities a
 LEFT JOIN schedule_map m
        ON get_json_object(a.payload, '$.schedule_id') = m.schedule_id
 WHERE get_json_object(a.payload, '$.id') IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Rejects
+-- ---------------------------------------------------------------------------
+-- Two ways a row leaves this parser without a trace, both now recorded:
+--
+--   * an activity with no id (the WHERE above) - target cd_silver_outbuild_activities, so
+--     bronze activities = silver activities + these rejects;
+--   * an Outbuild project with no schedules. explode() of an empty or missing array yields
+--     no row, so the project vanishes from the schedule map - and sv_outbuild_projects,
+--     which is derived from the activities, never sees it either. Its target is the map,
+--     not the activity table, because no activity row was lost.
+--
+-- DELETE then INSERT for the same reason as 24_qc_procore_silver.sql.
+
+DELETE FROM cd_dq_rejects
+WHERE target_table IN ('cd_silver_outbuild_activities', 'outbuild_schedule_map');
+
+INSERT INTO cd_dq_rejects
+SELECT 'cd_silver_outbuild_activities', 'missing id', payload, _batch_id
+FROM cd_bronze_outbuild_activities
+WHERE get_json_object(payload, '$.id') IS NULL
+UNION ALL
+SELECT 'outbuild_schedule_map',
+       'Outbuild project has no schedules - none of its activities can be attributed',
+       payload, _batch_id
+FROM cd_bronze_outbuild_projects
+WHERE get_json_object(payload, '$.schedules[0]') IS NULL;

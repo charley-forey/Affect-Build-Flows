@@ -1,0 +1,29 @@
+table man_DailyLogCompliance
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column LogsExpected
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: LogsExpected
+
+	column LogsMissedSameDay
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: LogsMissedSameDay
+
+	partition man_DailyLogCompliance = entity
+		mode: directLake
+		source
+			entityName: man_dailylogcompliance
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

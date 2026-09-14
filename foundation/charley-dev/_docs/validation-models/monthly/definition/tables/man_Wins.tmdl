@@ -1,0 +1,34 @@
+table man_Wins
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column WinNumber
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: WinNumber
+
+	column Description
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Description
+
+	column WinType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: WinType
+
+	partition man_Wins = entity
+		mode: directLake
+		source
+			entityName: man_wins
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

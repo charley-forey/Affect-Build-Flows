@@ -1,0 +1,71 @@
+{
+  "unmatched_sage_jobs": [
+    {
+      "fct_Invoice[SageJobNumber]": "8",
+      "[InvoiceCount]": 1,
+      "[Amount]": 89990.85
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "7",
+      "[InvoiceCount]": 3,
+      "[Amount]": 21781.239999999998
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "4",
+      "[InvoiceCount]": 5,
+      "[Amount]": 365603.9
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "2",
+      "[InvoiceCount]": 15,
+      "[Amount]": 816455.4199999999
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "27",
+      "[InvoiceCount]": 2,
+      "[Amount]": 34332.38
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "26",
+      "[InvoiceCount]": 3,
+      "[Amount]": 23462.019999999997
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "25",
+      "[InvoiceCount]": 2,
+      "[Amount]": 47858.9
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "24",
+      "[InvoiceCount]": 1,
+      "[Amount]": 52993.63
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "23",
+      "[InvoiceCount]": 4,
+      "[Amount]": 21958.67
+    },
+    {
+      "fct_Invoice[SageJobNumber]": "21",
+      "[InvoiceCount]": 1,
+      "[Amount]": 536.0
+    }
+  ],
+  "candidate_checks": {
+    "Open Submittals": [
+      {
+        "[Value]": 2156
+      }
+    ],
+    "Open Submittals Past Due": [
+      {
+        "[Value]": 24
+      }
+    ],
+    "Change Order Amount": [
+      {
+        "[Value]": 5076272.619999997
+      }
+    ]
+  }
+}

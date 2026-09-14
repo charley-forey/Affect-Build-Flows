@@ -1,0 +1,10 @@
+{
+  "query": "EVALUATE ROW(\"MissingStart\",DATEDIFF(BLANK(),DATE(2026,9,10),DAY),\"MissingFinish\",DATEDIFF(DATE(2026,9,10),BLANK(),DAY),\"Inverted\",DATEDIFF(DATE(2026,9,10),DATE(2026,9,1),DAY))",
+  "result": [
+    {
+      "[MissingStart]": null,
+      "[MissingFinish]": null,
+      "[Inverted]": -9
+    }
+  ]
+}

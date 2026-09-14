@@ -1,0 +1,23 @@
+{
+  "status": 200,
+  "message": "Success",
+  "results": {
+    "subscriptions": [
+      {
+        "subscriptionId": "73932b34-3bb6-4a94-bd4b-4b7623d4f7d6",
+        "displayName": "Azure subscription 1",
+        "state": "Enabled",
+        "tenantId": "b2a2225b-4b4e-42ec-ba52-c7e1c2dea580",
+        "isDefault": true
+      },
+      {
+        "subscriptionId": "0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6",
+        "displayName": "Azure subscription 1",
+        "state": "Enabled",
+        "tenantId": "b2a2225b-4b4e-42ec-ba52-c7e1c2dea580",
+        "isDefault": false
+      }
+    ]
+  },
+  "duration": 6336
+}

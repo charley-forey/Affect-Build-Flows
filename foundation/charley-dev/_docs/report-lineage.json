@@ -1,0 +1,4821 @@
+{
+  "generated_at": "2026-09-10T10:52:14.815072+00:00",
+  "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
+  "models": [
+    {
+      "model": "Affect Project Report",
+      "report": "Monthly Progress Report",
+      "pages": {
+        "portfolio": "Portfolio",
+        "overview": "Overview",
+        "financial": "Financial",
+        "schedule": "Schedule & Quality",
+        "safetyquality": "Safety & Quality",
+        "billing": "Billing & Retainage",
+        "costsvendors": "Direct Costs & Vendors",
+        "insurance": "Vendor Insurance",
+        "scorecard": "Scorecard",
+        "sourcecoverage": "Source Coverage",
+        "projectdetail": "Project Detail",
+        "dataquality": "Data Quality"
+      },
+      "tables": [
+        "dim_Date",
+        "dim_Project",
+        "dim_Vendor",
+        "dim_CostCode",
+        "dim_Trade",
+        "dim_Status",
+        "dim_Owner",
+        "dim_ActivityCategory",
+        "dim_ScorecardWeight",
+        "dim_ScorecardBand",
+        "fct_BudgetLine",
+        "fct_ChangeOrder",
+        "fct_Invoice",
+        "fct_RfiSubmittal",
+        "fct_Milestone",
+        "fct_FinancialPeriod",
+        "fct_QualityItem",
+        "fct_SafetyMonthly",
+        "fct_Billing",
+        "fct_DirectCost",
+        "bridge_ProjectVendor",
+        "bridge_VendorCostCode",
+        "fct_VendorInsurance",
+        "man_Wins",
+        "man_Risks",
+        "man_PriorityItems",
+        "man_Flags",
+        "man_Survey",
+        "man_SafetyMonthly",
+        "man_QualityMonthly",
+        "man_Milestones",
+        "man_DailyLogCompliance",
+        "dim_ProjectCrosswalk",
+        "dim_VendorCrosswalk",
+        "dim_CostCodeCrosswalk",
+        "meta_PipelineRun"
+      ],
+      "relationships": [
+        [
+          "fct_BudgetLine",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_BudgetLine",
+          "CostCodeKey",
+          "dim_CostCode",
+          "CostCodeKey"
+        ],
+        [
+          "fct_BudgetLine",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_ChangeOrder",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_ChangeOrder",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_Invoice",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_Invoice",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_RfiSubmittal",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_QualityItem",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_QualityItem",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_SafetyMonthly",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_SafetyMonthly",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_Billing",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_Billing",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_DirectCost",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_DirectCost",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "bridge_ProjectVendor",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "bridge_VendorCostCode",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "bridge_VendorCostCode",
+          "VendorKey",
+          "dim_Vendor",
+          "VendorKey"
+        ],
+        [
+          "bridge_VendorCostCode",
+          "CostCodeKey",
+          "dim_CostCode",
+          "CostCodeKey"
+        ],
+        [
+          "fct_VendorInsurance",
+          "VendorKey",
+          "dim_Vendor",
+          "VendorKey"
+        ],
+        [
+          "fct_RfiSubmittal",
+          "CostCodeKey",
+          "dim_CostCode",
+          "CostCodeKey"
+        ],
+        [
+          "fct_RfiSubmittal",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_Milestone",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_Milestone",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_FinancialPeriod",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_FinancialPeriod",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "dim_ProjectCrosswalk",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_Wins",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_Wins",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_Risks",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_Risks",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_PriorityItems",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_PriorityItems",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_Flags",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_Flags",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_Survey",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_Survey",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_SafetyMonthly",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_SafetyMonthly",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_QualityMonthly",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QualityMonthly",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_DailyLogCompliance",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_DailyLogCompliance",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "man_Milestones",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ]
+      ],
+      "measures": [
+        {
+          "name": "Original Contract",
+          "expression": "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n\t\t\tSUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C3"
+        },
+        {
+          "name": "Current Contract",
+          "expression": "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n\t\t\tSUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C4"
+        },
+        {
+          "name": "Contract Growth %",
+          "expression": "DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )",
+          "format": "\"0.00%\"",
+          "origin": "DASHBOARD!AT11"
+        },
+        {
+          "name": "Pending Change Orders",
+          "expression": "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n\t\t\tSUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"
+        },
+        {
+          "name": "Age Of Oldest Unapproved CO",
+          "expression": "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
+          "format": "\"#,0\"",
+          "origin": "FINANCIALS!C6 - typed by hand"
+        },
+        {
+          "name": "Approved Change Orders",
+          "expression": "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )",
+          "format": "\"$#,0\"",
+          "origin": "derived - approved COs, the complement of [Pending Change Orders]"
+        },
+        {
+          "name": "Change Order Amount",
+          "expression": "SUM ( fct_ChangeOrder[Amount] )",
+          "format": "\"$#,0\"",
+          "origin": "change-order grain; responds to status and item filters"
+        },
+        {
+          "name": "Budget",
+          "expression": "SUM ( fct_BudgetLine[BudgetAmount] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C19:C20"
+        },
+        {
+          "name": "Forecast",
+          "expression": "SUM ( fct_BudgetLine[ForecastAmount] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!D19:D20"
+        },
+        {
+          "name": "Committed",
+          "expression": "SUM ( fct_BudgetLine[CommittedAmount] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!D61"
+        },
+        {
+          "name": "Spent To Date",
+          "expression": "SUM ( fct_BudgetLine[SpentToDate] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!E19:E20"
+        },
+        {
+          "name": "Cost To Complete",
+          "expression": "SUM ( fct_BudgetLine[CostToComplete] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C15"
+        },
+        {
+          "name": "Budget Variance",
+          "expression": "[Budget] - [Spent To Date]",
+          "format": "\"$#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Budget Variance %",
+          "expression": "DIVIDE ( [Budget Variance], [Budget] )",
+          "format": "\"0.0%\"",
+          "origin": "the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown"
+        },
+        {
+          "name": "Budget Status",
+          "expression": "VAR V = [Budget Variance %]\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" )",
+          "format": null,
+          "origin": "FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment"
+        },
+        {
+          "name": "Percent Bought Out",
+          "expression": "DIVIDE ( [Committed], [Budget] )",
+          "format": "\"0.0%\"",
+          "origin": "FINANCIALS!D62"
+        },
+        {
+          "name": "Last Checked Run",
+          "expression": "MAX ( meta_PipelineRun[RunAt] )",
+          "format": "\"yyyy-mm-dd hh:nn\"",
+          "origin": "no workbook equivalent - the spreadsheet cannot say when it was last correct"
+        },
+        {
+          "name": "Hours Since Last Checked Run",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Pipeline Status",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nVAR Built = [Last Refresh]\nVAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )\nVAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> \"ok\" || meta_PipelineRun[Blocking] > 0 ) )\nVAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )\nVAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )\nRETURN SWITCH ( TRUE (),\n    ISBLANK ( Last ), \"Unknown - no checked run\",\n    Built > Last, \"Unvalidated - data built after last check\",\n    Blocked > 0, \"BLOCKED - validation failed\",\n    Hrs < 0, \"Unknown - check timestamp is in the future\",\n    Hrs > 72, \"STALE - no checked run in over 72 hours\",\n    Hrs > 30, \"Late - no checked run in over 30 hours\",\n    Warnings > 0, \"Gold checked with warnings; source completeness unverified\",\n    \"Gold checks passed; source completeness unverified\" )",
+          "format": null,
+          "origin": "derived"
+        },
+        {
+          "name": "Blocking Violations Last Run",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),\n\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Vendor Spend",
+          "expression": "CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = \"Actual\" )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - vendor spend could not be sliced by cost code"
+        },
+        {
+          "name": "Vendor Committed",
+          "expression": "CALCULATE ( SUM ( bridge_VendorCostCode[Amount] ), bridge_VendorCostCode[AmountType] = \"Committed\" )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!D61 - committed by vendor and cost code, which the workbook cannot slice"
+        },
+        {
+          "name": "Cost Codes Per Vendor",
+          "expression": "COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[CostCodeKey] ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Vendors Per Cost Code",
+          "expression": "COALESCE ( DISTINCTCOUNT ( bridge_VendorCostCode[VendorKey] ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Certificates On File",
+          "expression": "COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "D8"
+        },
+        {
+          "name": "Vendors With Insurance",
+          "expression": "COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "D8"
+        },
+        {
+          "name": "Expired Certificates",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expired\" ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "D8"
+        },
+        {
+          "name": "Certificates Expiring Soon",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expiring within 30 days\" ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "D8 - the renewals to chase this month"
+        },
+        {
+          "name": "Vendors Without Insurance",
+          "expression": "VAR Insured = VALUES ( fct_VendorInsurance[VendorKey] )\n\t\t\tRETURN COALESCE ( COUNTROWS ( EXCEPT (\n\t\t\tVALUES ( bridge_ProjectVendor[VendorKey] ), Insured ) ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "D8 - a vendor with no certificate never appears in the insurance table"
+        },
+        {
+          "name": "Retainage Held Owner",
+          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - Sage holds no header retainage"
+        },
+        {
+          "name": "Retainage Held Sub",
+          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Subcontractor\" )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent"
+        },
+        {
+          "name": "Net Retainage Position",
+          "expression": "[Retainage Held Owner] - [Retainage Held Sub]",
+          "format": "\"$#,0\"",
+          "origin": "derived - what Affect is owed, less what Affect holds"
+        },
+        {
+          "name": "Owner Billed To Date",
+          "expression": "CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C10, sourced from Procore instead of Sage"
+        },
+        {
+          "name": "Owner Contract Sum",
+          "expression": "CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C4, cross-check on [Current Contract]"
+        },
+        {
+          "name": "Balance To Finish",
+          "expression": "CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "format": "\"$#,0\"",
+          "origin": "derived - contract sum less completed, including retainage"
+        },
+        {
+          "name": "Billed This Period",
+          "expression": "CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = \"Owner\", fct_Billing[StatusLabel] <> \"DRAFT\" )",
+          "format": "\"$#,0\"",
+          "origin": "derived - safe to sum, unlike the cumulative columns"
+        },
+        {
+          "name": "Billing Periods",
+          "expression": "COALESCE ( COUNTROWS ( fct_Billing ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Draft Billings",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_Billing ), fct_Billing[StatusLabel] = \"DRAFT\" ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "derived - what is sitting unissued at month end"
+        },
+        {
+          "name": "Direct Costs",
+          "expression": "SUM ( fct_DirectCost[GrandTotal] )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - self-performed cost was never captured"
+        },
+        {
+          "name": "Self Performed Labour",
+          "expression": "CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[CostType] = \"payroll\" )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent"
+        },
+        {
+          "name": "Unapproved Direct Costs",
+          "expression": "CALCULATE ( SUM ( fct_DirectCost[GrandTotal] ), fct_DirectCost[IsApproved] = FALSE () )",
+          "format": "\"$#,0\"",
+          "origin": "derived - cost committed but not yet approved"
+        },
+        {
+          "name": "Vendors On Project",
+          "expression": "COALESCE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "D8 - the vendor list, assembled by hand from Procore today"
+        },
+        {
+          "name": "Vendors Missing From ERP",
+          "expression": "COALESCE ( CALCULATE ( DISTINCTCOUNT ( bridge_ProjectVendor[VendorKey] ), bridge_ProjectVendor[IsMissingFromErp] = TRUE () ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Total Billed",
+          "expression": "SUM ( fct_Invoice[Amount] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C10"
+        },
+        {
+          "name": "Total Paid",
+          "expression": "SUM ( fct_Invoice[AmountPaid] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!C12"
+        },
+        {
+          "name": "AR Outstanding",
+          "expression": "SUM ( fct_Invoice[Balance] )",
+          "format": "\"$#,0\"",
+          "origin": "FINANCIALS!F57"
+        },
+        {
+          "name": "Total Billed %",
+          "expression": "DIVIDE ( [Total Billed], [Current Contract] )",
+          "format": "\"0.0%\"",
+          "origin": "DASHBOARD!AT15 - was a TEXT string, so it could never be charted"
+        },
+        {
+          "name": "Total Billed MoM %",
+          "expression": "VAR Prior = CALCULATE ( [Total Billed], DATEADD ( dim_Date[Date], -1, MONTH ) )\n\t\t\tRETURN DIVIDE ( [Total Billed] - Prior, Prior )",
+          "format": "\"0.0%\"",
+          "origin": "replaces the hand-keyed LAST PERIOD column"
+        },
+        {
+          "name": "Open Submittals",
+          "expression": "CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE, fct_RfiSubmittal[ItemType] = \"Submittal\" )",
+          "format": "\"#,0\"",
+          "origin": "SUBMITTALS & RFI!D"
+        },
+        {
+          "name": "Open Submittals Past Due",
+          "expression": "CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE, fct_RfiSubmittal[ItemType] = \"Submittal\" )",
+          "format": "\"#,0\"",
+          "origin": "derived - the workbook has no equivalent"
+        },
+        {
+          "name": "Avg Days Open",
+          "expression": "AVERAGE ( fct_RfiSubmittal[DaysOpen] )",
+          "format": "\"#,0.0\"",
+          "origin": "QUALITY!D39 - typed by hand"
+        },
+        {
+          "name": "Critical Milestones",
+          "expression": "COUNTROWS ( fct_Milestone )",
+          "format": "\"#,0\"",
+          "origin": "SCHEDULE!Table5"
+        },
+        {
+          "name": "Overdue Milestones",
+          "expression": "CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Schedule Performance %",
+          "expression": "DIVIDE ( [Overdue Milestones], [Critical Milestones] )",
+          "format": "\"0.0%\"",
+          "origin": "DASHBOARD!L19 - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)"
+        },
+        {
+          "name": "Avg Milestone Progress",
+          "expression": "AVERAGE ( fct_Milestone[PercentComplete] )",
+          "format": "\"0.0%\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Punchlist Items",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[ItemType] = \"PunchItem\" ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "QUALITY!Table18 - typed by hand today"
+        },
+        {
+          "name": "Open Quality Items",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsOpen] = TRUE ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "observations and punch items still outstanding"
+        },
+        {
+          "name": "Quality Items Past Due",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsPastDue] = TRUE ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "open AND past their due date"
+        },
+        {
+          "name": "Avg Days Past Due",
+          "expression": "AVERAGEX ( FILTER ( fct_QualityItem, fct_QualityItem[IsPastDue] = TRUE ), fct_QualityItem[DaysPastDue] )",
+          "format": "\"0.0\"",
+          "origin": "QUALITY!D38:E38 - hand-computed today"
+        },
+        {
+          "name": "Projects Fully Mapped",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[SystemCount] = 3 ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "present in Procore AND Sage AND Outbuild"
+        },
+        {
+          "name": "Projects In Coverage",
+          "expression": "COUNTROWS ( dim_ProjectCrosswalk )",
+          "format": "\"#,0\"",
+          "origin": "all projects in the selected coverage category, including incomplete mappings"
+        },
+        {
+          "name": "Projects Missing From Sage",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInSage] = FALSE ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "these read as ZERO revenue everywhere - the most dangerous gap"
+        },
+        {
+          "name": "Projects Missing From Outbuild",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInOutbuild] = FALSE ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "no milestones - Outbuild is the only milestone source that exists"
+        },
+        {
+          "name": "Source Coverage %",
+          "expression": "DIVIDE ( [Projects Fully Mapped], COUNTROWS ( dim_ProjectCrosswalk ) )",
+          "format": "\"0.0%\"",
+          "origin": "share of projects present in all three systems"
+        },
+        {
+          "name": "Vendors Missing From Sage",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "mostly expected - a vendor invited to bid is not a vendor who was paid"
+        },
+        {
+          "name": "DQ Projects Without Crosswalk",
+          "expression": "CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )",
+          "format": "\"#,0\"",
+          "origin": "diagnostics - cannot join to Sage until fixed"
+        },
+        {
+          "name": "DQ Cost Codes Not In Source",
+          "expression": "CALCULATE ( COUNTROWS ( dim_CostCode ), dim_CostCode[IsInSource] = FALSE )",
+          "format": "\"#,0\"",
+          "origin": "diagnostics"
+        },
+        {
+          "name": "DQ Milestones With Inverted Dates",
+          "expression": "CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[HasDateInversion] = TRUE )",
+          "format": "\"#,0\"",
+          "origin": "diagnostics - Excel defect #6, never flagged in the workbook"
+        },
+        {
+          "name": "DQ Unmatched Invoices",
+          "expression": "CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
+          "format": "\"#,0\"",
+          "origin": "diagnostics - unmatched AR across all projects; retains the selected month"
+        },
+        {
+          "name": "Unmatched AR Amount - All Projects",
+          "expression": "CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
+          "format": "\"$#,0.00\"",
+          "origin": "unattributed billed amount across all projects; retains the selected month"
+        },
+        {
+          "name": "Billed Cumulative",
+          "expression": "CALCULATE ( [Billed This Period], FILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - a single snapshot cannot draw a curve"
+        },
+        {
+          "name": "Billed Cumulative % Of Contract",
+          "expression": "DIVIDE ( [Billed Cumulative], [Current Contract] )",
+          "format": "\"0.0%\"",
+          "origin": "the S-curve against the contract line"
+        },
+        {
+          "name": "Projects Reporting",
+          "expression": "COUNTROWS ( dim_Project )",
+          "format": "\"#,0\"",
+          "origin": "portfolio scope"
+        },
+        {
+          "name": "Projects At Risk",
+          "expression": "COUNTROWS ( FILTER ( dim_Project, NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )",
+          "format": "\"#,0\"",
+          "origin": "no workbook equivalent - one workbook per project cannot rank them"
+        },
+        {
+          "name": "Milestone Offset Days",
+          "expression": "VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\nVAR Origin = MINX ( FILTER ( ALLSELECTED ( fct_Milestone ), NOT ISBLANK ( fct_Milestone[CurrentStart] ) && NOT ISBLANK ( fct_Milestone[CurrentFinish] ) && fct_Milestone[CurrentFinish] >= fct_Milestone[CurrentStart] ), fct_Milestone[CurrentStart] )\nRETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), DATEDIFF ( Origin, StartDate, DAY ), BLANK () )",
+          "format": "\"#,0\"",
+          "origin": "Gantt geometry - the transparent leading bar"
+        },
+        {
+          "name": "Milestone Duration Days",
+          "expression": "VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\nVAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\nRETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () )",
+          "format": "\"#,0\"",
+          "origin": "Gantt geometry - the visible bar"
+        },
+        {
+          "name": "Last Refresh",
+          "expression": "MAX ( _Measures[_built_at] )",
+          "format": "\"yyyy-mm-dd hh:nn\"",
+          "origin": "no workbook equivalent - the Excel could not say when its numbers were true"
+        },
+        {
+          "name": "Report Month Label",
+          "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) )",
+          "format": null,
+          "origin": "DASHBOARD!AU4 - the month anchor, now driven by the slicer"
+        },
+        {
+          "name": "Avg Days To Payment",
+          "expression": "BLANK ()",
+          "format": "\"#,0.0\"",
+          "origin": "FINANCIALS!F56 - blocked: Sage AR header has no payment date"
+        },
+        {
+          "name": "Cash Position %",
+          "expression": "DIVIDE ( [Total Paid] + [AR Outstanding], [Cost To Complete] )",
+          "format": "\"0.0%\"",
+          "origin": "FINANCIALS!C8 - a human judgement the workbook could already have computed"
+        },
+        {
+          "name": "Profitability Code",
+          "expression": "SELECTEDVALUE ( man_Flags[ProfitabilityCode] )",
+          "format": null,
+          "origin": "FINANCIALS!C7 - a genuine human judgement, stays manual"
+        },
+        {
+          "name": "Recordable Incidents",
+          "expression": "COALESCE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "SAFETY!E - Procore /incidents, in the registry but not yet ingested"
+        },
+        {
+          "name": "Hours Worked",
+          "expression": "COALESCE ( SUM ( fct_SafetyMonthly[HoursWorked] ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "SAFETY!D - Sage payroll / ADP / Procore timecards, undecided"
+        },
+        {
+          "name": "Observations",
+          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[ItemType] = \"Observation\" ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "Procore /observations/items - was QUALITY!D, typed by hand"
+        },
+        {
+          "name": "Avg Observation Days Open",
+          "expression": "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), fct_QualityItem[DaysOpen] )",
+          "format": "\"#,0.0\"",
+          "origin": "QUALITY!D39 - typed by hand today"
+        },
+        {
+          "name": "Daily Reports Missed",
+          "expression": "SUM ( man_DailyLogCompliance[LogsMissedSameDay] )",
+          "format": "\"#,0\"",
+          "origin": "SCORECARD CALC!E28 - Procore /daily_log_headers derives this"
+        },
+        {
+          "name": "Completion Variance Days",
+          "expression": "VAR Baseline = MAX ( man_Milestones[BaselineFinish] )\nVAR Forecast = MAX ( fct_Milestone[CurrentFinish] )\nRETURN IF ( ISBLANK ( Baseline ) || ISBLANK ( Forecast ), BLANK (), DATEDIFF ( Baseline, Forecast, DAY ) )",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!M16 - which returned the TEXT \"0 days\" (defect #1b)"
+        },
+        {
+          "name": "Client Satisfaction",
+          "expression": "DIVIDE ( SUM ( man_Survey[Score] ), COUNTROWS ( man_Survey ) * 5 )",
+          "format": "\"0.0%\"",
+          "origin": "SCORECARD CALC!C42"
+        },
+        {
+          "name": "Score - Accounts Receivable",
+          "expression": "VAR V = [Avg Days To Payment]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 1\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E13 - FIX: driver is days to payment, not an aging balance (defect #1c)"
+        },
+        {
+          "name": "Score - Profitability",
+          "expression": "VAR V = [Profitability Code]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 2\n                && dim_ScorecardBand[MatchValue] = V\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E7"
+        },
+        {
+          "name": "Score - Cash Position",
+          "expression": "VAR V = [Cash Position %]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 3\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E10 - now computed rather than picked from a dropdown"
+        },
+        {
+          "name": "Score - Change Orders",
+          "expression": "VAR V = [Age Of Oldest Unapproved CO]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 4\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E14"
+        },
+        {
+          "name": "Score - Safety Incidents",
+          "expression": "VAR V = [Recordable Incidents]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 5\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E16"
+        },
+        {
+          "name": "Score - Schedule Performance",
+          "expression": "VAR V = [Schedule Performance %]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 6\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E19 - FIX: bands are fractions, so this stops always awarding 3/3 (defect #1a)"
+        },
+        {
+          "name": "Score - Completion Variance",
+          "expression": "VAR V = [Completion Variance Days]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 7\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E22 - FIX: numeric, so finishing on baseline scores 3 not 0 (defect #1b)"
+        },
+        {
+          "name": "Score - Observations",
+          "expression": "VAR V = [Avg Observation Days Open]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 8\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E25"
+        },
+        {
+          "name": "Score - Daily Reports",
+          "expression": "VAR V = [Daily Reports Missed]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 9\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E28"
+        },
+        {
+          "name": "Project Scorecard",
+          "expression": "DIVIDE (\n    SUMX (\n        ALL ( dim_ScorecardWeight ),\n        VAR S =\n            SWITCH (\n                dim_ScorecardWeight[CategoryKey],\n            1, [Score - Accounts Receivable],\n            2, [Score - Profitability],\n            3, [Score - Cash Position],\n            4, [Score - Change Orders],\n            5, [Score - Safety Incidents],\n            6, [Score - Schedule Performance],\n            7, [Score - Completion Variance],\n            8, [Score - Observations],\n            9, [Score - Daily Reports],\n                BLANK ()\n            )\n        RETURN IF ( ISBLANK ( S ), 0, S * dim_ScorecardWeight[Weight] )\n    ),\n    3\n)",
+          "format": "\"0.00\"",
+          "origin": "SCORECARD CALC!G31"
+        },
+        {
+          "name": "Scorecard Coverage %",
+          "expression": "SUMX (\n    ALL ( dim_ScorecardWeight ),\n    VAR S =\n        SWITCH (\n            dim_ScorecardWeight[CategoryKey],\n            1, [Score - Accounts Receivable],\n            2, [Score - Profitability],\n            3, [Score - Cash Position],\n            4, [Score - Change Orders],\n            5, [Score - Safety Incidents],\n            6, [Score - Schedule Performance],\n            7, [Score - Completion Variance],\n            8, [Score - Observations],\n            9, [Score - Daily Reports],\n            BLANK ()\n        )\n    RETURN IF ( ISBLANK ( S ), 0, dim_ScorecardWeight[Weight] )\n)",
+          "format": "\"0.0%\"",
+          "origin": "no equivalent - the workbook could not tell you this"
+        },
+        {
+          "name": "Project Scorecard (Measured Only)",
+          "expression": "DIVIDE ( [Project Scorecard], [Scorecard Coverage %] )",
+          "format": "\"0.00\"",
+          "origin": "derived - makes partial coverage comparable"
+        },
+        {
+          "name": "Category Score",
+          "expression": "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\nRETURN\nSWITCH (\n    K,\n            1, [Score - Accounts Receivable],\n            2, [Score - Profitability],\n            3, [Score - Cash Position],\n            4, [Score - Change Orders],\n            5, [Score - Safety Incidents],\n            6, [Score - Schedule Performance],\n            7, [Score - Completion Variance],\n            8, [Score - Observations],\n            9, [Score - Daily Reports],\n    BLANK ()\n)",
+          "format": "\"0\"",
+          "origin": "SCORECARD CALC!E23:E31 - the per-category score, never displayed in the Excel"
+        },
+        {
+          "name": "Category Weighted",
+          "expression": "VAR S = [Category Score]\nVAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )\nRETURN IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) )",
+          "format": "\"0.000\"",
+          "origin": "SCORECARD CALC!G23:G31 - ((E*F)/3), the workbook's own normalisation"
+        },
+        {
+          "name": "Category Band",
+          "expression": "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\nVAR S = [Category Score]\nRETURN\nIF (\n    ISBLANK ( S ),\n    \"Not measured\",\n    CALCULATE (\n        MAX ( dim_ScorecardBand[BandLabel] ),\n        ALL ( dim_ScorecardBand ),\n        dim_ScorecardBand[CategoryKey] = K,\n        dim_ScorecardBand[Score] = S\n    )\n)",
+          "format": null,
+          "origin": "derived - the band the driver fell in, in the seed table's own words"
+        }
+      ],
+      "visual_bindings": [
+        {
+          "page": "Portfolio",
+          "visual": "69e88b894bf8684f8a82",
+          "table": "_Measures",
+          "field": "Projects Reporting",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "321c3bc03598f1a1119f",
+          "table": "_Measures",
+          "field": "Current Contract",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "92c0e7157d176fa81e21",
+          "table": "_Measures",
+          "field": "Total Billed %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "3638fa04fd9194144115",
+          "table": "_Measures",
+          "field": "AR Outstanding",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "04be2bfbb1f8524292f8",
+          "table": "_Measures",
+          "field": "Projects At Risk",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "47b67b00ed6b68e6a225",
+          "table": "_Measures",
+          "field": "Category Score",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "47b67b00ed6b68e6a225",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "47b67b00ed6b68e6a225",
+          "table": "dim_ScorecardWeight",
+          "field": "CategoryName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8c3d98dc80be2bd1b16e",
+          "table": "_Measures",
+          "field": "Current Contract",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8c3d98dc80be2bd1b16e",
+          "table": "_Measures",
+          "field": "Total Billed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8c3d98dc80be2bd1b16e",
+          "table": "_Measures",
+          "field": "Total Paid",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8c3d98dc80be2bd1b16e",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "d56c4c8a8c584de03d50",
+          "table": "_Measures",
+          "field": "AR Outstanding",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "d56c4c8a8c584de03d50",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "77bf159aa5ed5ba20d2a",
+          "table": "_Measures",
+          "field": "Scorecard Coverage %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "77bf159aa5ed5ba20d2a",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "f3de7a859007ec8b2a81",
+          "table": "_Measures",
+          "field": "Vendors Without Insurance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "f3de7a859007ec8b2a81",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "2cc385f3bdafd97b103c",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "62023e35bbb2441093f7",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8ef765dec009e2d482aa",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8ef765dec009e2d482aa",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8ef765dec009e2d482aa",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "eeb21cb62d6d26701448",
+          "table": "_Measures",
+          "field": "Current Contract",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "a47b43fb88b555b4cbe6",
+          "table": "_Measures",
+          "field": "Total Billed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "45a0d87c867b257ba34f",
+          "table": "_Measures",
+          "field": "Total Billed %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "f5f8e7aeb845559da457",
+          "table": "_Measures",
+          "field": "Total Paid",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "4b49810674e947092bac",
+          "table": "_Measures",
+          "field": "AR Outstanding",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "69bd4a9d14025d6490d8",
+          "table": "_Measures",
+          "field": "Contract Growth %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "d1768ef08e04e74f3ee0",
+          "table": "_Measures",
+          "field": "Percent Bought Out",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "819d65c7fb6134b9b296",
+          "table": "_Measures",
+          "field": "Pending Change Orders",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "40ba33b3cf07ac77a9b8",
+          "table": "_Measures",
+          "field": "Open Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "b3065689e0f85b21574d",
+          "table": "_Measures",
+          "field": "Critical Milestones",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "185eacf0aafc5ea44231",
+          "table": "_Measures",
+          "field": "Total Billed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "185eacf0aafc5ea44231",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Overview",
+          "visual": "32570f6f4015baf81ef5",
+          "table": "_Measures",
+          "field": "Budget",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "32570f6f4015baf81ef5",
+          "table": "_Measures",
+          "field": "Spent To Date",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "32570f6f4015baf81ef5",
+          "table": "dim_CostCode",
+          "field": "Division",
+          "kind": "Column"
+        },
+        {
+          "page": "Overview",
+          "visual": "00bc831dfc64a1b2eaa8",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Overview",
+          "visual": "32fe2a3b649b0a294016",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Overview",
+          "visual": "f111d701a1b410434d40",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "f111d701a1b410434d40",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Overview",
+          "visual": "f111d701a1b410434d40",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "20ae6427fac7b2a3d929",
+          "table": "_Measures",
+          "field": "Budget",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "c9bb3238a32172e1fb0d",
+          "table": "_Measures",
+          "field": "Forecast",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "26a58634cc3400c33346",
+          "table": "_Measures",
+          "field": "Committed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "767aa458d29f47a6f7fd",
+          "table": "_Measures",
+          "field": "Spent To Date",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "2272e16a3682c4920190",
+          "table": "_Measures",
+          "field": "Cost To Complete",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "ae8f3dac89cc501dd307",
+          "table": "_Measures",
+          "field": "Budget Variance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Budget",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Budget Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Budget Variance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Budget Variance %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Spent To Date",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "dim_CostCode",
+          "field": "CostCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "dim_CostCode",
+          "field": "Division",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "fct_BudgetLine",
+          "field": "BudgetLineID",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "fct_BudgetLine",
+          "field": "Category",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "fct_BudgetLine",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "d58038d656f270000880",
+          "table": "_Measures",
+          "field": "Change Order Amount",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "d58038d656f270000880",
+          "table": "fct_ChangeOrder",
+          "field": "StatusLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "413f28b8cf3e15004c11",
+          "table": "_Measures",
+          "field": "Billed Cumulative",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "413f28b8cf3e15004c11",
+          "table": "_Measures",
+          "field": "Current Contract",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "413f28b8cf3e15004c11",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "b58d509033809a57e425",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "8aaa517921eb7d7b8ee7",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "e0075e91dedc75d1d43a",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "e0075e91dedc75d1d43a",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "e0075e91dedc75d1d43a",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "73464aa4c2e7e0561f4a",
+          "table": "_Measures",
+          "field": "Critical Milestones",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "07ba7285f365a890c256",
+          "table": "_Measures",
+          "field": "Overdue Milestones",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "0e32c9c17775ef4b8db2",
+          "table": "_Measures",
+          "field": "Schedule Performance %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "4e5286804294af4c3d43",
+          "table": "_Measures",
+          "field": "Avg Milestone Progress",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "f2f9c754e2f00bd1ab69",
+          "table": "_Measures",
+          "field": "Open Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "d9d7bbe1b09c50de7707",
+          "table": "_Measures",
+          "field": "Open Submittals Past Due",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "dab58176f11d508fd896",
+          "table": "_Measures",
+          "field": "Milestone Duration Days",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "dab58176f11d508fd896",
+          "table": "_Measures",
+          "field": "Milestone Offset Days",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "dab58176f11d508fd896",
+          "table": "fct_Milestone",
+          "field": "ActivityKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "dab58176f11d508fd896",
+          "table": "fct_Milestone",
+          "field": "MilestoneName",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "dab58176f11d508fd896",
+          "table": "fct_Milestone",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "ActivityKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "CurrentFinish",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "CurrentStart",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "HasDateInversion",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "MilestoneName",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "PercentComplete",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "622494d0db7a838af57e",
+          "table": "fct_Milestone",
+          "field": "StatusLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "47b8e0deb88646ad4d62",
+          "table": "_Measures",
+          "field": "Open Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "47b8e0deb88646ad4d62",
+          "table": "fct_RfiSubmittal",
+          "field": "StatusLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "bfd1c2392055261417ec",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "98c6b89909ddaf7504be",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "6838b8e5e34586f41d89",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "6838b8e5e34586f41d89",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "6838b8e5e34586f41d89",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "629c2a3cdfc69d0340a9",
+          "table": "_Measures",
+          "field": "Hours Worked",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "2c23d427257322c45659",
+          "table": "_Measures",
+          "field": "Recordable Incidents",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "3758d634ab7ba5538595",
+          "table": "_Measures",
+          "field": "Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "81aa6982f2e0a5d03da2",
+          "table": "_Measures",
+          "field": "Punchlist Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "106fa52140807b091882",
+          "table": "_Measures",
+          "field": "Open Quality Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "2ce3d2b9ddacf8854560",
+          "table": "_Measures",
+          "field": "Quality Items Past Due",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "5060c1d160188763c782",
+          "table": "_Measures",
+          "field": "Avg Days Past Due",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "3defaf81f3cc7576c88d",
+          "table": "_Measures",
+          "field": "Avg Observation Days Open",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "6d24dc5d2c1353a2a9c9",
+          "table": "_Measures",
+          "field": "Open Quality Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "6d24dc5d2c1353a2a9c9",
+          "table": "fct_QualityItem",
+          "field": "ItemType",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "d8a6eef2467f0ce07a49",
+          "table": "_Measures",
+          "field": "Open Quality Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "d8a6eef2467f0ce07a49",
+          "table": "fct_QualityItem",
+          "field": "Trade",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "00fe363050bceecde534",
+          "table": "fct_QualityItem",
+          "field": "AssignedTo",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "00fe363050bceecde534",
+          "table": "fct_QualityItem",
+          "field": "DaysPastDue",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "00fe363050bceecde534",
+          "table": "fct_QualityItem",
+          "field": "Title",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "086bb684aeb3513171b3",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "6853ce1a5d7a0c21c8a1",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "0f05c3716adb91f8bd34",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "0f05c3716adb91f8bd34",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "0f05c3716adb91f8bd34",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "495d2292acc05dc47ede",
+          "table": "_Measures",
+          "field": "Net Retainage Position",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "952172f172d88dd14b4b",
+          "table": "_Measures",
+          "field": "Retainage Held Owner",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "18e874f17e973df13eab",
+          "table": "_Measures",
+          "field": "Retainage Held Sub",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "3451acf515b1bd767735",
+          "table": "_Measures",
+          "field": "Owner Contract Sum",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "aab28a9fa247356ab528",
+          "table": "_Measures",
+          "field": "Owner Billed To Date",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "138ac359b3b8102f0ae5",
+          "table": "_Measures",
+          "field": "Balance To Finish",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "e6342db98c48273e3871",
+          "table": "_Measures",
+          "field": "Billed This Period",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "ab7235f0416d3fa3d072",
+          "table": "_Measures",
+          "field": "Draft Billings",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "9f462ec603556e7d6efa",
+          "table": "_Measures",
+          "field": "Billed This Period",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "9f462ec603556e7d6efa",
+          "table": "dim_Date",
+          "field": "MonthStart",
+          "kind": "Column"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "d3dc16d0f03186dca680",
+          "table": "_Measures",
+          "field": "Retainage Held Owner",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "d3dc16d0f03186dca680",
+          "table": "_Measures",
+          "field": "Retainage Held Sub",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "d3dc16d0f03186dca680",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "188ca3d21f41d4fe7f3a",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "e858c3274b35b8bfc94d",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "1a77605b6a4646eaa836",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "1a77605b6a4646eaa836",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "1a77605b6a4646eaa836",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "3d4ac05cff085ff263c3",
+          "table": "_Measures",
+          "field": "Direct Costs",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "fa55e68ea67efbf39fac",
+          "table": "_Measures",
+          "field": "Self Performed Labour",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "52791588ce815db662ff",
+          "table": "_Measures",
+          "field": "Unapproved Direct Costs",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "ba16ec39649255c1d3ce",
+          "table": "_Measures",
+          "field": "Vendors On Project",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "5b2f58ef5ba656c6f9db",
+          "table": "_Measures",
+          "field": "Vendors Missing From ERP",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "e55665bfcbc0f8f8f150",
+          "table": "_Measures",
+          "field": "Vendor Committed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "bf72fab2b1be86d98f29",
+          "table": "_Measures",
+          "field": "Direct Costs",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "bf72fab2b1be86d98f29",
+          "table": "fct_DirectCost",
+          "field": "CostCategory",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "1638b8701d5269132b3a",
+          "table": "_Measures",
+          "field": "Direct Costs",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "1638b8701d5269132b3a",
+          "table": "dim_Date",
+          "field": "MonthStart",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "02a63ede24a009be7a78",
+          "table": "_Measures",
+          "field": "Vendor Committed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "02a63ede24a009be7a78",
+          "table": "_Measures",
+          "field": "Vendor Spend",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "02a63ede24a009be7a78",
+          "table": "bridge_VendorCostCode",
+          "field": "CostCodeName",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "43a5448912a9f8e7b8d3",
+          "table": "_Measures",
+          "field": "Vendor Committed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "43a5448912a9f8e7b8d3",
+          "table": "_Measures",
+          "field": "Vendor Spend",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "43a5448912a9f8e7b8d3",
+          "table": "bridge_VendorCostCode",
+          "field": "AmountType",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "43a5448912a9f8e7b8d3",
+          "table": "bridge_VendorCostCode",
+          "field": "VendorName",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a9a74f12201a54fabac3",
+          "table": "bridge_ProjectVendor",
+          "field": "City",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a9a74f12201a54fabac3",
+          "table": "bridge_ProjectVendor",
+          "field": "IsPrequalified",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a9a74f12201a54fabac3",
+          "table": "bridge_ProjectVendor",
+          "field": "LicenseNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a9a74f12201a54fabac3",
+          "table": "bridge_ProjectVendor",
+          "field": "SyncedToErp",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a9a74f12201a54fabac3",
+          "table": "bridge_ProjectVendor",
+          "field": "TradeName",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a9a74f12201a54fabac3",
+          "table": "bridge_ProjectVendor",
+          "field": "VendorName",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "0f99ebf1d8bc56b01f16",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "a6902949e05282dc7ebd",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "2ef4308876dbd8142d74",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "2ef4308876dbd8142d74",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "2ef4308876dbd8142d74",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "79c30699778a643f71c1",
+          "table": "_Measures",
+          "field": "Vendors On Project",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "9d1496d43091d45be979",
+          "table": "_Measures",
+          "field": "Vendors With Insurance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "7565146c1d2c0578e704",
+          "table": "_Measures",
+          "field": "Vendors Without Insurance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "987edfff6d7726110a4f",
+          "table": "_Measures",
+          "field": "Certificates On File",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "ad25791397553239021f",
+          "table": "_Measures",
+          "field": "Expired Certificates",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "83ad06d696509974632a",
+          "table": "_Measures",
+          "field": "Certificates Expiring Soon",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "d5608338e5d0e3d3af70",
+          "table": "_Measures",
+          "field": "Certificates On File",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "d5608338e5d0e3d3af70",
+          "table": "fct_VendorInsurance",
+          "field": "ExpiryStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "c9c47db3c61c9182d52c",
+          "table": "_Measures",
+          "field": "Certificates On File",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "c9c47db3c61c9182d52c",
+          "table": "fct_VendorInsurance",
+          "field": "InsuranceType",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "c1f0e4228ce028f6be50",
+          "table": "_Measures",
+          "field": "Certificates On File",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "c1f0e4228ce028f6be50",
+          "table": "fct_VendorInsurance",
+          "field": "ComplianceState",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "DaysUntilExpiry",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "ExpirationDate",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "ExpiryStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "InsuranceType",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "PolicyNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "Provider",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "fct_VendorInsurance",
+          "field": "VendorKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "59092d59ad58b3bbee2e",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "b3e7159de9c99ac602e2",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "591de945a85db7c2f6d3",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "591de945a85db7c2f6d3",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "591de945a85db7c2f6d3",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "5e6064da8be8db08a898",
+          "table": "_Measures",
+          "field": "Project Scorecard",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "b01a2d4bc37ceb8dc1cf",
+          "table": "_Measures",
+          "field": "Scorecard Coverage %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "f426c8f54e73eef58917",
+          "table": "_Measures",
+          "field": "Project Scorecard (Measured Only)",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "c27f6ca7d7cfce3c5b8e",
+          "table": "_Measures",
+          "field": "Client Satisfaction",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "699061ecba22c14b7de3",
+          "table": "_Measures",
+          "field": "Category Band",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "699061ecba22c14b7de3",
+          "table": "_Measures",
+          "field": "Category Score",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "699061ecba22c14b7de3",
+          "table": "_Measures",
+          "field": "Category Weighted",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "699061ecba22c14b7de3",
+          "table": "dim_ScorecardWeight",
+          "field": "CategoryName",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "699061ecba22c14b7de3",
+          "table": "dim_ScorecardWeight",
+          "field": "Weight",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "1f22598bd88d5a355a09",
+          "table": "dim_ScorecardBand",
+          "field": "BandLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "1f22598bd88d5a355a09",
+          "table": "dim_ScorecardBand",
+          "field": "CategoryName",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "1f22598bd88d5a355a09",
+          "table": "dim_ScorecardBand",
+          "field": "Score",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "9964a77831debaf0c3aa",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "02493f6ce206822a0a12",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "e6ad6ffebf3383e85f42",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "e6ad6ffebf3383e85f42",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "e6ad6ffebf3383e85f42",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "c1a02990e719ab98531e",
+          "table": "_Measures",
+          "field": "Projects Fully Mapped",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "38ae29e33f0cedc189f0",
+          "table": "_Measures",
+          "field": "Projects Missing From Sage",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "2c8c29c95811e002b3a6",
+          "table": "_Measures",
+          "field": "Projects Missing From Outbuild",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "3bf0c8f290b0a7a1ad33",
+          "table": "_Measures",
+          "field": "Source Coverage %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "767c94fffef23745efb7",
+          "table": "_Measures",
+          "field": "Projects In Coverage",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "767c94fffef23745efb7",
+          "table": "dim_ProjectCrosswalk",
+          "field": "CoverageStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "40388f6f6ef86d50e5fc",
+          "table": "dim_ProjectCrosswalk",
+          "field": "CoverageStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "40388f6f6ef86d50e5fc",
+          "table": "dim_ProjectCrosswalk",
+          "field": "OutbuildProjectId",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "40388f6f6ef86d50e5fc",
+          "table": "dim_ProjectCrosswalk",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "40388f6f6ef86d50e5fc",
+          "table": "dim_ProjectCrosswalk",
+          "field": "SageProjectId",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "eb83c351fbe4e88de650",
+          "table": "dim_VendorCrosswalk",
+          "field": "HasNameMismatch",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "eb83c351fbe4e88de650",
+          "table": "dim_VendorCrosswalk",
+          "field": "IsInSage",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "eb83c351fbe4e88de650",
+          "table": "dim_VendorCrosswalk",
+          "field": "VendorName",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "7ef184aa63a4da5d76bc",
+          "table": "dim_CostCodeCrosswalk",
+          "field": "CostCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "7ef184aa63a4da5d76bc",
+          "table": "dim_CostCodeCrosswalk",
+          "field": "DivisionCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "7ef184aa63a4da5d76bc",
+          "table": "dim_CostCodeCrosswalk",
+          "field": "HasUnparseableCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "3e676256724d4bafbc49",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "8f4f4035b368f3d73dd0",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "c5460fdd515b7b085429",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "c5460fdd515b7b085429",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "c5460fdd515b7b085429",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "63e79aa008935075ebe0",
+          "table": "_Measures",
+          "field": "Current Contract",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "9b911864980b785f4925",
+          "table": "_Measures",
+          "field": "Total Billed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "756a62a8fbbd0e3b5459",
+          "table": "_Measures",
+          "field": "Total Paid",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "0b73931fe558aaf2f6ea",
+          "table": "_Measures",
+          "field": "AR Outstanding",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "e92195efd9bf378f7d61",
+          "table": "_Measures",
+          "field": "Project Scorecard",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "88eab1ddd0e9013f693e",
+          "table": "_Measures",
+          "field": "Budget",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "88eab1ddd0e9013f693e",
+          "table": "_Measures",
+          "field": "Budget Variance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "88eab1ddd0e9013f693e",
+          "table": "_Measures",
+          "field": "Spent To Date",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "88eab1ddd0e9013f693e",
+          "table": "dim_CostCode",
+          "field": "CostCodeKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "88eab1ddd0e9013f693e",
+          "table": "dim_CostCode",
+          "field": "Division",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "5ad8b5fd2dbc6d73f362",
+          "table": "_Measures",
+          "field": "Approved Change Orders",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "5ad8b5fd2dbc6d73f362",
+          "table": "fct_ChangeOrder",
+          "field": "ChangeOrderNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "5ad8b5fd2dbc6d73f362",
+          "table": "fct_ChangeOrder",
+          "field": "StatusLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "2d7010b1add764f5d4bd",
+          "table": "fct_RfiSubmittal",
+          "field": "ItemNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "2d7010b1add764f5d4bd",
+          "table": "fct_RfiSubmittal",
+          "field": "ItemType",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "2d7010b1add764f5d4bd",
+          "table": "fct_RfiSubmittal",
+          "field": "StatusLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "2d7010b1add764f5d4bd",
+          "table": "fct_RfiSubmittal",
+          "field": "Subject",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "cc2e806e882ae74802db",
+          "table": "fct_Milestone",
+          "field": "CurrentFinish",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "cc2e806e882ae74802db",
+          "table": "fct_Milestone",
+          "field": "CurrentStart",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "cc2e806e882ae74802db",
+          "table": "fct_Milestone",
+          "field": "IsOverdue",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "cc2e806e882ae74802db",
+          "table": "fct_Milestone",
+          "field": "MilestoneName",
+          "kind": "Column"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "43cd2580cf1a2d570533",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "43cd2580cf1a2d570533",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "43cd2580cf1a2d570533",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "a5161949320a73786b79",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "6d12d1767bde2360258e",
+          "table": "_Measures",
+          "field": "Hours Since Last Checked Run",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "d24d93a058886ccacc36",
+          "table": "_Measures",
+          "field": "Last Checked Run",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "62519d94659a5cb1914a",
+          "table": "_Measures",
+          "field": "Blocking Violations Last Run",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "7bc9c29e9c1e0c723384",
+          "table": "_Measures",
+          "field": "DQ Projects Without Crosswalk",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "e9eedff30c6b12275bed",
+          "table": "_Measures",
+          "field": "DQ Cost Codes Not In Source",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "9ed265496e293118d2e8",
+          "table": "_Measures",
+          "field": "DQ Milestones With Inverted Dates",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "98041c2f926f979e79ec",
+          "table": "_Measures",
+          "field": "DQ Unmatched Invoices",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "0034aa3916e13faaff20",
+          "table": "_Measures",
+          "field": "Unmatched AR Amount - All Projects",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c8482ba1079573fb4beb",
+          "table": "dim_Project",
+          "field": "HasPrimeContract",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c8482ba1079573fb4beb",
+          "table": "dim_Project",
+          "field": "IsInCrosswalk",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c8482ba1079573fb4beb",
+          "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c8482ba1079573fb4beb",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "dcfa1170dfa1bdb543fb",
+          "table": "_Measures",
+          "field": "Total Billed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "dcfa1170dfa1bdb543fb",
+          "table": "fct_Invoice",
+          "field": "HasUnmatchedProject",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "dcfa1170dfa1bdb543fb",
+          "table": "fct_Invoice",
+          "field": "InvoiceID",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "dcfa1170dfa1bdb543fb",
+          "table": "fct_Invoice",
+          "field": "InvoiceNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "dcfa1170dfa1bdb543fb",
+          "table": "fct_Invoice",
+          "field": "SageJobNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "27655a06000ab8807279",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "caf14ec4d9cc64f2ccf9",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c64349e4a616a28b8516",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c64349e4a616a28b8516",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c64349e4a616a28b8516",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        }
+      ]
+    },
+    {
+      "model": "Project Quality Plan",
+      "report": "Project Quality Plan",
+      "pages": {
+        "qcportfolio": "Quality Portfolio",
+        "qcncr": "Observations",
+        "qcpunch": "Punch & Completion",
+        "qcsubmittals": "Submittals & Mock-Ups",
+        "qcinspections": "Procore Inspections",
+        "qcinspectionitems": "Inspection Items",
+        "qcgates": "Statutory Gates",
+        "qcchecklists": "Trade Checklists & DFOW",
+        "qcdq": "Data Quality"
+      },
+      "tables": [
+        "dim_Date",
+        "dim_Project",
+        "qc_seed_Trade",
+        "qc_seed_ChecklistItem",
+        "qc_seed_Gate",
+        "qc_seed_DohItem",
+        "dim_QcStatus",
+        "fct_QcNcr",
+        "fct_QcPunch",
+        "fct_QcSubmittal",
+        "fct_ProcoreInspection",
+        "fct_ProcoreInspectionItem",
+        "man_QcDfow",
+        "man_QcItp",
+        "man_QcGate",
+        "man_QcSpecialInspection",
+        "man_QcCommissioning",
+        "man_QcInspectorSignIn",
+        "man_QcChecklistResult",
+        "man_QcDohResult",
+        "meta_PipelineRun"
+      ],
+      "relationships": [
+        [
+          "fct_QcNcr",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_QcNcr",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_QcNcr",
+          "TradeKey",
+          "qc_seed_Trade",
+          "TradeKey"
+        ],
+        [
+          "fct_QcPunch",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_QcPunch",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_QcPunch",
+          "TradeKey",
+          "qc_seed_Trade",
+          "TradeKey"
+        ],
+        [
+          "fct_QcSubmittal",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_QcSubmittal",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_ProcoreInspection",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_ProcoreInspection",
+          "InspectionDate",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_ProcoreInspectionItem",
+          "InspectionLinkKey",
+          "fct_ProcoreInspection",
+          "InspectionLinkKey"
+        ],
+        [
+          "qc_seed_ChecklistItem",
+          "TradeKey",
+          "qc_seed_Trade",
+          "TradeKey"
+        ],
+        [
+          "man_QcDfow",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcDfow",
+          "TradeKey",
+          "qc_seed_Trade",
+          "TradeKey"
+        ],
+        [
+          "man_QcItp",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcItp",
+          "TradeKey",
+          "qc_seed_Trade",
+          "TradeKey"
+        ],
+        [
+          "man_QcGate",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcGate",
+          "GateKey",
+          "qc_seed_Gate",
+          "GateKey"
+        ],
+        [
+          "man_QcSpecialInspection",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcCommissioning",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcCommissioning",
+          "TradeKey",
+          "qc_seed_Trade",
+          "TradeKey"
+        ],
+        [
+          "man_QcInspectorSignIn",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcChecklistResult",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcChecklistResult",
+          "ItemKey",
+          "qc_seed_ChecklistItem",
+          "ItemKey"
+        ],
+        [
+          "man_QcDohResult",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "man_QcDohResult",
+          "ItemKey",
+          "qc_seed_DohItem",
+          "ItemKey"
+        ]
+      ],
+      "measures": [
+        {
+          "name": "Last Refresh",
+          "expression": "MAX('_Measures'[_built_at])",
+          "format": "\"yyyy-mm-dd hh:nn:ss\"",
+          "origin": "nothing - the workbook could not say when it was last true"
+        },
+        {
+          "name": "Report Month Label",
+          "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) )",
+          "format": "",
+          "origin": "the workbook used TODAY(), so a saved copy silently re-dated itself"
+        },
+        {
+          "name": "Last Checked Run",
+          "expression": "MAX ( meta_PipelineRun[RunAt] )",
+          "format": "\"yyyy-mm-dd hh:nn\"",
+          "origin": "no workbook equivalent - a spreadsheet cannot say when it was last correct"
+        },
+        {
+          "name": "Hours Since Last Checked Run",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+          "format": "\"#,0\"",
+          "origin": "derived"
+        },
+        {
+          "name": "Pipeline Status",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nVAR Built = [Last Refresh]\nVAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )\nVAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> \"ok\" || meta_PipelineRun[Blocking] > 0 ) )\nVAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )\nVAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )\nRETURN SWITCH ( TRUE (),\n    ISBLANK ( Last ), \"Unknown - no checked run\",\n    Built > Last, \"Unvalidated - data built after last check\",\n    Blocked > 0, \"BLOCKED - validation failed\",\n    Hrs < 0, \"Unknown - check timestamp is in the future\",\n    Hrs > 72, \"STALE - no checked run in over 72 hours\",\n    Hrs > 30, \"Late - no checked run in over 30 hours\",\n    Warnings > 0, \"Gold checked with warnings; source completeness unverified\",\n    \"Gold checks passed; source completeness unverified\" )",
+          "format": "",
+          "origin": "nothing - text not colour, so it survives greyscale and colour-blindness"
+        },
+        {
+          "name": "Projects With Quality Data",
+          "expression": "CALCULATE(DISTINCTCOUNT(fct_QcNcr[ProjectKey]), ALL(dim_Project))",
+          "format": "\"#,0\"",
+          "origin": "nothing - the workbook is one project per file"
+        },
+        {
+          "name": "Total Observations",
+          "expression": "COUNTROWS(fct_QcNcr)",
+          "format": "\"#,0\"",
+          "origin": "NCR Log!B4 (Total Raised)"
+        },
+        {
+          "name": "Open Observations",
+          "expression": "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "NCR Log!D4 (Open)"
+        },
+        {
+          "name": "Closed Observations",
+          "expression": "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsOpen] = FALSE())",
+          "format": "\"#,0\"",
+          "origin": "NCR Log!F4 (Closed)"
+        },
+        {
+          "name": "Observations Past Due",
+          "expression": "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[IsPastDue] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "NCR Log!H4 (Overdue)"
+        },
+        {
+          "name": "Avg Observation Closure Days",
+          "expression": "AVERAGEX(FILTER(fct_QcNcr, fct_QcNcr[IsOpen] = FALSE()), fct_QcNcr[DaysOpen])",
+          "format": "\"#,0.0\"",
+          "origin": "NCR Log!K4 (Avg Days to Close)"
+        },
+        {
+          "name": "Observation Closure Rate",
+          "expression": "DIVIDE([Closed Observations], [Total Observations])",
+          "format": "\"0.0%\"",
+          "origin": "NCR Log - not computed in the workbook"
+        },
+        {
+          "name": "Total Punch Items",
+          "expression": "COUNTROWS(fct_QcPunch)",
+          "format": "\"#,0\"",
+          "origin": "Punch & RCL Log!B4 (Total Items)"
+        },
+        {
+          "name": "Open Punch Items",
+          "expression": "CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[IsOpen] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "Punch & RCL Log!D4 (Open)"
+        },
+        {
+          "name": "Punch Items Aged Over 7 Days",
+          "expression": "CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[IsOpen] = TRUE(), fct_QcPunch[DaysOpen] > 7)",
+          "format": "\"#,0\"",
+          "origin": "Punch & RCL Log!L4 (Aged > 7 Days)"
+        },
+        {
+          "name": "Punch Closure Rate",
+          "expression": "DIVIDE(CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[IsOpen] = FALSE()), [Total Punch Items])",
+          "format": "\"0.0%\"",
+          "origin": "Punch & RCL Log!N4 (% Closed)"
+        },
+        {
+          "name": "Avg Days Punch Open",
+          "expression": "AVERAGEX(FILTER(fct_QcPunch, fct_QcPunch[IsOpen] = TRUE()), fct_QcPunch[DaysOpen])",
+          "format": "\"#,0.0\"",
+          "origin": "Punch & RCL Log!N column (Days Open)"
+        },
+        {
+          "name": "Total Submittals",
+          "expression": "COUNTROWS(fct_QcSubmittal)",
+          "format": "\"#,0\"",
+          "origin": "Submittals & Mockups!B4 (Total)"
+        },
+        {
+          "name": "Open Submittals",
+          "expression": "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsOpen] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "Submittals & Mockups!I4 (Outstanding)"
+        },
+        {
+          "name": "Overdue Submittals",
+          "expression": "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsOverdue] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "Submittals & Mockups - not computed in the workbook"
+        },
+        {
+          "name": "Avg Submittal Turnaround",
+          "expression": "AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])",
+          "format": "\"#,0.0\"",
+          "origin": "Submittals & Mockups - not computed in the workbook"
+        },
+        {
+          "name": "Possible Mock-Ups",
+          "expression": "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register."
+        },
+        {
+          "name": "Native Inspections",
+          "expression": "COUNTROWS(fct_ProcoreInspection)",
+          "format": "\"#,0\"",
+          "origin": "Retrieved native Procore inspection records; month filters use inspection date. Not a certification of scope or completion."
+        },
+        {
+          "name": "Native Inspection Items",
+          "expression": "COUNTROWS(fct_ProcoreInspectionItem)",
+          "format": "\"#,0\"",
+          "origin": "Retrieved native items linked through the project/inspection key; source responses are not reclassified."
+        },
+        {
+          "name": "Gates Defined",
+          "expression": "COUNTROWS(qc_seed_Gate)",
+          "format": "\"#,0\"",
+          "origin": "Path to TCO!E4 + Path to Fire Alarm + Statutory Inspections"
+        },
+        {
+          "name": "Gates Recorded",
+          "expression": "COUNTROWS(man_QcGate)",
+          "format": "\"#,0\"",
+          "origin": "Path to TCO!A9:A71"
+        },
+        {
+          "name": "Gates Complete",
+          "expression": "CALCULATE(COUNTROWS(man_QcGate), man_QcGate[StatusCode] = \"COMPLETE\")",
+          "format": "\"#,0\"",
+          "origin": "Path to TCO!G4 (Complete)"
+        },
+        {
+          "name": "Gate Template Completion",
+          "expression": "VAR Recorded = [Gates Recorded]\nVAR Completed = COALESCE([Gates Complete], 0)\nVAR Defined = [Gates Defined]\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined))",
+          "format": "\"0.0%\"",
+          "origin": "Recorded completion against the template for one project; applicability and readiness are not certified"
+        },
+        {
+          "name": "Checklist Items Defined",
+          "expression": "COUNTROWS(qc_seed_ChecklistItem)",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!D59 (TOTAL - ALL TRADE CHECKLISTS)"
+        },
+        {
+          "name": "Checklist Items Recorded",
+          "expression": "COUNTROWS(man_QcChecklistResult)",
+          "format": "\"#,0\"",
+          "origin": "the 26 trade checklist tabs, column G"
+        },
+        {
+          "name": "Checklist Items Passed",
+          "expression": "CALCULATE(COUNTROWS(man_QcChecklistResult), man_QcChecklistResult[ResultCode] = \"PASS\")",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!E59 (Pass)"
+        },
+        {
+          "name": "Checklist Items Failed",
+          "expression": "CALCULATE(COUNTROWS(man_QcChecklistResult), man_QcChecklistResult[ResultCode] = \"FAIL\")",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!F59 (Fail)"
+        },
+        {
+          "name": "Checklist Template Completion",
+          "expression": "VAR Recorded = [Checklist Items Recorded]\nVAR Completed = COALESCE([Checklist Items Passed], 0)\nVAR Defined = [Checklist Items Defined]\nRETURN IF(HASONEVALUE(dim_Project[ProjectKey]) && NOT ISBLANK(SELECTEDVALUE(dim_Project[ProjectKey])) && Recorded > 0 && Defined > 0 && Recorded <= Defined && Completed <= Recorded, DIVIDE(Completed, Defined))",
+          "format": "\"0.0%\"",
+          "origin": "Recorded passes against the template for one project; applicability and submission completeness are unverified"
+        },
+        {
+          "name": "DFOWs Registered",
+          "expression": "COUNTROWS(man_QcDfow)",
+          "format": "\"#,0\"",
+          "origin": "DFOW Risk Register!A5:A36"
+        },
+        {
+          "name": "Tier 3 And 4 DFOWs",
+          "expression": "CALCULATE(COUNTROWS(man_QcDfow), man_QcDfow[RiskTier] >= 3)",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!B29 (Tier 3 & 4 DFOWs)"
+        },
+        {
+          "name": "ITP Tests Defined",
+          "expression": "COUNTROWS(man_QcItp)",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!B10 (ITP total)"
+        },
+        {
+          "name": "ITP Tests Passed",
+          "expression": "CALCULATE(COUNTROWS(man_QcItp), man_QcItp[ResultCode] = \"PASS\")",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!C10 (ITP Pass)"
+        },
+        {
+          "name": "Special Inspections Logged",
+          "expression": "COUNTROWS(man_QcSpecialInspection)",
+          "format": "\"#,0\"",
+          "origin": "Special Inspections!B4 (Total Events)"
+        },
+        {
+          "name": "Inspector Visits Logged",
+          "expression": "COUNTROWS(man_QcInspectorSignIn)",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!B28 (Inspector sign-in entries)"
+        },
+        {
+          "name": "Systems Accepted",
+          "expression": "CALCULATE(COUNTROWS(man_QcCommissioning), man_QcCommissioning[StatusCode] = \"ACCEPTED\")",
+          "format": "\"#,0\"",
+          "origin": "DASHBOARD!C11 (Commissioning accepted)"
+        },
+        {
+          "name": "DOH Items Verified",
+          "expression": "CALCULATE(COUNTROWS(man_QcDohResult), man_QcDohResult[StatusCode] = \"VERIFIED\")",
+          "format": "\"#,0\"",
+          "origin": "DOH Checklist!D4 (Verified)"
+        },
+        {
+          "name": "DQ Observations With Unmapped Trade",
+          "expression": "CALCULATE(COUNTROWS(fct_QcNcr), fct_QcNcr[HasUnmappedTrade] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "nothing - Excel drops unmatched rows from a lookup silently"
+        },
+        {
+          "name": "DQ Punch With Unmapped Trade",
+          "expression": "CALCULATE(COUNTROWS(fct_QcPunch), fct_QcPunch[HasUnmappedTrade] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "nothing - Excel drops unmatched rows from a lookup silently"
+        },
+        {
+          "name": "DQ Registers Awaiting Input",
+          "expression": "VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty; completeness unverified\"",
+          "format": "",
+          "origin": "Observed row coverage in current filters; populated registers are not certified complete"
+        }
+      ],
+      "visual_bindings": [
+        {
+          "page": "Quality Portfolio",
+          "visual": "9b8aa856b2efa28d9ffc",
+          "table": "_Measures",
+          "field": "Open Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "87065a7a72eb0184f114",
+          "table": "_Measures",
+          "field": "Observations Past Due",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "2c624c1056ebcb85dc05",
+          "table": "_Measures",
+          "field": "Avg Observation Closure Days",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "d4a965c0843fccc66506",
+          "table": "_Measures",
+          "field": "Observation Closure Rate",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "d0f6a6b8454b3ad57bfc",
+          "table": "_Measures",
+          "field": "Open Punch Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "1db13055935f3a978de2",
+          "table": "_Measures",
+          "field": "Punch Items Aged Over 7 Days",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "2cefbd4e6fabd420c80e",
+          "table": "_Measures",
+          "field": "Open Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "8662982003b0d2b1c8b7",
+          "table": "_Measures",
+          "field": "Overdue Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "1e51157708fae5fa868d",
+          "table": "_Measures",
+          "field": "Open Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "1e51157708fae5fa868d",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "5945a1da4b60dde98a86",
+          "table": "_Measures",
+          "field": "Open Punch Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "5945a1da4b60dde98a86",
+          "table": "_Measures",
+          "field": "Open Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "5945a1da4b60dde98a86",
+          "table": "_Measures",
+          "field": "Total Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "5945a1da4b60dde98a86",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "bc915c2e0cb10907b14b",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "ee67f719df6172b63af1",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "dc5bb7949cd9489153b4",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "dc5bb7949cd9489153b4",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "dc5bb7949cd9489153b4",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "f374c8d95cfecef4840a",
+          "table": "_Measures",
+          "field": "Total Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "ca392f94458a96c49c8d",
+          "table": "_Measures",
+          "field": "Open Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "4a172dcbf01df0da157a",
+          "table": "_Measures",
+          "field": "Closed Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "4aa55fe47800544d8e12",
+          "table": "_Measures",
+          "field": "Observations Past Due",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "dc4f7f6517bb47ec5161",
+          "table": "_Measures",
+          "field": "Avg Observation Closure Days",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "023a7a65df43e3c2253c",
+          "table": "_Measures",
+          "field": "Open Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "023a7a65df43e3c2253c",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "03763ab3aed09fbf80b0",
+          "table": "fct_QcNcr",
+          "field": "DaysOpen",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "03763ab3aed09fbf80b0",
+          "table": "fct_QcNcr",
+          "field": "NcrNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "03763ab3aed09fbf80b0",
+          "table": "fct_QcNcr",
+          "field": "StatusCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "03763ab3aed09fbf80b0",
+          "table": "fct_QcNcr",
+          "field": "Title",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "3c5a724fa8adbc638630",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "2f1a1700d5f3f646e6c1",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "9be622f2648c875b4bdb",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "9be622f2648c875b4bdb",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Observations",
+          "visual": "9be622f2648c875b4bdb",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "a4ecdba4d986b7dea3ce",
+          "table": "_Measures",
+          "field": "Total Punch Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "294a7822eb8a204ff1a9",
+          "table": "_Measures",
+          "field": "Open Punch Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "8f7520a6313d0255f64a",
+          "table": "_Measures",
+          "field": "Punch Items Aged Over 7 Days",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "77ce5e75b07aa47786a7",
+          "table": "_Measures",
+          "field": "Punch Closure Rate",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "273d4d4d53f7aa788d8c",
+          "table": "_Measures",
+          "field": "Open Punch Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "273d4d4d53f7aa788d8c",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "7d4f8a3c807caba72b46",
+          "table": "fct_QcPunch",
+          "field": "DaysOpen",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "7d4f8a3c807caba72b46",
+          "table": "fct_QcPunch",
+          "field": "PunchNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "7d4f8a3c807caba72b46",
+          "table": "fct_QcPunch",
+          "field": "StatusCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "7d4f8a3c807caba72b46",
+          "table": "fct_QcPunch",
+          "field": "Title",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "6c5181b1e9f645f5d483",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "1d4e08cb1ccea0835357",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "2f14311b39f062b15047",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "2f14311b39f062b15047",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "2f14311b39f062b15047",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "2d38cc3b49aa5f838d61",
+          "table": "_Measures",
+          "field": "Total Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "9383d8f5fa468b3ca3a2",
+          "table": "_Measures",
+          "field": "Open Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "b08ce344790e54995969",
+          "table": "_Measures",
+          "field": "Overdue Submittals",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "cc593f24b2559940eee0",
+          "table": "_Measures",
+          "field": "Avg Submittal Turnaround",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "ee49efee9204836ab653",
+          "table": "_Measures",
+          "field": "Possible Mock-Ups",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "eb84e5eeebc5f40efdef",
+          "table": "fct_QcSubmittal",
+          "field": "StatusCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "eb84e5eeebc5f40efdef",
+          "table": "fct_QcSubmittal",
+          "field": "Subject",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "eb84e5eeebc5f40efdef",
+          "table": "fct_QcSubmittal",
+          "field": "SubmittalNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "eb84e5eeebc5f40efdef",
+          "table": "fct_QcSubmittal",
+          "field": "TurnaroundDays",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "18bc7e7d948d1b9748b2",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "1637784795bc133c71da",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "82481871c08810e36081",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "82481871c08810e36081",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "82481871c08810e36081",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "b5744a3309d9c2a4e539",
+          "table": "_Measures",
+          "field": "Native Inspections",
+          "kind": "Measure"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "ConformingItemCount",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "DeficientItemCount",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "DueDate",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "InspectionDate",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "InspectionKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "InspectionName",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "NotInspectedItemCount",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "SourceItemCount",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "SourceStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "9a39298fbaf354792ecc",
+          "table": "fct_ProcoreInspection",
+          "field": "SourceTemplateName",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "6e20b4a2d1c94c192ae9",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "fc6273d812fd27b47a4e",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "f850ce245302edc1347e",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "f850ce245302edc1347e",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "f850ce245302edc1347e",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "10882a826c0f267aff65",
+          "table": "_Measures",
+          "field": "Native Inspection Items",
+          "kind": "Measure"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "InspectionKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "ItemKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "ItemName",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "ResponseCategory",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "ResponseType",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "SourceResponse",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "7fa0cf43d7089f770319",
+          "table": "fct_ProcoreInspectionItem",
+          "field": "SourceStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "a0d12155bc049d20340d",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "959a9a24e570de124c4e",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "238d3dcf4ebab516b5e2",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "238d3dcf4ebab516b5e2",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "238d3dcf4ebab516b5e2",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "c4c7e74143caa91c6242",
+          "table": "_Measures",
+          "field": "Gates Defined",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "5c9b33ef001136004bde",
+          "table": "_Measures",
+          "field": "Gates Recorded",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "223d6809c3b5b76fab51",
+          "table": "_Measures",
+          "field": "Gates Complete",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "0f52d123e8883a1b57c4",
+          "table": "_Measures",
+          "field": "Gate Template Completion",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "40240db3186276be0b29",
+          "table": "_Measures",
+          "field": "Gates Defined",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "40240db3186276be0b29",
+          "table": "qc_seed_Gate",
+          "field": "GateType",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "707ffcb0fe11e4c709e0",
+          "table": "qc_seed_Gate",
+          "field": "Authority",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "707ffcb0fe11e4c709e0",
+          "table": "qc_seed_Gate",
+          "field": "Gate",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "707ffcb0fe11e4c709e0",
+          "table": "qc_seed_Gate",
+          "field": "GateType",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "707ffcb0fe11e4c709e0",
+          "table": "qc_seed_Gate",
+          "field": "Step",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "65cd1270699e0171f94e",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "629b71a4db8985666153",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "08a08509c36bcf6262a2",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "08a08509c36bcf6262a2",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "08a08509c36bcf6262a2",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "d743c42402a77cc76ae2",
+          "table": "_Measures",
+          "field": "Checklist Items Defined",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "0923ac7f2335cf6bae41",
+          "table": "_Measures",
+          "field": "Checklist Items Recorded",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "f6f84837fb78659d0878",
+          "table": "_Measures",
+          "field": "Checklist Items Passed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "86e8383201065dece9b5",
+          "table": "_Measures",
+          "field": "Checklist Items Failed",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "c3ebbe62a8ec04c4f466",
+          "table": "_Measures",
+          "field": "DFOWs Registered",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "6dccdf724ff6c898cbb1",
+          "table": "_Measures",
+          "field": "Tier 3 And 4 DFOWs",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "212130602baaff3c497e",
+          "table": "_Measures",
+          "field": "ITP Tests Defined",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "002a901404cf593abb47",
+          "table": "_Measures",
+          "field": "Special Inspections Logged",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "99aa1fa29e2e63ac3585",
+          "table": "_Measures",
+          "field": "Checklist Items Defined",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "99aa1fa29e2e63ac3585",
+          "table": "qc_seed_Trade",
+          "field": "TradeName",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "867282abeb9aa4d86e45",
+          "table": "qc_seed_Trade",
+          "field": "CsiCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "867282abeb9aa4d86e45",
+          "table": "qc_seed_Trade",
+          "field": "DfowRef",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "867282abeb9aa4d86e45",
+          "table": "qc_seed_Trade",
+          "field": "RiskTier",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "867282abeb9aa4d86e45",
+          "table": "qc_seed_Trade",
+          "field": "TradeName",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "a643baf091b4643edbdf",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "65eac640200dc3b42264",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "c990c87e440bc9c3eaac",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "c990c87e440bc9c3eaac",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "c990c87e440bc9c3eaac",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "1c86f510bb1d3e8e950f",
+          "table": "_Measures",
+          "field": "DQ Observations With Unmapped Trade",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "3dea3972a57d3cba4c67",
+          "table": "_Measures",
+          "field": "DQ Punch With Unmapped Trade",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "72201e8735dcd3a4fa64",
+          "table": "_Measures",
+          "field": "DQ Registers Awaiting Input",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "6afccfdde31f3ba424e8",
+          "table": "_Measures",
+          "field": "Gates Recorded",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "e34fa71fe90697dca00e",
+          "table": "_Measures",
+          "field": "Checklist Items Recorded",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "2e1bc87c70894b740c8e",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "c86eb94c812525928695",
+          "table": "_Measures",
+          "field": "Hours Since Last Checked Run",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "3e63b2517d6547b58479",
+          "table": "_Measures",
+          "field": "Last Checked Run",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "7d00844fa1253ffc2482",
+          "table": "_Measures",
+          "field": "Total Observations",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "7d00844fa1253ffc2482",
+          "table": "fct_QcNcr",
+          "field": "TradeLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "cd829b7519cc936517cc",
+          "table": "dim_Project",
+          "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "70ba7a6ecbe56e5d4157",
+          "table": "dim_Date",
+          "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "ed76fb0225f960c695b8",
+          "table": "_Measures",
+          "field": "Last Refresh",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "ed76fb0225f960c695b8",
+          "table": "_Measures",
+          "field": "Pipeline Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "ed76fb0225f960c695b8",
+          "table": "_Measures",
+          "field": "Report Month Label",
+          "kind": "Measure"
+        }
+      ]
+    }
+  ],
+  "sql_producers": {
+    "dim_Date": [
+      "02-transformation\\sql\\gold\\00_dim_date.sql"
+    ],
+    "dim_Owner": [
+      "02-transformation\\sql\\gold\\03_dim_owner.sql"
+    ],
+    "dim_ActivityCategory": [
+      "02-transformation\\sql\\gold\\04_dim_activitycategory.sql"
+    ],
+    "dim_ScorecardWeight": [
+      "02-transformation\\sql\\gold\\05_dim_scorecardweight.sql"
+    ],
+    "dim_ScorecardBand": [
+      "02-transformation\\sql\\gold\\06_dim_scorecardband.sql"
+    ],
+    "measures_anchor": [
+      "02-transformation\\sql\\gold\\07_measures_anchor.sql"
+    ],
+    "qc_seed_Trade": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "qc_seed_TradeAlias": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "qc_seed_ChecklistItem": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "qc_seed_Gate": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "qc_seed_DohItem": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "dim_QcStatus": [
+      "02-transformation\\sql\\gold\\08_qc_seeds.sql"
+    ],
+    "dim_Project": [
+      "02-transformation\\sql\\gold\\10_dim_project.sql"
+    ],
+    "dim_Vendor": [
+      "02-transformation\\sql\\gold\\11_dim_vendor.sql"
+    ],
+    "dim_CostCode": [
+      "02-transformation\\sql\\gold\\12_dim_costcode.sql"
+    ],
+    "dim_Job": [
+      "02-transformation\\sql\\gold\\13_dim_job.sql"
+    ],
+    "dim_ProjectCrosswalk": [
+      "02-transformation\\sql\\gold\\15_dim_projectcrosswalk.sql"
+    ],
+    "dim_VendorCrosswalk": [
+      "02-transformation\\sql\\gold\\16_dim_vendorcrosswalk.sql"
+    ],
+    "dim_CostCodeCrosswalk": [
+      "02-transformation\\sql\\gold\\17_dim_costcodecrosswalk.sql"
+    ],
+    "fct_BudgetLine": [
+      "02-transformation\\sql\\gold\\20_fct_budgetline.sql"
+    ],
+    "fct_ChangeOrder": [
+      "02-transformation\\sql\\gold\\21_fct_changeorder.sql"
+    ],
+    "fct_Invoice": [
+      "02-transformation\\sql\\gold\\22_fct_invoice.sql"
+    ],
+    "fct_RfiSubmittal": [
+      "02-transformation\\sql\\gold\\23_fct_rfisubmittal.sql"
+    ],
+    "fct_Milestone": [
+      "02-transformation\\sql\\gold\\24_fct_milestone.sql"
+    ],
+    "fct_QualityItem": [
+      "02-transformation\\sql\\gold\\25_fct_qualityitem.sql"
+    ],
+    "fct_SafetyMonthly": [
+      "02-transformation\\sql\\gold\\26_fct_safetymonthly.sql"
+    ],
+    "fct_Billing": [
+      "02-transformation\\sql\\gold\\27_fct_billing.sql"
+    ],
+    "fct_DirectCost": [
+      "02-transformation\\sql\\gold\\28_fct_directcost.sql"
+    ],
+    "bridge_ProjectVendor": [
+      "02-transformation\\sql\\gold\\29_bridge_projectvendor.sql"
+    ],
+    "fct_FinancialPeriod": [
+      "02-transformation\\sql\\gold\\30_fct_financialperiod.sql"
+    ],
+    "bridge_VendorCostCode": [
+      "02-transformation\\sql\\gold\\31_bridge_vendorcostcode.sql"
+    ],
+    "fct_VendorInsurance": [
+      "02-transformation\\sql\\gold\\32_fct_vendorinsurance.sql"
+    ],
+    "fct_QcNcr": [
+      "02-transformation\\sql\\gold\\33_fct_qc.sql"
+    ],
+    "fct_QcPunch": [
+      "02-transformation\\sql\\gold\\33_fct_qc.sql"
+    ],
+    "fct_QcSubmittal": [
+      "02-transformation\\sql\\gold\\33_fct_qc.sql"
+    ],
+    "fct_ProcoreInspection": [
+      "02-transformation\\sql\\gold\\33_fct_qc.sql"
+    ],
+    "fct_ProcoreInspectionItem": [
+      "02-transformation\\sql\\gold\\33_fct_qc.sql"
+    ],
+    "man_Wins": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_Risks": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_PriorityItems": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_Flags": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_Survey": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_SafetyMonthly": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_QualityMonthly": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_Milestones": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_DailyLogCompliance": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "AS": [
+      "02-transformation\\sql\\gold\\40_man_tables.sql"
+    ],
+    "man_QcDfow": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcItp": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcGate": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcSpecialInspection": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcCommissioning": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcInspectorSignIn": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcChecklistResult": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "man_QcDohResult": [
+      "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "sv_projects": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_vendors": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_cost_codes": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_budgets": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_prime_change_orders": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_prime_contracts": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_ar_invoices": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_submittals": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_outbuild_activities": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_rfis": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_project_crosswalk": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_outbuild_projects": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_sage_vendors": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_observations": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_punch_items": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_incidents": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_manpower_daily": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_billing": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_direct_costs": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_project_vendors": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_direct_cost_lines": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_vendor_insurance": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_commitments": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_commitment_lines": [
+      "02-transformation\\sql\\silver\\00_source_views.sql",
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_ap_invoices": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_ap_lines": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_ar_lines": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_sage_jobs": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_wins": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_risks": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_priority_items": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_flags": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_survey": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_safety_monthly": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_quality_monthly": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_milestones": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_daily_log_compliance": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_qc_ncr": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_qc_punch": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_qc_submittal": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_qc_inspection": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_qc_inspection_item": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_dfow": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_itp": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_gate": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_special_inspection": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_commissioning": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_inspector_sign_in": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_checklist_result": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_qc_doh_result": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_man_job_register": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "cd_silver_projects": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_vendors": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_cost_codes": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_prime_contracts": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_prime_change_orders": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_budgets": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_submittals": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_rfis": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_dq_rejects": [
+      "02-transformation\\sql\\silver\\10_procore_silver.sql"
+    ],
+    "cd_silver_observations": [
+      "02-transformation\\sql\\silver\\20_fieldops_silver.sql"
+    ],
+    "cd_silver_punch_items": [
+      "02-transformation\\sql\\silver\\20_fieldops_silver.sql"
+    ],
+    "cd_silver_incidents": [
+      "02-transformation\\sql\\silver\\20_fieldops_silver.sql"
+    ],
+    "cd_silver_manpower_daily": [
+      "02-transformation\\sql\\silver\\20_fieldops_silver.sql"
+    ],
+    "cd_silver_billing": [
+      "02-transformation\\sql\\silver\\21_financial_silver.sql"
+    ],
+    "cd_silver_direct_costs": [
+      "02-transformation\\sql\\silver\\21_financial_silver.sql"
+    ],
+    "cd_silver_project_vendors": [
+      "02-transformation\\sql\\silver\\21_financial_silver.sql"
+    ],
+    "cd_silver_direct_cost_lines": [
+      "02-transformation\\sql\\silver\\22_vendor_costcode_silver.sql"
+    ],
+    "cd_silver_vendor_insurance": [
+      "02-transformation\\sql\\silver\\22_vendor_costcode_silver.sql"
+    ],
+    "cd_silver_commitments": [
+      "02-transformation\\sql\\silver\\23_commitment_silver.sql"
+    ],
+    "cd_silver_commitment_lines": [
+      "02-transformation\\sql\\silver\\23_commitment_silver.sql"
+    ],
+    "cd_silver_qc_ncr": [
+      "02-transformation\\sql\\silver\\24_qc_procore_silver.sql"
+    ],
+    "cd_silver_qc_punch": [
+      "02-transformation\\sql\\silver\\24_qc_procore_silver.sql"
+    ],
+    "cd_silver_qc_submittal": [
+      "02-transformation\\sql\\silver\\24_qc_procore_silver.sql"
+    ],
+    "cd_silver_qc_inspection": [
+      "02-transformation\\sql\\silver\\24_qc_procore_silver.sql"
+    ],
+    "cd_silver_qc_inspection_item": [
+      "02-transformation\\sql\\silver\\24_qc_procore_silver.sql"
+    ],
+    "cd_silver_outbuild_activities": [
+      "02-transformation\\sql\\silver\\25_outbuild_silver.sql"
+    ],
+    "cd_silver_sage_jobs": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
+    "cd_silver_sage_ar_invoices": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
+    "cd_silver_sage_ar_lines": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
+    "cd_silver_sage_ap_invoices": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
+    "cd_silver_sage_ap_lines": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
+    "mv_valid_projects": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_wins": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_risks": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_priority_items": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_flags": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_survey": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_safety_monthly": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_quality_monthly": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_milestones": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_daily_log_compliance": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_silver_man_job_register": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "cd_dq_rejects_manual": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "qcv_valid_projects": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_dfow": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_itp": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_gate": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_special_inspection": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_commissioning": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_inspector_sign_in": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_checklist_result": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_silver_man_qc_doh_result": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "cd_dq_rejects_qc": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ]
+  }
+}

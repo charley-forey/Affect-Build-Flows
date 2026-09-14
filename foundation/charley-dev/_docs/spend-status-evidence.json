@@ -1,0 +1,20 @@
+{
+  "captured_at": "2026-09-10T08:54:00.332936+00:00",
+  "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+  "scope": "Read-only evaluation of revised expression with synthetic variance inputs; not deployed",
+  "checks": {
+    "query": "EVALUATE ROW(\"unknown\",VAR V = BLANK()\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" ),\"zero_budget_gap\",VAR V = 0\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" ),\"under_budget\",VAR V = 0.5\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" ),\"small_overrun\",VAR V = -0.03\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" ),\"boundary\",VAR V = -0.05\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" ),\"larger_overrun\",VAR V = -0.0501\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" ))",
+    "result": [
+      {
+        "[unknown]": null,
+        "[zero_budget_gap]": "Spend within budget",
+        "[under_budget]": "Spend within budget",
+        "[small_overrun]": "Spend over budget up to 5%",
+        "[boundary]": "Spend over budget up to 5%",
+        "[larger_overrun]": "Spend over budget above 5%"
+      }
+    ],
+    "scenarios": 6,
+    "passed": true
+  }
+}

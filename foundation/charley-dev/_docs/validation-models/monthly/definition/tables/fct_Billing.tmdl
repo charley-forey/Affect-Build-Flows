@@ -1,0 +1,173 @@
+table fct_Billing
+
+	column BillingKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BillingKey
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column BillingType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BillingType
+
+	column ContractId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ContractId
+
+	column ContractName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ContractName
+
+	column ContractType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ContractType
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column CounterpartyName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CounterpartyName
+
+	column InvoiceNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceNumber
+
+	column PeriodNumber
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: PeriodNumber
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column BillingDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BillingDate
+		formatString: yyyy-mm-dd
+
+	column PeriodStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PeriodStart
+		formatString: yyyy-mm-dd
+
+	column PeriodEnd
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PeriodEnd
+		formatString: yyyy-mm-dd
+
+	column PaymentDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PaymentDate
+		formatString: yyyy-mm-dd
+
+	column PercentComplete
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PercentComplete
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HasOutOfRangeDate
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasOutOfRangeDate
+
+	column CurrentPaymentDue
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CurrentPaymentDue
+
+	column OriginalContractSum
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: OriginalContractSum
+
+	column NetChangeByChangeOrders
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: NetChangeByChangeOrders
+
+	column ContractSumToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ContractSumToDate
+
+	column CompletedToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CompletedToDate
+
+	column PreviousCertificatesToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PreviousCertificatesToDate
+
+	column RetainageHeld
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: RetainageHeld
+
+	column TotalRetainageHeld
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: TotalRetainageHeld
+
+	column StoredRetainageHeld
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: StoredRetainageHeld
+
+	column EarnedLessRetainageToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: EarnedLessRetainageToDate
+
+	column BalanceToFinish
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BalanceToFinish
+
+	column RetainagePercent
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: RetainagePercent
+
+	column IsLatestPeriod
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsLatestPeriod
+
+	column IsRetainageReleased
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsRetainageReleased
+
+	partition fct_Billing = entity
+		mode: directLake
+		source
+			entityName: fct_billing
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

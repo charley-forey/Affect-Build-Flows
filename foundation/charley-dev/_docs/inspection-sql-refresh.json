@@ -1,0 +1,27 @@
+{
+  "endpoint_id": "ceaf23be-a574-41f2-9025-b789a940bdc1",
+  "request": {
+    "tables": [
+      {
+        "schema": "dbo",
+        "tableNames": [
+          "cd_silver_qc_inspection"
+        ]
+      }
+    ],
+    "recreateTables": false
+  },
+  "status": 200,
+  "result": {
+    "value": [
+      {
+        "tableName": "dbo.cd_silver_qc_inspection",
+        "status": "NotRun",
+        "startDateTime": "2026-09-10T10:36:54.4602115Z",
+        "endDateTime": "2026-09-10T10:36:54.5384497Z",
+        "lastSuccessfulSyncDateTime": "2026-09-10T10:35:46.6555688Z"
+      }
+    ]
+  },
+  "location": null
+}

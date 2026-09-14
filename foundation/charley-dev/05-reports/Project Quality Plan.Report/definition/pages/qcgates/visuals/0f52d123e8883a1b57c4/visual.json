@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Gate Readiness"
+                  "Property": "Gate Template Completion"
                 }
               },
-              "queryRef": "_Measures.Gate Readiness",
-              "nativeQueryRef": "Gate Readiness"
+              "queryRef": "_Measures.Gate Template Completion",
+              "nativeQueryRef": "Gate Template Completion"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Gate Readiness. Shows Gate Readiness for the current selection.'"
+                  "Value": "'Card. Gate Template Completion. Shows Gate Template Completion for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Gate Readiness'"
+                  "Value": "'Gate Template Completion'"
                 }
               }
             },

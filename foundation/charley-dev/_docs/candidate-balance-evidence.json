@@ -1,0 +1,25 @@
+{
+  "model_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+  "source_run_id": "78ea309feb6047cabfc7cf58f7521997",
+  "captured_at": "2026-09-10T08:34:01.133958+00:00",
+  "scope": "Semantic balances compared to fact aggregations; not an upstream source completeness proof",
+  "query": "EVALUATE ROW(\n    \"Owner\", [Retainage Held Owner],\n    \"ExpectedOwner\", SUMX(FILTER(fct_Billing,\n        fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = \"Owner\"), fct_Billing[RetainageHeld]),\n    \"Sub\", [Retainage Held Sub],\n    \"ExpectedSub\", SUMX(FILTER(fct_Billing,\n        fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = \"Subcontractor\"), fct_Billing[RetainageHeld]),\n    \"Net\", [Net Retainage Position],\n    \"ExpectedNet\", [Retainage Held Owner] - [Retainage Held Sub],\n    \"Contract\", [Current Contract],\n    \"ExpectedContract\", SUMX(VALUES(fct_FinancialPeriod[ProjectKey]),\n        VAR LastMonth = CALCULATE(MAX(fct_FinancialPeriod[MonthStart]),\n            NOT ISBLANK(fct_FinancialPeriod[CurrentContract]))\n        RETURN CALCULATE(SUM(fct_FinancialPeriod[CurrentContract]),\n            fct_FinancialPeriod[MonthStart] = LastMonth))\n)",
+  "rows": [
+    {
+      "[Owner]": 889664.45,
+      "[ExpectedOwner]": 889664.45,
+      "[Sub]": 404444.69999999995,
+      "[ExpectedSub]": 404444.69999999995,
+      "[Net]": 485219.75,
+      "[ExpectedNet]": 485219.75,
+      "[Contract]": 35451887.39,
+      "[ExpectedContract]": 35451887.39
+    }
+  ],
+  "checks": [
+    "Owner balance agrees with its fact aggregation within one cent",
+    "Sub balance agrees with its fact aggregation within one cent",
+    "Net balance agrees with its fact aggregation within one cent",
+    "Contract balance agrees with its fact aggregation within one cent"
+  ]
+}

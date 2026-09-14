@@ -158,3 +158,36 @@ SELECT
          THEN TRUE ELSE FALSE END       AS IsOverdue
 FROM sv_qc_submittal
 WHERE project_id IS NOT NULL;
+
+-- Native inspections retain their own identity; no equivalence to manual templates is assumed.
+CREATE OR REPLACE TABLE fct_ProcoreInspection AS
+SELECT project_id AS ProjectKey,
+       inspection_id AS InspectionKey,
+       CONCAT(CAST(LENGTH(project_id) AS STRING), ':', project_id, inspection_id) AS InspectionLinkKey,
+       inspection_number AS InspectionNumber,
+       name AS InspectionName,
+       template_id AS SourceTemplateId,
+       template_name AS SourceTemplateName,
+       trade AS SourceTrade,
+       inspector_name AS LegacyInspectorName,
+       inspectors_json AS InspectorsJson,
+       source_status AS SourceStatus,
+       inspection_date AS InspectionDate,
+       due_date AS DueDate,
+       item_count AS SourceItemCount,
+       conforming_item_count AS ConformingItemCount,
+       deficient_item_count AS DeficientItemCount,
+       not_inspected_item_count AS NotInspectedItemCount,
+       na_item_count AS NotApplicableItemCount,
+       neutral_item_count AS NeutralItemCount,
+       percent_complete AS SourcePercentComplete
+FROM sv_qc_inspection;
+
+CREATE OR REPLACE TABLE fct_ProcoreInspectionItem AS
+SELECT project_id AS ProjectKey, item_id AS ItemKey, inspection_id AS InspectionKey,
+       CONCAT(CAST(LENGTH(project_id) AS STRING), ':', project_id, inspection_id) AS InspectionLinkKey,
+       section_id AS SourceSectionId, name AS ItemName, source_status AS SourceStatus,
+       source_response AS SourceResponse, response_category AS ResponseCategory,
+       response_type AS ResponseType, response_json AS ResponseJson,
+       item_response_json AS ItemResponseJson
+FROM sv_qc_inspection_item;

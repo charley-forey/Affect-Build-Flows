@@ -1,0 +1,2298 @@
+{
+  "value": [
+    {
+      "sparkApplicationId": "application_1789027667621_0001",
+      "state": "InProgress",
+      "livyId": "3db6138c-ec0b-41e3-928e-9da5f4ec0d0f",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_3db6138c-ec0b-41e3-928e-9da5f4ec0d0f",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-10T08:11:51Z",
+      "startDateTime": "2026-09-10T08:07:56Z",
+      "endDateTime": "0001-01-01T00:00:00Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 917,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 917,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "f310bd55-4b1f-4418-b3d5-b3153fe22978",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1789021421326_0001",
+      "state": "Failed",
+      "livyId": "351acffa-5082-4bec-9218-340d16516858",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_351acffa-5082-4bec-9218-340d16516858",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-10T06:26:52Z",
+      "startDateTime": "2026-09-10T06:23:52Z",
+      "endDateTime": "2026-09-10T06:27:28Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 36,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 36,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "ee44157a-50d3-4544-9ae3-9c36d1bb60ac",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1789020362305_0001",
+      "state": "Failed",
+      "livyId": "8bd4a9d9-13b4-43a0-a3da-30e6cf5bf920",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_8bd4a9d9-13b4-43a0-a3da-30e6cf5bf920",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-10T06:10:30Z",
+      "startDateTime": "2026-09-10T06:06:18Z",
+      "endDateTime": "2026-09-10T06:25:44Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 914,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 914,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "5dbfd2bd-58bd-4343-817a-b2fb5d7e366a",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788934905482_0001",
+      "state": "Failed",
+      "livyId": "603e5882-4a23-44d2-bf61-3f91eb2c37f1",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_603e5882-4a23-44d2-bf61-3f91eb2c37f1",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-09T06:25:28Z",
+      "startDateTime": "2026-09-09T06:21:55Z",
+      "endDateTime": "2026-09-09T06:26:25Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 56,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 56,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "a7d362e0-2fea-42ff-8b66-f0ed41b4b523",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788933365003_0001",
+      "state": "Failed",
+      "livyId": "20a02b17-ac05-450a-95e9-8d2c72fb81b9",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_20a02b17-ac05-450a-95e9-8d2c72fb81b9",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-09T06:01:02Z",
+      "startDateTime": "2026-09-09T05:56:15Z",
+      "endDateTime": "2026-09-09T06:17:06Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 964,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 964,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "a3eb8dc3-7000-4c35-bc8b-e463cba07f32",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788848594879_0001",
+      "state": "Failed",
+      "livyId": "e01bd4a3-c92a-4a23-9bc5-ab6bb1a8ca05",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_e01bd4a3-c92a-4a23-9bc5-ab6bb1a8ca05",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-08T06:26:53Z",
+      "startDateTime": "2026-09-08T06:23:27Z",
+      "endDateTime": "2026-09-08T06:27:25Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 32,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 32,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "1dabd0cd-e3f9-45ce-898c-aae527931911",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788847643445_0001",
+      "state": "Failed",
+      "livyId": "ba3803b7-f54f-456d-bf95-8c6c38579c80",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_ba3803b7-f54f-456d-bf95-8c6c38579c80",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-08T06:11:25Z",
+      "startDateTime": "2026-09-08T06:07:30Z",
+      "endDateTime": "2026-09-08T06:25:32Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 846,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 846,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "c9f7bffe-b7cc-49dc-bb45-415a18a991c3",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788762003634_0001",
+      "state": "Failed",
+      "livyId": "3cf6669c-504d-4ed3-b343-73eebd1d358b",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_3cf6669c-504d-4ed3-b343-73eebd1d358b",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-07T06:26:13Z",
+      "startDateTime": "2026-09-07T06:20:09Z",
+      "endDateTime": "2026-09-07T06:27:27Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 74,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 74,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "b885437b-1834-40ef-b917-5d80f080fcbb",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788760477448_0001",
+      "state": "Failed",
+      "livyId": "cff24b5c-787b-4104-ace7-3a3aea49fd8e",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_cff24b5c-787b-4104-ace7-3a3aea49fd8e",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-07T06:00:45Z",
+      "startDateTime": "2026-09-07T05:54:50Z",
+      "endDateTime": "2026-09-07T06:16:09Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 923,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 923,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "5f0dd80a-8067-4e28-9eec-8ca66cd03a70",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788675672884_0001",
+      "state": "Failed",
+      "livyId": "9d0fc3c0-4f94-411c-b07a-e35243269d44",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_9d0fc3c0-4f94-411c-b07a-e35243269d44",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-06T06:26:52Z",
+      "startDateTime": "2026-09-06T06:21:18Z",
+      "endDateTime": "2026-09-06T06:27:26Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 34,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 34,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "099bbd82-669e-4b14-ba18-60356f93f782",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788674690437_0001",
+      "state": "Failed",
+      "livyId": "e76029c6-e159-4b4c-96ff-c469c8786201",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_e76029c6-e159-4b4c-96ff-c469c8786201",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-06T06:10:30Z",
+      "startDateTime": "2026-09-06T06:04:55Z",
+      "endDateTime": "2026-09-06T06:25:26Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 895,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 895,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "bbf13280-3caa-4c3c-bfb0-f79146c18e37",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788589337653_0001",
+      "state": "Failed",
+      "livyId": "706f1fc2-3e3f-485d-825a-f68031556c7a",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_706f1fc2-3e3f-485d-825a-f68031556c7a",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-05T06:26:50Z",
+      "startDateTime": "2026-09-05T06:22:28Z",
+      "endDateTime": "2026-09-05T06:27:30Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 40,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 40,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "2109935f-63e2-45b8-8fb5-02c9b8a295e0",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788588359284_0001",
+      "state": "Failed",
+      "livyId": "179a49e6-eba1-4751-bab6-18cffe62c8b2",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_179a49e6-eba1-4751-bab6-18cffe62c8b2",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-05T06:11:21Z",
+      "startDateTime": "2026-09-05T06:06:12Z",
+      "endDateTime": "2026-09-05T06:25:37Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 856,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 856,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "b089ed72-4bd7-4671-874d-e7cbf315960a",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788502903627_0001",
+      "state": "Failed",
+      "livyId": "d755b34e-c965-4264-8aa0-41daeb200918",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_d755b34e-c965-4264-8aa0-41daeb200918",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-04T06:26:19Z",
+      "startDateTime": "2026-09-04T06:21:51Z",
+      "endDateTime": "2026-09-04T06:27:04Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 45,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 45,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "80b5aa11-e042-47e3-afb8-5f599e88c693",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788501812409_0001",
+      "state": "Failed",
+      "livyId": "407ccefd-f5aa-4233-9dcf-3d1941046576",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_407ccefd-f5aa-4233-9dcf-3d1941046576",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-04T06:07:24Z",
+      "startDateTime": "2026-09-04T06:03:40Z",
+      "endDateTime": "2026-09-04T06:21:43Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 858,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 858,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "5fd34ff4-9b02-45c8-acfd-6edc37350ce3",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788416675205_0001",
+      "state": "Failed",
+      "livyId": "6239f743-0838-4992-9120-7d23859b3d6f",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_6239f743-0838-4992-9120-7d23859b3d6f",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-03T06:27:52Z",
+      "startDateTime": "2026-09-03T06:24:45Z",
+      "endDateTime": "2026-09-03T06:28:24Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 32,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 32,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "98086100-f648-44e1-98b7-d07ca6d6695c",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788415585548_0001",
+      "state": "Failed",
+      "livyId": "f805d286-fbff-4d46-bd12-c8f36ef8fec4",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_f805d286-fbff-4d46-bd12-c8f36ef8fec4",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-03T06:11:14Z",
+      "startDateTime": "2026-09-03T06:06:34Z",
+      "endDateTime": "2026-09-03T06:26:47Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 932,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 932,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "cd4782af-5d48-4756-ad84-21b641b5b30f",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788329890940_0001",
+      "state": "Failed",
+      "livyId": "97d5aff8-11db-4c79-9813-4cf45c369982",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_97d5aff8-11db-4c79-9813-4cf45c369982",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-02T06:21:41Z",
+      "startDateTime": "2026-09-02T06:18:18Z",
+      "endDateTime": "2026-09-02T06:22:25Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 43,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 43,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "b22dcf60-11eb-458a-a8df-e854fa283c92",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788328880394_0001",
+      "state": "Failed",
+      "livyId": "4d48410a-0fdf-4e68-b556-578b1bf4c452",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_4d48410a-0fdf-4e68-b556-578b1bf4c452",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-02T06:03:47Z",
+      "startDateTime": "2026-09-02T06:01:35Z",
+      "endDateTime": "2026-09-02T06:18:10Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 862,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 862,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "96aeab22-1a19-4a7d-85e3-520101b0e091",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788243865894_0001",
+      "state": "Failed",
+      "livyId": "7b0f2e56-6f55-4bcc-8d80-9870df9fb96b",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_7b0f2e56-6f55-4bcc-8d80-9870df9fb96b",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-01T06:27:55Z",
+      "startDateTime": "2026-09-01T06:24:34Z",
+      "endDateTime": "2026-09-01T06:29:25Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 90,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 90,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "955b16cc-d83e-4719-86a3-e5a83b4033d4",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788242430086_0001",
+      "state": "Failed",
+      "livyId": "889133d4-957a-456e-a06a-0fc18d31da77",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_889133d4-957a-456e-a06a-0fc18d31da77",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-09-01T06:03:42Z",
+      "startDateTime": "2026-09-01T06:00:40Z",
+      "endDateTime": "2026-09-01T06:19:12Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 930,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 930,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "8fb9f17c-75c2-4741-ada7-e0d0c9b1d3a0",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788157154045_0001",
+      "state": "Failed",
+      "livyId": "44982325-d12d-429f-9330-1efd5238c871",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_44982325-d12d-429f-9330-1efd5238c871",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-31T06:22:29Z",
+      "startDateTime": "2026-08-31T06:19:34Z",
+      "endDateTime": "2026-08-31T06:23:21Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 51,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 51,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "d33da32c-1d4b-4c8b-aa80-0004fb79d9a7",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788155646141_0001",
+      "state": "Failed",
+      "livyId": "ae8fa027-c5d9-4601-af8d-4b1fb72a04c2",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_ae8fa027-c5d9-4601-af8d-4b1fb72a04c2",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-31T06:00:38Z",
+      "startDateTime": "2026-08-31T05:54:14Z",
+      "endDateTime": "2026-08-31T06:14:14Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 815,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 815,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "f7f92b70-3d04-4ba7-8e42-f07a86656f80",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788070842154_0001",
+      "state": "Failed",
+      "livyId": "8a74e864-3042-4b31-bfcb-b41f41c2e620",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_8a74e864-3042-4b31-bfcb-b41f41c2e620",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-30T06:25:23Z",
+      "startDateTime": "2026-08-30T06:20:51Z",
+      "endDateTime": "2026-08-30T06:26:20Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 56,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 56,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "e28e0116-3af2-427d-9b89-fdf93adeacfc",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1788069744689_0001",
+      "state": "Failed",
+      "livyId": "42c9ed6b-d409-4c71-9663-b52108bbaff8",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_42c9ed6b-d409-4c71-9663-b52108bbaff8",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-30T06:06:39Z",
+      "startDateTime": "2026-08-30T06:02:31Z",
+      "endDateTime": "2026-08-30T06:21:54Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 914,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 914,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "335580a5-df75-487f-8d52-c402f8399906",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787984648552_0001",
+      "state": "Failed",
+      "livyId": "f5440bd0-7c90-4c7c-8134-d4af10e8338a",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_f5440bd0-7c90-4c7c-8134-d4af10e8338a",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-29T06:30:03Z",
+      "startDateTime": "2026-08-29T06:24:19Z",
+      "endDateTime": "2026-08-29T06:31:22Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 78,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 78,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "a7058661-46d2-43f6-aa16-255d416e51f2",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787983328730_0001",
+      "state": "Failed",
+      "livyId": "a96f446f-c48f-475e-898a-5cf80f8e7fcf",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_a96f446f-c48f-475e-898a-5cf80f8e7fcf",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-29T06:06:28Z",
+      "startDateTime": "2026-08-29T06:02:23Z",
+      "endDateTime": "2026-08-29T06:21:10Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 882,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 882,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "499f8432-7e82-4b2c-9928-c9fa9ef8b9e0",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787896872128_0001",
+      "state": "Succeeded",
+      "livyId": "78cac552-d453-44f7-85f9-0d7c64696bbc",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_78cac552-d453-44f7-85f9-0d7c64696bbc",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-28T06:03:56Z",
+      "startDateTime": "2026-08-28T06:01:26Z",
+      "endDateTime": "2026-08-28T06:21:47Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 1070,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 1070,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "949590d3-bf57-472b-af97-325f39862c79",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787810533731_0001",
+      "state": "Succeeded",
+      "livyId": "00929feb-da8f-4423-85d7-05f409a43e35",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_00929feb-da8f-4423-85d7-05f409a43e35",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-27T06:03:46Z",
+      "startDateTime": "2026-08-27T06:02:12Z",
+      "endDateTime": "2026-08-27T06:21:06Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 1040,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 1040,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "f26cc42c-1a80-4d6b-8871-c1328745350c",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787723744703_0001",
+      "state": "Succeeded",
+      "livyId": "d54086d6-0487-44fa-b5de-4e15c19c7cd6",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_d54086d6-0487-44fa-b5de-4e15c19c7cd6",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-26T06:00:41Z",
+      "startDateTime": "2026-08-26T05:55:55Z",
+      "endDateTime": "2026-08-26T06:19:53Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 1152,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 1152,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "68136d53-1f4f-4cd9-9608-0cbaeddbf0e3",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787656387510_0001",
+      "state": "Succeeded",
+      "livyId": "2767224d-8e9b-43cd-b6cb-8291a9f5b3b8",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_2767224d-8e9b-43cd-b6cb-8291a9f5b3b8",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T11:17:01Z",
+      "startDateTime": "2026-08-25T11:13:17Z",
+      "endDateTime": "2026-08-25T11:33:55Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 1013,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 1013,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "b1a16a7a-9a8d-41f9-9ce1-45cdf9eb837c",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787653902456_0001",
+      "state": "Succeeded",
+      "livyId": "4ed7ec16-2203-4bb6-a57e-09edc508cd95",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_4ed7ec16-2203-4bb6-a57e-09edc508cd95",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T10:36:25Z",
+      "startDateTime": "2026-08-25T10:31:54Z",
+      "endDateTime": "2026-08-25T10:52:08Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 942,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 942,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "a0f0d6b1-fea6-4e03-ae69-3cc572db0b8e",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787638209304_0001",
+      "state": "Succeeded",
+      "livyId": "7dae7b25-a330-4938-9735-a57962698ae7",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_7dae7b25-a330-4938-9735-a57962698ae7",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T06:12:00Z",
+      "startDateTime": "2026-08-25T06:10:16Z",
+      "endDateTime": "2026-08-25T06:27:28Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 927,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 927,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "5e250b39-c280-4d43-a32d-3e7a92404f44",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Pipeline Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787628253412_0001",
+      "state": "Succeeded",
+      "livyId": "714f75ac-4a6c-4812-9f6b-92344ef8e199",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_714f75ac-4a6c-4812-9f6b-92344ef8e199",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T03:30:47Z",
+      "startDateTime": "2026-08-25T03:24:23Z",
+      "endDateTime": "2026-08-25T03:45:44Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 896,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 896,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "721191fe-2204-4cb7-8a9b-b9fc7b6df9ed",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System stopped the Spark session upon completion of the notebook run",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787627052786_0001",
+      "state": "Failed",
+      "livyId": "b6143822-974d-4aa9-9f70-9faead05e697",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_b6143822-974d-4aa9-9f70-9faead05e697",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T03:12:08Z",
+      "startDateTime": "2026-08-25T03:04:10Z",
+      "endDateTime": "2026-08-25T03:27:34Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 925,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 925,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "b217e7dc-9f28-4fa1-8361-e6356f4910b0",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787625617080_0001",
+      "state": "Failed",
+      "livyId": "1b840148-19ee-4506-9860-27a4c9c0eee3",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_1b840148-19ee-4506-9860-27a4c9c0eee3",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T02:47:04Z",
+      "startDateTime": "2026-08-25T02:40:22Z",
+      "endDateTime": "2026-08-25T03:01:33Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 869,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 869,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "9b975931-df54-46a1-aef8-8f4f3b47a026",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787624919733_0001",
+      "state": "Failed",
+      "livyId": "df392025-49b7-4575-911f-fec5d62f93ba",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_df392025-49b7-4575-911f-fec5d62f93ba",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T02:33:46Z",
+      "startDateTime": "2026-08-25T02:28:51Z",
+      "endDateTime": "2026-08-25T02:45:50Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 723,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 723,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "0726cfa3-76af-4a11-9415-bd444b9a0936",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787624036278_0001",
+      "state": "Failed",
+      "livyId": "69fe2495-e2ab-4f39-9a57-c5ef285e6a1a",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_69fe2495-e2ab-4f39-9a57-c5ef285e6a1a",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T02:20:23Z",
+      "startDateTime": "2026-08-25T02:14:01Z",
+      "endDateTime": "2026-08-25T02:32:57Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 753,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 753,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "c16fdb72-979f-4cae-a026-050409a1e964",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787623348252_0001",
+      "state": "Failed",
+      "livyId": "4274eece-6070-44a5-a4de-ec48202cd276",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_4274eece-6070-44a5-a4de-ec48202cd276",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T02:08:31Z",
+      "startDateTime": "2026-08-25T02:02:28Z",
+      "endDateTime": "2026-08-25T02:19:40Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 669,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 669,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "62f9e5f1-f9a4-4c22-b3ba-f8a3927a6954",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787622951105_0001",
+      "state": "Failed",
+      "livyId": "59d5d19b-13ac-40e2-8934-480d18b41816",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_59d5d19b-13ac-40e2-8934-480d18b41816",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T02:01:25Z",
+      "startDateTime": "2026-08-25T01:56:00Z",
+      "endDateTime": "2026-08-25T02:05:13Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 227,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 227,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "3afd58ce-5275-44b9-99f0-ebfbf467147d",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787622671216_0001",
+      "state": "Failed",
+      "livyId": "e83ee86a-4a52-4aa8-9da9-09f0ac43cfcb",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_e83ee86a-4a52-4aa8-9da9-09f0ac43cfcb",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T01:56:44Z",
+      "startDateTime": "2026-08-25T01:51:20Z",
+      "endDateTime": "2026-08-25T01:58:48Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 123,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 123,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "8d18ff26-12c0-459d-b543-1684bbdd0967",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787622216945_0001",
+      "state": "Failed",
+      "livyId": "4e480883-0f68-483d-b3ce-902c8095e1a2",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_4e480883-0f68-483d-b3ce-902c8095e1a2",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T01:48:14Z",
+      "startDateTime": "2026-08-25T01:43:42Z",
+      "endDateTime": "2026-08-25T01:49:40Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 86,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 86,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "1639a763-5ded-4272-9564-3f3c8eba6cdc",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787621845233_0001",
+      "state": "Failed",
+      "livyId": "037f7a10-b2c4-484b-9eec-98beec81701b",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_037f7a10-b2c4-484b-9eec-98beec81701b",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T01:43:02Z",
+      "startDateTime": "2026-08-25T01:37:31Z",
+      "endDateTime": "2026-08-25T01:43:44Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 41,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 41,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "f4945c95-db0c-4bc5-b197-805b9a94ad9b",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787621609085_0001",
+      "state": "Failed",
+      "livyId": "ba279dba-6e52-4048-80ee-6e486dbf0d28",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_ba279dba-6e52-4048-80ee-6e486dbf0d28",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T01:38:46Z",
+      "startDateTime": "2026-08-25T01:33:40Z",
+      "endDateTime": "2026-08-25T01:39:07Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 21,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 21,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "d7819d8a-0454-4699-8702-f02aeb9d539a",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    },
+    {
+      "sparkApplicationId": "application_1787621498825_0001",
+      "state": "Failed",
+      "livyId": "f0eef75e-b40c-4e96-99a2-cd941cd7f473",
+      "origin": "SubmittedJob",
+      "attemptNumber": 0,
+      "maxNumberOfAttempts": 0,
+      "livyName": "cd_01_extract_procore_f0eef75e-b40c-4e96-99a2-cd941cd7f473",
+      "submitter": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "item": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "itemName": "cd_01_extract_procore",
+      "itemType": "notebook",
+      "jobType": "SparkSession",
+      "submittedDateTime": "2026-08-25T01:35:52Z",
+      "startDateTime": "2026-08-25T01:31:58Z",
+      "endDateTime": "2026-08-25T01:36:25Z",
+      "queuedDuration": {
+        "value": 0,
+        "timeUnit": "Seconds"
+      },
+      "runningDuration": {
+        "value": 33,
+        "timeUnit": "Seconds"
+      },
+      "totalDuration": {
+        "value": 33,
+        "timeUnit": "Seconds"
+      },
+      "jobInstanceId": "42c8f074-cefb-43a3-a053-9c44f1508eca",
+      "creatorItem": {
+        "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+        "itemId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+        "referenceType": "ById"
+      },
+      "isHighConcurrency": false,
+      "cancellationReason": "System cancelled the Spark session due to statement execution failures",
+      "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+      "operationName": "Notebook Scheduled Run",
+      "consumerIdentity": {
+        "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+        "type": "User"
+      },
+      "runtimeVersion": "1.3"
+    }
+  ]
+}

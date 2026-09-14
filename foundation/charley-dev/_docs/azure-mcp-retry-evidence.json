@@ -1,0 +1,18 @@
+{
+  "observed_at": "2026-09-10T09:05:56.428Z",
+  "tool": "azure/subscription_list",
+  "parameters": {
+    "tenant": "b2a2225b-4b4e-42ec-ba52-c7e1c2dea580"
+  },
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "tool call error: tool call failed for `azure/subscription_list`\n\nCaused by:\n    timed out awaiting tools/call after 300s"
+      }
+    ],
+    "isError": true
+  },
+  "scope": "Read-only MCP access check; no deployment",
+  "diagnosis": "Timeout after 300 seconds; authentication or transport root cause not established"
+}

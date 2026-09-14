@@ -1,0 +1,12 @@
+{
+  "stage": "fetch_token (Procore OAuth)",
+  "error": "HTTPError: 401 Client Error: Unauthorized for url: https://sandbox.procore.com/oauth/token",
+  "trace": "Traceback (most recent call last):\n  File \"/tmp/ipykernel_6830/4174364258.py\", line 27, in <module>\n    token = px.fetch_token(settings, session)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/lakehouse/default/Files/lib/procore_extract.py\", line 195, in fetch_token\n    response.raise_for_status()\n  File \"/home/trusted-service-user/cluster-env/trident_env/lib/python3.11/site-packages/requests/models.py\", line 1021, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 401 Client Error: Unauthorized for url: https://sandbox.procore.com/oauth/token\n",
+  "secrets_present": {
+    "PROCORE_CLIENT_ID": false,
+    "PROCORE_CLIENT_SECRET": false,
+    "PROCORE_COMPANY_ID": false,
+    "PROCORE_KEYVAULT_URL": false,
+    "PROCORE_BASE_URL": false
+  }
+}

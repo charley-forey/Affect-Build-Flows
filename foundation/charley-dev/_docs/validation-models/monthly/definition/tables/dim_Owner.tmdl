@@ -1,0 +1,28 @@
+table dim_Owner
+
+	column OwnerKey
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: OwnerKey
+
+	column RoleName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RoleName
+
+	column SortOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SortOrder
+
+	column PersonName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PersonName
+
+	partition dim_Owner = entity
+		mode: directLake
+		source
+			entityName: dim_owner
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

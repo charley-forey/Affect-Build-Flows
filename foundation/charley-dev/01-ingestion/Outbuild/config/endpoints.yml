@@ -18,18 +18,31 @@
 # are NOT the obvious slug: /rfvtypes and /roadblocktypes have no hyphen, while
 # /rfv-tasks and /roadblock-tasks do; Weekly Commitments is /commitments; User is /users.
 
+# Link tables (roadblock_tasks, rfv_tasks, activity_tags, task_tags) have NO `id`: a row
+# is the pair. A list `key` is joined with "|" by the extractor. Declaring `key: id` gave
+# every row the merge key "|" and broke the bronze MERGE (2026-09-13).
+
+# `consumed: true` = read by silver (02-transformation/sql/silver/25_outbuild_silver.sql).
+# cd_02_extract_outbuild FAILS the run when a consumed endpoint fails; any other endpoint
+# failure is a manifest warning. test_validation.py asserts this flag matches the SQL.
+#
+# No watermarks: every endpoint is a full pull (?page=N only - the API has no updated-since
+# filter), and the MERGE on _merge_key makes a re-run a no-op.
+
 endpoints:
   # ---- the milestone-bearing core -----------------------------------------
   - name: projects
     path: /projects
     bronze_table: cd_bronze_outbuild_projects
     key: id
+    consumed: true
 
   # Dates, baseline dates, progress and is_critical. This is fct_Milestone's only source.
   - name: activities
     path: /activities
     bronze_table: cd_bronze_outbuild_activities
     key: id
+    consumed: true
 
   - name: tasks
     path: /tasks
@@ -52,7 +65,7 @@ endpoints:
   - name: roadblock_tasks
     path: /roadblock-tasks
     bronze_table: cd_bronze_outbuild_roadblock_tasks
-    key: id
+    key: [roadblock_id, task_id]
 
   - name: roadblock_types
     path: /roadblocktypes
@@ -69,7 +82,7 @@ endpoints:
   - name: rfv_tasks
     path: /rfv-tasks
     bronze_table: cd_bronze_outbuild_rfv_tasks
-    key: id
+    key: [rfv_id, task_id]
 
   - name: rfv_types
     path: /rfvtypes
@@ -107,9 +120,9 @@ endpoints:
   - name: activity_tags
     path: /activitytags
     bronze_table: cd_bronze_outbuild_activity_tags
-    key: id
+    key: [activity_id, tag_id]
 
   - name: task_tags
     path: /tasktags
     bronze_table: cd_bronze_outbuild_task_tags
-    key: id
+    key: [task_id, tag_id]

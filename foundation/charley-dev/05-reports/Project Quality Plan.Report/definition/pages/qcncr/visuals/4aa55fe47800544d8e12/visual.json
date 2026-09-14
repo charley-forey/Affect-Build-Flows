@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "NCRs Past Due"
+                  "Property": "Observations Past Due"
                 }
               },
-              "queryRef": "_Measures.NCRs Past Due",
-              "nativeQueryRef": "NCRs Past Due"
+              "queryRef": "_Measures.Observations Past Due",
+              "nativeQueryRef": "Observations Past Due"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. NCRs Past Due. Shows NCRs Past Due for the current selection.'"
+                  "Value": "'Card. Observations Past Due. Shows Observations Past Due for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'NCRs Past Due'"
+                  "Value": "'Observations Past Due'"
                 }
               }
             },

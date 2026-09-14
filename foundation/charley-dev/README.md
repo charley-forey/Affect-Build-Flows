@@ -1,5 +1,10 @@
 # charley-dev
 
+**Current validation work:** see [_docs/validation-and-development-plan.md](_docs/validation-and-development-plan.md)
+and its timestamped evidence. The operational statements below are historical; the
+September 10 review found failed ingestion, unresolved mappings and unverified publication
+isolation. Passing offline checks is not certification of the live report.
+
 A complete, self-contained data solution for Affect Group's Monthly Progress Report **and
 Project Quality Plan**, built inside the Fabric workspace **Build** under the folder
 `charley-dev` (`25dd1e34-bd57-43ca-aa29-c8fd33013101`). **20 items** as of 2026-08-19.

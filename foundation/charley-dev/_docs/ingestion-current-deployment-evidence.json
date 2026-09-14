@@ -1,0 +1,43 @@
+{
+  "captured_at": "2026-09-10T09:48:03.082027+00:00",
+  "lakehouse_id": "fa946636-e143-417b-b598-5cbd31ed9990",
+  "checks": [
+    {
+      "path": "Files/lib/procore_extract.py",
+      "bytes": 24243,
+      "sha256": "d615054ab0c5742234d763649a1faa500c4f657a1a78c14d3357054f81f58b29",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/procore_scope.py",
+      "bytes": 18833,
+      "sha256": "d8f8aa553a0c061f22860783186b24c7d4aac8e1ed31a2866f08043fc1775c0b",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/fabric_common.py",
+      "bytes": 16780,
+      "sha256": "9c5bfe6f59255f353c1afad94b101860301c56097e19885fcdba2f95e8ded10e",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/watermark.py",
+      "bytes": 5278,
+      "sha256": "ffe175bb3f0264e2b121c840bb63d5c951971098873f12c0bb197ff141101779",
+      "matches_local": true
+    },
+    {
+      "path": "Files/lib/ratelimit.py",
+      "bytes": 10706,
+      "sha256": "031e4dad7a5bf52fba952793a2d1e34360a51a0f750a653ccd4d6569f1777e6b",
+      "matches_local": true
+    },
+    {
+      "path": "Files/config/endpoints.yml",
+      "bytes": 20244,
+      "sha256": "606542f6be9ace5461802d01ae5a7e1baec20269e41477731fb4113fd2a4f84d",
+      "matches_local": true
+    }
+  ],
+  "scope": "Independent read-back of six deployed runtime/configuration files; full extractor definition updated but full job not rerun"
+}

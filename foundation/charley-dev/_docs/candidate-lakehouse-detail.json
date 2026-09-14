@@ -1,0 +1,18 @@
+{
+  "id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
+  "type": "Lakehouse",
+  "displayName": "CD_Validation_Lakehouse",
+  "description": "",
+  "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "properties": {
+    "oneLakeTablesPath": "https://onelake.dfs.fabric.microsoft.com/1f7caed6-f88a-4e52-bc83-9a498a165301/0c26a970-705b-44c2-8366-9101cd6f4e7f/Tables",
+    "oneLakeFilesPath": "https://onelake.dfs.fabric.microsoft.com/1f7caed6-f88a-4e52-bc83-9a498a165301/0c26a970-705b-44c2-8366-9101cd6f4e7f/Files",
+    "sqlEndpointProperties": {
+      "connectionString": "lmrkfmsojpwefossy7q4fxvfqa-22xhyh4k7bje5pedtjeyufstae.datawarehouse.fabric.microsoft.com",
+      "id": "ceaf23be-a574-41f2-9025-b789a940bdc1",
+      "provisioningStatus": "Success"
+    },
+    "defaultSchema": "dbo"
+  },
+  "folderId": "25dd1e34-bd57-43ca-aa29-c8fd33013101"
+}

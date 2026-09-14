@@ -11,12 +11,12 @@
 -- It is left to DAX rather than baked in here so the thresholds stay tunable without a
 -- pipeline run.
 --
--- Grain: one row per project x cost code x snapshot_date. The snapshot column is what
--- gives budget drift over time - the Excel is a single-month artifact and structurally
--- cannot show it.
+-- Grain: project x source budget line. SnapshotDate is the ingestion date;
+-- this current-state table does not establish retained month-end history.
 
 CREATE OR REPLACE TABLE fct_BudgetLine AS
 SELECT
+    budget_line_id                      AS BudgetLineID,
     project_id                          AS ProjectKey,
     COALESCE(cost_code_id, 'UNASSIGNED') AS CostCodeKey,
     snapshot_date                       AS SnapshotDate,

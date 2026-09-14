@@ -142,6 +142,43 @@ def test_fct_invoice(con) -> None:
     assert one(con, "SELECT ROUND(SUM(Balance), 2) FROM fct_Invoice WHERE ProjectKey='P1'") == 300000.0
     check("fct_Invoice[IsPaid] and outstanding balance agree")
 
+    # Paid date from receipts. INV1: 200k on 05-20, 300k on 06-10 -> paid 06-10, NOT the
+    # first receipt and NOT the due date (06-04). INV2: same-day +300k/-300k nets to nothing.
+    rows = q(con, "SELECT InvoiceKey, PaymentsReceived, FirstPaymentDate, LastPaymentDate, PaidDate, "
+                  "DaysToPayment FROM fct_Invoice ORDER BY InvoiceKey")
+    assert rows == [
+        ("INV1", 500000.0, date(2025, 5, 20), date(2025, 6, 10), date(2025, 6, 10), 36),
+        ("INV2", 0.0, date(2025, 6, 1), date(2025, 6, 1), None, None),
+        ("INV3", None, None, None, None, None),
+    ], rows
+    check("fct_Invoice[PaidDate] is when receipts first covered the invoice; reversals and partials stay unpaid")
+
+    import seedrunner
+    gold_sql = (seedrunner.CHARLEY_DEV / "02-transformation/sql/gold/22_fct_invoice.sql").read_text()
+
+    def rebuild(*receipts):
+        con.execute("BEGIN")
+        try:
+            con.execute("CREATE OR REPLACE VIEW sv_ar_payments AS SELECT * FROM (VALUES "
+                        + ", ".join(receipts) + ") AS t(payment_uid, invoice_uid, invoice_id, payment_date, amount)")
+            for sql in seedrunner.split_statements(gold_sql):
+                con.execute(sql)
+            return q(con, "SELECT PaidDate, DaysToPayment FROM fct_Invoice WHERE InvoiceKey = 'INV1'")[0]
+        finally:
+            con.execute("ROLLBACK")
+
+    # A LATER reversal reopens the invoice; a later re-payment sets PaidDate to that day.
+    full = "('A','INV1','901',DATE '2025-05-20',500000.0)"
+    back = "('B','INV1','901',DATE '2025-05-25',-500000.0)"
+    again = "('C','INV1','901',DATE '2025-06-01',500000.0)"
+    assert rebuild(full) == (date(2025, 5, 20), 15)
+    assert rebuild(full, back) == (None, None)
+    assert rebuild(full, back, again) == (date(2025, 6, 1), 27)
+    # Short by more than a cent is not paid; within a cent is.
+    assert rebuild("('A','INV1','901',DATE '2025-05-20',499999.98)") == (None, None)
+    assert rebuild("('A','INV1','901',DATE '2025-05-20',499999.996)") == (date(2025, 5, 20), 15)
+    check("fct_Invoice[PaidDate] reopens on a later reversal and ignores sub-cent rounding")
+
 
 def test_fct_rfisubmittal(con) -> None:
     # BOTH arms, as of 2026-08-02. RFIs are the half of the workbook's only chart that has
@@ -540,13 +577,93 @@ def test_fct_vendorinsurance(con) -> None:
     assert one(con, "SELECT IsExpired FROM fct_VendorInsurance WHERE InsuranceKey='I2'") is False
     check("expiry is evaluated at load time and stored, not recomputed per render")
 
+GAP_CATEGORIES = {
+    "Rejected source row", "Rejected manual entry", "Rejected quality entry",
+    "Unmatched AR invoice", "Unmapped trade", "Project missing from Sage",
+    "Project missing from Outbuild", "Vendor without certificate", "Expired certificate",
+    "Empty manual register",
+}
+
+
+def test_dq_datagap(con) -> None:
+    """One register of every known gap - every category must be reachable from fixtures."""
+    from seedrunner import CHARLEY_DEV, split_statements
+    gap_sql = split_statements((CHARLEY_DEV / "02-transformation" / "sql" / "gold"
+                                / "45_dq_datagap.sql").read_text(encoding="utf-8"))
+    con.execute("BEGIN")
+    try:
+        # The two categories the shared fixtures are healthy on: a project vendor with no
+        # certificate, and a manual register nobody has typed into.
+        con.execute("INSERT INTO bridge_ProjectVendor SELECT * REPLACE ('V9' AS VendorKey, "
+                    "'Uninsured Co' AS VendorName) FROM bridge_ProjectVendor LIMIT 1")
+        con.execute("DELETE FROM man_QcItp")
+        # Fact rows on a project gold has never heard of: ProjectKey must come out NULL.
+        con.execute("INSERT INTO bridge_ProjectVendor SELECT * REPLACE ('V8' AS VendorKey, "
+                    "'P404' AS ProjectKey) FROM bridge_ProjectVendor LIMIT 1")
+        con.execute("INSERT INTO fct_QcNcr SELECT * REPLACE ('NCR404' AS NcrKey, 'P404' AS ProjectKey, "
+                    "TRUE AS HasUnmappedTrade) FROM fct_QcNcr LIMIT 1")
+        con.execute("INSERT INTO fct_QcPunch SELECT * REPLACE ('PUN404' AS PunchKey, 'P404' AS ProjectKey, "
+                    "TRUE AS HasUnmappedTrade) FROM fct_QcPunch LIMIT 1")
+        # Live Procore payloads carry user emails; none may reach the register.
+        con.execute("""CREATE OR REPLACE VIEW sv_dq_rejects AS SELECT * FROM (VALUES
+            ('cd_silver_submittals', 'missing id', '{"title":"No id","created_by":{"email":"a.person@example.com"}}', 'batch-1'),
+            ('cd_silver_qc_ncr', 'missing project', '{"id":"OBX","assignee":{"login":"b.person@example.com"}}', 'batch-1'),
+            ('cd_silver_sage_ar_invoice', 'missing job', '{"_idnum":"S77"}', 'batch-2')
+        ) AS t(target_table, reason, payload, _batch_id)""")
+        for sql in gap_sql:
+            con.execute(sql)
+        seen = {r[0] for r in q(con, "SELECT DISTINCT GapCategory FROM dq_DataGap")}
+        assert seen == GAP_CATEGORIES, (seen ^ GAP_CATEGORIES)
+        check(f"dq_DataGap surfaces all {len(GAP_CATEGORIES)} gap categories from fixtures")
+
+        assert q(con, "SELECT EntityKey, ProjectKey FROM dq_DataGap WHERE EntityKey IN "
+                      "('V8', 'NCR404', 'PUN404') ORDER BY EntityKey") ==             [("NCR404", None), ("PUN404", None), ("V8", None)]
+        check("unmapped-trade and uninsured-vendor gaps on an unknown project get a NULL ProjectKey")
+
+        details = [r[0] or "" for r in q(con, "SELECT Detail FROM dq_DataGap")]
+        editors = [r[0] for r in q(con, "SELECT last_modified_by FROM sv_dq_rejects_manual "
+                                         "UNION SELECT last_modified_by FROM sv_dq_rejects_qc")]
+        assert not any("@" in d for d in details), details
+        assert not any(e in d for d in details for e in editors), details
+        assert q(con, "SELECT Detail FROM dq_DataGap WHERE EntityKey = 'S77'") ==             [("record S77; table cd_silver_sage_ar_invoice; reason missing job; batch batch-2",)]
+        check("dq_DataGap[Detail] carries record ids, never payload emails or editor names")
+
+        assert q(con, "SELECT EntityKey, ProjectKey FROM dq_DataGap "
+                      "WHERE GapCategory = 'Vendor without certificate' AND EntityKey = 'V9'") == [("V9", "P1")]
+        assert q(con, "SELECT EntityType FROM dq_DataGap "
+                      "WHERE GapCategory = 'Empty manual register'") == [("man_QcItp",)]
+        check("an uninsured project vendor and an empty register each produce exactly one gap")
+    finally:
+        con.execute("ROLLBACK")
+
+    # Money only where the gap carries it: the orphan AR invoice's 1,000.
+    assert q(con, "SELECT EntityKey, Amount FROM dq_DataGap WHERE Amount IS NOT NULL") == [("INV3", 1000.0)]
+    check("Amount is populated only by unmatched AR, and carries the invoice total")
+
+    # Every ProjectKey resolves, so the model relationship never shows a blank member. The
+    # manual reject for P9 keeps its raw id in Detail instead.
+    assert one(con, "SELECT COUNT(*) FROM dq_DataGap g LEFT JOIN dim_Project p "
+                    "ON g.ProjectKey = p.ProjectKey WHERE g.ProjectKey IS NOT NULL "
+                    "AND p.ProjectKey IS NULL") == 0
+    assert one(con, "SELECT Detail FROM dq_DataGap WHERE GapCategory = 'Rejected manual entry'"
+               ).startswith("project P9")
+    check("dq_DataGap[ProjectKey] only holds keys dim_Project has; unknown ids stay readable in Detail")
+
+    # Each reject ledger row appears once - the register is a view of the ledgers, not a sample.
+    assert one(con, "SELECT COUNT(*) FROM dq_DataGap WHERE GapCategory LIKE 'Rejected%'") == \
+        sum(one(con, f"SELECT COUNT(*) FROM {v}")
+            for v in ("sv_dq_rejects", "sv_dq_rejects_manual", "sv_dq_rejects_qc"))
+    assert one(con, "SELECT RunBatchId FROM dq_DataGap WHERE EntityKey = 'OBX'") == "batch-1"
+    check("every reject ledger row reaches dq_DataGap exactly once, with its batch id")
+
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance):
+        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance, test_dq_datagap):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

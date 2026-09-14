@@ -1,0 +1,485 @@
+[
+  {
+    "step": "view:0",
+    "ok": true
+  },
+  {
+    "step": "view:1",
+    "ok": true
+  },
+  {
+    "step": "view:2",
+    "ok": true
+  },
+  {
+    "step": "view:3",
+    "ok": true
+  },
+  {
+    "step": "view:4",
+    "ok": true
+  },
+  {
+    "step": "view:5",
+    "ok": true
+  },
+  {
+    "step": "view:6",
+    "ok": true
+  },
+  {
+    "step": "view:7",
+    "ok": true
+  },
+  {
+    "step": "view:8",
+    "ok": true
+  },
+  {
+    "step": "view:9",
+    "ok": true
+  },
+  {
+    "step": "view:10",
+    "ok": true
+  },
+  {
+    "step": "view:11",
+    "ok": true
+  },
+  {
+    "step": "view:12",
+    "ok": true
+  },
+  {
+    "step": "view:13",
+    "ok": true
+  },
+  {
+    "step": "view:14",
+    "ok": true
+  },
+  {
+    "step": "view:15",
+    "ok": true
+  },
+  {
+    "step": "view:16",
+    "ok": true
+  },
+  {
+    "step": "view:17",
+    "ok": true
+  },
+  {
+    "step": "view:18",
+    "ok": true
+  },
+  {
+    "step": "view:19",
+    "ok": true
+  },
+  {
+    "step": "view:20",
+    "ok": true
+  },
+  {
+    "step": "view:21",
+    "ok": true
+  },
+  {
+    "step": "view:22",
+    "ok": true
+  },
+  {
+    "step": "view:23",
+    "ok": true
+  },
+  {
+    "step": "view:24",
+    "ok": true
+  },
+  {
+    "step": "view:25",
+    "ok": true
+  },
+  {
+    "step": "view:26",
+    "ok": true
+  },
+  {
+    "step": "view:27",
+    "ok": true
+  },
+  {
+    "step": "view:28",
+    "ok": true
+  },
+  {
+    "step": "view:29",
+    "ok": true
+  },
+  {
+    "step": "view:30",
+    "ok": true
+  },
+  {
+    "step": "view:31",
+    "ok": true
+  },
+  {
+    "step": "view:32",
+    "ok": true
+  },
+  {
+    "step": "view:33",
+    "ok": true
+  },
+  {
+    "step": "view:34",
+    "ok": true
+  },
+  {
+    "step": "view:35",
+    "ok": true
+  },
+  {
+    "step": "view:36",
+    "ok": true
+  },
+  {
+    "step": "view:37",
+    "ok": true
+  },
+  {
+    "step": "view:38",
+    "ok": true
+  },
+  {
+    "step": "view:39",
+    "ok": true
+  },
+  {
+    "step": "view:40",
+    "ok": true
+  },
+  {
+    "step": "view:41",
+    "ok": true
+  },
+  {
+    "step": "view:42",
+    "ok": true
+  },
+  {
+    "step": "view:43",
+    "ok": true
+  },
+  {
+    "step": "view:44",
+    "ok": true
+  },
+  {
+    "step": "view:45",
+    "ok": true
+  },
+  {
+    "step": "view:46",
+    "ok": true
+  },
+  {
+    "step": "view:47",
+    "ok": true
+  },
+  {
+    "step": "view:48",
+    "ok": true
+  },
+  {
+    "step": "view:49",
+    "ok": true
+  },
+  {
+    "step": "10_dim_project.sql",
+    "ok": true
+  },
+  {
+    "step": "11_dim_vendor.sql",
+    "ok": true
+  },
+  {
+    "step": "12_dim_costcode.sql",
+    "ok": true
+  },
+  {
+    "step": "13_dim_job.sql",
+    "ok": true
+  },
+  {
+    "step": "13_dim_job.sql",
+    "ok": true
+  },
+  {
+    "step": "15_dim_projectcrosswalk.sql",
+    "ok": true
+  },
+  {
+    "step": "16_dim_vendorcrosswalk.sql",
+    "ok": true
+  },
+  {
+    "step": "17_dim_costcodecrosswalk.sql",
+    "ok": true
+  },
+  {
+    "step": "20_fct_budgetline.sql",
+    "ok": true
+  },
+  {
+    "step": "21_fct_changeorder.sql",
+    "ok": true
+  },
+  {
+    "step": "22_fct_invoice.sql",
+    "ok": true
+  },
+  {
+    "step": "23_fct_rfisubmittal.sql",
+    "ok": true
+  },
+  {
+    "step": "24_fct_milestone.sql",
+    "ok": true
+  },
+  {
+    "step": "25_fct_qualityitem.sql",
+    "ok": true
+  },
+  {
+    "step": "26_fct_safetymonthly.sql",
+    "ok": true
+  },
+  {
+    "step": "27_fct_billing.sql",
+    "ok": true
+  },
+  {
+    "step": "28_fct_directcost.sql",
+    "ok": true
+  },
+  {
+    "step": "29_bridge_projectvendor.sql",
+    "ok": true
+  },
+  {
+    "step": "30_fct_financialperiod.sql",
+    "ok": true
+  },
+  {
+    "step": "31_bridge_vendorcostcode.sql",
+    "ok": true
+  },
+  {
+    "step": "32_fct_vendorinsurance.sql",
+    "ok": true
+  },
+  {
+    "step": "33_fct_qc.sql",
+    "ok": true
+  },
+  {
+    "step": "33_fct_qc.sql",
+    "ok": true
+  },
+  {
+    "step": "33_fct_qc.sql",
+    "ok": true
+  },
+  {
+    "step": "33_fct_qc.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "40_man_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "verification",
+    "ok": true,
+    "counts": {
+      "dim_Project": 20,
+      "dim_Vendor": 126,
+      "dim_CostCode": 5768,
+      "dim_ProjectCrosswalk": 20,
+      "dim_VendorCrosswalk": 125,
+      "dim_CostCodeCrosswalk": 5767,
+      "fct_BudgetLine": 435,
+      "fct_QualityItem": 2542,
+      "fct_SafetyMonthly": 68,
+      "fct_Billing": 876,
+      "fct_DirectCost": 437,
+      "bridge_ProjectVendor": 422,
+      "bridge_VendorCostCode": 421,
+      "fct_VendorInsurance": 105,
+      "fct_ChangeOrder": 330,
+      "fct_Invoice": 148,
+      "fct_RfiSubmittal": 3125,
+      "fct_Milestone": 126,
+      "fct_FinancialPeriod": 150,
+      "fct_QcNcr": 962,
+      "fct_QcPunch": 1580,
+      "fct_QcSubmittal": 2471,
+      "fct_ProcoreInspection": 21,
+      "man_DailyLogCompliance": 0,
+      "man_Flags": 0,
+      "man_Milestones": 0,
+      "man_PriorityItems": 0,
+      "man_QcChecklistResult": 0,
+      "man_QcCommissioning": 0,
+      "man_QcDfow": 0,
+      "man_QcDohResult": 0,
+      "man_QcGate": 0,
+      "man_QcInspectorSignIn": 0,
+      "man_QcItp": 0,
+      "man_QcSpecialInspection": 0,
+      "man_QualityMonthly": 0,
+      "man_Risks": 0,
+      "man_SafetyMonthly": 0,
+      "man_Survey": 0,
+      "man_Wins": 0
+    },
+    "findings": []
+  }
+]

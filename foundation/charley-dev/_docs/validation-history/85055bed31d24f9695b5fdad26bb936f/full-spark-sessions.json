@@ -1,0 +1,52 @@
+[
+  {
+    "sparkApplicationId": "application_1789024838923_0001",
+    "state": "InProgress",
+    "livyId": "d34f586c-4f75-4f15-9f03-4c563a49d394",
+    "origin": "SubmittedJob",
+    "attemptNumber": 0,
+    "maxNumberOfAttempts": 0,
+    "livyName": "cd_94_validate_full_d34f586c-4f75-4f15-9f03-4c563a49d394",
+    "submitter": {
+      "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+      "type": "User"
+    },
+    "item": {
+      "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+      "itemId": "77fe4969-f886-47c1-b1fa-750f5bebc2df",
+      "referenceType": "ById"
+    },
+    "itemName": "cd_94_validate_full",
+    "itemType": "notebook",
+    "jobType": "SparkSession",
+    "submittedDateTime": "2026-09-10T07:25:47Z",
+    "startDateTime": "2026-09-10T07:20:50Z",
+    "endDateTime": "0001-01-01T00:00:00Z",
+    "queuedDuration": {
+      "value": 0,
+      "timeUnit": "Seconds"
+    },
+    "runningDuration": {
+      "value": 403,
+      "timeUnit": "Seconds"
+    },
+    "totalDuration": {
+      "value": 403,
+      "timeUnit": "Seconds"
+    },
+    "jobInstanceId": "456e992b-9ef8-4e12-a04d-9157d1726b1b",
+    "creatorItem": {
+      "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+      "itemId": "77fe4969-f886-47c1-b1fa-750f5bebc2df",
+      "referenceType": "ById"
+    },
+    "isHighConcurrency": false,
+    "capacityId": "2cecb6d0-eba3-48ea-b369-1ad10aedd20e",
+    "operationName": "Notebook Scheduled Run",
+    "consumerIdentity": {
+      "id": "01526810-bd7a-4257-a955-4e84b99f70fb",
+      "type": "User"
+    },
+    "runtimeVersion": "1.3"
+  }
+]

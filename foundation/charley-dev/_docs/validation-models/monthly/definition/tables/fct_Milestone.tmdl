@@ -1,0 +1,76 @@
+table fct_Milestone
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ActivityKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityKey
+
+	column MilestoneName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MilestoneName
+
+	column ActivityType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityType
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column CurrentStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CurrentStart
+		formatString: yyyy-mm-dd
+
+	column CurrentFinish
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CurrentFinish
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column DurationDays
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: DurationDays
+
+	column PercentComplete
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PercentComplete
+
+	column IsCritical
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsCritical
+
+	column IsOverdue
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsOverdue
+
+	column HasDateInversion
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasDateInversion
+
+	partition fct_Milestone = entity
+		mode: directLake
+		source
+			entityName: fct_milestone
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

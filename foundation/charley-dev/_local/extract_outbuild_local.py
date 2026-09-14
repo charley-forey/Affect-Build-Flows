@@ -15,6 +15,9 @@ lives, and `cd_05_land_to_bronze` merges the files into Delta in Fabric where no
 needed. It writes the identical manifest + NDJSON shape, so the landing notebook does not
 need to know Outbuild exists.
 
+IN FABRIC (2026-09-13): cd_02_extract_outbuild imports this file from Files/lib and calls
+extract(), reading the token from Key Vault. This CLI remains for probes and manual backfill.
+
 WHY THIS SOURCE MATTERS
 Outbuild is the ONLY source of milestone data anywhere in the estate - Procore's OAS has no
 milestone endpoint. fct_Milestone and the whole Schedule page have no other path to real
@@ -34,6 +37,7 @@ bronze row shape is identical so both sources land through one notebook.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -46,9 +50,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import deploy as dp  # noqa: E402
-from extract_procore_local import find_env, put_file, storage_token  # noqa: E402
-
+# Importable as a library: cd_02_extract_outbuild loads this file from Files/lib inside
+# Fabric, where extract_procore_local.py does not exist. So nothing laptop-only is imported
+# at module level - token() and main() import what they need.
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
 ENDPOINTS_YML = CHARLEY_DEV / "01-ingestion" / "Outbuild" / "config" / "endpoints.yml"
@@ -64,9 +68,21 @@ BASE = "https://datahub.outbuild.com"
 USER_AGENT = "AffectGroup-FabricETL/1.0 (Affect Group data integration)"
 PAGE_SIZE = 500          # fixed by the API; documented, not configurable
 MAX_PAGES = 200          # 100k rows on one endpoint means something is wrong, not big
+# 429 plus the gateway family. /tasks answered 504 on 2026-09-13 and succeeded on re-run.
+TRANSIENT = {429, 500, 502, 503, 504}
+ATTEMPTS = 4             # backoff 2s, 4s, 8s - bounded: a dead endpoint costs ~15s, not minutes
+
+FAILURE_POLICY = (
+    "Every endpoint is a full pull (no watermark). An endpoint that still fails after "
+    "transient retries is recorded here. It FAILS the run only if it is consumed "
+    "downstream (consumed: true in endpoints.yml - read by silver). A failure on an "
+    "unconsumed endpoint is a warning: nothing reads it, so it must not hold the Schedule "
+    "page on stale milestones.")
 
 
 def token() -> str:
+    from extract_procore_local import find_env
+
     env_file = find_env()
     if env_file:
         for line in env_file.read_text(encoding="utf-8").splitlines():
@@ -121,10 +137,10 @@ def keyvault_token() -> str | None:
     return result.stdout.strip() or None
 
 
-def load_registry() -> list[dict]:
+def load_registry(path: str | Path = ENDPOINTS_YML) -> list[dict]:
     import yaml
 
-    raw = yaml.safe_load(ENDPOINTS_YML.read_text(encoding="utf-8"))
+    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     endpoints = raw["endpoints"]
 
     names = [e["name"] for e in endpoints]
@@ -152,18 +168,24 @@ def fetch_page(path: str, tok: str, page: int) -> tuple[list[dict], bool]:
         # one is accepted, so this identifies the client rather than disguising it.
         "User-Agent": USER_AGENT,
     })
-    for attempt in range(4):
+    for attempt in range(1, ATTEMPTS + 1):
         try:
             with urllib.request.urlopen(request, timeout=90) as response:
                 body = json.loads(response.read() or "null")
         except urllib.error.HTTPError as exc:
-            if exc.code == 429 and attempt < 3:
-                retry_after = exc.headers.get("Retry-After")
-                time.sleep(float(retry_after) if retry_after else 2.0 ** attempt)
-                continue
-            raise
+            if exc.code not in TRANSIENT or attempt == ATTEMPTS:
+                raise
+            retry_after = exc.headers.get("Retry-After") if exc.code == 429 else None
+            time.sleep(float(retry_after) if retry_after else 2.0 ** attempt)
+            continue
+        except (urllib.error.URLError, TimeoutError):
+            # Connection reset / read timeout: transient by the same reasoning as a 504.
+            if attempt == ATTEMPTS:
+                raise
+            time.sleep(2.0 ** attempt)
+            continue
         return unwrap(body)
-    return [], False
+    raise AssertionError("unreachable")
 
 
 def unwrap(body: object) -> tuple[list[dict], bool]:
@@ -211,9 +233,16 @@ def to_bronze_row(record: dict, endpoint: dict, ingested_at: datetime, batch: st
     The full payload stays an unparsed JSON string: bronze cannot drop a column it never
     parsed, so a transform bug is a re-run rather than a re-extract.
     """
+    # Link tables have no id: their key is a list of fields, joined with "|". A missing part
+    # would collapse distinct rows onto one merge key, so it raises instead of guessing.
+    key = endpoint.get("key", "id")
+    parts = [record.get(k) for k in (key if isinstance(key, list) else [key])]
+    if isinstance(key, list) and any(p is None for p in parts):
+        raise ValueError(f"{endpoint['name']}: record is missing key field(s) {key}")
+    project = record.get("projectId", record.get("project_id"))
     return {
-        "_key": str(record.get(endpoint.get("key", "id"), "")),
-        "_project_id": str(record["projectId"]) if record.get("projectId") is not None else None,
+        "_key": "|".join("" if p is None else str(p) for p in parts),
+        "_project_id": str(project) if project is not None else None,
         "_source_endpoint": endpoint["name"],
         "_ingested_at": ingested_at.isoformat(),
         "_batch_id": batch,
@@ -221,7 +250,76 @@ def to_bronze_row(record: dict, endpoint: dict, ingested_at: datetime, batch: st
     }
 
 
+def bronze_row(record: dict, endpoint: dict, ingested_at: datetime, batch: str) -> dict:
+    """to_bronze_row plus the two columns cd_05_land_to_bronze derives in Spark, so a Fabric
+    extract and a landing replay write compatible rows into the same Delta tables.
+
+    _merge_key is _key + "|" + (_project_id or ""): one non-null merge column, exactly as
+    landing builds it - the existing bronze tables were created by landing on that key.
+    """
+    row = to_bronze_row(record, endpoint, ingested_at, batch)
+    row["_row_hash"] = hashlib.sha256(row["payload"].encode("utf-8")).hexdigest()  # F.sha2(payload, 256)
+    row["_merge_key"] = f"{row['_key']}|{row['_project_id'] or ''}"
+    return row
+
+
+def extract(endpoints: list[dict], tok: str, batch: str, diag: str | Path, write) -> dict:
+    """The Fabric run (cd_02_extract_outbuild): pull, archive raw, merge, write a manifest.
+
+    `write(table, rows) -> int` does the Spark merge; it is passed in so this stays testable
+    without a cluster. Raw records are archived to <diag>/ingestion/<batch>/<name>.jsonl
+    (exclusive create) BEFORE the merge; the manifest goes to <diag>/ingestion/<batch>.json
+    and <diag>/outbuild_run.json. The caller raises when manifest["blocking_failures"].
+
+    FAILURE POLICY: see FAILURE_POLICY. One endpoint failing never stops the others.
+    """
+    ingested_at = datetime.now(timezone.utc)
+    raw_dir = Path(diag) / "ingestion" / batch
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    audit = []
+    for endpoint in endpoints:
+        entry = {"endpoint": endpoint["name"], "table": endpoint["bronze_table"],
+                 "key": endpoint.get("key", "id"), "consumed": bool(endpoint.get("consumed")),
+                 "status": "started", "received_rows": 0, "written_rows": 0}
+        audit.append(entry)
+        if endpoint.get("scope"):
+            entry["status"] = "skipped"
+            entry["note"] = f"needs a {endpoint['scope']}Id in the path"
+            continue
+        try:
+            records = pull(endpoint, tok)
+            entry["received_rows"] = len(records)
+            entry["raw_archive"] = str(raw_dir / f"{endpoint['name']}.jsonl")
+            with open(entry["raw_archive"], "x", encoding="utf-8") as fh:
+                fh.writelines(json.dumps(r, default=str) + "\n" for r in records)
+            rows = [bronze_row(r, endpoint, ingested_at, batch) for r in records]
+            entry["written_rows"] = write(endpoint["bronze_table"], rows) if rows else 0
+            entry["status"] = "complete"
+        except Exception as exc:                                    # noqa: BLE001
+            entry["status"] = "failed"
+            entry["error"] = f"{type(exc).__name__}: {exc}"[:300]
+
+    failed = [a for a in audit if a["status"] == "failed"]
+    blocking = [a["endpoint"] for a in failed if a["consumed"]]
+    manifest = {
+        "batch": batch, "host": BASE, "source": "outbuild", "mode": "full",
+        "failure_policy": FAILURE_POLICY,
+        "status": "failed" if blocking else ("complete_with_warnings" if failed else "complete"),
+        "blocking_failures": blocking,
+        "warnings": [a["endpoint"] for a in failed if not a["consumed"]],
+        "total_rows": sum(a["written_rows"] for a in audit),
+        "endpoints": audit,
+    }
+    for dest, mode in ((raw_dir.parent / f"{batch}.json", "x"),
+                       (Path(diag) / "outbuild_run.json", "w")):
+        with open(dest, mode, encoding="utf-8") as fh:
+            json.dump(manifest, fh, indent=1, default=str)
+    return manifest
+
+
 def main() -> int:
+    from extract_procore_local import put_file, storage_token
+
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--apply", action="store_true")
@@ -345,6 +443,29 @@ def _selftest() -> None:
     assert unwrap({"page": 1, "hasNextPage": False}) == ([], False)
     assert unwrap(None) == ([], False)
     assert unwrap([{"id": 1}]) == ([{"id": 1}], False)
+
+    # Link tables: composite key, snake_case project_id, and a missing part fails loudly.
+    link = {"name": "roadblock_tasks", "key": ["roadblock_id", "task_id"]}
+    row = to_bronze_row({"roadblock_id": 764996, "task_id": 5637388, "project_id": 37687},
+                        link, datetime.now(timezone.utc), "b")
+    assert (row["_key"], row["_project_id"]) == ("764996|5637388", "37687"), row
+    other = to_bronze_row({"roadblock_id": 764996, "task_id": 5637389, "project_id": 37687},
+                          link, datetime.now(timezone.utc), "b")
+    assert other["_key"] != row["_key"]
+    try:
+        to_bronze_row({"roadblock_id": 1, "project_id": 2}, link, datetime.now(timezone.utc), "b")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("link row without task_id got a key")
+    plain = to_bronze_row({"id": 9, "projectId": 4}, {"name": "tasks", "key": "id"},
+                          datetime.now(timezone.utc), "b")
+    assert (plain["_key"], plain["_project_id"]) == ("9", "4")
+    keys = {e["name"]: e.get("key", "id") for e in load_registry()}
+    assert keys["roadblock_tasks"] == ["roadblock_id", "task_id"]
+    assert keys["rfv_tasks"] == ["rfv_id", "task_id"]
+    assert keys["activity_tags"] == ["activity_id", "tag_id"]
+    assert keys["task_tags"] == ["task_id", "tag_id"]
 
     print("extract_outbuild_local self-check passed")
 

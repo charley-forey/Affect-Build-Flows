@@ -3,9 +3,9 @@
   "name": "9805079a6c906150a6b6",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1160,
+    "width": 728,
     "height": 40,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "26 trade checklists sharing one schema, 625 items, held once as a versioned library rather than copied into every project workbook. Adding a 27th trade is a row, not a new tab.",
+                    "value": "26 trade templates define 625 items. Counts use the manual registers; Procore inspection results are not linked to these templates. Completion requires one project and valid input; missing input stays blank. Applicability is unverified.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'26 trade checklists sharing one schema, 625 items, held once as a versioned library rather than copied into every project workbook. Adding a 27th trade is a row, not a new tab.'"
+                  "Value": "'26 trade templates define 625 items. Counts use the manual registers; Procore inspection results are not linked to these templates. Completion requires one project and valid input; missing input stays blank. Applicability is unverified.'"
                 }
               }
             }

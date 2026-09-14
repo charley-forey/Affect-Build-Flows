@@ -1,0 +1,25 @@
+{
+  "item_id": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+  "location": "https://api.fabric.microsoft.com/v1/workspaces/1f7caed6-f88a-4e52-bc83-9a498a165301/items/14292ae6-1740-4b97-83f0-d58a664c3f2e/jobs/instances/00b17e0a-9fd5-44cd-a520-3e595613ded8",
+  "selected_endpoints": [
+    "checklist_list_items"
+  ],
+  "definition_sha256": "dd72c41f768f576b82c7de97412f18662a6b31e1a092828b05f8e79fbb08dd43",
+  "rate_limit_library_sha256": "d41bded38d190626eba1178e8f008163dcec10becd6a7fe9eff178689b5a69b5",
+  "scope": "Retry after adding tested bounded transport retries; prior request timed out after 80 archived rows, with no upsert",
+  "latest_job": {
+    "id": "00b17e0a-9fd5-44cd-a520-3e595613ded8",
+    "itemId": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+    "jobType": "RunNotebook",
+    "invokeType": "Manual",
+    "status": "Failed",
+    "failureReason": {
+      "requestId": "c7ead6ba-02fd-49ca-8e99-33882803eaf6",
+      "message": "RuntimeError: 1 of 1 endpoints failed: checklist_list_items\n---------------------------------------------------------------------------\nRuntimeError                              Traceback (most recent call last)\nCell In[20], line 32\n     27         print(f\"  {name:<32} {detail}\")\n     28     # Raise only now. Everything that could land has landed and been merged, so the rerun\n     29     # after a fix is incremental rather than a full re-pull - and the pipeline still goes\n     30     # red, which is the point. Silently succeeding on 43 of 44 is how one endpoint stays\n     31     # broken for a month.\n---> 32     raise RuntimeError(\n     33         f\"{len(failures)} of {len(summary)} endpoints failed: \"\n     34         + \", \".join(name for name, _ in failures)\n     35     )\n     37 incomplete = [a[\"endpoint\"] for a in endpoint_audit if a[\"status\"] == \"incomplete_scope\"]\n     38 if incomplete:\n\nRuntimeError: 1 of 1 endpoints failed: checklist_list_items",
+      "isRetriable": false
+    },
+    "rootActivityId": "df938db3-01a9-4a00-bb61-1a198a69d801",
+    "startTimeUtc": "2026-09-10T09:51:27.2111332",
+    "endTimeUtc": "2026-09-10T09:54:59.13074"
+  }
+}

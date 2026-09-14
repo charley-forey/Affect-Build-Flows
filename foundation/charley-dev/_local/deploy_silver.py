@@ -5,11 +5,9 @@
 
 Writes cd_silver_* into CD_Silver_Lakehouse from the raw payloads in CD_Bronze.
 
-Bronze is EMPTY until cd_01_extract_procore can authenticate, so this currently produces
-empty silver tables. That is deliberate and useful: the pipeline shape is complete and
-provably correct, and the moment credentials land the same notebook fills it. The SQL is
-verified offline by _local/tests/test_silver.py (10 assertions) against real payload
-shapes.
+All declared bronze inputs must be readable before transformations begin. Missing or
+inaccessible inputs fail the run; they must never be replaced by invented empty data.
+Offline fixtures validate the parser contracts; a live Fabric run remains necessary.
 """
 
 from __future__ import annotations
@@ -26,6 +24,7 @@ import deploy as dp  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
 from seedrunner import split_statements  # noqa: E402
+from sage_validation import checks as sage_checks
 
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
@@ -113,8 +112,8 @@ The column names silver produces are a CONTRACT: they must match what
 `sql/silver/01_source_views_cd.sql` exposes as `sv_*`, because every gold file reads
 `sv_*` and nothing else. That is what makes switching gold's source a one-file change.
 
-Verified offline by `_local/tests/test_silver.py` - 10 assertions against real payload
-shapes, including the sv_* column contract itself.
+Verified offline by `_local/tests/test_silver.py`, including the sv_* column contract.
+Offline validation does not establish live input completeness.
 """,
             "markdown",
         ),
@@ -136,9 +135,8 @@ def run_sql(label, sql):
         print(f"  FAILED {{label}}: {{type(exc).__name__}}: {{str(exc)[:300]}}")
 
 # Bronze lives in a DIFFERENT lakehouse, so it is registered as views rather than read
-# through the default catalog. CREATE IF NOT EXISTS declares the contract so silver builds
-# cleanly before ingestion has ever run - an empty table is a valid state, a missing one
-# looks like broken SQL.
+# through the default catalog. Every declared input must exist and be readable.
+# Missing or inaccessible data is not evidence of an empty source population.
 # json_field(payload, 'KEY') - look a JSON key up by NAME, not by path.
 #
 # get_json_object uses a simplified JSONPath that silently returns NULL for bracket keys
@@ -167,13 +165,15 @@ for t in {BRONZE_TABLES!r}:
     try:
         spark.sql(f"CREATE OR REPLACE TEMPORARY VIEW {{t}} AS "
                   f"SELECT * FROM delta.`{{BRONZE}}/{{t}}`")
-    except Exception:
-        # Not yet extracted. Declare the shape so the transforms are exercisable now.
-        spark.sql(f"CREATE OR REPLACE TEMPORARY VIEW {{t}} AS "
-                  f"SELECT * FROM (SELECT NULL AS _key, NULL AS _project_id, "
-                  f"NULL AS payload, NULL AS _ingested_at, NULL AS _batch_id, "
-                  f"NULL AS _row_hash) WHERE 1=0")
-        print(f"  {{t}}: not extracted yet, declared empty")
+    except Exception as exc:
+        results.append({{"step": f"source:{{t}}", "ok": False,
+                         "error": f"{{type(exc).__name__}}: {{exc}}"[:1500]}})
+
+if results:
+    with open(f"{{DIAG}}/silver_run.json", "w", encoding="utf-8") as fh:
+        json.dump(results, fh, indent=1)
+    raise RuntimeError("bronze inputs are missing or unreadable; silver transformation blocked: "
+                       + ", ".join(r["step"] for r in results))
 '''
         ),
     ]
@@ -193,7 +193,7 @@ for t in {BRONZE_TABLES!r}:
             # Concatenated rather than interpolated: the rest of this cell is full of
             # inner f-strings, and making the whole thing an f-string means escaping every
             # one of them.
-            f"tables = {SILVER_TABLES!r}\n"
+            f"tables = {SILVER_TABLES!r}\nsage_rules = {sage_checks()!r}\n"
             """
 # WRITE THE DIAG BEFORE COUNTING ANYTHING.
 #
@@ -208,6 +208,17 @@ for t in {BRONZE_TABLES!r}:
 with open(f"{DIAG}/silver_run.json", "w", encoding="utf-8") as fh:
     json.dump(results, fh, indent=1)
 
+# Independent header/line and bronze/silver checks; failure to execute also blocks.
+for name, query in sage_rules.items():
+    try:
+        failing_rows = spark.sql(query).count()
+        results.append({"step": name, "ok": failing_rows == 0,
+                        "failing_rows": failing_rows, "sql": query,
+                        "error": f"{failing_rows} reconciliation violation(s)"})
+    except Exception as exc:
+        results.append({"step": name, "ok": False, "sql": query,
+                        "error": f"{type(exc).__name__}: {exc}"[:1500]})
+
 counts = {}
 for t in tables:
     # A missing table is a FAILED CREATE upstream, already recorded in results. Catch it so
@@ -217,12 +228,15 @@ for t in tables:
         print(f"  {t:<34} {counts[t]:>7} rows")
     except Exception as exc:
         counts[t] = None
+        results.append({"step": f"count:{t}", "ok": False,
+                        "error": f"{type(exc).__name__}: {exc}"[:1500]})
         print(f"  {t:<34}   MISSING  ({type(exc).__name__})")
 
 rejects = spark.sql("SELECT COUNT(*) AS n FROM cd_dq_rejects").collect()[0]["n"]
 print(f"\\n  cd_dq_rejects {rejects} row(s) - rows that failed their key check")
 
-results.append({"step": "verification", "ok": True, "counts": counts, "rejects": rejects})
+results.append({"step": "verification", "ok": all(v is not None for v in counts.values()),
+                "counts": counts, "rejects": rejects, "error": "one or more table counts failed"})
 with open(f"{DIAG}/silver_run.json", "w", encoding="utf-8") as fh:
     json.dump(results, fh, indent=1)
 
@@ -232,11 +246,9 @@ if failed:
         f"{len(failed)} statement(s) failed:\\n  "
         + "\\n  ".join(f"{r['step']}: {r['error'][:200]}" for r in failed[:5]))
 
-# Zero rows is EXPECTED until cd_01_extract_procore can authenticate, so this is not an
-# error - but it must be visible, not mistaken for a working pipeline.
+# Empty outputs are observable; their cause cannot be inferred from row counts alone.
 if sum(v for v in counts.values() if v is not None) == 0:
-    print("\\nAll silver tables are empty - bronze has not been extracted yet.")
-    print("See _docs/procore-ingestion.md: the ingestion needs Procore credentials.")
+    print("All silver tables are empty; source completeness is not established by this run.")
 else:
     built = [v for v in counts.values() if v is not None]
     print(f"\\nsilver built: {sum(built)} rows across {len(built)} of {len(tables)} tables")

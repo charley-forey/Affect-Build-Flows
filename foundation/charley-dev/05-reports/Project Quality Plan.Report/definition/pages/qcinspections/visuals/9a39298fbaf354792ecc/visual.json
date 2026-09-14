@@ -1,0 +1,224 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "9a39298fbaf354792ecc",
+  "position": {
+    "x": 20,
+    "y": 260,
+    "z": 0,
+    "width": 1164,
+    "height": 360,
+    "tabOrder": 13
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "ProjectKey"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.ProjectKey",
+              "nativeQueryRef": "ProjectKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "InspectionKey"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.InspectionKey",
+              "nativeQueryRef": "InspectionKey"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "InspectionName"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.InspectionName",
+              "nativeQueryRef": "InspectionName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "SourceTemplateName"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.SourceTemplateName",
+              "nativeQueryRef": "SourceTemplateName"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "InspectionDate"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.InspectionDate",
+              "nativeQueryRef": "InspectionDate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "DueDate"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.DueDate",
+              "nativeQueryRef": "DueDate"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "SourceStatus"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.SourceStatus",
+              "nativeQueryRef": "SourceStatus"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "SourceItemCount"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.SourceItemCount",
+              "nativeQueryRef": "SourceItemCount"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "ConformingItemCount"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.ConformingItemCount",
+              "nativeQueryRef": "ConformingItemCount"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "DeficientItemCount"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.DeficientItemCount",
+              "nativeQueryRef": "DeficientItemCount"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ProcoreInspection"
+                    }
+                  },
+                  "Property": "NotInspectedItemCount"
+                }
+              },
+              "queryRef": "fct_ProcoreInspection.NotInspectedItemCount",
+              "nativeQueryRef": "NotInspectedItemCount"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Native inspection register \u2014 source counts. Shows ProjectKey, InspectionKey, InspectionName, SourceTemplateName, InspectionDate, DueDate, SourceStatus, SourceItemCount, ConformingItemCount, DeficientItemCount, NotInspectedItemCount for the current selection.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Native inspection register \u2014 source counts'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

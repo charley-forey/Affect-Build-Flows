@@ -72,11 +72,8 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_cost_codes        # cheatsheet:33
 
-  - name: standard_cost_codes
-    path: /rest/v1.0/standard_cost_codes
-    scope: company
-    api_version: "1.0"
-    bronze_table: cd_bronze_procore_standard_cost_codes  # cheatsheet:34
+  # standard_cost_codes REMOVED 2026-09-13: the request lacked the required
+  # standard_cost_code_list_id (403/404 nightly) and nothing in silver/gold reads it.
 
   # ==========================================================================
   # Financial
@@ -88,6 +85,10 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_prime_contracts
     incremental: filters[updated_at]        # cheatsheet:138
+    # Declared exclusions: a 403/404 on these projects is recorded as excluded_declared,
+    # not a coverage gap. Any other project's 403/404 still fails the run.
+    unavailable_projects:
+      "562949955173068": "Prime Contracts tool not enabled on this project (403/404 observed 2026-09-11..09-13; same project returns 200 on 27 other endpoints)"
 
   # Sub-resource: needs a prime_contract id, which only the call above can supply.
   - name: prime_contract_line_items
@@ -253,12 +254,9 @@ endpoints:
     bronze_table: cd_bronze_procore_potential_change_orders
     incremental: filters[updated_at]        # cheatsheet:178
 
-  - name: change_order_requests
-    path: /rest/v1.0/change_order_requests?project_id={project_id}
-    scope: project
-    api_version: "1.0"
-    bronze_table: cd_bronze_procore_change_order_requests
-    incremental: filters[updated_at]        # cheatsheet:179
+  # change_order_requests REMOVED 2026-09-13: 403/404 on 20/20 projects (this tenant
+  # models prime COs as change_order_packages - see prime_change_orders) and nothing in
+  # silver/gold reads it.
 
   - name: change_order_statuses
     path: /rest/v1.0/change_order/statuses
@@ -318,22 +316,8 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_punch_items            # cheatsheet:92
 
-  # KNOWN 403 ON THIS TENANT, kept deliberately rather than deleted.
-  #
-  # /punch_item_types returns 403 for our service account today. It is a company-scope
-  # reference list, so the failure costs one lookup table and nothing downstream: silver
-  # derives the Punch & RCL class from punch_item_type.name on the item itself
-  # (24_qc_procore_silver.sql), not from this list.
-  #
-  # It stays in the registry because deleting it turns a known permission gap into an
-  # invisible one - the next person to want punch types would re-derive the endpoint, hit
-  # the same 403 and start debugging their auth. When the tool permission is granted this
-  # starts working with no code change, which is the point of a registry.
-  - name: punch_item_types
-    path: /rest/v1.0/punch_item_types
-    scope: company
-    api_version: "1.0"
-    bronze_table: cd_bronze_procore_punch_item_types       # cheatsheet:93
+  # punch_item_types REMOVED 2026-09-13: 403/404 nightly and nothing reads it - silver
+  # takes punch_item_type.name from the punch item itself (24_qc_procore_silver.sql).
 
   - name: inspection_logs
     path: /rest/v1.0/projects/{project_id}/inspection_logs
@@ -362,12 +346,12 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_checklist_lists        # cheatsheet:96
 
-  # The checklist's individual line items - the per-item pass/fail the trade sheets record
-  # by hand. Parent-scoped on checklist_lists, so it costs one call per inspection rather
-  # than one per project; against a 600/hour limit that is the difference between running
-  # nightly and not running.
+  # List inspection items through the documented project endpoint. The nested
+  # /checklist/lists/{id}/items path is not the list action and returned 403/404.
+  # Filter by each discovered inspection: the unfiltered project request repeatedly
+  # timed out. Complete parent discovery and inherited scope failures still apply.
   - name: checklist_list_items
-    path: /rest/v1.0/checklist/lists/{parent_id}/items
+    path: /rest/v1.0/projects/{project_id}/checklist/list_items?filters[list_id][]={parent_id}
     scope: parent
     api_version: "1.0"
     parent:
@@ -446,11 +430,5 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_daily_log_headers      # cheatsheet:51
 
-  # Schedule TASKS, not milestones - the OAS has no milestone path at all
-  # (source-mapping.md:87). Outbuild is the real milestone source; this is pulled for
-  # comparison so we can show Affect what Procore does and does not hold.
-  - name: schedule
-    path: /rest/v1.0/projects/{project_id}/schedule
-    scope: project
-    api_version: "1.0"
-    bronze_table: cd_bronze_procore_schedule               # cheatsheet:47
+  # schedule REMOVED 2026-09-13: it is schedule integration metadata, not tasks; 403/404
+  # on one project nightly, and nothing reads it (milestones come from Outbuild).

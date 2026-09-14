@@ -1,0 +1,27 @@
+{
+  "item": {
+    "id": "4eff5de6-3c4a-4238-9af2-79fb69f07709",
+    "type": "Notebook",
+    "displayName": "cd_06_land_manual",
+    "description": "",
+    "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+    "folderId": "25dd1e34-bd57-43ca-aa29-c8fd33013101"
+  },
+  "response": {
+    "result": {
+      "content": [
+        {
+          "text": "null",
+          "type": "text"
+        },
+        {
+          "text": "Retry-After: 20\r\nx-ms-operation-id: 209bf8f5-5ee4-4c95-97b4-bceebf609a97\r\nRequestId: de009dfa-eb3f-402f-ab7c-0e4eb3e95fd3\r\nDate: Thu, 10 Sep 2026 10:11:43 GMT\r\nLocation: https://api.fabric.microsoft.com/v1/operations/209bf8f5-5ee4-4c95-97b4-bceebf609a97",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    },
+    "jsonrpc": "2.0",
+    "id": 4
+  }
+}

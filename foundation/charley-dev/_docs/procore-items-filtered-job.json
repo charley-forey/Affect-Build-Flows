@@ -1,0 +1,23 @@
+{
+  "item_id": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+  "location": "https://api.fabric.microsoft.com/v1/workspaces/1f7caed6-f88a-4e52-bc83-9a498a165301/items/14292ae6-1740-4b97-83f0-d58a664c3f2e/jobs/instances/c369b3aa-d255-45ec-898c-28cfcaf6ba99",
+  "selected_endpoints": [
+    "checklist_lists",
+    "checklist_list_items"
+  ],
+  "definition_sha256": "278d222043c8b9ddaf6471452d2f867d065868a3e39a3fc301c7c24b2215ceed",
+  "scope_library_sha256": "0ff078c1010124ca98c0323d1463b7f12e7fb1db15bb5fcd113649b116e9548d",
+  "config_sha256": "37bd2079a5e3e95b4fd915e2d2df77898eb11d78a6a1010b6ccfc0b55e7917ee",
+  "scope": "All active-project inspection parents then items filtered per discovered inspection; dedicated config; full extractor configuration unchanged",
+  "latest_job": {
+    "id": "c369b3aa-d255-45ec-898c-28cfcaf6ba99",
+    "itemId": "14292ae6-1740-4b97-83f0-d58a664c3f2e",
+    "jobType": "RunNotebook",
+    "invokeType": "Manual",
+    "status": "Completed",
+    "failureReason": null,
+    "rootActivityId": "4c4db4af-6e15-4607-a4d5-8bcd47adbfc9",
+    "startTimeUtc": "2026-09-10T09:59:43.1140704",
+    "endTimeUtc": "2026-09-10T10:16:22.130891"
+  }
+}

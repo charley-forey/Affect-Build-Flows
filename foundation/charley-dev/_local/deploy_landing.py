@@ -73,7 +73,7 @@ import json, os, sys, traceback
 from pyspark.sql import functions as F
 
 sys.path.insert(0, "/lakehouse/default/Files/lib")
-from fabric_common import merge_sql          # the tested MERGE builder, not a second copy
+from fabric_common import merge_sql, prepare_merge
 
 DIAG = "/lakehouse/default/Files/_diag"
 LANDING = "/lakehouse/default/Files/_landing"
@@ -106,10 +106,27 @@ print(f"{{len(manifest['endpoints'])}} endpoint file(s), "
         cell(
             f'''
 results, landed = [], {{}}
+extract_failures = {{f["endpoint"]: f["error"] for f in manifest.get("failures", [])}}
 
 for entry in manifest["endpoints"]:
-    table, rows_expected = entry["table"], entry["rows"]
+    table, rows_expected = entry["table"], entry.get("rows", 0)
     path = f"Files/_landing/{{batch}}/{{table}}.jsonl"
+
+    if not os.path.exists(f"{{LANDING}}/{{batch}}/{{table}}.jsonl"):
+        if entry["endpoint"] in extract_failures:
+            # Failed at extract time and recorded as such: nothing to land, and the
+            # extract run already reported it. Visible here, not blocking.
+            results.append({{"table": table, "ok": True, "landed": False,
+                             "note": "not landed - failed at extract time",
+                             "extract_error": extract_failures[entry["endpoint"]]}})
+            print(f"  {{table:<44}} not landed (failed at extract time)")
+            continue
+        if rows_expected:
+            # The manifest promises rows this batch does not hold. Never a silent skip.
+            results.append({{"table": table, "ok": False,
+                             "error": f"{{path}} missing but manifest records {{rows_expected}} row(s)"}})
+            print(f"  {{table:<44}} FAILED  file missing")
+            continue
 
     if rows_expected == 0:
         # A genuinely empty endpoint. Skip rather than fail - a company with no change
@@ -137,7 +154,7 @@ for entry in manifest["endpoints"]:
                 df = df.withColumn(col, F.lit(None).cast("string"))
 
         cols = {BRONZE_COLUMNS!r} + ["_merge_key"]
-        df = df.select(*cols)
+        df = prepare_merge(df.select(*cols), ["_merge_key"])
 
         if not spark.catalog.tableExists(table):
             # First landing. overwriteSchema so the table is created WITH data files -

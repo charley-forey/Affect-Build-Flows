@@ -1,0 +1,18 @@
+[
+  {
+    "id": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+    "type": "Notebook",
+    "displayName": "cd_01_extract_procore",
+    "description": "",
+    "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+    "folderId": "25dd1e34-bd57-43ca-aa29-c8fd33013101"
+  },
+  {
+    "id": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
+    "type": "Dataflow",
+    "displayName": "CD_Sage_Ingest",
+    "description": "Sage 100 Contractor -> CD_Bronze_Lakehouse, including the arivln/apivln line tables where cost codes and real retainage live.",
+    "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+    "folderId": "25dd1e34-bd57-43ca-aa29-c8fd33013101"
+  }
+]

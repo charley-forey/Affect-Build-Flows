@@ -6,7 +6,7 @@
     "y": 392,
     "z": 0,
     "width": 560,
-    "height": 290,
+    "height": 260,
     "tabOrder": 22
   },
   "visual": {
@@ -41,11 +41,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Open NCRs"
+                  "Property": "Open Observations"
                 }
               },
-              "queryRef": "_Measures.Open NCRs",
-              "nativeQueryRef": "Open NCRs"
+              "queryRef": "_Measures.Open Observations",
+              "nativeQueryRef": "Open Observations"
             }
           ]
         }
@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Open NCRs by project. Shows Open NCRs by ProjectName.'"
+                  "Value": "'Bar chart. Open Observations by project. Shows Open Observations by ProjectName.'"
                 }
               }
             }
@@ -72,7 +72,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open NCRs by project'"
+                  "Value": "'Open Observations by project'"
                 }
               }
             },

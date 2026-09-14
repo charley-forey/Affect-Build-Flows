@@ -1,0 +1,11 @@
+{
+  "changed_endpoints": [
+    "checklist_list_items"
+  ],
+  "config_before_sha256": "606542f6be9ace5461802d01ae5a7e1baec20269e41477731fb4113fd2a4f84d",
+  "config_after_sha256": "b320e8d174008f2e7fe44bb50b2d2018cfa9b73174ff33fe02eb16eac70bbe7d",
+  "helper_sha256": "0ff078c1010124ca98c0323d1463b7f12e7fb1db15bb5fcd113649b116e9548d",
+  "readback_equal": true,
+  "transport": "OneLake REST, not MCP",
+  "execution_requested": false
+}

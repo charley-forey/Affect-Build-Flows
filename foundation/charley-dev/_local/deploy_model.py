@@ -10,8 +10,9 @@ has DOUBLE, and a declared type that does not match makes Direct Lake drop the t
 silently.
 
 DirectLake, matching the existing workspace models (`mode: directLake`,
-`schemaName: dbo`) rather than import - so the report reads the lakehouse directly and
-there is no refresh to schedule or fail.
+`schemaName: dbo`). Direct Lake framing determines which table versions readers see.
+Automatic updates, explicit refreshes and failure isolation require separate verification;
+a successful model deployment does not establish a validated publication boundary.
 """
 
 from __future__ import annotations
@@ -62,6 +63,8 @@ MODEL_TABLES = [
     # Cross-source coverage. These answer "is this project actually in Sage and Outbuild,
     # or is it silently reading as zero revenue?" - which nothing else in the model can.
     "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
+    # Every known data gap in one register - silver rejects included - for the DQ page.
+    "dq_DataGap",
     # The pipeline heartbeat. Not project data - it is how the report answers
     # "are these numbers from last night, or from three weeks ago?".
     "meta_PipelineRun",
@@ -104,6 +107,7 @@ RELATIONSHIPS = [
     ("fct_FinancialPeriod", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_FinancialPeriod", "MonthStart", "dim_Date", "Date"),
     ("dim_ProjectCrosswalk", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("dq_DataGap", "ProjectKey", "dim_Project", "ProjectKey"),
     ("man_Wins", "ProjectKey", "dim_Project", "ProjectKey"),
     ("man_Wins", "MonthStart", "dim_Date", "Date"),
     ("man_Risks", "ProjectKey", "dim_Project", "ProjectKey"),
@@ -125,6 +129,22 @@ RELATIONSHIPS = [
 
 # Measures. Each carries the workbook cell it replaces, so anyone reading the model can
 # trace a number back to the spreadsheet it came from.
+PIPELINE_STATUS_DAX = '''VAR Last = MAX ( meta_PipelineRun[RunAt] )
+VAR Built = [Last Refresh]
+VAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )
+VAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> "ok" || meta_PipelineRun[Blocking] > 0 ) )
+VAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )
+VAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )
+RETURN SWITCH ( TRUE (),
+    ISBLANK ( Last ), "Unknown - no checked run",
+    Built > Last, "Unvalidated - data built after last check",
+    Blocked > 0, "BLOCKED - validation failed",
+    Hrs < 0, "Unknown - check timestamp is in the future",
+    Hrs > 72, "STALE - no checked run in over 72 hours",
+    Hrs > 30, "Late - no checked run in over 30 hours",
+    Warnings > 0, "Gold checked with warnings; source completeness unverified",
+    "Gold checks passed; source completeness unverified" )'''
+
 MEASURES = [
     # BALANCES, NOT FLOWS. fct_FinancialPeriod is one row per project per MONTH, and
     # OriginalContract on it is dim_Project's contract amount repeated on every one of
@@ -168,6 +188,8 @@ MEASURES = [
     ("Approved Change Orders",
      "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )",
      '"$#,0"', "derived - approved COs, the complement of [Pending Change Orders]"),
+    ("Change Order Amount", "SUM ( fct_ChangeOrder[Amount] )", '"$#,0"',
+     "change-order grain; responds to status and item filters"),
     ("Budget", "SUM ( fct_BudgetLine[BudgetAmount] )", '"$#,0"', "FINANCIALS!C19:C20"),
     ("Forecast", "SUM ( fct_BudgetLine[ForecastAmount] )", '"$#,0"', "FINANCIALS!D19:D20"),
     ("Committed", "SUM ( fct_BudgetLine[CommittedAmount] )", '"$#,0"', "FINANCIALS!D61"),
@@ -180,9 +202,9 @@ MEASURES = [
     # idiomatic DAX for banded IFs - flat instead of nested.
     ("Budget Status",
      'VAR V = [Budget Variance %]\n'
-     '\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "On Track", '
-     'V >= -0.05, "Watch", "Over Budget" )',
-     None, "FINANCIALS!F19:F20 - derivable, but typed by hand today"),
+     '\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "Spend within budget", '
+     'V >= -0.05, "Spend over budget up to 5%", "Spend over budget above 5%" )',
+     None, "FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment"),
     ("Percent Bought Out", "DIVIDE ( [Committed], [Budget] )", '"0.0%"', "FINANCIALS!D62"),
 
 
@@ -203,10 +225,7 @@ MEASURES = [
     # Text, not a colour. A stale pipeline has to be readable in greyscale and by the 8% of
     # men who are colour-blind - the same rule the theme applies to every RAG status.
     ("Pipeline Status",
-     "VAR Hrs = [Hours Since Last Checked Run]\n"
-     '\t\t\tRETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", '
-     'Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", '
-     '"STALE - these numbers may be weeks old" )',
+     PIPELINE_STATUS_DAX,
      None, "derived"),
     ("Blocking Violations Last Run",
      "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
@@ -346,10 +365,10 @@ MEASURES = [
      "\t\t\tRETURN DIVIDE ( [Total Billed] - Prior, Prior )",
      '"0.0%"', "replaces the hand-keyed LAST PERIOD column"),
     ("Open Submittals",
-     "CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE )",
+     'CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE, fct_RfiSubmittal[ItemType] = "Submittal" )',
      '"#,0"', "SUBMITTALS & RFI!D"),
     ("Open Submittals Past Due",
-     "CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE )",
+     'CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE, fct_RfiSubmittal[ItemType] = "Submittal" )',
      '"#,0"', "derived - the workbook has no equivalent"),
     ("Avg Days Open", "AVERAGE ( fct_RfiSubmittal[DaysOpen] )", '"#,0.0"',
      "QUALITY!D39 - typed by hand"),
@@ -393,6 +412,8 @@ MEASURES = [
     ("Projects Fully Mapped",
      "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[SystemCount] = 3 ), 0 )",
      '"#,0"', "present in Procore AND Sage AND Outbuild"),
+    ("Projects In Coverage", "COUNTROWS ( dim_ProjectCrosswalk )", '"#,0"',
+     "all projects in the selected coverage category, including incomplete mappings"),
     ("Projects Missing From Sage",
      "COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInSage] = FALSE ), 0 )",
      '"#,0"', "these read as ZERO revenue everywhere - the most dangerous gap"),
@@ -415,8 +436,18 @@ MEASURES = [
      "CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[HasDateInversion] = TRUE )",
      '"#,0"', "diagnostics - Excel defect #6, never flagged in the workbook"),
     ("DQ Unmatched Invoices",
-     "CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )",
-     '"#,0"', "diagnostics - AR rows whose Sage job resolves to no project"),
+     "CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
+     '"#,0"', "diagnostics - unmatched AR across all projects; retains the selected month"),
+    ("Unmatched AR Amount - All Projects",
+     "CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
+     '"$#,0.00"', "unattributed billed amount across all projects; retains the selected month"),
+    # The gap register. Gaps with no project (rejected source rows, expired certificates,
+    # empty registers) have a blank ProjectKey, so selecting a project hides them - clear
+    # the project slicer to see the whole register.
+    ("Data Gaps", "COALESCE ( COUNTROWS ( dq_DataGap ), 0 )", '"#,0"',
+     "nothing - rejects, unmatched AR, unmapped trades, coverage and certificate gaps in one register"),
+    ("Data Gap Amount", "SUM ( dq_DataGap[Amount] )", '"$#,0.00"',
+     "money carried by data gaps - today only unmatched AR invoices carry an amount"),
 
     # ---- Trend and portfolio ------------------------------------------------
     #
@@ -455,11 +486,21 @@ MEASURES = [
     # no actual, so this shows the schedule AS IT STANDS - it cannot show drift against a
     # baseline. That needs baseline dates Outbuild is not supplying today.
     ("Milestone Offset Days",
-     "VAR Origin = CALCULATE ( MIN ( fct_Milestone[CurrentStart] ), ALLSELECTED ( fct_Milestone ) )\n"
-     "RETURN DATEDIFF ( Origin, MIN ( fct_Milestone[CurrentStart] ), DAY )",
+     "VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\n"
+     "VAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\n"
+     "VAR Origin = MINX ( FILTER ( ALLSELECTED ( fct_Milestone ), "
+     "NOT ISBLANK ( fct_Milestone[CurrentStart] ) && NOT ISBLANK ( fct_Milestone[CurrentFinish] ) "
+     "&& fct_Milestone[CurrentFinish] >= fct_Milestone[CurrentStart] ), fct_Milestone[CurrentStart] )\n"
+     "RETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) "
+     "&& NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), "
+     "DATEDIFF ( Origin, StartDate, DAY ), BLANK () )",
      '"#,0"', "Gantt geometry - the transparent leading bar"),
     ("Milestone Duration Days",
-     "DATEDIFF ( MIN ( fct_Milestone[CurrentStart] ), MAX ( fct_Milestone[CurrentFinish] ), DAY )",
+     "VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\n"
+     "VAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\n"
+     "RETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) "
+     "&& NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, "
+     "DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () )",
      '"#,0"', "Gantt geometry - the visible bar"),
 
     # ---- Report context -----------------------------------------------------
@@ -523,7 +564,7 @@ def folder_for(name: str, _cache: dict = {}) -> str:
     return _cache[name]
 
 
-def introspect() -> dict[str, list[tuple[str, str]]]:
+def introspect(lakehouse_id: str | None = None) -> dict[str, list[tuple[str, str]]]:
     """Column names and types for each model table, read from FABRIC.
 
     Authoritative on purpose. Inferring types from the offline DuckDB build is unsound:
@@ -538,7 +579,7 @@ def introspect() -> dict[str, list[tuple[str, str]]]:
     """
     import deploy_gold as dg
 
-    raw = dg.fetch_diagnostics(ds.lakehouse()["id"], "gold_schema.json")
+    raw = dg.fetch_diagnostics(lakehouse_id or ds.lakehouse()["id"], "gold_schema.json")
     if not raw:
         raise RuntimeError(
             "gold_schema.json not found in the lakehouse. Run deploy_gold.py --apply first "
@@ -567,15 +608,20 @@ def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
     lines = [f"table {name}", ""]
     for col, dtype in columns:
         quoted = f"'{col}'" if not col.isidentifier() else col
+        source_completion = name == "fct_ProcoreInspection" and col == "SourcePercentComplete"
+        if source_completion:
+            lines.append("\t/// Raw source completion value; unit and scale require confirmation. Unknown remains blank. Do not sum across inspections.")
         lines += [
             f"\tcolumn {quoted}",
             f"\t\tdataType: {dtype}",
-            "\t\tsummarizeBy: none" if dtype in ("string", "boolean", "dateTime")
+            "\t\tsummarizeBy: none" if source_completion or dtype in ("string", "boolean", "dateTime")
             else "\t\tsummarizeBy: sum",
             f"\t\tsourceColumn: {col}",
         ]
         if dtype == "dateTime":
             lines.append('\t\tformatString: yyyy-mm-dd')
+        elif source_completion:
+            lines.append('\t\tformatString: 0.##')
         lines.append("")
     lines += [
         f"\tpartition {name} = entity",
@@ -686,15 +732,16 @@ def expressions_tmdl(lakehouse_id: str) -> str:
     )
 
 
-def write_files(lakehouse_id: str) -> dict[str, str]:
+def write_files(lakehouse_id: str, output_dir: Path | None = None,
+                model_name: str | None = None) -> dict[str, str]:
     """Build every TMDL part. Also written to disk so the model is reviewable in a diff."""
-    schema = introspect()
+    schema = introspect(lakehouse_id)
 
     files = {
         ".platform": json.dumps({
             "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/"
                        "platformProperties/2.0.0/schema.json",
-            "metadata": {"type": "SemanticModel", "displayName": MODEL_NAME},
+            "metadata": {"type": "SemanticModel", "displayName": model_name or MODEL_NAME},
             "config": {"version": "2.0", "logicalId": "00000000-0000-0000-0000-000000000000"},
         }, indent=2),
         "definition.pbism": json.dumps({
@@ -712,7 +759,7 @@ def write_files(lakehouse_id: str) -> dict[str, str]:
         files[f"definition/tables/{table}.tmdl"] = table_tmdl(table, cols)
 
     for rel, content in files.items():
-        path = MODEL_DIR / rel
+        path = (output_dir or MODEL_DIR) / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         # newline="" prevents Python translating \n to \r\n on Windows. TMDL is
         # whitespace-significant and the payload is uploaded verbatim, so the file on disk

@@ -17,9 +17,8 @@
 -- An exported page has to state what it is a snapshot of; the workbook used TODAY(), which
 -- meant a saved file re-dated itself every time it was opened (defect #5). Stamping at
 -- BUILD time rather than at view time is the whole point.
-CREATE OR REPLACE TABLE measures_anchor AS
--- No parentheses: bare CURRENT_TIMESTAMP is ANSI and valid in both Spark and the DuckDB
--- the offline suite replays this same file through. `CURRENT_TIMESTAMP()` is Spark-only
--- and fails the tests, which is the check doing its job.
+-- Seeding runs independently of ingestion and must not advance the report's build time.
+-- deploy_gold stamps this only after the gold statements and verification succeed.
+CREATE TABLE IF NOT EXISTS measures_anchor AS
 SELECT CAST('measures' AS STRING) AS _placeholder,
-       CURRENT_TIMESTAMP         AS _built_at;
+       CAST(NULL AS TIMESTAMP)    AS _built_at;

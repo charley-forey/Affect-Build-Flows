@@ -3,9 +3,9 @@
   "name": "b43097c8890d80332487",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1160,
+    "width": 728,
     "height": 40,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Read from Procore Observations - the client's workbook names Procore as the mandatory system of record for quality, so these are not retyped. NCRs are meant to close before the next progress billing is approved.",
+                    "value": "Includes all retrieved Procore observations, not only confirmed NCRs. NCR classification requires review. The monthly chart groups currently open records by creation month; it is not historical month-end backlog.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Read from Procore Observations - the client''s workbook names Procore as the mandatory system of record for quality, so these are not retyped. NCRs are meant to close before the next progress billing is approved.'"
+                  "Value": "'Includes all retrieved Procore observations, not only confirmed NCRs. NCR classification requires review. The monthly chart groups currently open records by creation month; it is not historical month-end backlog.'"
                 }
               }
             }

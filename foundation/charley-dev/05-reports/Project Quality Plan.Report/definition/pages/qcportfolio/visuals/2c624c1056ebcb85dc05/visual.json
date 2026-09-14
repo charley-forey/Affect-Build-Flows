@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Avg Days To Close NCR"
+                  "Property": "Avg Observation Closure Days"
                 }
               },
-              "queryRef": "_Measures.Avg Days To Close NCR",
-              "nativeQueryRef": "Avg Days To Close NCR"
+              "queryRef": "_Measures.Avg Observation Closure Days",
+              "nativeQueryRef": "Avg Observation Closure Days"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Avg Days To Close NCR. Shows Avg Days To Close NCR for the current selection.'"
+                  "Value": "'Card. Avg Observation Closure Days. Shows Avg Observation Closure Days for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Avg Days To Close NCR'"
+                  "Value": "'Avg Observation Closure Days'"
                 }
               }
             },

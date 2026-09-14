@@ -12,8 +12,13 @@
 -- rewrites last year's scores - a project that scored 0.72 in March would show a different
 -- number the moment someone decided safety mattered more. EffectiveTo NULL = current.
 
+-- Weight is a ratio, not money: DOUBLE, not the DECIMAL a VALUES literal infers. A decimal
+-- column becomes a Power BI fixed-decimal (4 dp), which rounded every weighted intermediate
+-- and put Project Scorecard off by up to 7e-5 on 4 live projects - enough to flip the 0.6
+-- at-risk cutoff for a project sitting on it.
 CREATE OR REPLACE TABLE dim_ScorecardWeight AS
-SELECT * FROM (VALUES
+SELECT CategoryKey, CategoryName, CAST(Weight AS DOUBLE) AS Weight, SortOrder, EffectiveFrom, EffectiveTo
+FROM (VALUES
     (1, 'Accounts Receivable',   0.12, 1, DATE '2023-01-01', CAST(NULL AS DATE)),
     (2, 'Profitability',         0.12, 2, DATE '2023-01-01', CAST(NULL AS DATE)),
     (3, 'Cash Position',         0.12, 3, DATE '2023-01-01', CAST(NULL AS DATE)),

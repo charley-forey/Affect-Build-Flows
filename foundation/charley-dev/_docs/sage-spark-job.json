@@ -1,0 +1,16 @@
+{
+  "run_id": "d23486dc4ca14583bfc07540a65d08f6",
+  "item_id": "9aced743-3ddb-45cf-8793-80c6b9685f03",
+  "location": "https://api.fabric.microsoft.com/v1/workspaces/1f7caed6-f88a-4e52-bc83-9a498a165301/items/9aced743-3ddb-45cf-8793-80c6b9685f03/jobs/instances/c1e7864c-d694-47d8-95eb-7c244077df65",
+  "latest_job": {
+    "id": "c1e7864c-d694-47d8-95eb-7c244077df65",
+    "itemId": "9aced743-3ddb-45cf-8793-80c6b9685f03",
+    "jobType": "RunNotebook",
+    "invokeType": "Manual",
+    "status": "Completed",
+    "failureReason": null,
+    "rootActivityId": "52fba1c3-a4fb-4101-a9bf-842aca1a00c5",
+    "startTimeUtc": "2026-09-10T06:47:52.4275033",
+    "endTimeUtc": "2026-09-10T06:49:08.6020612"
+  }
+}

@@ -41,3 +41,15 @@ __pycache__/
 
 # LibreOffice lock files
 .~lock.*#
+
+# charley-dev evidence: raw source payloads, driver logs and large dumps carry client PII
+# (people's emails, names) and this repo is PUBLIC. Keep locally; commit summaries/hashes only.
+foundation/charley-dev/_docs/**/*.jsonl
+foundation/charley-dev/_docs/**/*-stdout.txt
+foundation/charley-dev/_docs/**/*-error-tail.txt
+foundation/charley-dev/_docs/inspection-silver-live.json
+foundation/charley-dev/_docs/budget-bronze-evidence.json
+foundation/charley-dev/_docs/budget-grain-evidence.json
+foundation/charley-dev/_docs/candidate-monthly-dax-evidence.json
+foundation/charley-dev/_docs/candidate-qc-dax-evidence.json
+foundation/charley-dev/_docs/procore-repair-spark-jobs.json

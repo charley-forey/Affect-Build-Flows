@@ -1,0 +1,529 @@
+{
+  "captured_at": "2026-09-10T06:36:11.243863+00:00",
+  "query": "EVALUATE TABLETRAITS()",
+  "models": {
+    "Affect Project Report": {
+      "id": "4cdfb689-232a-4f33-a6bf-d53e90e8025a",
+      "traits": [
+        {
+          "[TableName]": "_Measures",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/measures_anchor/"
+        },
+        {
+          "[TableName]": "dim_Date",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_date/"
+        },
+        {
+          "[TableName]": "dim_Project",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_project/"
+        },
+        {
+          "[TableName]": "dim_Vendor",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_vendor/"
+        },
+        {
+          "[TableName]": "dim_CostCode",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_costcode/"
+        },
+        {
+          "[TableName]": "dim_Trade",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_trade/"
+        },
+        {
+          "[TableName]": "dim_Status",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_status/"
+        },
+        {
+          "[TableName]": "dim_Owner",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_owner/"
+        },
+        {
+          "[TableName]": "dim_ActivityCategory",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_activitycategory/"
+        },
+        {
+          "[TableName]": "dim_ScorecardWeight",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_scorecardweight/"
+        },
+        {
+          "[TableName]": "dim_ScorecardBand",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_scorecardband/"
+        },
+        {
+          "[TableName]": "fct_BudgetLine",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_budgetline/"
+        },
+        {
+          "[TableName]": "fct_ChangeOrder",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_changeorder/"
+        },
+        {
+          "[TableName]": "fct_Invoice",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_invoice/"
+        },
+        {
+          "[TableName]": "fct_RfiSubmittal",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_rfisubmittal/"
+        },
+        {
+          "[TableName]": "fct_Milestone",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_milestone/"
+        },
+        {
+          "[TableName]": "fct_FinancialPeriod",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_financialperiod/"
+        },
+        {
+          "[TableName]": "man_Wins",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_wins/"
+        },
+        {
+          "[TableName]": "man_Risks",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_risks/"
+        },
+        {
+          "[TableName]": "man_PriorityItems",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_priorityitems/"
+        },
+        {
+          "[TableName]": "man_Flags",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_flags/"
+        },
+        {
+          "[TableName]": "man_Survey",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_survey/"
+        },
+        {
+          "[TableName]": "man_SafetyMonthly",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_safetymonthly/"
+        },
+        {
+          "[TableName]": "man_QualityMonthly",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qualitymonthly/"
+        },
+        {
+          "[TableName]": "man_Milestones",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_milestones/"
+        },
+        {
+          "[TableName]": "man_DailyLogCompliance",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_dailylogcompliance/"
+        },
+        {
+          "[TableName]": "dim_ProjectCrosswalk",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_projectcrosswalk/"
+        },
+        {
+          "[TableName]": "dim_VendorCrosswalk",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_vendorcrosswalk/"
+        },
+        {
+          "[TableName]": "dim_CostCodeCrosswalk",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_costcodecrosswalk/"
+        },
+        {
+          "[TableName]": "fct_QualityItem",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_qualityitem/"
+        },
+        {
+          "[TableName]": "fct_SafetyMonthly",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_safetymonthly/"
+        },
+        {
+          "[TableName]": "fct_Billing",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_billing/"
+        },
+        {
+          "[TableName]": "fct_DirectCost",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_directcost/"
+        },
+        {
+          "[TableName]": "bridge_ProjectVendor",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/bridge_projectvendor/"
+        },
+        {
+          "[TableName]": "bridge_VendorCostCode",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/bridge_vendorcostcode/"
+        },
+        {
+          "[TableName]": "fct_VendorInsurance",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_vendorinsurance/"
+        },
+        {
+          "[TableName]": "meta_PipelineRun",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/meta_pipelinerun/"
+        }
+      ]
+    },
+    "Project Quality Plan": {
+      "id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+      "traits": [
+        {
+          "[TableName]": "_Measures",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/measures_anchor/"
+        },
+        {
+          "[TableName]": "dim_Date",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_date/"
+        },
+        {
+          "[TableName]": "dim_Project",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_project/"
+        },
+        {
+          "[TableName]": "qc_seed_Trade",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/qc_seed_trade/"
+        },
+        {
+          "[TableName]": "qc_seed_ChecklistItem",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/qc_seed_checklistitem/"
+        },
+        {
+          "[TableName]": "qc_seed_Gate",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/qc_seed_gate/"
+        },
+        {
+          "[TableName]": "qc_seed_DohItem",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/qc_seed_dohitem/"
+        },
+        {
+          "[TableName]": "dim_QcStatus",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/dim_qcstatus/"
+        },
+        {
+          "[TableName]": "fct_QcNcr",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_qcncr/"
+        },
+        {
+          "[TableName]": "fct_QcPunch",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_qcpunch/"
+        },
+        {
+          "[TableName]": "fct_QcSubmittal",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/fct_qcsubmittal/"
+        },
+        {
+          "[TableName]": "man_QcDfow",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcdfow/"
+        },
+        {
+          "[TableName]": "man_QcItp",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcitp/"
+        },
+        {
+          "[TableName]": "man_QcGate",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcgate/"
+        },
+        {
+          "[TableName]": "man_QcSpecialInspection",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcspecialinspection/"
+        },
+        {
+          "[TableName]": "man_QcCommissioning",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qccommissioning/"
+        },
+        {
+          "[TableName]": "man_QcInspectorSignIn",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcinspectorsignin/"
+        },
+        {
+          "[TableName]": "man_QcChecklistResult",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcchecklistresult/"
+        },
+        {
+          "[TableName]": "man_QcDohResult",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/man_qcdohresult/"
+        },
+        {
+          "[TableName]": "meta_PipelineRun",
+          "[StorageMode]": "DirectLake",
+          "[SingleSignOn]": null,
+          "[DatasourceSupportsAutoAggregations]": false,
+          "[ExcludedFromAutomaticAggregations]": false,
+          "[DirectLakeFallbackInfo]": null,
+          "[DirectLakeUri]": "/1f7caed6-f88a-4e52-bc83-9a498a165301/812ec953-5517-447e-95aa-062f7cf89b28/Tables/dbo/meta_pipelinerun/"
+        }
+      ]
+    }
+  }
+}

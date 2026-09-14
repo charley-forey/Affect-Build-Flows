@@ -1,0 +1,42 @@
+{
+  "delta_log": "0c26a970-705b-44c2-8366-9101cd6f4e7f/Tables/dbo/cd_silver_qc_inspection/_delta_log/00000000000000000003.json",
+  "metadata": {
+    "id": "268454a9-93a0-4426-a8c0-d6632fcdc508",
+    "format": {
+      "provider": "parquet",
+      "options": {}
+    },
+    "schemaString": "{\"type\":\"struct\",\"fields\":[{\"name\":\"project_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"inspection_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"inspection_number\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"name\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"inspection_type\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"template_name\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"trade\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"inspector_name\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"inspectors_json\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"template_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"item_count\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"conforming_item_count\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"deficient_item_count\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"not_inspected_item_count\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"na_item_count\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"neutral_item_count\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"source_status\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"inspection_date\",\"type\":\"date\",\"nullable\":true,\"metadata\":{}},{\"name\":\"due_date\",\"type\":\"date\",\"nullable\":true,\"metadata\":{}},{\"name\":\"percent_complete\",\"type\":\"double\",\"nullable\":true,\"metadata\":{}},{\"name\":\"_ingested_at\",\"type\":\"timestamp\",\"nullable\":true,\"metadata\":{}},{\"name\":\"_batch_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]}",
+    "partitionColumns": [],
+    "configuration": {
+      "delta.stats.extended.collect": "true",
+      "delta.stats.extended.inject": "true"
+    },
+    "createdTime": 1789035707217
+  },
+  "fields": [
+    "project_id",
+    "inspection_id",
+    "inspection_number",
+    "name",
+    "inspection_type",
+    "template_name",
+    "trade",
+    "inspector_name",
+    "inspectors_json",
+    "template_id",
+    "item_count",
+    "conforming_item_count",
+    "deficient_item_count",
+    "not_inspected_item_count",
+    "na_item_count",
+    "neutral_item_count",
+    "source_status",
+    "inspection_date",
+    "due_date",
+    "percent_complete",
+    "_ingested_at",
+    "_batch_id"
+  ],
+  "sql_endpoint_new_columns_available": false
+}

@@ -6,6 +6,7 @@ Power Query names real tables and most of their columns.
 
 | File | What it is |
 |---|---|
+| [`SAGE-100-REFERENCE.md`](SAGE-100-REFERENCE.md) | **Start here.** The complete consolidated reference — all 8 extracted tables, columns, keys, types, silver/gold layers, measured values and gaps, compiled from every source in the repo. |
 | [`OBSERVED-SCHEMA.md`](OBSERVED-SCHEMA.md) | **Generated.** Tables, columns, renames, foreign keys, derived from the live M code. |
 | [`derive_schema.py`](derive_schema.py) | Regenerates it: `python derive_schema.py`. Self-check: `--selftest`. |
 

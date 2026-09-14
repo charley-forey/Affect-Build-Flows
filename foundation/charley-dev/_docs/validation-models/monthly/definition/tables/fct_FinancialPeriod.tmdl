@@ -1,0 +1,94 @@
+table fct_FinancialPeriod
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column OriginalContract
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: OriginalContract
+
+	column CurrentContract
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CurrentContract
+
+	column PendingChangeOrders
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PendingChangeOrders
+
+	column AgeOfOldestUnapprovedCO
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: AgeOfOldestUnapprovedCO
+
+	column ChangeOrderCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: ChangeOrderCount
+
+	column BudgetAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BudgetAmount
+
+	column ForecastAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ForecastAmount
+
+	column CommittedAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CommittedAmount
+
+	column SpentToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: SpentToDate
+
+	column CostToComplete
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CostToComplete
+
+	column BilledThisPeriod
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BilledThisPeriod
+
+	column PaidThisPeriod
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PaidThisPeriod
+
+	column ArOutstanding
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ArOutstanding
+
+	column InvoiceCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: InvoiceCount
+
+	column PercentBoughtOut
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PercentBoughtOut
+
+	partition fct_FinancialPeriod = entity
+		mode: directLake
+		source
+			entityName: fct_financialperiod
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

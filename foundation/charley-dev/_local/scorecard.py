@@ -102,14 +102,13 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         # -- drivers -------------------------------------------------------------
         (
             "Avg Days To Payment",
-            # The AR header carries the amount paid but NOT the payment DATE, so days-to-
-            # payment cannot be computed from it (verified while building fct_Invoice).
-            # Returning BLANK is deliberate: the alternative is substituting days-to-DUE,
-            # which looks like an answer and is not one. The category scores BLANK and
-            # [Scorecard Coverage %] reports the gap.
-            "BLANK ()",
+            # Sent to PAID, per fct_Invoice[DaysToPayment]: PaidDate is the day Sage
+            # receipts (acrpmt) first fully covered the invoice. AVERAGE skips blanks, so
+            # only fully-paid invoices count, and it is BLANK when none are in context -
+            # the category then scores BLANK. Due date is never substituted for paid date.
+            "AVERAGE ( fct_Invoice[DaysToPayment] )",
             '"#,0.0"',
-            "FINANCIALS!F56 - blocked: Sage AR header has no payment date",
+            "FINANCIALS!F56 - now from Sage AR receipts (acrpmt)",
         ),
         (
             "Cash Position %",

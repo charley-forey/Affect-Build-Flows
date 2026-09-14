@@ -2,22 +2,6 @@
   "properties": {
     "activities": [
       {
-        "name": "Extract Procore",
-        "type": "TridentNotebook",
-        "dependsOn": [],
-        "policy": {
-          "timeout": "0.02:00:00",
-          "retry": 1,
-          "retryIntervalInSeconds": 60,
-          "secureOutput": false,
-          "secureInput": false
-        },
-        "typeProperties": {
-          "notebookId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
-          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
-        }
-      },
-      {
         "name": "Land To Bronze",
         "type": "TridentNotebook",
         "dependsOn": [],
@@ -52,7 +36,14 @@
       {
         "name": "Land Manual Input",
         "type": "TridentNotebook",
-        "dependsOn": [],
+        "dependsOn": [
+          {
+            "activity": "Land To Bronze",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
         "policy": {
           "timeout": "0.00:30:00",
           "retry": 1,
@@ -66,11 +57,63 @@
         }
       },
       {
+        "name": "Extract Outbuild",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Land Manual Input",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "d6ea054b-bbc9-414e-85c1-60c89b41169c",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
+        "name": "Extract Procore",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Extract Outbuild",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.02:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "c27ccac5-8185-4ed9-8603-7959f7598a74",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
         "name": "Bronze To Silver",
         "type": "TridentNotebook",
         "dependsOn": [
           {
             "activity": "Extract Procore",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          },
+          {
+            "activity": "Extract Outbuild",
             "dependencyConditions": [
               "Succeeded"
             ]

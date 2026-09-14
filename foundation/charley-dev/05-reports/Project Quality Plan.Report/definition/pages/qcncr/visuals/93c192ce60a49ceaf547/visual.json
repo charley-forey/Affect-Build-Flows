@@ -6,7 +6,7 @@
     "y": 16,
     "z": 0,
     "width": 600,
-    "height": 44,
+    "height": 40,
     "tabOrder": 10
   },
   "visual": {
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Non-Conformance (NCR)",
+                    "value": "Procore Observations",
                     "textStyle": {
                       "fontSize": "20pt",
                       "color": "#252423",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Non-Conformance (NCR)'"
+                  "Value": "'Procore Observations'"
                 }
               }
             }

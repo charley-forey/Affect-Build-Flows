@@ -400,8 +400,8 @@ table _Measures
 			RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )
 		displayFolder: 00 Report context
 
-	/// Replaces FINANCIALS!F56 - blocked: Sage AR header has no payment date
-	measure 'Avg Days To Payment' = BLANK ()
+	/// Replaces FINANCIALS!F56 - now from Sage AR receipts (acrpmt)
+	measure 'Avg Days To Payment' = AVERAGE ( fct_Invoice[DaysToPayment] )
 		formatString: "#,0.0"
 		displayFolder: 11 Scorecard drivers
 

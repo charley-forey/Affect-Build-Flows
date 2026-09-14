@@ -1,0 +1,54 @@
+table fct_SafetyMonthly
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column HoursWorked
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: HoursWorked
+
+	column WorkerDays
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: WorkerDays
+
+	column DaysLogged
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysLogged
+
+	column IncidentCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: IncidentCount
+
+	column RecordableIncidents
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: RecordableIncidents
+
+	column TRIR
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: TRIR
+
+	column HasNoManpowerLog
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasNoManpowerLog
+
+	partition fct_SafetyMonthly = entity
+		mode: directLake
+		source
+			entityName: fct_safetymonthly
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

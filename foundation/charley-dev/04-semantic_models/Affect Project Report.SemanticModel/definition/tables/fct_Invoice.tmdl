@@ -1,5 +1,20 @@
 table fct_Invoice
 
+	column InvoiceKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceKey
+
+	column InvoiceID
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceID
+
+	column InvoiceNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceNumber
+
 	column ProjectKey
 		dataType: string
 		summarizeBy: none
@@ -57,6 +72,34 @@ table fct_Invoice
 		dataType: boolean
 		summarizeBy: none
 		sourceColumn: IsPaid
+
+	column PaymentsReceived
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PaymentsReceived
+
+	column FirstPaymentDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: FirstPaymentDate
+		formatString: yyyy-mm-dd
+
+	column LastPaymentDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: LastPaymentDate
+		formatString: yyyy-mm-dd
+
+	column PaidDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: PaidDate
+		formatString: yyyy-mm-dd
+
+	column DaysToPayment
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysToPayment
 
 	column DaysToDue
 		dataType: int64
