@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T03:40:45.842468+00:00",
+  "generated_at": "2026-09-14T04:08:29.977385+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -56,7 +56,8 @@
         "dim_VendorCrosswalk",
         "dim_CostCodeCrosswalk",
         "dq_DataGap",
-        "meta_PipelineRun"
+        "meta_PipelineRun",
+        "fct_DailySnapshot"
       ],
       "relationships": [
         [
@@ -334,6 +335,18 @@
           "ProjectKey",
           "dim_Project",
           "ProjectKey"
+        ],
+        [
+          "fct_DailySnapshot",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_DailySnapshot",
+          "SnapshotDate",
+          "dim_Date",
+          "Date"
         ]
       ],
       "measures": [
@@ -437,19 +450,19 @@
           "name": "Last Checked Run",
           "expression": "MAX ( meta_PipelineRun[RunAt] )",
           "format": "\"yyyy-mm-dd hh:nn\"",
-          "origin": "no workbook equivalent - the spreadsheet cannot say when it was last correct"
+          "origin": "nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built"
         },
         {
           "name": "Hours Since Last Checked Run",
           "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
           "format": "\"#,0\"",
-          "origin": "derived"
+          "origin": "nothing - hours since the last PUBLISHED validated run: automatic update is off, so the model only moves when cd_50_publish_models frames a run that passed the DQ gate. A blocked gate is NOT visible here (the model keeps the last good run); the alert is the signal"
         },
         {
           "name": "Pipeline Status",
           "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nVAR Built = [Last Refresh]\nVAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )\nVAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> \"ok\" || meta_PipelineRun[Blocking] > 0 ) )\nVAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )\nVAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )\nRETURN SWITCH ( TRUE (),\n    ISBLANK ( Last ), \"Unknown - no checked run\",\n    Built > Last, \"Unvalidated - data built after last check\",\n    Blocked > 0, \"BLOCKED - validation failed\",\n    Hrs < 0, \"Unknown - check timestamp is in the future\",\n    Hrs > 72, \"STALE - no checked run in over 72 hours\",\n    Hrs > 30, \"Late - no checked run in over 30 hours\",\n    Warnings > 0, \"Gold checked with warnings; source completeness unverified\",\n    \"Gold checks passed; source completeness unverified\" )",
           "format": null,
-          "origin": "derived"
+          "origin": "nothing - status of the last PUBLISHED validated run, as text so it survives greyscale. A blocked gate never publishes, so BLOCKED is not expected in-model; the alert is the signal"
         },
         {
           "name": "Blocking Violations Last Run",
@@ -816,6 +829,96 @@
           "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( NOT ISFILTERED ( dim_Date ), \"All months\", IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) ) )",
           "format": null,
           "origin": "DASHBOARD!AU4 - the month anchor, now driven by the slicer"
+        },
+        {
+          "name": "Open Submittals (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenSubmittals] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"#,0\"",
+          "origin": "no workbook equivalent - [Open Submittals] as saved at the last capture in the period"
+        },
+        {
+          "name": "Open Submittals Past Due (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[SubmittalsPastDue] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"#,0\"",
+          "origin": "no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period"
+        },
+        {
+          "name": "Open RFIs (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenRfis] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"#,0\"",
+          "origin": "no workbook equivalent - [Open RFIs] as saved at the last capture in the period"
+        },
+        {
+          "name": "Open Observations (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenObservations] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"#,0\"",
+          "origin": "no workbook equivalent - [Open Observations] as saved at the last capture in the period"
+        },
+        {
+          "name": "Open Punch Items (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenPunchItems] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"#,0\"",
+          "origin": "no workbook equivalent - [Open Punch Items] as saved at the last capture in the period"
+        },
+        {
+          "name": "AR Outstanding (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[ArOutstanding] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [AR Outstanding] as saved at the last capture in the period"
+        },
+        {
+          "name": "Total Billed (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[BilledToDate] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Total Billed] as saved at the last capture in the period"
+        },
+        {
+          "name": "Budget (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[BudgetAmount] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Budget] as saved at the last capture in the period"
+        },
+        {
+          "name": "Spent To Date (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[SpentToDate] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Spent To Date] as saved at the last capture in the period"
+        },
+        {
+          "name": "Committed (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[CommittedAmount] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Committed] as saved at the last capture in the period"
+        },
+        {
+          "name": "Current Contract (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[CurrentContract] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Current Contract] as saved at the last capture in the period"
+        },
+        {
+          "name": "Pending Change Orders (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[PendingChangeOrders] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period"
+        },
+        {
+          "name": "Approved Change Orders (Month End)",
+          "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[ApprovedChangeOrders] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period"
+        },
+        {
+          "name": "Snapshot History Starts",
+          "expression": "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
+          "format": "\"yyyy-mm-dd\"",
+          "origin": "no workbook equivalent - first saved capture"
+        },
+        {
+          "name": "Snapshot History Note",
+          "expression": "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\nRETURN IF ( ISBLANK ( F ), \"No month-end history captured yet\",\n\"History starts \" & FORMAT ( F, \"yyyy-MM-dd\" ) & \"; earlier months are unavailable, not zero\" )",
+          "format": null,
+          "origin": "no workbook equivalent - states where saved history begins"
         },
         {
           "name": "Avg Days To Payment",
@@ -1597,6 +1700,34 @@
           "visual": "47b8e0deb88646ad4d62",
           "table": "fct_RfiSubmittal",
           "field": "StatusLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "013a9d7b5e4c0ecd8b20",
+          "table": "_Measures",
+          "field": "Snapshot History Note",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "2e9510fce0b29b654bfb",
+          "table": "_Measures",
+          "field": "Open Submittals (Month End)",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "2e9510fce0b29b654bfb",
+          "table": "_Measures",
+          "field": "Open Submittals Past Due (Month End)",
+          "kind": "Measure"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "2e9510fce0b29b654bfb",
+          "table": "dim_Date",
+          "field": "MonthYear",
           "kind": "Column"
         },
         {
@@ -3143,19 +3274,19 @@
           "name": "Last Checked Run",
           "expression": "MAX ( meta_PipelineRun[RunAt] )",
           "format": "\"yyyy-mm-dd hh:nn\"",
-          "origin": "no workbook equivalent - a spreadsheet cannot say when it was last correct"
+          "origin": "nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built"
         },
         {
           "name": "Hours Since Last Checked Run",
           "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
           "format": "\"#,0\"",
-          "origin": "derived"
+          "origin": "nothing - hours since the last PUBLISHED validated run: automatic update is off, so the model only moves when cd_50_publish_models frames a run that passed the DQ gate. A blocked gate is NOT visible here (the model keeps the last good run); the alert is the signal"
         },
         {
           "name": "Pipeline Status",
           "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nVAR Built = [Last Refresh]\nVAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )\nVAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> \"ok\" || meta_PipelineRun[Blocking] > 0 ) )\nVAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )\nVAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )\nRETURN SWITCH ( TRUE (),\n    ISBLANK ( Last ), \"Unknown - no checked run\",\n    Built > Last, \"Unvalidated - data built after last check\",\n    Blocked > 0, \"BLOCKED - validation failed\",\n    Hrs < 0, \"Unknown - check timestamp is in the future\",\n    Hrs > 72, \"STALE - no checked run in over 72 hours\",\n    Hrs > 30, \"Late - no checked run in over 30 hours\",\n    Warnings > 0, \"Gold checked with warnings; source completeness unverified\",\n    \"Gold checks passed; source completeness unverified\" )",
           "format": "",
-          "origin": "nothing - text not colour, so it survives greyscale and colour-blindness"
+          "origin": "nothing - status of the last PUBLISHED validated run, as text so it survives greyscale. A blocked gate never publishes, so BLOCKED is not expected in-model; the alert is the signal"
         },
         {
           "name": "Projects With Quality Data",
@@ -4481,6 +4612,9 @@
     "dim_QcStatus": [
       "02-transformation\\sql\\gold\\08_qc_seeds.sql"
     ],
+    "seed_ProjectCrosswalk": [
+      "02-transformation\\sql\\gold\\09_seed_projectcrosswalk.sql"
+    ],
     "dim_Project": [
       "02-transformation\\sql\\gold\\10_dim_project.sql"
     ],
@@ -4609,6 +4743,9 @@
     ],
     "man_QcDohResult": [
       "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
+    ],
+    "dq_CrosswalkCandidate": [
+      "02-transformation\\sql\\gold\\44_dq_crosswalkcandidate.sql"
     ],
     "dq_DataGap": [
       "02-transformation\\sql\\gold\\45_dq_datagap.sql"
@@ -4898,6 +5035,9 @@
     "cd_silver_sage_ar_payments": [
       "02-transformation\\sql\\silver\\26_sage_silver.sql"
     ],
+    "cd_silver_sage_vendors": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
     "mv_valid_projects": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
@@ -5014,6 +5154,9 @@
     ],
     "cd_dq_rejects_qc": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "fct_DailySnapshot": [
+      "02-transformation\\sql\\snapshot\\fct_dailysnapshot.sql"
     ]
   }
 }

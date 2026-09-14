@@ -1,37 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "47b8e0deb88646ad4d62",
+  "name": "013a9d7b5e4c0ecd8b20",
   "position": {
     "x": 780,
-    "y": 210,
+    "y": 488,
     "z": 0,
     "width": 480,
-    "height": 270,
-    "tabOrder": 18
+    "height": 44,
+    "tabOrder": 19
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_RfiSubmittal"
-                    }
-                  },
-                  "Property": "StatusLabel"
-                }
-              },
-              "queryRef": "fct_RfiSubmittal.StatusLabel",
-              "nativeQueryRef": "StatusLabel"
-            }
-          ]
-        },
-        "Y": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -41,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Open Submittals"
+                  "Property": "Snapshot History Note"
                 }
               },
-              "queryRef": "_Measures.Open Submittals",
-              "nativeQueryRef": "Open Submittals"
+              "queryRef": "_Measures.Snapshot History Note",
+              "nativeQueryRef": "Snapshot History Note"
             }
           ]
         }
@@ -59,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Stacked bar chart. Open submittals by status (as of today). Shows Open Submittals by StatusLabel.'"
+                  "Value": "'Card. Snapshot History Note. Shows Snapshot History Note for the current selection.'"
                 }
               }
             }
@@ -72,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open submittals by status (as of today)'"
+                  "Value": "'Snapshot History Note'"
                 }
               }
             },

@@ -1,16 +1,16 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "47b8e0deb88646ad4d62",
+  "name": "2e9510fce0b29b654bfb",
   "position": {
     "x": 780,
-    "y": 210,
+    "y": 540,
     "z": 0,
     "width": 480,
-    "height": 270,
-    "tabOrder": 18
+    "height": 110,
+    "tabOrder": 21
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "lineChart",
     "query": {
       "queryState": {
         "Category": {
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_RfiSubmittal"
+                      "Entity": "dim_Date"
                     }
                   },
-                  "Property": "StatusLabel"
+                  "Property": "MonthYear"
                 }
               },
-              "queryRef": "fct_RfiSubmittal.StatusLabel",
-              "nativeQueryRef": "StatusLabel"
+              "queryRef": "dim_Date.MonthYear",
+              "nativeQueryRef": "MonthYear"
             }
           ]
         },
@@ -41,11 +41,25 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Open Submittals"
+                  "Property": "Open Submittals (Month End)"
                 }
               },
-              "queryRef": "_Measures.Open Submittals",
-              "nativeQueryRef": "Open Submittals"
+              "queryRef": "_Measures.Open Submittals (Month End)",
+              "nativeQueryRef": "Open Submittals (Month End)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Open Submittals Past Due (Month End)"
+                }
+              },
+              "queryRef": "_Measures.Open Submittals Past Due (Month End)",
+              "nativeQueryRef": "Open Submittals Past Due (Month End)"
             }
           ]
         }
@@ -59,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Stacked bar chart. Open submittals by status (as of today). Shows Open Submittals by StatusLabel.'"
+                  "Value": "'Line chart. Open and past-due submittals as saved at the last nightly capture of each month. Months before history starts have no value, not zero.'"
                 }
               }
             }
@@ -72,7 +86,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open submittals by status (as of today)'"
+                  "Value": "'Submittal backlog at month end (saved history)'"
                 }
               }
             },

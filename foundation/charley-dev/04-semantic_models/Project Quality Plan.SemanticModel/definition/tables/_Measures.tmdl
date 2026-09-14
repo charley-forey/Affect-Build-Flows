@@ -12,19 +12,19 @@ table _Measures
 			RETURN IF ( NOT ISFILTERED ( dim_Date ), "All months", IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) ) )
 		displayFolder: 00 Report context
 
-	/// Replaces no workbook equivalent - a spreadsheet cannot say when it was last correct
+	/// Replaces nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built
 	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
 		formatString: "yyyy-mm-dd hh:nn"
 		displayFolder: 00 Report context
 
-	/// Replaces derived
+	/// Replaces nothing - hours since the last PUBLISHED validated run: automatic update is off, so the model only moves when cd_50_publish_models frames a run that passed the DQ gate. A blocked gate is NOT visible here (the model keeps the last good run); the alert is the signal
 	measure 'Hours Since Last Checked Run' =
 			VAR Last = MAX ( meta_PipelineRun[RunAt] )
 			RETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )
 		formatString: "#,0"
 		displayFolder: 00 Report context
 
-	/// Replaces nothing - text not colour, so it survives greyscale and colour-blindness
+	/// Replaces nothing - status of the last PUBLISHED validated run, as text so it survives greyscale. A blocked gate never publishes, so BLOCKED is not expected in-model; the alert is the signal
 	measure 'Pipeline Status' =
 			VAR Last = MAX ( meta_PipelineRun[RunAt] )
 			VAR Built = [Last Refresh]
