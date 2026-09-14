@@ -2,11 +2,11 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "9be622f2648c875b4bdb",
   "position": {
-    "x": 720,
-    "y": 664,
+    "x": 20,
+    "y": 662,
     "z": 0,
-    "width": 540,
-    "height": 44,
+    "width": 1240,
+    "height": 56,
     "tabOrder": 99
   },
   "visual": {
@@ -70,6 +70,34 @@
               "expr": {
                 "Literal": {
                   "Value": "'Report footer. States the reporting period shown, the time the underlying data was last built, and whether the last checked pipeline run passed its gold checks.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "dataLabels": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "9D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryLabels": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
                 }
               }
             }

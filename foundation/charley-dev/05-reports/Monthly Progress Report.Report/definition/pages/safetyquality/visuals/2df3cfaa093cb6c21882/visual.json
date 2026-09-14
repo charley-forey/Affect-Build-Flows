@@ -5,8 +5,8 @@
     "x": 20,
     "y": 60,
     "z": 0,
-    "width": 728,
-    "height": 30,
+    "width": 1240,
+    "height": 44,
     "tabOrder": 11
   },
   "visual": {
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
-                      "fontWeight": "bold"
+                      "fontWeight": "normal"
                     }
                   }
                 ]

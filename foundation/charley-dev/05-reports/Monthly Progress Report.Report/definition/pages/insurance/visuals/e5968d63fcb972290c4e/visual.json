@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dim_Vendor.VendorName",
-              "nativeQueryRef": "VendorName"
+              "nativeQueryRef": "VendorName",
+              "displayName": "Vendor Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "fct_VendorInsurance.InsuranceType",
-              "nativeQueryRef": "InsuranceType"
+              "nativeQueryRef": "InsuranceType",
+              "displayName": "Insurance Type"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "fct_VendorInsurance.Provider",
-              "nativeQueryRef": "Provider"
+              "nativeQueryRef": "Provider",
+              "displayName": "Provider"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "fct_VendorInsurance.PolicyNumber",
-              "nativeQueryRef": "PolicyNumber"
+              "nativeQueryRef": "PolicyNumber",
+              "displayName": "Policy Number"
             },
             {
               "field": {
@@ -83,7 +87,8 @@
                 }
               },
               "queryRef": "fct_VendorInsurance.ExpirationDate",
-              "nativeQueryRef": "ExpirationDate"
+              "nativeQueryRef": "ExpirationDate",
+              "displayName": "Expiration Date"
             },
             {
               "field": {
@@ -97,7 +102,8 @@
                 }
               },
               "queryRef": "fct_VendorInsurance.ExpiryStatus",
-              "nativeQueryRef": "ExpiryStatus"
+              "nativeQueryRef": "ExpiryStatus",
+              "displayName": "Expiry Status"
             },
             {
               "field": {
@@ -111,7 +117,8 @@
                 }
               },
               "queryRef": "fct_VendorInsurance.DaysUntilExpiry",
-              "nativeQueryRef": "DaysUntilExpiry"
+              "nativeQueryRef": "DaysUntilExpiry",
+              "displayName": "Days Until Expiry"
             },
             {
               "field": {
@@ -149,6 +156,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -173,12 +187,180 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           }
         }
       ]
     },
     "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "243D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Vendor.VendorName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "135D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_VendorInsurance.InsuranceType"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "135D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_VendorInsurance.Provider"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "135D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_VendorInsurance.PolicyNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "139D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_VendorInsurance.ExpirationDate"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "135D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_VendorInsurance.ExpiryStatus"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "135D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_VendorInsurance.DaysUntilExpiry"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "153D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Certificates On File"
+          }
+        }
+      ],
       "total": [
         {
           "properties": {

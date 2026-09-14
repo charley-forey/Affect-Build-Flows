@@ -3,10 +3,10 @@
   "name": "eb83c351fbe4e88de650",
   "position": {
     "x": 20,
-    "y": 528,
+    "y": 508,
     "z": 0,
     "width": 620,
-    "height": 128,
+    "height": 150,
     "tabOrder": 19
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dim_VendorCrosswalk.VendorName",
-              "nativeQueryRef": "VendorName"
+              "nativeQueryRef": "VendorName",
+              "displayName": "Vendor Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "dim_VendorCrosswalk.IsInSage",
-              "nativeQueryRef": "IsInSage"
+              "nativeQueryRef": "IsInSage",
+              "displayName": "Is In Sage"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "dim_VendorCrosswalk.HasNameMismatch",
-              "nativeQueryRef": "HasNameMismatch"
+              "nativeQueryRef": "HasNameMismatch",
+              "displayName": "Has Name Mismatch"
             }
           ]
         }
@@ -79,6 +82,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -103,7 +113,107 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "292D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_VendorCrosswalk.VendorName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "152D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_VendorCrosswalk.IsInSage"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "152D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_VendorCrosswalk.HasNameMismatch"
           }
         }
       ]

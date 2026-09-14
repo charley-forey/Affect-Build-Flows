@@ -3,10 +3,10 @@
   "name": "867282abeb9aa4d86e45",
   "position": {
     "x": 600,
-    "y": 392,
+    "y": 372,
     "z": 0,
     "width": 584,
-    "height": 260,
+    "height": 284,
     "tabOrder": 21
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "qc_seed_Trade.TradeName",
-              "nativeQueryRef": "TradeName"
+              "nativeQueryRef": "TradeName",
+              "displayName": "Trade Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "qc_seed_Trade.CsiCode",
-              "nativeQueryRef": "CsiCode"
+              "nativeQueryRef": "CsiCode",
+              "displayName": "Csi Code"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "qc_seed_Trade.DfowRef",
-              "nativeQueryRef": "DfowRef"
+              "nativeQueryRef": "DfowRef",
+              "displayName": "Dfow Ref"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "qc_seed_Trade.RiskTier",
-              "nativeQueryRef": "RiskTier"
+              "nativeQueryRef": "RiskTier",
+              "displayName": "Risk Tier"
             }
           ]
         }
@@ -93,6 +97,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -117,7 +128,121 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "198D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Trade.TradeName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "120D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Trade.CsiCode"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "120D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Trade.DfowRef"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "120D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Trade.RiskTier"
           }
         }
       ]

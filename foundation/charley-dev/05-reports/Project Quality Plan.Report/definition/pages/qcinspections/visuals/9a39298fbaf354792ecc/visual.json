@@ -6,7 +6,7 @@
     "y": 260,
     "z": 0,
     "width": 1164,
-    "height": 360,
+    "height": 396,
     "tabOrder": 13
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.ProjectKey",
-              "nativeQueryRef": "ProjectKey"
+              "nativeQueryRef": "ProjectKey",
+              "displayName": "Project Key"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.InspectionKey",
-              "nativeQueryRef": "InspectionKey"
+              "nativeQueryRef": "InspectionKey",
+              "displayName": "Inspection Key"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.InspectionName",
-              "nativeQueryRef": "InspectionName"
+              "nativeQueryRef": "InspectionName",
+              "displayName": "Inspection Name"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.SourceTemplateName",
-              "nativeQueryRef": "SourceTemplateName"
+              "nativeQueryRef": "SourceTemplateName",
+              "displayName": "Source Template Name"
             },
             {
               "field": {
@@ -83,7 +87,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.InspectionDate",
-              "nativeQueryRef": "InspectionDate"
+              "nativeQueryRef": "InspectionDate",
+              "displayName": "Inspection Date"
             },
             {
               "field": {
@@ -97,7 +102,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.DueDate",
-              "nativeQueryRef": "DueDate"
+              "nativeQueryRef": "DueDate",
+              "displayName": "Due Date"
             },
             {
               "field": {
@@ -111,7 +117,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.SourceStatus",
-              "nativeQueryRef": "SourceStatus"
+              "nativeQueryRef": "SourceStatus",
+              "displayName": "Source Status"
             },
             {
               "field": {
@@ -125,7 +132,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.SourceItemCount",
-              "nativeQueryRef": "SourceItemCount"
+              "nativeQueryRef": "SourceItemCount",
+              "displayName": "Source Item Count"
             },
             {
               "field": {
@@ -139,7 +147,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.ConformingItemCount",
-              "nativeQueryRef": "ConformingItemCount"
+              "nativeQueryRef": "ConformingItemCount",
+              "displayName": "Conforming Item Count"
             },
             {
               "field": {
@@ -153,7 +162,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.DeficientItemCount",
-              "nativeQueryRef": "DeficientItemCount"
+              "nativeQueryRef": "DeficientItemCount",
+              "displayName": "Deficient Item Count"
             },
             {
               "field": {
@@ -167,7 +177,8 @@
                 }
               },
               "queryRef": "fct_ProcoreInspection.NotInspectedItemCount",
-              "nativeQueryRef": "NotInspectedItemCount"
+              "nativeQueryRef": "NotInspectedItemCount",
+              "displayName": "Not Inspected Item Count"
             }
           ]
         }
@@ -191,6 +202,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -215,7 +233,219 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.ProjectKey"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.InspectionKey"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "130D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.InspectionName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "126D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.SourceTemplateName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.InspectionDate"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.DueDate"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.SourceStatus"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.SourceItemCount"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.ConformingItemCount"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.DeficientItemCount"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "96D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ProcoreInspection.NotInspectedItemCount"
           }
         }
       ]

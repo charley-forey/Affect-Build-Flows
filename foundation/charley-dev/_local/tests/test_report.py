@@ -124,6 +124,112 @@ def test_report() -> None:
     print(f"  {len(pages)} pages, {total} visuals: alt text, tab order, slicers, footer, theme")
 
 
+def _lit(prop: dict) -> str:
+    return prop["expr"]["Literal"]["Value"]
+
+
+def _size(objects: dict, obj: str) -> float:
+    return float(_lit(objects[obj][0]["properties"]["fontSize"]).rstrip("D"))
+
+
+def test_text_fit() -> None:
+    """Estimated rendered text against its container, so clipping fails offline.
+
+    Every check in test_report passed while production clipped subtitles, section headers,
+    card labels, table columns and the footer on nearly every page. On the canvas is not
+    the same as legible. The estimate is deliberately simple (see deploy_report.text_px);
+    what matters is that the generator and this check share it, so a longer note or a
+    narrower card fails here instead of in a browser.
+    """
+    files = build_report()
+    failures = []
+    for pid, visuals in sorted(_pages(files).items()):
+        for v in visuals:
+            vis, pos = v["visual"], v["position"]
+            w, h, vtype = pos["width"], pos["height"], vis["visualType"]
+            where = f"{pid}/{vtype}"
+            fail = failures.append
+
+            if vtype == "textbox":
+                run = vis["objects"]["general"][0]["properties"]["paragraphs"][0]["textRuns"][0]
+                text, style = run["value"], run["textStyle"]
+                size, bold = float(style["fontSize"].rstrip("pt")), style["fontWeight"] == "bold"
+                need = dr.wrap_lines(text, size, w - 8, bold) * dr.line_px(size) + dr.TEXT_PAD
+                if need > h or dr.longest_word_px(text, size, bold) > w - 8:
+                    fail(f"{where} {text[:40]!r}: needs {need:.0f}px, box is {h}")
+                continue
+
+            title_props = vis.get("visualContainerObjects", {}).get("title", [{}])[0].get("properties")
+            title = _lit(title_props["text"])[1:-1].replace("''", "'") if title_props else ""
+            tsize = float(_lit(title_props["fontSize"]).rstrip("D")) if title_props else 0
+            inner = w - dr.BOX_PAD
+            title_lines = dr.wrap_lines(title, tsize, inner, bold=True) if title else 0
+            if title and dr.longest_word_px(title, tsize, True) > inner:
+                fail(f"{where} title {title!r}: a word is wider than the visual")
+
+            if vtype == "card":
+                name = vis["query"]["queryState"]["Values"]["projections"][0]["nativeQueryRef"]
+                sample = dr.CARD_TEXT_SAMPLES.get(name, dr.NUMBER_SAMPLE)
+                vsize = _size(vis["objects"], "labels")
+                assert _lit(vis["objects"]["categoryLabels"][0]["properties"]["show"]) == "false"
+                wraps = _lit(vis["objects"]["wordWrap"][0]["properties"]["show"]) == "true"
+                value_lines = dr.wrap_lines(sample, vsize, inner) if wraps else 1
+                if dr.longest_word_px(sample, vsize) > inner or (
+                        not wraps and dr.text_px(sample, vsize) > inner):
+                    fail(f"{where} {name}: value {sample!r} wider than the card")
+                need = (dr.BOX_PAD + title_lines * dr.line_px(tsize)
+                        + value_lines * dr.line_px(vsize))
+                if need > h:
+                    fail(f"{where} {title!r}: needs {need:.0f}px, card is {h}")
+            elif vtype == "multiRowCard":
+                names = [p["nativeQueryRef"] for p in vis["query"]["queryState"]["Values"]["projections"]]
+                third = inner / len(names)
+                vsize, lsize = _size(vis["objects"], "dataLabels"), _size(vis["objects"], "categoryLabels")
+                for name in names:
+                    sample = dr.CARD_TEXT_SAMPLES.get(name, "September 2026 - December 2026")
+                    if dr.text_px(sample, vsize) > third or dr.text_px(name, lsize) > third:
+                        fail(f"{where} footer {name}: wider than its third ({third:.0f}px)")
+                if dr.BOX_PAD + dr.line_px(vsize) + dr.line_px(lsize) > h:
+                    fail(f"{where} footer: value and label rows need more than {h}px")
+            elif vtype == "slicer":
+                assert _lit(vis["objects"]["data"][0]["properties"]["mode"]) == "'Dropdown'"
+                if dr.BOX_PAD / 2 + dr.line_px(tsize) + dr.SLICER_BOX > h:
+                    fail(f"{where} slicer {title!r}: title and dropdown need more than {h}px")
+            else:
+                if title_lines > 2:
+                    fail(f"{where} title {title!r}: wraps to {title_lines} lines")
+            if vtype in ("barChart", "clusteredBarChart") and h < 180:
+                fail(f"{where} {title!r}: {h}px tall shows only a few bars")
+            if vtype == "tableEx" and h < 150:
+                fail(f"{where} {title!r}: {h}px tall shows only a few rows")
+
+            if vtype in ("tableEx", "pivotTable") and "Columns" not in vis["query"]["queryState"]:
+                widths = {c["selector"]["metadata"]: float(_lit(c["properties"]["value"]).rstrip("D"))
+                          for c in vis["objects"]["columnWidth"]}
+                groups = dr.table_columns(vis)
+                total = sum(widths.get(g[0]["queryRef"], 0) for g in groups)
+                if total > w - dr.TABLE_GUTTER:
+                    fail(f"{where} {title!r}: columns total {total:.0f}px in {w}px")
+                for p in (p for g in groups for p in g):
+                    header = p.get("displayName", p["nativeQueryRef"])
+                    if widths.get(p["queryRef"], 0) < dr.column_need(header):
+                        fail(f"{where} {title!r}: column {header!r} narrower than its header")
+    assert not failures, "text will clip:\n  " + "\n  ".join(failures)
+
+    # The footer's worst-case status is the model's own longest literal, so the sample the
+    # sizing uses cannot drift from what the DAX can actually return.
+    import re
+    import deploy_model as dm
+    assert dr.CARD_TEXT_SAMPLES["Pipeline Status"] == max(
+        re.findall(r'"([^"]*)"', dm.PIPELINE_STATUS_DAX), key=len)
+    # Both reports print Last Refresh the same way (minutes, no seconds).
+    here = Path(__file__).resolve().parent.parent
+    fmts = {f: re.search(r'\("Last Refresh", [^\n]*?, (\'"[^"]+"\')', (here / f).read_text(encoding="utf-8")).group(1)
+            for f in ("deploy_model.py", "deploy_model_qc.py")}
+    assert len(set(fmts.values())) == 1, f"Last Refresh formats differ: {fmts}"
+    print(f"  text fit: every textbox, title, card, slicer, footer and table column estimated to fit")
+
+
 def test_report_refs() -> None:
     """Every field a visual asks for must exist in the model.
 
@@ -297,6 +403,7 @@ if __name__ == "__main__":
         import deploy_model_qc
         import deploy_report_qc
     test_report()
+    test_text_fit()
     test_report_refs()
     if "--qc" not in sys.argv:
         test_schedule_grain()

@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "1f22598bd88d5a355a09",
   "position": {
-    "x": 840,
+    "x": 740,
     "y": 260,
     "z": 0,
-    "width": 420,
+    "width": 520,
     "height": 390,
     "tabOrder": 17
   },
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dim_ScorecardBand.CategoryName",
-              "nativeQueryRef": "CategoryName"
+              "nativeQueryRef": "CategoryName",
+              "displayName": "Category Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "dim_ScorecardBand.Score",
-              "nativeQueryRef": "Score"
+              "nativeQueryRef": "Score",
+              "displayName": "Score"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "dim_ScorecardBand.BandLabel",
-              "nativeQueryRef": "BandLabel"
+              "nativeQueryRef": "BandLabel",
+              "displayName": "Band Label"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "dim_ScorecardBand.MinValue",
-              "nativeQueryRef": "MinValue"
+              "nativeQueryRef": "MinValue",
+              "displayName": "Min Value"
             },
             {
               "field": {
@@ -83,7 +87,8 @@
                 }
               },
               "queryRef": "dim_ScorecardBand.MaxValue",
-              "nativeQueryRef": "MaxValue"
+              "nativeQueryRef": "MaxValue",
+              "displayName": "Max Value"
             },
             {
               "field": {
@@ -97,7 +102,8 @@
                 }
               },
               "queryRef": "dim_ScorecardBand.MatchValue",
-              "nativeQueryRef": "MatchValue"
+              "nativeQueryRef": "MatchValue",
+              "displayName": "Match Value"
             }
           ]
         }
@@ -121,6 +127,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -145,12 +158,152 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           }
         }
       ]
     },
     "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "83D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardBand.CategoryName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardBand.Score"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "83D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardBand.BandLabel"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardBand.MinValue"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardBand.MaxValue"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardBand.MatchValue"
+          }
+        }
+      ],
       "total": [
         {
           "properties": {
