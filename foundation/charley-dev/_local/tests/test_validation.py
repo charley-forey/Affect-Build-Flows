@@ -1188,7 +1188,144 @@ def test_refresh_request_identity():
         network.assert_not_called()
 
 
+def test_daily_snapshot():
+    """fct_DailySnapshot: executes the generated gate + capture cells against DuckDB."""
+    import json
+    from datetime import date, datetime
+    import seedrunner
+    sys.path.insert(0, str(seedrunner.CHARLEY_DEV / "02-transformation" / "dq"))
+    import expectations
+    con = seedrunner.build()
+    con.execute("CREATE TABLE meta_PipelineRun (RunId VARCHAR, RunAt TIMESTAMP, Stage VARCHAR, Status VARCHAR, "
+                "Expectations BIGINT, Failing BIGINT, Blocking BIGINT)")
+
+    class DuckSpark:
+        corrupt = None  # SQL run straight after the capture INSERT, to fake a bad write
+        def sql(self, query):
+            rows = con.execute(query.replace("`", '"')).fetchall()
+            if self.corrupt and query.lstrip().startswith("INSERT INTO fct_DailySnapshot"):
+                con.execute(self.corrupt)
+            return SimpleNamespace(count=lambda: len(rows))
+        def table(self, name):
+            return SimpleNamespace(schema=SimpleNamespace(fields=[
+                SimpleNamespace(name=r[0], dataType=SimpleNamespace(simpleString=lambda t=r[1]: t.lower()))
+                for r in con.execute(f'DESCRIBE "{name}"').fetchall()]))
+
+    cells = deploy_dq.build_notebook()["cells"]
+    gate_and_capture = "".join(cells[3]["source"]) + "\n" + "".join(cells[4]["source"])
+    passing = [dq.Result(dq.not_null("t", "id"), 0)]
+    blocked = [dq.Result(dq.not_null("t", "id"), 3)]
+    spark = DuckSpark()
+
+    def run(batch_id, results=passing):
+        status = "blocked" if any(r.blocking for r in results) else "ok"
+        con.execute("INSERT INTO meta_PipelineRun VALUES (?, CURRENT_TIMESTAMP, 'dq_gate', ?, 1, 0, ?)",
+                    [batch_id, status, int(status != "ok")])  # what the heartbeat cell writes
+        with tempfile.TemporaryDirectory() as diag:
+            (Path(diag) / "gold_schema.json").write_text("{}")
+            scope = dict(results=results, dq=dq, fc=SimpleNamespace(notify=lambda *a, **k: None),
+                         summarise=expectations.summarise, spark=spark, batch_id=batch_id, DIAG=diag,
+                         __builtins__=__builtins__)
+            exec(compile(gate_and_capture, "dq:gate+snapshot", "exec"), scope)
+            assert "SnapshotDate" in dict(json.loads((Path(diag) / "gold_schema.json").read_text())["fct_DailySnapshot"])
+
+    def snap(day, column="OpenSubmittals"):
+        return con.execute(f"SELECT COUNT(*), SUM({column}), MIN(RunId) FROM fct_DailySnapshot "
+                           f"WHERE SnapshotDate = DATE '{day}'").fetchone()
+    run("20260115T230000Z")
+    rows, jan15, _ = snap("2026-01-15")
+    assert jan15 == 2 and rows == con.execute("SELECT COUNT(*) FROM v_DailySnapshotLive").fetchone()[0]
+    # A submittal closes retroactively: current-state facts now say January had one open.
+    con.execute("UPDATE fct_RfiSubmittal SET IsOpen = FALSE, IsPastDue = FALSE WHERE ItemType = 'Submittal' AND IsPastDue")
+
+    # Idempotent re-run on one date: replaced, never duplicated.
+    run("20260131T230000Z")
+    run("20260131T231500Z")
+    assert snap("2026-01-31") == (rows, 1, "20260131T231500Z"), snap("2026-01-31")
+    run("20260210T230000Z")
+
+    # Failed gate: raises before capture, appends nothing.
+    try:
+        run("20260220T230000Z", blocked)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("a blocked gate reached the snapshot capture")
+    assert snap("2026-02-20")[0] == 0
+
+    # Bad write: post-capture verification removes this run's rows and fails the run.
+    spark.corrupt = "UPDATE fct_DailySnapshot SET OpenRfis = COALESCE(OpenRfis, 0) + 1 WHERE SnapshotDate = DATE '2026-02-25'"
+    try:
+        run("20260225T230000Z")
+    except RuntimeError as exc:
+        assert "equals live facts" in str(exc)
+    else:
+        raise AssertionError("an unreconciled snapshot was kept")
+    spark.corrupt = None
+    assert snap("2026-02-25")[0] == 0
+
+    # History is not rewritten by the closure.
+    assert snap("2026-01-15")[:2] == (rows, 2)
+
+    # Model: month end = last capture in the month; BLANK before history and after it.
+    from decimal import Decimal
+    # The shapes the live DAX reader returns: ISO datetimes and JSON floats.
+    iso = lambda v: (datetime(v.year, v.month, v.day).isoformat() if isinstance(v, date)
+                     else float(v) if isinstance(v, Decimal) else v)
+    def load(table):
+        cur = con.execute(f'SELECT * FROM "{table}"')
+        names = [d[0] for d in cur.description]
+        return [{n: iso(v) for n, v in zip(names, row)} for row in cur.fetchall()]
+    live = ["dim_Date", "dim_Project", "fct_DailySnapshot", "fct_RfiSubmittal", "fct_QualityItem", "fct_Invoice",
+            "fct_BudgetLine", "fct_FinancialPeriod", "fct_ChangeOrder"]
+    c = validate_model.Recompute({t: load(t) for t in live}, deploy_model.RELATIONSHIPS)
+    E = validate_model.monthly_expected()
+    month = lambda m: validate_model.Scope(None, m, None)
+    assert E["Open Submittals (Month End)"](c, month("2026-01-01T00:00:00")) == 1
+    assert E["Open Submittals (Month End)"](c, month("2025-12-01T00:00:00")) is None
+    assert E["Open Submittals (Month End)"](c, month("2026-03-01T00:00:00")) is None
+    assert E["Open Submittals (Month End)"](c, validate_model.PORTFOLIO) == 1
+    assert E["Snapshot History Note"](c, month("2026-03-01T00:00:00")) == \
+        "History starts 2026-01-15; earlier months are unavailable, not zero"
+    blank_dax = [m[1] for m in deploy_model.MEASURES if m[0].endswith("(Month End)")]
+    assert len(blank_dax) == len(deploy_model.SNAPSHOT_KPIS) and not any("COALESCE" in d for d in blank_dax)
+
+    # Same logic as the live measures: the latest capture equals each measure's independent
+    # recomputation, per project and for the portfolio (UNMATCHED AR included).
+    scopes = [validate_model.PORTFOLIO] + [validate_model.Scope(p["ProjectKey"], None, None) for p in c.data["dim_Project"]]
+    for name, _, _ in deploy_model.SNAPSHOT_KPIS:
+        if name in E:
+            for s in scopes:
+                assert validate_model.same_value(E[f"{name} (Month End)"](c, s), E[name](c, s)), (name, s)
+
+    # DQ rule mutations on the latest capture.
+    rules = {e.name: e for e in expectations.snapshot_suite("2026-02-10").expectations}
+    def failing(name, *mutations):
+        con.execute("BEGIN")
+        try:
+            for m in mutations:
+                con.execute(m)
+            return len(con.execute(rules[name].failing_sql.replace("`", '"')).fetchall())
+        finally:
+            con.execute("ROLLBACK")
+    recon, unique = "fct_DailySnapshot equals live facts at capture", "fct_DailySnapshot.ProjectKey_SnapshotDate.unique"
+    passing_runs = "fct_DailySnapshot rows come only from passing runs"
+    assert all(failing(n) == 0 for n in rules), {n: failing(n) for n in rules}
+    for col in expectations.SNAPSHOT_VALUES.split(", ")[1:]:
+        assert failing(recon, f"UPDATE fct_DailySnapshot SET {col} = COALESCE({col}, 0) + 1 "
+                              "WHERE SnapshotDate = DATE '2026-02-10' AND ProjectKey = 'P1'"), col
+    assert failing(recon, "DELETE FROM fct_DailySnapshot WHERE SnapshotDate = DATE '2026-02-10' AND ProjectKey = 'P2'")
+    assert failing(recon, "UPDATE fct_QualityItem SET IsOpen = FALSE WHERE ItemType = 'PunchItem'")
+    assert failing(unique, "INSERT INTO fct_DailySnapshot SELECT * FROM fct_DailySnapshot "
+                           "WHERE SnapshotDate = DATE '2026-02-10' LIMIT 1")
+    assert failing(passing_runs, "INSERT INTO fct_DailySnapshot SELECT * REPLACE ('20260220T230000Z' AS RunId, "
+                                 "DATE '2026-02-20' AS SnapshotDate) FROM fct_DailySnapshot WHERE SnapshotDate = DATE '2026-02-10'")
+    con.close()
+    print("  daily snapshot: idempotent re-run, failed gate and bad write append nothing, month end, blank before start, rule mutations")
+
+
 if __name__ == "__main__":
+    test_daily_snapshot()
     test_deployment_lookup()
     test_notebooks()
     test_candidate_preserves_evaluation_on_write_failure()

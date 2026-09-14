@@ -37,14 +37,25 @@ def persist_heartbeat(spark, results, run_id, diagnostic_dir):
           "blocked" if blocking else "ok", len(results), failing, blocking)],
         "RunId STRING, RunAt TIMESTAMP, Stage STRING, Status STRING, Expectations BIGINT, Failing BIGINT, Blocking BIGINT")
     heartbeat.write.format("delta").mode("append").saveAsTable("meta_PipelineRun")
-    path = Path(diagnostic_dir) / "gold_schema.json"
-    schema = json.loads(path.read_text(encoding="utf-8"))
-    schema["meta_PipelineRun"] = [(f.name, f.dataType.simpleString())
-                                  for f in spark.table("meta_PipelineRun").schema.fields]
-    path.write_text(json.dumps(schema, indent=1), encoding="utf-8")
+    publish_schema(spark, diagnostic_dir, "meta_PipelineRun")
     (Path(diagnostic_dir) / "heartbeat_run.json").write_text(json.dumps({
         "run_id": run_id, "counts": {"meta_PipelineRun": spark.table("meta_PipelineRun").count()}
     }, indent=2), encoding="utf-8")
+
+
+def publish_schema(spark, diagnostic_dir, table):
+    """Add a gate-written table's real Spark schema to gold_schema.json for deploy_model.py.
+
+    cd_30_build_gold publishes the schema BEFORE the gate writes these tables, so on a new
+    lakehouse they would otherwise be missing from it until the following night.
+    """
+    import json
+    from pathlib import Path
+
+    path = Path(diagnostic_dir) / "gold_schema.json"
+    schema = json.loads(path.read_text(encoding="utf-8"))
+    schema[table] = [(f.name, f.dataType.simpleString()) for f in spark.table(table).schema.fields]
+    path.write_text(json.dumps(schema, indent=1), encoding="utf-8")
 
 
 @dataclass(frozen=True)

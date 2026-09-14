@@ -1143,6 +1143,46 @@ def _add_key_and_vocabulary_rules(suite: Suite) -> None:
     ))
 
 
+SNAPSHOT_TABLE = "fct_DailySnapshot"
+SNAPSHOT_VALUES = ("ProjectKey, OpenSubmittals, SubmittalsPastDue, OpenRfis, OpenObservations, "
+                   "OpenPunchItems, ArOutstanding, BilledToDate, BudgetAmount, SpentToDate, "
+                   "CommittedAmount, CurrentContract, PendingChangeOrders, ApprovedChangeOrders")
+
+
+def snapshot_suite(snapshot_date: str) -> Suite:
+    """Checks run by cd_40_dq_checks straight AFTER capturing fct_DailySnapshot.
+
+    Not part of build_suite: the table does not exist before the first passing run, and
+    v_DailySnapshotLive is a temp view of the capture session, so these would read as
+    "could not run" - which blocks - inside the main gate.
+    """
+    return Suite().add(
+        unique_key(SNAPSHOT_TABLE, ["ProjectKey", "SnapshotDate"]),
+        Expectation(
+            name=f"{SNAPSHOT_TABLE} equals live facts at capture",
+            table=SNAPSHOT_TABLE,
+            # Both directions: a changed value, a missing project and an extra project each
+            # leave a row on one side. EXCEPT compares NULLs as equal, which is what a
+            # BLANK-preserving snapshot needs.
+            failing_sql=(
+                f"(SELECT {SNAPSHOT_VALUES} FROM v_DailySnapshotLive "
+                f"EXCEPT SELECT {SNAPSHOT_VALUES} FROM {SNAPSHOT_TABLE} WHERE SnapshotDate = DATE '{snapshot_date}') "
+                f"UNION ALL "
+                f"(SELECT {SNAPSHOT_VALUES} FROM {SNAPSHOT_TABLE} WHERE SnapshotDate = DATE '{snapshot_date}' "
+                f"EXCEPT SELECT {SNAPSHOT_VALUES} FROM v_DailySnapshotLive)"),
+            description="the saved month-end history must be what the facts said when it was saved",
+        ),
+        Expectation(
+            name=f"{SNAPSHOT_TABLE} rows come only from passing runs",
+            table=SNAPSHOT_TABLE,
+            failing_sql=(
+                f"SELECT s.* FROM {SNAPSHOT_TABLE} s WHERE NOT EXISTS (SELECT 1 FROM meta_PipelineRun r "
+                f"WHERE r.RunId = s.RunId AND r.Status = 'ok' AND r.Blocking = 0)"),
+            description="a snapshot from a blocked run would freeze unvalidated numbers into history",
+        ),
+    )
+
+
 def summarise(results) -> str:
     """One line per failure, blocking first. Written for a notebook log, not a dashboard."""
     blocking = [r for r in results if r.blocking]

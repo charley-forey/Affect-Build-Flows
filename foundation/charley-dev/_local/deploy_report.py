@@ -429,10 +429,23 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                            column("fct_Milestone", "HasDateInversion")]},
                title="Critical path milestones (Outbuild)"),
         # The workbook's one native chart, rebuilt - and now drillable to the items.
-        visual(p, "submittals_by_status", "barChart", 780, 210, 480, 440,
+        visual(p, "submittals_by_status", "barChart", 780, 210, 480, 270,
                {"Category": [column("fct_RfiSubmittal", "StatusLabel")],
                 "Y": [measure("Open Submittals")]},
                title="Open submittals by status"),
+        # SAVED HISTORY, not current state regrouped. A backlog chart built from today's
+        # facts rewrites every past month whenever an item closes; this one reads what the
+        # nightly run saved at each month end. The note names where history starts, because
+        # a month before it is unavailable - an empty point, never a zero.
+        card(p, "snapshot_note", "Snapshot History Note", 780, 488, 480, 44),
+        visual(p, "backlog_month_end", "lineChart", 780, 540, 480, 110,
+               {"Category": [column("dim_Date", "MonthYear")],
+                "Y": [measure("Open Submittals (Month End)"),
+                      measure("Open Submittals Past Due (Month End)")]},
+               title="Submittal backlog at month end (saved history)",
+               alt="Line chart. Open and past-due submittals as saved at the last nightly "
+                   "capture of each month. Months before history starts have no value, "
+                   "not zero."),
     ]
     timeline = next(v["visual"] for v in items if v["name"] == oid(p, "gantt"))
     timeline["objects"] = {"dataPoint": [{

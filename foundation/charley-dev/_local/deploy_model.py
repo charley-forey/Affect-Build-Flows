@@ -68,6 +68,9 @@ MODEL_TABLES = [
     # The pipeline heartbeat. Not project data - it is how the report answers
     # "are these numbers from last night, or from three weeks ago?".
     "meta_PipelineRun",
+    # Saved point-in-time KPIs, one row-set per passing nightly run. The only honest source
+    # for "as of month X": every other fact is current state.
+    "fct_DailySnapshot",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -125,6 +128,8 @@ RELATIONSHIPS = [
     ("man_DailyLogCompliance", "ProjectKey", "dim_Project", "ProjectKey"),
     ("man_DailyLogCompliance", "MonthStart", "dim_Date", "Date"),
     ("man_Milestones", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_DailySnapshot", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_DailySnapshot", "SnapshotDate", "dim_Date", "Date"),
 ]
 
 # Measures. Each carries the workbook cell it replaces, so anyone reading the model can
@@ -144,6 +149,48 @@ RETURN SWITCH ( TRUE (),
     Hrs > 30, "Late - no checked run in over 30 hours",
     Warnings > 0, "Gold checked with warnings; source completeness unverified",
     "Gold checks passed; source completeness unverified" )'''
+
+# ---- Month-end snapshots ---------------------------------------------------
+#
+# Current-state facts grouped by month are NOT month-end figures: closing a record rewrites
+# every past month it was open in. These read fct_DailySnapshot, which the DQ gate appends
+# after each passing run, and take the LAST capture inside the filter context - the month
+# end for a month, the latest capture with no month selected.
+#
+# BLANK, never zero, when no capture exists in the context: months before capture started
+# are unavailable, and a zero there would be fabricated history. No COALESCE on purpose.
+SNAPSHOT_KPIS = [
+    ("Open Submittals", "OpenSubmittals", '"#,0"'),
+    ("Open Submittals Past Due", "SubmittalsPastDue", '"#,0"'),
+    ("Open RFIs", "OpenRfis", '"#,0"'),
+    ("Open Observations", "OpenObservations", '"#,0"'),
+    ("Open Punch Items", "OpenPunchItems", '"#,0"'),
+    ("AR Outstanding", "ArOutstanding", '"$#,0"'),
+    ("Total Billed", "BilledToDate", '"$#,0"'),
+    ("Budget", "BudgetAmount", '"$#,0"'),
+    ("Spent To Date", "SpentToDate", '"$#,0"'),
+    ("Committed", "CommittedAmount", '"$#,0"'),
+    ("Current Contract", "CurrentContract", '"$#,0"'),
+    ("Pending Change Orders", "PendingChangeOrders", '"$#,0"'),
+    ("Approved Change Orders", "ApprovedChangeOrders", '"$#,0"'),
+]
+SNAPSHOT_MEASURES = [
+    (f"{name} (Month End)",
+     "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\n"
+     "RETURN IF ( ISBLANK ( D ), BLANK (),\n"
+     f"CALCULATE ( SUM ( fct_DailySnapshot[{col}] ), fct_DailySnapshot[SnapshotDate] = D ) )",
+     fmt, f"no workbook equivalent - [{name}] as saved at the last capture in the period")
+    for name, col, fmt in SNAPSHOT_KPIS
+] + [
+    ("Snapshot History Starts",
+     "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
+     '"yyyy-mm-dd"', "no workbook equivalent - first saved capture"),
+    ("Snapshot History Note",
+     "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\n"
+     'RETURN IF ( ISBLANK ( F ), "No month-end history captured yet",\n'
+     '"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero" )',
+     None, "no workbook equivalent - states where saved history begins"),
+]
 
 MEASURES = [
     # BALANCES, NOT FLOWS. fct_FinancialPeriod is one row per project per MONTH, and
@@ -521,7 +568,7 @@ MEASURES = [
      'RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), '
      'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )',
      None, "DASHBOARD!AU4 - the month anchor, now driven by the slicer"),
-] + scorecard.measures()
+] + SNAPSHOT_MEASURES + scorecard.measures()
 
 
 # Field-list folders. Forward-filled: a measure inherits the folder of the last section
@@ -550,6 +597,7 @@ FOLDER_STARTS = [
     ("Avg Days To Payment", "11 Scorecard drivers"),
     ("Score - Accounts Receivable", "12 Scorecard"),
     ("Last Refresh", "00 Report context"),
+    ("Open Submittals (Month End)", "16 Month-end snapshots"),
 ]
 
 
