@@ -262,6 +262,31 @@ def build_suite() -> Suite:
             description="pre-1990 dates are 'unknown' placeholders, not real dates",
         ))
 
+    # Submittal dates. Until 2026-09-14 silver read the intake received_date as the response,
+    # which put ~96% of submittals "open" (every Approved one included) and the turnaround
+    # KPI at ~1 day. These rules make that class of mapping error loud.
+    for fact, type_filter in (("fct_RfiSubmittal", "ItemType = 'Submittal' AND "),
+                              ("fct_QcSubmittal", "")):
+        suite.add(Expectation(
+            # ERROR: a distributed or closed submittal counted open inflates Open and Past
+            # Due and hides the real backlog.
+            name=f"{fact}: no responded submittal is counted open",
+            table=fact,
+            failing_sql=f"SELECT * FROM {fact} WHERE {type_filter}IsOpen AND RespondedDate IS NOT NULL",
+            severity=SEVERITY_ERROR,
+            description="distributed/closed submittals must not count as open",
+        ))
+    suite.add(Expectation(
+        # WARN: a negative turnaround means the response date is really an intake date or a
+        # back-dated entry. Real data can do it; a large count means a wrong source field.
+        name="submittal responded before it was created",
+        table="fct_RfiSubmittal",
+        failing_sql=("SELECT * FROM fct_RfiSubmittal WHERE ItemType = 'Submittal' "
+                     "AND RespondedDate < CreatedDate"),
+        severity=SEVERITY_WARN,
+        description="negative submittal turnaround - check which date silver reads",
+    ))
+
     suite.add(
         # A milestone finishing before it starts is workbook defect #6, which the
         # spreadsheet never flagged. WARN, not ERROR: it is real data entered by a human,

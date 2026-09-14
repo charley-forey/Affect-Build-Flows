@@ -128,6 +128,7 @@ SELECT
     subject,
     cost_code_id,
     status_label                                            AS source_status,
+    status_category,
     -- -> dim_QcStatus Domain='SUBMITTALSMOCKUPS_6'
     CASE UPPER(TRIM(COALESCE(status_label, '')))
          WHEN 'DRAFT'                THEN 'OPEN'

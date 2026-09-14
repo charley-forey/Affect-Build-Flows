@@ -101,6 +101,28 @@ BRONZE = {
         bronze_row("SB2", {"id": "SB2", "number": "002", "title": "Sentinel",
                            "status": {"name": "Open"},
                            "created_at": "0001-01-01"}, project_id="7"),
+        # Live shapes, 2026-09-14. received_date is the day the GC got the package from the
+        # sub - usually BEFORE created_at - and must never become the response date.
+        bronze_row("SB3", {"id": "SB3", "number": "003", "title": "Approved, distributed",
+                           "status": {"id": 3, "name": "Approved", "status": "Closed"},
+                           "created_at": "2025-04-01T14:02:11Z",
+                           "received_date": "2025-03-29",
+                           "due_date": "2025-04-20", "required_on_site_date": "2025-06-01",
+                           "distributed_at": "2025-04-15T10:00:00Z",
+                           "closed_at": "2025-04-18T09:00:00Z"}, project_id="7"),
+        bronze_row("SB4", {"id": "SB4", "number": "004", "title": "For record, closed only",
+                           "status": {"id": 4, "name": "For Record", "status": "Closed"},
+                           "created_at": "2025-04-01T08:00:00Z", "due_date": None,
+                           "distributed_at": None,
+                           "closed_at": "2025-05-02T16:30:00Z"}, project_id="7"),
+        bronze_row("SB5", {"id": "SB5", "number": "005", "title": "Closed, no dates",
+                           "status": {"id": 5, "name": "Closed", "status": "Closed"},
+                           "created_at": "2025-04-01T08:00:00Z", "due_date": "2025-04-22",
+                           "distributed_at": None, "closed_at": None}, project_id="7"),
+        bronze_row("SB6", {"id": "SB6", "number": "006", "title": "Draft",
+                           "status": {"id": 6, "name": "Draft", "status": "Draft"},
+                           "created_at": "2025-05-05T08:00:00Z", "due_date": "2025-05-10",
+                           "distributed_at": None, "closed_at": None}, project_id="7"),
     ],
     # Field ops. These parsers shipped with no offline fixture at all - the test named one
     # SQL file by hand and never reached them. The glob that replaced it found this.
@@ -670,6 +692,25 @@ def test_rejects(con) -> None:
     finally:
         con.execute("ROLLBACK")
     check("15 additional Procore input rejection paths retain the original payload and batch exactly once")
+
+
+def test_submittal_dates(con) -> None:
+    def row(item):
+        return con.execute("SELECT created_date, due_date, responded_date, status_category "
+                           "FROM cd_silver_submittals WHERE item_id = ?", [item]).fetchone()
+    # distributed_at wins over closed_at; received_date (before created) is ignored.
+    assert row("SB3") == (date(2025, 4, 1), date(2025, 4, 20), date(2025, 4, 15), "Closed")
+    check("submittal responded_date is distributed_at, never the intake received_date")
+    # due_date wins over required_on_site_date; the latter is only a fallback.
+    assert row("SB1")[1] == date(2025, 5, 20)
+    check("submittal due_date is $.due_date, falling back to required_on_site_date")
+    assert row("SB4") == (date(2025, 4, 1), None, date(2025, 5, 2), "Closed")
+    check("a submittal closed without distribution responds on closed_at")
+    assert row("SB5")[2] is None and row("SB5")[3] == "Closed"
+    assert row("SB6")[2:] == (None, "Draft")
+    check("closed-with-no-dates and drafts keep their status category for gold's open rule")
+    assert one(con, "SELECT status_category FROM cd_silver_qc_submittal "
+                    "WHERE submittal_id='SB6'") == "Draft"
 
 
 def test_rfis(con) -> None:
@@ -1355,7 +1396,7 @@ def test_sage_reconciliation(con):
 
 def main() -> int:
     con = build()
-    for fn in (test_parsing, test_sentinel_dates, test_rejects, test_rfis,
+    for fn in (test_parsing, test_sentinel_dates, test_rejects, test_submittal_dates, test_rfis,
                test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
                test_manual_parsers, test_qc_procore_parser, test_outbuild_parser,
                test_sage_parser, test_sage_reconciliation, test_manual_reject_conservation,

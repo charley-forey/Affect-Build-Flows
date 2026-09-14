@@ -184,10 +184,15 @@ SOURCE_FIXTURES = (
     ) AS t(payment_uid, invoice_uid, invoice_id, payment_date, amount)""",
 
     """CREATE OR REPLACE VIEW sv_submittals AS SELECT * FROM (VALUES
-        ('P1','SB1','001','Rebar shop drawings','Open',    'CC1', DATE '2025-05-01', DATE '2025-05-20', NULL),
-        ('P1','SB2','002','Concrete mix design','Approved','CC1', DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-15'),
-        ('P1','SB3','003','No cost code',        'Open',    NULL,  DATE '2025-05-03', DATE '2099-01-01', NULL)
-    ) AS t(project_id, item_id, item_number, subject, status_label, cost_code_id,
+        ('P1','SB1','001','Rebar shop drawings','Open',    'Open',  'CC1', DATE '2025-05-01', DATE '2025-05-20', NULL),
+        ('P1','SB2','002','Concrete mix design','Approved','Closed','CC1', DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-15'),
+        ('P1','SB3','003','No cost code',        'Open',    'Open',  NULL,  DATE '2025-05-03', DATE '2099-01-01', NULL),
+        -- A draft past its due date: not open, not past due, but still counted as a draft.
+        ('P1','SB4','004','Draft door hardware', 'Draft',   'Draft', 'CC1', DATE '2025-05-05', DATE '2025-05-10', NULL),
+        -- Closed by status with neither distributed_at nor closed_at (65 live): not open,
+        -- and no turnaround rather than an invented one.
+        ('P1','SB5','005','Closed, no dates',    'Closed',  'Closed','CC1', DATE '2025-04-02', DATE '2025-04-22', NULL)
+    ) AS t(project_id, item_id, item_number, subject, status_label, status_category, cost_code_id,
            created_date, due_date, responded_date)""",
 
     # RFIs are the second arm of fct_RfiSubmittal. Fixtures mirror the submittal shapes -
@@ -496,16 +501,16 @@ SOURCE_FIXTURES = (
     # maps, so status_code is NULL. The DQ suite counts those rather than the pipeline
     # bucketing them into whatever an ELSE branch said.
     """CREATE OR REPLACE VIEW sv_qc_submittal AS SELECT * FROM (VALUES
-        ('P1','SB1','001','Rebar shop drawings','CC1','Open','OPEN','SHOP_DRAWING',
+        ('P1','SB1','001','Rebar shop drawings','CC1','Open','Open','OPEN','SHOP_DRAWING',
          DATE '2025-05-01', DATE '2025-05-20', CAST(NULL AS DATE)),
-        ('P1','SB2','002','Lobby stone mockup','CC1','Approved','APPROVED','MOCK_UP',
+        ('P1','SB2','002','Lobby stone mockup','CC1','Approved','Closed','APPROVED','MOCK_UP',
          DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-15'),
-        ('P1','SB3','003','Unmapped status',CAST(NULL AS VARCHAR),'Under Review',
+        ('P1','SB3','003','Unmapped status',CAST(NULL AS VARCHAR),'Under Review','Open',
          CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR),
          DATE '2025-05-03', DATE '2025-05-17', CAST(NULL AS DATE))
     ) AS t(project_id, submittal_id, submittal_number, subject, cost_code_id,
-           source_status, status_code, submittal_type_code, created_date, due_date,
-           responded_date)""",
+           source_status, status_category, status_code, submittal_type_code, created_date,
+           due_date, responded_date)""",
 
     # Native inspection register; no equivalence to the manual templates is assumed.
     """CREATE OR REPLACE VIEW sv_qc_inspection AS SELECT * FROM (VALUES

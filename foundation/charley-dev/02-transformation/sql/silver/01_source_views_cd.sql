@@ -154,7 +154,7 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_jobs`;
 -- automated. fct_RfiSubmittal reads sv_submittals; the union happens here so gold does not
 -- need to know there are two sources.
 CREATE OR REPLACE TEMPORARY VIEW sv_submittals AS
-SELECT project_id, item_id, item_number, subject, status_label, cost_code_id,
+SELECT project_id, item_id, item_number, subject, status_label, status_category, cost_code_id,
        created_date, due_date, responded_date
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_submittals`;
 
@@ -410,7 +410,7 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_punch`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_qc_submittal AS
 SELECT project_id, submittal_id, submittal_number, subject, cost_code_id, source_status,
-       status_code, submittal_type_code, created_date, due_date, responded_date
+       status_category, status_code, submittal_type_code, created_date, due_date, responded_date
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_qc_submittal`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_qc_inspection AS

@@ -84,6 +84,16 @@ table fct_RfiSubmittal
 		summarizeBy: none
 		sourceColumn: IsPastDue
 
+	column IsDraft
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsDraft
+
+	column TurnaroundDays
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: TurnaroundDays
+
 	partition fct_RfiSubmittal = entity
 		mode: directLake
 		source

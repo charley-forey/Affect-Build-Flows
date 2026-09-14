@@ -84,6 +84,16 @@ table fct_QcSubmittal
 		summarizeBy: none
 		sourceColumn: IsOverdue
 
+	column IsDraft
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsDraft
+
+	column DaysOpen
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DaysOpen
+
 	partition fct_QcSubmittal = entity
 		mode: directLake
 		source

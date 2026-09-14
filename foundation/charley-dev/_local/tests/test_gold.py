@@ -184,15 +184,15 @@ def test_fct_rfisubmittal(con) -> None:
     # BOTH arms, as of 2026-08-02. RFIs are the half of the workbook's only chart that has
     # never been automated anywhere - no RFI table exists in the existing warehouse - so
     # asserting the union is asserting the new capability, not just the row count.
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 5
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 3
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 7
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 5
     assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='RFI'") == 2
     check("fct_RfiSubmittal unions submittals AND RFIs, split by ItemType")
 
     # ItemKey is only unique WITHIN an arm - Procore numbers RFIs and submittals
     # independently, so the model keys on the pair.
     assert one(con, "SELECT COUNT(*) FROM (SELECT DISTINCT ItemType, ItemKey "
-                    "FROM fct_RfiSubmittal)") == 5
+                    "FROM fct_RfiSubmittal)") == 7
     check("ItemType + ItemKey is unique across both arms")
 
     # The RFI arm must behave identically to the submittal arm - same derivations, not a
@@ -201,11 +201,20 @@ def test_fct_rfisubmittal(con) -> None:
     assert one(con, "SELECT IsOpen FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") is False
     check("the RFI arm derives IsOpen the same way the submittal arm does")
 
-    # Open is derived from the data (no response yet), not from status text, which varies
-    # by Procore configuration.
-    assert one(con, "SELECT IsOpen FROM fct_RfiSubmittal WHERE ItemKey='SB1'") is True
-    assert one(con, "SELECT IsOpen FROM fct_RfiSubmittal WHERE ItemKey='SB2'") is False
-    check("fct_RfiSubmittal[IsOpen] derives from RespondedDate, not status text")
+    # Open = awaiting review: no response, not in Procore's Closed category, not a draft.
+    def sub(item):
+        return con.execute("SELECT IsOpen, IsDraft, IsPastDue, DaysOpen IS NOT NULL, TurnaroundDays "
+                           "FROM fct_RfiSubmittal WHERE ItemType='Submittal' AND ItemKey=?",
+                           [item]).fetchone()
+    assert sub("SB1") == (True, False, True, True, None)
+    assert sub("SB2") == (False, False, False, False, 14)
+    assert sub("SB4") == (False, True, False, False, None)
+    assert sub("SB5") == (False, False, False, False, None)
+    check("submittal IsOpen excludes responded, Closed-category and draft items")
+    check("DaysOpen is set for open items only; TurnaroundDays for responded items only")
+    assert one(con, "SELECT DaysOpen FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") is None
+    assert one(con, "SELECT TurnaroundDays FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") == 9
+    check("an answered RFI has a turnaround and no today-minus-created DaysOpen")
 
     # A responded item is not past due even if its due date has gone.
     assert one(con, "SELECT IsPastDue FROM fct_RfiSubmittal WHERE ItemKey='SB2'") is False

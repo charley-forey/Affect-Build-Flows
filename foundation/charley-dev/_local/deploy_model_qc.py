@@ -161,10 +161,21 @@ dm.MEASURES = [
     ("Overdue Submittals",
      "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsOverdue] = TRUE())", COUNT,
      "Submittals & Mockups - not computed in the workbook"),
+    # Closed items only: TurnaroundDays is blank on open and draft rows (33_fct_qc.sql), and
+    # the IsOpen filter says so explicitly. Mean is right-skewed (live 2026-09-14: mean ~68,
+    # median ~32 days), hence the median beside it.
     ("Avg Submittal Turnaround",
-     "AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), "
-     "fct_QcSubmittal[TurnaroundDays])", DAYS,
-     "Submittals & Mockups - not computed in the workbook"),
+     "AVERAGEX(FILTER(fct_QcSubmittal, fct_QcSubmittal[IsOpen] = FALSE() "
+     "&& NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])", DAYS,
+     "Submittals & Mockups - not computed in the workbook; created to distributed/closed, closed items only"),
+    ("Median Submittal Turnaround",
+     "MEDIANX(FILTER(fct_QcSubmittal, fct_QcSubmittal[IsOpen] = FALSE() "
+     "&& NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])", DAYS,
+     "Submittals & Mockups - not computed in the workbook; median of closed-item turnaround"),
+    # Drafts are not open (not yet submitted for review) but are counted here, not dropped.
+    ("Draft Submittals",
+     "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsDraft] = TRUE())", COUNT,
+     "Submittals & Mockups - drafts not yet submitted; excluded from Open Submittals"),
     ("Possible Mock-Ups",
      "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsMockup] = TRUE())", COUNT,
      "Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register."),

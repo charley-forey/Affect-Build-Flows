@@ -1,0 +1,48 @@
+{
+  "run_date": "2026-09-14",
+  "scope": "Read-only SQL endpoint queries. Aggregates only. Bronze CD_Bronze_Lakehouse.cd_bronze_procore_submittals / cd_bronze_procore_rfis; silver CD_Silver_Lakehouse.cd_silver_submittals (still built with the pre-fix mapping). Rows with _project_id NULL excluded, as gold does. Past-due and days-open evaluated as of 2026-09-14.",
+  "caveat_truncation": "The SQL endpoint caps payload at 8000 chars: 1722 of 2474 submittal rows are valid JSON. Bronze figures are on that subset. Truncated rows are the larger (more approvers) payloads, i.e. almost all closed. Full-population status split is taken from silver status_label (all 2474 rows), which needs no date field.",
+  "fix": {
+    "responded_date": "COALESCE($.distributed_at, $.closed_at) (was $.received_date - intake date)",
+    "due_date": "COALESCE($.due_date, $.required_on_site_date) (was $.required_on_site_date)",
+    "status_category": "new silver column $.status.status",
+    "IsOpen_submittals": "NOT closed AND NOT draft; closed = responded_date present OR status_category = 'Closed'; draft = status_category (else status name) = 'Draft'",
+    "DaysOpen": "today - created, open items only (both arms of fct_RfiSubmittal; new on fct_QcSubmittal)",
+    "TurnaroundDays": "responded - created, responded items only (fct_QcSubmittal; new on fct_RfiSubmittal)"
+  },
+  "bronze_status_values_valid_json_n1722": [
+    {"status_name": "Draft", "status_category": "Draft", "n": 467, "closed_at": 0, "distributed_at": 0},
+    {"status_name": "Approved as Noted", "status_category": "Closed", "n": 346, "closed_at": 279, "distributed_at": 337},
+    {"status_name": "Open", "status_category": "Open", "n": 303, "closed_at": 0, "distributed_at": 0},
+    {"status_name": "For Record", "status_category": "Closed", "n": 237, "closed_at": 198, "distributed_at": 88},
+    {"status_name": "Closed", "status_category": "Closed", "n": 164, "closed_at": 119, "distributed_at": 19},
+    {"status_name": "Revise and Resubmit", "status_category": "Closed", "n": 109, "closed_at": 96, "distributed_at": 100},
+    {"status_name": "Approved", "status_category": "Closed", "n": 75, "closed_at": 67, "distributed_at": 73},
+    {"status_name": "Rejected", "status_category": "Closed", "n": 20, "closed_at": 17, "distributed_at": 18},
+    {"status_name": "Not Reviewed", "status_category": "Closed", "n": 1, "closed_at": 1, "distributed_at": 1}
+  ],
+  "submittals_valid_json_n1722": {
+    "open_submittals": {"before": 1656, "after": 303, "note": "before counted 887 Closed-category submittals with a distribution/close date as open, plus every draft"},
+    "draft_submittals_new_measure": 467,
+    "closed_submittals": 952,
+    "closed_with_turnaround": 887,
+    "closed_with_neither_date": 65,
+    "open_submittals_past_due": {"before": 10, "after": 222},
+    "avg_submittal_turnaround_days_closed_only": {"before": 0.36, "before_n": 66, "after": 67.98, "after_n": 887},
+    "median_submittal_turnaround_days": {"after": 32, "p25": 9, "p75": 96},
+    "qc_avg_submittal_turnaround_as_previously_computed": {"before": 425.5, "note": "old TurnaroundDays fell back to today-created on every non-responded row, and the measure averaged all non-blank rows"},
+    "avg_days_open_submittals_open_only": {"after": 392.0, "n": 303},
+    "dq_warn_responded_before_created": 0,
+    "dq_error_responded_counted_open": 0
+  },
+  "submittals_full_population_silver_n2474": {
+    "current_silver_mapping": {"open_submittals": 2369, "avg_turnaround_closed_days": 0.99, "past_due": 29},
+    "status_name_counts": {"Approved as Noted": 821, "Draft": 467, "Open": 311, "For Record": 272, "Revise and Resubmit": 252, "Closed": 183, "Approved": 132, "Rejected": 35, "Not Reviewed": 1},
+    "expected_after_fix": {"open_submittals": 311, "draft_submittals": 467, "closed_submittals": 1696, "note": "Open-status rows carry no distributed_at/closed_at on the valid subset, so open = the 'Open' status count"}
+  },
+  "rfis_valid_json_n657": {
+    "open_rfis": {"before": 47, "after": 47, "note": "RFI open rule unchanged"},
+    "avg_days_open_rfi_arm": {"before": 34.2, "after": 215.8, "note": "DaysOpen is now open-only; before it mixed closed-RFI turnaround into the average"},
+    "draft_rfis_still_counted_open": 16
+  }
+}
