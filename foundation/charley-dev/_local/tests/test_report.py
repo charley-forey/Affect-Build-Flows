@@ -159,6 +159,11 @@ def test_report_refs() -> None:
         from seedrunner import build
         con = build()
         try:
+            if "fct_DailySnapshot" in missing_tables:
+                # Written by the DQ gate, not the gold build: run its real capture SQL.
+                import deploy_dq
+                for statement in deploy_dq.snapshot_statements():
+                    con.execute(statement.replace("{SNAPSHOT_DATE}", "2026-01-31").replace("{RUN_ID}", "test"))
             for table in missing_tables:
                 known[table] = {r[0] for r in con.execute(f'DESCRIBE "{table}"').fetchall()}
         finally:

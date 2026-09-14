@@ -5,7 +5,8 @@
 
 Runs the expectations in 02-transformation/dq/expectations.py against gold, writes the
 results to cd_dq_results and the offending rows to cd_dq_rejects, and RAISES on a blocking
-failure.
+failure. Only after a pass does it append that day's fct_DailySnapshot (see
+02-transformation/sql/snapshot/fct_dailysnapshot.sql).
 
 WHY IT RAISES. A failure prevents Succeeded-dependent pipeline activities from running.
 This alone does not isolate Direct Lake readers from gold writes or automatic updates;
@@ -200,8 +201,42 @@ if warnings:
 print("\\nall blocking expectations passed - publication controls and source coverage still require verification")
 '''
         ),
+        cell(
+            '''
+# DAILY SNAPSHOT - point-in-time KPIs for month-end history (fct_DailySnapshot).
+#
+# ONLY REACHED WHEN THE GATE PASSED: dq.assert_no_blocking in the cell above raises first,
+# so a failed run appends nothing. Same UTC date as the batch; a re-run that date replaces
+# its rows. The month-end view is the model's job: the last capture in each month.
+import sys as _sys
+_sys.path.insert(0, "/lakehouse/default/Files/lib")
+from expectations import snapshot_suite
+
+SNAPSHOT_SQL = ''' + json.dumps(snapshot_statements(), indent=1) + '''
+snapshot_date = f"{batch_id[:4]}-{batch_id[4:6]}-{batch_id[6:8]}"
+for _sql in SNAPSHOT_SQL:
+    spark.sql(_sql.replace("{SNAPSHOT_DATE}", snapshot_date).replace("{RUN_ID}", batch_id))
+
+# Verified straight after writing: unique per project and date, equal to the live facts it
+# was captured from, and only from passing runs. A failure removes THIS run's rows before
+# raising, so unverified numbers never become history.
+snapshot_results = snapshot_suite(snapshot_date).run(spark, batch_id, persist=False)
+print(summarise(snapshot_results))
+if any(r.blocking for r in snapshot_results):
+    spark.sql(f"DELETE FROM fct_DailySnapshot WHERE RunId = '{batch_id}'")
+    dq.assert_no_blocking(snapshot_results)
+dq.publish_schema(spark, DIAG, "fct_DailySnapshot")
+print(f"daily snapshot captured for {snapshot_date}")
+'''
+        ),
     ]
     return notebook(cells)
+
+
+def snapshot_statements() -> list[str]:
+    """fct_DailySnapshot capture, placeholders left for the run to fill in."""
+    return dg.statements((CHARLEY_DEV / "02-transformation" / "sql" / "snapshot"
+                          / "fct_dailysnapshot.sql").read_text(encoding="utf-8"))
 
 
 def main() -> int:

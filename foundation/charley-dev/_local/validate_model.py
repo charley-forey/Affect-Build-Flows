@@ -146,6 +146,9 @@ RAW_COLUMNS = {
     "man_DailyLogCompliance": ["LogsMissedSameDay"],
     "dim_ProjectCrosswalk": ["SystemCount", "IsInSage", "IsInOutbuild"], "dim_VendorCrosswalk": ["IsInSage"],
     "meta_PipelineRun": ["RunAt", "Status", "Blocking", "Failing"], "dq_DataGap": ["Amount"],
+    "fct_DailySnapshot": ["SnapshotDate", "OpenSubmittals", "SubmittalsPastDue", "OpenRfis", "OpenObservations",
+                          "OpenPunchItems", "ArOutstanding", "BilledToDate", "BudgetAmount", "SpentToDate",
+                          "CommittedAmount", "CurrentContract", "PendingChangeOrders", "ApprovedChangeOrders"],
     "qc_seed_Gate": [], "qc_seed_ChecklistItem": [], "qc_seed_Trade": [],
     "fct_QcNcr": ["IsOpen", "IsPastDue", "DaysOpen", "HasUnmappedTrade"],
     "fct_QcPunch": ["IsOpen", "DaysOpen", "HasUnmappedTrade"],
@@ -182,6 +185,11 @@ def _avg(rows, column):
 def _max(rows, column, key=None):
     values = [r[column] for r in rows if r[column] is not None]
     return max(values, key=key) if values else None
+
+
+def _min(rows, column):
+    values = [r[column] for r in rows if r[column] is not None]
+    return min(values, key=_ts) if values else None
 
 
 def _count(rows):
@@ -488,6 +496,23 @@ def monthly_expected():
                                            else score * selected(c.rows("dim_ScorecardWeight", s), "Weight") / 3),
         "Category Band": category_band,
     })
+    # Month end: the last capture in the filter context, BLANK when there is none.
+    def month_end(column):
+        def value(c, s):
+            rows = c.rows("fct_DailySnapshot", s)
+            last = _max(rows, "SnapshotDate", key=_ts)
+            return None if last is None else _sum([r for r in rows if r["SnapshotDate"] == last], column)
+        return value
+
+    def history_start(c, s):
+        return _min(c.rows("fct_DailySnapshot", s._replace(month=None)), "SnapshotDate")
+
+    import deploy_model as dm
+    E.update({f"{name} (Month End)": month_end(column) for name, column, _ in dm.SNAPSHOT_KPIS})
+    E["Snapshot History Starts"] = history_start
+    E["Snapshot History Note"] = lambda c, s: (
+        "No month-end history captured yet" if (first := history_start(c, s)) is None
+        else f"History starts {_ts(first):%Y-%m-%d}; earlier months are unavailable, not zero")
     for number, name in enumerate(("Accounts Receivable", "Profitability", "Cash Position", "Change Orders",
                                    "Safety Incidents", "Schedule Performance", "Completion Variance",
                                    "Observations", "Daily Reports"), 1):

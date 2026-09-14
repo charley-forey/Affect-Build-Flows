@@ -335,15 +335,18 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 
-# meta_PipelineRun is written by the DQ GATE, which runs after this notebook - so on a
-# brand-new lakehouse it does not exist yet and this must not fail. It appears in the
-# schema from the second run onward, which is also the first run at which it has anything
-# to say.
-try:
-    schema["meta_PipelineRun"] = [(f.name, f.dataType.simpleString())
-                                  for f in spark.table("meta_PipelineRun").schema.fields]
-except Exception:
-    print("  meta_PipelineRun: not created yet (the DQ gate writes it) - skipping")
+# GATE-WRITTEN TABLES. The DQ gate writes these after this notebook - so on a brand-new
+# lakehouse they do not exist yet and this must not fail. Kept out of `tables` above for
+# the same reason (the empty guard would fail the first build). They are still listed
+# HERE, because a table missing from gold_schema.json silently cannot reach a model; the
+# gate also publishes their schema itself right after writing them (dq.publish_schema).
+#   meta_PipelineRun   the heartbeat
+#   fct_DailySnapshot  point-in-time KPIs, appended only after a passing gate
+for t in ["meta_PipelineRun", "fct_DailySnapshot"]:
+    try:
+        schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
+    except Exception:
+        print(f"  {t}: not created yet (the DQ gate writes it) - skipping")
 with open(f"{DIAG}/gold_schema.json", "w", encoding="utf-8") as fh:
     json.dump(schema, fh, indent=1)
 print(f"  published schema for {len(schema)} tables")
