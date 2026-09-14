@@ -34,8 +34,9 @@ SELECT
               AND (created_date < DATE '2015-01-01' OR created_date > DATE '2035-12-31')
          THEN TRUE ELSE FALSE END    AS HasOutOfRangeDate,
     -- "Pending" is anything not yet approved. Matching case-insensitively because status
-    -- text casing is not guaranteed consistent across Procore configurations.
-    CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed') THEN FALSE ELSE TRUE END AS IsPending,
+    -- text casing is not guaranteed consistent across Procore configurations. A void CO is
+    -- dead, not outstanding, so it is not pending either.
+    CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed', 'void') THEN FALSE ELSE TRUE END AS IsPending,
     CASE WHEN created_date IS NULL THEN NULL
          ELSE datediff(CURRENT_DATE, created_date) END AS DaysOpen
 FROM sv_prime_change_orders

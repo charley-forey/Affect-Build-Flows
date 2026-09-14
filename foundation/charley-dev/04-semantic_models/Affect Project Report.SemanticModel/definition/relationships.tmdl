@@ -181,3 +181,16 @@ relationship rel_44_man_DailyLogCompliance_dim_Date_MonthStart
 relationship rel_45_man_Milestones_dim_Project_ProjectKey
 	fromColumn: man_Milestones.ProjectKey
 	toColumn: dim_Project.ProjectKey
+
+relationship rel_46_fct_DailySnapshot_dim_Project_ProjectKey
+	fromColumn: fct_DailySnapshot.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_47_fct_DailySnapshot_dim_Date_SnapshotDate
+	fromColumn: fct_DailySnapshot.SnapshotDate
+	toColumn: dim_Date.Date
+
+relationship rel_inactive_fct_Invoice_dim_Date_PaidDate
+	isActive: false
+	fromColumn: fct_Invoice.PaidDate
+	toColumn: dim_Date.Date

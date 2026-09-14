@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Total Paid (on invoices in period). Shows Total Paid for the current selection.'"
+                  "Value": "'Card. Total Paid (on invoices sent in period). Shows Total Paid for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Total Paid (on invoices in period)'"
+                  "Value": "'Total Paid (on invoices sent in period)'"
                 }
               }
             },

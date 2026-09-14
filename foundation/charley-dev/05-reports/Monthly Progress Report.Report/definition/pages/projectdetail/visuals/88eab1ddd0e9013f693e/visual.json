@@ -79,11 +79,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget Variance"
+                  "Property": "Budget Remaining"
                 }
               },
-              "queryRef": "_Measures.Budget Variance",
-              "nativeQueryRef": "Budget Variance"
+              "queryRef": "_Measures.Budget Remaining",
+              "nativeQueryRef": "Budget Remaining"
             }
           ]
         }
@@ -97,7 +97,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Budget by cost code. Shows CostCode, Division, Budget, Spent To Date, Budget Variance for the current selection.'"
+                  "Value": "'Table. Budget by cost code. Shows CostCode, Division, Budget, Spent To Date, Budget Remaining for the current selection.'"
                 }
               }
             }

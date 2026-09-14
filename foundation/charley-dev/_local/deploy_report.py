@@ -69,7 +69,7 @@ BILLED_PCT_TITLE = "Billed To Date % Of Contract (at period end)"
 AR_TITLE = "AR Outstanding (current balance)"
 CARD_TITLES = {
     "Total Billed": "Total Billed (selected period)",
-    "Total Paid": "Total Paid (on invoices in period)",
+    "Total Paid": "Total Paid (on invoices sent in period)",
     "Total Billed %": BILLED_PCT_TITLE,
     "AR Outstanding": AR_TITLE,
     "Percent Bought Out": "Percent Bought Out (last snapshot)",
@@ -412,7 +412,7 @@ def page_financial() -> tuple[str, list[dict]]:
         card(p, "f_committed", "Committed", 412, 80, title="Committed (last snapshot)"),
         card(p, "f_spent", "Spent To Date", 608, 80, title="Spent To Date (last snapshot)"),
         card(p, "f_ctc", "Cost To Complete", 804, 80, title="Cost To Complete (last snapshot)"),
-        card(p, "f_var", "Budget Variance", 1000, 80, title="Budget Variance (last snapshot)"),
+        card(p, "f_var", "Budget Remaining", 1000, 80, title="Budget Remaining (last snapshot)"),
         # A matrix rather than a flat table: cost codes roll up by division, so a reader
         # starts at the level they care about and expands into the detail rather than
         # scrolling 4,837 rows looking for it.
@@ -423,11 +423,12 @@ def page_financial() -> tuple[str, list[dict]]:
                          column("fct_BudgetLine", "ProjectKey"),
                          column("fct_BudgetLine", "BudgetLineID")],
                 "Values": [measure("Budget"), measure("Spent To Date"),
-                           measure("Budget Variance"), measure("Budget Variance %"),
-                           measure("Budget Status")]},
+                           measure("Budget Remaining"), measure("Budget Remaining %"),
+                           measure("Budget Status"), measure("Forecast"),
+                           measure("Forecast Variance"), measure("Forecast Status")]},
                title="Budget by cost code (last snapshot) - expand for category and source line",
-               alt="Matrix. Variance is budget less spend to date; status describes that spend comparison, "
-                   "not a forecast of final cost. Expand through division, cost code, category, project ID and source budget line ID."),
+               alt="Matrix. Budget remaining is budget less spend to date and Budget Status describes that spend "
+                   "comparison; Forecast Variance is budget less forecast and Forecast Status bands it the same way. Expand through division, cost code, category, project ID and source budget line ID."),
         visual(p, "co_by_status", "clusteredColumnChart", 820, 210, 440, 210,
                {"Category": [column("fct_ChangeOrder", "StatusLabel")],
                 "Y": [measure("Change Order Amount")]},
@@ -738,7 +739,7 @@ def page_project_detail() -> tuple[str, list[dict]]:
                            column("dim_CostCode", "Division"),
                            measure("Budget"),
                            measure("Spent To Date"),
-                           measure("Budget Variance")]},
+                           measure("Budget Remaining")]},
                title="Budget by cost code"),
 
         visual(p, "pd_co", "tableEx", 660, 228, 600, 232,
@@ -856,7 +857,8 @@ def page_billing() -> tuple[str, list[dict]]:
 
         # Retainage first. This is the new information on the page.
         textbox(p, "ret_h", "Retainage", 20, 104, 300, 28, size=13),
-        card(p, "b_net", "Net Retainage Position", 20, 136, 260, 110),
+        card(p, "b_net", "Net Retainage Position", 20, 136, 260, 110,
+             title="Net Retainage (owner-held minus sub-held; negative = Affect holds more)"),
         card(p, "b_ret_own", "Retainage Held Owner", 296, 136, 240, 110),
         card(p, "b_ret_sub", "Retainage Held Sub", 552, 136, 240, 110),
 
@@ -869,7 +871,7 @@ def page_billing() -> tuple[str, list[dict]]:
         # column on the fact, and the gap between the two IS the retainage above. A reader
         # who spots that has understood the table.
         card(p, "b_period", "Billed This Period", 296, 262, 240, 100,
-             title="Owner Billed (selected period)"),
+             title="Owner billed (net of retainage)"),
         card(p, "b_draft", "Draft Billings", 552, 262, 240, 100),
 
         # Billing over time uses the SUM-SAFE measure. A cumulative column on a trend chart
@@ -1001,6 +1003,9 @@ def page_insurance() -> tuple[str, list[dict]]:
         card(p, "i_certs", "Certificates On File", 647, 144, 195, 100),
         card(p, "i_expired", "Expired Certificates", 856, 144, 195, 100),
         card(p, "i_soon", "Certificates Expiring Soon", 1065, 144, 195, 100),
+        # Why every certificate reads Expired: the newest one in Procore is already past.
+        card(p, "i_latest", "Latest Certificate Expiration", 1065, 76, 195, 64,
+             title="Latest certificate expiration"),
 
         visual(p, "i_by_status", "columnChart", 20, 256, 400, 196,
                {"Category": [column("fct_VendorInsurance", "ExpiryStatus")],
@@ -1008,9 +1013,9 @@ def page_insurance() -> tuple[str, list[dict]]:
                title="Certificates by expiry status"),
 
         visual(p, "i_by_type", "barChart", 436, 256, 400, 196,
-               {"Category": [column("fct_VendorInsurance", "InsuranceType")],
+               {"Category": [column("fct_VendorInsurance", "InsuranceCategory")],
                 "Y": [measure("Certificates On File")]},
-               title="Certificates by type (Procore's free-text values, untidied)"),
+               title="Certificates by coverage type"),
 
         visual(p, "i_state", "columnChart", 852, 256, 408, 196,
                {"Category": [column("fct_VendorInsurance", "ComplianceState")],

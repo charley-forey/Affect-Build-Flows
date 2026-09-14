@@ -93,6 +93,21 @@ def build_suite() -> Suite:
         referential("fct_Milestone", "ProjectKey", "dim_Project", "ProjectKey"),
     )
 
+    # Division is the by-division rollup key. "1" beside "01" split one CSI division into two
+    # rows on the budget page; gold zero-pads, and this keeps it that way. Written without a
+    # regex so it runs unchanged on Spark and DuckDB.
+    suite.add(Expectation(
+        name="dim_CostCode.Division is two digits or NULL",
+        table="dim_CostCode",
+        failing_sql=(
+            "SELECT * FROM dim_CostCode WHERE Division IS NOT NULL AND NOT ("
+            "LENGTH(Division) = 2 AND SUBSTRING(Division, 1, 1) BETWEEN '0' AND '9' "
+            "AND SUBSTRING(Division, 2, 1) BETWEEN '0' AND '9')"
+        ),
+        severity=SEVERITY_ERROR,
+        description="an unpadded or non-numeric division splits the by-division rollup",
+    ))
+
     # ------------------------------------------------- the Sage join is alive
     #
     # A project genuinely missing from Sage is a WARN and always has been. EVERY project

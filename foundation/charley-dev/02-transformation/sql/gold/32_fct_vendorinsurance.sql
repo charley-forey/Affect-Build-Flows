@@ -31,6 +31,19 @@ SELECT
     insurance_id                     AS InsuranceKey,
     vendor_id                        AS VendorKey,
     insurance_type                   AS InsuranceType,
+    -- Procore's type is free text: "Auto Mobile Liability" and "AUTOMOBILE LIABILITY" are
+    -- one coverage. Grouped for the visual; InsuranceType keeps the raw text. Pollution is
+    -- tested before Excess so "Contractors Pollution Excess" is not read as umbrella cover.
+    CASE WHEN UPPER(insurance_type) LIKE '%POLLUTION%' THEN 'Other'
+         WHEN UPPER(insurance_type) LIKE '%AUTO%' THEN 'Auto'
+         WHEN UPPER(insurance_type) LIKE '%GENERAL LIAB%'
+              OR UPPER(TRIM(insurance_type)) IN ('GL', 'COMMERCIAL GL') THEN 'General Liability'
+         WHEN UPPER(insurance_type) LIKE '%WORKER%' THEN 'Workers Comp'
+         WHEN UPPER(insurance_type) LIKE '%UMBRELLA%'
+              OR UPPER(insurance_type) LIKE '%EXCESS%' THEN 'Umbrella/Excess'
+         WHEN UPPER(insurance_type) LIKE '%DISAB%'
+              OR UPPER(insurance_type) LIKE '%DBL%' THEN 'Disability'
+         ELSE 'Other' END            AS InsuranceCategory,
     provider                         AS Provider,
     policy_number                    AS PolicyNumber,
     status_label                     AS StatusLabel,

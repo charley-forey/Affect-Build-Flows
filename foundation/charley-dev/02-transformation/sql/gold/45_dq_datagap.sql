@@ -83,7 +83,7 @@ WHERE i.HasUnmatchedProject
 
 UNION ALL
 SELECT 'Unmapped trade', 'Procore', 'fct_QcNcr', n.NcrKey, p.ProjectKey,
-       CONCAT('Procore trade "', n.TradeLabel, '" has no workbook TradeKey'),
+       CONCAT(n.TradeLabel, ' (no workbook TradeKey)'),
        CAST(NULL AS DOUBLE), CONCAT('observation ', n.NcrNumber), CAST(NULL AS STRING)
 FROM fct_QcNcr n
 LEFT JOIN dim_Project p ON p.ProjectKey = n.ProjectKey
@@ -91,7 +91,7 @@ WHERE n.HasUnmappedTrade
 
 UNION ALL
 SELECT 'Unmapped trade', 'Procore', 'fct_QcPunch', u.PunchKey, p.ProjectKey,
-       CONCAT('Procore trade "', u.TradeLabel, '" has no workbook TradeKey'),
+       CONCAT(u.TradeLabel, ' (no workbook TradeKey)'),
        CAST(NULL AS DOUBLE), CONCAT('punch item ', u.PunchNumber), CAST(NULL AS STRING)
 FROM fct_QcPunch u
 LEFT JOIN dim_Project p ON p.ProjectKey = u.ProjectKey

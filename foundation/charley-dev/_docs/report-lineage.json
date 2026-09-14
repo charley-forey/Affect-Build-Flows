@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T04:27:23.746448+00:00",
+  "generated_at": "2026-09-14T04:57:02.922595+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -352,13 +352,13 @@
       "measures": [
         {
           "name": "Original Contract",
-          "expression": "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n\t\t\tSUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )",
+          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\nRETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\nCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )",
           "format": "\"$#,0\"",
           "origin": "FINANCIALS!C3"
         },
         {
           "name": "Current Contract",
-          "expression": "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n\t\t\tSUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )",
+          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\nRETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\nCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )",
           "format": "\"$#,0\"",
           "origin": "FINANCIALS!C4"
         },
@@ -370,7 +370,7 @@
         },
         {
           "name": "Pending Change Orders",
-          "expression": "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n\t\t\tSUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )",
+          "expression": "VAR EndDate = MAX ( dim_Date[Date] )\nRETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\nCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) ),\nREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )",
           "format": "\"$#,0\"",
           "origin": "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"
         },
@@ -382,7 +382,7 @@
         },
         {
           "name": "Approved Change Orders",
-          "expression": "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )",
+          "expression": "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> \"void\" )",
           "format": "\"$#,0\"",
           "origin": "derived - approved COs, the complement of [Pending Change Orders]"
         },
@@ -423,22 +423,40 @@
           "origin": "FINANCIALS!C15 - as of the last budget snapshot"
         },
         {
-          "name": "Budget Variance",
+          "name": "Budget Remaining",
           "expression": "[Budget] - [Spent To Date]",
           "format": "\"$#,0\"",
-          "origin": "derived"
+          "origin": "derived - budget less spend to date"
         },
         {
-          "name": "Budget Variance %",
-          "expression": "DIVIDE ( [Budget Variance], [Budget] )",
+          "name": "Budget Remaining %",
+          "expression": "DIVIDE ( [Budget Remaining], [Budget] )",
           "format": "\"0.0%\"",
           "origin": "the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown"
         },
         {
+          "name": "Forecast Variance",
+          "expression": "[Budget] - [Forecast]",
+          "format": "\"$#,0\"",
+          "origin": "derived - budget less forecast final cost; negative = forecast over budget"
+        },
+        {
+          "name": "Forecast Variance %",
+          "expression": "DIVIDE ( [Forecast Variance], [Budget] )",
+          "format": "\"0.0%\"",
+          "origin": "derived"
+        },
+        {
           "name": "Budget Status",
-          "expression": "VAR V = [Budget Variance %]\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" )",
+          "expression": "VAR V = [Budget Remaining %]\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Spend within budget\", V >= -0.05, \"Spend over budget up to 5%\", \"Spend over budget above 5%\" )",
           "format": null,
           "origin": "FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment"
+        },
+        {
+          "name": "Forecast Status",
+          "expression": "VAR V = [Forecast Variance %]\n\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, \"Forecast within budget\", V >= -0.05, \"Forecast over budget up to 5%\", \"Forecast over budget above 5%\" )",
+          "format": null,
+          "origin": "FINANCIALS!F19:F20 bands applied to forecast final cost against budget"
         },
         {
           "name": "Percent Bought Out",
@@ -519,6 +537,12 @@
           "origin": "D8 - the renewals to chase this month"
         },
         {
+          "name": "Latest Certificate Expiration",
+          "expression": "MAX ( fct_VendorInsurance[ExpirationDate] )",
+          "format": "\"yyyy-mm-dd\"",
+          "origin": "D8 - latest certificate expiration on file"
+        },
+        {
           "name": "Vendors Without Insurance",
           "expression": "VAR Insured = VALUES ( fct_VendorInsurance[VendorKey] )\n\t\t\tRETURN COALESCE ( COUNTROWS ( EXCEPT (\n\t\t\tVALUES ( bridge_ProjectVendor[VendorKey] ), Insured ) ), 0 )",
           "format": "\"#,0\"",
@@ -532,15 +556,15 @@
         },
         {
           "name": "Retainage Held Sub",
-          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Subcontractor\" )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Subcontractor\", fct_Billing[StatusLabel] IN { \"APPROVED\", \"APPROVED_AS_NOTED\" } )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent"
+          "origin": "no workbook equivalent - approved subcontractor pay apps only"
         },
         {
           "name": "Net Retainage Position",
           "expression": "[Retainage Held Owner] - [Retainage Held Sub]",
           "format": "\"$#,0\"",
-          "origin": "derived - what Affect is owed, less what Affect holds"
+          "origin": "derived - Owner-held minus sub-held; negative = Affect holds more than it is owed"
         },
         {
           "name": "Owner Billed To Date",
@@ -564,7 +588,7 @@
           "name": "Billed This Period",
           "expression": "CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = \"Owner\", fct_Billing[StatusLabel] <> \"DRAFT\" )",
           "format": "\"$#,0\"",
-          "origin": "derived - safe to sum, unlike the cumulative columns"
+          "origin": "derived - owner billed net of retainage (payment due, Procore); safe to sum, unlike the cumulative columns"
         },
         {
           "name": "Billing Periods",
@@ -618,7 +642,13 @@
           "name": "Total Paid",
           "expression": "SUM ( fct_Invoice[AmountPaid] )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C12"
+          "origin": "FINANCIALS!C12 - paid on invoices SENT in the period, not cash received in it"
+        },
+        {
+          "name": "Cash Received",
+          "expression": "CALCULATE ( SUM ( fct_Invoice[AmountPaid] ), NOT ISBLANK ( fct_Invoice[PaidDate] ),\nUSERELATIONSHIP ( fct_Invoice[PaidDate], dim_Date[Date] ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - invoices fully paid in the period, by paid date"
         },
         {
           "name": "AR Outstanding",
@@ -664,7 +694,7 @@
         },
         {
           "name": "Critical Milestones",
-          "expression": "COUNTROWS ( fct_Milestone )",
+          "expression": "VAR N = COUNTROWS ( fct_Milestone )\nRETURN IF ( ISBLANK ( N ) && NOT ISBLANK ( CALCULATE ( COUNTROWS ( fct_Milestone ), REMOVEFILTERS ( dim_Date ) ) ), 0, N )",
           "format": "\"#,0\"",
           "origin": "SCHEDULE!Table5"
         },
@@ -748,7 +778,7 @@
         },
         {
           "name": "DQ Projects Without Crosswalk",
-          "expression": "CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )",
+          "expression": "CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE, dim_Project[ProjectKey] <> \"UNMATCHED\" )",
           "format": "\"#,0\"",
           "origin": "diagnostics - cannot join to Sage until fixed"
         },
@@ -802,13 +832,13 @@
         },
         {
           "name": "Projects Reporting",
-          "expression": "DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] )",
+          "expression": "CALCULATE ( DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] ), fct_FinancialPeriod[ProjectKey] <> \"UNMATCHED\" )",
           "format": "\"#,0\"",
           "origin": "portfolio scope - projects with financial-period rows in the current filters"
         },
         {
           "name": "Projects At Risk",
-          "expression": "COUNTROWS ( FILTER ( dim_Project, NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )",
+          "expression": "COUNTROWS ( FILTER ( dim_Project, dim_Project[ProjectKey] <> \"UNMATCHED\" && NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )",
           "format": "\"#,0\"",
           "origin": "no workbook equivalent - one workbook per project cannot rank them"
         },
@@ -1418,7 +1448,7 @@
           "page": "Financial",
           "visual": "ae8f3dac89cc501dd307",
           "table": "_Measures",
-          "field": "Budget Variance",
+          "field": "Budget Remaining",
           "kind": "Measure"
         },
         {
@@ -1432,6 +1462,20 @@
           "page": "Financial",
           "visual": "a53e711fbab0e09bdd3e",
           "table": "_Measures",
+          "field": "Budget Remaining",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Budget Remaining %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
           "field": "Budget Status",
           "kind": "Measure"
         },
@@ -1439,14 +1483,21 @@
           "page": "Financial",
           "visual": "a53e711fbab0e09bdd3e",
           "table": "_Measures",
-          "field": "Budget Variance",
+          "field": "Forecast",
           "kind": "Measure"
         },
         {
           "page": "Financial",
           "visual": "a53e711fbab0e09bdd3e",
           "table": "_Measures",
-          "field": "Budget Variance %",
+          "field": "Forecast Status",
+          "kind": "Measure"
+        },
+        {
+          "page": "Financial",
+          "visual": "a53e711fbab0e09bdd3e",
+          "table": "_Measures",
+          "field": "Forecast Variance",
           "kind": "Measure"
         },
         {
@@ -2277,6 +2328,13 @@
         },
         {
           "page": "Vendor Insurance",
+          "visual": "17f453d79d42a96e93dd",
+          "table": "_Measures",
+          "field": "Latest Certificate Expiration",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
           "visual": "d5608338e5d0e3d3af70",
           "table": "_Measures",
           "field": "Certificates On File",
@@ -2300,7 +2358,7 @@
           "page": "Vendor Insurance",
           "visual": "c9c47db3c61c9182d52c",
           "table": "fct_VendorInsurance",
-          "field": "InsuranceType",
+          "field": "InsuranceCategory",
           "kind": "Column"
         },
         {
@@ -2748,7 +2806,7 @@
           "page": "Project Detail",
           "visual": "88eab1ddd0e9013f693e",
           "table": "_Measures",
-          "field": "Budget Variance",
+          "field": "Budget Remaining",
           "kind": "Measure"
         },
         {

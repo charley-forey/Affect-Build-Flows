@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Net Retainage Position. Shows Net Retainage Position for the current selection.'"
+                  "Value": "'Card. Net Retainage (owner-held minus sub-held; negative = Affect holds more). Shows Net Retainage Position for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Net Retainage Position'"
+                  "Value": "'Net Retainage (owner-held minus sub-held; negative = Affect holds more)'"
                 }
               }
             },

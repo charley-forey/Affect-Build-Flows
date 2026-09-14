@@ -7,7 +7,7 @@
     "z": 0,
     "width": 400,
     "height": 196,
-    "tabOrder": 21
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "barChart",
@@ -23,11 +23,11 @@
                       "Entity": "fct_VendorInsurance"
                     }
                   },
-                  "Property": "InsuranceType"
+                  "Property": "InsuranceCategory"
                 }
               },
-              "queryRef": "fct_VendorInsurance.InsuranceType",
-              "nativeQueryRef": "InsuranceType"
+              "queryRef": "fct_VendorInsurance.InsuranceCategory",
+              "nativeQueryRef": "InsuranceCategory"
             }
           ]
         },
@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Stacked bar chart. Certificates by type (Procore''s free-text values, untidied). Shows Certificates On File by InsuranceType.'"
+                  "Value": "'Stacked bar chart. Certificates by coverage type. Shows Certificates On File by InsuranceCategory.'"
                 }
               }
             }
@@ -72,7 +72,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Certificates by type (Procore''s free-text values, untidied)'"
+                  "Value": "'Certificates by coverage type'"
                 }
               }
             },

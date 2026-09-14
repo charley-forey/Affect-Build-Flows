@@ -2,17 +2,19 @@ table _Measures
 
 	/// Replaces FINANCIALS!C3
 	measure 'Original Contract' =
-			SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
-			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
-			SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )
+			VAR EndDate = MAX ( dim_Date[Date] )
+			RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) ),
+			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
 	/// Replaces FINANCIALS!C4
 	measure 'Current Contract' =
-			SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
-			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
-			SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )
+			VAR EndDate = MAX ( dim_Date[Date] )
+			RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) ),
+			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
@@ -23,9 +25,10 @@ table _Measures
 
 	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell
 	measure 'Pending Change Orders' =
-			SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
-			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],
-			SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )
+			VAR EndDate = MAX ( dim_Date[Date] )
+			RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) ),
+			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
@@ -35,7 +38,7 @@ table _Measures
 		displayFolder: 01 Contract & Change
 
 	/// Replaces derived - approved COs, the complement of [Pending Change Orders]
-	measure 'Approved Change Orders' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )
+	measure 'Approved Change Orders' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> "void" )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
@@ -69,20 +72,36 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
-	/// Replaces derived
-	measure 'Budget Variance' = [Budget] - [Spent To Date]
+	/// Replaces derived - budget less spend to date
+	measure 'Budget Remaining' = [Budget] - [Spent To Date]
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown
-	measure 'Budget Variance %' = DIVIDE ( [Budget Variance], [Budget] )
+	measure 'Budget Remaining %' = DIVIDE ( [Budget Remaining], [Budget] )
+		formatString: "0.0%"
+		displayFolder: 02 Budget & Cost
+
+	/// Replaces derived - budget less forecast final cost; negative = forecast over budget
+	measure 'Forecast Variance' = [Budget] - [Forecast]
+		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
+
+	/// Replaces derived
+	measure 'Forecast Variance %' = DIVIDE ( [Forecast Variance], [Budget] )
 		formatString: "0.0%"
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment
 	measure 'Budget Status' =
-			VAR V = [Budget Variance %]
+			VAR V = [Budget Remaining %]
 			RETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "Spend within budget", V >= -0.05, "Spend over budget up to 5%", "Spend over budget above 5%" )
+		displayFolder: 02 Budget & Cost
+
+	/// Replaces FINANCIALS!F19:F20 bands applied to forecast final cost against budget
+	measure 'Forecast Status' =
+			VAR V = [Forecast Variance %]
+			RETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "Forecast within budget", V >= -0.05, "Forecast over budget up to 5%", "Forecast over budget above 5%" )
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D62
@@ -169,6 +188,11 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 15 Insurance
 
+	/// Replaces D8 - latest certificate expiration on file
+	measure 'Latest Certificate Expiration' = MAX ( fct_VendorInsurance[ExpirationDate] )
+		formatString: "yyyy-mm-dd"
+		displayFolder: 15 Insurance
+
 	/// Replaces D8 - a vendor with no certificate never appears in the insurance table
 	measure 'Vendors Without Insurance' =
 			VAR Insured = VALUES ( fct_VendorInsurance[VendorKey] )
@@ -182,12 +206,12 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
 
-	/// Replaces no workbook equivalent
-	measure 'Retainage Held Sub' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = "Subcontractor" )
+	/// Replaces no workbook equivalent - approved subcontractor pay apps only
+	measure 'Retainage Held Sub' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = "Subcontractor", fct_Billing[StatusLabel] IN { "APPROVED", "APPROVED_AS_NOTED" } )
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
 
-	/// Replaces derived - what Affect is owed, less what Affect holds
+	/// Replaces derived - Owner-held minus sub-held; negative = Affect holds more than it is owed
 	measure 'Net Retainage Position' = [Retainage Held Owner] - [Retainage Held Sub]
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
@@ -207,7 +231,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
 
-	/// Replaces derived - safe to sum, unlike the cumulative columns
+	/// Replaces derived - owner billed net of retainage (payment due, Procore); safe to sum, unlike the cumulative columns
 	measure 'Billed This Period' = CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = "Owner", fct_Billing[StatusLabel] <> "DRAFT" )
 		formatString: "$#,0"
 		displayFolder: 03 Billing & Retainage
@@ -252,8 +276,15 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 05 Cash & AR
 
-	/// Replaces FINANCIALS!C12
+	/// Replaces FINANCIALS!C12 - paid on invoices SENT in the period, not cash received in it
 	measure 'Total Paid' = SUM ( fct_Invoice[AmountPaid] )
+		formatString: "$#,0"
+		displayFolder: 05 Cash & AR
+
+	/// Replaces no workbook equivalent - invoices fully paid in the period, by paid date
+	measure 'Cash Received' =
+			CALCULATE ( SUM ( fct_Invoice[AmountPaid] ), NOT ISBLANK ( fct_Invoice[PaidDate] ),
+			USERELATIONSHIP ( fct_Invoice[PaidDate], dim_Date[Date] ) )
 		formatString: "$#,0"
 		displayFolder: 05 Cash & AR
 
@@ -298,7 +329,9 @@ table _Measures
 		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces SCHEDULE!Table5
-	measure 'Critical Milestones' = COUNTROWS ( fct_Milestone )
+	measure 'Critical Milestones' =
+			VAR N = COUNTROWS ( fct_Milestone )
+			RETURN IF ( ISBLANK ( N ) && NOT ISBLANK ( CALCULATE ( COUNTROWS ( fct_Milestone ), REMOVEFILTERS ( dim_Date ) ) ), 0, N )
 		formatString: "#,0"
 		displayFolder: 07 Schedule
 
@@ -368,7 +401,7 @@ table _Measures
 		displayFolder: 09 Source Coverage
 
 	/// Replaces diagnostics - cannot join to Sage until fixed
-	measure 'DQ Projects Without Crosswalk' = CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )
+	measure 'DQ Projects Without Crosswalk' = CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE, dim_Project[ProjectKey] <> "UNMATCHED" )
 		formatString: "#,0"
 		displayFolder: 10 Data Quality
 
@@ -413,12 +446,12 @@ table _Measures
 		displayFolder: 05 Cash & AR
 
 	/// Replaces portfolio scope - projects with financial-period rows in the current filters
-	measure 'Projects Reporting' = DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] )
+	measure 'Projects Reporting' = CALCULATE ( DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] ), fct_FinancialPeriod[ProjectKey] <> "UNMATCHED" )
 		formatString: "#,0"
 		displayFolder: 13 Portfolio
 
 	/// Replaces no workbook equivalent - one workbook per project cannot rank them
-	measure 'Projects At Risk' = COUNTROWS ( FILTER ( dim_Project, NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )
+	measure 'Projects At Risk' = COUNTROWS ( FILTER ( dim_Project, dim_Project[ProjectKey] <> "UNMATCHED" && NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )
 		formatString: "#,0"
 		displayFolder: 13 Portfolio
 

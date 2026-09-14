@@ -47,6 +47,12 @@ def main() -> int:
     con = build()
     checks = 0
 
+    name = "dim_CostCode.Division is two digits or NULL"
+    assert RULES[name].severity == expectations.SEVERITY_ERROR
+    for bad in ("'1'", "'AB'", "'031'"):
+        check_fails(con, name, f"UPDATE dim_CostCode SET Division = {bad} WHERE CostCodeKey = 'CC1'")
+        checks += 1
+
     # Conservation: altered amount, dropped row, fanned-out row, extra source row.
     for gold, view, src_cols, gold_cols, keep in expectations.CONSERVATION:
         name = f"{gold} conserves {view} rows and amounts exactly"

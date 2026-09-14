@@ -125,11 +125,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget Variance"
+                  "Property": "Budget Remaining"
                 }
               },
-              "queryRef": "_Measures.Budget Variance",
-              "nativeQueryRef": "Budget Variance"
+              "queryRef": "_Measures.Budget Remaining",
+              "nativeQueryRef": "Budget Remaining"
             },
             {
               "field": {
@@ -139,11 +139,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Budget Variance %"
+                  "Property": "Budget Remaining %"
                 }
               },
-              "queryRef": "_Measures.Budget Variance %",
-              "nativeQueryRef": "Budget Variance %"
+              "queryRef": "_Measures.Budget Remaining %",
+              "nativeQueryRef": "Budget Remaining %"
             },
             {
               "field": {
@@ -158,6 +158,48 @@
               },
               "queryRef": "_Measures.Budget Status",
               "nativeQueryRef": "Budget Status"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Forecast"
+                }
+              },
+              "queryRef": "_Measures.Forecast",
+              "nativeQueryRef": "Forecast"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Forecast Variance"
+                }
+              },
+              "queryRef": "_Measures.Forecast Variance",
+              "nativeQueryRef": "Forecast Variance"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Forecast Status"
+                }
+              },
+              "queryRef": "_Measures.Forecast Status",
+              "nativeQueryRef": "Forecast Status"
             }
           ]
         }
@@ -171,7 +213,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Matrix. Variance is budget less spend to date; status describes that spend comparison, not a forecast of final cost. Expand through division, cost code, category, project ID and source budget line ID.'"
+                  "Value": "'Matrix. Budget remaining is budget less spend to date and Budget Status describes that spend comparison; Forecast Variance is budget less forecast and Forecast Status bands it the same way. Expand through division, cost code, category, project ID and source budget line ID.'"
                 }
               }
             }

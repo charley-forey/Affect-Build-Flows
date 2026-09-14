@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Owner Billed (selected period). Shows Billed This Period for the current selection.'"
+                  "Value": "'Card. Owner billed (net of retainage). Shows Billed This Period for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Owner Billed (selected period)'"
+                  "Value": "'Owner billed (net of retainage)'"
                 }
               }
             },

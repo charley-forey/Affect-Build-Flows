@@ -15,6 +15,11 @@ table fct_VendorInsurance
 		summarizeBy: none
 		sourceColumn: InsuranceType
 
+	column InsuranceCategory
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InsuranceCategory
+
 	column Provider
 		dataType: string
 		summarizeBy: none

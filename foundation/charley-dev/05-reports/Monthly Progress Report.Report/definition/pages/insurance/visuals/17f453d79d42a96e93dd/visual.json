@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "79c30699778a643f71c1",
+  "name": "17f453d79d42a96e93dd",
   "position": {
-    "x": 20,
-    "y": 144,
+    "x": 1065,
+    "y": 76,
     "z": 0,
     "width": 195,
-    "height": 100,
-    "tabOrder": 15
+    "height": 64,
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Vendors On Project"
+                  "Property": "Latest Certificate Expiration"
                 }
               },
-              "queryRef": "_Measures.Vendors On Project",
-              "nativeQueryRef": "Vendors On Project"
+              "queryRef": "_Measures.Latest Certificate Expiration",
+              "nativeQueryRef": "Latest Certificate Expiration"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Vendors On Project. Shows Vendors On Project for the current selection.'"
+                  "Value": "'Card. Latest certificate expiration. Shows Latest Certificate Expiration for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Vendors On Project'"
+                  "Value": "'Latest certificate expiration'"
                 }
               }
             },
