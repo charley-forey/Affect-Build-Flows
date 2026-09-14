@@ -76,7 +76,7 @@ table fct_RfiSubmittal
 
 	column DaysOpen
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysOpen
 
 	column IsPastDue

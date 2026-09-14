@@ -13,7 +13,7 @@ table man_Risks
 
 	column RiskNumber
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: RiskNumber
 
 	column Description

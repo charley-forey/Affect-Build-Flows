@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Open Observations by project. Shows Open Observations by ProjectName.'"
+                  "Value": "'Stacked bar chart. Open Observations by project. Shows Open Observations by ProjectName.'"
                 }
               }
             }

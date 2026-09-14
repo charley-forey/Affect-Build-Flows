@@ -10,7 +10,7 @@
     "tabOrder": 23
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -73,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Budget vs spent by division. Shows Budget, Spent To Date by Division.'"
+                  "Value": "'Clustered bar chart. Budget vs spent by division (last budget snapshot). Shows Budget, Spent To Date by Division.'"
                 }
               }
             }
@@ -86,7 +86,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget vs spent by division'"
+                  "Value": "'Budget vs spent by division (last budget snapshot)'"
                 }
               }
             },

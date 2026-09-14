@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Open punch items by project. Shows Open Punch Items by ProjectName.'"
+                  "Value": "'Stacked bar chart. Open punch items by project. Shows Open Punch Items by ProjectName.'"
                 }
               }
             }

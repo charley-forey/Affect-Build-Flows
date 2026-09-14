@@ -3,9 +3,9 @@
   "name": "2df3cfaa093cb6c21882",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1100,
+    "width": 728,
     "height": 30,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Every figure is counted from Procore records - observations, punch items, incidents and manpower logs - rather than typed each month. Status is shown as text, never colour alone.",
+                    "value": "Every figure is counted from Procore records - observations, punch items, incidents and manpower logs - rather than typed each month. Open and past-due counts are as of today; a month selection groups them by creation month.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Every figure is counted from Procore records - observations, punch items, incidents and manpower logs - rather than typed each month. Status is shown as text, never colour alone.'"
+                  "Value": "'Every figure is counted from Procore records - observations, punch items, incidents and manpower logs - rather than typed each month. Open and past-due counts are as of today; a month selection groups them by creation month.'"
                 }
               }
             }

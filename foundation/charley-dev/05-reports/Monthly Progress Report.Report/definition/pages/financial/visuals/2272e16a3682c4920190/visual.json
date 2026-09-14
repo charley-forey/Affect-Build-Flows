@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Cost To Complete. Shows Cost To Complete for the current selection.'"
+                  "Value": "'Card. Cost To Complete (last snapshot). Shows Cost To Complete for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Cost To Complete'"
+                  "Value": "'Cost To Complete (last snapshot)'"
                 }
               }
             },

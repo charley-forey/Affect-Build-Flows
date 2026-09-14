@@ -20,6 +20,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -192,6 +193,21 @@ SNAPSHOT_MEASURES = [
      None, "no workbook equivalent - states where saved history begins"),
 ]
 
+
+REPORT_MONTH_LABEL_DAX = (
+    'VAR L = MIN ( dim_Date[MonthStart] )\n'
+    'VAR H = MAX ( dim_Date[MonthStart] )\n'
+    'RETURN IF ( NOT ISFILTERED ( dim_Date ), "All months", IF ( L = H, FORMAT ( L, "MMMM YYYY" ), '
+    'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) ) )')
+
+
+def _project_vendors(expression: str) -> str:
+    """Scope an insurance count to the selected project's vendors; company-wide otherwise."""
+    return ("COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( " + expression + ", "
+            "TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), "
+            + expression + " ), 0 )")
+
+
 MEASURES = [
     # BALANCES, NOT FLOWS. fct_FinancialPeriod is one row per project per MONTH, and
     # OriginalContract on it is dim_Project's contract amount repeated on every one of
@@ -217,7 +233,7 @@ MEASURES = [
      '"$#,0"', "FINANCIALS!C4"),
     ("Contract Growth %",
      "DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )",
-     '"0.00%"', "DASHBOARD!AT11"),
+     '"0.0%"', "DASHBOARD!AT11"),
     # Also a balance. What is pending in a month is a standing amount, not that month's
     # new change orders - adding twelve months of it counts the same open CO twelve times.
     ("Pending Change Orders",
@@ -237,11 +253,21 @@ MEASURES = [
      '"$#,0"', "derived - approved COs, the complement of [Pending Change Orders]"),
     ("Change Order Amount", "SUM ( fct_ChangeOrder[Amount] )", '"$#,0"',
      "change-order grain; responds to status and item filters"),
-    ("Budget", "SUM ( fct_BudgetLine[BudgetAmount] )", '"$#,0"', "FINANCIALS!C19:C20"),
-    ("Forecast", "SUM ( fct_BudgetLine[ForecastAmount] )", '"$#,0"', "FINANCIALS!D19:D20"),
-    ("Committed", "SUM ( fct_BudgetLine[CommittedAmount] )", '"$#,0"', "FINANCIALS!D61"),
-    ("Spent To Date", "SUM ( fct_BudgetLine[SpentToDate] )", '"$#,0"', "FINANCIALS!E19:E20"),
-    ("Cost To Complete", "SUM ( fct_BudgetLine[CostToComplete] )", '"$#,0"', "FINANCIALS!C15"),
+    # AS OF THE LAST SNAPSHOT. fct_BudgetLine is one current-state snapshot keyed to the
+    # ingestion month, so a month slicer used to blank every budget card while contract and
+    # billing cards beside them still showed values. REMOVEFILTERS(dim_Date) makes the
+    # cards say what the data is: the budget position as last ingested, whatever month is
+    # selected. The Financial page titles them that way.
+    ("Budget", "CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "FINANCIALS!C19:C20 - as of the last budget snapshot"),
+    ("Forecast", "CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "FINANCIALS!D19:D20 - as of the last budget snapshot"),
+    ("Committed", "CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "FINANCIALS!D61 - as of the last budget snapshot"),
+    ("Spent To Date", "CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "FINANCIALS!E19:E20 - as of the last budget snapshot"),
+    ("Cost To Complete", "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
+     '"$#,0"', "FINANCIALS!C15 - as of the last budget snapshot"),
     ("Budget Variance", "[Budget] - [Spent To Date]", '"$#,0"', "derived"),
     ("Budget Variance %", "DIVIDE ( [Budget Variance], [Budget] )", '"0.0%"',
      "the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown"),
@@ -265,9 +291,10 @@ MEASURES = [
     # nightly pipeline failed every night while reporting itself as enabled.
     ("Last Checked Run", "MAX ( meta_PipelineRun[RunAt] )", '"yyyy-mm-dd hh:nn"',
      "no workbook equivalent - the spreadsheet cannot say when it was last correct"),
+    # UTCNOW, the same clock [Pipeline Status] uses, so the two cards cannot disagree.
     ("Hours Since Last Checked Run",
      "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
-     "\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+     "\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
      '"#,0"', "derived"),
     # Text, not a colour. A stale pipeline has to be readable in greyscale and by the 8% of
     # men who are colour-blind - the same rule the theme applies to every RAG status.
@@ -275,9 +302,10 @@ MEASURES = [
      PIPELINE_STATUS_DAX,
      None, "derived"),
     ("Blocking Violations Last Run",
+     # BLANK with no checked run - a zero there reads as a clean run.
      "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
-     "\t\t\tRETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),\n"
-     "\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 )",
+     "\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),\n"
+     "\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 ) )",
      '"#,0"', "derived"),
     # ---- Vendor <-> cost code (Phase 0 item 3) ------------------------------
     # ACTUAL only. bridge_VendorCostCode holds actual and committed as separate
@@ -303,16 +331,23 @@ MEASURES = [
     # COVERAGE and CURRENCY are counted separately on purpose. A vendor with no
     # certificate and a vendor with a lapsed one both fail a single "compliant" flag, and
     # they need completely different follow-up.
-    ("Certificates On File", "COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )", '"#,0"',
+    #
+    # PROJECT SCOPE. fct_VendorInsurance hangs off dim_Vendor only, so a project selection
+    # never reached it: "Vendors On Project" and "Vendors Without Insurance" followed the
+    # project while "Vendors With Insurance" and every certificate count stayed company-wide,
+    # and With + Without did not add up to On Project. With a project selected these now
+    # count only that project's vendors (TREATAS over the bridge). The month slicer still
+    # does not apply - certificates have no reporting month - and the page says so.
+    ("Certificates On File", _project_vendors("COUNTROWS ( fct_VendorInsurance )"), '"#,0"',
      "D8"),
     ("Vendors With Insurance",
-     "COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )", '"#,0"', "D8"),
+     _project_vendors("DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] )"), '"#,0"', "D8"),
     ("Expired Certificates",
-     'COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
-     'fct_VendorInsurance[ExpiryStatus] = "Expired" ), 0 )', '"#,0"', "D8"),
+     _project_vendors('CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
+                      'fct_VendorInsurance[ExpiryStatus] = "Expired" )'), '"#,0"', "D8"),
     ("Certificates Expiring Soon",
-     'COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
-     'fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" ), 0 )', '"#,0"',
+     _project_vendors('CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
+                      'fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" )'), '"#,0"',
      "D8 - the renewals to chase this month"),
     # The gap the vendor list is really for: vendors on a project with NO certificate at
     # all. Counted from the bridge rather than the insurance table, because a vendor with
@@ -338,11 +373,11 @@ MEASURES = [
     # written out in full on each measure rather than hidden behind a helper: it is the
     # correctness argument, and it has to be visible to whoever reads the measure next.
     ("Retainage Held Owner",
-     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
      'fct_Billing[BillingType] = "Owner" )',
      '"$#,0"', "no workbook equivalent - Sage holds no header retainage"),
     ("Retainage Held Sub",
-     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
      'fct_Billing[BillingType] = "Subcontractor" )',
      '"$#,0"', "no workbook equivalent"),
     # Owner retainage is money owed TO Affect, sub retainage is money Affect holds FROM
@@ -355,15 +390,15 @@ MEASURES = [
     # from different systems, and a gap between them is a reconciliation finding rather
     # than a rounding difference.
     ("Owner Billed To Date",
-     'CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
      'fct_Billing[BillingType] = "Owner" )',
      '"$#,0"', "FINANCIALS!C10, sourced from Procore instead of Sage"),
     ("Owner Contract Sum",
-     'CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
      'fct_Billing[BillingType] = "Owner" )',
      '"$#,0"', "FINANCIALS!C4, cross-check on [Current Contract]"),
     ("Balance To Finish",
-     'CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), '
+     'CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
      'fct_Billing[BillingType] = "Owner" )',
      '"$#,0"', "derived - contract sum less completed, including retainage"),
     # The sum-safe column. This is a period movement, so it sums across periods and is the
@@ -403,8 +438,16 @@ MEASURES = [
     ("Total Billed", "SUM ( fct_Invoice[Amount] )", '"$#,0"', "FINANCIALS!C10"),
     ("Total Paid", "SUM ( fct_Invoice[AmountPaid] )", '"$#,0"', "FINANCIALS!C12"),
     ("AR Outstanding", "SUM ( fct_Invoice[Balance] )", '"$#,0"', "FINANCIALS!F57"),
-    ("Total Billed %", "DIVIDE ( [Total Billed], [Current Contract] )", '"0.0%"',
-     "DASHBOARD!AT15 - was a TEXT string, so it could never be charted"),
+    # BILLED TO DATE as of the end of the selected period, against the contract as of that
+    # same point. It used to be [Total Billed] / [Current Contract], which with a month
+    # selected divided ONE month's invoices by the whole contract - not the workbook's
+    # billed-to-date %. Invoices with no matched project are excluded: they carry no
+    # contract, so counting them in the numerator overstated the portfolio figure.
+    ("Total Billed %",
+     "DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),\n"
+     "\t\t\tFILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) ),\n"
+     "\t\t\t[Current Contract] )", '"0.0%"',
+     "DASHBOARD!AT15 - billed to date at period end over contract; was a TEXT string"),
     # DIVIDE, not "/", so a new project with no prior month returns blank instead of
     # #DIV/0! - the workbook's failure at DASHBOARD!AI48.
     ("Total Billed MoM %",
@@ -423,9 +466,10 @@ MEASURES = [
     ("Overdue Milestones",
      "CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )",
      '"#,0"', "derived"),
-    ("Schedule Performance %",
+    # Named for what it counts. Higher is WORSE; "Schedule Performance %" read the other way.
+    ("Milestones Overdue %",
      "DIVIDE ( [Overdue Milestones], [Critical Milestones] )", '"0.0%"',
-     "DASHBOARD!L19 - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)"),
+     "DASHBOARD!L19 (Schedule Performance) - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)"),
     ("Avg Milestone Progress", "AVERAGE ( fct_Milestone[PercentComplete] )", '"0.0%"',
      "derived"),
     # Data-quality measures. These drive the hidden diagnostics page - surfacing bad data
@@ -485,15 +529,16 @@ MEASURES = [
     ("DQ Unmatched Invoices",
      "CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
      '"#,0"', "diagnostics - unmatched AR across all projects; retains the selected month"),
-    ("Unmatched AR Amount - All Projects",
+    # BILLED, not AR: it sums invoice Amount, not the outstanding Balance.
+    ("Unmatched Billed Amount - All Projects",
      "CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
-     '"$#,0.00"', "unattributed billed amount across all projects; retains the selected month"),
+     '"$#,0"', "unattributed billed amount across all projects; retains the selected month"),
     # The gap register. Gaps with no project (rejected source rows, expired certificates,
     # empty registers) have a blank ProjectKey, so selecting a project hides them - clear
     # the project slicer to see the whole register.
     ("Data Gaps", "COALESCE ( COUNTROWS ( dq_DataGap ), 0 )", '"#,0"',
      "nothing - rejects, unmatched AR, unmapped trades, coverage and certificate gaps in one register"),
-    ("Data Gap Amount", "SUM ( dq_DataGap[Amount] )", '"$#,0.00"',
+    ("Data Gap Amount", "SUM ( dq_DataGap[Amount] )", '"$#,0"',
      "money carried by data gaps - today only unmatched AR invoices carry an amount"),
 
     # ---- Trend and portfolio ------------------------------------------------
@@ -514,7 +559,10 @@ MEASURES = [
      '"0.0%"', "the S-curve against the contract line"),
     # Portfolio counts. Every page today is one project behind a slicer; leadership was
     # never given a number that spans the jobs.
-    ("Projects Reporting", "COUNTROWS ( dim_Project )", '"#,0"', "portfolio scope"),
+    # Projects with a financial period in context - not every row of dim_Project, which
+    # ignored the month slicer and counted projects that have never reported anything.
+    ("Projects Reporting", "DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] )", '"#,0"',
+     "portfolio scope - projects with financial-period rows in the current filters"),
     ("Projects At Risk",
      # Below 0.60 on the measured-only score, so a project is not flagged merely for being
      # under-instrumented - that is what [Scorecard Coverage %] is for.
@@ -560,13 +608,9 @@ MEASURES = [
     # not NOW() - NOW() is when the report was VIEWED, which is the same lie in a new place.
     ("Last Refresh", "MAX ( _Measures[_built_at] )", '"yyyy-mm-dd hh:nn"',
      "no workbook equivalent - the Excel could not say when its numbers were true"),
-    # Follows the slicer. With no month selected it names the full span rather than
-    # inventing a single month, because that IS what the reader is looking at.
-    ("Report Month Label",
-     'VAR L = MIN ( dim_Date[MonthStart] )\n'
-     'VAR H = MAX ( dim_Date[MonthStart] )\n'
-     'RETURN IF ( L = H, FORMAT ( L, "MMMM YYYY" ), '
-     'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) )',
+    # Follows the slicer. With no month selected it says so: the calendar spans 2015-2035,
+    # and "January 2015 - December 2035" on a printed page implied data out to 2035.
+    ("Report Month Label", REPORT_MONTH_LABEL_DAX,
      None, "DASHBOARD!AU4 - the month anchor, now driven by the slicer"),
 ] + SNAPSHOT_MEASURES + scorecard.measures()
 
@@ -652,8 +696,20 @@ def introspect(lakehouse_id: str | None = None) -> dict[str, list[tuple[str, str
     return schema
 
 
+# Month labels sort by their number, not alphabetically ("Apr 2024, Aug 2024, Dec 2024").
+# Without this the S-curve zig-zags and the month slicer lists 250 months out of order.
+SORT_BY = {("dim_Date", "MonthYear"): "MonthYearSort", ("dim_Date", "MonthName"): "Month"}
+
+# Numeric columns that must never be added up in a totals row: keys, ordinals, day counts,
+# fractions and band thresholds. Default Sum put "Total 18,402" days under registers and
+# added milestone percentages together.
+NO_SUM = re.compile(r"(Key|Tier|Sort|Year|Quarter|Month|Day|Offset|Number|PercentComplete|Weight|Score|MinValue|MaxValue)$|Days")
+PERCENT_COLUMNS = re.compile(r"^(PercentComplete|Weight)$")
+
+
 def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
     lines = [f"table {name}", ""]
+    present = {col for col, _ in columns}
     for col, dtype in columns:
         quoted = f"'{col}'" if not col.isidentifier() else col
         source_completion = name == "fct_ProcoreInspection" and col == "SourcePercentComplete"
@@ -663,13 +719,17 @@ def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
             f"\tcolumn {quoted}",
             f"\t\tdataType: {dtype}",
             "\t\tsummarizeBy: none" if source_completion or dtype in ("string", "boolean", "dateTime")
-            else "\t\tsummarizeBy: sum",
+            or NO_SUM.search(col) else "\t\tsummarizeBy: sum",
             f"\t\tsourceColumn: {col}",
         ]
         if dtype == "dateTime":
             lines.append('\t\tformatString: yyyy-mm-dd')
         elif source_completion:
             lines.append('\t\tformatString: 0.##')
+        elif dtype in ("double", "decimal") and PERCENT_COLUMNS.match(col):
+            lines.append('\t\tformatString: 0%')
+        if SORT_BY.get((name, col)) in present:
+            lines.append(f"\t\tsortByColumn: {SORT_BY[(name, col)]}")
         lines.append("")
     lines += [
         f"\tpartition {name} = entity",

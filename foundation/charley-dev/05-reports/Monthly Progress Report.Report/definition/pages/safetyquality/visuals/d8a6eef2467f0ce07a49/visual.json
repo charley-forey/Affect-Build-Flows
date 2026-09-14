@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Open items by trade. Shows Open Quality Items by Trade.'"
+                  "Value": "'Stacked bar chart. Open items by trade. Shows Open Quality Items by Trade.'"
                 }
               }
             }

@@ -10,7 +10,7 @@
     "tabOrder": 21
   },
   "visual": {
-    "visualType": "matrix",
+    "visualType": "pivotTable",
     "query": {
       "queryState": {
         "Rows": {
@@ -31,40 +31,8 @@
             }
           ]
         },
-        "Columns": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "bridge_VendorCostCode"
-                    }
-                  },
-                  "Property": "AmountType"
-                }
-              },
-              "queryRef": "bridge_VendorCostCode.AmountType",
-              "nativeQueryRef": "AmountType"
-            }
-          ]
-        },
         "Values": {
           "projections": [
-            {
-              "field": {
-                "Measure": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "_Measures"
-                    }
-                  },
-                  "Property": "Vendor Spend"
-                }
-              },
-              "queryRef": "_Measures.Vendor Spend",
-              "nativeQueryRef": "Vendor Spend"
-            },
             {
               "field": {
                 "Measure": {
@@ -78,6 +46,20 @@
               },
               "queryRef": "_Measures.Vendor Committed",
               "nativeQueryRef": "Vendor Committed"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Vendor Spend"
+                }
+              },
+              "queryRef": "_Measures.Vendor Spend",
+              "nativeQueryRef": "Vendor Spend"
             }
           ]
         }
@@ -91,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'matrix. Vendor: committed vs actual. Shows Vendor Spend, Vendor Committed for the current selection.'"
+                  "Value": "'Matrix. One row per vendor showing committed and actual amounts side by side. Not month-filtered.'"
                 }
               }
             }

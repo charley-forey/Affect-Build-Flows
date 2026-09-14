@@ -23,12 +23,12 @@ table man_QualityMonthly
 
 	column AvgDaysPastDue
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: AvgDaysPastDue
 
 	column AvgDaysToClose
 		dataType: double
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: AvgDaysToClose
 
 	partition man_QualityMonthly = entity

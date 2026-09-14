@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Total Billed. Shows Total Billed for the current selection.'"
+                  "Value": "'Card. Total Billed (selected period). Shows Total Billed for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Total Billed'"
+                  "Value": "'Total Billed (selected period)'"
                 }
               }
             },

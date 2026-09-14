@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Open submittals by status. Shows Open Submittals by StatusLabel.'"
+                  "Value": "'Stacked bar chart. Open submittals by status (as of today). Shows Open Submittals by StatusLabel.'"
                 }
               }
             }
@@ -72,7 +72,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open submittals by status'"
+                  "Value": "'Open submittals by status (as of today)'"
                 }
               }
             },

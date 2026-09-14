@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Billed This Period. Shows Billed This Period for the current selection.'"
+                  "Value": "'Card. Owner Billed (selected period). Shows Billed This Period for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Billed This Period'"
+                  "Value": "'Owner Billed (selected period)'"
                 }
               }
             },

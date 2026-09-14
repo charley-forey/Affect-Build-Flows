@@ -10,7 +10,7 @@
     "tabOrder": 20
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -73,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Committed and actual by cost code. Shows Vendor Committed, Vendor Spend by CostCodeName.'"
+                  "Value": "'Clustered bar chart. Committed and actual by cost code. Shows Vendor Committed, Vendor Spend by CostCodeName.'"
                 }
               }
             }

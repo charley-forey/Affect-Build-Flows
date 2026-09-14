@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-10T10:52:14.815072+00:00",
+  "generated_at": "2026-09-14T03:40:45.842468+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -55,6 +55,7 @@
         "dim_ProjectCrosswalk",
         "dim_VendorCrosswalk",
         "dim_CostCodeCrosswalk",
+        "dq_DataGap",
         "meta_PipelineRun"
       ],
       "relationships": [
@@ -227,6 +228,12 @@
           "ProjectKey"
         ],
         [
+          "dq_DataGap",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
           "man_Wins",
           "ProjectKey",
           "dim_Project",
@@ -345,7 +352,7 @@
         {
           "name": "Contract Growth %",
           "expression": "DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )",
-          "format": "\"0.00%\"",
+          "format": "\"0.0%\"",
           "origin": "DASHBOARD!AT11"
         },
         {
@@ -374,33 +381,33 @@
         },
         {
           "name": "Budget",
-          "expression": "SUM ( fct_BudgetLine[BudgetAmount] )",
+          "expression": "CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C19:C20"
+          "origin": "FINANCIALS!C19:C20 - as of the last budget snapshot"
         },
         {
           "name": "Forecast",
-          "expression": "SUM ( fct_BudgetLine[ForecastAmount] )",
+          "expression": "CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!D19:D20"
+          "origin": "FINANCIALS!D19:D20 - as of the last budget snapshot"
         },
         {
           "name": "Committed",
-          "expression": "SUM ( fct_BudgetLine[CommittedAmount] )",
+          "expression": "CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!D61"
+          "origin": "FINANCIALS!D61 - as of the last budget snapshot"
         },
         {
           "name": "Spent To Date",
-          "expression": "SUM ( fct_BudgetLine[SpentToDate] )",
+          "expression": "CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!E19:E20"
+          "origin": "FINANCIALS!E19:E20 - as of the last budget snapshot"
         },
         {
           "name": "Cost To Complete",
-          "expression": "SUM ( fct_BudgetLine[CostToComplete] )",
+          "expression": "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"$#,0\"",
-          "origin": "FINANCIALS!C15"
+          "origin": "FINANCIALS!C15 - as of the last budget snapshot"
         },
         {
           "name": "Budget Variance",
@@ -434,7 +441,7 @@
         },
         {
           "name": "Hours Since Last Checked Run",
-          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
           "format": "\"#,0\"",
           "origin": "derived"
         },
@@ -446,7 +453,7 @@
         },
         {
           "name": "Blocking Violations Last Run",
-          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),\n\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 )",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), COALESCE ( CALCULATE ( SUM ( meta_PipelineRun[Blocking] ),\n\t\t\tmeta_PipelineRun[RunAt] = Last ), 0 ) )",
           "format": "\"#,0\"",
           "origin": "derived"
         },
@@ -476,25 +483,25 @@
         },
         {
           "name": "Certificates On File",
-          "expression": "COALESCE ( COUNTROWS ( fct_VendorInsurance ), 0 )",
+          "expression": "COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( COUNTROWS ( fct_VendorInsurance ), TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), COUNTROWS ( fct_VendorInsurance ) ), 0 )",
           "format": "\"#,0\"",
           "origin": "D8"
         },
         {
           "name": "Vendors With Insurance",
-          "expression": "COALESCE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), 0 )",
+          "expression": "COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ) ), 0 )",
           "format": "\"#,0\"",
           "origin": "D8"
         },
         {
           "name": "Expired Certificates",
-          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expired\" ), 0 )",
+          "expression": "COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expired\" ), TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expired\" ) ), 0 )",
           "format": "\"#,0\"",
           "origin": "D8"
         },
         {
           "name": "Certificates Expiring Soon",
-          "expression": "COALESCE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expiring within 30 days\" ), 0 )",
+          "expression": "COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expiring within 30 days\" ), TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), CALCULATE ( COUNTROWS ( fct_VendorInsurance ), fct_VendorInsurance[ExpiryStatus] = \"Expiring within 30 days\" ) ), 0 )",
           "format": "\"#,0\"",
           "origin": "D8 - the renewals to chase this month"
         },
@@ -506,13 +513,13 @@
         },
         {
           "name": "Retainage Held Owner",
-          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Owner\" )",
           "format": "\"$#,0\"",
           "origin": "no workbook equivalent - Sage holds no header retainage"
         },
         {
           "name": "Retainage Held Sub",
-          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Subcontractor\" )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Subcontractor\" )",
           "format": "\"$#,0\"",
           "origin": "no workbook equivalent"
         },
@@ -524,19 +531,19 @@
         },
         {
           "name": "Owner Billed To Date",
-          "expression": "CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Owner\" )",
           "format": "\"$#,0\"",
           "origin": "FINANCIALS!C10, sourced from Procore instead of Sage"
         },
         {
           "name": "Owner Contract Sum",
-          "expression": "CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Owner\" )",
           "format": "\"$#,0\"",
           "origin": "FINANCIALS!C4, cross-check on [Current Contract]"
         },
         {
           "name": "Balance To Finish",
-          "expression": "CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), fct_Billing[BillingType] = \"Owner\" )",
+          "expression": "CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), fct_Billing[BillingType] = \"Owner\" )",
           "format": "\"$#,0\"",
           "origin": "derived - contract sum less completed, including retainage"
         },
@@ -608,9 +615,9 @@
         },
         {
           "name": "Total Billed %",
-          "expression": "DIVIDE ( [Total Billed], [Current Contract] )",
+          "expression": "DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),\n\t\t\tFILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) ),\n\t\t\t[Current Contract] )",
           "format": "\"0.0%\"",
-          "origin": "DASHBOARD!AT15 - was a TEXT string, so it could never be charted"
+          "origin": "DASHBOARD!AT15 - billed to date at period end over contract; was a TEXT string"
         },
         {
           "name": "Total Billed MoM %",
@@ -649,10 +656,10 @@
           "origin": "derived"
         },
         {
-          "name": "Schedule Performance %",
+          "name": "Milestones Overdue %",
           "expression": "DIVIDE ( [Overdue Milestones], [Critical Milestones] )",
           "format": "\"0.0%\"",
-          "origin": "DASHBOARD!L19 - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)"
+          "origin": "DASHBOARD!L19 (Schedule Performance) - a FRACTION, which the scorecard compared against 5/9/10 (defect #1a)"
         },
         {
           "name": "Avg Milestone Progress",
@@ -745,10 +752,22 @@
           "origin": "diagnostics - unmatched AR across all projects; retains the selected month"
         },
         {
-          "name": "Unmatched AR Amount - All Projects",
+          "name": "Unmatched Billed Amount - All Projects",
           "expression": "CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )",
-          "format": "\"$#,0.00\"",
+          "format": "\"$#,0\"",
           "origin": "unattributed billed amount across all projects; retains the selected month"
+        },
+        {
+          "name": "Data Gaps",
+          "expression": "COALESCE ( COUNTROWS ( dq_DataGap ), 0 )",
+          "format": "\"#,0\"",
+          "origin": "nothing - rejects, unmatched AR, unmapped trades, coverage and certificate gaps in one register"
+        },
+        {
+          "name": "Data Gap Amount",
+          "expression": "SUM ( dq_DataGap[Amount] )",
+          "format": "\"$#,0\"",
+          "origin": "money carried by data gaps - today only unmatched AR invoices carry an amount"
         },
         {
           "name": "Billed Cumulative",
@@ -764,9 +783,9 @@
         },
         {
           "name": "Projects Reporting",
-          "expression": "COUNTROWS ( dim_Project )",
+          "expression": "DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] )",
           "format": "\"#,0\"",
-          "origin": "portfolio scope"
+          "origin": "portfolio scope - projects with financial-period rows in the current filters"
         },
         {
           "name": "Projects At Risk",
@@ -794,19 +813,19 @@
         },
         {
           "name": "Report Month Label",
-          "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) )",
+          "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( NOT ISFILTERED ( dim_Date ), \"All months\", IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) ) )",
           "format": null,
           "origin": "DASHBOARD!AU4 - the month anchor, now driven by the slicer"
         },
         {
           "name": "Avg Days To Payment",
-          "expression": "BLANK ()",
+          "expression": "AVERAGE ( fct_Invoice[DaysToPayment] )",
           "format": "\"#,0.0\"",
-          "origin": "FINANCIALS!F56 - blocked: Sage AR header has no payment date"
+          "origin": "FINANCIALS!F56 - now from Sage AR receipts (acrpmt)"
         },
         {
           "name": "Cash Position %",
-          "expression": "DIVIDE ( [Total Paid] + [AR Outstanding], [Cost To Complete] )",
+          "expression": "DIVIDE ( [Total Paid] + [AR Outstanding], SUM ( fct_BudgetLine[CostToComplete] ) )",
           "format": "\"0.0%\"",
           "origin": "FINANCIALS!C8 - a human judgement the workbook could already have computed"
         },
@@ -818,13 +837,13 @@
         },
         {
           "name": "Recordable Incidents",
-          "expression": "COALESCE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), 0 )",
+          "expression": "VAR I = SUM ( fct_SafetyMonthly[RecordableIncidents] )\nVAR H = SUM ( fct_SafetyMonthly[HoursWorked] )\nRETURN IF ( H > 0 || I > 0, COALESCE ( I, 0 ) )",
           "format": "\"#,0\"",
           "origin": "SAFETY!E - Procore /incidents, in the registry but not yet ingested"
         },
         {
           "name": "Hours Worked",
-          "expression": "COALESCE ( SUM ( fct_SafetyMonthly[HoursWorked] ), 0 )",
+          "expression": "VAR H = SUM ( fct_SafetyMonthly[HoursWorked] )\nRETURN IF ( H > 0, H )",
           "format": "\"#,0\"",
           "origin": "SAFETY!D - Sage payroll / ADP / Procore timecards, undecided"
         },
@@ -835,7 +854,7 @@
           "origin": "Procore /observations/items - was QUALITY!D, typed by hand"
         },
         {
-          "name": "Avg Observation Days Open",
+          "name": "Avg Observation Days To Close",
           "expression": "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), fct_QualityItem[DaysOpen] )",
           "format": "\"#,0.0\"",
           "origin": "QUALITY!D39 - typed by hand today"
@@ -890,7 +909,7 @@
         },
         {
           "name": "Score - Schedule Performance",
-          "expression": "VAR V = [Schedule Performance %]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 6\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "expression": "VAR V = [Milestones Overdue %]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 6\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
           "format": "\"0\"",
           "origin": "SCORECARD CALC!E19 - FIX: bands are fractions, so this stops always awarding 3/3 (defect #1a)"
         },
@@ -902,7 +921,7 @@
         },
         {
           "name": "Score - Observations",
-          "expression": "VAR V = [Avg Observation Days Open]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 8\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
+          "expression": "VAR V = [Avg Observation Days To Close]\nRETURN\nIF (\n    ISBLANK ( V ),\n    BLANK (),\n    MAXX (\n        FILTER (\n            ALL ( dim_ScorecardBand ),\n            dim_ScorecardBand[CategoryKey] = 8\n                && ( ISBLANK ( dim_ScorecardBand[MinValue] ) || V >= dim_ScorecardBand[MinValue] )\n                && ( ISBLANK ( dim_ScorecardBand[MaxValue] ) || V < dim_ScorecardBand[MaxValue] )\n        ),\n        dim_ScorecardBand[Score]\n    )\n)",
           "format": "\"0\"",
           "origin": "SCORECARD CALC!E25"
         },
@@ -914,7 +933,7 @@
         },
         {
           "name": "Project Scorecard",
-          "expression": "DIVIDE (\n    SUMX (\n        ALL ( dim_ScorecardWeight ),\n        VAR S =\n            SWITCH (\n                dim_ScorecardWeight[CategoryKey],\n            1, [Score - Accounts Receivable],\n            2, [Score - Profitability],\n            3, [Score - Cash Position],\n            4, [Score - Change Orders],\n            5, [Score - Safety Incidents],\n            6, [Score - Schedule Performance],\n            7, [Score - Completion Variance],\n            8, [Score - Observations],\n            9, [Score - Daily Reports],\n                BLANK ()\n            )\n        RETURN IF ( ISBLANK ( S ), 0, S * dim_ScorecardWeight[Weight] )\n    ),\n    3\n)",
+          "expression": "IF ( [Scorecard Coverage %] > 0,\nDIVIDE (\n    SUMX (\n        ALL ( dim_ScorecardWeight ),\n        VAR S =\n            SWITCH (\n                dim_ScorecardWeight[CategoryKey],\n            1, [Score - Accounts Receivable],\n            2, [Score - Profitability],\n            3, [Score - Cash Position],\n            4, [Score - Change Orders],\n            5, [Score - Safety Incidents],\n            6, [Score - Schedule Performance],\n            7, [Score - Completion Variance],\n            8, [Score - Observations],\n            9, [Score - Daily Reports],\n                BLANK ()\n            )\n        RETURN IF ( ISBLANK ( S ), 0, S * dim_ScorecardWeight[Weight] )\n    ),\n    3\n) )",
           "format": "\"0.00\"",
           "origin": "SCORECARD CALC!G31"
         },
@@ -938,13 +957,13 @@
         },
         {
           "name": "Category Weighted",
-          "expression": "VAR S = [Category Score]\nVAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )\nRETURN IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) )",
+          "expression": "VAR S = [Category Score]\nVAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )\nRETURN IF ( NOT HASONEVALUE ( dim_ScorecardWeight[CategoryKey] ), [Project Scorecard],\n    IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) ) )",
           "format": "\"0.000\"",
           "origin": "SCORECARD CALC!G23:G31 - ((E*F)/3), the workbook's own normalisation"
         },
         {
           "name": "Category Band",
-          "expression": "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\nVAR S = [Category Score]\nRETURN\nIF (\n    ISBLANK ( S ),\n    \"Not measured\",\n    CALCULATE (\n        MAX ( dim_ScorecardBand[BandLabel] ),\n        ALL ( dim_ScorecardBand ),\n        dim_ScorecardBand[CategoryKey] = K,\n        dim_ScorecardBand[Score] = S\n    )\n)",
+          "expression": "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\nVAR S = [Category Score]\nRETURN\nIF ( NOT HASONEVALUE ( dim_ScorecardWeight[CategoryKey] ), BLANK (),\nIF (\n    ISBLANK ( S ),\n    \"Not measured\",\n    CALCULATE (\n        MAX ( dim_ScorecardBand[BandLabel] ),\n        ALL ( dim_ScorecardBand ),\n        dim_ScorecardBand[CategoryKey] = K,\n        dim_ScorecardBand[Score] = S\n    )\n) )",
           "format": null,
           "origin": "derived - the band the driver fell in, in the seed table's own words"
         }
@@ -1451,7 +1470,7 @@
           "page": "Schedule & Quality",
           "visual": "0e32c9c17775ef4b8db2",
           "table": "_Measures",
-          "field": "Schedule Performance %",
+          "field": "Milestones Overdue %",
           "kind": "Measure"
         },
         {
@@ -1668,7 +1687,7 @@
           "page": "Safety & Quality",
           "visual": "3defaf81f3cc7576c88d",
           "table": "_Measures",
-          "field": "Avg Observation Days Open",
+          "field": "Avg Observation Days To Close",
           "kind": "Measure"
         },
         {
@@ -1711,6 +1730,13 @@
           "visual": "00fe363050bceecde534",
           "table": "fct_QualityItem",
           "field": "DaysPastDue",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "00fe363050bceecde534",
+          "table": "fct_QualityItem",
+          "field": "IsPastDue",
           "kind": "Column"
         },
         {
@@ -1990,13 +2016,6 @@
           "page": "Direct Costs & Vendors",
           "visual": "43a5448912a9f8e7b8d3",
           "table": "bridge_VendorCostCode",
-          "field": "AmountType",
-          "kind": "Column"
-        },
-        {
-          "page": "Direct Costs & Vendors",
-          "visual": "43a5448912a9f8e7b8d3",
-          "table": "bridge_VendorCostCode",
           "field": "VendorName",
           "kind": "Column"
         },
@@ -2164,6 +2183,20 @@
         {
           "page": "Vendor Insurance",
           "visual": "e5968d63fcb972290c4e",
+          "table": "_Measures",
+          "field": "Certificates On File",
+          "kind": "Measure"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
+          "table": "dim_Vendor",
+          "field": "VendorName",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "e5968d63fcb972290c4e",
           "table": "fct_VendorInsurance",
           "field": "DaysUntilExpiry",
           "kind": "Column"
@@ -2201,13 +2234,6 @@
           "visual": "e5968d63fcb972290c4e",
           "table": "fct_VendorInsurance",
           "field": "Provider",
-          "kind": "Column"
-        },
-        {
-          "page": "Vendor Insurance",
-          "visual": "e5968d63fcb972290c4e",
-          "table": "fct_VendorInsurance",
-          "field": "VendorKey",
           "kind": "Column"
         },
         {
@@ -2320,6 +2346,27 @@
           "visual": "1f22598bd88d5a355a09",
           "table": "dim_ScorecardBand",
           "field": "CategoryName",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "1f22598bd88d5a355a09",
+          "table": "dim_ScorecardBand",
+          "field": "MatchValue",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "1f22598bd88d5a355a09",
+          "table": "dim_ScorecardBand",
+          "field": "MaxValue",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "1f22598bd88d5a355a09",
+          "table": "dim_ScorecardBand",
+          "field": "MinValue",
           "kind": "Column"
         },
         {
@@ -2548,6 +2595,13 @@
         },
         {
           "page": "Project Detail",
+          "visual": "fe15c59960f73591c665",
+          "table": "_Measures",
+          "field": "Scorecard Coverage %",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
           "visual": "88eab1ddd0e9013f693e",
           "table": "_Measures",
           "field": "Budget",
@@ -2571,7 +2625,7 @@
           "page": "Project Detail",
           "visual": "88eab1ddd0e9013f693e",
           "table": "dim_CostCode",
-          "field": "CostCodeKey",
+          "field": "CostCode",
           "kind": "Column"
         },
         {
@@ -2586,6 +2640,13 @@
           "visual": "5ad8b5fd2dbc6d73f362",
           "table": "_Measures",
           "field": "Approved Change Orders",
+          "kind": "Measure"
+        },
+        {
+          "page": "Project Detail",
+          "visual": "5ad8b5fd2dbc6d73f362",
+          "table": "_Measures",
+          "field": "Change Order Amount",
           "kind": "Measure"
         },
         {
@@ -2739,7 +2800,7 @@
           "page": "Data Quality",
           "visual": "0034aa3916e13faaff20",
           "table": "_Measures",
-          "field": "Unmatched AR Amount - All Projects",
+          "field": "Unmatched Billed Amount - All Projects",
           "kind": "Measure"
         },
         {
@@ -2803,6 +2864,27 @@
           "visual": "dcfa1170dfa1bdb543fb",
           "table": "fct_Invoice",
           "field": "SageJobNumber",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "947435169297888aca5d",
+          "table": "_Measures",
+          "field": "Data Gap Amount",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "947435169297888aca5d",
+          "table": "_Measures",
+          "field": "Data Gaps",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "947435169297888aca5d",
+          "table": "dq_DataGap",
+          "field": "GapCategory",
           "kind": "Column"
         },
         {
@@ -2877,6 +2959,7 @@
         "man_QcInspectorSignIn",
         "man_QcChecklistResult",
         "man_QcDohResult",
+        "dq_DataGap",
         "meta_PipelineRun"
       ],
       "relationships": [
@@ -3035,18 +3118,24 @@
           "ItemKey",
           "qc_seed_DohItem",
           "ItemKey"
+        ],
+        [
+          "dq_DataGap",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
         ]
       ],
       "measures": [
         {
           "name": "Last Refresh",
           "expression": "MAX('_Measures'[_built_at])",
-          "format": "\"yyyy-mm-dd hh:nn:ss\"",
+          "format": "\"yyyy-mm-dd hh:nn\"",
           "origin": "nothing - the workbook could not say when it was last true"
         },
         {
           "name": "Report Month Label",
-          "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) )",
+          "expression": "VAR L = MIN ( dim_Date[MonthStart] )\nVAR H = MAX ( dim_Date[MonthStart] )\nRETURN IF ( NOT ISFILTERED ( dim_Date ), \"All months\", IF ( L = H, FORMAT ( L, \"MMMM YYYY\" ), FORMAT ( L, \"MMMM YYYY\" ) & \" - \" & FORMAT ( H, \"MMMM YYYY\" ) ) )",
           "format": "",
           "origin": "the workbook used TODAY(), so a saved copy silently re-dated itself"
         },
@@ -3058,7 +3147,7 @@
         },
         {
           "name": "Hours Since Last Checked Run",
-          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, NOW (), HOUR ) )",
+          "expression": "VAR Last = MAX ( meta_PipelineRun[RunAt] )\nRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
           "format": "\"#,0\"",
           "origin": "derived"
         },
@@ -3159,10 +3248,10 @@
           "origin": "Submittals & Mockups - not computed in the workbook"
         },
         {
-          "name": "Avg Submittal Turnaround",
-          "expression": "AVERAGEX(FILTER(fct_QcSubmittal, NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])",
+          "name": "Avg Submittal Turnaround Days",
+          "expression": "AVERAGEX(FILTER(fct_QcSubmittal, NOT fct_QcSubmittal[IsOpen] && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])",
           "format": "\"#,0.0\"",
-          "origin": "Submittals & Mockups - not computed in the workbook"
+          "origin": "Submittals & Mockups - not computed in the workbook; closed submittals only"
         },
         {
           "name": "Possible Mock-Ups",
@@ -3298,9 +3387,21 @@
         },
         {
           "name": "DQ Registers Awaiting Input",
-          "expression": "VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty; completeness unverified\"",
+          "expression": "VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)\nRETURN FORMAT(EmptyRegisters, \"0\") & \"/8 registers empty in current filters; completeness unverified\"",
           "format": "",
           "origin": "Observed row coverage in current filters; populated registers are not certified complete"
+        },
+        {
+          "name": "Data Gaps",
+          "expression": "COALESCE(COUNTROWS(dq_DataGap), 0)",
+          "format": "\"#,0\"",
+          "origin": "nothing - rejects, unmapped trades, coverage and certificate gaps in one register"
+        },
+        {
+          "name": "Data Gap Amount",
+          "expression": "SUM(dq_DataGap[Amount])",
+          "format": "\"$#,0\"",
+          "origin": "money carried by data gaps - today only unmatched AR invoices carry an amount"
         }
       ],
       "visual_bindings": [
@@ -3679,7 +3780,7 @@
           "page": "Submittals & Mock-Ups",
           "visual": "cc593f24b2559940eee0",
           "table": "_Measures",
-          "field": "Avg Submittal Turnaround",
+          "field": "Avg Submittal Turnaround Days",
           "kind": "Measure"
         },
         {
@@ -4274,7 +4375,35 @@
           "page": "Data Quality",
           "visual": "7d00844fa1253ffc2482",
           "table": "fct_QcNcr",
+          "field": "HasUnmappedTrade",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "7d00844fa1253ffc2482",
+          "table": "fct_QcNcr",
           "field": "TradeLabel",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "4659498f9a6a162e513b",
+          "table": "_Measures",
+          "field": "Data Gap Amount",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "4659498f9a6a162e513b",
+          "table": "_Measures",
+          "field": "Data Gaps",
+          "kind": "Measure"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "4659498f9a6a162e513b",
+          "table": "dq_DataGap",
+          "field": "GapCategory",
           "kind": "Column"
         },
         {
@@ -4481,6 +4610,9 @@
     "man_QcDohResult": [
       "02-transformation\\sql\\gold\\41_man_qc_tables.sql"
     ],
+    "dq_DataGap": [
+      "02-transformation\\sql\\gold\\45_dq_datagap.sql"
+    ],
     "sv_projects": [
       "02-transformation\\sql\\silver\\00_source_views.sql",
       "02-transformation\\sql\\silver\\01_source_views_cd.sql"
@@ -4658,6 +4790,18 @@
     "sv_man_job_register": [
       "02-transformation\\sql\\silver\\01_source_views_cd.sql"
     ],
+    "sv_dq_rejects": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_dq_rejects_manual": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_dq_rejects_qc": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
+    "sv_ar_payments": [
+      "02-transformation\\sql\\silver\\01_source_views_cd.sql"
+    ],
     "cd_silver_projects": [
       "02-transformation\\sql\\silver\\10_procore_silver.sql"
     ],
@@ -4751,31 +4895,61 @@
     "cd_silver_sage_ap_lines": [
       "02-transformation\\sql\\silver\\26_sage_silver.sql"
     ],
+    "cd_silver_sage_ar_payments": [
+      "02-transformation\\sql\\silver\\26_sage_silver.sql"
+    ],
     "mv_valid_projects": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "mv_wins": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_wins": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
+    "mv_risks": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
     "cd_silver_man_risks": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "mv_priority_items": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_priority_items": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
+    "mv_flags": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
     "cd_silver_man_flags": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "mv_survey": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_survey": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
+    "mv_safety_monthly": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
     "cd_silver_man_safety_monthly": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "mv_quality_monthly": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_quality_monthly": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
+    "mv_milestones": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
     "cd_silver_man_milestones": [
+      "02-transformation\\sql\\silver\\30_manual_silver.sql"
+    ],
+    "mv_daily_log_compliance": [
       "02-transformation\\sql\\silver\\30_manual_silver.sql"
     ],
     "cd_silver_man_daily_log_compliance": [
@@ -4790,25 +4964,49 @@
     "qcv_valid_projects": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
+    "qcv_dfow": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
     "cd_silver_man_qc_dfow": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "qcv_itp": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
     "cd_silver_man_qc_itp": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
+    "qcv_gate": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
     "cd_silver_man_qc_gate": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "qcv_special_inspection": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
     "cd_silver_man_qc_special_inspection": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
+    "qcv_commissioning": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
     "cd_silver_man_qc_commissioning": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "qcv_inspector_sign_in": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
     "cd_silver_man_qc_inspector_sign_in": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
+    "qcv_checklist_result": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
     "cd_silver_man_qc_checklist_result": [
+      "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
+    ],
+    "qcv_doh_result": [
       "02-transformation\\sql\\silver\\31_qc_manual_silver.sql"
     ],
     "cd_silver_man_qc_doh_result": [

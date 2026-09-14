@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Project Scorecard. Shows Project Scorecard for the current selection.'"
+                  "Value": "'Card. Project Scorecard (portfolio blend unless one project is selected). Shows Project Scorecard for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Project Scorecard'"
+                  "Value": "'Project Scorecard (portfolio blend unless one project is selected)'"
                 }
               }
             },

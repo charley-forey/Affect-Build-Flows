@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Punch is not quality control - it confirms readiness. Zero Punch is the stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 to the trade executive, which is why ageing is a headline here.",
+                    "value": "Punch is not quality control - it confirms readiness. Zero Punch is the stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 to the trade executive, which is why ageing is a headline here. Open and overdue counts are as of today; a month selection groups them by creation month.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Punch is not quality control - it confirms readiness. Zero Punch is the stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 to the trade executive, which is why ageing is a headline here.'"
+                  "Value": "'Punch is not quality control - it confirms readiness. Zero Punch is the stated objective. Items beyond 5 days escalate to the trade PM, beyond 7 to the trade executive, which is why ageing is a headline here. Open and overdue counts are as of today; a month selection groups them by creation month.'"
                 }
               }
             }

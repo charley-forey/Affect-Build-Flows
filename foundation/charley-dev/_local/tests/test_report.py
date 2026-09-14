@@ -220,6 +220,56 @@ def test_schedule_grain():
     assert {"ProjectKey", "ActivityKey", "CurrentStart", "CurrentFinish", "HasDateInversion"} <= columns
 
 
+def test_report_formats():
+    """Display fixes from the report-format audit: each one rendered a wrong number silently."""
+    import deploy_model as dm
+    visuals = {}
+    for _, builder, _ in dr.PAGES:
+        pid, items = builder()
+        visuals.update({v["name"]: v for v in items})
+    get = lambda page, key: visuals[dr.oid(page, key)]
+    # Unlike measures side by side, never stacked into one bar.
+    for page, key in (("overview", "budget_by_code"), ("costsvendors", "c_topcodes"), ("billing", "b_by_project")):
+        assert get(page, key)["visual"]["visualType"] == "clusteredBarChart", key
+    matrix = get("costsvendors", "c_matrix")["visual"]
+    assert matrix["visualType"] == "pivotTable" and "Columns" not in matrix["query"]["queryState"]
+    overdue = get("safetyquality", "sq_overdue")
+    assert overdue["filterConfig"]["filters"][0]["field"]["Column"]["Property"] == "IsPastDue"
+    assert overdue["visual"]["query"]["sortDefinition"]["sort"][0]["direction"] == "Descending"
+    assert overdue["visual"]["objects"]["total"][0]["properties"]["totals"]["expr"]["Literal"]["Value"] == "false"
+    co = json.dumps(get("projectdetail", "pd_co"))
+    assert "Change Order Amount" in co, "pending change orders drop out of an approved-only table"
+    # Month labels sort chronologically; day counts and fractions are never summed.
+    date = dm.table_tmdl("dim_Date", [("MonthYear", "string"), ("MonthYearSort", "int64"), ("Year", "int64")])
+    assert "sortByColumn: MonthYearSort" in date and "summarizeBy: sum" not in date
+    milestone = dm.table_tmdl("fct_Milestone", [("PercentComplete", "double"), ("DaysPastDue", "int64"),
+                                                ("Amount", "double")])
+    assert milestone.count("summarizeBy: none") == 2 and "formatString: 0%" in milestone
+    names = {m[0] for m in dm.MEASURES}
+    assert {"Milestones Overdue %", "Avg Observation Days To Close", "Unmatched Billed Amount - All Projects"} <= names
+    assert not {"Schedule Performance %", "Avg Observation Days Open", "Unmatched AR Amount - All Projects"} & names
+    exprs = {m[0]: m[1] for m in dm.MEASURES}
+    assert "COALESCE" not in exprs["Hours Worked"] and "All months" in exprs["Report Month Label"]
+
+    # The independent expectations encode the same semantics: unmeasured safety is BLANK,
+    # insurance follows a selected project's vendors, and With + Without = On Project.
+    import validate_model as vm
+    E = vm.monthly_expected()
+    jan = "2026-01-01T00:00:00"
+    data = dict(dim_Project=[{"ProjectKey": "a"}, {"ProjectKey": "b"}], dim_Date=[{"Date": jan, "MonthStart": jan}],
+                dim_Vendor=[{"VendorKey": v} for v in (1, 2, 3)],
+                fct_SafetyMonthly=[{"ProjectKey": "a", "MonthStart": jan, "RecordableIncidents": 0, "HoursWorked": 0.0}],
+                bridge_ProjectVendor=[{"ProjectKey": "a", "VendorKey": 1}, {"ProjectKey": "a", "VendorKey": 2},
+                                      {"ProjectKey": "b", "VendorKey": 3}],
+                fct_VendorInsurance=[{"VendorKey": 1, "ExpiryStatus": "Expired"}, {"VendorKey": 3, "ExpiryStatus": "Expired"}])
+    c = vm.Recompute(data, dm.RELATIONSHIPS)
+    a = vm.Scope("a", None, None)
+    assert E["Hours Worked"](c, a) is None and E["Recordable Incidents"](c, a) is None
+    assert E["Certificates On File"](c, vm.PORTFOLIO) == 2 and E["Certificates On File"](c, a) == 1
+    assert E["Vendors With Insurance"](c, a) + E["Vendors Without Insurance"](c, a) == E["Vendors On Project"](c, a)
+    assert E["Report Month Label"](c, a) == "All months"
+
+
 def test_qc_disclosures():
     import deploy_report_qc as qc
     import deploy_model as dm
@@ -250,6 +300,7 @@ if __name__ == "__main__":
     test_report_refs()
     if "--qc" not in sys.argv:
         test_schedule_grain()
+        test_report_formats()
     else:
         test_qc_disclosures()
     print("report checks passed")

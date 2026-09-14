@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Certificates by type (Procore''s free-text values, untidied). Shows Certificates On File by InsuranceType.'"
+                  "Value": "'Stacked bar chart. Certificates by type (Procore''s free-text values, untidied). Shows Certificates On File by InsuranceType.'"
                 }
               }
             }

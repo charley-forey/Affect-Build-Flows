@@ -3,9 +3,9 @@
   "name": "42af668fb1318b8ed390",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1240,
+    "width": 728,
     "height": 34,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Every figure is the CURRENT balance from the latest issued billing per contract - not a total of every period, which would count the same retainage once per month. Drafts are excluded from balances and counted separately below.",
+                    "value": "Balances are CURRENT, from the latest issued billing per contract, whatever month is selected - not a total of every period. Owner billed (selected period) is the sum of payments due in the selected months; all months if none. Drafts are excluded and counted separately.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Every figure is the CURRENT balance from the latest issued billing per contract - not a total of every period, which would count the same retainage once per month. Drafts are excluded from balances and counted separately below.'"
+                  "Value": "'Balances are CURRENT, from the latest issued billing per contract, whatever month is selected - not a total of every period. Owner billed (selected period) is the sum of payments due in the selected months; all months if none. Drafts are excluded and counted separately.'"
                 }
               }
             }

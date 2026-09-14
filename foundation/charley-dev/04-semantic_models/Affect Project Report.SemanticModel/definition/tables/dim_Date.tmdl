@@ -8,22 +8,22 @@ table dim_Date
 
 	column Year
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Year
 
 	column Quarter
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Quarter
 
 	column Month
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Month
 
 	column Day
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: Day
 
 	column MonthStart
@@ -42,20 +42,22 @@ table dim_Date
 		dataType: string
 		summarizeBy: none
 		sourceColumn: MonthName
+		sortByColumn: Month
 
 	column MonthYear
 		dataType: string
 		summarizeBy: none
 		sourceColumn: MonthYear
+		sortByColumn: MonthYearSort
 
 	column MonthYearSort
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: MonthYearSort
 
 	column MonthOffset
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: MonthOffset
 
 	column IsMonthEnd

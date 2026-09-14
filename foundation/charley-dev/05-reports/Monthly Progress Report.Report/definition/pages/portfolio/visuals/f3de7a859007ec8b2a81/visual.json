@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Vendors with no certificate on file, by project. Shows Vendors Without Insurance by ProjectName.'"
+                  "Value": "'Stacked bar chart. Vendors with no certificate on file, by project. Shows Vendors Without Insurance by ProjectName.'"
                 }
               }
             }

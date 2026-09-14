@@ -7,7 +7,7 @@ table qc_seed_ChecklistItem
 
 	column ItemNumber
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: ItemNumber
 
 	column ItemText

@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Committed. Shows Committed for the current selection.'"
+                  "Value": "'Card. Committed (last snapshot). Shows Committed for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Committed'"
+                  "Value": "'Committed (last snapshot)'"
                 }
               }
             },

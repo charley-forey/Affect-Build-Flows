@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Budget Variance. Shows Budget Variance for the current selection.'"
+                  "Value": "'Card. Budget Variance (last snapshot). Shows Budget Variance for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Budget Variance'"
+                  "Value": "'Budget Variance (last snapshot)'"
                 }
               }
             },

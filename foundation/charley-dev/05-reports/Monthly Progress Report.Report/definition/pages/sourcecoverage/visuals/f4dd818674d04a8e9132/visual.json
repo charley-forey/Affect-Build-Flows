@@ -3,9 +3,9 @@
   "name": "f4dd818674d04a8e9132",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1100,
+    "width": 728,
     "height": 44,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "A project missing from Sage reads as ZERO revenue everywhere - it does not error, it just looks like a project that never billed. Every project below appears exactly once; the status says what is missing.",
+                    "value": "Missing Sage coverage means project revenue is not verified. A blank or zero does not establish that nothing was billed. Review the source mappings below and the unmatched invoices on Data Quality.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'A project missing from Sage reads as ZERO revenue everywhere - it does not error, it just looks like a project that never billed. Every project below appears exactly once; the status says what is missing.'"
+                  "Value": "'Missing Sage coverage means project revenue is not verified. A blank or zero does not establish that nothing was billed. Review the source mappings below and the unmatched invoices on Data Quality.'"
                 }
               }
             }

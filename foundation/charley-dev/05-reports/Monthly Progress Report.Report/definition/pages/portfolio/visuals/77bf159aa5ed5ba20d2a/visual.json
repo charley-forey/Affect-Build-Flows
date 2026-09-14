@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Scorecard coverage by project. Shows Scorecard Coverage % by ProjectName.'"
+                  "Value": "'Stacked bar chart. Scorecard coverage by project. Shows Scorecard Coverage % by ProjectName.'"
                 }
               }
             }

@@ -27,7 +27,7 @@ table qc_seed_Trade
 
 	column RiskTier
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: RiskTier
 
 	column SortOrder

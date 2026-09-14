@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "dcfa1170dfa1bdb543fb",
   "position": {
-    "x": 640,
+    "x": 436,
     "y": 356,
     "z": 0,
-    "width": 620,
+    "width": 400,
     "height": 300,
-    "tabOrder": 22
+    "tabOrder": 23
   },
   "visual": {
     "visualType": "tableEx",
@@ -15,6 +15,34 @@
       "queryState": {
         "Values": {
           "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Invoice"
+                    }
+                  },
+                  "Property": "InvoiceID"
+                }
+              },
+              "queryRef": "fct_Invoice.InvoiceID",
+              "nativeQueryRef": "InvoiceID"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Invoice"
+                    }
+                  },
+                  "Property": "InvoiceNumber"
+                }
+              },
+              "queryRef": "fct_Invoice.InvoiceNumber",
+              "nativeQueryRef": "InvoiceNumber"
+            },
             {
               "field": {
                 "Column": {
@@ -37,11 +65,11 @@
                       "Entity": "fct_Invoice"
                     }
                   },
-                  "Property": "Description"
+                  "Property": "HasUnmatchedProject"
                 }
               },
-              "queryRef": "fct_Invoice.Description",
-              "nativeQueryRef": "Description"
+              "queryRef": "fct_Invoice.HasUnmatchedProject",
+              "nativeQueryRef": "HasUnmatchedProject"
             },
             {
               "field": {
@@ -69,7 +97,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. AR invoices by Sage job. Shows SageJobNumber, Description, Total Billed for the current selection.'"
+                  "Value": "'Table. AR invoice trace - selected project and month. Shows InvoiceID, InvoiceNumber, SageJobNumber, HasUnmatchedProject, Total Billed for the current selection.'"
                 }
               }
             }
@@ -82,7 +110,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'AR invoices by Sage job'"
+                  "Value": "'AR invoice trace - selected project and month'"
                 }
               }
             },

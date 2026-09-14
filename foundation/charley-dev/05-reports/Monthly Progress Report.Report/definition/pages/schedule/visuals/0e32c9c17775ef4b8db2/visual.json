@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Schedule Performance %"
+                  "Property": "Milestones Overdue %"
                 }
               },
-              "queryRef": "_Measures.Schedule Performance %",
-              "nativeQueryRef": "Schedule Performance %"
+              "queryRef": "_Measures.Milestones Overdue %",
+              "nativeQueryRef": "Milestones Overdue %"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Schedule Performance %. Shows Schedule Performance % for the current selection.'"
+                  "Value": "'Card. Milestones Overdue % (as of today). Shows Milestones Overdue % for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Schedule Performance %'"
+                  "Value": "'Milestones Overdue % (as of today)'"
                 }
               }
             },

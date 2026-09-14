@@ -259,6 +259,8 @@ class Recompute:
         return sum(values) if values else None
 
     def label(self, s):
+        if s.month is None:
+            return "All months"  # NOT ISFILTERED(dim_Date)
         months = [_ts(r["MonthStart"]) for r in self.rows("dim_Date", s) if r["MonthStart"]]
         if not months:
             return ""
@@ -295,7 +297,7 @@ def _shared_expected():
         "Last Checked Run": lambda c, s: _max(c.rows("meta_PipelineRun", s), "RunAt", key=_ts),
         "Hours Since Last Checked Run": lambda c, s: (
             None if (last := _max(c.rows("meta_PipelineRun", s), "RunAt", key=_ts)) is None
-            else _hours(_ts(last), _ts(c.now))),
+            else _hours(_ts(last), _ts(c.utcnow))),
         "Pipeline Status": lambda c, s: c.pipeline_status(s),
         "Data Gaps": lambda c, s: len(c.rows("dq_DataGap", s)),
         "Data Gap Amount": lambda c, s: _sum(c.rows("dq_DataGap", s), "Amount"),
@@ -342,9 +344,9 @@ def monthly_expected():
                 3: band(c, 3, E["Cash Position %"](c, s)),
                 4: band(c, 4, E["Age Of Oldest Unapproved CO"](c, s)),
                 5: band(c, 5, E["Recordable Incidents"](c, s)),
-                6: band(c, 6, E["Schedule Performance %"](c, s)),
+                6: band(c, 6, E["Milestones Overdue %"](c, s)),
                 7: band(c, 7, E["Completion Variance Days"](c, s)),
-                8: band(c, 8, E["Avg Observation Days Open"](c, s)),
+                8: band(c, 8, E["Avg Observation Days To Close"](c, s)),
                 9: band(c, 9, E["Daily Reports Missed"](c, s))}
 
     def scorecard(c, s, weighted=True):
@@ -352,6 +354,8 @@ def monthly_expected():
         if not weights:
             return None
         found = scores(c, s)
+        if weighted and not scorecard(c, s, weighted=False):
+            return None  # IF ( [Scorecard Coverage %] > 0, ... )
         total = sum(0 if found.get(w["CategoryKey"]) is None
                     else (found[w["CategoryKey"]] * w["Weight"] if weighted else w["Weight"]) for w in weights)
         return total / 3 if weighted else total
@@ -366,6 +370,8 @@ def monthly_expected():
 
     def category_band(c, s):
         score, key = category_score(c, s), selected_category(c, s)
+        if key is None:
+            return None  # NOT HASONEVALUE - a totals row
         if score is None:
             return "Not measured"
         labels = [b["BandLabel"] for b in c.data["dim_ScorecardBand"]
@@ -382,7 +388,7 @@ def monthly_expected():
         return count or None
 
     def vendors_without_insurance(c, s):
-        insured = {r["VendorKey"] for r in c.rows("fct_VendorInsurance", s)}
+        insured = {r["VendorKey"] for r in insurance(c, s)}
         return len({r["VendorKey"] for r in c.rows("bridge_ProjectVendor", s)} - insured)
 
     def completion_variance(c, s):
@@ -399,7 +405,31 @@ def monthly_expected():
         values = {r[column] for r in rows}
         return values.pop() if len(values) == 1 else None
 
-    budget = lambda column: lambda c, s: _sum(c.rows("fct_BudgetLine", s), column)
+    # REMOVEFILTERS(dim_Date): the budget is one current-state snapshot.
+    budget = lambda column: lambda c, s: _sum(c.rows("fct_BudgetLine", s._replace(month=None)), column)
+
+    def insurance(c, s):
+        """IF(ISFILTERED(dim_Project), TREATAS(project vendors), company-wide)."""
+        rows = c.rows("fct_VendorInsurance", s)
+        if s.project is None:
+            return rows
+        vendors = {r["VendorKey"] for r in c.rows("bridge_ProjectVendor", s)}
+        return [r for r in rows if r["VendorKey"] in vendors]
+
+    def billed_to_date_pct(c, s):
+        dates = [r["Date"] for r in c.rows("dim_Date", s) if r["Date"]]
+        if not dates:
+            return None
+        end = max(_ts(d) for d in dates)
+        valid = {r["Date"] for r in c.data["dim_Date"] if r["Date"] and _ts(r["Date"]) <= end}
+        billed = _sum([r for r in c.rows("fct_Invoice", s._replace(month=None))
+                       if r["MonthStart"] in valid and r["HasUnmatchedProject"] is not True], "Amount")
+        return _div(billed, E["Current Contract"](c, s))
+
+    def recordable_incidents(c, s):
+        rows = c.rows("fct_SafetyMonthly", s)
+        incidents, hours = _sum(rows, "RecordableIncidents"), _sum(rows, "HoursWorked")
+        return _zero(incidents) if (hours or 0) > 0 or (incidents or 0) > 0 else None
     E.update({
         "Original Contract": lambda c, s: c.latest("fct_FinancialPeriod", "OriginalContract", s),
         "Current Contract": lambda c, s: c.latest("fct_FinancialPeriod", "CurrentContract", s),
@@ -416,26 +446,26 @@ def monthly_expected():
         "Budget Variance %": lambda c, s: _div(E["Budget Variance"](c, s), E["Budget"](c, s)),
         "Budget Status": budget_status,
         "Percent Bought Out": lambda c, s: _div(E["Committed"](c, s), E["Budget"](c, s)),
-        "Blocking Violations Last Run": lambda c, s: _zero(_sum(
+        "Blocking Violations Last Run": lambda c, s: None if E["Last Checked Run"](c, s) is None else _zero(_sum(
             [r for r in c.rows("meta_PipelineRun", s) if r["RunAt"] == E["Last Checked Run"](c, s)], "Blocking")),
         "Vendor Spend": lambda c, s: _sum(R(c, "bridge_VendorCostCode", s, lambda r: _eq(r["AmountType"], "Actual")), "Amount"),
         "Vendor Committed": lambda c, s: _sum(R(c, "bridge_VendorCostCode", s, lambda r: _eq(r["AmountType"], "Committed")), "Amount"),
         "Cost Codes Per Vendor": lambda c, s: _zero(_distinct(c.rows("bridge_VendorCostCode", s), "CostCodeKey")),
         "Vendors Per Cost Code": lambda c, s: _zero(_distinct(c.rows("bridge_VendorCostCode", s), "VendorKey")),
-        "Certificates On File": lambda c, s: len(c.rows("fct_VendorInsurance", s)),
-        "Vendors With Insurance": lambda c, s: _zero(_distinct(c.rows("fct_VendorInsurance", s), "VendorKey")),
-        "Expired Certificates": lambda c, s: len(R(c, "fct_VendorInsurance", s, lambda r: _eq(r["ExpiryStatus"], "Expired"))),
-        "Certificates Expiring Soon": lambda c, s: len(R(c, "fct_VendorInsurance", s,
-                                                         lambda r: _eq(r["ExpiryStatus"], "Expiring within 30 days"))),
+        "Certificates On File": lambda c, s: len(insurance(c, s)),
+        "Vendors With Insurance": lambda c, s: _zero(_distinct(insurance(c, s), "VendorKey")),
+        "Expired Certificates": lambda c, s: len([r for r in insurance(c, s) if _eq(r["ExpiryStatus"], "Expired")]),
+        "Certificates Expiring Soon": lambda c, s: len([r for r in insurance(c, s)
+                                                        if _eq(r["ExpiryStatus"], "Expiring within 30 days")]),
         "Vendors Without Insurance": vendors_without_insurance,
-        "Retainage Held Owner": lambda c, s: _sum(R(c, "fct_Billing", s, lambda r: r["IsLatestPeriod"] is True
+        "Retainage Held Owner": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), lambda r: r["IsLatestPeriod"] is True
                                                      and _eq(r["BillingType"], "Owner")), "RetainageHeld"),
-        "Retainage Held Sub": lambda c, s: _sum(R(c, "fct_Billing", s, lambda r: r["IsLatestPeriod"] is True
+        "Retainage Held Sub": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), lambda r: r["IsLatestPeriod"] is True
                                                    and _eq(r["BillingType"], "Subcontractor")), "RetainageHeld"),
         "Net Retainage Position": lambda c, s: _add(E["Retainage Held Owner"](c, s), E["Retainage Held Sub"](c, s), -1),
-        "Owner Billed To Date": lambda c, s: _sum(R(c, "fct_Billing", s, latest_owner), "CompletedToDate"),
-        "Owner Contract Sum": lambda c, s: _sum(R(c, "fct_Billing", s, latest_owner), "ContractSumToDate"),
-        "Balance To Finish": lambda c, s: _sum(R(c, "fct_Billing", s, latest_owner), "BalanceToFinish"),
+        "Owner Billed To Date": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "CompletedToDate"),
+        "Owner Contract Sum": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "ContractSumToDate"),
+        "Balance To Finish": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "BalanceToFinish"),
         "Billed This Period": lambda c, s: _sum(R(c, "fct_Billing", s, lambda r: _eq(r["BillingType"], "Owner")
                                                  and not _eq(r["StatusLabel"], "DRAFT")), "CurrentPaymentDue"),
         "Billing Periods": lambda c, s: len(c.rows("fct_Billing", s)),
@@ -448,14 +478,14 @@ def monthly_expected():
         "Total Billed": lambda c, s: _sum(c.rows("fct_Invoice", s), "Amount"),
         "Total Paid": lambda c, s: _sum(c.rows("fct_Invoice", s), "AmountPaid"),
         "AR Outstanding": lambda c, s: _sum(c.rows("fct_Invoice", s), "Balance"),
-        "Total Billed %": lambda c, s: _div(E["Total Billed"](c, s), E["Current Contract"](c, s)),
+        "Total Billed %": billed_to_date_pct,
         "Total Billed MoM %": mom,
         "Open Submittals": lambda c, s: _count(R(c, "fct_RfiSubmittal", s, lambda r: r["IsOpen"] is True and _eq(r["ItemType"], "Submittal"))),
         "Open Submittals Past Due": lambda c, s: _count(R(c, "fct_RfiSubmittal", s, lambda r: r["IsPastDue"] is True and _eq(r["ItemType"], "Submittal"))),
         "Avg Days Open": lambda c, s: _avg(c.rows("fct_RfiSubmittal", s), "DaysOpen"),
         "Critical Milestones": lambda c, s: _count(c.rows("fct_Milestone", s)),
         "Overdue Milestones": lambda c, s: _count(R(c, "fct_Milestone", s, true("IsOverdue"))),
-        "Schedule Performance %": lambda c, s: _div(E["Overdue Milestones"](c, s), E["Critical Milestones"](c, s)),
+        "Milestones Overdue %": lambda c, s: _div(E["Overdue Milestones"](c, s), E["Critical Milestones"](c, s)),
         "Avg Milestone Progress": lambda c, s: _avg(c.rows("fct_Milestone", s), "PercentComplete"),
         "Punchlist Items": lambda c, s: len(R(c, "fct_QualityItem", s, lambda r: _eq(r["ItemType"], "PunchItem"))),
         "Open Quality Items": lambda c, s: len(R(c, "fct_QualityItem", s, true("IsOpen"))),
@@ -471,19 +501,21 @@ def monthly_expected():
         "DQ Cost Codes Not In Source": lambda c, s: _count(R(c, "dim_CostCode", s, false("IsInSource"))),
         "DQ Milestones With Inverted Dates": lambda c, s: _count(R(c, "fct_Milestone", s, true("HasDateInversion"))),
         "DQ Unmatched Invoices": lambda c, s: _count(R(c, "fct_Invoice", s._replace(project=None), true("HasUnmatchedProject"))),
-        "Unmatched AR Amount - All Projects": lambda c, s: _sum(R(c, "fct_Invoice", s._replace(project=None),
+        "Unmatched Billed Amount - All Projects": lambda c, s: _sum(R(c, "fct_Invoice", s._replace(project=None),
                                                                  true("HasUnmatchedProject")), "Amount"),
         "Billed Cumulative": billed_cumulative,
         "Billed Cumulative % Of Contract": lambda c, s: _div(billed_cumulative(c, s), E["Current Contract"](c, s)),
-        "Projects Reporting": lambda c, s: _count(c.rows("dim_Project", s)),
+        "Projects Reporting": lambda c, s: len({r["ProjectKey"] for r in c.rows("fct_FinancialPeriod", s)
+                                                if r["ProjectKey"] is not None}) or None,
         "Projects At Risk": projects_at_risk,
         "Avg Days To Payment": lambda c, s: _avg(c.rows("fct_Invoice", s), "DaysToPayment"),
-        "Cash Position %": lambda c, s: _div(_add(E["Total Paid"](c, s), E["AR Outstanding"](c, s)), E["Cost To Complete"](c, s)),
+        "Cash Position %": lambda c, s: _div(_add(E["Total Paid"](c, s), E["AR Outstanding"](c, s)),
+                                              _sum(c.rows("fct_BudgetLine", s), "CostToComplete")),
         "Profitability Code": lambda c, s: selected(c.rows("man_Flags", s), "ProfitabilityCode"),
-        "Recordable Incidents": lambda c, s: _zero(_sum(c.rows("fct_SafetyMonthly", s), "RecordableIncidents")),
-        "Hours Worked": lambda c, s: _zero(_sum(c.rows("fct_SafetyMonthly", s), "HoursWorked")),
+        "Recordable Incidents": recordable_incidents,
+        "Hours Worked": lambda c, s: (h if (h := _sum(c.rows("fct_SafetyMonthly", s), "HoursWorked")) and h > 0 else None),
         "Observations": lambda c, s: len(R(c, "fct_QualityItem", s, lambda r: _eq(r["ItemType"], "Observation"))),
-        "Avg Observation Days Open": lambda c, s: _avg(R(c, "fct_QualityItem", s, false("IsOpen")), "DaysOpen"),
+        "Avg Observation Days To Close": lambda c, s: _avg(R(c, "fct_QualityItem", s, false("IsOpen")), "DaysOpen"),
         "Daily Reports Missed": lambda c, s: _sum(c.rows("man_DailyLogCompliance", s), "LogsMissedSameDay"),
         "Completion Variance Days": completion_variance,
         "Client Satisfaction": lambda c, s: _div(_sum(c.rows("man_Survey", s), "Score"),
@@ -492,7 +524,8 @@ def monthly_expected():
         "Scorecard Coverage %": lambda c, s: scorecard(c, s, weighted=False),
         "Project Scorecard (Measured Only)": lambda c, s: _div(scorecard(c, s), scorecard(c, s, weighted=False)),
         "Category Score": category_score,
-        "Category Weighted": lambda c, s: (None if (score := category_score(c, s)) is None
+        "Category Weighted": lambda c, s: (scorecard(c, s) if selected_category(c, s) is None
+                                           else None if (score := category_score(c, s)) is None
                                            else score * selected(c.rows("dim_ScorecardWeight", s), "Weight") / 3),
         "Category Band": category_band,
     })
@@ -555,7 +588,7 @@ def qc_expected():
         "Total Submittals": count("fct_QcSubmittal"),
         "Open Submittals": count("fct_QcSubmittal", true("IsOpen")),
         "Overdue Submittals": count("fct_QcSubmittal", true("IsOverdue")),
-        "Avg Submittal Turnaround": lambda c, s: _avg(c.rows("fct_QcSubmittal", s), "TurnaroundDays"),
+        "Avg Submittal Turnaround Days": lambda c, s: _avg(R(c, "fct_QcSubmittal", s, false("IsOpen")), "TurnaroundDays"),
         "Possible Mock-Ups": count("fct_QcSubmittal", true("IsMockup")),
         "Native Inspections": count("fct_ProcoreInspection"),
         "Native Inspection Items": count("fct_ProcoreInspectionItem"),
@@ -579,7 +612,7 @@ def qc_expected():
         "DQ Observations With Unmapped Trade": count("fct_QcNcr", true("HasUnmappedTrade")),
         "DQ Punch With Unmapped Trade": count("fct_QcPunch", true("HasUnmappedTrade")),
         "DQ Registers Awaiting Input": lambda c, s: (
-            f"{sum(not c.rows(t, s) for t in registers)}/8 registers empty; completeness unverified"),
+            f"{sum(not c.rows(t, s) for t in registers)}/{len(registers)} registers empty in current filters; completeness unverified"),
     })
     return E
 

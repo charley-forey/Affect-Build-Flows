@@ -3,9 +3,9 @@
   "name": "4d73883b5473cc5c98a9",
   "position": {
     "x": 20,
-    "y": 56,
+    "y": 60,
     "z": 0,
-    "width": 1240,
+    "width": 728,
     "height": 46,
     "tabOrder": 11
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Sourced from Procore's insurance records. COVERAGE (is there a certificate at all) and CURRENCY (is it in date) are counted separately - a vendor with no record and a vendor with a lapsed record both fail a single compliance flag and need different follow-up. Exempt vendors are counted apart from lapsed ones.",
+                    "value": "Sourced from Procore's insurance records. COVERAGE (is there a certificate at all) and CURRENCY (is it in date) are counted separately - a vendor with no record and a vendor with a lapsed record both fail a single compliance flag and need different follow-up. With a project selected, every figure covers that project's vendors; the month slicer does not apply.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Sourced from Procore''s insurance records. COVERAGE (is there a certificate at all) and CURRENCY (is it in date) are counted separately - a vendor with no record and a vendor with a lapsed record both fail a single compliance flag and need different follow-up. Exempt vendors are counted apart from lapsed ones.'"
+                  "Value": "'Sourced from Procore''s insurance records. COVERAGE (is there a certificate at all) and CURRENCY (is it in date) are counted separately - a vendor with no record and a vendor with a lapsed record both fail a single compliance flag and need different follow-up. With a project selected, every figure covers that project''s vendors; the month slicer does not apply.'"
                 }
               }
             }

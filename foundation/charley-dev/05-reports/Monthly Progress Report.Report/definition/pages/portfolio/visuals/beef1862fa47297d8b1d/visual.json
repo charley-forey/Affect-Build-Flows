@@ -3,7 +3,7 @@
   "name": "beef1862fa47297d8b1d",
   "position": {
     "x": 20,
-    "y": 58,
+    "y": 60,
     "z": 0,
     "width": 720,
     "height": 34,
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "All projects, one screen. Scores use the same weights and bands as the Scorecard page. A category with no data reads as blank, never as zero - so a gap in the data cannot masquerade as bad performance.",
+                    "value": "Every project in the current slicers - clear the project slicer to compare them all. Scores use the Scorecard page's weights and bands; no data reads as blank, never zero. AR is today's balance on invoices in the selected period.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'All projects, one screen. Scores use the same weights and bands as the Scorecard page. A category with no data reads as blank, never as zero - so a gap in the data cannot masquerade as bad performance.'"
+                  "Value": "'Every project in the current slicers - clear the project slicer to compare them all. Scores use the Scorecard page''s weights and bands; no data reads as blank, never zero. AR is today''s balance on invoices in the selected period.'"
                 }
               }
             }

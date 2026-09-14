@@ -69,7 +69,7 @@ table fct_VendorInsurance
 
 	column DaysUntilExpiry
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysUntilExpiry
 
 	column ExpiryStatus

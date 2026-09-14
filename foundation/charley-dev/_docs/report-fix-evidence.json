@@ -1,0 +1,430 @@
+{
+  "checked_at": "2026-09-14T03:38:59.467188+00:00",
+  "workspace": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "method": "Read-only executeQueries. Both the previous generator definitions (commit e2aa1f4) and the revised ones were supplied with DEFINE MEASURE in the same query, so the candidate's deployed (possibly older) measures played no part. Before/after compared at portfolio, every dim_Date[MonthStart] and every non-blank dim_Project[ProjectKey]; only aggregates are recorded. The revised definitions were also run through validate_model.check_independent_measures (Python recomputation from raw columns).",
+  "limitations": [
+    "Candidate models lack fct_Invoice[DaysToPayment], dq_DataGap and (PQP) the Procore inspection tables; measures over them were defined as BLANK() in both before and after and are not evidence.",
+    "Rendering of visual changes (clustered bars, pivotTable, filters, sort, totals off, sortByColumn) is not verified by DAX and needs a deployed-report check."
+  ],
+  "models": {
+    "CD_Validation_Monthly": {
+      "dataset_id": "93a87eef-e5fa-4626-bd32-ca61233a351d",
+      "independent_check": {
+        "measures_checked": 101,
+        "failed": [
+          "Category Weighted",
+          "Project Scorecard",
+          "Project Scorecard (Measured Only)"
+        ],
+        "failure_mismatch_counts": {
+          "Project Scorecard": 3,
+          "Project Scorecard (Measured Only)": 3,
+          "Category Weighted": 3
+        },
+        "failure_note": "Pre-existing, unchanged by this fix: dim_ScorecardWeight[Weight] is decimal, so the weighted total is returned rounded to 4 dp (0.3267 vs 0.326667). Project Scorecard and Measured Only show the same mismatches in candidate-measure-coverage-evidence.json before this change; Category Weighted inherits them only because its totals row now returns the headline.",
+        "tables_absent_from_candidate": [
+          "dq_DataGap"
+        ]
+      },
+      "changed_measures": {
+        "Budget": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 35274580.420000024
+          }
+        },
+        "Forecast": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 35784021.65000003
+          }
+        },
+        "Committed": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 30193165.750000026
+          }
+        },
+        "Spent To Date": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 20268605.649999995
+          }
+        },
+        "Cost To Complete": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 9924560.1
+          }
+        },
+        "Budget Variance": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 15005974.77000003
+          }
+        },
+        "Budget Variance %": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 0.42540476998819027
+          }
+        },
+        "Budget Status": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": "Spend within budget"
+          }
+        },
+        "Percent Bought Out": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 251,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 0.8559468430383106
+          }
+        },
+        "Retainage Held Owner": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 252,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 346229.50999999995
+          }
+        },
+        "Certificates On File": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 0,
+          "projects_changed": 20,
+          "latest_changed_month": null
+        },
+        "Vendors With Insurance": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 0,
+          "projects_changed": 20,
+          "latest_changed_month": null
+        },
+        "Expired Certificates": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 0,
+          "projects_changed": 20,
+          "latest_changed_month": null
+        },
+        "Retainage Held Sub": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 252,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 407988.13
+          }
+        },
+        "Net Retainage Position": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 252,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": -61758.62000000005
+          }
+        },
+        "Owner Billed To Date": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 252,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 29601900.03
+          }
+        },
+        "Owner Contract Sum": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 252,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 34021855.99
+          }
+        },
+        "Balance To Finish": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 252,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": null,
+            "after": 4766185.47
+          }
+        },
+        "Total Billed %": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": 0.7157664783602773,
+            "after": 0.6606305154758558
+          },
+          "months_changed": 21,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2026-09-01T00:00:00",
+            "before": 0.01476872194717401,
+            "after": 0.6606305154758557
+          }
+        },
+        "Projects Reporting": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": 20,
+            "after": 17
+          },
+          "months_changed": 252,
+          "projects_changed": 4,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 20,
+            "after": null
+          }
+        },
+        "Report Month Label": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": "January 2015 - December 2035",
+            "after": "All months"
+          },
+          "months_changed": 0,
+          "projects_changed": 20,
+          "latest_changed_month": null
+        },
+        "Recordable Incidents": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 238,
+          "projects_changed": 7,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 0,
+            "after": null
+          }
+        },
+        "Hours Worked": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 238,
+          "projects_changed": 7,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 0.0,
+            "after": null
+          }
+        },
+        "Projects At Risk": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 21,
+          "projects_changed": 0,
+          "latest_changed_month": {
+            "month": "2026-09-01T00:00:00",
+            "before": 1,
+            "after": 9
+          }
+        },
+        "Category Weighted": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": null,
+            "after": 0.26
+          },
+          "months_changed": 30,
+          "projects_changed": 15,
+          "latest_changed_month": {
+            "month": "2026-09-01T00:00:00",
+            "before": null,
+            "after": 0.24
+          }
+        },
+        "Category Band": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": "Not measured",
+            "after": null
+          },
+          "months_changed": 252,
+          "projects_changed": 20,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": "Not measured",
+            "after": null
+          }
+        },
+        "Score - Safety Incidents": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 238,
+          "projects_changed": 7,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 3,
+            "after": null
+          }
+        },
+        "Project Scorecard": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 238,
+          "projects_changed": 7,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 0.14,
+            "after": null
+          }
+        },
+        "Scorecard Coverage %": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 238,
+          "projects_changed": 7,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 0.14,
+            "after": 0.0
+          }
+        },
+        "Project Scorecard (Measured Only)": {
+          "renamed_from": null,
+          "portfolio": null,
+          "months_changed": 237,
+          "projects_changed": 7,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": 1.0,
+            "after": null
+          }
+        }
+      },
+      "renamed_with_identical_values": [
+        "Milestones Overdue %",
+        "Avg Observation Days To Close",
+        "Unmatched Billed Amount - All Projects"
+      ],
+      "observations": [
+        "Projects At Risk under a month selection rises (latest changed month 1 -> 9) because Safety no longer scores 3/3 on months with no hours logged, which had inflated the measured-only score.",
+        "Total Billed % portfolio falls 71.6% -> 66.1% because invoices with no matched project (no contract) are excluded; with a month selected it is now billed-to-date rather than that month's billing.",
+        "Projects Reporting portfolio 20 -> 17: projects with financial-period rows, not every dim_Project row."
+      ]
+    },
+    "CD_Validation_PQP": {
+      "dataset_id": "5b66f1ab-51ba-4eda-8646-7705b1ba9084",
+      "independent_check": {
+        "measures_checked": 42,
+        "failed": [],
+        "failure_mismatch_counts": {},
+        "failure_note": null,
+        "tables_absent_from_candidate": [
+          "dq_DataGap",
+          "fct_ProcoreInspection",
+          "fct_ProcoreInspectionItem"
+        ]
+      },
+      "changed_measures": {
+        "Report Month Label": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": "January 2015 - December 2035",
+            "after": "All months"
+          },
+          "months_changed": 0,
+          "projects_changed": 20,
+          "latest_changed_month": null
+        },
+        "Avg Submittal Turnaround Days": {
+          "renamed_from": "Avg Submittal Turnaround",
+          "portfolio": {
+            "before": 384.02789005658855,
+            "after": 0.9904761904761905
+          },
+          "months_changed": 34,
+          "projects_changed": 16,
+          "latest_changed_month": {
+            "month": "2026-09-01T00:00:00",
+            "before": 11.504716981132075,
+            "after": 6.0
+          }
+        },
+        "DQ Registers Awaiting Input": {
+          "renamed_from": null,
+          "portfolio": {
+            "before": "8/8 registers empty; completeness unverified",
+            "after": "8/8 registers empty in current filters; completeness unverified"
+          },
+          "months_changed": 252,
+          "projects_changed": 20,
+          "latest_changed_month": {
+            "month": "2035-12-01T00:00:00",
+            "before": "8/8 registers empty; completeness unverified",
+            "after": "8/8 registers empty in current filters; completeness unverified"
+          }
+        }
+      },
+      "renamed_with_identical_values": [],
+      "observations": [
+        "Avg Submittal Turnaround Days (closed submittals only) is about 1 day at portfolio against 384 when open items' ages were averaged in. The definition matches gold (datediff(responded_date, created_date)); a near-zero turnaround suggests responded_date is often the creation date in source and needs review."
+      ]
+    }
+  }
+}

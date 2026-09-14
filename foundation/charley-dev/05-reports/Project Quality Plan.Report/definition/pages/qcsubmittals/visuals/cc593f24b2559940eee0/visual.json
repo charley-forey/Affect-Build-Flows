@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Avg Submittal Turnaround"
+                  "Property": "Avg Submittal Turnaround Days"
                 }
               },
-              "queryRef": "_Measures.Avg Submittal Turnaround",
-              "nativeQueryRef": "Avg Submittal Turnaround"
+              "queryRef": "_Measures.Avg Submittal Turnaround Days",
+              "nativeQueryRef": "Avg Submittal Turnaround Days"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Avg Submittal Turnaround. Shows Avg Submittal Turnaround for the current selection.'"
+                  "Value": "'Card. Avg Submittal Turnaround Days. Shows Avg Submittal Turnaround Days for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Avg Submittal Turnaround'"
+                  "Value": "'Avg Submittal Turnaround Days'"
                 }
               }
             },

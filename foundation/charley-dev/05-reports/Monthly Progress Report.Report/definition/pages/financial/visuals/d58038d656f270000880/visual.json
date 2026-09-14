@@ -41,11 +41,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Pending Change Orders"
+                  "Property": "Change Order Amount"
                 }
               },
-              "queryRef": "_Measures.Pending Change Orders",
-              "nativeQueryRef": "Pending Change Orders"
+              "queryRef": "_Measures.Change Order Amount",
+              "nativeQueryRef": "Change Order Amount"
             }
           ]
         }
@@ -59,7 +59,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Clustered column chart. Change orders by status. Shows Pending Change Orders by StatusLabel.'"
+                  "Value": "'Clustered column chart. Change orders by status. Shows Change Order Amount by StatusLabel.'"
                 }
               }
             }

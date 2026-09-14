@@ -114,7 +114,9 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "Cash Position %",
             # FINANCIALS!C8 is a DROPDOWN in the workbook, but the note in G8 spells out
             # the arithmetic. Computing it removes one of the three subjective inputs.
-            "DIVIDE ( [Total Paid] + [AR Outstanding], [Cost To Complete] )",
+            # The fact, not [Cost To Complete]: that card ignores the month slicer, and a
+            # month's invoices over the whole remaining cost would score every job at risk.
+            "DIVIDE ( [Total Paid] + [AR Outstanding], SUM ( fct_BudgetLine[CostToComplete] ) )",
             '"0.0%"',
             "FINANCIALS!C8 - a human judgement the workbook could already have computed",
         ),
@@ -126,7 +128,11 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Recordable Incidents",
-            "COALESCE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), 0 )",
+            # BLANK, NEVER ZERO: a project or month with no hours logged and no incident
+            # recorded is unmeasured, not incident-free. Zero only once hours exist.
+            "VAR I = SUM ( fct_SafetyMonthly[RecordableIncidents] )\n"
+            "VAR H = SUM ( fct_SafetyMonthly[HoursWorked] )\n"
+            "RETURN IF ( H > 0 || I > 0, COALESCE ( I, 0 ) )",
             '"#,0"',
             "SAFETY!E - Procore /incidents, in the registry but not yet ingested",
         ),
@@ -135,7 +141,9 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             # From the FACT now: 911 project-days of Procore manpower logs, summed. Was
             # man_SafetyMonthly, the hand-typed table that is still empty - so this
             # category scored BLANK and dragged [Scorecard Coverage %] down with it.
-            "COALESCE ( SUM ( fct_SafetyMonthly[HoursWorked] ), 0 )",
+            # BLANK when no hours were logged, rather than a confident 0.
+            "VAR H = SUM ( fct_SafetyMonthly[HoursWorked] )\n"
+            "RETURN IF ( H > 0, H )",
             '"#,0"',
             "SAFETY!D - Sage payroll / ADP / Procore timecards, undecided",
         ),
@@ -150,8 +158,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "Procore /observations/items - was QUALITY!D, typed by hand",
         ),
         (
-            "Avg Observation Days Open",
-            # Averaged over CLOSED items only. Mixing open and closed would blend "how long
+            "Avg Observation Days To Close",
+            # Averaged over CLOSED items only, hence "to close" - not the age of open items. Mixing open and closed would blend "how long
             # has this been outstanding" with "how long did that take to close" - two
             # different questions with one misleading answer.
             "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] ), "
@@ -225,7 +233,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Score - Schedule Performance",
-            numeric_band(SCHEDULE, "Schedule Performance %"),
+            numeric_band(SCHEDULE, "Milestones Overdue %"),
             '"0"',
             "SCORECARD CALC!E19 - FIX: bands are fractions, so this stops always "
             "awarding 3/3 (defect #1a)",
@@ -239,7 +247,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Score - Observations",
-            numeric_band(OBSERVATIONS, "Avg Observation Days Open"),
+            numeric_band(OBSERVATIONS, "Avg Observation Days To Close"),
             '"0"',
             "SCORECARD CALC!E25",
         ),
@@ -256,6 +264,9 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             # Weights come from the table, not from DAX, so retuning is a data edit.
             # Divided by 3 because 3 is the maximum category score - this is the
             # workbook's own ((E*F)/3) normalisation to a 0-1 index.
+            # BLANK when nothing is measured: 0.00 on an uninstrumented project reads as a
+            # failing one. [Scorecard Coverage %] sits beside it on every page that shows it.
+            "IF ( [Scorecard Coverage %] > 0,\n"
             "DIVIDE (\n"
             "    SUMX (\n"
             "        ALL ( dim_ScorecardWeight ),\n"
@@ -268,7 +279,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "        RETURN IF ( ISBLANK ( S ), 0, S * dim_ScorecardWeight[Weight] )\n"
             "    ),\n"
             "    3\n"
-            ")",
+            ") )",
             '"0.00"',
             "SCORECARD CALC!G31",
         ),
@@ -326,8 +337,11 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             # What this category actually contributes to the 0-1 headline. The column that
             # makes the score auditable: these sum to [Project Scorecard] exactly.
             "VAR S = [Category Score]\n"
+            # In a totals row (no single category) it shows the headline, so the column
+            # visibly adds up to [Project Scorecard] instead of ending in a blank.
             "VAR W = SELECTEDVALUE ( dim_ScorecardWeight[Weight] )\n"
-            "RETURN IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) )",
+            "RETURN IF ( NOT HASONEVALUE ( dim_ScorecardWeight[CategoryKey] ), [Project Scorecard],\n"
+            "    IF ( ISBLANK ( S ), BLANK (), DIVIDE ( S * W, 3 ) ) )",
             '"0.000"',
             "SCORECARD CALC!G23:G31 - ((E*F)/3), the workbook's own normalisation",
         ),
@@ -339,6 +353,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "VAR K = SELECTEDVALUE ( dim_ScorecardWeight[CategoryKey] )\n"
             "VAR S = [Category Score]\n"
             "RETURN\n"
+            "IF ( NOT HASONEVALUE ( dim_ScorecardWeight[CategoryKey] ), BLANK (),\n"
             "IF (\n"
             "    ISBLANK ( S ),\n"
             '    "Not measured",\n'
@@ -348,7 +363,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "        dim_ScorecardBand[CategoryKey] = K,\n"
             "        dim_ScorecardBand[Score] = S\n"
             "    )\n"
-            ")",
+            ") )",
             None,
             "derived - the band the driver fell in, in the seed table's own words",
         ),

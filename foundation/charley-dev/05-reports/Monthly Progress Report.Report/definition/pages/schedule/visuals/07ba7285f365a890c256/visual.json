@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Overdue Milestones. Shows Overdue Milestones for the current selection.'"
+                  "Value": "'Card. Overdue Milestones (as of today). Shows Overdue Milestones for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Overdue Milestones'"
+                  "Value": "'Overdue Milestones (as of today)'"
                 }
               }
             },

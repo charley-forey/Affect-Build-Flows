@@ -18,7 +18,7 @@ table man_DailyLogCompliance
 
 	column LogsMissedSameDay
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: LogsMissedSameDay
 
 	partition man_DailyLogCompliance = entity

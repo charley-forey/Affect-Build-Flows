@@ -2,7 +2,7 @@ table dim_Owner
 
 	column OwnerKey
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: OwnerKey
 
 	column RoleName

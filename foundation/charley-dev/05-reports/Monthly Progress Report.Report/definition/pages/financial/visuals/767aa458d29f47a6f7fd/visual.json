@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Spent To Date. Shows Spent To Date for the current selection.'"
+                  "Value": "'Card. Spent To Date (last snapshot). Shows Spent To Date for the current selection.'"
                 }
               }
             }
@@ -54,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Spent To Date'"
+                  "Value": "'Spent To Date (last snapshot)'"
                 }
               }
             },

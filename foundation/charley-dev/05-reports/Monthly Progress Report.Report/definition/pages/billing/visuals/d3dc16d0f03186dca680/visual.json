@@ -10,7 +10,7 @@
     "tabOrder": 23
   },
   "visual": {
-    "visualType": "barChart",
+    "visualType": "clusteredBarChart",
     "query": {
       "queryState": {
         "Category": {
@@ -73,7 +73,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Bar chart. Retainage held by project. Shows Retainage Held Owner, Retainage Held Sub by ProjectName.'"
+                  "Value": "'Clustered bar chart. Retainage held by project. Shows Retainage Held Owner, Retainage Held Sub by ProjectName.'"
                 }
               }
             }
