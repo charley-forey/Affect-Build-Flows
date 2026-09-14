@@ -217,6 +217,27 @@ SOURCE_FIXTURES = (
         ('SV1', 'ACME CONCRETE LLC')
     ) AS t(sage_vendor_id, sage_vendor_name)""",
 
+    # Sage jobs and AP, read by dq_CrosswalkCandidate and dq_DataGap. S200's short name is
+    # P2's name in different case and padding - the one exact-name candidate. S999 carries
+    # AR (INV3) and AP with no mapping, so it must surface as a job-level gap in BOTH
+    # directions. AP3 has no job at all. S100 is mapped, so neither its AP nor its name may appear.
+    """CREATE OR REPLACE VIEW sv_sage_jobs AS SELECT * FROM (VALUES
+        ('S100', 'Tower A', 'TWRA', '501', 'Brooklyn', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
+        ('S200', 'Depot B warehouse', ' depot b ', '502', 'Queens', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
+        ('S999', 'Office', 'OFFICE', '1', 'Brooklyn', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0)
+    ) AS t(sage_project_id, job_name, job_short_name, client_id, city, state,
+           status_code, start_date, completion_date, contract_date,
+           beginning_balance, ending_balance)""",
+
+    """CREATE OR REPLACE VIEW sv_ap_invoices AS SELECT * FROM (VALUES
+        ('AP1', 'INV-77', 'SV1', 'S100', 'Tower A', DATE '2025-05-10', DATE '2025-06-10', 'Draw', 8000.0, 2000.0, 6000.0, '2025-05'),
+        ('AP2', 'INV-78', 'SV1', 'S999', 'Office',  DATE '2025-05-12', DATE '2025-06-12', 'Rent', 2500.0,    0.0, 2500.0, '2025-05'),
+        -- No job at all: counted under 'AP invoice with no Sage job', never valued.
+        ('AP3', 'INV-79', 'SV1', NULL,   NULL,      DATE '2025-05-14', DATE '2025-06-14', 'Stock', 700.0,    0.0,  700.0, '2025-05')
+    ) AS t(invoice_id, invoice_number, sage_vendor_id, sage_project_id, job_name,
+           invoice_date, due_date, description, invoice_total, amount_paid,
+           invoice_balance, billing_period)""",
+
     # Field ops. Values exercise the paths that matter: one open and past due, one closed
     # (so IsPastDue must be FALSE even though its due date has gone), and a punch item with
     # no cost code.
@@ -624,23 +645,6 @@ SOURCE_FIXTURES = (
          CAST(NULL AS VARCHAR), CAST(NULL AS VARCHAR))
     ) AS t(project_id, item_key, responsibility_code, status_code, verified_date,
            verified_by, evidence_link, notes)""",
-)
-
-# The three {SILVER_ABFSS} lookups (sv_vendors, sv_project_crosswalk, sv_sage_vendors) keyed
-# to the ids the INTEGRATED bronze fixture uses (test_silver.BRONZE: Procore project 7,
-# Sage job recnum 11, vendor V1). SOURCE_FIXTURES key them to P1, which is right for the
-# gold suite and makes the integrated run look like a dead Sage join that production
-# cannot have while the crosswalk holds its real rows.
-INTEGRATED_EXTERNAL_FIXTURES = (
-    """CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM (VALUES
-        ('7', '11', 'Tower A')
-    ) AS t(procore_project_id, sage_project_id, project_name)""",
-    """CREATE OR REPLACE VIEW sv_vendors AS SELECT * FROM (VALUES
-        ('V1', 'SV1', 'Acme Concrete')
-    ) AS t(procore_vendor_id, sage_vendor_id, vendor_name)""",
-    """CREATE OR REPLACE VIEW sv_sage_vendors AS SELECT * FROM (VALUES
-        ('SV1', 'ACME CONCRETE LLC')
-    ) AS t(sage_vendor_id, sage_vendor_name)""",
 )
 
 # dim_Status is not a pure seed: it unions its 32 static rows with Procore's OWN status

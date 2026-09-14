@@ -107,6 +107,50 @@ FROM dim_ProjectCrosswalk x
 WHERE NOT x.IsInSage
 
 UNION ALL
+-- The other side of the crosswalk: a Sage job carrying money that maps to no Procore project.
+-- One row per job AND direction (AR, AP). AMOUNT IS NULL ON PURPOSE: the AR money is already
+-- itemised per invoice under 'Unmatched AR invoice', so putting it here too would make
+-- SUM(Amount) - the Data Gap Amount measure - count it twice. The figure is in Reason.
+-- Nothing is excluded (the office overhead job included): which jobs are legitimately
+-- outside Procore is Affect's call, not a filter in this file. Invoices with NO job at all
+-- cannot belong to a job-level row; they are the next arm.
+SELECT 'Sage job without Procore project', 'Sage', g.src, g.sage_project_id, CAST(NULL AS STRING),
+       CONCAT('Sage job ', g.sage_project_id, ' has ', CAST(g.n AS STRING), ' ', g.kind,
+              ' invoice(s) totalling ', CAST(CAST(g.amount AS DECIMAL(18,2)) AS STRING),
+              ' and no Procore project in the crosswalk'),
+       CAST(NULL AS DOUBLE),
+       concat_ws('; ', CONCAT('job ', COALESCE(j.job_name, '(not in sv_sage_jobs)')),
+                 'see dq_CrosswalkCandidate for proposed matches'),
+       CAST(NULL AS STRING)
+FROM (
+    SELECT 'sv_ar_invoices' AS src, 'AR' AS kind, sage_project_id,
+           COUNT(*) AS n, CAST(SUM(invoice_total) AS DOUBLE) AS amount
+    FROM sv_ar_invoices GROUP BY sage_project_id
+    UNION ALL
+    SELECT 'sv_ap_invoices', 'AP', sage_project_id,
+           COUNT(*), CAST(SUM(invoice_total) AS DOUBLE)
+    FROM sv_ap_invoices GROUP BY sage_project_id
+) g
+LEFT JOIN sv_sage_jobs j ON j.sage_project_id = g.sage_project_id
+WHERE g.sage_project_id IS NOT NULL
+  AND g.sage_project_id NOT IN (SELECT sage_project_id FROM sv_project_crosswalk
+                                WHERE sage_project_id IS NOT NULL)
+
+UNION ALL
+-- AP booked to no Sage job at all (overhead, stock, suppliers). No crosswalk can attach it
+-- to a project, so it is counted, not valued: Amount NULL for the same double-count reason,
+-- the invoice total in Detail. Measured 2026-09-13: 303 invoices, $4,205,597.50.
+SELECT 'AP invoice with no Sage job', 'Sage', 'sv_ap_invoices', a.invoice_id, CAST(NULL AS STRING),
+       'Sage AP invoice carries no job - it cannot reach any project',
+       CAST(NULL AS DOUBLE),
+       concat_ws('; ', CONCAT('invoice ', a.invoice_number),
+                 CONCAT('vendor ', a.sage_vendor_id),
+                 CONCAT('total ', CAST(CAST(a.invoice_total AS DECIMAL(18,2)) AS STRING))),
+       CAST(NULL AS STRING)
+FROM sv_ap_invoices a
+WHERE a.sage_project_id IS NULL
+
+UNION ALL
 SELECT 'Project missing from Outbuild', 'Outbuild', 'dim_ProjectCrosswalk', x.ProjectKey, x.ProjectKey,
        CASE WHEN x.HasAmbiguousOutbuildMatch
             THEN 'Linked from more than one Outbuild project - no milestones until resolved'

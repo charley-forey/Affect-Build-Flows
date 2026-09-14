@@ -25,12 +25,14 @@
 -- abfss rather than by bare name because gold's notebook runs with CD_Gold_Lakehouse as its
 -- default catalog - an unqualified cd_silver_projects does not resolve from there.
 --
--- Three lookup views still read the existing warehouse:
+-- The last three lookups left the existing warehouse on 2026-09-13; nothing here reads
+-- {SILVER_ABFSS} any more:
 --
---   sv_vendors              carries sage_vendor_id, which Procore does not put on the vendor
---                           record; it comes from the existing crosswalk.
---   sv_project_crosswalk    owns the explicit Procore-to-Sage project association.
---   sv_sage_vendors         owns the Sage vendor names used to check name drift.
+--   sv_vendors              cd_silver_vendors; sage_vendor_id is Procore's origin_code,
+--                           which is actpay.recnum (933/1,117, 0 conflicts, 125/125 legacy).
+--   sv_project_crosswalk    seed_ProjectCrosswalk, a committed seed (15 verified pairs) -
+--                           Sage carries no Procore reference, so this is curated data.
+--   sv_sage_vendors         cd_silver_sage_vendors (actpay).
 --
 -- sv_ar_invoices was the other one until 2026-08-25. CD_Sage_Ingest now runs, so it reads
 -- cd_silver_sage_ar_invoices and the Sage subject area is ours end to end.
@@ -48,20 +50,17 @@ SELECT project_id, project_name,
        'PROCORE' AS origin_code
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_projects`;
 
--- Vendors stay on the existing crosswalk, and this one is easy to get wrong: Procore's
--- vendor record has no Sage vendor id, so cd_silver_vendors sets sage_vendor_id to NULL
--- (10_procore_silver.sql:46). Sourcing this view from our own silver would look like a
--- clean switch and would silently break every vendor-to-Sage join in gold - the mapping
--- only exists in dim_procore_project_vendor.
---
--- Our 1,098 Procore vendors are already landed and typed in cd_silver_vendors; they take
--- over here the moment we own the Sage side of the mapping.
+-- REPOINTED 2026-09-13 off dim_procore_project_vendor. sage_vendor_id is filled in
+-- 10_procore_silver.sql from the vendor's origin_code (= Sage actpay.recnum). Every Procore
+-- vendor is listed, matched or not - the legacy view listed only its 125 mapped ones.
+-- DQ guards the key: origin_code not in actpay and a Sage vendor on two Procore vendors
+-- both block.
 CREATE OR REPLACE TEMPORARY VIEW sv_vendors AS
 SELECT
-    CAST(`Procore Vendor ID` AS STRING) AS procore_vendor_id,
-    CAST(`Sage Vendor ID`    AS STRING) AS sage_vendor_id,
-    CAST(`Vendor Name`       AS STRING) AS vendor_name
-FROM delta.`{SILVER_ABFSS}/dim_procore_project_vendor`;
+    CAST(procore_vendor_id AS STRING) AS procore_vendor_id,
+    CAST(sage_vendor_id    AS STRING) AS sage_vendor_id,
+    CAST(vendor_name       AS STRING) AS vendor_name
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_vendors`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_cost_codes AS
 SELECT cost_code_id, cost_code, cost_code_name
@@ -195,8 +194,8 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`;
 -- CROSSWALK SOURCES
 -- ---------------------------------------------------------------------------
 --
--- These three feed dim_ProjectCrosswalk / dim_VendorCrosswalk, and all read the EXISTING
--- warehouse under both --source settings. The reason is now only Sage: CD_Sage_Ingest is
+-- These three feed dim_ProjectCrosswalk / dim_VendorCrosswalk. Until 2026-09-13 they read
+-- the EXISTING warehouse under both --source settings; the history below is why. The reason is now only Sage: CD_Sage_Ingest is
 -- still blocked on the gateway grant. Outbuild's half of that sentence expired on
 -- 2026-08-19 when the token arrived, and sv_outbuild_activities has since moved onto our
 -- own bronze - these crosswalk views did not, because the Procore<->Sage mapping they
@@ -206,12 +205,21 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`;
 -- Procore project id <-> Sage project id. Per resources/sage-100-contractor/schema, Sage
 -- `jobnum` on an invoice is a foreign key to actrec.recnum, NOT a readable job code - so
 -- this table IS the join between the two systems, not a convenience lookup.
+--
+-- REPOINTED 2026-09-13 onto seed/project_crosswalk.csv, built into gold as
+-- seed_ProjectCrosswalk by cd_20_seed_gold (09_seed_projectcrosswalk.sql). The 15 rows are
+-- the legacy dim_projects_procoreXsage verbatim. Measured: 13 of 15 have no system key, so
+-- the mapping is human knowledge, not derivable - a new pair is a reviewed CSV edit.
+-- gold dq_CrosswalkCandidate PROPOSES exact name matches; nothing reads it back here.
 CREATE OR REPLACE TEMPORARY VIEW sv_project_crosswalk AS
 SELECT
-    CAST(`Project ID`      AS STRING) AS procore_project_id,
-    CAST(`Sage Project ID` AS STRING) AS sage_project_id,
-    CAST(`Project Name`    AS STRING) AS project_name
-FROM delta.`{SILVER_ABFSS}/dim_projects_procoreXsage`;
+    CAST(x.ProcoreProjectId AS STRING) AS procore_project_id,
+    CAST(x.SageJobNumber    AS STRING) AS sage_project_id,
+    CAST(p.project_name     AS STRING) AS project_name
+FROM seed_ProjectCrosswalk x
+LEFT JOIN delta.`{CD_SILVER_ABFSS}/cd_silver_projects` p
+       ON p.project_id = x.ProcoreProjectId
+WHERE x.Relationship = 'primary';
 
 -- Outbuild carries its OWN Procore project id, so it joins to the hub directly rather than
 -- needing a third mapping. One row per Outbuild project.
@@ -223,11 +231,12 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`
 WHERE outbuild_project_id IS NOT NULL;
 
 -- Sage's own vendor master, for names on the Sage side of the vendor crosswalk.
+-- REPOINTED 2026-09-13 off Dim_Sage_Vendors onto our own actpay (26_sage_silver.sql).
 CREATE OR REPLACE TEMPORARY VIEW sv_sage_vendors AS
 SELECT
-    CAST(`Vendor ID`   AS STRING) AS sage_vendor_id,
-    CAST(`Vendor Name` AS STRING) AS sage_vendor_name
-FROM delta.`{SILVER_ABFSS}/Dim_Sage_Vendors`;
+    CAST(sage_vendor_id AS STRING) AS sage_vendor_id,
+    CAST(vendor_name    AS STRING) AS sage_vendor_name
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_vendors`;
 
 
 -- ---------------------------------------------------------------------------

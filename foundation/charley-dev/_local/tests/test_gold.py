@@ -581,7 +581,7 @@ GAP_CATEGORIES = {
     "Rejected source row", "Rejected manual entry", "Rejected quality entry",
     "Unmatched AR invoice", "Unmapped trade", "Project missing from Sage",
     "Project missing from Outbuild", "Vendor without certificate", "Expired certificate",
-    "Empty manual register",
+    "Empty manual register", "Sage job without Procore project", "AP invoice with no Sage job",
 }
 
 
@@ -636,9 +636,28 @@ def test_dq_datagap(con) -> None:
     finally:
         con.execute("ROLLBACK")
 
-    # Money only where the gap carries it: the orphan AR invoice's 1,000.
+    # Money only where the gap carries it: the orphan AR invoice's 1,000. The job-level and
+    # no-job AP rows carry their figures in text, never in Amount - Data Gap Amount is
+    # SUM(Amount), and valuing S999's AR again would count the same invoice twice.
     assert q(con, "SELECT EntityKey, Amount FROM dq_DataGap WHERE Amount IS NOT NULL") == [("INV3", 1000.0)]
-    check("Amount is populated only by unmatched AR, and carries the invoice total")
+    assert one(con, "SELECT SUM(Amount) FROM dq_DataGap") == one(
+        con, "SELECT SUM(Amount) FROM fct_Invoice WHERE HasUnmatchedProject")
+    check("Data Gap Amount equals unmatched AR only - no arm double-counts it")
+    assert q(con, "SELECT EntityType, EntityKey, Reason FROM dq_DataGap "
+                  "WHERE GapCategory = 'Sage job without Procore project' ORDER BY 1") == [
+        ("sv_ap_invoices", "S999", "Sage job S999 has 1 AP invoice(s) totalling 2500.00 and no Procore project in the crosswalk"),
+        ("sv_ar_invoices", "S999", "Sage job S999 has 1 AR invoice(s) totalling 1000.00 and no Procore project in the crosswalk")]
+    assert q(con, "SELECT EntityKey, Detail FROM dq_DataGap WHERE GapCategory = 'AP invoice with no Sage job'") == [
+        ("AP3", "invoice INV-79; vendor SV1; total 700.00")]
+    check("unmapped Sage jobs (per direction) and job-less AP are listed with figures in text, not Amount")
+
+    # Candidates are proposals: exact normalised name only, unmapped on both sides, and
+    # nothing in the crosswalk reads them back.
+    assert q(con, "SELECT ProcoreProjectId, SageJobNumber, MatchRule FROM dq_CrosswalkCandidate") == [
+        ("P2", "S200", "EXACT_NAME_SHORT_NAME")]
+    views = (CHARLEY_DEV / "02-transformation/sql/silver/01_source_views_cd.sql").read_text(encoding="utf-8")
+    assert "dq_CrosswalkCandidate" not in views.split("CREATE OR REPLACE TEMPORARY VIEW sv_project_crosswalk")[1].split(";")[0]
+    check("dq_CrosswalkCandidate proposes the exact-name match and is never auto-applied")
 
     # Every ProjectKey resolves, so the model relationship never shows a blank member. The
     # manual reject for P9 keeps its raw id in Detail instead.

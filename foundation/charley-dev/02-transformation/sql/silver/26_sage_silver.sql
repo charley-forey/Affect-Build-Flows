@@ -239,3 +239,17 @@ FROM cd_bronze_sage_acrpmt p
 LEFT JOIN cd_silver_sage_ar_invoices h
   ON p._idref = h.invoice_uid
 WHERE p._idref IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Vendor master (actpay). Replaces Rebecca's Dim_Sage_Vendors, which was actpay.recnum /
+-- vndnme verbatim: measured 2026-09-13, 1,073 of 1,073 ids in actpay with 0 name
+-- differences, and actpay carries 9 more. `recnum` is the id AP invoices carry in `vndnum`
+-- and the id Procore writes into a vendor's `origin_code` when it syncs to Sage.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE TABLE cd_silver_sage_vendors AS
+SELECT
+    CAST(recnum AS STRING)              AS sage_vendor_id,
+    TRIM(vndnme)                        AS vendor_name,
+    CAST(upddte AS TIMESTAMP)           AS updated_at
+FROM cd_bronze_sage_actpay
+WHERE recnum IS NOT NULL;

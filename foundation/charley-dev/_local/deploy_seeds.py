@@ -92,6 +92,7 @@ built = []
         "dim_ActivityCategory": 28, "dim_ScorecardWeight": 9, "dim_ScorecardBand": 27,
         "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
         "qc_seed_DohItem": 101, "dim_QcStatus": 141,
+        "seed_ProjectCrosswalk": 15,
     }
     cells.append(
         cell(

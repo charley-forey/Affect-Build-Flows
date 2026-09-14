@@ -4,14 +4,11 @@
 -- present in Procore commitments but absent from Sage contributes zero spend to every
 -- payables measure, silently.
 --
--- WHY THE MAPPING CANNOT COME FROM PROCORE. Procore's vendor record carries no Sage vendor
--- id - cd_silver_vendors sets it NULL by construction (10_procore_silver.sql). The mapping
--- exists only in the existing warehouse's dim_procore_project_vendor, which is why
--- sv_vendors still reads there under both source settings. Switching that view to our own
--- silver would look like a clean migration and would break every vendor-to-Sage join.
---
--- 1,098 Procore vendors are landed and typed in cd_silver_vendors, ready to take over the
--- Procore side the moment we own the Sage side of the mapping.
+-- WHERE THE MAPPING COMES FROM. Procore's ERP sync writes the Sage vendor id (actpay.recnum)
+-- into the vendor's origin_code; 10_procore_silver.sql carries it as sage_vendor_id. Until
+-- 2026-09-13 this read the existing warehouse's dim_procore_project_vendor (125 pairs); the
+-- origin_code key reproduces all 125 and adds 808 more. DQ blocks on an id not in actpay or
+-- a Sage vendor shared by two Procore vendors.
 --
 -- UNMATCHED VENDORS ARE KEPT. Most of the 1,098 will never appear in Sage - a vendor
 -- invited to bid is not a vendor who was paid - so "unmatched" here is normal, not an
