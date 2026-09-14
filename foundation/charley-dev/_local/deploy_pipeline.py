@@ -252,7 +252,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--run", action="store_true")
+    parser.add_argument("--procore-python", action="store_true",
+                        help="run Extract Procore on cd_01_extract_procore_py (Python kernel); "
+                             "omit to roll back to the Spark notebook")
     args = parser.parse_args()
+    # Same stage, same timeout/retry policy; only the notebook item behind it changes.
+    item_names = {"cd_01_extract_procore": "cd_01_extract_procore_py"} if args.procore_python else {}
 
     tok = dp.token()
 
@@ -260,7 +265,7 @@ def main() -> int:
     # notebook that does not exist deploys fine and fails at run time.
     notebook_ids = {}
     for _, nb, _ in STAGES:
-        item = ds.find_item(tok, nb, "Notebook")
+        item = ds.find_item(tok, item_names.get(nb, nb), "Notebook")
         if not item:
             print(f"ERROR: notebook {nb!r} not found - deploy it before the pipeline")
             return 1
