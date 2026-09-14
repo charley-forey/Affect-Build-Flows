@@ -195,7 +195,14 @@ SOURCE_FIXTURES = (
         ('P1','SB4','004','Draft door hardware', 'Draft',   'Draft', 'CC1', DATE '2025-05-05', DATE '2025-05-10', NULL),
         -- Closed by status with neither distributed_at nor closed_at (65 live): not open,
         -- and no turnaround rather than an invented one.
-        ('P1','SB5','005','Closed, no dates',    'Closed',  'Closed','CC1', DATE '2025-04-02', DATE '2025-04-22', NULL)
+        ('P1','SB5','005','Closed, no dates',    'Closed',  'Closed','CC1', DATE '2025-04-02', DATE '2025-04-22', NULL),
+        -- The rest of production's status names, spelt as Procore sends them (see
+        -- tests/observed_values.json). All closed and answered, so open counts do not move.
+        ('P1','SB6','006','Noted door schedule', 'Approved as Noted',  'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB7','007','Record copy',         'For Record',         'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB8','008','Resubmit anchors',    'Revise and Resubmit','Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB9','009','Rejected sealant',    'Rejected',           'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13'),
+        ('P1','SB10','010','Never reviewed',     'Not Reviewed',       'Closed','CC1', DATE '2025-04-03', DATE '2025-04-23', DATE '2025-04-13')
     ) AS t(project_id, item_id, item_number, subject, status_label, status_category, cost_code_id,
            created_date, due_date, responded_date)""",
 
@@ -204,7 +211,10 @@ SOURCE_FIXTURES = (
     # is exercised on both arms rather than only on the one that existed first.
     """CREATE OR REPLACE VIEW sv_rfis AS SELECT * FROM (VALUES
         ('P1','R1','RFI-1','Slab edge detail','Open',  'High',  'CC1', DATE '2025-05-03', DATE '2025-05-17', NULL),
-        ('P1','R2','RFI-2','Closed one',      'Closed','Normal', NULL, DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-10')
+        ('P1','R2','RFI-2','Closed one',      'Closed','Normal', NULL, DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-10'),
+        -- Production has 16 RFI drafts (raw status 'draft'). Answered here so it does not
+        -- move the open counts; draft-as-open is a ponytail note in 23_fct_rfisubmittal.sql.
+        ('P1','R3','RFI-3','Draft answered',  'draft', 'Normal', NULL, DATE '2025-04-02', DATE '2025-04-21', DATE '2025-04-11')
     ) AS t(project_id, item_id, item_number, subject, status_label, priority, cost_code_id,
            created_date, due_date, responded_date)""",
 
@@ -365,7 +375,23 @@ SOURCE_FIXTURES = (
         ('Subcontractor','P2','B6','1',1,'DRAFT','V2','Orphan','C9','SC-9',
          'WorkOrderContract', DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31',
          NULL, 5.0, 100000.0, 0.0, 100000.0, 5000.0, 0.0, 7777.0, 5.0, 0.0, 7777.0,
-         0.0, 0.0, 95000.0)
+         0.0, 0.0, 95000.0),
+        -- The sub pay app statuses production carries beyond APPROVED/DRAFT, on their own
+        -- contract (C7, zero money so no balance moves). Periods 2-4 are issued but not
+        -- approved: period 4 wins IsLatestPeriod, period 1 (APPROVED_AS_NOTED) stays the
+        -- latest approved.
+        ('Subcontractor','P1','B7','1',1,'APPROVED_AS_NOTED','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-05-31', DATE '2025-05-01', DATE '2025-05-31',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ('Subcontractor','P1','B8','2',2,'REVISE_AND_RESUBMIT','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-06-30', DATE '2025-06-01', DATE '2025-06-30',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ('Subcontractor','P1','B9','3',3,'UNDER_REVIEW','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-07-31', DATE '2025-07-01', DATE '2025-07-31',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+        ('Subcontractor','P1','B10','4',4,'PENDING_OWNER_APPROVAL','V1','Demar','C7','SC-7',
+         'WorkOrderContract', DATE '2025-08-31', DATE '2025-08-01', DATE '2025-08-31',
+         NULL, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     ) AS t(billing_type, project_id, billing_id, invoice_number, period_number,
            status_label, vendor_id, counterparty_name, contract_id, contract_name,
            contract_type, billing_date, period_start, period_end, payment_date,

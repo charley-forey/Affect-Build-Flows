@@ -1,0 +1,208 @@
+{
+  "_about": [
+    "Distinct values actually observed in PRODUCTION for every categorical field the silver/gold SQL branches on (CASE / IN / LIKE / = on a string).",
+    "Counts only - no names, ids or free text beyond the category label itself. Checked by tests/test_observed_values.py (run from the gold suite).",
+    "Built offline 2026-09-14 from evidence already on disk. 'scratchpad:' = the Claude session scratch dir (session daa633c5, not kept); '_docs/' = foundation/charley-dev/_docs (some files gitignored).",
+    "status 'observed' = values below came from real rows. status 'unknown - capture next time capacity allows' = no offline evidence; values is empty on purpose, never guessed.",
+    "null_count = rows where the field was NULL/absent. Regenerate with _local/refresh_observed_values.py (read-only SQL, dry-run by default)."
+  ],
+  "fields": {
+    "prime_change_order.status": {
+      "source": "Procore change_order_packages $.status -> sv_prime_change_orders.status",
+      "status": "observed",
+      "values": {"approved": 314, "pending": 9, "draft": 9, "void": 3},
+      "provenance": [
+        {"file": "_docs/semantic-fix-evidence.json#change_orders_by_status", "captured": "2026-09-14"},
+        {"file": "scratchpad:definitions-evidence.md section 3", "captured": "2026-09-14 (bronze load 06:47 UTC)"}
+      ],
+      "note": "No rejected / no_charge / closed prime COs today. Procore documents Pending variants (in_review, revised, pricing, not_pricing, proceeding, not_proceeding) and custom 'Pending - ...' labels - see potential_change_order.status for the ones seen on this tenant."
+    },
+    "potential_change_order.status": {
+      "source": "Procore potential_change_orders $.status (bronze only; same status vocabulary as CO packages, which 21_fct_changeorder.sql reads)",
+      "status": "observed",
+      "values": {"approved": 700, "pending": 142, "void": 128, "draft": 80, "not_proceeding": 37, "rejected": 23, "pricing": 20, "no_charge": 14, "proceeding": 10},
+      "provenance": [{"file": "scratchpad:definitions-evidence.md section 3", "captured": "2026-09-14 (bronze load 06:47 UTC)"}]
+    },
+    "submittal.status_name": {
+      "source": "Procore submittals $.status.name -> sv_submittals.status_label / sv_qc_submittal.source_status",
+      "status": "observed",
+      "values": {"Approved as Noted": 821, "Draft": 464, "Open": 294, "For Record": 272, "Revise and Resubmit": 252, "Closed": 183, "Approved": 132, "Rejected": 35, "Not Reviewed": 1},
+      "provenance": [
+        {"file": "scratchpad:raw/submittals.jsonl (2,454 records, Procore API capture)", "captured": "2026-09-13"},
+        {"file": "_docs/submittal-date-fix-evidence.json", "captured": "2026-09-14"}
+      ]
+    },
+    "submittal.status_category": {
+      "source": "Procore submittals $.status.status -> sv_submittals.status_category",
+      "status": "observed",
+      "values": {"Closed": 1696, "Draft": 464, "Open": 294},
+      "provenance": [{"file": "scratchpad:raw/submittals.jsonl (2,454 records, Procore API capture)", "captured": "2026-09-13"}]
+    },
+    "rfi.status": {
+      "source": "Procore rfis $.status -> sv_rfis.status_label",
+      "status": "observed",
+      "values": {"open": 31, "draft": 16, "closed": null},
+      "provenance": [{"file": "scratchpad:definitions-evidence.md section 1", "captured": "2026-09-14 (bronze load 06:47 UTC)"}],
+      "note": "Row counts for open/draft are current revisions; closed count not captured (657 RFI rows total). The rfi_statuses picklist also offers closed_draft and closed_with_revision, not seen on rows. Gold does not branch on RFI status (IsOpen comes from responded_date)."
+    },
+    "billing.status_label": {
+      "source": "Procore payment_applications (owner) + requisitions (sub) UPPER(TRIM($.status)) -> sv_billing.status_label",
+      "status": "observed",
+      "values": {"APPROVED": 590, "UNDER_REVIEW": 138, "PENDING_OWNER_APPROVAL": 95, "DRAFT": 31, "APPROVED_AS_NOTED": 15, "REVISE_AND_RESUBMIT": 7},
+      "provenance": [
+        {"file": "scratchpad:daxcache_monthly/c2a4704f877dd099aa65aed8059265d2feaccfbf.json (fct_Billing rows, production model)", "captured": "2026-09-13"},
+        {"file": "scratchpad:raw/payment_applications.jsonl (owner: approved 126, draft 11)", "captured": "2026-09-13"},
+        {"file": "_docs/semantic-fix-evidence.json#sub_retainage_latest_by_status", "captured": "2026-09-14"}
+      ]
+    },
+    "commitment.status_label": {
+      "source": "Procore work_order_contracts + purchase_order_contracts UPPER(TRIM($.status)) -> sv_commitments.status_label",
+      "status": "observed",
+      "values": {"APPROVED": 248, "DRAFT": 36, "OUT FOR SIGNATURE": 15, "PROCESSING": 7, "VOID": 4, "CLOSED": 4, "TERMINATED": 1, "COMPLETE": 1},
+      "provenance": [{"file": "scratchpad:raw/commitments.jsonl (316 records) and raw/commitment_contracts.jsonl", "captured": "2026-09-13"}],
+      "note": "No SQL branches on commitment status today: bridge_VendorCostCode sums Committed lines for VOID and DRAFT commitments too."
+    },
+    "commitment_line.holder_type": {
+      "source": "Procore *_contract line_items $.holder.holder_type -> sv_commitment_lines.holder_type",
+      "status": "observed",
+      "values": {"WorkOrderContract": 277, "PurchaseOrderContract": 180},
+      "provenance": [{"file": "scratchpad:raw/work_order_contract_line_items.jsonl, raw/purchase_order_contract_line_items.jsonl", "captured": "2026-09-13"}]
+    },
+    "direct_cost_line.holder_type": {
+      "source": "Procore direct_cost line_items $.holder.holder_type -> sv_direct_cost_lines.holder_type",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "direct_cost.cost_type": {
+      "source": "Procore direct_costs LOWER(TRIM($.direct_cost_type)) -> sv_direct_costs.cost_type",
+      "status": "observed",
+      "values": {"expense": 323, "payroll": 108, "invoice": 6},
+      "provenance": [{"file": "scratchpad:daxcache_monthly/a3fe25419d18228025c08f2b7bc6c59451ea41ad.json (fct_DirectCost rows, production model)", "captured": "2026-09-13"}]
+    },
+    "direct_cost.status_label": {
+      "source": "Procore direct_costs UPPER(TRIM($.status)) -> sv_direct_costs.status_label",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "observation.status_label": {
+      "source": "Procore observations UPPER(TRIM($.status)) -> sv_observations.status_label",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "observation.observation_type": {
+      "source": "Procore observations $.type.name -> sv_observations.observation_type",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "observation.trade": {
+      "source": "Procore observations $.trade.name -> sv_observations.trade",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": [{"file": "scratchpad:render-anomalies.json finding 7 (966 observations, 220 no trade, 237 unmapped free text - labels not listed)", "captured": "2026-09-14"}]
+    },
+    "punch_item.status_label": {
+      "source": "Procore punch_items UPPER(TRIM($.status)) -> sv_punch_items.status_label",
+      "status": "observed",
+      "values": {"CLOSED": 1478, "OVERDUE": 77, "OPEN": 62},
+      "provenance": [{"file": "scratchpad:raw/punch_items.jsonl (1,617 records)", "captured": "2026-09-13"}]
+    },
+    "punch_item.workflow_status": {
+      "source": "Procore punch_items UPPER(TRIM($.workflow_status)) -> cd_silver_punch_items.workflow_status",
+      "status": "observed",
+      "values": {"CLOSED": 1478, "WORK_REQUIRED": 103, "READY_TO_CLOSE": 17, "INITIATED": 12, "READY_FOR_REVIEW": 6, "IN_DISPUTE": 1},
+      "provenance": [{"file": "scratchpad:raw/punch_items.jsonl (1,617 records)", "captured": "2026-09-13"}],
+      "note": "Not branched on. The PUNCHRCLLOG_5 CASE in 24_qc_procore_silver.sql lists workflow values (INITIATED, WORK_REQUIRED, READY_FOR_REVIEW) but is applied to status_label."
+    },
+    "punch_item.punch_item_type": {
+      "source": "Procore punch_items $.punch_item_type.name -> sv_punch_items.punch_item_type",
+      "status": "observed",
+      "values": {"Punch list": 439, "Affect Group": 206, "Punch List": 137, "Architectural": 134, "Owner/Engineer/Architect - Punch List": 113, "Work to Complete": 101, "Engineer": 67, "Rolling (Punch As You Go)": 13, "New Scope": 6, "Pre-Con": 4, "Defects": 3, "Work to complete": 2},
+      "null_count": 392,
+      "provenance": [{"file": "scratchpad:raw/punch_items.jsonl (1,617 records)", "captured": "2026-09-13"}]
+    },
+    "punch_item.trade": {
+      "source": "Procore punch_items $.trade.name -> sv_punch_items.trade",
+      "status": "observed",
+      "values": {"Electrical": 244, "Drywall/Carpentry": 221, "Painting": 161, "Plumbing": 147, "Millwork": 61, "Masonry/Stucco": 50, "Concrete Superstructure": 46, "Doors, Frames & Hardware": 38, "Flooring": 30, "HVAC": 21, "Sprinkler": 15, "Carpet": 15, "Stone/Tile": 15, "Doors & Frames (Hardware)": 11, "Glazing": 9, "Roofing": 8, "Concrete": 7, "Windows": 6, "Masonry": 5, "Drywall": 5, "Demolition": 4, "Cabinetry": 4, "Fire Alarm": 3, "Window Treatments": 3, "Ceramic Tile": 2, "Low Voltage": 2, "Trash Chute/Compactors": 1, "Doors": 1, "Specalties": 1, "WINDOW TREATMENT": 1},
+      "null_count": 480,
+      "provenance": [{"file": "scratchpad:raw/punch_items.jsonl (1,617 records)", "captured": "2026-09-13"}]
+    },
+    "vendor_insurance.insurance_type": {
+      "source": "Procore vendor insurances $.insurance_type -> sv_vendor_insurance.insurance_type",
+      "status": "observed",
+      "values": {"Commercial General Liability": 22, "Auto Mobile Liability": 14, "Workers' Compensation Insurance": 12, "Umbrella Liability": 10, "Umbrella Liab Excess Liab": 9, "Excess Liability": 8, "AUTOMOBILE LIABILITY": 7, "Workers Comp & Employers Liability": 6, "Disability": 3, "CERTIFICATE OF LIABILITY INSURANCE": 3, "NYS Disability": 2, "Commercial GL": 1, "GL": 1, "Workers Comp": 1, "Umbrella": 1, "Excess": 1, "NYS DBL": 1},
+      "provenance": [
+        {"file": "scratchpad:render-anomalies.json finding 9", "captured": "2026-09-14"},
+        {"file": "_docs/semantic-fix-evidence.json#insurance_type_to_category", "captured": "2026-09-14"}
+      ],
+      "note": "PARTIAL: 105 certificates, 20 distinct raw types; 17 listed (102 rows). 3 types / 3 rows categorised Other were not named in the evidence."
+    },
+    "vendor_insurance.status_label": {
+      "source": "Procore vendor insurances UPPER(TRIM($.status)) -> sv_vendor_insurance.status_label",
+      "status": "observed",
+      "values": {"NON_COMPLIANT": 105},
+      "provenance": [{"file": "scratchpad:render-anomalies.json finding 1", "captured": "2026-09-14"}]
+    },
+    "manpower_log.status": {
+      "source": "Procore manpower_logs $.status (not carried into silver)",
+      "status": "observed",
+      "values": {"approved": 4709},
+      "provenance": [{"file": "scratchpad:raw/manpower_logs.jsonl (4,709 records)", "captured": "2026-09-13"}]
+    },
+    "manpower_log.trade": {
+      "source": "Procore manpower_logs $.trade.name (not carried into silver)",
+      "status": "observed",
+      "values": {},
+      "null_count": 4709,
+      "provenance": [{"file": "scratchpad:raw/manpower_logs.jsonl (4,709 records)", "captured": "2026-09-13"}]
+    },
+    "outbuild_activity.activity_type": {
+      "source": "Outbuild activities $.activity_type -> sv_outbuild_activities.activity_type",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "outbuild_activity.status": {
+      "source": "none - Outbuild activities have no status field; 25_outbuild_silver.sql emits NULL",
+      "status": "observed",
+      "values": {},
+      "null_count": null,
+      "provenance": [{"file": "02-transformation/sql/silver/25_outbuild_silver.sql:52-55,109", "captured": "2026-09-14"}]
+    },
+    "sage.status_code": {
+      "source": "Sage jcmjob / acrinv / acpinv status (INT) -> sv_sage_jobs / sv_ar_invoices / sv_ap_invoices status_code",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "manual.win_type": {
+      "source": "SharePoint Wins list WinType -> 30_manual_silver.sql",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": [],
+      "note": "Manual registers were empty in production at last check (scratchpad:definitions-evidence.md section 2/4)."
+    },
+    "manual.impact_code": {
+      "source": "SharePoint Risks list ImpactCode -> 30_manual_silver.sql",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "manual.stage": {
+      "source": "SharePoint Job Register Stage -> 30_manual_silver.sql",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    },
+    "manual.gate_type": {
+      "source": "SharePoint QC gates list GateType -> 31_qc_manual_silver.sql",
+      "status": "unknown - capture next time capacity allows",
+      "values": {},
+      "provenance": []
+    }
+  }
+}
