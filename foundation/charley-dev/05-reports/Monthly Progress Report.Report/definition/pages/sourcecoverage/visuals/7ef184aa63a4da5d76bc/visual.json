@@ -3,10 +3,10 @@
   "name": "7ef184aa63a4da5d76bc",
   "position": {
     "x": 660,
-    "y": 528,
+    "y": 508,
     "z": 0,
     "width": 600,
-    "height": 128,
+    "height": 150,
     "tabOrder": 20
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dim_CostCodeCrosswalk.DivisionCode",
-              "nativeQueryRef": "DivisionCode"
+              "nativeQueryRef": "DivisionCode",
+              "displayName": "Division Code"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "dim_CostCodeCrosswalk.CostCode",
-              "nativeQueryRef": "CostCode"
+              "nativeQueryRef": "CostCode",
+              "displayName": "Cost Code"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "dim_CostCodeCrosswalk.HasUnparseableCode",
-              "nativeQueryRef": "HasUnparseableCode"
+              "nativeQueryRef": "HasUnparseableCode",
+              "displayName": "Has Unparseable Code"
             }
           ]
         }
@@ -79,6 +82,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -103,7 +113,107 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "188D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_CostCodeCrosswalk.DivisionCode"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "188D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_CostCodeCrosswalk.CostCode"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "199D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_CostCodeCrosswalk.HasUnparseableCode"
           }
         }
       ]

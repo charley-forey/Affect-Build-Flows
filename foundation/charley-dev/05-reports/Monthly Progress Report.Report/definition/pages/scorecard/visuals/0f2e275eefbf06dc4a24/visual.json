@@ -3,10 +3,10 @@
   "name": "0f2e275eefbf06dc4a24",
   "position": {
     "x": 20,
-    "y": 588,
+    "y": 568,
     "z": 0,
-    "width": 800,
-    "height": 76,
+    "width": 700,
+    "height": 92,
     "tabOrder": 18
   },
   "visual": {
@@ -23,7 +23,7 @@
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
-                      "fontWeight": "bold"
+                      "fontWeight": "normal"
                     }
                   }
                 ]

@@ -6,7 +6,7 @@
     "y": 260,
     "z": 0,
     "width": 878,
-    "height": 290,
+    "height": 396,
     "tabOrder": 17
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "fct_QcSubmittal.SubmittalNumber",
-              "nativeQueryRef": "SubmittalNumber"
+              "nativeQueryRef": "SubmittalNumber",
+              "displayName": "Submittal Number"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "fct_QcSubmittal.Subject",
-              "nativeQueryRef": "Subject"
+              "nativeQueryRef": "Subject",
+              "displayName": "Subject"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "fct_QcSubmittal.StatusCode",
-              "nativeQueryRef": "StatusCode"
+              "nativeQueryRef": "StatusCode",
+              "displayName": "Status Code"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "fct_QcSubmittal.TurnaroundDays",
-              "nativeQueryRef": "TurnaroundDays"
+              "nativeQueryRef": "TurnaroundDays",
+              "displayName": "Turnaround Days"
             }
           ]
         }
@@ -93,6 +97,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -117,7 +128,121 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "169D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_QcSubmittal.SubmittalNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "343D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_QcSubmittal.Subject"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "169D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_QcSubmittal.StatusCode"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "173D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_QcSubmittal.TurnaroundDays"
           }
         }
       ]

@@ -3,10 +3,10 @@
   "name": "4659498f9a6a162e513b",
   "position": {
     "x": 604,
-    "y": 544,
+    "y": 470,
     "z": 0,
-    "width": 572,
-    "height": 110,
+    "width": 580,
+    "height": 190,
     "tabOrder": 25
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dq_DataGap.GapCategory",
-              "nativeQueryRef": "GapCategory"
+              "nativeQueryRef": "GapCategory",
+              "displayName": "Gap Category"
             },
             {
               "field": {
@@ -79,6 +80,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -103,7 +111,107 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "268D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_DataGap.GapCategory"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "144D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Data Gaps"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "144D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Data Gap Amount"
           }
         }
       ]

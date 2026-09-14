@@ -5,9 +5,9 @@
     "x": 20,
     "y": 256,
     "z": 0,
-    "width": 400,
+    "width": 335,
     "height": 196,
-    "tabOrder": 21
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "columnChart",
@@ -69,6 +69,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -91,6 +98,13 @@
               "expr": {
                 "Literal": {
                   "Value": "12D"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }

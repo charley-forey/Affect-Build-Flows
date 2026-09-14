@@ -2,10 +2,10 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "dcfa1170dfa1bdb543fb",
   "position": {
-    "x": 436,
-    "y": 356,
+    "x": 396,
+    "y": 360,
     "z": 0,
-    "width": 400,
+    "width": 460,
     "height": 300,
     "tabOrder": 23
   },
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "fct_Invoice.InvoiceID",
-              "nativeQueryRef": "InvoiceID"
+              "nativeQueryRef": "InvoiceID",
+              "displayName": "Invoice ID"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "fct_Invoice.InvoiceNumber",
-              "nativeQueryRef": "InvoiceNumber"
+              "nativeQueryRef": "InvoiceNumber",
+              "displayName": "Invoice Number"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "fct_Invoice.SageJobNumber",
-              "nativeQueryRef": "SageJobNumber"
+              "nativeQueryRef": "SageJobNumber",
+              "displayName": "Sage Job Number"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "fct_Invoice.HasUnmatchedProject",
-              "nativeQueryRef": "HasUnmatchedProject"
+              "nativeQueryRef": "HasUnmatchedProject",
+              "displayName": "Has Unmatched Project"
             },
             {
               "field": {
@@ -107,6 +111,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -131,7 +142,135 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Invoice.InvoiceID"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Invoice.InvoiceNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Invoice.SageJobNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Invoice.HasUnmatchedProject"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Total Billed"
           }
         }
       ]

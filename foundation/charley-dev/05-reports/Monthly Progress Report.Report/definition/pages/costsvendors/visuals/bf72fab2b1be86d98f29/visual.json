@@ -5,8 +5,8 @@
     "x": 20,
     "y": 208,
     "z": 0,
-    "width": 400,
-    "height": 140,
+    "width": 297,
+    "height": 130,
     "tabOrder": 18
   },
   "visual": {
@@ -69,6 +69,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -91,6 +98,13 @@
               "expr": {
                 "Literal": {
                   "Value": "12D"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }

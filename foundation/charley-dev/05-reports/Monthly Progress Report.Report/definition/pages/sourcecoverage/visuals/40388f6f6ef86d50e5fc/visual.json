@@ -6,7 +6,7 @@
     "y": 252,
     "z": 0,
     "width": 680,
-    "height": 232,
+    "height": 200,
     "tabOrder": 17
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dim_ProjectCrosswalk.ProjectName",
-              "nativeQueryRef": "ProjectName"
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "dim_ProjectCrosswalk.CoverageStatus",
-              "nativeQueryRef": "CoverageStatus"
+              "nativeQueryRef": "CoverageStatus",
+              "displayName": "Coverage Status"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "dim_ProjectCrosswalk.SageProjectId",
-              "nativeQueryRef": "SageProjectId"
+              "nativeQueryRef": "SageProjectId",
+              "displayName": "Sage Project Id"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "dim_ProjectCrosswalk.OutbuildProjectId",
-              "nativeQueryRef": "OutbuildProjectId"
+              "nativeQueryRef": "OutbuildProjectId",
+              "displayName": "Outbuild Project Id"
             }
           ]
         }
@@ -93,6 +97,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -117,7 +128,121 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "246D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ProjectCrosswalk.ProjectName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "136D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ProjectCrosswalk.CoverageStatus"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "136D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ProjectCrosswalk.SageProjectId"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "136D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ProjectCrosswalk.OutbuildProjectId"
           }
         }
       ]

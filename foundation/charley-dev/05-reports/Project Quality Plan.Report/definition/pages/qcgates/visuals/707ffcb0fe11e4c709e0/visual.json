@@ -6,7 +6,7 @@
     "y": 260,
     "z": 0,
     "width": 664,
-    "height": 290,
+    "height": 396,
     "tabOrder": 17
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "qc_seed_Gate.GateType",
-              "nativeQueryRef": "GateType"
+              "nativeQueryRef": "GateType",
+              "displayName": "Gate Type"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "qc_seed_Gate.Step",
-              "nativeQueryRef": "Step"
+              "nativeQueryRef": "Step",
+              "displayName": "Step"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "qc_seed_Gate.Gate",
-              "nativeQueryRef": "Gate"
+              "nativeQueryRef": "Gate",
+              "displayName": "Gate"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "qc_seed_Gate.Authority",
-              "nativeQueryRef": "Authority"
+              "nativeQueryRef": "Authority",
+              "displayName": "Authority"
             }
           ]
         }
@@ -93,6 +97,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -117,7 +128,121 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "134D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Gate.GateType"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "134D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Gate.Step"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "238D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Gate.Gate"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "134D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "qc_seed_Gate.Authority"
           }
         }
       ]

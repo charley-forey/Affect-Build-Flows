@@ -3,10 +3,10 @@
   "name": "622494d0db7a838af57e",
   "position": {
     "x": 20,
-    "y": 520,
+    "y": 508,
     "z": 0,
     "width": 740,
-    "height": 130,
+    "height": 150,
     "tabOrder": 20
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "fct_Milestone.ProjectKey",
-              "nativeQueryRef": "ProjectKey"
+              "nativeQueryRef": "ProjectKey",
+              "displayName": "Project Key"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "fct_Milestone.ActivityKey",
-              "nativeQueryRef": "ActivityKey"
+              "nativeQueryRef": "ActivityKey",
+              "displayName": "Activity Key"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "fct_Milestone.MilestoneName",
-              "nativeQueryRef": "MilestoneName"
+              "nativeQueryRef": "MilestoneName",
+              "displayName": "Milestone Name"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "fct_Milestone.CurrentStart",
-              "nativeQueryRef": "CurrentStart"
+              "nativeQueryRef": "CurrentStart",
+              "displayName": "Current Start"
             },
             {
               "field": {
@@ -83,7 +87,8 @@
                 }
               },
               "queryRef": "fct_Milestone.CurrentFinish",
-              "nativeQueryRef": "CurrentFinish"
+              "nativeQueryRef": "CurrentFinish",
+              "displayName": "Current Finish"
             },
             {
               "field": {
@@ -97,7 +102,8 @@
                 }
               },
               "queryRef": "fct_Milestone.PercentComplete",
-              "nativeQueryRef": "PercentComplete"
+              "nativeQueryRef": "PercentComplete",
+              "displayName": "Percent Complete"
             },
             {
               "field": {
@@ -111,7 +117,8 @@
                 }
               },
               "queryRef": "fct_Milestone.StatusLabel",
-              "nativeQueryRef": "StatusLabel"
+              "nativeQueryRef": "StatusLabel",
+              "displayName": "Status Label"
             },
             {
               "field": {
@@ -125,7 +132,8 @@
                 }
               },
               "queryRef": "fct_Milestone.HasDateInversion",
-              "nativeQueryRef": "HasDateInversion"
+              "nativeQueryRef": "HasDateInversion",
+              "displayName": "Has Date Inversion"
             }
           ]
         }
@@ -149,6 +157,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -173,12 +188,180 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           }
         }
       ]
     },
     "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.ProjectKey"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.ActivityKey"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "97D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.MilestoneName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.CurrentStart"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.CurrentFinish"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.PercentComplete"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "97D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.StatusLabel"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "87D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.HasDateInversion"
+          }
+        }
+      ],
       "total": [
         {
           "properties": {

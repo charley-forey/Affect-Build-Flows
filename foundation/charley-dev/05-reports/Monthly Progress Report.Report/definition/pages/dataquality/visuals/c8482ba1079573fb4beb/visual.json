@@ -3,9 +3,9 @@
   "name": "c8482ba1079573fb4beb",
   "position": {
     "x": 20,
-    "y": 356,
+    "y": 360,
     "z": 0,
-    "width": 400,
+    "width": 360,
     "height": 300,
     "tabOrder": 22
   },
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "dim_Project.ProjectKey",
-              "nativeQueryRef": "ProjectKey"
+              "nativeQueryRef": "ProjectKey",
+              "displayName": "Project Key"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "dim_Project.ProjectName",
-              "nativeQueryRef": "ProjectName"
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project Name"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "dim_Project.IsInCrosswalk",
-              "nativeQueryRef": "IsInCrosswalk"
+              "nativeQueryRef": "IsInCrosswalk",
+              "displayName": "Is In Crosswalk"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "dim_Project.HasPrimeContract",
-              "nativeQueryRef": "HasPrimeContract"
+              "nativeQueryRef": "HasPrimeContract",
+              "displayName": "Has Prime Contract"
             }
           ]
         }
@@ -93,6 +97,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -117,7 +128,121 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "83D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Project.ProjectKey"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "86D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Project.ProjectName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "83D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Project.IsInCrosswalk"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "83D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Project.HasPrimeContract"
           }
         }
       ]

@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "fct_Milestone.MilestoneName",
-              "nativeQueryRef": "MilestoneName"
+              "nativeQueryRef": "MilestoneName",
+              "displayName": "Milestone Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "fct_Milestone.CurrentStart",
-              "nativeQueryRef": "CurrentStart"
+              "nativeQueryRef": "CurrentStart",
+              "displayName": "Current Start"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "fct_Milestone.CurrentFinish",
-              "nativeQueryRef": "CurrentFinish"
+              "nativeQueryRef": "CurrentFinish",
+              "displayName": "Current Finish"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "fct_Milestone.IsOverdue",
-              "nativeQueryRef": "IsOverdue"
+              "nativeQueryRef": "IsOverdue",
+              "displayName": "Is Overdue"
             }
           ]
         }
@@ -93,6 +97,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -117,7 +128,121 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "206D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.MilestoneName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "123D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.CurrentStart"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "123D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.CurrentFinish"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "123D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.IsOverdue"
           }
         }
       ]

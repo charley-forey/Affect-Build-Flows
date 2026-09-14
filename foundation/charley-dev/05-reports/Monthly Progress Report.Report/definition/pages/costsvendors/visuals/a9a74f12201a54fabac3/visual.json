@@ -3,10 +3,10 @@
   "name": "a9a74f12201a54fabac3",
   "position": {
     "x": 646,
-    "y": 360,
+    "y": 400,
     "z": 0,
     "width": 614,
-    "height": 150,
+    "height": 262,
     "tabOrder": 22
   },
   "visual": {
@@ -27,7 +27,8 @@
                 }
               },
               "queryRef": "bridge_ProjectVendor.VendorName",
-              "nativeQueryRef": "VendorName"
+              "nativeQueryRef": "VendorName",
+              "displayName": "Vendor Name"
             },
             {
               "field": {
@@ -41,7 +42,8 @@
                 }
               },
               "queryRef": "bridge_ProjectVendor.TradeName",
-              "nativeQueryRef": "TradeName"
+              "nativeQueryRef": "TradeName",
+              "displayName": "Trade Name"
             },
             {
               "field": {
@@ -55,7 +57,8 @@
                 }
               },
               "queryRef": "bridge_ProjectVendor.City",
-              "nativeQueryRef": "City"
+              "nativeQueryRef": "City",
+              "displayName": "City"
             },
             {
               "field": {
@@ -69,7 +72,8 @@
                 }
               },
               "queryRef": "bridge_ProjectVendor.LicenseNumber",
-              "nativeQueryRef": "LicenseNumber"
+              "nativeQueryRef": "LicenseNumber",
+              "displayName": "License Number"
             },
             {
               "field": {
@@ -83,7 +87,8 @@
                 }
               },
               "queryRef": "bridge_ProjectVendor.IsPrequalified",
-              "nativeQueryRef": "IsPrequalified"
+              "nativeQueryRef": "IsPrequalified",
+              "displayName": "Is Prequalified"
             },
             {
               "field": {
@@ -97,7 +102,8 @@
                 }
               },
               "queryRef": "bridge_ProjectVendor.SyncedToErp",
-              "nativeQueryRef": "SyncedToErp"
+              "nativeQueryRef": "SyncedToErp",
+              "displayName": "Synced To Erp"
             }
           ]
         }
@@ -121,6 +127,13 @@
       "title": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
@@ -145,7 +158,149 @@
                   "Value": "12D"
                 }
               }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "106D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "bridge_ProjectVendor.VendorName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "106D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "bridge_ProjectVendor.TradeName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "90D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "bridge_ProjectVendor.City"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "90D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "bridge_ProjectVendor.LicenseNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "108D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "bridge_ProjectVendor.IsPrequalified"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "90D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "bridge_ProjectVendor.SyncedToErp"
           }
         }
       ]

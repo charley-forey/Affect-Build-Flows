@@ -30,6 +30,7 @@ import argparse
 import base64
 import hashlib
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -138,9 +139,143 @@ def describe(vtype: str, title: str | None, projections: dict) -> str:
     return " ".join(parts)
 
 
+# --------------------------------------------------------------------------
+# Text fit
+#
+# Static geometry checks passed while the service clipped subtitles, card labels and table
+# columns on nearly every page: a box that is on the canvas is not a box its words fit in.
+# These estimate rendered size from character count and font size, so generation can size
+# boxes and tests/test_report.py can fail a clipping regression offline.
+#
+# ponytail: average-glyph heuristic for Segoe UI, not font metrics. Wide glyphs (W, M, caps
+# runs) render wider than estimated; measure with a real font if a string sits at the edge.
+# --------------------------------------------------------------------------
+
+PX = 4 / 3            # points -> CSS pixels
+LINE = 1.33           # line height, in ems
+TEXT_PAD = 8          # textbox vertical padding, total
+BOX_PAD = 16          # visual container padding, total, each axis
+TABLE_GUTTER = 24     # vertical scrollbar and outline a table must leave free
+TABLE_FONT = 10       # table header and value font, pt (the theme's 9pt read as tiny at fit-to-page)
+CARD_TITLE = 10       # card title font, pt
+CARD_VALUE = 20       # numeric card callout, pt (the theme's 28pt pushed the label off the card)
+CARD_TEXT_VALUE = 11  # text-valued card callout, pt, wrapped
+SLICER_TITLE = 10
+
+# Longest value a text measure can show, so a card is sized for its worst case rather
+# than for whatever the data happened to say on the day it was checked. Pipeline Status
+# is asserted against the DAX in the tests so this cannot drift from the model.
+CARD_TEXT_SAMPLES = {
+    "Pipeline Status": "Gold checked with warnings; source completeness unverified",
+    "Snapshot History Note": "History starts 2026-01-31; earlier months are unavailable, not zero",
+    "DQ Registers Awaiting Input": "8/8 registers empty in current filters; completeness unverified",
+    "Last Checked Run": "2026-09-14 04:00",
+    "Category Band": "Not measured",
+}
+NUMBER_SAMPLE = "$25,123,456"
+
+
+def text_px(text: str, size: float, bold: bool = False) -> float:
+    return len(text) * size * PX * (0.55 if bold else 0.52)
+
+
+def line_px(size: float) -> float:
+    return size * PX * LINE
+
+
+def wrap_lines(text: str, size: float, width: float, bold: bool = False) -> int:
+    """Lines a greedy word wrap needs. A single word wider than `width` still counts as one
+    line - callers check the longest word separately, because a word cannot wrap."""
+    lines, cur, space = 1, 0.0, size * PX * 0.28
+    for word in text.split():
+        wp = text_px(word, size, bold)
+        if cur and cur + space + wp > width:
+            lines, cur = lines + 1, wp
+        else:
+            cur += (space if cur else 0) + wp
+    return lines
+
+
+def longest_word_px(text: str, size: float, bold: bool = False) -> float:
+    return max((text_px(w, size, bold) for w in text.split()), default=0.0)
+
+
+def label(name: str) -> str:
+    """ProjectKey -> Project Key. Table headers wrap at spaces only, so a camel-case column
+    name is one unbreakable word that forces its column wide or clips."""
+    out = ""
+    for i, ch in enumerate(name):
+        if i and ch.isupper() and (not name[i - 1].isupper()
+                                   or (i + 1 < len(name) and name[i + 1].islower())):
+            out += " "
+        out += ch
+    return out
+
+
+def _num(value: float) -> dict:
+    return {"expr": {"Literal": {"Value": f"{round(value)}D"}}}
+
+
+_ON = {"expr": {"Literal": {"Value": "true"}}}
+_OFF = {"expr": {"Literal": {"Value": "false"}}}
+_WIDE = ("Name", "Title", "Subject", "Gate", "Label", "Response", "Category")
+
+
+def column_need(header: str) -> float:
+    """Minimum width: the longest header word, or a ten-character value, plus cell padding."""
+    return math.ceil(max(longest_word_px(header, TABLE_FONT, bold=True),
+                         text_px("2026-09-14", TABLE_FONT)) + 12)
+
+
+def fit_table(v: dict) -> dict:
+    """Readable headers, wrapped text, and explicit column widths that sum to the visual.
+
+    The theme turns column auto-size off, and with no widths set Power BI falls back to a
+    default per column - so a wide table ran off its right edge behind a scrollbar.
+    """
+    vis = v["visual"]
+    state = vis["query"]["queryState"]
+    fields = [p for role in ("Rows", "Values") for p in state.get(role, {}).get("projections", [])]
+    for p in fields:
+        if "Column" in p["field"]:
+            p.setdefault("displayName", label(p["nativeQueryRef"]))
+    size = _num(TABLE_FONT)
+    objects = vis.setdefault("objects", {})
+    objects["columnHeaders"] = [{"properties": {"fontSize": size, "wordWrap": _ON,
+                                                "autoSizeColumnWidth": _OFF}}]
+    objects["values"] = [{"properties": {"fontSize": size, "wordWrap": _ON}}]
+    if vis["visualType"] == "pivotTable":
+        objects["rowHeaders"] = [{"properties": {"fontSize": size, "wordWrap": _ON}}]
+    # A matrix with a Columns role has one column per category value, not per field; its
+    # widths cannot be known here, so only the fonts and wrapping apply.
+    if "Columns" in state:
+        return v
+    # A matrix steps every Rows field into ONE row-header column, so they share a width.
+    groups = table_columns(vis)
+    names = [[p.get("displayName", p["nativeQueryRef"]) for p in g] for g in groups]
+    needs = [max(column_need(n) for n in g) for g in names]
+    weights = [3 if any(n.split()[-1] in _WIDE for n in g) else 1 for g in names]
+    spare = max(v["position"]["width"] - TABLE_GUTTER - sum(needs), 0)
+    objects["columnWidth"] = [
+        {"properties": {"value": _num(math.floor(need + spare * wt / sum(weights)))},
+         "selector": {"metadata": p["queryRef"]}}
+        for g, need, wt in zip(groups, needs, weights) for p in g
+    ]
+    return v
+
+
+def table_columns(vis: dict) -> list[list[dict]]:
+    """Rendered columns of a table or matrix, each a list of the projections sharing it."""
+    state = vis["query"]["queryState"]
+    rows = state.get("Rows", {}).get("projections", [])
+    values = state.get("Values", {}).get("projections", [])
+    return ([rows] if rows else []) + [[p] for p in values]
+
+
 def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
            title: str | None = None, tab: int | None = None,
-           alt: str | None = None, sync: str | None = None) -> dict:
+           alt: str | None = None, sync: str | None = None,
+           title_size: int = 12) -> dict:
     position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
     if tab is not None:
         position["tabOrder"] = tab
@@ -160,10 +295,14 @@ def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
         "altText": lit(alt or describe(vtype, title, projections)),
     }}]}
     if title:
+        # Shown explicitly and allowed to wrap: two register tables rendered with no title
+        # on canvas, and a long title on a narrow card truncated rather than wrapping.
         container["title"] = [{"properties": {
+            "show": _ON,
             "text": lit(title),
             "fontColor": {"solid": {"color": lit(INK)}},
-            "fontSize": {"expr": {"Literal": {"Value": "12D"}}},
+            "fontSize": _num(title_size),
+            "titleWrap": _ON,
         }}]
     v["visual"]["visualContainerObjects"] = container
     # Slicers only. Keeps project and month selection together across every page, so a
@@ -171,17 +310,20 @@ def visual(page: str, key: str, vtype: str, x, y, w, h, projections: dict,
     if sync:
         v["visual"]["syncGroup"] = {"groupName": sync, "fieldChanges": False,
                                     "filterChanges": True}
+    if vtype in ("tableEx", "pivotTable"):
+        fit_table(v)
     return v
 
 
 def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
             color: str = INK, tab: int | None = None) -> dict:
-    # Reserve the shared header's right side for slicers and keep introductory text
-    # below the title. Every report uses this furniture, so fix the geometry once.
+    # The header band is shared furniture, so its geometry is fixed once here: the title and
+    # slicers share y 4-58, and the subtitle runs the full canvas width beneath both. It
+    # used to stop at x=748 beside slicers that reached y=72, and wrapped out of its box.
     if key == "title":
-        h = min(h, 40)
+        h = 44
     if y in (56, 58):
-        y, w = 60, min(w, 728)
+        x, y, w = 20, 60, 1240
     position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
     if tab is not None:
         position["tabOrder"] = tab
@@ -193,7 +335,9 @@ def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
             "visualType": "textbox",
             "objects": {"general": [{"properties": {"paragraphs": [{
                 "textRuns": [{"value": text, "textStyle": {
-                    "fontSize": f"{size}pt", "color": color, "fontWeight": "bold"}}]
+                    "fontSize": f"{size}pt", "color": color,
+                    # Headings bold; explanatory notes regular, which also fits more per line.
+                    "fontWeight": "bold" if size > 10 else "normal"}}]
             }]}}]},
             # Textboxes carry their own words, so the alt text IS the text. Repeating it
             # is what a screen reader needs; leaving it blank drops the sentence entirely.
@@ -203,8 +347,55 @@ def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
 
 
 def card(page: str, key: str, name: str, x, y, w=180, h=110, title: str | None = None) -> dict:
-    """title overrides the measure name where the name alone would misstate the scope."""
-    return visual(page, key, "card", x, y, w, h, {"Values": [measure(name)]}, title=title or name)
+    """title overrides the measure name where the name alone would misstate the scope.
+
+    The title carries the name, so the category label under the value is off: with both on,
+    title + 28pt value + label did not fit a 100px card and the label was cut at the bottom.
+    Text-valued measures get a smaller wrapped value instead of a truncated one.
+    """
+    v = visual(page, key, "card", x, y, w, h, {"Values": [measure(name)]},
+               title=title or name, title_size=CARD_TITLE)
+    text = name in CARD_TEXT_SAMPLES
+    v["visual"]["objects"] = {
+        "labels": [{"properties": {"fontSize": _num(CARD_TEXT_VALUE if text else CARD_VALUE)}}],
+        "categoryLabels": [{"properties": {"show": _OFF}}],
+        "wordWrap": [{"properties": {"show": _ON if text else _OFF}}],
+    }
+    return v
+
+
+def top_n(v: dict, table: str, col: str, by: str, n: int) -> dict:
+    """Visual-level Top N filter: the n values of table[col] ranked by measure `by`.
+
+    For categories that run to hundreds of rows, where squeezing all of them into one chart
+    left every bar a hairline. The title must say "top n" - a silent cut reads as the whole.
+    """
+    ref = {"Column": {"Expression": {"SourceRef": {"Source": "d"}}, "Property": col}}
+    v["filterConfig"] = {"filters": [{
+        "name": oid(v["name"], "topn", col),
+        "field": {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}},
+        "type": "TopN",
+        "filter": {
+            "Version": 2,
+            "From": [
+                {"Name": "subquery", "Type": 2, "Expression": {"Subquery": {"Query": {
+                    "Version": 2,
+                    "From": [{"Name": "d", "Entity": table, "Type": 0}],
+                    "Select": [dict(ref, Name="field")],
+                    "OrderBy": [{"Direction": 2, "Expression": {"Measure": {
+                        "Expression": {"SourceRef": {"Entity": "_Measures"}}, "Property": by}}}],
+                    "Top": n,
+                }}}},
+                {"Name": "d", "Entity": table, "Type": 0},
+            ],
+            "Where": [{"Condition": {"In": {
+                "Expressions": [ref],
+                "Table": {"SourceRef": {"Source": "subquery"}},
+            }}}],
+        },
+        "howCreated": "User",
+    }]}
+    return v
 
 
 def no_totals(v: dict) -> dict:
@@ -238,10 +429,10 @@ def keep_true(v: dict, table: str, col: str) -> dict:
     return v
 
 
-def sort_desc(v: dict, table: str, col: str) -> dict:
+def sort_desc(v: dict, field: dict) -> dict:
+    """Default sort, descending, by a column() or measure() projection."""
     v["visual"]["query"]["sortDefinition"] = {
-        "sort": [{"field": {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}},
-                  "direction": "Descending"}],
+        "sort": [{"field": field["field"], "direction": "Descending"}],
         "isDefaultSort": True,
     }
     return v
@@ -265,7 +456,9 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
         # question about every page, not about the DQ page - and the failure it guards
         # against went unnoticed for a month, with the nightly pipeline failing every
         # night while reporting itself as enabled. Text, never colour alone.
-        visual(page, "footer", "multiRowCard", 720, 664, 540, 44,
+        # Full width, one third per field: at 540 wide the status sentence truncated and
+        # the label row under each value was cut off at the bottom.
+        visual(page, "footer", "multiRowCard", 20, FOOTER_Y, 1240, 720 - FOOTER_Y - 2,
                {"Values": [measure("Report Month Label"), measure("Last Refresh"),
                            measure("Pipeline Status")]},
                tab=99,
@@ -273,19 +466,36 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
                    "underlying data was last built, and whether the last checked pipeline "
                    "run passed its gold checks."),
     ]
+    items[0]["visual"]["objects"] = {
+        "dataLabels": [{"properties": {"fontSize": _num(FOOTER_VALUE)}}],
+        "categoryLabels": [{"properties": {"fontSize": _num(FOOTER_LABEL)}}],
+    }
     # A drill-through page receives its project from the caller. Putting a project slicer
     # on it would let a reader change that selection out from under the filter they
     # arrived by, so the page would answer a different question than the one asked.
     if slicers:
         items = [
-            visual(page, "slicer_project", "slicer", 768, 14, 240, 58,
+            visual(page, "slicer_project", "slicer", 768, 4, 240, 54,
                    {"Values": [column("dim_Project", "ProjectName")]},
-                   title="Project", tab=1, sync="project"),
-            visual(page, "slicer_month", "slicer", 1020, 14, 240, 58,
+                   title="Project", tab=1, sync="project", title_size=SLICER_TITLE),
+            visual(page, "slicer_month", "slicer", 1020, 4, 240, 54,
                    {"Values": [column("dim_Date", "MonthYear")]},
-                   title="Month", tab=2, sync="month"),
+                   title="Month", tab=2, sync="month", title_size=SLICER_TITLE),
         ] + items
+        # Dropdown, and no field header under the title. A list slicer in a 58px box with
+        # both a title and a header had room for one item, which was "(Blank)".
+        for s in items[:2]:
+            s["visual"]["objects"] = {
+                "data": [{"properties": {"mode": {"expr": {"Literal": {"Value": "'Dropdown'"}}}}}],
+                "header": [{"properties": {"show": _OFF}}],
+            }
     return items
+
+
+FOOTER_Y = 662     # everything else on a page ends at or above this line
+FOOTER_VALUE = 9   # pt
+FOOTER_LABEL = 8   # pt
+SLICER_BOX = 28    # dropdown control height, px
 
 
 # --------------------------------------------------------------------------
@@ -314,18 +524,18 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 "Every project in the current slicers - clear the project slicer to compare them "
                 "all. Scores use the Scorecard page's weights and bands; no data reads as blank, "
                 "never zero. AR is today's balance on invoices in the selected period.",
-                20, 58, 720, 34, size=10, color=MUTED),
+                20, 58, 1240, 44, size=10, color=MUTED),
 
-        card(p, "pf_projects", "Projects Reporting", 20, 100, 228, 100),
-        card(p, "pf_contract", "Current Contract", 268, 100, 228, 100),
-        card(p, "pf_billed", "Total Billed %", 516, 100, 228, 100, title=BILLED_PCT_TITLE),
-        card(p, "pf_ar", "AR Outstanding", 764, 100, 228, 100, title=AR_TITLE),
-        card(p, "pf_risk", "Projects At Risk", 1012, 100, 228, 100),
+        card(p, "pf_projects", "Projects Reporting", 20, 112, 228, 96),
+        card(p, "pf_contract", "Current Contract", 268, 112, 228, 96),
+        card(p, "pf_billed", "Total Billed %", 516, 112, 228, 96, title=BILLED_PCT_TITLE),
+        card(p, "pf_ar", "AR Outstanding", 764, 112, 228, 96, title=AR_TITLE),
+        card(p, "pf_risk", "Projects At Risk", 1012, 112, 228, 96),
 
         # THE HEATMAP. A matrix rather than a chart because the cell values are ordinal
         # scores (0/2/3) against two categorical axes - there is no magnitude to compare
         # lengths of, and conditional formatting carries the reading.
-        no_totals(visual(p, "pf_heatmap", "pivotTable", 20, 216, 720, 300,
+        no_totals(visual(p, "pf_heatmap", "pivotTable", 20, 220, 720, 230,
                {"Rows": [column("dim_Project", "ProjectName")],
                 "Columns": [column("dim_ScorecardWeight", "CategoryName")],
                 "Values": [measure("Category Score")]},
@@ -336,23 +546,25 @@ def page_portfolio() -> tuple[str, list[dict]]:
 
         # Contract, billed and paid together per job: the gap between the bars IS the
         # exposure, and reading three separate cards never showed it.
-        visual(p, "pf_money", "clusteredColumnChart", 760, 216, 500, 300,
+        visual(p, "pf_money", "clusteredColumnChart", 760, 220, 500, 230,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Current Contract"), measure("Total Billed"),
                       measure("Total Paid")]},
                title="Contract, billed and paid by project"),
 
-        visual(p, "pf_ar_rank", "barChart", 20, 528, 400, 128,
+        # Ranked, and tall enough for eight bars before scrolling: at 128px each of these
+        # three showed two projects and hid the rest behind a scrollbar.
+        sort_desc(visual(p, "pf_ar_rank", "barChart", 20, 462, 400, 194,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("AR Outstanding")]},
-               title="AR outstanding (current balance), ranked"),
+               title="AR outstanding (current balance), ranked"), measure("AR Outstanding")),
 
         # Coverage sits on the portfolio page too, because the honest reading of any
         # cross-project comparison is "and how much of each score is real".
-        visual(p, "pf_coverage", "barChart", 436, 528, 400, 128,
+        sort_desc(visual(p, "pf_coverage", "barChart", 436, 462, 400, 194,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Scorecard Coverage %")]},
-               title="Scorecard coverage by project"),
+               title="Scorecard coverage by project"), measure("Scorecard Coverage %")),
 
         # Insurance exposure belongs at portfolio level, not only on the Insurance page:
         # "which jobs are running subs with no certificate on file" is a question about
@@ -360,10 +572,11 @@ def page_portfolio() -> tuple[str, list[dict]]:
         # over two key lists, NOT a RELATEDTABLE - there is no relationship from
         # bridge_ProjectVendor to fct_VendorInsurance, both hang off dim_Vendor, and a
         # RELATEDTABLE version would deploy perfectly cleanly and then fail at render.
-        visual(p, "pf_uninsured", "barChart", 852, 528, 388, 128,
+        sort_desc(visual(p, "pf_uninsured", "barChart", 852, 462, 408, 194,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Vendors Without Insurance")]},
                title="Vendors with no certificate on file, by project"),
+            measure("Vendors Without Insurance")),
     ]
 
 
@@ -398,7 +611,7 @@ def page_overview() -> tuple[str, list[dict]]:
         textbox(p, "title", "Monthly Progress Report", 20, 16, 700, 44),
         textbox(p, "sub", "Replaces the Excel Monthly Progress Report. Budget figures are the last "
                 "snapshot; open counts are as of today, grouped by creation month when a month is selected.",
-                20, 58, 700, 24, size=10, color=MUTED),
+                20, 58, 1240, 26, size=10, color=MUTED),
         *cards, trend, budget,
     ]
 
@@ -470,7 +683,7 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
         # CurrentStart/CurrentFinish only - there is no baseline and no actual anywhere in
         # gold, because Outbuild is not supplying them. A baseline-vs-current timeline is
         # the version Affect actually wants, and it needs that data first.
-        visual(p, "gantt", "barChart", 20, 210, 740, 300,
+        visual(p, "gantt", "barChart", 20, 210, 740, 290,
                {"Category": [dict(column("fct_Milestone", c), active=True)
                              for c in ("ProjectKey", "ActivityKey", "MilestoneName")],
                 "Y": [measure("Milestone Offset Days"),
@@ -480,7 +693,7 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                    "date and sized by its duration in days, relative to the earliest "
                    "valid milestone start currently shown. Missing or inverted dates are "
                    "omitted from the bars and retained in the table. Baseline variance is unavailable."),
-        no_totals(visual(p, "milestones", "tableEx", 20, 520, 740, 130,
+        no_totals(visual(p, "milestones", "tableEx", 20, 508, 740, 150,
                {"Values": [column("fct_Milestone", "ProjectKey"),
                            column("fct_Milestone", "ActivityKey"),
                            column("fct_Milestone", "MilestoneName"),
@@ -491,7 +704,7 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                            column("fct_Milestone", "HasDateInversion")]},
                title="Critical path milestones (Outbuild)")),
         # The workbook's one native chart, rebuilt - and now drillable to the items.
-        visual(p, "submittals_by_status", "barChart", 780, 210, 480, 270,
+        visual(p, "submittals_by_status", "barChart", 780, 210, 480, 250,
                {"Category": [column("fct_RfiSubmittal", "StatusLabel")],
                 "Y": [measure("Open Submittals")]},
                title="Open submittals by status (as of today)"),
@@ -499,8 +712,8 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
         # facts rewrites every past month whenever an item closes; this one reads what the
         # nightly run saved at each month end. The note names where history starts, because
         # a month before it is unavailable - an empty point, never a zero.
-        card(p, "snapshot_note", "Snapshot History Note", 780, 488, 480, 44),
-        visual(p, "backlog_month_end", "lineChart", 780, 540, 480, 110,
+        card(p, "snapshot_note", "Snapshot History Note", 780, 468, 480, 76),
+        visual(p, "backlog_month_end", "lineChart", 780, 552, 480, 104,
                {"Category": [column("dim_Date", "MonthYear")],
                 "Y": [measure("Open Submittals (Month End)"),
                       measure("Open Submittals Past Due (Month End)")]},
@@ -525,29 +738,29 @@ def page_data_quality() -> tuple[str, list[dict]]:
                 "Unmatched invoice count and billed amount cover all projects for the selected month. "
                 "Other visuals follow the project selection. Invoice identifiers link amounts to Sage. "
                 "Checks passed does not establish complete source coverage.",
-                20, 56, 1100, 40, size=10, color=MUTED),
+                20, 56, 1240, 44, size=10, color=MUTED),
 
         # FIRST band on the page, deliberately. Every other number here describes the data;
         # this one says whether the data arrived at all. A DQ page full of green checks on
         # three-week-old numbers is worse than no DQ page.
-        textbox(p, "hb_h", "Pipeline", 20, 104, 300, 24, size=13),
-        card(p, "dq_hb_status", "Pipeline Status", 20, 132, 300, 100),
-        card(p, "dq_hb_hours", "Hours Since Last Checked Run", 336, 132, 260, 100),
-        card(p, "dq_hb_last", "Last Checked Run", 612, 132, 260, 100),
-        card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 132, 260, 100),
+        textbox(p, "hb_h", "Pipeline", 20, 106, 300, 32, size=13),
+        card(p, "dq_hb_status", "Pipeline Status", 20, 140, 300, 100),
+        card(p, "dq_hb_hours", "Hours Since Last Checked Run", 336, 140, 260, 100),
+        card(p, "dq_hb_last", "Last Checked Run", 612, 140, 260, 100),
+        card(p, "dq_hb_block", "Blocking Violations Last Run", 888, 140, 260, 100),
 
-        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 244, 228, 100),
-        card(p, "dq_codes", "DQ Cost Codes Not In Source", 268, 244, 228, 100),
-        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 516, 244, 228, 100),
-        card(p, "dq_ar", "DQ Unmatched Invoices", 764, 244, 228, 100),
-        card(p, "dq_ar_amount", "Unmatched Billed Amount - All Projects", 1012, 244, 248, 100),
-        visual(p, "no_crosswalk", "tableEx", 20, 356, 400, 300,
+        card(p, "dq_cross", "DQ Projects Without Crosswalk", 20, 248, 228, 100),
+        card(p, "dq_codes", "DQ Cost Codes Not In Source", 268, 248, 228, 100),
+        card(p, "dq_inv", "DQ Milestones With Inverted Dates", 516, 248, 228, 100),
+        card(p, "dq_ar", "DQ Unmatched Invoices", 764, 248, 228, 100),
+        card(p, "dq_ar_amount", "Unmatched Billed Amount - All Projects", 1012, 248, 248, 100),
+        visual(p, "no_crosswalk", "tableEx", 20, 360, 360, 300,
                {"Values": [column("dim_Project", "ProjectKey"),
                            column("dim_Project", "ProjectName"),
                            column("dim_Project", "IsInCrosswalk"),
                            column("dim_Project", "HasPrimeContract")]},
                title="Projects - crosswalk and contract coverage"),
-        visual(p, "unmatched_ar", "tableEx", 436, 356, 400, 300,
+        visual(p, "unmatched_ar", "tableEx", 396, 360, 460, 300,
                {"Values": [column("fct_Invoice", "InvoiceID"),
                            column("fct_Invoice", "InvoiceNumber"),
                            column("fct_Invoice", "SageJobNumber"),
@@ -557,7 +770,7 @@ def page_data_quality() -> tuple[str, list[dict]]:
         # The whole gap register, one row per category. Gaps with no project (rejected
         # source rows, expired certificates, empty registers) drop out when a project is
         # selected, which the alt text says so it is not read as "no gaps".
-        visual(p, "data_gaps", "tableEx", 852, 356, 408, 300,
+        visual(p, "data_gaps", "tableEx", 872, 360, 388, 300,
                {"Values": [column("dq_DataGap", "GapCategory"),
                            measure("Data Gaps"), measure("Data Gap Amount")]},
                title="Data gap register by category",
@@ -599,7 +812,7 @@ def page_scorecard() -> tuple[str, list[dict]]:
         # what it contributed. The contribution column sums to [Project Scorecard] exactly,
         # because it is driven by the same SWITCH the headline measure uses. This is the
         # view in which the workbook's three dead bands would have been obvious.
-        visual(p, "audit", "tableEx", 20, 260, 800, 320,
+        visual(p, "audit", "tableEx", 20, 260, 700, 300,
                {"Values": [column("dim_ScorecardWeight", "CategoryName"),
                            measure("Category Score"),
                            measure("Category Band"),
@@ -624,17 +837,17 @@ def page_scorecard() -> tuple[str, list[dict]]:
                 "never matched. Those errors happened to cancel in the sample project. "
                 "This report uses corrected bands. Review category scores and missing "
                 "inputs before comparing results with earlier workbook reports.",
-                # Ends at y=664, the top of the footer band, so it can run the full width
+                # Ends at y=660, above the footer band, so it can run the full width
                 # of the canvas. It previously ran to 742 on a 720-high page, and then to
                 # x=940, which the widened footer would have covered.
-                20, 588, 800, 76, size=10, color=MUTED),
+                20, 568, 700, 92, size=10, color=MUTED),
 
         # The band table stays, as the reference behind the Band column - but keyed by the
         # category NAME rather than the surrogate integer the previous version showed.
         # The name is a column on the band table itself, not reached through a
         # relationship; see the note in deploy_model.RELATIONSHIPS for why.
         # Thresholds shown, so the band behind a score can be read, not just its label.
-        no_totals(visual(p, "bands", "tableEx", 840, 260, 420, 390,
+        no_totals(visual(p, "bands", "tableEx", 740, 260, 520, 390,
                {"Values": [column("dim_ScorecardBand", "CategoryName"),
                            column("dim_ScorecardBand", "Score"),
                            column("dim_ScorecardBand", "BandLabel"),
@@ -673,13 +886,13 @@ def page_source_coverage() -> tuple[str, list[dict]]:
         card(p, "cov_nooutbuild", "Projects Missing From Outbuild", 572, 116, 260, 120),
         card(p, "cov_pct", "Source Coverage %", 848, 116, 260, 120),
 
-        visual(p, "cov_status", "columnChart", 20, 252, 540, 232,
+        visual(p, "cov_status", "columnChart", 20, 252, 540, 200,
                {"Category": [column("dim_ProjectCrosswalk", "CoverageStatus")],
                 "Y": [measure("Projects In Coverage")]},
                title="Projects by coverage status"),
 
         # The list is the actionable artifact: it names the projects to go fix.
-        visual(p, "cov_detail", "tableEx", 580, 252, 680, 232,
+        visual(p, "cov_detail", "tableEx", 580, 252, 680, 200,
                {"Values": [column("dim_ProjectCrosswalk", "ProjectName"),
                            column("dim_ProjectCrosswalk", "CoverageStatus"),
                            column("dim_ProjectCrosswalk", "SageProjectId"),
@@ -690,13 +903,13 @@ def page_source_coverage() -> tuple[str, list[dict]]:
                 "An unmatched vendor may be outside the ERP scope or may need a mapping. "
                 "Review commitments and payments before deciding; an absent Sage id alone "
                 "does not establish the reason. Crosswalk tables are company-wide and ignore both slicers.",
-                20, 488, 1100, 30, size=10, color=MUTED),
-        visual(p, "vendor_cov", "tableEx", 20, 528, 620, 128,
+                20, 456, 1240, 44, size=10, color=MUTED),
+        visual(p, "vendor_cov", "tableEx", 20, 508, 620, 150,
                {"Values": [column("dim_VendorCrosswalk", "VendorName"),
                            column("dim_VendorCrosswalk", "IsInSage"),
                            column("dim_VendorCrosswalk", "HasNameMismatch")]},
                title="Vendor mapping - Procore to Sage"),
-        visual(p, "costcode_cov", "tableEx", 660, 528, 600, 128,
+        visual(p, "costcode_cov", "tableEx", 660, 508, 600, 150,
                {"Values": [column("dim_CostCodeCrosswalk", "DivisionCode"),
                            column("dim_CostCodeCrosswalk", "CostCode"),
                            column("dim_CostCodeCrosswalk", "HasUnparseableCode")]},
@@ -792,19 +1005,19 @@ def page_safety_quality() -> tuple[str, list[dict]]:
                 "Every figure is counted from Procore records - observations, punch items, "
                 "incidents and manpower logs - rather than typed each month. Open and past-due "
                 "counts are as of today; a month selection groups them by creation month.",
-                20, 56, 1100, 30, size=10, color=MUTED),
+                20, 56, 1240, 44, size=10, color=MUTED),
 
         # SAFETY. Hours first: an incident count without hours cannot be compared between a
         # 12-person job and a 200-person one, which is the entire reason TRIR exists.
-        textbox(p, "safety_h", "Safety", 20, 100, 300, 28, size=13),
-        card(p, "sq_hours", "Hours Worked", 20, 132, 250, 110),
-        card(p, "sq_rec", "Recordable Incidents", 286, 132, 250, 110),
+        textbox(p, "safety_h", "Safety", 20, 106, 300, 32, size=13),
+        card(p, "sq_hours", "Hours Worked", 20, 140, 250, 110),
+        card(p, "sq_rec", "Recordable Incidents", 286, 140, 250, 110),
 
         # QUALITY.
-        textbox(p, "quality_h", "Quality", 560, 100, 300, 28, size=13),
-        card(p, "sq_obs", "Observations", 560, 132, 230, 110),
-        card(p, "sq_punch", "Punchlist Items", 806, 132, 230, 110),
-        card(p, "sq_open", "Open Quality Items", 1052, 132, 208, 110),
+        textbox(p, "quality_h", "Quality", 560, 106, 300, 32, size=13),
+        card(p, "sq_obs", "Observations", 560, 140, 230, 110),
+        card(p, "sq_punch", "Punchlist Items", 806, 140, 230, 110),
+        card(p, "sq_open", "Open Quality Items", 1052, 140, 208, 110),
 
         # Open and past due are the actionable pair - the second is a subset of the first,
         # and the gap between them is what a PM does something about this week.
@@ -829,7 +1042,7 @@ def page_safety_quality() -> tuple[str, list[dict]]:
                            column("fct_QualityItem", "AssignedTo"),
                            column("fct_QualityItem", "DaysPastDue")]},
                title="Past due, by days late")), "fct_QualityItem", "IsPastDue"),
-            "fct_QualityItem", "DaysPastDue"),
+            column("fct_QualityItem", "DaysPastDue")),
     ]
 
 
@@ -853,18 +1066,18 @@ def page_billing() -> tuple[str, list[dict]]:
                 "month is selected - not a total of every period. Owner billed (selected "
                 "period) is the sum of payments due in the selected months; all months if none. "
                 "Drafts are excluded and counted separately.",
-                20, 56, 1240, 34, size=10, color=MUTED),
+                20, 56, 1240, 44, size=10, color=MUTED),
 
         # Retainage first. This is the new information on the page.
-        textbox(p, "ret_h", "Retainage", 20, 104, 300, 28, size=13),
-        card(p, "b_net", "Net Retainage Position", 20, 136, 260, 110,
+        textbox(p, "ret_h", "Retainage", 20, 106, 300, 32, size=13),
+        card(p, "b_net", "Net Retainage Position", 20, 140, 260, 110,
              title="Net Retainage (owner-held minus sub-held; negative = Affect holds more)"),
-        card(p, "b_ret_own", "Retainage Held Owner", 296, 136, 240, 110),
-        card(p, "b_ret_sub", "Retainage Held Sub", 552, 136, 240, 110),
+        card(p, "b_ret_own", "Retainage Held Owner", 296, 140, 240, 110),
+        card(p, "b_ret_sub", "Retainage Held Sub", 552, 140, 240, 110),
 
-        textbox(p, "bill_h", "Owner billing", 820, 104, 300, 28, size=13),
-        card(p, "b_contract", "Owner Contract Sum", 820, 136, 220, 110),
-        card(p, "b_todate", "Owner Billed To Date", 1056, 136, 204, 110),
+        textbox(p, "bill_h", "Owner billing", 820, 106, 300, 32, size=13),
+        card(p, "b_contract", "Owner Contract Sum", 820, 140, 220, 110),
+        card(p, "b_todate", "Owner Billed To Date", 1056, 140, 204, 110),
 
         card(p, "b_balance", "Balance To Finish", 20, 262, 260, 100),
         # Shown beside the cumulative figure deliberately: this is the only sum-safe money
@@ -906,44 +1119,48 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                 "not current insurance. Vendor figures and the Sage AP table are not "
                 "month-filtered. Sage AP starts 2025-03-11 and lags or leads Procore, so it "
                 "checks Spent To Date and is never added to it.",
-                20, 56, 1240, 34, size=10, color=MUTED),
+                20, 56, 1240, 44, size=10, color=MUTED),
 
         # Six across. The vendor/cost-code bridge added a sixth headline number to a row
         # that was already full, so the whole row narrows rather than the new one wrapping
         # to a band of its own.
-        card(p, "c_direct", "Direct Costs", 20, 104, 195, 92),
-        card(p, "c_labour", "Self Performed Labour", 229, 104, 195, 92),
-        card(p, "c_unapproved", "Unapproved Direct Costs", 438, 104, 195, 92),
-        card(p, "c_vendors", "Vendors On Project", 647, 104, 195, 92),
+        card(p, "c_direct", "Direct Costs", 20, 108, 195, 92),
+        card(p, "c_labour", "Self Performed Labour", 229, 108, 195, 92),
+        card(p, "c_unapproved", "Unapproved Direct Costs", 438, 108, 195, 92),
+        card(p, "c_vendors", "Vendors On Project", 647, 108, 195, 92),
         # Half of Affect's vendors are not written back to Sage. That is a reconciliation
         # gap - cost exists in one system and not the other - and nothing surfaced it
         # before this card.
-        card(p, "c_missing", "Vendors Missing From ERP", 856, 104, 195, 92),
+        card(p, "c_missing", "Vendors Missing From ERP", 856, 108, 195, 92),
         # Committed and actual are shown side by side and NEVER summed: committed is what
         # was promised, actual is what has gone out, and adding them counts the same work
         # twice. The gap between them is work in progress.
-        card(p, "c_committed", "Vendor Committed", 1065, 104, 195, 92),
+        card(p, "c_committed", "Vendor Committed", 1065, 108, 195, 92),
 
-        visual(p, "c_by_type", "columnChart", 20, 208, 400, 140,
+        visual(p, "c_by_type", "columnChart", 20, 208, 297, 130,
                {"Category": [column("fct_DirectCost", "CostCategory")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by category"),
 
-        visual(p, "c_trend", "columnChart", 436, 208, 400, 140,
+        visual(p, "c_trend", "columnChart", 333, 208, 297, 130,
                {"Category": [column("dim_Date", "MonthStart")],
                 "Y": [measure("Direct Costs")]},
                title="Direct cost by month"),
 
         # Spend by vendor AND cost code - the linkage that exists in no single Procore
         # object, and that nothing in the current reporting can slice.
-        visual(p, "c_topcodes", "clusteredBarChart", 852, 208, 408, 140,
+        # Top 10 by commitment. Every cost code at once left each bar a hairline; the
+        # title names the cut so it is not read as the whole list.
+        sort_desc(top_n(visual(p, "c_topcodes", "clusteredBarChart", 646, 208, 614, 180,
                {"Category": [column("bridge_VendorCostCode", "CostCodeName")],
                 "Y": [measure("Vendor Committed"), measure("Vendor Spend")]},
-               title="Committed and actual by cost code"),
+               title="Top 10 cost codes by committed: committed and actual"),
+            "bridge_VendorCostCode", "CostCodeName", "Vendor Committed", 10),
+            measure("Vendor Committed")),
 
         # pivotTable is the PBIR matrix type. No AmountType on columns: the two measures
         # already split it, and pivoting by it left half the cells structurally blank.
-        visual(p, "c_matrix", "pivotTable", 20, 360, 610, 150,
+        visual(p, "c_matrix", "pivotTable", 20, 350, 610, 150,
                {"Rows": [column("bridge_VendorCostCode", "VendorName")],
                 "Values": [measure("Vendor Committed"), measure("Vendor Spend")]},
                title="Vendor: committed vs actual",
@@ -953,7 +1170,7 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
         # The D8 deliverable itself: the list somebody assembles by hand today.
         # Was 300 tall at y=542, which ran 122px off the bottom of the canvas - invisible
         # in a PDF export and clipped in the service, neither of which reports an error.
-        visual(p, "c_vendorlist", "tableEx", 646, 360, 614, 150,
+        visual(p, "c_vendorlist", "tableEx", 646, 400, 614, 262,
                {"Values": [column("bridge_ProjectVendor", "VendorName"),
                            column("bridge_ProjectVendor", "TradeName"),
                            column("bridge_ProjectVendor", "City"),
@@ -962,13 +1179,15 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                            column("bridge_ProjectVendor", "SyncedToErp")]},
                title="Vendor list - prequalification and ERP sync"),
 
-        # Sage AP against Procore, per project. Stops above the footer band (y 664).
-        visual(p, "c_ap_recon", "tableEx", 20, 522, 1240, 132,
+        # Sage AP against Procore, per project. Ends on the footer line (FOOTER_Y 662).
+        # Left column: two short column charts, the matrix, then this table; right column:
+        # the cost-code bars (180px minimum) over the vendor list running to the footer.
+        visual(p, "c_ap_recon", "tableEx", 20, 512, 610, 150,
                {"Values": [column("dim_Project", "ProjectName"),
                            measure("Spent To Date"), measure("AP Job Cost"),
                            measure("AP vs Procore Spent Variance"), measure("AP / Procore Spent Ratio"),
                            measure("ERP-only Vendor Cost")]},
-               title="Procore Spent To Date vs Sage AP job cost (AP from 2025-03-11; not added to Spent)",
+               title="Spent To Date vs Sage AP job cost (AP from 2025-03-11; never added to Spent)",
                alt="Table. One row per project: Procore Spent To Date, Sage AP job cost, the variance "
                    "and ratio between them, and AP job cost at vendors with no Procore commitment or "
                    "direct cost on the project. Sage AP history starts 2025-03-11 and timing differs "
@@ -1007,30 +1226,31 @@ def page_insurance() -> tuple[str, list[dict]]:
         # Three coverage numbers on the left, three currency numbers on the right, one
         # band. i_soon sits with currency rather than in a row of its own - "expiring
         # soon" is a renewal question, not a coverage one.
-        textbox(p, "cov_h", "Coverage", 20, 112, 400, 28, size=13),
+        textbox(p, "cov_h", "Coverage", 20, 110, 400, 32, size=13),
         card(p, "i_vendors", "Vendors On Project", 20, 144, 195, 100),
         card(p, "i_insured", "Vendors With Insurance", 229, 144, 195, 100),
         card(p, "i_missing", "Vendors Without Insurance", 438, 144, 195, 100),
 
-        textbox(p, "cur_h", "Currency", 647, 112, 400, 28, size=13),
+        textbox(p, "cur_h", "Currency", 647, 110, 400, 32, size=13),
         card(p, "i_certs", "Certificates On File", 647, 144, 195, 100),
         card(p, "i_expired", "Expired Certificates", 856, 144, 195, 100),
         card(p, "i_soon", "Certificates Expiring Soon", 1065, 144, 195, 100),
         # Why every certificate reads Expired: the newest one in Procore is already past.
-        card(p, "i_latest", "Latest Certificate Expiration", 1065, 76, 195, 64,
+        # Beside the charts; the header strip above belongs to the title and slicers.
+        card(p, "i_latest", "Latest Certificate Expiration", 1065, 256, 195, 100,
              title="Latest certificate expiration"),
 
-        visual(p, "i_by_status", "columnChart", 20, 256, 400, 196,
+        visual(p, "i_by_status", "columnChart", 20, 256, 335, 196,
                {"Category": [column("fct_VendorInsurance", "ExpiryStatus")],
                 "Y": [measure("Certificates On File")]},
                title="Certificates by expiry status"),
 
-        visual(p, "i_by_type", "barChart", 436, 256, 400, 196,
+        visual(p, "i_by_type", "barChart", 369, 256, 335, 196,
                {"Category": [column("fct_VendorInsurance", "InsuranceCategory")],
                 "Y": [measure("Certificates On File")]},
                title="Certificates by coverage type"),
 
-        visual(p, "i_state", "columnChart", 852, 256, 408, 196,
+        visual(p, "i_state", "columnChart", 718, 256, 335, 196,
                {"Category": [column("fct_VendorInsurance", "ComplianceState")],
                 "Y": [measure("Certificates On File")]},
                title="Lapsed vs in date vs exempt"),
