@@ -18,6 +18,8 @@ import deploy_manual
 import deploy_seeds
 import deploy_silver
 import deploy_pipeline
+import deploy_publish
+import set_autosync  # noqa: F401 - import is the check
 import deploy_ingestion
 import make_notebooks
 import duckdb
@@ -86,6 +88,7 @@ def test_notebooks():
         "gold candidate": validate_gold_candidate.build("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
         "silver candidate": validate_gold_candidate.build_silver("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
         "full candidate": validate_gold_candidate.build_full("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
+        "publish models": deploy_publish.build_notebook(),
     }
     count = 0
     for name, nb in notebooks.items():
@@ -111,6 +114,13 @@ def test_notebooks():
     assert deploy_gold.CD_SILVER_ABFSS not in full_source
     assert "validation-only/Tables/dbo/cd_silver_budgets" in full_source
     assert 'dq.REJECTS_TABLE = "cd_validation_gold_rejects"' in full_source
+    publish = "\n".join("".join(c["source"]) for c in notebooks["publish models"]["cells"])
+    assert 'getToken("pbi")' in publish and "publish_run.json" in publish
+    assert deploy_publish.MODEL_NAMES == ["Affect Project Report", "Project Quality Plan"]
+    # Direct Lake on OneLake has no DirectQuery fallback. On SQL endpoints it does, and a
+    # fallback query reads post-frame gold - bypassing the publish barrier.
+    expressions = deploy_model.expressions_tmdl("x")
+    assert "AzureStorage.DataLake" in expressions and "Sql.Database" not in expressions
 
 
 def test_candidate_preserves_evaluation_on_write_failure():
@@ -837,6 +847,80 @@ def test_pipeline():
     assert {"Extract Procore", "Extract Outbuild", "Ingest Sage", "Land To Bronze", "Land Manual Input"} <= silver_deps
     assert by_name["Data Quality Gate"]["dependsOn"] == [
         {"activity": "Build Gold", "dependencyConditions": ["Succeeded"]}]
+    # The only frame after autosync is off: strictly behind a passed gate, and not retried.
+    assert by_name["Publish Models"]["dependsOn"] == [
+        {"activity": "Data Quality Gate", "dependencyConditions": ["Succeeded"]}]
+    assert by_name["Publish Models"]["typeProperties"]["notebookId"] == "cd_50_publish_models"
+    assert by_name["Publish Models"]["policy"]["retry"] == 0
+
+
+def test_publish_models():
+    import json
+    import os
+    nb = deploy_publish.build_notebook()
+    setup, publish = ("".join(c["source"]) for c in nb["cells"][1:])
+    gate = "20260913T060000Z"
+
+    def run(before, after=None, fail_refresh=None, names=None):
+        with tempfile.TemporaryDirectory() as tmp:
+            Path(tmp, "heartbeat_run.json").write_text(json.dumps({"run_id": gate}))
+            scope = {}
+            exec(compile(setup, "publish:setup", "exec"), scope)
+            shown, calls = dict(before), []
+            listing = [{"name": n, "id": n.lower()} for n in (names or deploy_publish.MODEL_NAMES)]
+            def pbi(method, url, tok, body=None):
+                calls.append((method, url, body))
+                if url.endswith("/datasets"):
+                    return 200, {"value": listing}
+                if url.endswith("/capacities"):
+                    return 200, {"@odata.context": "https://cluster/v1.0/myorg/$metadata#capacities"}
+                if "/settings" in url:
+                    return 204, {}
+                return 200, {"model": {"id": 7}}
+            def reframe(dataset_id, tok, timeout):
+                calls.append(("REFRESH", dataset_id, None))
+                if dataset_id == fail_refresh:
+                    raise RuntimeError("refresh failed")
+                shown[dataset_id] = (after or {}).get(dataset_id, {"run_id": gate, "status": "ok"})
+                return {"status": "Completed", "requestId": dataset_id}
+            def dax(dataset_id, tok, query):
+                if isinstance(shown[dataset_id], Exception):
+                    raise shown[dataset_id]
+                return [{"[RunId]": shown[dataset_id]["run_id"], "[Status]": shown[dataset_id]["status"]}]
+            sent = []
+            scope.update(DIAG=tmp, pbi=pbi, reframe=reframe, dax=dax,
+                         notebookutils=SimpleNamespace(credentials=SimpleNamespace(getToken=lambda aud: "t")))
+            with patch.object(fabric_common, "notify", side_effect=lambda subject, body: sent.append(body)):
+                try:
+                    exec(compile(publish, "publish:run", "exec"), scope)
+                    error = None
+                except Exception as exc:
+                    error = exc
+            record = json.loads(Path(tmp, "publish_run.json").read_text())
+        return error, record, calls, sent
+
+    old = {"run_id": "20260912T060000Z", "status": "ok"}
+    report, pqp = "affect project report", "project quality plan"
+    error, record, calls, sent = run({report: old, pqp: RuntimeError("never framed")})
+    assert error is None and record["ok"] and not sent, error
+    posts = [c for c in calls if c[0] == "POST"]
+    assert [c[2] for c in posts] == [{"directLakeAutoSync": False}] * 2
+    # autosync is off on BOTH before the FIRST refresh, and refreshes are serial in order
+    assert calls.index(posts[-1]) < calls.index(("REFRESH", report, None)) < calls.index(("REFRESH", pqp, None))
+
+    error, record, calls, sent = run({report: old, pqp: old}, fail_refresh=pqp)
+    assert error and not record["ok"] and ("REFRESH", pqp, None) in calls
+    assert gate in sent[0] and "Affect Project Report" in sent[0] and "20260912T060000Z" in sent[0]
+
+    error, record, _, sent = run({report: {"run_id": gate, "status": "ok"}, pqp: old})
+    assert "AUTO-FRAMING" in str(error) and record["auto_framed"] == ["Affect Project Report"] and sent
+
+    error, _, _, _ = run({report: old, pqp: old}, after={pqp: {"run_id": gate, "status": "blocked"}})
+    assert "Project Quality Plan" in str(error)
+
+    error, _, calls, _ = run({report: old, pqp: old}, names=deploy_publish.MODEL_NAMES + ["Project Quality Plan"])
+    assert "exactly one" in str(error) and not any(c[0] in ("POST", "REFRESH") for c in calls)
+    print("  publish: autosync off first, serial refresh, auto-frame, split release and status all fail loudly")
 
 
 def test_lineage_bindings():
@@ -1353,6 +1437,7 @@ if __name__ == "__main__":
     test_empty_freshness()
     test_evidence_write_failure()
     test_pipeline()
+    test_publish_models()
     test_outbuild_extract()
     test_outbuild_link_keys()
     test_lineage_bindings()

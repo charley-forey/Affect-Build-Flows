@@ -123,19 +123,25 @@ STAGES = [
     # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
     # means the numbers were checked - not merely that the tables were written. Anything
     # downstream (a model refresh, a subscription) hangs off this rather than off Build
-    # Gold. This dependency does not isolate existing Direct Lake readers from gold writes.
+    # Gold. On its own this does not isolate Direct Lake readers: with automatic update ON
+    # the models frame gold as it is written. set_autosync.py turns that off, which makes
+    # Publish Models below the only frame - and it only runs on a passed gate.
     ("Data Quality Gate", "cd_40_dq_checks", ["Build Gold"]),
+    # Refreshes both models serially and fails if they end up on different pipeline runs.
+    ("Publish Models", "cd_50_publish_models", ["Data Quality Gate"]),
 ]
 
 # A timeout that is too generous hides a hung run; too tight kills a working one.
 # Extraction is now the long pole: 44 endpoints, most fanned out across 19 projects, at 100
 # records per page. A full first pull measured ~11 minutes; the 2-hour allowance covers a
 # cold start plus the retry.
-TIMEOUTS = {"cd_01_extract_procore": "0.02:00:00", "cd_05_land_to_bronze": "0.01:00:00"}
+TIMEOUTS = {"cd_01_extract_procore": "0.02:00:00", "cd_05_land_to_bronze": "0.01:00:00",
+            "cd_50_publish_models": "0.01:00:00"}
 DEFAULT_TIMEOUT = "0.00:30:00"
 # No retry on extraction: attempt 1 spends the hourly Procore quota, so a retry 60s later
 # can only fail on 429s while holding a Spark session for another hour.
-RETRIES = {"cd_01_extract_procore": 0}
+# No retry on publish: a retry resubmits a refresh whose first request may still be running.
+RETRIES = {"cd_01_extract_procore": 0, "cd_50_publish_models": 0}
 
 
 # Dataflow Gen2 stages. Separate from STAGES because a dataflow activity is a different

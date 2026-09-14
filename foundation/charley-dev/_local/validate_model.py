@@ -1,6 +1,13 @@
 """Run DAX against the deployed semantic model and check the numbers.
 
-    python validate_model.py
+    python validate_model.py                              # validate the current frame
+    python validate_model.py --allow-production-reframe   # refresh production first
+
+Without --allow-production-reframe it does NOT refresh: it validates the release the
+production model currently shows (its last frame). Direct Lake automatic update is off, so
+refreshing production IS publishing - that is cd_50_publish_models' job, after the DQ gate.
+To validate a model you just deployed, use validate_candidate_model.py (reframes candidates
+only) or run the pipeline / deploy_publish.py --apply --run first.
 
 This is the reconciliation gate as a test rather than a manual comparison. It executes
 each measure against the live model and asserts the result, so "the model deploys" becomes
@@ -834,6 +841,14 @@ def expected_counts(lakehouse_id: str) -> dict[str, int]:
 
 
 def main() -> int:
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    # With Direct Lake automatic update off, a refresh IS a publish: it shows readers whatever
+    # gold holds now, gated or not. Publishing belongs to cd_50_publish_models; candidate
+    # models are reframed by validate_candidate_model.py.
+    parser.add_argument("--allow-production-reframe", action="store_true",
+                        help="refresh the PRODUCTION model before validating (out-of-band publish)")
+    args = parser.parse_args()
     tok_fabric = dp.token()
     model = ds.find_item(tok_fabric, MODEL_NAME, "SemanticModel")
     if not model:
@@ -843,8 +858,12 @@ def main() -> int:
 
     tok = pbi_token()
 
-    print("  reframing ...", end=" ", flush=True)
-    print(reframe(model["id"], tok))
+    if args.allow_production_reframe:
+        print("  reframing PRODUCTION ...", end=" ", flush=True)
+        print(reframe(model["id"], tok))
+    else:
+        print("  not reframing production - validating the release it currently shows "
+              "(--allow-production-reframe to override)")
 
     # 1. Row counts straight from the model. If DirectLake is not wired to the lakehouse,
     #    these come back zero or the query errors - either way we find out here rather

@@ -290,17 +290,18 @@ MEASURES = [
     # signal - which is exactly the failure mode that went unnoticed for a month, when the
     # nightly pipeline failed every night while reporting itself as enabled.
     ("Last Checked Run", "MAX ( meta_PipelineRun[RunAt] )", '"yyyy-mm-dd hh:nn"',
-     "no workbook equivalent - the spreadsheet cannot say when it was last correct"),
+     "nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built"),
     # UTCNOW, the same clock [Pipeline Status] uses, so the two cards cannot disagree.
     ("Hours Since Last Checked Run",
      "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
      "\t\t\tRETURN IF ( ISBLANK ( Last ), BLANK (), DATEDIFF ( Last, UTCNOW (), HOUR ) )",
-     '"#,0"', "derived"),
+     '"#,0"',
+     "nothing - hours since the last PUBLISHED validated run: automatic update is off, so the model only moves when cd_50_publish_models frames a run that passed the DQ gate. A blocked gate is NOT visible here (the model keeps the last good run); the alert is the signal"),
     # Text, not a colour. A stale pipeline has to be readable in greyscale and by the 8% of
     # men who are colour-blind - the same rule the theme applies to every RAG status.
     ("Pipeline Status",
      PIPELINE_STATUS_DAX,
-     None, "derived"),
+     None, "nothing - status of the last PUBLISHED validated run, as text so it survives greyscale. A blocked gate never publishes, so BLOCKED is not expected in-model; the alert is the signal"),
     ("Blocking Violations Last Run",
      # BLANK with no checked run - a zero there reads as a clean run.
      "VAR Last = MAX ( meta_PipelineRun[RunAt] )\n"
