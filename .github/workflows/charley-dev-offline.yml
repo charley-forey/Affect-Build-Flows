@@ -1,0 +1,70 @@
+# Offline checks for foundation/charley-dev. Public repo: this job uses no secrets and never
+# calls Fabric, Azure or Procore. Everything runs against committed fixtures with DuckDB.
+name: charley-dev offline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "foundation/charley-dev/**"
+      # read by the suites: seedrunner (src/procore/sql), extractor compat, report theme
+      - "src/procore/**"
+      - "powerbi/theme.json"
+      - ".github/workflows/charley-dev-offline.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "foundation/charley-dev/**"
+      - "src/procore/**"
+      - "powerbi/theme.json"
+      - ".github/workflows/charley-dev-offline.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the PII guard diffs against the base commit
+
+      # Fails only on lines ADDED by this push/PR, so the handful of known runtime strings
+      # already on main (grant_sage_gateway.py GRANTEE, agent prompts) don't need an allowlist.
+      # To fix a hit: replace the address with a role/placeholder, or read it from config.
+      - name: Guard against new company email addresses
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "no base commit to diff against - skipped"; exit 0
+          fi
+          hits=$(git diff -U0 "$BASE" HEAD -- foundation/charley-dev \
+            | grep -E '^\+[^+]' \
+            | grep -inE '[A-Za-z0-9._%+-]+@(affect-group|eesnyc|procore)\.com' || true)
+          if [ -n "$hits" ]; then
+            echo "::error::New company email address(es) added under foundation/charley-dev:"
+            echo "$hits"
+            exit 1
+          fi
+          echo "no new company email addresses"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: foundation/charley-dev/_local/requirements-ci.txt
+
+      - name: Install pinned deps
+        run: python -m pip install -r foundation/charley-dev/_local/requirements-ci.txt
+
+      - name: Run all suites
+        run: python foundation/charley-dev/_local/run_tests.py
+
+      - name: Generator drift checks
+        working-directory: foundation/charley-dev/_local
+        run: |
+          python make_qc_seeds.py --check
+          python make_sharepoint.py --check
