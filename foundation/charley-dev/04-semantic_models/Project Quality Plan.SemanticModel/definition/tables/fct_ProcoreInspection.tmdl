@@ -1,0 +1,112 @@
+table fct_ProcoreInspection
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column InspectionKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionKey
+
+	column InspectionLinkKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionLinkKey
+
+	column InspectionNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionNumber
+
+	column InspectionName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionName
+
+	column SourceTemplateId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceTemplateId
+
+	column SourceTemplateName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceTemplateName
+
+	column SourceTrade
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceTrade
+
+	column LegacyInspectorName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: LegacyInspectorName
+
+	column InspectorsJson
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectorsJson
+
+	column SourceStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceStatus
+
+	column InspectionDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: InspectionDate
+		formatString: yyyy-mm-dd
+
+	column DueDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: DueDate
+		formatString: yyyy-mm-dd
+
+	column SourceItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SourceItemCount
+
+	column ConformingItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: ConformingItemCount
+
+	column DeficientItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DeficientItemCount
+
+	column NotInspectedItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: NotInspectedItemCount
+
+	column NotApplicableItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: NotApplicableItemCount
+
+	column NeutralItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: NeutralItemCount
+
+	/// Raw source completion value; unit and scale require confirmation. Unknown remains blank. Do not sum across inspections.
+	column SourcePercentComplete
+		dataType: double
+		summarizeBy: none
+		sourceColumn: SourcePercentComplete
+		formatString: 0.##
+
+	partition fct_ProcoreInspection = entity
+		mode: directLake
+		source
+			entityName: fct_procoreinspection
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -907,6 +907,26 @@
       "boolean"
     ],
     [
+      "PaymentsReceived",
+      "double"
+    ],
+    [
+      "FirstPaymentDate",
+      "date"
+    ],
+    [
+      "LastPaymentDate",
+      "date"
+    ],
+    [
+      "PaidDate",
+      "date"
+    ],
+    [
+      "DaysToPayment",
+      "int"
+    ],
+    [
       "DaysToDue",
       "int"
     ],

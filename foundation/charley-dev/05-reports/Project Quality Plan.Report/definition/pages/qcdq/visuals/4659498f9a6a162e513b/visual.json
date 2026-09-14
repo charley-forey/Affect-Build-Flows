@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "7d00844fa1253ffc2482",
+  "name": "4659498f9a6a162e513b",
   "position": {
-    "x": 20,
+    "x": 604,
     "y": 544,
     "z": 0,
-    "width": 568,
+    "width": 572,
     "height": 110,
-    "tabOrder": 24
+    "tabOrder": 25
   },
   "visual": {
     "visualType": "tableEx",
@@ -20,14 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_QcNcr"
+                      "Entity": "dq_DataGap"
                     }
                   },
-                  "Property": "TradeLabel"
+                  "Property": "GapCategory"
                 }
               },
-              "queryRef": "fct_QcNcr.TradeLabel",
-              "nativeQueryRef": "TradeLabel"
+              "queryRef": "dq_DataGap.GapCategory",
+              "nativeQueryRef": "GapCategory"
             },
             {
               "field": {
@@ -37,11 +37,25 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Total Observations"
+                  "Property": "Data Gaps"
                 }
               },
-              "queryRef": "_Measures.Total Observations",
-              "nativeQueryRef": "Total Observations"
+              "queryRef": "_Measures.Data Gaps",
+              "nativeQueryRef": "Data Gaps"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Data Gap Amount"
+                }
+              },
+              "queryRef": "_Measures.Data Gap Amount",
+              "nativeQueryRef": "Data Gap Amount"
             }
           ]
         }
@@ -55,7 +69,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Procore trade labels seen on observations. Shows TradeLabel, Total Observations for the current selection.'"
+                  "Value": "'Table. Count of known data gaps and the money they carry, by gap category. Gaps not tied to a project are hidden while a project is selected.'"
                 }
               }
             }
@@ -68,7 +82,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Procore trade labels seen on observations'"
+                  "Value": "'Data gap register by category'"
                 }
               }
             },

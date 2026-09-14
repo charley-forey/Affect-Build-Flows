@@ -17,6 +17,8 @@ ref table dim_QcStatus
 ref table fct_QcNcr
 ref table fct_QcPunch
 ref table fct_QcSubmittal
+ref table fct_ProcoreInspection
+ref table fct_ProcoreInspectionItem
 ref table man_QcDfow
 ref table man_QcItp
 ref table man_QcGate
@@ -25,4 +27,5 @@ ref table man_QcCommissioning
 ref table man_QcInspectorSignIn
 ref table man_QcChecklistResult
 ref table man_QcDohResult
+ref table dq_DataGap
 ref table meta_PipelineRun

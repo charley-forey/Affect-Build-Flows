@@ -128,6 +128,16 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 03 Submittals & mock-ups
 
+	/// Replaces Retrieved native Procore inspection records; month filters use inspection date. Not a certification of scope or completion.
+	measure 'Native Inspections' = COUNTROWS(fct_ProcoreInspection)
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Retrieved native items linked through the project/inspection key; source responses are not reclassified.
+	measure 'Native Inspection Items' = COUNTROWS(fct_ProcoreInspectionItem)
+		formatString: "#,0"
+		displayFolder: 03 Submittals & mock-ups
+
 	/// Replaces Path to TCO!E4 + Path to Fire Alarm + Statutory Inspections
 	measure 'Gates Defined' = COUNTROWS(qc_seed_Gate)
 		formatString: "#,0"
@@ -235,6 +245,16 @@ table _Measures
 	measure 'DQ Registers Awaiting Input' =
 			VAR EmptyRegisters = IF(COUNTROWS(man_QcDfow) = 0, 1, 0) + IF(COUNTROWS(man_QcItp) = 0, 1, 0) + IF(COUNTROWS(man_QcGate) = 0, 1, 0) + IF(COUNTROWS(man_QcSpecialInspection) = 0, 1, 0) + IF(COUNTROWS(man_QcCommissioning) = 0, 1, 0) + IF(COUNTROWS(man_QcInspectorSignIn) = 0, 1, 0) + IF(COUNTROWS(man_QcChecklistResult) = 0, 1, 0) + IF(COUNTROWS(man_QcDohResult) = 0, 1, 0)
 			RETURN FORMAT(EmptyRegisters, "0") & "/8 registers empty; completeness unverified"
+		displayFolder: 07 Data quality
+
+	/// Replaces nothing - rejects, unmapped trades, coverage and certificate gaps in one register
+	measure 'Data Gaps' = COALESCE(COUNTROWS(dq_DataGap), 0)
+		formatString: "#,0"
+		displayFolder: 07 Data quality
+
+	/// Replaces money carried by data gaps - today only unmatched AR invoices carry an amount
+	measure 'Data Gap Amount' = SUM(dq_DataGap[Amount])
+		formatString: "$#,0.00"
 		displayFolder: 07 Data quality
 
 	column _placeholder

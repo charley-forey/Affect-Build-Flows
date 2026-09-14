@@ -10,7 +10,7 @@
     "tabOrder": 17
   },
   "visual": {
-    "visualType": "stackedBarChart",
+    "visualType": "barChart",
     "query": {
       "queryState": {
         "Category": {
@@ -23,11 +23,42 @@
                       "Entity": "fct_Milestone"
                     }
                   },
+                  "Property": "ProjectKey"
+                }
+              },
+              "queryRef": "fct_Milestone.ProjectKey",
+              "nativeQueryRef": "ProjectKey",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "ActivityKey"
+                }
+              },
+              "queryRef": "fct_Milestone.ActivityKey",
+              "nativeQueryRef": "ActivityKey",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
                   "Property": "MilestoneName"
                 }
               },
               "queryRef": "fct_Milestone.MilestoneName",
-              "nativeQueryRef": "MilestoneName"
+              "nativeQueryRef": "MilestoneName",
+              "active": true
             }
           ]
         },
@@ -73,7 +104,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Stacked bar timeline. One bar per milestone, positioned by its start date and sized by its duration in days, relative to the earliest milestone start currently shown.'"
+                  "Value": "'Stacked bar timeline. One bar per milestone, positioned by its start date and sized by its duration in days, relative to the earliest valid milestone start currently shown. Missing or inverted dates are omitted from the bars and retained in the table. Baseline variance is unavailable.'"
                 }
               }
             }
@@ -86,7 +117,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Schedule timeline - current dates (set Offset series transparent)'"
+                  "Value": "'Current schedule - elapsed days from earliest valid start'"
                 }
               }
             },
@@ -105,6 +136,24 @@
               "expr": {
                 "Literal": {
                   "Value": "12D"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "dataPoint": [
+        {
+          "selector": {
+            "metadata": "_Measures.Milestone Offset Days"
+          },
+          "properties": {
+            "fillTransparency": {
+              "expr": {
+                "Literal": {
+                  "Value": "100D"
                 }
               }
             }

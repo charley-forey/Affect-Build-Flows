@@ -5,7 +5,7 @@
     "x": 20,
     "y": 588,
     "z": 0,
-    "width": 1240,
+    "width": 800,
     "height": 76,
     "tabOrder": 18
   },
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "WHY THIS DIFFERS FROM THE 0.59 IN THE WORKBOOK.  Two scoring bands are wrong there: Schedule Performance uses 5/10 where the data is a fraction (0.05/0.10), so it always scored 3; Completion Variance never matched any band, so it always scored 0. On the sample project those two errors cancel exactly - which is why nobody noticed. On a project where they do not cancel, the workbook's score is wrong by the difference.  The bands here are corrected (dim_ScorecardBand). Affect decides when to switch the number reported to leadership.",
+                    "value": "The workbook's 0.59 is not a reliable comparison: its schedule bands used whole numbers instead of percentages, and its completion-variance band never matched. Those errors happened to cancel in the sample project. This report uses corrected bands. Review category scores and missing inputs before comparing results with earlier workbook reports.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'WHY THIS DIFFERS FROM THE 0.59 IN THE WORKBOOK.  Two scoring bands are wrong there: Schedule Performance uses 5/10 where the data is a fraction (0.05/0.10), so it always scored 3; Completion Variance never matched any band, so it always scored 0. On the sample project those two errors cancel exactly - which is why nobody noticed. On a project where they do not cancel, the workbook''s score is wrong by the difference.  The bands here are corrected (dim_ScorecardBand). Affect decides when to switch the number reported to leadership.'"
+                  "Value": "'The workbook''s 0.59 is not a reliable comparison: its schedule bands used whole numbers instead of percentages, and its completion-variance band never matched. Those errors happened to cancel in the sample project. This report uses corrected bands. Review category scores and missing inputs before comparing results with earlier workbook reports.'"
                 }
               }
             }

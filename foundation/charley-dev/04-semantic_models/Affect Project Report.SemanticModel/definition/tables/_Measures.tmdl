@@ -39,6 +39,11 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
+	/// Replaces change-order grain; responds to status and item filters
+	measure 'Change Order Amount' = SUM ( fct_ChangeOrder[Amount] )
+		formatString: "$#,0"
+		displayFolder: 01 Contract & Change
+
 	/// Replaces FINANCIALS!C19:C20
 	measure 'Budget' = SUM ( fct_BudgetLine[BudgetAmount] )
 		formatString: "$#,0"
@@ -74,10 +79,10 @@ table _Measures
 		formatString: "0.0%"
 		displayFolder: 02 Budget & Cost
 
-	/// Replaces FINANCIALS!F19:F20 - derivable, but typed by hand today
+	/// Replaces FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment
 	measure 'Budget Status' =
 			VAR V = [Budget Variance %]
-			RETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "On Track", V >= -0.05, "Watch", "Over Budget" )
+			RETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "Spend within budget", V >= -0.05, "Spend over budget up to 5%", "Spend over budget above 5%" )
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D62
@@ -99,8 +104,21 @@ table _Measures
 
 	/// Replaces derived
 	measure 'Pipeline Status' =
-			VAR Hrs = [Hours Since Last Checked Run]
-			RETURN SWITCH ( TRUE (), ISBLANK ( Hrs ), "Never completed a checked run", Hrs <= 30, "Current", Hrs <= 72, "Late - no run in over a day", "STALE - these numbers may be weeks old" )
+			VAR Last = MAX ( meta_PipelineRun[RunAt] )
+			VAR Built = [Last Refresh]
+			VAR Latest = FILTER ( ALL ( meta_PipelineRun ), meta_PipelineRun[RunAt] = Last )
+			VAR Blocked = COUNTROWS ( FILTER ( Latest, meta_PipelineRun[Status] <> "ok" || meta_PipelineRun[Blocking] > 0 ) )
+			VAR Warnings = SUMX ( Latest, meta_PipelineRun[Failing] )
+			VAR Hrs = DATEDIFF ( Last, UTCNOW (), HOUR )
+			RETURN SWITCH ( TRUE (),
+			ISBLANK ( Last ), "Unknown - no checked run",
+			Built > Last, "Unvalidated - data built after last check",
+			Blocked > 0, "BLOCKED - validation failed",
+			Hrs < 0, "Unknown - check timestamp is in the future",
+			Hrs > 72, "STALE - no checked run in over 72 hours",
+			Hrs > 30, "Late - no checked run in over 30 hours",
+			Warnings > 0, "Gold checked with warnings; source completeness unverified",
+			"Gold checks passed; source completeness unverified" )
 		displayFolder: 14 Pipeline liveness
 
 	/// Replaces derived
@@ -257,12 +275,12 @@ table _Measures
 		displayFolder: 05 Cash & AR
 
 	/// Replaces SUBMITTALS & RFI!D
-	measure 'Open Submittals' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE )
+	measure 'Open Submittals' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsOpen] = TRUE, fct_RfiSubmittal[ItemType] = "Submittal" )
 		formatString: "#,0"
 		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces derived - the workbook has no equivalent
-	measure 'Open Submittals Past Due' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE )
+	measure 'Open Submittals Past Due' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsPastDue] = TRUE, fct_RfiSubmittal[ItemType] = "Submittal" )
 		formatString: "#,0"
 		displayFolder: 06 Submittals & RFIs
 
@@ -316,6 +334,11 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 09 Source Coverage
 
+	/// Replaces all projects in the selected coverage category, including incomplete mappings
+	measure 'Projects In Coverage' = COUNTROWS ( dim_ProjectCrosswalk )
+		formatString: "#,0"
+		displayFolder: 09 Source Coverage
+
 	/// Replaces these read as ZERO revenue everywhere - the most dangerous gap
 	measure 'Projects Missing From Sage' = COALESCE ( CALCULATE ( COUNTROWS ( dim_ProjectCrosswalk ), dim_ProjectCrosswalk[IsInSage] = FALSE ), 0 )
 		formatString: "#,0"
@@ -351,9 +374,24 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 10 Data Quality
 
-	/// Replaces diagnostics - AR rows whose Sage job resolves to no project
-	measure 'DQ Unmatched Invoices' = CALCULATE ( COUNTROWS ( fct_Invoice ), fct_Invoice[HasUnmatchedProject] = TRUE )
+	/// Replaces diagnostics - unmatched AR across all projects; retains the selected month
+	measure 'DQ Unmatched Invoices' = CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )
 		formatString: "#,0"
+		displayFolder: 10 Data Quality
+
+	/// Replaces unattributed billed amount across all projects; retains the selected month
+	measure 'Unmatched AR Amount - All Projects' = CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[HasUnmatchedProject] = TRUE )
+		formatString: "$#,0.00"
+		displayFolder: 10 Data Quality
+
+	/// Replaces nothing - rejects, unmatched AR, unmapped trades, coverage and certificate gaps in one register
+	measure 'Data Gaps' = COALESCE ( COUNTROWS ( dq_DataGap ), 0 )
+		formatString: "#,0"
+		displayFolder: 10 Data Quality
+
+	/// Replaces money carried by data gaps - today only unmatched AR invoices carry an amount
+	measure 'Data Gap Amount' = SUM ( dq_DataGap[Amount] )
+		formatString: "$#,0.00"
 		displayFolder: 10 Data Quality
 
 	/// Replaces no workbook equivalent - a single snapshot cannot draw a curve
@@ -378,13 +416,18 @@ table _Measures
 
 	/// Replaces Gantt geometry - the transparent leading bar
 	measure 'Milestone Offset Days' =
-			VAR Origin = CALCULATE ( MIN ( fct_Milestone[CurrentStart] ), ALLSELECTED ( fct_Milestone ) )
-			RETURN DATEDIFF ( Origin, MIN ( fct_Milestone[CurrentStart] ), DAY )
+			VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )
+			VAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )
+			VAR Origin = MINX ( FILTER ( ALLSELECTED ( fct_Milestone ), NOT ISBLANK ( fct_Milestone[CurrentStart] ) && NOT ISBLANK ( fct_Milestone[CurrentFinish] ) && fct_Milestone[CurrentFinish] >= fct_Milestone[CurrentStart] ), fct_Milestone[CurrentStart] )
+			RETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate && NOT ISBLANK ( Origin ), DATEDIFF ( Origin, StartDate, DAY ), BLANK () )
 		formatString: "#,0"
 		displayFolder: 07 Schedule
 
 	/// Replaces Gantt geometry - the visible bar
-	measure 'Milestone Duration Days' = DATEDIFF ( MIN ( fct_Milestone[CurrentStart] ), MAX ( fct_Milestone[CurrentFinish] ), DAY )
+	measure 'Milestone Duration Days' =
+			VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )
+			VAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )
+			RETURN IF ( COUNTROWS ( fct_Milestone ) = 1 && NOT ISBLANK ( StartDate ) && NOT ISBLANK ( FinishDate ) && FinishDate >= StartDate, DATEDIFF ( StartDate, FinishDate, DAY ), BLANK () )
 		formatString: "#,0"
 		displayFolder: 07 Schedule
 

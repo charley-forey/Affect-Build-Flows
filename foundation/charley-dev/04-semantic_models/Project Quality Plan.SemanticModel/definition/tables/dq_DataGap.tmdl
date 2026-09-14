@@ -1,0 +1,53 @@
+table dq_DataGap
+
+	column GapCategory
+		dataType: string
+		summarizeBy: none
+		sourceColumn: GapCategory
+
+	column SourceSystem
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceSystem
+
+	column EntityType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: EntityType
+
+	column EntityKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: EntityKey
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column Reason
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Reason
+
+	column Amount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column Detail
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Detail
+
+	column RunBatchId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RunBatchId
+
+	partition dq_DataGap = entity
+		mode: directLake
+		source
+			entityName: dq_datagap
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -216,6 +216,10 @@
     "ok": true
   },
   {
+    "step": "view:54",
+    "ok": true
+  },
+  {
     "step": "10_dim_project.sql",
     "ok": true
   },
@@ -480,14 +484,14 @@
       "fct_ChangeOrder": 335,
       "fct_Invoice": 149,
       "fct_RfiSubmittal": 3131,
-      "fct_Milestone": 126,
+      "fct_Milestone": 253,
       "fct_FinancialPeriod": 151,
       "fct_QcNcr": 966,
       "fct_QcPunch": 1617,
       "fct_QcSubmittal": 2474,
       "fct_ProcoreInspection": 26,
       "fct_ProcoreInspectionItem": 705,
-      "dq_DataGap": 1150,
+      "dq_DataGap": 1147,
       "man_DailyLogCompliance": 0,
       "man_Flags": 0,
       "man_Milestones": 0,

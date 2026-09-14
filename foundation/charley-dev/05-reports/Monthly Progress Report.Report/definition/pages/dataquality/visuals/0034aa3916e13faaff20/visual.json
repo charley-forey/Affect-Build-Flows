@@ -1,34 +1,20 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "7d00844fa1253ffc2482",
+  "name": "0034aa3916e13faaff20",
   "position": {
-    "x": 20,
-    "y": 544,
+    "x": 1012,
+    "y": 244,
     "z": 0,
-    "width": 568,
-    "height": 110,
-    "tabOrder": 24
+    "width": 248,
+    "height": 100,
+    "tabOrder": 21
   },
   "visual": {
-    "visualType": "tableEx",
+    "visualType": "card",
     "query": {
       "queryState": {
         "Values": {
           "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_QcNcr"
-                    }
-                  },
-                  "Property": "TradeLabel"
-                }
-              },
-              "queryRef": "fct_QcNcr.TradeLabel",
-              "nativeQueryRef": "TradeLabel"
-            },
             {
               "field": {
                 "Measure": {
@@ -37,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Total Observations"
+                  "Property": "Unmatched AR Amount - All Projects"
                 }
               },
-              "queryRef": "_Measures.Total Observations",
-              "nativeQueryRef": "Total Observations"
+              "queryRef": "_Measures.Unmatched AR Amount - All Projects",
+              "nativeQueryRef": "Unmatched AR Amount - All Projects"
             }
           ]
         }
@@ -55,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Procore trade labels seen on observations. Shows TradeLabel, Total Observations for the current selection.'"
+                  "Value": "'Card. Unmatched AR Amount - All Projects. Shows Unmatched AR Amount - All Projects for the current selection.'"
                 }
               }
             }
@@ -68,7 +54,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Procore trade labels seen on observations'"
+                  "Value": "'Unmatched AR Amount - All Projects'"
                 }
               }
             },

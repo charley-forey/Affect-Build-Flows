@@ -1,0 +1,68 @@
+table fct_ProcoreInspectionItem
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ItemKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemKey
+
+	column InspectionKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionKey
+
+	column InspectionLinkKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InspectionLinkKey
+
+	column SourceSectionId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceSectionId
+
+	column ItemName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemName
+
+	column SourceStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceStatus
+
+	column SourceResponse
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SourceResponse
+
+	column ResponseCategory
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ResponseCategory
+
+	column ResponseType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ResponseType
+
+	column ResponseJson
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ResponseJson
+
+	column ItemResponseJson
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemResponseJson
+
+	partition fct_ProcoreInspectionItem = entity
+		mode: directLake
+		source
+			entityName: fct_procoreinspectionitem
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'
