@@ -121,14 +121,21 @@ SELECT
     CAST(id                 AS STRING) AS item_id,
     CAST(number             AS STRING) AS item_number,
     CAST(Description        AS STRING) AS subject,
-    CAST(`Submittal Status` AS STRING) AS status_label,
+    -- In this legacy table `Status` is Procore's status NAME and `Submittal Status` is the
+    -- Draft/Open/Closed CATEGORY (checked 2026-09-14).
+    CAST(Status             AS STRING) AS status_label,
+    CAST(`Submittal Status` AS STRING) AS status_category,
     CAST(`Cost Code ID`     AS STRING) AS cost_code_id,
     CASE WHEN CAST(`Created At` AS DATE) < DATE '1990-01-01' THEN NULL
          ELSE CAST(`Created At` AS DATE) END          AS created_date,
+    -- LEGACY, --source existing only (default is cd). This table has no due_date,
+    -- distributed_at or closed_at, so the only due date is the ~1% required_on_site_date
+    -- and there is NO response date: received_date is an intake date, not a response
+    -- (see 10_procore_silver.sql). Open-ness still comes from status_category, so open
+    -- counts are right; turnaround is simply unavailable on this path.
     CASE WHEN CAST(required_on_site_date AS DATE) < DATE '1990-01-01' THEN NULL
          ELSE CAST(required_on_site_date AS DATE) END AS due_date,
-    CASE WHEN CAST(received_date AS DATE) < DATE '1990-01-01' THEN NULL
-         ELSE CAST(received_date AS DATE) END         AS responded_date
+    CAST(NULL AS DATE)                                AS responded_date
 FROM delta.`{SILVER_ABFSS}/procore_submittals_silver`;
 
 -- Outbuild is the only real source of critical-path milestones: Procore's OAS has no

@@ -178,6 +178,21 @@ def main() -> int:
                       ("ERP-synced vendors without origin_code", "warn")):
         assert RULES[name].severity == sev, name
     checks += 7
+    # Submittal date rules: the pre-2026-09-14 mapping (responded submittals open, and an
+    # intake date before creation as the "response") must trip both.
+    for fact, where in (("fct_RfiSubmittal", "ItemKey = 'SB2'"), ("fct_QcSubmittal", "SubmittalKey = 'SB2'")):
+        name = f"{fact}: no responded submittal is counted open"
+        assert RULES[name].severity == expectations.SEVERITY_ERROR
+        check_fails(con, name, f"UPDATE {fact} SET IsOpen = TRUE WHERE {where}")
+        checks += 1
+    early = "submittal responded before it was created"
+    assert RULES[early].severity == expectations.SEVERITY_WARN
+    check_fails(con, early, "UPDATE fct_RfiSubmittal SET RespondedDate = CreatedDate - INTERVAL 3 DAY "
+                            "WHERE ItemKey = 'SB2'")
+    # An RFI answered "early" is not this rule's business.
+    assert mutated(con, early, "UPDATE fct_RfiSubmittal SET RespondedDate = CreatedDate - INTERVAL 3 DAY "
+                               "WHERE ItemType = 'RFI'") == 0
+    checks += 2
 
     con.close()
     print(f"test_dq_rules: {checks} mutation checks passed")

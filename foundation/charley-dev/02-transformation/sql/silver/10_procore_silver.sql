@@ -160,15 +160,31 @@ SELECT
     TRIM(get_json_object(payload, '$.number'))             AS item_number,
     TRIM(get_json_object(payload, '$.title'))              AS subject,
     TRIM(get_json_object(payload, '$.status.name'))        AS status_label,
+    -- Procore's fixed status CATEGORY behind the configurable name: Draft / Open / Closed
+    -- (measured 2026-09-14: 'Approved as Noted', 'For Record', 'Rejected' ... are all
+    -- Closed). Gold decides open-ness from this, not from the name.
+    TRIM(get_json_object(payload, '$.status.status'))      AS status_category,
     CAST(get_json_object(payload, '$.cost_code.id') AS STRING) AS cost_code_id,
     CASE WHEN CAST(get_json_object(payload, '$.created_at') AS DATE) < DATE '1990-01-01'
          THEN NULL ELSE CAST(get_json_object(payload, '$.created_at') AS DATE) END
                                                            AS created_date,
-    CASE WHEN CAST(get_json_object(payload, '$.required_on_site_date') AS DATE) < DATE '1990-01-01'
-         THEN NULL ELSE CAST(get_json_object(payload, '$.required_on_site_date') AS DATE) END
+    -- $.due_date is the submittal's review due date (78% populated). required_on_site_date
+    -- is a delivery date set on ~1% and is only a fallback. Reading it alone left
+    -- "past due" almost always empty.
+    CASE WHEN CAST(COALESCE(get_json_object(payload, '$.due_date'),
+                            get_json_object(payload, '$.required_on_site_date')) AS DATE)
+              < DATE '1990-01-01'
+         THEN NULL ELSE CAST(COALESCE(get_json_object(payload, '$.due_date'),
+                                      get_json_object(payload, '$.required_on_site_date')) AS DATE) END
                                                            AS due_date,
-    CASE WHEN CAST(get_json_object(payload, '$.received_date') AS DATE) < DATE '1990-01-01'
-         THEN NULL ELSE CAST(get_json_object(payload, '$.received_date') AS DATE) END
+    -- The response is when the reviewed package went back out (distributed_at), else when
+    -- it was closed. NOT $.received_date: that is the day the GC received the package from
+    -- the sub - an intake date, set on 4% and usually BEFORE created_at - which made the
+    -- turnaround KPI ~1 day and left every Approved submittal "open". Fixed 2026-09-14.
+    CASE WHEN CAST(COALESCE(get_json_object(payload, '$.distributed_at'),
+                            get_json_object(payload, '$.closed_at')) AS DATE) < DATE '1990-01-01'
+         THEN NULL ELSE CAST(COALESCE(get_json_object(payload, '$.distributed_at'),
+                                      get_json_object(payload, '$.closed_at')) AS DATE) END
                                                            AS responded_date,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_submittals

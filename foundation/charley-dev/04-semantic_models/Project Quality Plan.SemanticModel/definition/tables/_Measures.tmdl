@@ -118,9 +118,19 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 03 Submittals & mock-ups
 
-	/// Replaces Submittals & Mockups - not computed in the workbook; closed submittals only
-	measure 'Avg Submittal Turnaround Days' = AVERAGEX(FILTER(fct_QcSubmittal, NOT fct_QcSubmittal[IsOpen] && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])
+	/// Replaces Submittals & Mockups - not computed in the workbook; created to distributed/closed, closed items only
+	measure 'Avg Submittal Turnaround Days' = AVERAGEX(FILTER(fct_QcSubmittal, fct_QcSubmittal[IsOpen] = FALSE() && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])
 		formatString: "#,0.0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Submittals & Mockups - not computed in the workbook; median of closed-item turnaround
+	measure 'Median Submittal Turnaround Days' = MEDIANX(FILTER(fct_QcSubmittal, fct_QcSubmittal[IsOpen] = FALSE() && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])
+		formatString: "#,0.0"
+		displayFolder: 03 Submittals & mock-ups
+
+	/// Replaces Submittals & Mockups - drafts not yet submitted; excluded from Open Submittals
+	measure 'Draft Submittals' = CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsDraft] = TRUE())
+		formatString: "#,0"
 		displayFolder: 03 Submittals & mock-ups
 
 	/// Replaces Inferred from submittal subject text containing MOCK; may include false matches and miss unnamed mock-ups. Not a confirmed register.

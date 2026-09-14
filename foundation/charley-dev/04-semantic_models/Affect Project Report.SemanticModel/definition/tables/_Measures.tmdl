@@ -288,8 +288,13 @@ table _Measures
 		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces QUALITY!D39 - typed by hand
-	measure 'Avg Days Open' = AVERAGE ( fct_RfiSubmittal[DaysOpen] )
+	measure 'Avg Days Open' = CALCULATE ( AVERAGE ( fct_RfiSubmittal[DaysOpen] ), fct_RfiSubmittal[IsOpen] = TRUE )
 		formatString: "#,0.0"
+		displayFolder: 06 Submittals & RFIs
+
+	/// Replaces derived - drafts are not yet submitted, so excluded from Open Submittals
+	measure 'Draft Submittals' = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsDraft] = TRUE, fct_RfiSubmittal[ItemType] = "Submittal" )
+		formatString: "#,0"
 		displayFolder: 06 Submittals & RFIs
 
 	/// Replaces SCHEDULE!Table5

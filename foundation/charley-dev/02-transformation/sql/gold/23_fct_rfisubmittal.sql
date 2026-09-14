@@ -41,20 +41,33 @@ SELECT
     CASE WHEN created_date IS NOT NULL
               AND (created_date < DATE '2015-01-01' OR created_date > DATE '2035-12-31')
          THEN TRUE ELSE FALSE END     AS HasOutOfRangeDate,
-    -- Open means not yet responded to. Derived from the data rather than from status text,
-    -- which varies by Procore configuration.
-    CASE WHEN responded_date IS NULL THEN TRUE ELSE FALSE END AS IsOpen,
+    -- OPEN = awaiting review: not closed AND not a draft. Closed is a response date
+    -- (distributed_at/closed_at) OR Procore's fixed 'Closed' status category - 65 of 952
+    -- closed submittals (valid-JSON subset) carry neither date, and they are not open. Drafts (467 of 1,722
+    -- measured 2026-09-14) have not been submitted, so they are not "open submittals";
+    -- they stay visible through IsDraft / [Draft Submittals] instead of being dropped.
+    -- Before 2026-09-14 this was responded_date IS NULL over the wrong date column, which
+    -- counted ~96% of submittals open, every Approved one included.
+    NOT is_closed AND NOT is_draft    AS IsOpen,
     CAST(NULL AS BOOLEAN)             AS IsCritical,
-    CASE
-        WHEN responded_date IS NOT NULL AND created_date IS NOT NULL
-            THEN datediff(responded_date, created_date)
-        WHEN created_date IS NOT NULL
-            THEN datediff(CURRENT_DATE, created_date)
-    END                               AS DaysOpen,
+    -- Age of items still awaiting review. No value for closed or draft items: a
+    -- today-minus-created fallback on those is what polluted the average before.
+    CASE WHEN NOT is_closed AND NOT is_draft AND created_date IS NOT NULL
+         THEN datediff(CURRENT_DATE, created_date) END AS DaysOpen,
     -- Past due only counts while still open: a late-but-answered item is not outstanding.
-    CASE WHEN responded_date IS NULL AND due_date IS NOT NULL AND due_date < CURRENT_DATE
-         THEN TRUE ELSE FALSE END     AS IsPastDue
-FROM sv_submittals
+    CASE WHEN NOT is_closed AND NOT is_draft AND due_date IS NOT NULL AND due_date < CURRENT_DATE
+         THEN TRUE ELSE FALSE END     AS IsPastDue,
+    is_draft AND NOT is_closed        AS IsDraft,
+    -- Created -> responded, closed items only.
+    CASE WHEN responded_date IS NOT NULL AND created_date IS NOT NULL
+         THEN datediff(responded_date, created_date) END AS TurnaroundDays
+FROM (
+    SELECT *,
+           COALESCE(responded_date IS NOT NULL
+                    OR UPPER(TRIM(status_category)) = 'CLOSED', FALSE)            AS is_closed,
+           COALESCE(UPPER(TRIM(COALESCE(status_category, status_label))) = 'DRAFT', FALSE) AS is_draft
+    FROM sv_submittals
+) s
 WHERE project_id IS NOT NULL
 
 UNION ALL
@@ -83,14 +96,16 @@ SELECT
     -- which varies by Procore configuration.
     CASE WHEN responded_date IS NULL THEN TRUE ELSE FALSE END AS IsOpen,
     CAST(NULL AS BOOLEAN)             AS IsCritical,
-    CASE
-        WHEN responded_date IS NOT NULL AND created_date IS NOT NULL
-            THEN datediff(responded_date, created_date)
-        WHEN created_date IS NOT NULL
-            THEN datediff(CURRENT_DATE, created_date)
-    END                               AS DaysOpen,
+    -- Open items only, same as the submittal arm; answered RFIs carry TurnaroundDays.
+    CASE WHEN responded_date IS NULL AND created_date IS NOT NULL
+         THEN datediff(CURRENT_DATE, created_date) END AS DaysOpen,
     -- Past due only counts while still open: a late-but-answered item is not outstanding.
     CASE WHEN responded_date IS NULL AND due_date IS NOT NULL AND due_date < CURRENT_DATE
-         THEN TRUE ELSE FALSE END     AS IsPastDue
+         THEN TRUE ELSE FALSE END     AS IsPastDue,
+    -- ponytail: RFI drafts (16 live) are not split out and still count open; derive from
+    -- status_label like the submittal arm if the RFI open count is ever questioned.
+    FALSE                             AS IsDraft,
+    CASE WHEN responded_date IS NOT NULL AND created_date IS NOT NULL
+         THEN datediff(responded_date, created_date) END AS TurnaroundDays
 FROM sv_rfis
 WHERE project_id IS NOT NULL;

@@ -429,6 +429,12 @@ def test_procore_facts(con) -> None:
     assert one(con, "SELECT IsMockup FROM fct_QcSubmittal WHERE SubmittalKey='SB1'") is False
     check("mockups are identifiable without a second place to record them")
 
+    q = lambda k: con.execute("SELECT IsOpen, TurnaroundDays, DaysOpen IS NOT NULL, IsDraft "
+                              "FROM fct_QcSubmittal WHERE SubmittalKey=?", [k]).fetchone()
+    assert q("SB1") == (True, None, True, False)
+    assert q("SB2") == (False, 14, False, False)
+    check("QC submittal turnaround is closed-only and DaysOpen open-only - no today fallback")
+
     # MonthStart is the dim_Date join. A value outside the calendar matches nothing and
     # every measure over it returns BLANK, which on a card looks exactly like zero.
     for table in ("fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal"):

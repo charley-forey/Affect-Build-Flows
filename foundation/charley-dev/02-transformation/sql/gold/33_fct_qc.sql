@@ -126,8 +126,8 @@ WHERE p.project_id IS NOT NULL;
 -- ---------------------------------------------------------------------------
 -- Submittals & mockups
 -- ---------------------------------------------------------------------------
--- IsOverdue is derived from responded_date rather than status, for the same reason IsOpen
--- is above. TurnaroundDays is the number the quality plan actually manages to: a submittal
+-- IsOpen/IsOverdue use the response date plus Procore's fixed status category, never the
+-- configurable status name. TurnaroundDays is the number the quality plan actually manages to: a submittal
 -- approved in 40 days has held up procurement whatever its final status says.
 
 CREATE OR REPLACE TABLE fct_QcSubmittal AS
@@ -148,15 +148,25 @@ SELECT
               OR created_date < DATE '2015-01-01'
               OR created_date > DATE '2035-12-31' THEN NULL
          ELSE make_date(year(created_date), month(created_date), 1) END AS MonthStart,
-    CASE WHEN responded_date IS NULL THEN TRUE ELSE FALSE END AS IsOpen,
+    -- Same open/closed/draft rule as fct_RfiSubmittal (see 23_fct_rfisubmittal.sql).
+    NOT is_closed AND NOT is_draft      AS IsOpen,
+    -- Created -> responded, closed items only. The old today-minus-created fallback put
+    -- the age of open items into the turnaround average.
     CASE WHEN responded_date IS NOT NULL AND created_date IS NOT NULL
               THEN datediff(responded_date, created_date)
-         WHEN created_date IS NOT NULL
-              THEN datediff(CURRENT_DATE, created_date)
     END                                 AS TurnaroundDays,
-    CASE WHEN responded_date IS NULL AND due_date IS NOT NULL AND due_date < CURRENT_DATE
-         THEN TRUE ELSE FALSE END       AS IsOverdue
-FROM sv_qc_submittal
+    CASE WHEN NOT is_closed AND NOT is_draft AND due_date IS NOT NULL AND due_date < CURRENT_DATE
+         THEN TRUE ELSE FALSE END       AS IsOverdue,
+    is_draft AND NOT is_closed          AS IsDraft,
+    CASE WHEN NOT is_closed AND NOT is_draft AND created_date IS NOT NULL
+         THEN datediff(CURRENT_DATE, created_date) END AS DaysOpen
+FROM (
+    SELECT *,
+           COALESCE(responded_date IS NOT NULL
+                    OR UPPER(TRIM(status_category)) = 'CLOSED', FALSE)             AS is_closed,
+           COALESCE(UPPER(TRIM(COALESCE(status_category, source_status))) = 'DRAFT', FALSE) AS is_draft
+    FROM sv_qc_submittal
+) s
 WHERE project_id IS NOT NULL;
 
 -- Native inspections retain their own identity; no equivalence to manual templates is assumed.

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T04:08:29.977385+00:00",
+  "generated_at": "2026-09-14T04:27:23.746448+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -652,9 +652,15 @@
         },
         {
           "name": "Avg Days Open",
-          "expression": "AVERAGE ( fct_RfiSubmittal[DaysOpen] )",
+          "expression": "CALCULATE ( AVERAGE ( fct_RfiSubmittal[DaysOpen] ), fct_RfiSubmittal[IsOpen] = TRUE )",
           "format": "\"#,0.0\"",
           "origin": "QUALITY!D39 - typed by hand"
+        },
+        {
+          "name": "Draft Submittals",
+          "expression": "CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsDraft] = TRUE, fct_RfiSubmittal[ItemType] = \"Submittal\" )",
+          "format": "\"#,0\"",
+          "origin": "derived - drafts are not yet submitted, so excluded from Open Submittals"
         },
         {
           "name": "Critical Milestones",
@@ -3380,9 +3386,21 @@
         },
         {
           "name": "Avg Submittal Turnaround Days",
-          "expression": "AVERAGEX(FILTER(fct_QcSubmittal, NOT fct_QcSubmittal[IsOpen] && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])",
+          "expression": "AVERAGEX(FILTER(fct_QcSubmittal, fct_QcSubmittal[IsOpen] = FALSE() && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])",
           "format": "\"#,0.0\"",
-          "origin": "Submittals & Mockups - not computed in the workbook; closed submittals only"
+          "origin": "Submittals & Mockups - not computed in the workbook; created to distributed/closed, closed items only"
+        },
+        {
+          "name": "Median Submittal Turnaround Days",
+          "expression": "MEDIANX(FILTER(fct_QcSubmittal, fct_QcSubmittal[IsOpen] = FALSE() && NOT ISBLANK(fct_QcSubmittal[TurnaroundDays])), fct_QcSubmittal[TurnaroundDays])",
+          "format": "\"#,0.0\"",
+          "origin": "Submittals & Mockups - not computed in the workbook; median of closed-item turnaround"
+        },
+        {
+          "name": "Draft Submittals",
+          "expression": "CALCULATE(COUNTROWS(fct_QcSubmittal), fct_QcSubmittal[IsDraft] = TRUE())",
+          "format": "\"#,0\"",
+          "origin": "Submittals & Mockups - drafts not yet submitted; excluded from Open Submittals"
         },
         {
           "name": "Possible Mock-Ups",
