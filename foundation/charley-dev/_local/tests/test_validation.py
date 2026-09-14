@@ -98,6 +98,7 @@ def test_notebooks():
         "seeds": deploy_seeds.build_notebook(),
         "silver": deploy_silver.build_notebook(),
         "extraction": make_notebooks.notebook(make_notebooks.EXTRACT_PROCORE),
+        "python extraction": make_notebooks.notebook(make_notebooks.extract_procore_python("ws", "lh"), "python"),
         "outbuild extraction": make_notebooks.notebook(make_notebooks.EXTRACT_OUTBUILD),
         "sage candidate": validate_sage_spark.build("offline-test"),
         "gold candidate": validate_gold_candidate.build("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
@@ -116,7 +117,16 @@ def test_notebooks():
     assert "session = rl.RateLimitedSession(requests.Session())" in source
     assert any(remote == "Files/lib/ratelimit.py" and local.exists()
                for local, remote in deploy_ingestion.UPLOADS)
-    candidate = "\n".join("".join(c["source"]) for c in notebooks["sage candidate"]["cells"])
+    # The Python-kernel variant shares every extraction cell and never touches Spark.
+    python = notebooks["python extraction"]
+    assert python["cells"][2:] == notebooks["extraction"]["cells"][2:]
+    assert python["metadata"]["microsoft"]["language_group"] == "jupyter_python"
+    python_code = "\n".join("".join(c["source"]) for c in python["cells"] if c["cell_type"] == "code")
+    assert "spark" not in python_code.lower()
+    assert "abfss://ws@onelake.dfs.fabric.microsoft.com/lh/Tables/dbo" in python_code
+    assert any(remote == "Files/lib/deltars.py" and local.exists()
+               for local, remote in deploy_ingestion.UPLOADS)
+    candidate ="\n".join("".join(c["source"]) for c in notebooks["sage candidate"]["cells"])
     assert "CREATE OR REPLACE TABLE" not in candidate
     assert "CREATE OR REPLACE TEMPORARY VIEW" in candidate
     assert notebooks["gold candidate"]["metadata"]["dependencies"]["lakehouse"]["default_lakehouse"] == "validation-only"
@@ -539,7 +549,7 @@ def test_extraction_scope_evidence():
             if scenario == "declared_now_available" and ep.name == "parent":
                 return [("good", 7), ("good", 8)]
             return [("good", 7)] + ([("disabled", 8)] if gap else [])
-        def merge(spark, rows, table, keys):
+        def merge(rows, table, keys):
             if scenario == "merge_failure" and table == "bronze_parent":
                 raise ValueError("conflicting key")
             written.append(table)
@@ -549,20 +559,21 @@ def test_extraction_scope_evidence():
                 ordered=[parent, child], project_ids=[7, 8], batch_id="batch-test",
                 DIAG=temp, os=os, _json=json, print=lambda *a, **k: None,
                 settings=SimpleNamespace(company_id=1, base_url="unused"), session=None, token=None,
-                spark=SimpleNamespace(createDataFrame=lambda rows, schema: rows),
+                # The four bronze-write hooks each kernel's setup cell defines.
+                write_bronze=merge, log_run=lambda *a: None,
+                read_since=lambda *a: "previous-watermark",
+                write_watermark=lambda *a: watermarks.append(a),
                 px=SimpleNamespace(build_headers=lambda token, company, ep: {"endpoint": ep.name},
                     build_params=lambda ep, company, since: {"since": since},
                     iter_records=records, stamp_project=lambda record, pid: dict(record, normalized_project=pid),
-                    to_bronze_row=lambda record, *a: record, bronze_schema=lambda: None,
+                    to_bronze_row=lambda record, *a: record,
                     bronze_merge_keys=lambda ep: ["id"], is_tool_not_enabled=lambda exc: isinstance(exc, Disabled)),
                 ps=SimpleNamespace(expand_paths=paths, collect_parent_ids=lambda records, parent: [r["id"] for r in records],
                                    declared_unavailable=lambda ep, pid: "tool not enabled" if (
                                        scenario in ("declared", "declared_now_available") and ep.name == "parent" and pid == 8) else None,
                                    normalize_records=lambda ep, record, path: [record]),
-                fc=SimpleNamespace(utc_now=lambda: "now", row_hash=lambda r: "hash",
-                                   merge_delta=merge, log_run=lambda *a: None),
-                wm=SimpleNamespace(read_since=lambda *a: "previous-watermark", high_water=lambda *a: "high",
-                                   write_watermark=lambda *a: watermarks.append(a)))
+                fc=SimpleNamespace(utc_now=lambda: "now", row_hash=lambda r: "hash"),
+                wm=SimpleNamespace(high_water=lambda *a: "high"))
             if scenario in ("archive_failure", "checkpoint_failure"):
                 def unavailable_archive(path, *args, **kwargs):
                     if str(path).endswith(".jsonl" if scenario == "archive_failure" else ".audit.json"):
