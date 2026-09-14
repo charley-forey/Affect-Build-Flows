@@ -3,6 +3,12 @@
     python validate_model.py                              # validate the current frame
     python validate_model.py --allow-production-reframe   # refresh production first
 
+Without --allow-production-reframe it does NOT refresh: it validates the release the
+production model currently shows (its last frame). Direct Lake automatic update is off, so
+refreshing production IS publishing - that is cd_50_publish_models' job, after the DQ gate.
+To validate a model you just deployed, use validate_candidate_model.py (reframes candidates
+only) or run the pipeline / deploy_publish.py --apply --run first.
+
 This is the reconciliation gate as a test rather than a manual comparison. It executes
 each measure against the live model and asserts the result, so "the model deploys" becomes
 "the model returns the right numbers".

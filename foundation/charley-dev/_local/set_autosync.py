@@ -15,34 +15,20 @@ semantic-link-labs sempy_labs.directlake.set_autosync(enable=False) does
   POST {cluster}/metadata/models/{model.id}/settings  {"directLakeAutoSync": false} -> 204
 Undocumented and internal: confirm the result in the portal (Semantic model settings >
 Refresh) after --apply, because the setting cannot be read back through any API.
+cd_50_publish_models re-applies it on every run, so a recreated model is covered too.
 """
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deploy as dp  # noqa: E402
-import deploy_publish  # noqa: E402
+import deploy_publish as pub  # noqa: E402
 import validate_model as vm  # noqa: E402
-
-
-def call(method: str, url: str, tok: str, body: dict | None = None) -> tuple[int, dict]:
-    request = urllib.request.Request(
-        url, method=method, data=json.dumps(body).encode() if body is not None else None,
-        headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=60) as response:
-            raw = response.read().decode()
-            return response.status, json.loads(raw) if raw else {}
-    except urllib.error.HTTPError as exc:
-        raise dp.FabricError(f"{method} {url} failed ({exc.code}): {exc.read().decode()[:300]}") from exc
 
 
 def main() -> int:
@@ -52,23 +38,13 @@ def main() -> int:
     args = parser.parse_args()
 
     tok = vm.pbi_token()
-    _, capacities = call("GET", f"{vm.PBI_API}/capacities", tok)
-    cluster = capacities["@odata.context"].split("/v1.0")[0]
-    print(f"cluster {cluster}")
-
-    for name, dataset_id in deploy_publish.MODELS:
-        _, meta = call("GET", f"{cluster}/metadata/models/{dataset_id}", tok)
-        model_id = meta.get("model", {}).get("id")
-        if not model_id:
-            raise dp.FabricError(f"no internal model id for {name} ({dataset_id})")
-        url = f"{cluster}/metadata/models/{model_id}/settings"
-        if not args.apply:
-            print(f"  would POST {url} {{\"directLakeAutoSync\": false}}  ({name})")
-            continue
-        status, _ = call("POST", url, tok, {"directLakeAutoSync": False})
-        if status != 204:
-            raise dp.FabricError(f"{name}: expected 204, got {status}")
-        print(f"  {name}: automatic update disabled")
+    # Same resolution and call as cd_50_publish_models, which also re-applies this every run.
+    for name, dataset_id in pub.resolve_models(tok):
+        url = pub.disable_autosync(tok, dataset_id, apply=args.apply)
+        if args.apply:
+            print(f"  {name}: automatic update disabled ({url})")
+        else:
+            print(f"  would POST {url} {{\"directLakeAutoSync\": false}}  ({name} {dataset_id})")
 
     if not args.apply:
         print("\nDRY RUN - nothing changed. Re-run with --apply.")
