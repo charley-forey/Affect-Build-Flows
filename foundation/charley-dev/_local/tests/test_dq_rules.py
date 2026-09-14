@@ -279,6 +279,14 @@ def main() -> int:
     assert mutated(con, stale, "UPDATE dim_Project SET LastExtractedAt = NULL") == 0
     checks += 3
 
+    # Sage voids: WARN, clean fixture has none; a status-5 AR or AP invoice trips it.
+    void = "voided Sage invoices included in totals"
+    assert RULES[void].severity == expectations.SEVERITY_WARN and failing(con, void) == 0
+    for view, key in (("sv_ar_invoices", "invoice_uid = 'INV2'"), ("sv_ap_invoices", "invoice_id = 'AP2'")):
+        check_fails(con, void, f"CREATE TEMP TABLE void_snap AS SELECT * FROM {view}",
+                    f"CREATE OR REPLACE VIEW {view} AS SELECT * REPLACE (CASE WHEN {key} THEN 5 ELSE status_code END AS status_code) FROM void_snap")
+        checks += 1
+
     con.close()
     print(f"test_dq_rules: {checks} mutation checks passed")
     return 0

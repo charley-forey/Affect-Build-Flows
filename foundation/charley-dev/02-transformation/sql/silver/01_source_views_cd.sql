@@ -118,7 +118,10 @@ SELECT
     invoice_total,
     amount_paid,
     invoice_balance,
-    billing_period
+    billing_period,
+    -- Sage status: 1 Open, 2 Review, 3 Dispute, 4 Paid, 5 Void. Voids are NOT excluded; the
+    -- DQ WARN "voided Sage invoices included in totals" lists them.
+    status_code
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ar_invoices`;
 
 -- Sage AP, which has no equivalent in the existing warehouse at all. The line view is what

@@ -102,7 +102,8 @@ SELECT
     CAST(`Invoice Total`   AS DOUBLE) AS invoice_total,
     CAST(`Amount Paid`     AS DOUBLE) AS amount_paid,
     CAST(`Invoice Balance` AS DOUBLE) AS invoice_balance,
-    CAST(`Billing Period`  AS STRING) AS billing_period
+    CAST(`Billing Period`  AS STRING) AS billing_period,
+    CAST(NULL AS INT)                 AS status_code
 FROM delta.`{SILVER_ABFSS}/Revenue_AllTime`;
 
 -- SENTINEL DATES. The submittals table carries dates before 1582-10-15, which made Spark

@@ -222,9 +222,10 @@ def pull(endpoint: dict, tok: str) -> list[dict]:
         # /activities 500 - so the old "a short page is the last page" rule stopped after
         # page one on every endpoint that pages in anything other than PAGE_SIZE.
         if not has_next or not batch:
-            break
+            return records
         page += 1
-    return records
+    # A truncated list would read as deletions of everything past page MAX_PAGES.
+    raise RuntimeError(f"{endpoint['name']}: more than {MAX_PAGES} pages; refusing a partial pull")
 
 
 def to_bronze_row(record: dict, endpoint: dict, ingested_at: datetime, batch: str) -> dict:
@@ -266,8 +267,12 @@ def bronze_row(record: dict, endpoint: dict, ingested_at: datetime, batch: str) 
 def extract(endpoints: list[dict], tok: str, batch: str, diag: str | Path, write) -> dict:
     """The Fabric run (cd_02_extract_outbuild): pull, archive raw, merge, write a manifest.
 
-    `write(table, rows) -> int` does the Spark merge; it is passed in so this stays testable
-    without a cluster. Raw records are archived to <diag>/ingestion/<batch>/<name>.jsonl
+    `write(table, rows, tombstone) -> int` does the Spark merge; it is passed in so this stays
+    testable without a cluster. `tombstone` is True only for a consumed endpoint whose pull
+    finished and returned at least one row: the pull then holds the table's complete key set,
+    so bronze keys it lacks are flagged `_source_deleted_at` in the same merge (and a key read
+    again clears it). Skipped and failed endpoints never reach write; an empty answer is not
+    trusted. See _docs/deletion-and-scope-handling.md. Raw records are archived to <diag>/ingestion/<batch>/<name>.jsonl
     (exclusive create) BEFORE the merge; the manifest goes to <diag>/ingestion/<batch>.json
     and <diag>/outbuild_run.json. The caller raises when manifest["blocking_failures"].
 
@@ -293,7 +298,8 @@ def extract(endpoints: list[dict], tok: str, batch: str, diag: str | Path, write
             with open(entry["raw_archive"], "x", encoding="utf-8") as fh:
                 fh.writelines(json.dumps(r, default=str) + "\n" for r in records)
             rows = [bronze_row(r, endpoint, ingested_at, batch) for r in records]
-            entry["written_rows"] = write(endpoint["bronze_table"], rows) if rows else 0
+            entry["tombstone"] = bool(rows) and entry["consumed"]
+            entry["written_rows"] = write(endpoint["bronze_table"], rows, entry["tombstone"]) if rows else 0
             entry["status"] = "complete"
         except Exception as exc:                                    # noqa: BLE001
             entry["status"] = "failed"

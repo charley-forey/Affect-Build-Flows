@@ -194,7 +194,82 @@ def test_tombstones():
           "stamped once; reappearing key clears; legacy table gains the column; both paths identical")
 
 
+def test_outbuild_tombstones():
+    """Outbuild: extract() decides, the notebook's merge (merge_delta -> merge_sql with the
+    WHOLE_TABLE scope) flags. One Spark path, so DuckDB runs merge_sql as the oracle does above."""
+    import json
+    from unittest.mock import patch
+
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+    import extract_outbuild_local as ob
+
+    # The notebook cell's COLUMNS plus the tombstone column it adds.
+    cols = ["_key", "_project_id", "payload", "_ingested_at", "_batch_id", "_row_hash",
+            "_source_endpoint", "_merge_key", fabric_common.DELETED_AT]
+    types = {"_ingested_at": "TIMESTAMPTZ", fabric_common.DELETED_AT: "TIMESTAMPTZ"}
+    con = duckdb.connect()
+    con.execute("SET TimeZone = 'UTC'")
+
+    def write(table, rows, tombstone):
+        con.execute("CREATE OR REPLACE TABLE src (" + ", ".join(f'"{c}" {types.get(c, "VARCHAR")}' for c in cols) + ")")
+        con.executemany(f"INSERT INTO src VALUES ({', '.join('?' * len(cols))})",
+                        [[r.get(c) for c in cols] for r in rows])
+        fabric_common.prepare_merge(Frame(con.table("src")), ["_merge_key"])
+        if not con.execute(f"SELECT count(*) FROM information_schema.tables WHERE table_name = '{table}'").fetchone()[0]:
+            con.execute(f"CREATE TABLE {table} AS SELECT DISTINCT * FROM src")
+            return len(rows)
+        sql = fabric_common.merge_sql(table, "src", ["_merge_key"], cols,
+                                      [fabric_common.WHOLE_TABLE] if tombstone else (),
+                                      datetime.fromisoformat(rows[0]["_ingested_at"]))
+        con.execute(re.sub(r"t\.(\"[^\"]+\") = ", r"\1 = ", sql.replace("`", '"').replace("<=>", "IS NOT DISTINCT FROM")))
+        return len(rows)
+
+    endpoints = [{"name": "activities", "path": "/activities", "bronze_table": "ob_activities", "consumed": True},
+                 {"name": "tasks", "path": "/tasks", "bronze_table": "ob_tasks"},
+                 {"name": "schedule_impact_requests", "path": "/s/{scheduleId}", "scope": "schedule",
+                  "bronze_table": "ob_sir", "consumed": True}]
+    recs = lambda *ids: [{"id": i} for i in ids]
+    # (activities pull, tasks pull, expected tombstoned activity ids, expected tombstoned task ids)
+    steps = [
+        (recs(1, 2, 3), recs(10, 11), set(), set()),
+        # 2 gone from a complete consumed pull: flagged. 11 gone from an unconsumed one: not.
+        (recs(1, 3), recs(10), {"2"}, set()),
+        # A failed pull never merges, so never tombstones; an empty answer is not trusted.
+        (RuntimeError("504"), [], {"2"}, set()),
+        ([], recs(10), {"2"}, set()),
+        # 2 reappears and clears; 3 is now gone.
+        (recs(1, 2), recs(10), {"3"}, set()),
+    ]
+    stamps = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        for i, (activities, tasks, want_a, want_t) in enumerate(steps):
+            def pull(ep, tok):
+                got = {"activities": activities, "tasks": tasks}[ep["name"]]
+                if isinstance(got, Exception):
+                    raise got
+                return got
+            with patch.object(ob, "pull", pull):
+                manifest = ob.extract(endpoints, "t", f"b{i}", tmp, write)
+            by = {a["endpoint"]: a for a in manifest["endpoints"]}
+            assert by["schedule_impact_requests"]["status"] == "skipped"
+            assert by["activities"].get("tombstone", False) == bool(activities and not isinstance(activities, Exception)), (i, by)
+            for table, want in (("ob_activities", want_a), ("ob_tasks", want_t)):
+                flagged = dict(con.execute(f'SELECT _key, "{fabric_common.DELETED_AT}" FROM {table} '
+                                           f'WHERE "{fabric_common.DELETED_AT}" IS NOT NULL').fetchall())
+                assert set(flagged) == want, (i, table, flagged)
+                for key, at in flagged.items():   # stamped once, never re-stamped
+                    assert stamps.setdefault((table, key), at) == at
+        assert json.loads((Path(tmp) / "outbuild_run.json").read_text())["batch"] == "b4"
+    # Nothing is ever removed: the flag is the evidence.
+    assert con.execute("SELECT count(*) FROM ob_activities").fetchone()[0] == 3
+    assert con.execute("SELECT count(*) FROM ob_tasks").fetchone()[0] == 2
+    con.close()
+    print("  outbuild tombstones: consumed complete non-empty pulls only; failed, empty, skipped and "
+          "unconsumed never; stamped once; reappearing key clears")
+
+
 if __name__ == "__main__":
     test_merge_equivalence()
     test_tombstones()
+    test_outbuild_tombstones()
     test_watermark_and_run_log()

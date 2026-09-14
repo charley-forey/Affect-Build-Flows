@@ -998,7 +998,7 @@ def build_suite() -> Suite:
             table="dq_DataGap",
             failing_sql="SELECT * FROM dq_DataGap WHERE GapCategory = 'Deleted at source'",
             severity=SEVERITY_WARN,
-            description="records absent from a complete Procore pull are excluded from reporting - a spike means deletions or a pull that silently returned less",
+            description="records absent from a complete Procore or Outbuild pull are excluded from reporting - a spike means deletions or a pull that silently returned less",
         ),
         Expectation(
             name="projects with facts extracted within 2 days",
@@ -1009,6 +1009,20 @@ def build_suite() -> Suite:
                          "UNION SELECT ProjectKey FROM fct_RfiSubmittal)"),
             severity=SEVERITY_WARN,
             description="a project no longer extracted (usually inactive in Procore) still counts in totals with frozen figures",
+        ),
+        # Sage voids by status (5-Void on AR acrinv and AP acpinv, per the Sage 100 Contractor
+        # user guide), not by delete, and silver/gold do not exclude voids - an unconfirmed
+        # business rule. Live: AR invoice recnum 55 is status 5 with a +/-200,000 receipt
+        # reversal and invbal 200,000, so it adds 200,000 to billed and balance totals.
+        Expectation(
+            name="voided Sage invoices included in totals",
+            table="fct_Invoice",
+            failing_sql=("SELECT 'AR' AS ledger, invoice_uid, invoice_id, sage_project_id, invoice_total, invoice_balance "
+                         "FROM sv_ar_invoices WHERE status_code = 5 UNION ALL "
+                         "SELECT 'AP', invoice_uid, invoice_id, sage_project_id, invoice_total, invoice_balance "
+                         "FROM sv_ap_invoices WHERE status_code = 5"),
+            severity=SEVERITY_WARN,
+            description="Sage invoices with status 5-Void still count in AR/AP totals and balances until Affect confirms whether voids should be excluded",
         ),
     )
 

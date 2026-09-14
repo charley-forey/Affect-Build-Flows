@@ -1,4 +1,5 @@
--- silver: records deleted at source, and when each Procore project was last extracted.
+-- silver: records deleted at source (Procore and Outbuild), and when each Procore project was
+-- last extracted.
 --
 -- DELETED AT SOURCE. Bronze never deletes. When a key present in bronze is absent from a
 -- COMPLETE full pull of its (endpoint, project) scope, the extractor sets
@@ -53,7 +54,17 @@ WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NOT
 UNION ALL
 SELECT 'cd_silver_commitment_lines', 'deleted at source', payload, _batch_id
 FROM cd_bronze_procore_purchase_order_contract_line_items
-WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NOT NULL;
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NOT NULL
+-- Outbuild (cd_02_extract_outbuild tombstones projects and activities; 25 excludes them).
+-- An activity without an id stays a 'missing id' reject, as for Procore above.
+UNION ALL
+SELECT 'cd_silver_outbuild_activities', 'deleted at source', payload, _batch_id
+FROM cd_bronze_outbuild_activities
+WHERE get_json_object(payload, '$.id') IS NOT NULL AND _source_deleted_at IS NOT NULL
+UNION ALL
+SELECT 'outbuild_schedule_map', 'deleted at source', payload, _batch_id
+FROM cd_bronze_outbuild_projects
+WHERE _source_deleted_at IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- Project extraction freshness

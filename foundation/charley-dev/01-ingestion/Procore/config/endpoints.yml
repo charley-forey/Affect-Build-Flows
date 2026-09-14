@@ -17,6 +17,9 @@
 #   key           natural key used for the MERGE (default "id")
 #   incremental   watermark filter param; omit for a full reload.
 #                 A full reload is still idempotent - the load is a MERGE on `key`.
+#   full_pull_weekday  (incremental only) UTC weekday, e.g. Sunday, on which the watermark
+#                 is ignored and the endpoint is pulled in full, so records deleted in
+#                 Procore are tombstoned. Refused on date-windowed endpoints.
 #   per_page      page size (default 100). 1000 only on top-level v1.x collections that
 #                 returned complete data at 1000 on 2026-08-02; the loader refuses it on
 #                 nested, v2.0 and daily_logs paths, which 400 at 1000.
@@ -41,6 +44,7 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_projects
     incremental: filters[updated_at]        # cheatsheet:29
+    full_pull_weekday: Sunday               # deletions: see _docs/deletion-and-scope-handling.md
 
   - name: vendors
     path: /rest/v1.0/vendors
@@ -102,6 +106,7 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_prime_contract_line_items
     incremental: filters[updated_at]        # cheatsheet:139
+    full_pull_weekday: Sunday               # deletions: see _docs/deletion-and-scope-handling.md
     parent:
       endpoint: prime_contracts
       field: id
@@ -248,6 +253,7 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_direct_cost_line_items
     incremental: filters[updated_at]
+    full_pull_weekday: Sunday               # deletions: see _docs/deletion-and-scope-handling.md
 
   # -- Change orders ---------------------------------------------------------
   # Feeds [AgeOfOldestUnapprovedCO], typed by hand in FINANCIALS!C6 today.
@@ -258,6 +264,7 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_potential_change_orders
     incremental: filters[updated_at]        # cheatsheet:178
+    full_pull_weekday: Sunday               # deletions: see _docs/deletion-and-scope-handling.md
 
   # change_order_requests REMOVED 2026-09-13: 403/404 on 20/20 projects (this tenant
   # models prime COs as change_order_packages - see prime_change_orders) and nothing in
@@ -378,6 +385,7 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_incidents
     incremental: filters[updated_at]        # cheatsheet:113
+    full_pull_weekday: Sunday               # deletions: see _docs/deletion-and-scope-handling.md
 
   - name: incident_injuries
     path: /rest/v1.0/projects/{project_id}/incidents/injuries
@@ -397,6 +405,7 @@ endpoints:
     api_version: "1.0"
     bronze_table: cd_bronze_procore_incident_severity_levels
     incremental: filters[updated_at]        # cheatsheet:117
+    full_pull_weekday: Sunday               # deletions: see _docs/deletion-and-scope-handling.md
 
   # Computes SCHEDULE!Table14 "Avg Daily over past 30 days" exactly, at daily grain -
   # which also removes the workbook's hard cap of 5 subcontractors.

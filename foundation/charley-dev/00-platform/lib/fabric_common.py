@@ -204,15 +204,21 @@ def audit_columns(source_endpoint: str, batch_id: str, payload: Any = None) -> d
 # Set on a bronze row whose key was absent from a COMPLETE full pull of its scope; cleared
 # (NULL) whenever the key is read again. See _docs/deletion-and-scope-handling.md.
 DELETED_AT = "_source_deleted_at"
+# A tombstone scope meaning "every row of the table": a source whose one pull lists the
+# whole table (Outbuild). Procore scopes are project ids.
+WHOLE_TABLE = "*"
 
 
 def tombstone_predicate(scopes: Iterable[Any], column: str = "t.`_project_id`") -> str:
     """SQL predicate matching bronze rows inside the given complete project scopes.
 
-    None is the company scope (`_project_id` IS NULL). Ids are cast to int, so nothing from
-    a payload reaches the SQL text. Shared by the Spark and delta-rs merges.
+    None is the company scope (`_project_id` IS NULL); WHOLE_TABLE matches every row. Ids
+    are cast to int, so nothing from a payload reaches the SQL text. Shared by the Spark and
+    delta-rs merges.
     """
     scopes = list(scopes)
+    if WHOLE_TABLE in scopes:
+        return "(TRUE)"
     ids = sorted({int(s) for s in scopes if s is not None})
     parts = ([f"{column} IN ({', '.join(map(str, ids))})"] if ids else []) \
         + ([f"{column} IS NULL"] if None in scopes else [])
@@ -416,6 +422,7 @@ def _selftest() -> None:
             "(t.`_project_id` IN (7) OR t.`_project_id` IS NULL) THEN UPDATE SET "
             "t.`_source_deleted_at` = TIMESTAMP '2026-09-14 06:00:00.000000'") in sql, sql
     assert "NOT MATCHED BY SOURCE" not in merge_sql("t", "v", ["id"], ["id", "x"])
+    assert tombstone_predicate([WHOLE_TABLE]) == "(TRUE)"
     for bad in (["7 OR 1=1"], []):
         try:
             tombstone_predicate(bad)

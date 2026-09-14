@@ -1438,6 +1438,14 @@ def test_deleted_at_source(con) -> None:
                 payload = {"id": f"DEL-{source}", "holder": {"id": "X"}}
                 con.execute(f"INSERT INTO cd_bronze_procore_{source} VALUES "
                             + bronze_row(f"DEL-{source}", payload, "7", deleted_at="2026-08-02 06:00:00"))
+        # Outbuild: a deleted activity, and a deleted project whose schedule an activity still names.
+        con.execute("INSERT INTO cd_bronze_outbuild_activities VALUES "
+                    + bronze_row("A-DEL", {"id": 14999, "name": "DEL-activity", "schedule_id": 9001},
+                                 deleted_at="2026-08-02 06:00:00") + ", "
+                    + bronze_row("A-ORPH", {"id": 14998, "name": "Orphaned", "schedule_id": 9009}))
+        con.execute("INSERT INTO cd_bronze_outbuild_projects VALUES "
+                    + bronze_row("OB-DEL", {"id": 4009, "name": "DEL-project", "procore_id": "7",
+                                            "schedules": [{"id": 9009}]}, deleted_at="2026-08-02 06:00:00"))
         # A later full pull of project 7 re-merged its cost codes: freshness advances.
         con.execute("INSERT INTO cd_bronze_procore_cost_codes VALUES "
                     + bronze_row("CC-late", {"id": "CC-late"}, "7", ingested_at="2026-08-03 06:00:00"))
@@ -1453,17 +1461,28 @@ def test_deleted_at_source(con) -> None:
             assert len(deleted) == len(sources), (target, deleted)
             assert with_id == accepted + len(deleted), (target, with_id, accepted, len(deleted))
             assert not one(con, f"SELECT COUNT(*) FROM {target} WHERE CAST(to_json({target}) AS VARCHAR) LIKE '%DEL-%'"), target
+        # Outbuild conserves the same way; a deleted project leaves the schedule map, so its
+        # surviving activity is unattributed (visible), not silently kept on project 7.
+        with_id = one(con, "SELECT COUNT(*) FROM cd_bronze_outbuild_activities WHERE get_json_object(payload, '$.id') IS NOT NULL")
+        accepted = one(con, "SELECT COUNT(*) FROM cd_silver_outbuild_activities")
+        deleted = one(con, "SELECT COUNT(*) FROM cd_dq_rejects WHERE target_table = 'cd_silver_outbuild_activities' "
+                           "AND reason = 'deleted at source'")
+        assert (with_id, deleted) == (accepted + deleted, 1), (with_id, accepted, deleted)
+        assert one(con, "SELECT COUNT(*) FROM cd_silver_outbuild_activities WHERE activity_name LIKE 'DEL-%'") == 0
+        assert one(con, "SELECT project_id FROM cd_silver_outbuild_activities WHERE activity_id = '14998'") is None
+        assert [json.loads(p)["name"] for (p,) in con.execute(
+            "SELECT payload FROM cd_dq_rejects WHERE target_table = 'outbuild_schedule_map' ORDER BY reason").fetchall()] == ["DEL-project"]
         # The QC views read the filtered tables, and their project-less rejects skip tombstones.
         assert one(con, "SELECT COUNT(*) FROM cd_silver_qc_ncr WHERE ncr_id LIKE 'DEL-%'") == 0
         # Re-running 28 alone does not duplicate the ledger.
         for statement in split_statements((SILVER_DIR / "28_source_deletions_silver.sql").read_text(encoding="utf-8")):
             con.execute(statement)
-        assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects WHERE reason = 'deleted at source'") ==             sum(len(s) for s in DELETION_TARGETS.values())
+        assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects WHERE reason = 'deleted at source'") ==             sum(len(s) for s in DELETION_TARGETS.values()) + 2
         assert con.execute("SELECT is_active_in_procore, CAST(last_extracted_at AS VARCHAR) "
                            "FROM cd_silver_project_extraction WHERE project_id = '7'").fetchone() ==             (True, "2026-08-03 06:00:00")
     finally:
         con.execute("ROLLBACK")
-    check(f"{len(DELETION_TARGETS)} parsers exclude rows deleted at source: bronze with id = silver + 'deleted at source' rejects")
+    check(f"{len(DELETION_TARGETS)} Procore parsers and the Outbuild parser exclude rows deleted at source: bronze with id = silver + 'deleted at source' rejects")
     check("project freshness: last_extracted_at is the newest full-pull ingestion, with Procore's active flag")
 
 

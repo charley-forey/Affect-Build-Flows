@@ -83,6 +83,9 @@ WITH schedule_rows AS (
         get_json_object(payload, '$.id')                      AS outbuild_project_id,
         TRIM(get_json_object(payload, '$.name'))              AS outbuild_project_name
     FROM cd_bronze_outbuild_projects
+    -- A project no longer listed by Outbuild (tombstoned by cd_02_extract_outbuild) leaves
+    -- the map; its rows are ledgered 'deleted at source' by 28_source_deletions_silver.sql.
+    WHERE _source_deleted_at IS NULL
 ),
 schedule_map AS (
     SELECT get_json_object(sched, '$.id') AS schedule_id,
@@ -124,7 +127,9 @@ FROM cd_bronze_outbuild_activities a
 -- question and not a broken join.
 LEFT JOIN schedule_map m
        ON get_json_object(a.payload, '$.schedule_id') = m.schedule_id
-WHERE get_json_object(a.payload, '$.id') IS NOT NULL;
+WHERE get_json_object(a.payload, '$.id') IS NOT NULL
+  -- Deleted in Outbuild: excluded here, ledgered by 28_source_deletions_silver.sql.
+  AND a._source_deleted_at IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- Rejects
@@ -132,7 +137,8 @@ WHERE get_json_object(a.payload, '$.id') IS NOT NULL;
 -- Two ways a row leaves this parser without a trace, both now recorded:
 --
 --   * an activity with no id (the WHERE above) - target cd_silver_outbuild_activities, so
---     bronze activities = silver activities + these rejects;
+--     bronze activities = silver activities + these rejects + 'deleted at source' rejects
+--     (written by 28_source_deletions_silver.sql, which owns that reason);
 --   * an Outbuild project with no schedules. explode() of an empty or missing array yields
 --     no row, so the project vanishes from the schedule map - and sv_outbuild_projects,
 --     which is derived from the activities, never sees it either. Its target is the map,
@@ -152,4 +158,5 @@ SELECT 'outbuild_schedule_map',
        'Outbuild project has no schedules - none of its activities can be attributed',
        payload, _batch_id
 FROM cd_bronze_outbuild_projects
-WHERE get_json_object(payload, '$.schedules[0]') IS NULL;
+WHERE get_json_object(payload, '$.schedules[0]') IS NULL
+  AND _source_deleted_at IS NULL;

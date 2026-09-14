@@ -52,10 +52,26 @@ moving them to incremental would take them out of tombstoning (see recommendatio
 ### Outbuild
 
 Every endpoint is a company-wide full pull (`extract_outbuild_local.extract`, manifest
-`mode: full`), merged on `_merge_key`. Full key set: **yes**, one scope per endpoint, when
-the endpoint status is not failed. Deletions are currently kept like Procore's. Not
-implemented here (the merge goes through `fc.merge_sql` directly with a string schema); the
-same `tombstone_scopes` argument applies with a single company scope.
+`mode: full`), merged on `_merge_key`. Full key set: **yes**, one scope (the whole table) per
+endpoint. **Implemented 2026-09-14** for the consumed endpoints, `projects` and `activities`:
+
+- `extract()` passes `tombstone=True` to the notebook's `write` only when the endpoint is
+  `consumed`, its pull finished (every page, no exception) and returned **at least one row**.
+  Skipped (`scope:`) and failed endpoints never reach `write`; an empty answer is not
+  trusted. The decision is recorded per endpoint as `tombstone` in the manifest.
+- `pull()` now **raises** past `MAX_PAGES` instead of returning the pages it had: a truncated
+  list would otherwise tombstone everything after page 200.
+- The notebook's `write` now goes through `fc.merge_delta` (Spark only - there is no
+  delta-rs Outbuild path) with the scope `fc.WHOLE_TABLE` (predicate `TRUE`). merge_delta
+  adds `_source_deleted_at` to the landing-created tables with `ALTER TABLE`, and the source
+  carries the column as NULL, so a key read again clears its flag.
+- Silver `25_outbuild_silver.sql` excludes tombstoned activities, and tombstoned projects
+  from the schedule map (their surviving activities become unattributed, which is visible,
+  rather than staying on a deleted project). `28_source_deletions_silver.sql` ledgers them as
+  `deleted at source` (targets `cd_silver_outbuild_activities`, `outbuild_schedule_map`), so
+  bronze activities with an id = silver + `deleted at source` rejects. `dq_DataGap` shows them
+  under **Deleted at source** with source system `Outbuild`.
+- Unconsumed endpoints (tasks, roadblocks, ...) never tombstone: nothing reads them.
 
 ### Sage 100 (CD_Sage_Ingest dataflow / CD_Sage_Copy)
 
@@ -64,8 +80,7 @@ same `tombstone_scopes` argument applies with a single company scope.
 replace** of the eight tables, so a row deleted in Sage disappears from bronze on the next
 run. Nothing to tombstone. What remains is **voids**: Sage voids by status, not by delete.
 `26_sage_silver.sql` carries `status_code` on AR/AP headers but does not exclude voided
-invoices; that is a business-rule decision (void = status 5 in Sage 100 Contractor, to be
-confirmed against the tenant) and is out of scope for this change.
+invoices. See **Decision: Sage voided invoices** below.
 
 ### SharePoint registers (CD_Manual_Ingest dataflow)
 
@@ -95,10 +110,10 @@ refresh returns nothing. No tombstone needed.
    `cd_dq_rejects` with reason `deleted at source`, so bronze-with-id = silver + rejects.
    `dq_DataGap` lists them under **Deleted at source**; DQ WARN
    *Procore records deleted at source* counts them.
-4. **Incremental endpoints (next step, not done).** Add `filters[include_deleted]=true` where
-   the OAS supports it (potential_change_orders, WO/PO contracts, change_order_packages) and
-   map a returned `deleted_at` to `_source_deleted_at`; or run those endpoints full once a
-   week. Until then their deletions are invisible.
+4. **Incremental endpoints: weekly full pull (implemented 2026-09-14).** See **Decision:
+   weekly full pull** below. Date-windowed endpoints still never tombstone.
+   `filters[include_deleted]=true` remains the sharper signal where the OAS offers it
+   (potential_change_orders, WO/PO contracts, change_order_packages) - not built.
 5. **Inactive projects: make staleness visible rather than widen scope.** A "recently inactive"
    scope (projects whose `active` flipped within N days) needs the status-change date, which
    the projects payload does not carry (`updated_at` moves for any edit), and each extra
@@ -115,6 +130,81 @@ refresh returns nothing. No tombstone needed.
    If a frozen inactive project should be re-read once, the manual lever is a one-off run
    with its id added to `project_ids`.
 
+## Decision: weekly full pull on incremental Procore endpoints
+
+**Decision.** The six watermarked endpoints carry `full_pull_weekday: Sunday` in
+`endpoints.yml`: `projects`, `prime_contract_line_items`, `direct_cost_line_items`,
+`potential_change_orders`, `incidents`, `incident_severity_levels`. On that day the extraction
+cell ignores the watermark (`procore_scope.full_pull_due(ep, run_started)`), the audit reads
+`mode: full` and `scheduled_full_pull: true`, and `tombstone_scopes` applies exactly as for
+any full pull (complete, non-empty scopes only). The watermark still advances afterwards.
+`prime_contracts` is not flagged: it is already pulled in full nightly as a parent.
+
+- **Clock.** `run_started = fc.utc_now()` is read once per run and passed in, so every
+  endpoint agrees and the schedule is testable with any datetime. The weekday is the UTC
+  weekday; the 02:00 Eastern pipeline (`deploy_schedule.py`) runs at 06:00/07:00 UTC, the
+  same day.
+- **Refused at registry load**: the flag on a non-incremental endpoint, a misspelled weekday,
+  and any date-windowed endpoint (`manpower_daily_totals`, `manpower_logs`,
+  `daily_log_headers`). Those APIs require the window (200-empty or 400 without it, and
+  daily_logs caps it at 30 days), so no full key set exists; tombstoning inside the window
+  would need a payload-date predicate on both merge paths. Not built.
+- **Ceiling.** A Sunday run that fails or does not run leaves those deletions unseen for
+  another week (`ponytail:` note in `full_pull_due`).
+
+**Quota cost** (600 requests/hour). Requests per scope are `ceil(rows / per_page)`, minimum
+1; an upper bound is `scopes + floor(rows / per_page)`. The nightly incremental run already
+spends one request per scope (the repair manifest shows 0-5 changed rows per endpoint), so
+the Sunday cost is the extra pages only. Scopes come from `procore-repair-manifest.json`
+(batch 20260910T081211, 20 active projects). That manifest holds incremental row counts for
+these endpoints, so full row counts come from `procore-ingestion.md` (its full-run table and
+the defect-9 table). All six use `per_page: 100`.
+
+| Endpoint | Scopes | Full rows (source) | Nightly incremental | Sunday full, upper bound | Extra |
+|---|---:|---|---:|---:|---:|
+| projects | 1 (company) | 19 (procore-ingestion.md) | 1 | 1 | 0 |
+| incident_severity_levels | 1 (company) | 5 (procore-ingestion.md; manifest 5) | 1 | 1 | 0 |
+| incidents | 20 | 3 (procore-ingestion.md) | 20 | 20 | 0 |
+| prime_contract_line_items | 21 (parent) | 317 (procore-ingestion.md, defect 9) | 21 | 24 | 3 |
+| potential_change_orders | 20 | 1,050 (procore-ingestion.md) | 20 | 30 | 10 |
+| direct_cost_line_items | 20 | **not measured**; 418 direct_costs headers, assumed <= 1,300 lines | 20 | <= 33 | <= 13 |
+| **Total** | | | **83** | **<= 109** | **<= 26** |
+
+About 26 extra requests once a week, under 5% of one hour's quota. The row counts date from
+August; re-derive from the first Sunday manifest (`received_rows` per scope).
+
+## Decision: Sage voided invoices
+
+**Evidence (offline).**
+- Sage 100 Contractor guides (`resources/sage-100-contractor/guides/`:
+  `user-guide-2021-sql-v23.1.md` "About receivable invoice status" and "About payable invoice
+  status"; `sage-100-contractor-and-your-business-2026.1.md`): AR (`acrinv`) and AP (`acpinv`)
+  invoices share the status list **1-Open, 2-Review, 3-Dispute, 4-Paid, 5-Void**. 4 and 5 are
+  assigned only by Sage ("If you void the record, Sage 100 Contractor automatically assigns
+  status 5-Void"). `schema/OBSERVED-SCHEMA.md` confirms a `status` column on both tables but
+  gives no value distribution.
+- `_docs/sage-payments-evidence.json` (live aggregates, 2026-09-13): AR invoice **recnum 55
+  has status 5**, receipts +200,000.00 and -200,000.00 on 2025-12-31, `amtpad` 0 and `invbal`
+  200,000.00. It is a void, and silver's `invoice_total = amtpad + invbal` counts it as
+  200,000 billed and 200,000 outstanding.
+- No local evidence gives the full status distribution: `sage-reconciliation-evidence.json`
+  and `sage-spark-evidence.json` hold rule outcomes only, the scratch
+  `unmatched-ar-reconciliation.json` holds amounts by job with no status, and there is no
+  `sage-*.json` in the scratchpad. Whether any AP invoice is status 5 is unknown.
+
+**Decision.** A void is identifiable: `status_code = 5` on AR and AP. Inclusion logic is
+**unchanged** - excluding voids changes billed revenue and the AR balance, which is Affect's
+call, and a voided invoice still carrying `invbal` may be worth checking with their
+bookkeeper first. Instead:
+- `sv_ar_invoices` exposes `status_code` (NULL on the legacy warehouse source, which has no
+  status), matching `sv_ap_invoices`;
+- DQ WARN **voided Sage invoices included in totals** lists every AR/AP invoice with
+  `status_code = 5` (ledger, ids, job, total, balance). Expected live: at least recnum 55.
+
+If Affect confirms voids should not count, the change is one filter each in
+`22_fct_invoice.sql` and `34_fct_apinvoice.sql`, plus the conservation rules that compare
+them to silver.
+
 ## Implementation map
 
 | Piece | File |
@@ -127,7 +217,12 @@ refresh returns nothing. No tombstone needed.
 | Silver exclusion, reject ledger, freshness | silver `10`, `20`, `21`, `23`, `24`, `28`; `01`/`00` `sv_projects` |
 | Gold | `10_dim_project.sql`, `45_dq_datagap.sql` |
 | DQ | `02-transformation/dq/expectations.py` |
-| Tests | `test_deltars.py` (both paths identical; complete / partial / excluded / empty / incremental / reappear / legacy schema), `test_validation.py` (manifest scopes from the real extraction cell), `test_silver.py` (conservation), `test_gold.py`, `test_dq_rules.py` |
+| Outbuild tombstone decision, truncation guard | `_local/extract_outbuild_local.py` (`extract`, `pull`); `fabric_common.WHOLE_TABLE` |
+| Outbuild notebook write via `merge_delta` | `_local/make_notebooks.py` (`EXTRACT_OUTBUILD`) |
+| Outbuild silver exclusion and ledger | silver `25`, `28`; gold `45` (source system) |
+| Weekly full pull | `endpoints.yml` (`full_pull_weekday`), `procore_scope.full_pull_due`, extraction cell in `make_notebooks.py` |
+| Sage void WARN | `00`/`01` `sv_ar_invoices.status_code`, `dq/expectations.py` |
+| Tests | `test_deltars.py` (both paths identical; complete / partial / excluded / empty / incremental / reappear / legacy schema; Outbuild through `extract()` + `merge_sql`: consumed / unconsumed / failed / empty / skipped / reappear), `test_validation.py` (manifest scopes and the weekly full pull from the real extraction cell; registry flags; Outbuild tombstone flag per endpoint), `procore_scope.py` self-check (schedule with an injected clock; registry refusals), `test_silver.py` (conservation incl. Outbuild), `test_gold.py`, `test_dq_rules.py` (void WARN fires on AR and AP) |
 
 ## Risks
 
@@ -136,6 +231,11 @@ refresh returns nothing. No tombstone needed.
   ingestion notebook and let one extraction run finish **before** deploying silver, or
   silver fails with an unresolved column. Tables created by `cd_05_land_to_bronze` (local
   landing path) never gain it.
+- **Deploy order, again.** Silver `25` and `28` read `_source_deleted_at` on the two consumed
+  Outbuild bronze tables: run `cd_02_extract_outbuild` once with the new lib and notebook
+  before deploying silver. `endpoints.yml` with `full_pull_weekday` needs the new
+  `procore_scope.py` in `Files/lib` (the old dataclass rejects the unknown field): upload lib
+  and config together, as `deploy_ingestion.py` does.
 - **A pull that silently returns less.** Pagination truncation or a permission narrowing
   (e.g. private RFIs no longer visible to the service account) on a scope that still ends
   `complete` with rows will tombstone real records. They are recoverable (the next complete

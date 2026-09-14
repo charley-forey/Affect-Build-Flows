@@ -525,6 +525,14 @@ def test_checklist_group_normalization():
 def test_extraction_scope_evidence():
     import json
     import os
+    # Every watermarked endpoint gets the weekly full pull that lets it tombstone, except
+    # prime_contracts, which is already pulled in full every night as a parent.
+    registry = procore_scope.load_registry(
+        str(Path(__file__).resolve().parents[2] / "01-ingestion" / "Procore" / "config" / "endpoints.yml"))
+    weekly = {e.name for e in registry if e.full_pull_weekday == "Sunday"}
+    assert weekly == {e.name for e in registry if e.incremental} - {"prime_contracts"} == {
+        "projects", "prime_contract_line_items", "direct_cost_line_items",
+        "potential_change_orders", "incidents", "incident_severity_levels"}, weekly
     cells = ["".join(c["source"]) for c in make_notebooks.EXTRACT_PROCORE]
     extract = next(c for c in cells if "endpoint_audit = []" in c)
     finish = next(c for c in cells if "evidence = {" in c)
@@ -535,7 +543,7 @@ def test_extraction_scope_evidence():
     parent = SimpleNamespace(name="parent", bronze_table="bronze_parent", parent=None, incremental=True, per_page=100)
     child = SimpleNamespace(name="child", bronze_table="bronze_child", per_page=100,
                             parent=SimpleNamespace(endpoint="parent"), incremental=True)
-    for scenario in ("complete", "duplicates", "disabled", "declared", "declared_now_available", "partial_page", "merge_failure", "disabled_parent", "archive_failure", "checkpoint_failure"):
+    for scenario in ("complete", "duplicates", "disabled", "declared", "declared_now_available", "partial_page", "merge_failure", "disabled_parent", "archive_failure", "checkpoint_failure", "weekly_full"):
         written, watermarks, tombstones = [], [], []
         def records(session, base, path, headers, params, per_page):
             # No changed parent since the watermark, but its child has new data.
@@ -581,7 +589,9 @@ def test_extraction_scope_evidence():
                                    declared_unavailable=lambda ep, pid: "tool not enabled" if (
                                        scenario in ("declared", "declared_now_available") and ep.name == "parent" and pid == 8) else None,
                                    normalize_records=lambda ep, record, path: [record],
-                                   tombstone_scopes=procore_scope.tombstone_scopes),
+                                   tombstone_scopes=procore_scope.tombstone_scopes,
+                                   # "weekly_full": today is the incremental child's full-pull day.
+                                   full_pull_due=lambda ep, now: scenario == "weekly_full" and ep.name == "child"),
                 fc=SimpleNamespace(utc_now=lambda: "now", row_hash=lambda r: "hash"),
                 wm=SimpleNamespace(high_water=lambda *a: "high"))
             if scenario in ("archive_failure", "checkpoint_failure"):
@@ -608,9 +618,9 @@ def test_extraction_scope_evidence():
             try:
                 exec(compile(finish, "extract:evidence", "exec"), scope)
             except RuntimeError:
-                assert scenario not in ("complete", "duplicates", "declared", "declared_now_available")
+                assert scenario not in ("complete", "duplicates", "declared", "declared_now_available", "weekly_full")
             else:
-                assert scenario in ("complete", "duplicates", "declared", "declared_now_available")
+                assert scenario in ("complete", "duplicates", "declared", "declared_now_available", "weekly_full")
             evidence = json.loads((Path(temp) / "ingestion" / "batch-test.json").read_text())
             assert evidence == json.loads((Path(temp) / "ingest_run.json").read_text())
             first, second = evidence["endpoints"]
@@ -628,8 +638,13 @@ def test_extraction_scope_evidence():
             if written and scenario != "disabled_parent":
                 complete = [7, 8] if scenario == "declared_now_available" else [7]
                 assert tombstones[0] == ("bronze_parent", complete), tombstones
-                assert all(scopes == [] for table, scopes in tombstones[1:]), tombstones
+                # On its weekly full-pull day the incremental child ignores its watermark,
+                # reads in full and tombstones like any full pull; every other day it cannot.
+                child_scopes = [7] if scenario == "weekly_full" else []
+                assert all(scopes == child_scopes for table, scopes in tombstones[1:]), tombstones
                 assert first["tombstone_scopes"] == complete
+                assert second["scheduled_full_pull"] == (scenario == "weekly_full")
+                assert not first["scheduled_full_pull"]
             if failed:
                 assert evidence["status"] == "failed" and not written and not watermarks
                 assert first["received_rows"] == (0 if scenario == "archive_failure" else 1)
@@ -667,7 +682,8 @@ def test_extraction_scope_evidence():
             else:
                 assert evidence["status"] == "complete" and len(watermarks) == 2
                 assert written == ["bronze_parent", "bronze_child"]
-                assert second["since"] == "previous-watermark"
+                assert second["since"] == (None if scenario == "weekly_full" else "previous-watermark")
+                assert second["mode"] == ("full" if scenario == "weekly_full" else "incremental")
                 assert all(a["written_rows"] == 1 for a in evidence["endpoints"])
                 for a in evidence["endpoints"]:
                     assert a["duplicate_rows_removed"] == (1 if scenario == "duplicates" else 0)
@@ -787,6 +803,7 @@ def test_outbuild_extract():
                for local, remote in deploy_outbuild.UPLOADS)
     source = "\n".join("".join(c["source"]) for c in make_notebooks.EXTRACT_OUTBUILD)
     assert 'fc.get_secret("OUTBUILD_API_TOKEN")' in source and "ob.extract(" in source
+    assert "[fc.WHOLE_TABLE] if tombstone else ()" in source and "fc.merge_delta(" in source
 
     # Transient 5xx retries with bounded backoff; a persistent one raises; 4xx never retries.
     class Response:
@@ -818,13 +835,14 @@ def test_outbuild_extract():
                                 {"roadblock_id": 1, "task_id": 3, "project_id": 5}]}
     for broken, status in ((None, "complete"), ("tasks", "complete_with_warnings"),
                            ("activities", "failed")):
-        written = {}
+        written, tombstoned = {}, {}
         def pull(ep, tok):
             if ep["name"] == broken:
                 raise http(504)
             return data[ep["name"]]
-        def write(table, rows):
+        def write(table, rows, tombstone):
             written[table] = rows
+            tombstoned[table] = tombstone
             return len(rows)
         with tempfile.TemporaryDirectory() as temp, patch.object(ob, "pull", pull):
             manifest = ob.extract(chosen, "t", "b1", temp, write)
@@ -843,6 +861,11 @@ def test_outbuild_extract():
         assert manifest["blocking_failures"] == (["activities"] if broken == "activities" else [])
         assert manifest["warnings"] == (["tasks"] if broken == "tasks" else [])
         assert by["schedule_impact_requests"]["status"] == "skipped"
+        # Only a consumed endpoint that pulled completely tombstones; failed ones never merge.
+        assert tombstoned == {t: t in ("cd_bronze_outbuild_projects", "cd_bronze_outbuild_activities")
+                              for t in written}, tombstoned
+        assert all(by[n]["tombstone"] == (n != "tasks") for n in ("projects", "activities", "tasks") if n != broken)
+        assert "tombstone" not in by["schedule_impact_requests"]
         if broken:
             assert by[broken]["status"] == "failed" and "504" in by[broken]["error"]
             assert by[broken]["written_rows"] == 0

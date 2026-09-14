@@ -17,7 +17,9 @@ Self-check: python procore_scope.py
 
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
 
@@ -78,7 +80,20 @@ class Endpoint:
     # every v2.0 path and daily_logs (measured 2026-08-25), so those are refused here.
     per_page: int = 100
 
+    # Weekday name ("Sunday") on which an incremental endpoint ignores its watermark and
+    # pulls in full, so its deletions can be tombstoned (tombstone_scopes needs mode full).
+    # UTC weekday of the run start; the 02:00 Eastern run is the same day in UTC.
+    full_pull_weekday: str | None = None
+
     def __post_init__(self) -> None:
+        if self.full_pull_weekday is not None:
+            if self.full_pull_weekday not in calendar.day_name:
+                raise ValueError(f"{self.name}: full_pull_weekday must be a weekday name, e.g. Sunday")
+            if not self.incremental:
+                raise ValueError(f"{self.name}: full_pull_weekday only applies to an incremental endpoint")
+            if self.date_range_days:
+                # The API requires the window (manpower_logs, daily_logs), so there is no full pull.
+                raise ValueError(f"{self.name}: a date-windowed endpoint cannot be pulled in full")
         if not 1 <= self.per_page <= 1000:
             raise ValueError(f"{self.name}: per_page must be 1..1000")
         if self.per_page > 100 and (self.scope == SCOPE_PARENT or self.major_version >= 2
@@ -243,6 +258,17 @@ def declared_unavailable(endpoint: Endpoint, project_id: Any) -> str | None:
     if project_id is None:
         return None
     return {str(k): v for k, v in endpoint.unavailable_projects.items()}.get(str(project_id))
+
+
+def full_pull_due(endpoint: Endpoint, now: datetime) -> bool:
+    """True when this run should ignore the watermark: `now` (the run start, UTC) falls on
+    the endpoint's full_pull_weekday. The clock is passed in so the schedule is testable.
+
+    ponytail: a failed or skipped run on that day waits a week; add a "last full pull older
+    than 7 days" check if that matters.
+    """
+    weekday = getattr(endpoint, "full_pull_weekday", None)
+    return bool(weekday) and calendar.day_name[now.weekday()] == weekday
 
 
 def tombstone_scopes(endpoint: Endpoint, audit: dict[str, Any]) -> list[Any]:
@@ -446,6 +472,17 @@ def _selftest() -> None:
     assert tombstone_scopes(project, full) == [7, None]
     assert tombstone_scopes(project, dict(full, mode="incremental")) == []
     assert tombstone_scopes(_ep("m", "/m", SCOPE_PROJECT, date_range_days=30), full) == []
+
+    # Weekly full pull: due only on the named UTC weekday; refused where it cannot mean anything.
+    weekly = _ep("pcos", "/p", SCOPE_PROJECT, incremental="filters[updated_at]", full_pull_weekday="Sunday")
+    sunday, monday = datetime(2026, 9, 13, 6), datetime(2026, 9, 14, 6)
+    assert full_pull_due(weekly, sunday) and not full_pull_due(weekly, monday)
+    assert not full_pull_due(_ep("x", "/x", SCOPE_PROJECT, incremental="filters[updated_at]"), sunday)
+    assert tombstone_scopes(weekly, full) == [7, None]
+    expect_error(lambda: _ep("x", "/x", SCOPE_PROJECT, incremental="f", full_pull_weekday="sunday"), "lower-case weekday")
+    expect_error(lambda: _ep("x", "/x", SCOPE_PROJECT, full_pull_weekday="Sunday"), "weekday on a full endpoint")
+    expect_error(lambda: _ep("x", "/x", SCOPE_PROJECT, incremental="f", date_range_days=30,
+                             full_pull_weekday="Sunday"), "weekday on a windowed endpoint")
 
     assert _ep("big", "/rest/v1.0/cost_codes", SCOPE_PROJECT, per_page=1000).per_page == 1000
     expect_error(lambda: _ep("x", "/a/{parent_id}", SCOPE_PARENT, parent=ParentRef("y"), per_page=1000),
