@@ -985,8 +985,9 @@ def main() -> int:
             unresolved.append(f"{table}: {str(exc)[:120]}")
     assert not unresolved, (
         f"{len(unresolved)} model table(s) do not resolve - Direct Lake has not bound "
-        "them. New tables can need a minute for the SQL endpoint to discover them; "
-        "re-run deploy_model.py --apply.\n  " + "\n  ".join(unresolved[:5]))
+        "them. Check the deployed definition and completion of the gated model refresh, "
+        "then rerun validation; do not assume another definition deployment will bind them.\n  "
+        + "\n  ".join(unresolved[:5]))
     CHECKS.append(f"all {len(MODEL_TABLES)} model tables resolve through DirectLake")
 
     # 2. Every measure must evaluate. A measure referencing a renamed column fails HERE

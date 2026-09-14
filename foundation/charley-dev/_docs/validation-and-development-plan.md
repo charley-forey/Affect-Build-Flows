@@ -2,6 +2,22 @@
 
 ## Fresh verification — 2026-09-14 14:15 UTC
 
+GitHub main now includes the validation fixes (`2a54c8b`) and clean-CI timestamp dependency
+(`cea71f3`). [GitHub run 34859127933](https://github.com/charley-forey/Affect-Build-Flows/actions/runs/34859127933)
+passes all suites, generator checks and the email guard. The previous CI failure was a
+missing `pytz` dependency in the clean environment, not a waived test.
+
+The quality-plan model also needed a refresh: its Draft Submittals measure was unresolved.
+Refresh `b793ae49-04bd-4081-9ae5-61ea74edc55b` Completed at 15:03 UTC, and all 48 QC measures
+now evaluate without errors (`production-qc-model-refresh.json`). Both model settings
+accepted automatic update OFF (`production-autosync.txt`); browser confirmation and a
+successful scheduled cycle remain outstanding. The latest candidate completed silver at
+15:06 UTC with zero failed steps. Gold/snapshot certification is still pending.
+
+A server-side monthly PDF export was accepted and is running. This offers a rendering
+verification path without browser sign-in, but an accepted export is not a render pass.
+Exports are kept locally under `_local/render-verification/`, excluded from public Git.
+
 Production correction at 14:54 UTC: refresh request
 `ea86810e-6c9c-4f47-9e09-e5068c35633a` Completed against validated gold run
 `20260914T083429Z`. The existing monthly model now resolves 911 AP rows and 21 snapshot

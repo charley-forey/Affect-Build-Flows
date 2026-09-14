@@ -1,0 +1,33 @@
+{
+  "model_id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+  "errors": {
+    "20": "DAX failed (400): {\"error\":{\"code\":\"DatasetExecuteQueriesError\",\"pbi.error\":{\"code\":\"DatasetExecuteQueriesError\",\"parameters\":{},\"details\":[{\"code\":\"DetailsMessage\",\"detail\":{\"type\":1,\"value\":\"Query (1, 167) The value for '<oii>Draft Submittals</oii>' cannot be determined. Either the column doesn't exist, or there is no current row for this column.\"}},{\"code\":\"AnalysisServicesErrorCode\",\"detail\":{\"type\":1,\"value\":\"\nEVALUATE ROW(\"Avg Submittal Turnaround Days\",[Avg Submittal Turnaround Days],\"Median Submittal Turnaround Days\",[Median Submittal Turnaround Days],\"Draft Submittals\",[Draft Submittals],\"Possible Mock-"
+  },
+  "measures_checked": 28,
+  "counts": [
+    {
+      "[dim_Date]": 7670,
+      "[dim_Project]": 21,
+      "[qc_seed_Trade]": 26,
+      "[qc_seed_ChecklistItem]": 625,
+      "[qc_seed_Gate]": 93,
+      "[qc_seed_DohItem]": 101,
+      "[dim_QcStatus]": 141,
+      "[fct_QcNcr]": 966,
+      "[fct_QcPunch]": 1617,
+      "[fct_QcSubmittal]": 2474,
+      "[fct_ProcoreInspection]": 26,
+      "[fct_ProcoreInspectionItem]": 705,
+      "[man_QcDfow]": 0,
+      "[man_QcItp]": 0,
+      "[man_QcGate]": 0,
+      "[man_QcSpecialInspection]": 0,
+      "[man_QcCommissioning]": 0,
+      "[man_QcInspectorSignIn]": 0,
+      "[man_QcChecklistResult]": 0,
+      "[man_QcDohResult]": 0,
+      "[dq_DataGap]": 1546,
+      "[meta_PipelineRun]": 35
+    }
+  ]
+}

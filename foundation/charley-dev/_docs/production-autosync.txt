@@ -1,0 +1,4 @@
+  Affect Project Report: automatic update disabled (https://wabi-us-north-central-j-primary-redirect.analysis.windows.net/metadata/models/2548767/settings)
+  Project Quality Plan: automatic update disabled (https://wabi-us-north-central-j-primary-redirect.analysis.windows.net/metadata/models/2583041/settings)
+
+Confirm both in the portal: Semantic model settings > Refresh.

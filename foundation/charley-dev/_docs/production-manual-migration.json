@@ -1,0 +1,70 @@
+{
+  "wins": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "risks": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "priority_items": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "flags": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "survey": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "safety_monthly": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "quality_monthly": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "milestones": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "daily_log_compliance": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_dfow": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_itp": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_gate": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_special_inspection": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_commissioning": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_inspector_sign_in": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_checklist_result": {
+    "rows": 0,
+    "source": "sharepoint"
+  },
+  "qc_doh_result": {
+    "rows": 0,
+    "source": "sharepoint"
+  }
+}

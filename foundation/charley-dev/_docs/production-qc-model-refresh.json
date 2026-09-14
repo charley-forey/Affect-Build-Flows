@@ -1,0 +1,24 @@
+{
+  "model_id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+  "gate_run": "20260914T083429Z",
+  "refresh": {
+    "requestId": "b793ae49-04bd-4081-9ae5-61ea74edc55b",
+    "id": 402126487,
+    "refreshType": "ViaEnhancedApi",
+    "startTime": "2026-09-14T15:03:37.047Z",
+    "endTime": "2026-09-14T15:03:45.397Z",
+    "status": "Completed",
+    "extendedStatus": "Completed",
+    "refreshAttempts": [
+      {
+        "attemptId": 1,
+        "startTime": "2026-09-14T15:03:37.4554725Z",
+        "endTime": "2026-09-14T15:03:45.3959196Z",
+        "type": "Data",
+        "executionMetrics": []
+      }
+    ]
+  },
+  "errors": {},
+  "measures_checked": 48
+}
