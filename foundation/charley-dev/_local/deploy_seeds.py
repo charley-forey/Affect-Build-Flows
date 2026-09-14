@@ -159,7 +159,11 @@ def find_item(tok: str, name: str, kind: str) -> dict | None:
 
 
 def run_notebook(tok: str, item_id: str, timeout: int = 900) -> str:
-    """Start the notebook and poll to completion. Returns the terminal status."""
+    """Start the notebook and poll to completion. Returns "Completed"; raises otherwise.
+
+    Cancelled and Deduped raise too: the notebook did not run to the end, and every deploy
+    script prints this and exits 0 unless it raises.
+    """
     status, _, headers = dp.call(
         "POST",
         f"/workspaces/{dp.WORKSPACE_ID}/items/{item_id}/jobs/instances?jobType=RunNotebook",
@@ -175,8 +179,8 @@ def run_notebook(tok: str, item_id: str, timeout: int = 900) -> str:
         _, body, _ = dp.call("GET", location, tok)
         last = body.get("status", "")
         if last in ("Completed", "Failed", "Cancelled", "Deduped"):
-            if last == "Failed":
-                raise dp.FabricError(f"notebook run failed: {body.get('failureReason')}")
+            if last != "Completed":
+                raise dp.FabricError(f"notebook run {last}: {body.get('failureReason')}")
             return last
         time.sleep(10)
     raise dp.FabricError(f"notebook did not finish within {timeout}s (last status {last})")

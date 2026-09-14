@@ -6,7 +6,8 @@
 Runs the expectations in 02-transformation/dq/expectations.py against gold, writes the
 results to cd_dq_results and the offending rows to cd_dq_rejects, and RAISES on a blocking
 failure. Only after a pass does it append that day's fct_DailySnapshot (see
-02-transformation/sql/snapshot/fct_dailysnapshot.sql).
+02-transformation/sql/snapshot/fct_dailysnapshot.sql); a snapshot failure is recorded and
+alerted but does not fail the gate.
 
 WHY IT RAISES. A failure prevents Succeeded-dependent pipeline activities from running.
 This alone does not isolate Direct Lake readers from gold writes or automatic updates;
@@ -206,37 +207,78 @@ print("\\nall blocking expectations passed - publication controls and source cov
 # DAILY SNAPSHOT - point-in-time KPIs for month-end history (fct_DailySnapshot).
 #
 # ONLY REACHED WHEN THE GATE PASSED: dq.assert_no_blocking in the cell above raises first,
-# so a failed run appends nothing. Same UTC date as the batch; a re-run that date replaces
-# its rows. The month-end view is the model's job: the last capture in each month.
-import sys as _sys
+# so a failed run appends nothing. SnapshotDate is the batch's UTC date (the build that ran
+# overnight into it); a re-run that date replaces its rows. The month-end view is the
+# model's job: the last capture in each month.
+#
+# STAGE, VALIDATE, SWAP. The rows are checked in v_DailySnapshotStage before the date's
+# earlier capture is deleted, so a failed validation leaves that capture intact. The
+# written rows are checked again; a failure there removes THIS run's rows.
+#
+# A SNAPSHOT FAILURE DOES NOT FAIL THIS ACTIVITY. Gold already passed the gate; blocking
+# Publish Models over missing history would hold back validated numbers. It is recorded in
+# snapshot_run.json and heartbeat_run.json (snapshot_status) and alerted instead.
+import json, os, sys as _sys
 _sys.path.insert(0, "/lakehouse/default/Files/lib")
 from expectations import snapshot_suite
 
-SNAPSHOT_SQL = ''' + json.dumps(snapshot_statements(), indent=1) + '''
+SNAPSHOT_STAGE, SNAPSHOT_SWAP = ''' + json.dumps(snapshot_phases(), indent=1) + '''
 snapshot_date = f"{batch_id[:4]}-{batch_id[4:6]}-{batch_id[6:8]}"
-for _sql in SNAPSHOT_SQL:
-    spark.sql(_sql.replace("{SNAPSHOT_DATE}", snapshot_date).replace("{RUN_ID}", batch_id))
-
-# Verified straight after writing: unique per project and date, equal to the live facts it
-# was captured from, and only from passing runs. A failure removes THIS run's rows before
-# raising, so unverified numbers never become history.
-snapshot_results = snapshot_suite(snapshot_date).run(spark, batch_id, persist=False)
-print(summarise(snapshot_results))
-if any(r.blocking for r in snapshot_results):
-    spark.sql(f"DELETE FROM fct_DailySnapshot WHERE RunId = '{batch_id}'")
-    dq.assert_no_blocking(snapshot_results)
-dq.publish_schema(spark, DIAG, "fct_DailySnapshot")
-print(f"daily snapshot captured for {snapshot_date}")
+snapshot = {"run_id": batch_id, "snapshot_date": snapshot_date, "status": "failed"}
+_fill = lambda s: s.replace("{SNAPSHOT_DATE}", snapshot_date).replace("{RUN_ID}", batch_id)
+try:
+    for _sql in SNAPSHOT_STAGE:
+        spark.sql(_fill(_sql))
+    staged = snapshot_suite(snapshot_date, "v_DailySnapshotStage").run(spark, batch_id, persist=False)
+    print(summarise(staged))
+    if any(r.blocking for r in staged):
+        raise RuntimeError("staged snapshot failed validation; nothing deleted or written:\\n" + summarise(staged))
+    for _sql in SNAPSHOT_SWAP:
+        spark.sql(_fill(_sql))
+    written = snapshot_suite(snapshot_date).run(spark, batch_id, persist=False)
+    print(summarise(written))
+    if any(r.blocking for r in written):
+        spark.sql(f"DELETE FROM fct_DailySnapshot WHERE RunId = '{batch_id}'")
+        raise RuntimeError("written snapshot failed verification; this run's rows removed:\\n" + summarise(written))
+    dq.publish_schema(spark, DIAG, "fct_DailySnapshot")
+    snapshot["status"] = "ok"
+    print(f"daily snapshot captured for {snapshot_date}")
+except Exception as exc:
+    snapshot["error"] = f"{type(exc).__name__}: {exc}"
+    print(f"SNAPSHOT FAILED - gold still publishes: {snapshot['error']}")
+    snapshot["alert_sent"] = bool(fc.notify(
+        f"SNAPSHOT FAILED - {snapshot_date}",
+        "The DQ gate passed and gold will publish, but the daily snapshot was not saved. "
+        "Month-end history for this date falls back to the previous capture.\\n\\n" + snapshot["error"],
+        failing=1))
+    if not snapshot["alert_sent"]:
+        print("!" * 78 + "\\nWARNING: SNAPSHOT FAILED AND NO ALERT WAS SENT (no DQ-ALERT-WEBHOOK secret).\\n" + "!" * 78)
+with open(f"{DIAG}/snapshot_run.json", "w", encoding="utf-8") as fh:
+    json.dump(snapshot, fh, indent=1)
+if os.path.exists(f"{DIAG}/heartbeat_run.json"):
+    with open(f"{DIAG}/heartbeat_run.json", encoding="utf-8") as fh:
+        _heartbeat = json.load(fh)
+    _heartbeat["snapshot_status"] = snapshot["status"]
+    with open(f"{DIAG}/heartbeat_run.json", "w", encoding="utf-8") as fh:
+        json.dump(_heartbeat, fh, indent=2)
 '''
         ),
     ]
     return notebook(cells)
 
 
+SNAPSHOT_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "snapshot" / "fct_dailysnapshot.sql"
+
+
 def snapshot_statements() -> list[str]:
     """fct_DailySnapshot capture, placeholders left for the run to fill in."""
-    return dg.statements((CHARLEY_DEV / "02-transformation" / "sql" / "snapshot"
-                          / "fct_dailysnapshot.sql").read_text(encoding="utf-8"))
+    return dg.statements(SNAPSHOT_SQL.read_text(encoding="utf-8"))
+
+
+def snapshot_phases() -> tuple[list[str], list[str]]:
+    """(stage, swap): the statements before and after the file's SWAP marker."""
+    stage, swap = SNAPSHOT_SQL.read_text(encoding="utf-8").split("-- ==== SWAP ====")
+    return dg.statements(stage), dg.statements(swap)
 
 
 def main() -> int:

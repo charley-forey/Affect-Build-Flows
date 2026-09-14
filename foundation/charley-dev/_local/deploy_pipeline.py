@@ -97,7 +97,6 @@ STAGES = [
     # extraction (Procore) runs after landing. A Procore landing batch must never be left
     # as the newest one in Files/_landing, or it replays stale Procore rows over live ones.
     ("Land To Bronze", "cd_05_land_to_bronze", []),
-    ("Seed Gold Dimensions", "cd_20_seed_gold", []),
     # Silver PARSES cd_bronze_man_*, and this notebook is what creates them - typed and
     # empty when there is no CSV. Without this stage the nightly run rebuilt silver and gold
     # off whatever manual bronze happened to be there from the last manual deploy. Harmless
@@ -119,6 +118,10 @@ STAGES = [
     ("Extract Procore", "cd_01_extract_procore", ["Extract Outbuild"]),
     ("Bronze To Silver", "cd_10_bronze_to_silver",
      ["Extract Procore", "Extract Outbuild", "Ingest Sage", "Land To Bronze", "Land Manual Input"]),
+    # Seeds after silver, not in parallel with landing (2026-09-14): started at 06:00 beside
+    # Land To Bronze it waited for a Spark session and hit its 30-min timeout twice. Gold is
+    # the only consumer, so running it immediately before gold costs nothing.
+    ("Seed Gold Dimensions", "cd_20_seed_gold", ["Bronze To Silver"]),
     ("Build Gold", "cd_30_build_gold", ["Bronze To Silver", "Seed Gold Dimensions"]),
     # THE GATE. Runs last and raises on a blocking violation, so a Succeeded dependency
     # means the numbers were checked - not merely that the tables were written. Anything

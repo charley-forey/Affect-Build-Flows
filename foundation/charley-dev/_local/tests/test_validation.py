@@ -1,4 +1,6 @@
 """Offline release checks: generated code and fail-closed quality evidence."""
+import contextlib
+import io
 from pathlib import Path
 import sys
 import tempfile
@@ -29,6 +31,19 @@ import validate_gold_candidate
 import validate_model
 import validate_candidate_model
 from audit_solution import bindings
+
+
+def test_run_notebook_terminal_status():
+    """deploy_dq (and every deploy script) exits 1 only when run_notebook raises FabricError."""
+    dp = deploy_seeds.dp
+    for final in ("Cancelled", "Deduped", "Failed", "Completed"):
+        replies = [(202, {}, {"Location": "job"}), (200, {"status": final}, {})]
+        with patch.object(dp, "call", side_effect=lambda *a, **k: replies.pop(0)):
+            try:
+                assert deploy_seeds.run_notebook("t", "nb") == final == "Completed"
+            except dp.FabricError as exc:
+                assert final != "Completed" and final in str(exc), exc
+    print("  run_notebook: Cancelled, Deduped and Failed all raise")
 
 
 def test_deployment_lookup():
@@ -861,7 +876,7 @@ def test_publish_models():
     setup, publish = ("".join(c["source"]) for c in nb["cells"][1:])
     gate = "20260913T060000Z"
 
-    def run(before, after=None, fail_refresh=None, names=None):
+    def run(before, after=None, fail_refresh=None, names=None, settings_status=204):
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, "heartbeat_run.json").write_text(json.dumps({"run_id": gate}))
             scope = {}
@@ -875,7 +890,7 @@ def test_publish_models():
                 if url.endswith("/capacities"):
                     return 200, {"@odata.context": "https://cluster/v1.0/myorg/$metadata#capacities"}
                 if "/settings" in url:
-                    return 204, {}
+                    return settings_status, {}
                 return 200, {"model": {"id": 7}}
             def reframe(dataset_id, tok, timeout):
                 calls.append(("REFRESH", dataset_id, None))
@@ -890,13 +905,17 @@ def test_publish_models():
             sent = []
             scope.update(DIAG=tmp, pbi=pbi, reframe=reframe, dax=dax,
                          notebookutils=SimpleNamespace(credentials=SimpleNamespace(getToken=lambda aud: "t")))
-            with patch.object(fabric_common, "notify", side_effect=lambda subject, body: sent.append(body)):
+            out = io.StringIO()
+            # notify returns None: no webhook configured, so the notebook must warn loudly.
+            with patch.object(fabric_common, "notify", side_effect=lambda subject, body: sent.append(body)), \
+                    contextlib.redirect_stdout(out):
                 try:
                     exec(compile(publish, "publish:run", "exec"), scope)
                     error = None
                 except Exception as exc:
                     error = exc
             record = json.loads(Path(tmp, "publish_run.json").read_text())
+            assert (error is not None) == ("NO ALERT WAS SENT" in out.getvalue()), out.getvalue()
         return error, record, calls, sent
 
     old = {"run_id": "20260912T060000Z", "status": "ok"}
@@ -920,6 +939,15 @@ def test_publish_models():
 
     error, _, calls, _ = run({report: old, pqp: old}, names=deploy_publish.MODEL_NAMES + ["Project Quality Plan"])
     assert "exactly one" in str(error) and not any(c[0] in ("POST", "REFRESH") for c in calls)
+
+    # Autosync cannot be disabled: both refreshes still run, the error is recorded, and the
+    # activity fails at the end with an alert.
+    error, record, calls, sent = run({report: old, pqp: old}, settings_status=500)
+    assert "AUTOMATIC UPDATE NOT DISABLED" in str(error) and not record["ok"], error
+    assert ("REFRESH", report, None) in calls and ("REFRESH", pqp, None) in calls
+    assert all(m["autosync_disabled"] is False and "expected 204" in m["autosync_error"] for m in record["models"])
+    assert all(m["after"] == {"run_id": gate, "status": "ok"} for m in record["models"]) and sent
+    assert record["alert_sent"] is False
     print("  publish: autosync off first, serial refresh, auto-frame, split release and status all fail loudly")
 
 
@@ -1286,7 +1314,7 @@ def test_daily_snapshot():
     class DuckSpark:
         corrupt = None  # SQL run straight after the capture INSERT, to fake a bad write
         def sql(self, query):
-            rows = con.execute(query.replace("`", '"')).fetchall()
+            rows = con.execute(query.replace("`", '"').replace(") USING DELTA", ")")).fetchall()
             if self.corrupt and query.lstrip().startswith("INSERT INTO fct_DailySnapshot"):
                 con.execute(self.corrupt)
             return SimpleNamespace(count=lambda: len(rows))
@@ -1301,17 +1329,27 @@ def test_daily_snapshot():
     blocked = [dq.Result(dq.not_null("t", "id"), 3)]
     spark = DuckSpark()
 
-    def run(batch_id, results=passing):
+    def run(batch_id, results=passing, meta_status=None):
         status = "blocked" if any(r.blocking for r in results) else "ok"
         con.execute("INSERT INTO meta_PipelineRun VALUES (?, CURRENT_TIMESTAMP, 'dq_gate', ?, 1, 0, ?)",
-                    [batch_id, status, int(status != "ok")])  # what the heartbeat cell writes
+                    [batch_id, meta_status or status, int(status != "ok")])  # what the heartbeat cell writes
+        alerts = []
         with tempfile.TemporaryDirectory() as diag:
             (Path(diag) / "gold_schema.json").write_text("{}")
-            scope = dict(results=results, dq=dq, fc=SimpleNamespace(notify=lambda *a, **k: None),
+            (Path(diag) / "heartbeat_run.json").write_text(json.dumps({"run_id": batch_id}))
+            scope = dict(results=results, dq=dq, fc=SimpleNamespace(notify=lambda *a, **k: alerts.append(a)),
                          summarise=expectations.summarise, spark=spark, batch_id=batch_id, DIAG=diag,
                          __builtins__=__builtins__)
-            exec(compile(gate_and_capture, "dq:gate+snapshot", "exec"), scope)
-            assert "SnapshotDate" in dict(json.loads((Path(diag) / "gold_schema.json").read_text())["fct_DailySnapshot"])
+            with contextlib.redirect_stdout(io.StringIO()):
+                exec(compile(gate_and_capture, "dq:gate+snapshot", "exec"), scope)
+            record = json.loads((Path(diag) / "snapshot_run.json").read_text())
+            assert json.loads((Path(diag) / "heartbeat_run.json").read_text())["snapshot_status"] == record["status"]
+            if record["status"] == "ok":
+                assert not alerts
+                assert "SnapshotDate" in dict(json.loads((Path(diag) / "gold_schema.json").read_text())["fct_DailySnapshot"])
+            else:
+                assert alerts and "SNAPSHOT FAILED" in alerts[0][0] and record["alert_sent"] is False
+        return record
 
     def snap(day, column="OpenSubmittals"):
         return con.execute(f"SELECT COUNT(*), SUM({column}), MIN(RunId) FROM fct_DailySnapshot "
@@ -1337,16 +1375,29 @@ def test_daily_snapshot():
         raise AssertionError("a blocked gate reached the snapshot capture")
     assert snap("2026-02-20")[0] == 0
 
-    # Bad write: post-capture verification removes this run's rows and fails the run.
+    # Bad write: post-capture verification removes this run's rows, alerts and records the
+    # failure - but does NOT fail the gate, which would block publishing validated gold.
     spark.corrupt = "UPDATE fct_DailySnapshot SET OpenRfis = COALESCE(OpenRfis, 0) + 1 WHERE SnapshotDate = DATE '2026-02-25'"
-    try:
-        run("20260225T230000Z")
-    except RuntimeError as exc:
-        assert "equals live facts" in str(exc)
-    else:
-        raise AssertionError("an unreconciled snapshot was kept")
+    record = run("20260225T230000Z")
+    assert record["status"] == "failed" and "equals live facts" in record["error"], record
     spark.corrupt = None
     assert snap("2026-02-25")[0] == 0
+
+    # Failed validation of a same-date re-run: staged rows are rejected BEFORE the delete,
+    # so the earlier good capture of that date survives.
+    good = con.execute("SELECT * FROM fct_DailySnapshot WHERE SnapshotDate = DATE '2026-02-10' ORDER BY ProjectKey").fetchall()
+    record = run("20260210T231500Z", meta_status="blocked")
+    assert record["status"] == "failed" and "staged snapshot failed validation" in record["error"], record
+    assert con.execute("SELECT * FROM fct_DailySnapshot WHERE SnapshotDate = DATE '2026-02-10' ORDER BY ProjectKey").fetchall() == good
+
+    # Money is stored to the cent, so float noise in the facts cannot fail the reconciliation.
+    con.execute("BEGIN")
+    try:
+        con.execute("UPDATE fct_Invoice SET Balance = Balance + 0.001234, Amount = Amount + 1e-9")
+        assert con.execute("SELECT COUNT(*) FROM v_DailySnapshotLive WHERE ArOutstanding <> ROUND(ArOutstanding, 2) "
+                           "OR BilledToDate <> ROUND(BilledToDate, 2)").fetchone()[0] == 0
+    finally:
+        con.execute("ROLLBACK")
 
     # History is not rewritten by the closure.
     assert snap("2026-01-15")[:2] == (rows, 2)
@@ -1405,6 +1456,7 @@ def test_daily_snapshot():
             con.execute("ROLLBACK")
     recon, unique = "fct_DailySnapshot equals live facts at capture", "fct_DailySnapshot.ProjectKey_SnapshotDate.unique"
     passing_runs = "fct_DailySnapshot rows come only from passing runs"
+    historical = "fct_DailySnapshot historical rows from runs not recorded as passing"
     assert all(failing(n) == 0 for n in rules), {n: failing(n) for n in rules}
     for col in expectations.SNAPSHOT_VALUES.split(", ")[1:]:
         assert failing(recon, f"UPDATE fct_DailySnapshot SET {col} = COALESCE({col}, 0) + 1 "
@@ -1413,8 +1465,12 @@ def test_daily_snapshot():
     assert failing(recon, "UPDATE fct_QualityItem SET IsOpen = FALSE WHERE ItemType = 'PunchItem'")
     assert failing(unique, "INSERT INTO fct_DailySnapshot SELECT * FROM fct_DailySnapshot "
                            "WHERE SnapshotDate = DATE '2026-02-10' LIMIT 1")
-    assert failing(passing_runs, "INSERT INTO fct_DailySnapshot SELECT * REPLACE ('20260220T230000Z' AS RunId, "
-                                 "DATE '2026-02-20' AS SnapshotDate) FROM fct_DailySnapshot WHERE SnapshotDate = DATE '2026-02-10'")
+    # This capture from a non-passing run blocks; an orphan in HISTORY only warns.
+    assert failing(passing_runs, "UPDATE fct_DailySnapshot SET RunId = '20260220T230000Z' WHERE SnapshotDate = DATE '2026-02-10'")
+    orphan = ("INSERT INTO fct_DailySnapshot SELECT * REPLACE ('20260220T230000Z' AS RunId, "
+              "DATE '2026-02-20' AS SnapshotDate) FROM fct_DailySnapshot WHERE SnapshotDate = DATE '2026-02-10'")
+    assert failing(passing_runs, orphan) == 0 and failing(historical, orphan)
+    assert rules[historical].severity == dq.SEVERITY_WARN
     con.close()
     print("  daily snapshot: idempotent re-run, failed gate and bad write append nothing, month end, blank before start, rule mutations")
 
@@ -1449,6 +1505,7 @@ if __name__ == "__main__":
     test_evidence_write_failure()
     test_pipeline()
     test_publish_models()
+    test_run_notebook_terminal_status()
     test_outbuild_extract()
     test_outbuild_link_keys()
     test_lineage_bindings()

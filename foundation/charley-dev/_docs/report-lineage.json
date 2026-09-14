@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T05:06:10.884437+00:00",
+  "generated_at": "2026-09-14T07:22:14.440446+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -913,85 +913,85 @@
           "name": "Open Submittals (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenSubmittals] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Submittals] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Open Submittals] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Open Submittals Past Due (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[SubmittalsPastDue] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Open RFIs (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenRfis] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open RFIs] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Open RFIs] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Open Observations (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenObservations] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Observations] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Open Observations] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Open Punch Items (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[OpenPunchItems] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"#,0\"",
-          "origin": "no workbook equivalent - [Open Punch Items] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Open Punch Items] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "AR Outstanding (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[ArOutstanding] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [AR Outstanding] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [AR Outstanding] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Total Billed (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[BilledToDate] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Total Billed] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Total Billed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Budget (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[BudgetAmount] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Budget] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Budget] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Spent To Date (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[SpentToDate] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Spent To Date] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Spent To Date] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Committed (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[CommittedAmount] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Committed] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Committed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Current Contract (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[CurrentContract] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Current Contract] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Current Contract] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Pending Change Orders (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[PendingChangeOrders] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Approved Change Orders (Month End)",
           "expression": "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\nRETURN IF ( ISBLANK ( D ), BLANK (),\nCALCULATE ( SUM ( fct_DailySnapshot[ApprovedChangeOrders] ), fct_DailySnapshot[SnapshotDate] = D ) )",
           "format": "\"$#,0\"",
-          "origin": "no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period"
+          "origin": "no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Snapshot History Starts",
           "expression": "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
           "format": "\"yyyy-mm-dd\"",
-          "origin": "no workbook equivalent - first saved capture"
+          "origin": "no workbook equivalent - first saved capture. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night"
         },
         {
           "name": "Snapshot History Note",
@@ -1197,6 +1197,13 @@
           "page": "Portfolio",
           "visual": "47b67b00ed6b68e6a225",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "47b67b00ed6b68e6a225",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -1232,6 +1239,13 @@
           "page": "Portfolio",
           "visual": "8c3d98dc80be2bd1b16e",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "8c3d98dc80be2bd1b16e",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -1241,6 +1255,13 @@
           "table": "_Measures",
           "field": "AR Outstanding",
           "kind": "Measure"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "d56c4c8a8c584de03d50",
+          "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
         },
         {
           "page": "Portfolio",
@@ -1260,6 +1281,13 @@
           "page": "Portfolio",
           "visual": "77bf159aa5ed5ba20d2a",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "77bf159aa5ed5ba20d2a",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -1274,7 +1302,21 @@
           "page": "Portfolio",
           "visual": "f3de7a859007ec8b2a81",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "f3de7a859007ec8b2a81",
+          "table": "dim_Project",
           "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Portfolio",
+          "visual": "2cc385f3bdafd97b103c",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -1415,6 +1457,13 @@
           "visual": "32570f6f4015baf81ef5",
           "table": "dim_CostCode",
           "field": "Division",
+          "kind": "Column"
+        },
+        {
+          "page": "Overview",
+          "visual": "00bc831dfc64a1b2eaa8",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -1618,6 +1667,13 @@
           "visual": "413f28b8cf3e15004c11",
           "table": "dim_Date",
           "field": "MonthYear",
+          "kind": "Column"
+        },
+        {
+          "page": "Financial",
+          "visual": "b58d509033809a57e425",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -1834,6 +1890,13 @@
           "page": "Schedule & Quality",
           "visual": "bfd1c2392055261417ec",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Schedule & Quality",
+          "visual": "bfd1c2392055261417ec",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -1981,6 +2044,13 @@
           "page": "Safety & Quality",
           "visual": "086bb684aeb3513171b3",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Safety & Quality",
+          "visual": "086bb684aeb3513171b3",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -2101,6 +2171,13 @@
           "visual": "d3dc16d0f03186dca680",
           "table": "dim_Project",
           "field": "ProjectName",
+          "kind": "Column"
+        },
+        {
+          "page": "Billing & Retainage",
+          "visual": "188ca3d21f41d4fe7f3a",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -2338,6 +2415,13 @@
           "page": "Direct Costs & Vendors",
           "visual": "0f99ebf1d8bc56b01f16",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "0f99ebf1d8bc56b01f16",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -2520,6 +2604,13 @@
           "page": "Vendor Insurance",
           "visual": "59092d59ad58b3bbee2e",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Vendor Insurance",
+          "visual": "59092d59ad58b3bbee2e",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -2654,6 +2745,13 @@
           "visual": "1f22598bd88d5a355a09",
           "table": "dim_ScorecardBand",
           "field": "Score",
+          "kind": "Column"
+        },
+        {
+          "page": "Scorecard",
+          "visual": "9964a77831debaf0c3aa",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -2801,6 +2899,13 @@
           "visual": "7ef184aa63a4da5d76bc",
           "table": "dim_CostCodeCrosswalk",
           "field": "HasUnparseableCode",
+          "kind": "Column"
+        },
+        {
+          "page": "Source Coverage",
+          "visual": "3e676256724d4bafbc49",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -3165,6 +3270,13 @@
           "visual": "947435169297888aca5d",
           "table": "dq_DataGap",
           "field": "GapCategory",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "27655a06000ab8807279",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -3799,6 +3911,13 @@
           "page": "Quality Portfolio",
           "visual": "bc915c2e0cb10907b14b",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Quality Portfolio",
+          "visual": "bc915c2e0cb10907b14b",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -3911,6 +4030,13 @@
           "page": "Observations",
           "visual": "3c5a724fa8adbc638630",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Observations",
+          "visual": "3c5a724fa8adbc638630",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -4016,6 +4142,13 @@
           "page": "Punch & Completion",
           "visual": "6c5181b1e9f645f5d483",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Punch & Completion",
+          "visual": "6c5181b1e9f645f5d483",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -4108,6 +4241,13 @@
           "visual": "eb84e5eeebc5f40efdef",
           "table": "fct_QcSubmittal",
           "field": "TurnaroundDays",
+          "kind": "Column"
+        },
+        {
+          "page": "Submittals & Mock-Ups",
+          "visual": "18bc7e7d948d1b9748b2",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -4233,6 +4373,13 @@
           "page": "Procore Inspections",
           "visual": "6e20b4a2d1c94c192ae9",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Procore Inspections",
+          "visual": "6e20b4a2d1c94c192ae9",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -4325,6 +4472,13 @@
           "visual": "7fa0cf43d7089f770319",
           "table": "fct_ProcoreInspectionItem",
           "field": "SourceStatus",
+          "kind": "Column"
+        },
+        {
+          "page": "Inspection Items",
+          "visual": "a0d12155bc049d20340d",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -4430,6 +4584,13 @@
           "visual": "707ffcb0fe11e4c709e0",
           "table": "qc_seed_Gate",
           "field": "Step",
+          "kind": "Column"
+        },
+        {
+          "page": "Statutory Gates",
+          "visual": "65cd1270699e0171f94e",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {
@@ -4569,6 +4730,13 @@
           "page": "Trade Checklists & DFOW",
           "visual": "a643baf091b4643edbdf",
           "table": "dim_Project",
+          "field": "ProjectKey",
+          "kind": "Column"
+        },
+        {
+          "page": "Trade Checklists & DFOW",
+          "visual": "a643baf091b4643edbdf",
+          "table": "dim_Project",
           "field": "ProjectName",
           "kind": "Column"
         },
@@ -4696,6 +4864,13 @@
           "visual": "4659498f9a6a162e513b",
           "table": "dq_DataGap",
           "field": "GapCategory",
+          "kind": "Column"
+        },
+        {
+          "page": "Data Quality",
+          "visual": "cd829b7519cc936517cc",
+          "table": "dim_Project",
+          "field": "ProjectKey",
           "kind": "Column"
         },
         {

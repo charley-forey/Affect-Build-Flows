@@ -269,7 +269,8 @@ def test_report_refs() -> None:
                 # Written by the DQ gate, not the gold build: run its real capture SQL.
                 import deploy_dq
                 for statement in deploy_dq.snapshot_statements():
-                    con.execute(statement.replace("{SNAPSHOT_DATE}", "2026-01-31").replace("{RUN_ID}", "test"))
+                    con.execute(statement.replace("{SNAPSHOT_DATE}", "2026-01-31").replace("{RUN_ID}", "test")
+                                .replace(") USING DELTA", ")"))
             for table in missing_tables:
                 known[table] = {r[0] for r in con.execute(f'DESCRIBE "{table}"').fetchall()}
         finally:
@@ -327,6 +328,18 @@ def test_schedule_grain():
     assert {"ProjectKey", "ActivityKey", "CurrentStart", "CurrentFinish", "HasDateInversion"} <= columns
 
 
+def excludes_unmatched(v: dict) -> bool:
+    """True if v carries the visual-level filter dim_Project[ProjectKey] <> "UNMATCHED"."""
+    for f in v.get("filterConfig", {}).get("filters", []):
+        condition = f["filter"]["Where"][0]["Condition"]
+        if (f["field"]["Column"]["Expression"]["SourceRef"]["Entity"] == "dim_Project"
+                and f["field"]["Column"]["Property"] == "ProjectKey"
+                and condition.get("Not", {}).get("Expression", {}).get("In", {}).get("Values")
+                == [[{"Literal": {"Value": "'UNMATCHED'"}}]]):
+            return True
+    return False
+
+
 def test_report_formats():
     """Display fixes from the report-format audit: each one rendered a wrong number silently."""
     import deploy_model as dm
@@ -340,6 +353,14 @@ def test_report_formats():
         assert get(page, key)["visual"]["visualType"] == "clusteredBarChart", key
     matrix = get("costsvendors", "c_matrix")["visual"]
     assert matrix["visualType"] == "pivotTable" and "Columns" not in matrix["query"]["queryState"]
+    # The UNMATCHED project member is not a job: filtered from the project slicer and the
+    # per-project portfolio comparisons, kept on the data-gap visuals that are about it.
+    for key in ("pf_heatmap", "pf_money", "pf_ar_rank", "pf_coverage", "pf_uninsured"):
+        assert excludes_unmatched(get("portfolio", key)), key
+    slicer = dr.chrome("overview")[0]
+    assert slicer["name"] == dr.oid("overview", "slicer_project") and excludes_unmatched(slicer)
+    gaps = [v for v in visuals.values() if '"HasUnmatchedProject"' in json.dumps(v)]
+    assert gaps and not any(excludes_unmatched(v) for v in gaps)
     overdue = get("safetyquality", "sq_overdue")
     assert overdue["filterConfig"]["filters"][0]["field"]["Column"]["Property"] == "IsPastDue"
     assert overdue["visual"]["query"]["sortDefinition"]["sort"][0]["direction"] == "Descending"
@@ -426,6 +447,8 @@ def test_report_formats():
 def test_qc_disclosures():
     import deploy_report_qc as qc
     import deploy_model as dm
+    slicer = qc.chrome("qcportfolio")[0]
+    assert slicer["name"] == dr.oid("qcportfolio", "slicer_project") and excludes_unmatched(slicer)
     observations = json.dumps(qc.page_ncr())
     mockups = json.dumps(qc.page_submittals())
     assert "not only confirmed NCRs" in observations

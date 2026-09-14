@@ -186,17 +186,20 @@ SNAPSHOT_KPIS = [
     ("Pending Change Orders", "PendingChangeOrders", '"$#,0"'),
     ("Approved Change Orders", "ApprovedChangeOrders", '"$#,0"'),
 ]
+# SnapshotDate semantics, stated wherever a reader meets a snapshot measure.
+SNAPSHOT_DATE_NOTE = ("SnapshotDate is the UTC date of the DQ batch that saved it: the build that "
+                      "ran overnight into that date, so sources as of the previous night")
 SNAPSHOT_MEASURES = [
     (f"{name} (Month End)",
      "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\n"
      "RETURN IF ( ISBLANK ( D ), BLANK (),\n"
      f"CALCULATE ( SUM ( fct_DailySnapshot[{col}] ), fct_DailySnapshot[SnapshotDate] = D ) )",
-     fmt, f"no workbook equivalent - [{name}] as saved at the last capture in the period")
+     fmt, f"no workbook equivalent - [{name}] as saved at the last capture in the period. {SNAPSHOT_DATE_NOTE}")
     for name, col, fmt in SNAPSHOT_KPIS
 ] + [
     ("Snapshot History Starts",
      "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
-     '"yyyy-mm-dd"', "no workbook equivalent - first saved capture"),
+     '"yyyy-mm-dd"', f"no workbook equivalent - first saved capture. {SNAPSHOT_DATE_NOTE}"),
     ("Snapshot History Note",
      "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\n"
      'RETURN IF ( ISBLANK ( F ), "No month-end history captured yet",\n'

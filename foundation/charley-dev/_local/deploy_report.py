@@ -429,6 +429,31 @@ def keep_true(v: dict, table: str, col: str) -> dict:
     return v
 
 
+def exclude_unmatched(v: dict) -> dict:
+    """Visual-level filter: dim_Project[ProjectKey] <> "UNMATCHED".
+
+    The UNMATCHED member exists so unmatched AR is labelled rather than (Blank). In a
+    project slicer or a per-project comparison it reads as a real job, so it is filtered
+    there - and kept on the data-gap visuals that are about it.
+    """
+    col = "ProjectKey"
+    v.setdefault("filterConfig", {"filters": []})["filters"].append({
+        "name": oid(v["name"], "dim_Project", col, "not-unmatched"),
+        "field": {"Column": {"Expression": {"SourceRef": {"Entity": "dim_Project"}}, "Property": col}},
+        "type": "Categorical",
+        "filter": {
+            "Version": 2,
+            "From": [{"Name": "p", "Entity": "dim_Project", "Type": 0}],
+            "Where": [{"Condition": {"Not": {"Expression": {"In": {
+                "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "p"}}, "Property": col}}],
+                "Values": [[{"Literal": {"Value": "'UNMATCHED'"}}]],
+            }}}}}],
+        },
+        "howCreated": "User",
+    })
+    return v
+
+
 def sort_desc(v: dict, field: dict) -> dict:
     """Default sort, descending, by a column() or measure() projection."""
     v["visual"]["query"]["sortDefinition"] = {
@@ -475,9 +500,9 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
     # arrived by, so the page would answer a different question than the one asked.
     if slicers:
         items = [
-            visual(page, "slicer_project", "slicer", 768, 4, 240, 54,
+            exclude_unmatched(visual(page, "slicer_project", "slicer", 768, 4, 240, 54,
                    {"Values": [column("dim_Project", "ProjectName")]},
-                   title="Project", tab=1, sync="project", title_size=SLICER_TITLE),
+                   title="Project", tab=1, sync="project", title_size=SLICER_TITLE)),
             visual(page, "slicer_month", "slicer", 1020, 4, 240, 54,
                    {"Values": [column("dim_Date", "MonthYear")]},
                    title="Month", tab=2, sync="month", title_size=SLICER_TITLE),
@@ -535,36 +560,36 @@ def page_portfolio() -> tuple[str, list[dict]]:
         # THE HEATMAP. A matrix rather than a chart because the cell values are ordinal
         # scores (0/2/3) against two categorical axes - there is no magnitude to compare
         # lengths of, and conditional formatting carries the reading.
-        no_totals(visual(p, "pf_heatmap", "pivotTable", 20, 220, 720, 230,
+        exclude_unmatched(no_totals(visual(p, "pf_heatmap", "pivotTable", 20, 220, 720, 230,
                {"Rows": [column("dim_Project", "ProjectName")],
                 "Columns": [column("dim_ScorecardWeight", "CategoryName")],
                 "Values": [measure("Category Score")]},
                title="Scorecard by project and category (0-3, blank = not measured)",
                alt="Matrix. One row per project, one column per scorecard category, "
                    "showing each category score out of 3. Blank cells are categories with "
-                   "no data rather than a score of zero.")),
+                   "no data rather than a score of zero."))),
 
         # Contract, billed and paid together per job: the gap between the bars IS the
         # exposure, and reading three separate cards never showed it.
-        visual(p, "pf_money", "clusteredColumnChart", 760, 220, 500, 230,
+        exclude_unmatched(visual(p, "pf_money", "clusteredColumnChart", 760, 220, 500, 230,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Current Contract"), measure("Total Billed"),
                       measure("Total Paid")]},
-               title="Contract, billed and paid by project"),
+               title="Contract, billed and paid by project")),
 
         # Ranked, and tall enough for eight bars before scrolling: at 128px each of these
         # three showed two projects and hid the rest behind a scrollbar.
-        sort_desc(visual(p, "pf_ar_rank", "barChart", 20, 462, 400, 194,
+        exclude_unmatched(sort_desc(visual(p, "pf_ar_rank", "barChart", 20, 462, 400, 194,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("AR Outstanding")]},
-               title="AR outstanding (current balance), ranked"), measure("AR Outstanding")),
+               title="AR outstanding (current balance), ranked"), measure("AR Outstanding"))),
 
         # Coverage sits on the portfolio page too, because the honest reading of any
         # cross-project comparison is "and how much of each score is real".
-        sort_desc(visual(p, "pf_coverage", "barChart", 436, 462, 400, 194,
+        exclude_unmatched(sort_desc(visual(p, "pf_coverage", "barChart", 436, 462, 400, 194,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Scorecard Coverage %")]},
-               title="Scorecard coverage by project"), measure("Scorecard Coverage %")),
+               title="Scorecard coverage by project"), measure("Scorecard Coverage %"))),
 
         # Insurance exposure belongs at portfolio level, not only on the Insurance page:
         # "which jobs are running subs with no certificate on file" is a question about
@@ -572,11 +597,11 @@ def page_portfolio() -> tuple[str, list[dict]]:
         # over two key lists, NOT a RELATEDTABLE - there is no relationship from
         # bridge_ProjectVendor to fct_VendorInsurance, both hang off dim_Vendor, and a
         # RELATEDTABLE version would deploy perfectly cleanly and then fail at render.
-        sort_desc(visual(p, "pf_uninsured", "barChart", 852, 462, 408, 194,
+        exclude_unmatched(sort_desc(visual(p, "pf_uninsured", "barChart", 852, 462, 408, 194,
                {"Category": [column("dim_Project", "ProjectName")],
                 "Y": [measure("Vendors Without Insurance")]},
                title="Vendors with no certificate on file, by project"),
-            measure("Vendors Without Insurance")),
+            measure("Vendors Without Insurance"))),
     ]
 
 

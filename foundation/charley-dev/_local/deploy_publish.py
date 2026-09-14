@@ -14,7 +14,8 @@ WHAT IT DOES, EVERY RUN, IN ORDER:
   1. Resolves both models BY NAME in the workspace (exactly one each, or fail). Ids are not
      hardcoded: deploy_model.py --recreate issues a new id.
   2. Turns automatic update OFF on both (idempotent). A recreated model comes back with it
-     ON; set_autosync.py uses the same function for a one-off.
+     ON; set_autosync.py uses the same function for a one-off. A failure here is recorded,
+     both refreshes still run, and the activity FAILS at the end.
   3. Reads each model's latest meta_PipelineRun RunId BEFORE refreshing. If a model already
      shows the gate run this notebook is about to publish, something framed it without us -
      automatic update was on. Recorded, refresh still done (so both models agree), then the
@@ -123,9 +124,15 @@ try:
     with open(f"{DIAG}/heartbeat_run.json", encoding="utf-8") as fh:
         gate = record["gate_run_id"] = json.load(fh)["run_id"]
     record["models"] = [{"name": n, "id": i} for n, i in resolve_models(tok)]
+    # A failure here must not skip the refreshes: gold already passed the gate, and a model
+    # left unframed shows readers yesterday. Recorded, both refreshes run, then it fails.
     for m in record["models"]:
-        disable_autosync(tok, m["id"])
-        m["autosync_disabled"] = True
+        try:
+            disable_autosync(tok, m["id"])
+            m["autosync_disabled"] = True
+        except Exception as exc:
+            m["autosync_disabled"] = False
+            m["autosync_error"] = f"{type(exc).__name__}: {exc}"
     for m in record["models"]:
         try:
             m["before"] = latest_run(tok, m["id"])
@@ -149,6 +156,12 @@ try:
             f"AUTO-FRAMING DETECTED: {auto_framed} already showed gate run {gate} before this "
             "notebook refreshed - Direct Lake automatic update was ON, so readers may have seen "
             "gold before the DQ gate. It has now been turned off; check who re-enabled it.")
+    autosync_failed = {m["name"]: m["autosync_error"] for m in record["models"] if not m["autosync_disabled"]}
+    if autosync_failed:
+        raise RuntimeError(
+            f"AUTOMATIC UPDATE NOT DISABLED on {sorted(autosync_failed)}: both models were refreshed "
+            f"to gate run {gate}, but automatic update may still be ON, so the next gold write can "
+            f"reach readers before the DQ gate. Run set_autosync.py --apply. Errors: {autosync_failed}")
     record["ok"] = True
 except Exception as exc:
     record["error"] = f"{type(exc).__name__}: {exc}"
@@ -164,7 +177,11 @@ except Exception as exc:
         "(if they differ, the one on the gate run is ahead):\\n" + "\\n".join(releases))
     try:
         import fabric_common as fc
-        fc.notify("PUBLISH FAILED - cd_50_publish_models", record["alert"])
+        record["alert_sent"] = bool(fc.notify("PUBLISH FAILED - cd_50_publish_models", record["alert"]))
+        if not record["alert_sent"]:
+            print("!" * 78 + "\\nWARNING: PUBLISH FAILED AND NO ALERT WAS SENT - no DQ-ALERT-WEBHOOK "
+                  "secret is configured, so nobody has been told.\\nThis activity fails below; "
+                  "check the pipeline run.\\n" + "!" * 78)
     except Exception as alert_exc:
         print(f"[alert] could not alert: {alert_exc}\\n{record['alert']}")
     raise

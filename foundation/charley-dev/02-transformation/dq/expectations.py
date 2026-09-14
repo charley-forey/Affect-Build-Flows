@@ -1265,36 +1265,50 @@ SNAPSHOT_VALUES = ("ProjectKey, OpenSubmittals, SubmittalsPastDue, OpenRfis, Ope
                    "CommittedAmount, CurrentContract, PendingChangeOrders, ApprovedChangeOrders")
 
 
-def snapshot_suite(snapshot_date: str) -> Suite:
-    """Checks run by cd_40_dq_checks straight AFTER capturing fct_DailySnapshot.
+def snapshot_suite(snapshot_date: str, table: str = SNAPSHOT_TABLE) -> Suite:
+    """Checks run by cd_40_dq_checks on one capture of fct_DailySnapshot.
+
+    Run twice: on the staged rows (table="v_DailySnapshotStage") BEFORE the date's earlier
+    capture is deleted, and on the written table after the swap.
 
     Not part of build_suite: the table does not exist before the first passing run, and
     v_DailySnapshotLive is a temp view of the capture session, so these would read as
     "could not run" - which blocks - inside the main gate.
     """
+    capture = f"SnapshotDate = DATE '{snapshot_date}'"
+    not_passing = ("NOT EXISTS (SELECT 1 FROM meta_PipelineRun r "
+                   "WHERE r.RunId = s.RunId AND r.Status = 'ok' AND r.Blocking = 0)")
     return Suite().add(
-        unique_key(SNAPSHOT_TABLE, ["ProjectKey", "SnapshotDate"]),
+        unique_key(table, ["ProjectKey", "SnapshotDate"]),
         Expectation(
-            name=f"{SNAPSHOT_TABLE} equals live facts at capture",
-            table=SNAPSHOT_TABLE,
+            name=f"{table} equals live facts at capture",
+            table=table,
             # Both directions: a changed value, a missing project and an extra project each
             # leave a row on one side. EXCEPT compares NULLs as equal, which is what a
-            # BLANK-preserving snapshot needs.
+            # BLANK-preserving snapshot needs. Exact equality is safe because the money
+            # columns are ROUNDed to cents in v_DailySnapshotLive itself.
             failing_sql=(
                 f"(SELECT {SNAPSHOT_VALUES} FROM v_DailySnapshotLive "
-                f"EXCEPT SELECT {SNAPSHOT_VALUES} FROM {SNAPSHOT_TABLE} WHERE SnapshotDate = DATE '{snapshot_date}') "
+                f"EXCEPT SELECT {SNAPSHOT_VALUES} FROM {table} WHERE {capture}) "
                 f"UNION ALL "
-                f"(SELECT {SNAPSHOT_VALUES} FROM {SNAPSHOT_TABLE} WHERE SnapshotDate = DATE '{snapshot_date}' "
+                f"(SELECT {SNAPSHOT_VALUES} FROM {table} WHERE {capture} "
                 f"EXCEPT SELECT {SNAPSHOT_VALUES} FROM v_DailySnapshotLive)"),
             description="the saved month-end history must be what the facts said when it was saved",
         ),
+        # Scoped to THIS capture: a historical row from a run that later lost its
+        # meta_PipelineRun row must not block every night from now on.
         Expectation(
-            name=f"{SNAPSHOT_TABLE} rows come only from passing runs",
-            table=SNAPSHOT_TABLE,
-            failing_sql=(
-                f"SELECT s.* FROM {SNAPSHOT_TABLE} s WHERE NOT EXISTS (SELECT 1 FROM meta_PipelineRun r "
-                f"WHERE r.RunId = s.RunId AND r.Status = 'ok' AND r.Blocking = 0)"),
+            name=f"{table} rows come only from passing runs",
+            table=table,
+            failing_sql=f"SELECT s.* FROM {table} s WHERE s.{capture} AND {not_passing}",
             description="a snapshot from a blocked run would freeze unvalidated numbers into history",
+        ),
+        Expectation(
+            name=f"{table} historical rows from runs not recorded as passing",
+            table=table,
+            failing_sql=f"SELECT s.* FROM {table} s WHERE NOT s.{capture} AND {not_passing}",
+            severity=SEVERITY_WARN,
+            description="earlier captures whose run is missing or not ok in meta_PipelineRun - review, not a block",
         ),
     )
 

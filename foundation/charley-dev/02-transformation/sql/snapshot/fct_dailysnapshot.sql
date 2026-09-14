@@ -9,6 +9,14 @@
 -- raises before this file is reached and no row from a failed run is ever written. It is
 -- not a gold build file (no 1-4 prefix) because gold runs BEFORE the gate.
 --
+-- STAGE, VALIDATE, THEN SWAP. The notebook runs everything above the SWAP marker, checks
+-- v_DailySnapshotStage with expectations.snapshot_suite, and only then runs the swap. A
+-- failed validation leaves an earlier capture of the same date untouched.
+--
+-- {SNAPSHOT_DATE} is the UTC date of the DQ batch. The nightly run starts 02:00 New York
+-- (06:00-07:00 UTC), so a capture dated D is the build that ran overnight into D: sources
+-- as of the previous night, not the close of business on D.
+--
 -- ONE ROW-SET PER DATE. Re-running on the same {SNAPSHOT_DATE} replaces that date's rows.
 -- There is no backfill: months before the first capture are absent, and the model shows
 -- them as BLANK (unavailable), never zero.
@@ -17,7 +25,8 @@
 -- beside it, per ProjectKey. validate_model.monthly_expected recomputes those measures
 -- independently, and the offline suite asserts these columns equal that recomputation.
 -- COUNTs are SUM(CASE ... THEN 1 END) so "no rows" stays NULL, exactly as COUNTROWS of
--- nothing is BLANK in DAX.
+-- nothing is BLANK in DAX. Money is ROUNDed to cents here, once, so the stored value and
+-- the reconciliation's recomputation cannot differ by floating-point noise.
 
 CREATE TABLE IF NOT EXISTS fct_DailySnapshot (
     SnapshotDate          DATE,
@@ -37,7 +46,7 @@ CREATE TABLE IF NOT EXISTS fct_DailySnapshot (
     ApprovedChangeOrders  DOUBLE,
     RunId                 STRING,
     CapturedAt            TIMESTAMP
-);
+) USING DELTA;
 
 -- The live values. A TEMP view so the reconciliation rule in expectations.snapshot_suite
 -- compares the written rows against exactly what was captured, in the same session.
@@ -68,15 +77,15 @@ quality AS (
 ),
 ar AS (
     -- [AR Outstanding], [Total Billed]
-    SELECT ProjectKey, CAST(SUM(Balance) AS DOUBLE) AS ArOutstanding,
-           CAST(SUM(Amount) AS DOUBLE) AS BilledToDate
+    SELECT ProjectKey, ROUND(CAST(SUM(Balance) AS DOUBLE), 2) AS ArOutstanding,
+           ROUND(CAST(SUM(Amount) AS DOUBLE), 2) AS BilledToDate
     FROM fct_Invoice GROUP BY ProjectKey
 ),
 budget AS (
     -- [Budget], [Spent To Date], [Committed]
-    SELECT ProjectKey, CAST(SUM(BudgetAmount) AS DOUBLE) AS BudgetAmount,
-           CAST(SUM(SpentToDate) AS DOUBLE) AS SpentToDate,
-           CAST(SUM(CommittedAmount) AS DOUBLE) AS CommittedAmount
+    SELECT ProjectKey, ROUND(CAST(SUM(BudgetAmount) AS DOUBLE), 2) AS BudgetAmount,
+           ROUND(CAST(SUM(SpentToDate) AS DOUBLE), 2) AS SpentToDate,
+           ROUND(CAST(SUM(CommittedAmount) AS DOUBLE), 2) AS CommittedAmount
     FROM fct_BudgetLine GROUP BY ProjectKey
 ),
 -- [Current Contract], [Pending Change Orders]: LASTNONBLANKVALUE per project - the value
@@ -90,13 +99,13 @@ last_pending AS (
     WHERE PendingChangeOrders IS NOT NULL AND MonthStart IS NOT NULL GROUP BY ProjectKey
 ),
 contract AS (
-    SELECT f.ProjectKey, CAST(SUM(f.CurrentContract) AS DOUBLE) AS CurrentContract
+    SELECT f.ProjectKey, ROUND(CAST(SUM(f.CurrentContract) AS DOUBLE), 2) AS CurrentContract
     FROM fct_FinancialPeriod f
     JOIN last_contract l ON f.ProjectKey IS NOT DISTINCT FROM l.ProjectKey AND f.MonthStart = l.MonthStart
     GROUP BY f.ProjectKey
 ),
 pending AS (
-    SELECT f.ProjectKey, CAST(SUM(f.PendingChangeOrders) AS DOUBLE) AS PendingChangeOrders
+    SELECT f.ProjectKey, ROUND(CAST(SUM(f.PendingChangeOrders) AS DOUBLE), 2) AS PendingChangeOrders
     FROM fct_FinancialPeriod f
     JOIN last_pending l ON f.ProjectKey IS NOT DISTINCT FROM l.ProjectKey AND f.MonthStart = l.MonthStart
     GROUP BY f.ProjectKey
@@ -106,9 +115,9 @@ approved AS (
     -- not void (a void CO is not pending either, and never reaches the contract). DAX's
     -- StatusLabel <> "void" is case-insensitive and keeps a blank label.
     SELECT ProjectKey,
-           CAST(SUM(CASE WHEN NOT COALESCE(IsPending, FALSE)
+           ROUND(CAST(SUM(CASE WHEN NOT COALESCE(IsPending, FALSE)
                           AND (StatusLabel IS NULL OR LOWER(StatusLabel) <> 'void')
-                         THEN Amount END) AS DOUBLE) AS ApprovedChangeOrders
+                         THEN Amount END) AS DOUBLE), 2) AS ApprovedChangeOrders
     FROM fct_ChangeOrder GROUP BY ProjectKey
 )
 SELECT p.ProjectKey,
@@ -126,6 +135,18 @@ LEFT JOIN contract c  ON c.ProjectKey  IS NOT DISTINCT FROM p.ProjectKey
 LEFT JOIN pending  pe ON pe.ProjectKey IS NOT DISTINCT FROM p.ProjectKey
 LEFT JOIN approved ap ON ap.ProjectKey IS NOT DISTINCT FROM p.ProjectKey;
 
+-- The rows this run would write. Validated BEFORE anything is deleted.
+CREATE OR REPLACE TEMP VIEW v_DailySnapshotStage AS
+SELECT DATE '{SNAPSHOT_DATE}' AS SnapshotDate, ProjectKey,
+       OpenSubmittals, SubmittalsPastDue, OpenRfis, OpenObservations, OpenPunchItems,
+       ArOutstanding, BilledToDate, BudgetAmount, SpentToDate, CommittedAmount,
+       CurrentContract, PendingChangeOrders, ApprovedChangeOrders,
+       '{RUN_ID}' AS RunId, CAST(CURRENT_TIMESTAMP AS TIMESTAMP) AS CapturedAt
+FROM v_DailySnapshotLive;
+
+-- deploy_dq.snapshot_phases splits the file on the next line.
+-- ==== SWAP ====
+
 -- Idempotent re-run: replace this date, never duplicate it.
 -- ponytail: DELETE + INSERT is two Delta commits, not one. A failure between them leaves
 -- the date EMPTY (month-end falls back to the previous capture), never duplicated or
@@ -133,9 +154,9 @@ LEFT JOIN approved ap ON ap.ProjectKey IS NOT DISTINCT FROM p.ProjectKey;
 DELETE FROM fct_DailySnapshot WHERE SnapshotDate = DATE '{SNAPSHOT_DATE}';
 
 INSERT INTO fct_DailySnapshot
-SELECT DATE '{SNAPSHOT_DATE}', ProjectKey,
+SELECT SnapshotDate, ProjectKey,
        OpenSubmittals, SubmittalsPastDue, OpenRfis, OpenObservations, OpenPunchItems,
        ArOutstanding, BilledToDate, BudgetAmount, SpentToDate, CommittedAmount,
        CurrentContract, PendingChangeOrders, ApprovedChangeOrders,
-       '{RUN_ID}', CAST(CURRENT_TIMESTAMP AS TIMESTAMP)
-FROM v_DailySnapshotLive;
+       RunId, CapturedAt
+FROM v_DailySnapshotStage;

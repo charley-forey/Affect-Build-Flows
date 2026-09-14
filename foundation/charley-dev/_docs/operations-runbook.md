@@ -94,28 +94,35 @@ Offline first: `python _local/run_tests.py` (19 suites on release2, no network).
 
 Run from `_local/`, each with `--apply`, and stop at the first non-zero exit:
 
-1. `deploy_seeds.py`: gold reads `seed_ProjectCrosswalk`
-2. `deploy_manual.py`: creates `cd_bronze_man_*`
-3. `deploy_silver.py`
-4. `deploy_gold.py`: publishes `gold_schema.json`, which the model generators read
-5. `deploy_dq.py`: run the gate and confirm the result matches the candidate
-6. `deploy_model.py`, then `deploy_model_qc.py`
-7. `deploy_report.py`, then `deploy_report_qc.py`
-8. Reframe or publish. Once the barrier is deployed this is `deploy_publish.py --apply`
-   (notebook) plus the pipeline. An out-of-band publish is `deploy_publish.py --apply --run`.
-   Only do it after a passing gate.
-9. `validate_model.py`: live row counts, measure evaluation and independent checks. It does
-   not reframe production unless given `--allow-production-reframe`.
-10. `reconcile_live.py`: ten read-only checks, aggregates-only evidence to
+1. `deploy_ingestion.py`: shared library and extractors. NOT while a nightly run is in
+   progress - it replaces files the running notebooks import.
+2. `deploy_outbuild.py`
+3. `deploy_seeds.py`: gold reads `seed_ProjectCrosswalk`
+4. `deploy_manual.py`: creates `cd_bronze_man_*`
+5. `deploy_silver.py`
+6. `deploy_gold.py`: publishes `gold_schema.json`, which the model generators read
+7. `deploy_dq.py`: run the gate and confirm the result matches the candidate. Exits
+   non-zero on a Failed, Cancelled or Deduped run.
+8. `deploy_model.py`, then `deploy_model_qc.py`
+9. `deploy_report.py`, then `deploy_report_qc.py`
+10. `deploy_publish.py --apply`: the Publish Models notebook. An out-of-band publish is
+    `deploy_publish.py --apply --run`. Only do it after a passing gate.
+11. `deploy_pipeline.py --apply`: the nightly pipeline, including Publish Models after the
+    gate and Seed Gold Dimensions after Bronze To Silver.
+12. `set_autosync.py --apply`, only after Publish Models has run successfully once and the
+    `DQ-ALERT-WEBHOOK` secret exists. Before that, automatic update off means a failed
+    publish leaves readers on stale gold with nobody told.
+13. `validate_model.py`: live row counts, measure evaluation and independent checks. It does
+    not reframe production unless given `--allow-production-reframe`.
+14. `reconcile_live.py`: ten read-only checks, aggregates-only evidence to
     `_docs/live-reconciliation/<UTC>.json`, exit 1 on any ERROR-severity FAIL. For a
     candidate, pass `--model-id`, `--qc-model-id` and `--lakehouse`.
 
-The 2026-09-14 promotion (candidate `cadcd0d8`) followed steps 1-7 and 9. The gold step ran
+The 2026-09-14 promotion (candidate `cadcd0d8`) followed what are now steps 3-9 and 13. The gold step ran
 117 statements with 0 failed. The DQ gate ran 189 rules with 0 blocking, the same as the
 candidate. `validate_model.py` passed 18 checks.
 
-The first time the publish barrier is deployed, run `set_autosync.py` (dry run), then
-`set_autosync.py --apply`. Confirm in the portal (Semantic model settings > Refresh > "Keep
+For step 12, run `set_autosync.py` (dry run) first, then `set_autosync.py --apply`. Confirm in the portal (Semantic model settings > Refresh > "Keep
 your Direct Lake data up to date" = Off), because no API can read that setting back.
 
 ## 5. Rollback
