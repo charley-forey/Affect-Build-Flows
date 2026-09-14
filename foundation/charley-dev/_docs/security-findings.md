@@ -18,7 +18,7 @@ Re-checked 2026-08-19: **F1 is still open**, and is now actionable for the first
 > hardcoded Procore secrets were re-read on 2026-08-19: they use `get_secret()` throughout,
 > carry no literal credentials, and hold no saved token output in their cell results.
 >
-> The **workspace** copy is not. Rebecca's `procore_auth` notebook running in Fabric still
+> The **workspace** copy is not. The Affect reporting lead's `procore_auth` notebook running in Fabric still
 > assigns the client id and secret as string literals. That is the copy that matters — a
 > scrubbed file in git next to an unscrubbed notebook in the service is the most dangerous
 > shape this finding can take, because the exposure reads as fixed and is not.
@@ -26,8 +26,8 @@ Re-checked 2026-08-19: **F1 is still open**, and is now actionable for the first
 > What changed is that the remediation is now possible, and **nothing is blocking it.**
 > Re-checked late on 2026-08-19: the vault to use is **`AffectKeyVault`**
 > (`https://affectkeyvault.vault.azure.net/`, RG `Affect_Data`, subscription `73932b34-…`),
-> where `cforey-c@affect-group.com` already holds **Key Vault Administrator** inherited at
-> resource-group scope. Secrets read and write today — Rebecca's Outbuild token was placed
+> where the build account already holds **Key Vault Administrator** inherited at
+> resource-group scope. Secrets read and write today — the Affect reporting lead's Outbuild token was placed
 > there and read back successfully the same evening.
 >
 > **The earlier ask — "Key Vault Secrets Officer" on vault `OneLake` — was aimed at the wrong

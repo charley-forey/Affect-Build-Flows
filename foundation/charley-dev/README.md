@@ -115,7 +115,7 @@ Vault inside Fabric and environment variables locally.
 
 The vault is **`AffectKeyVault`** — `https://affectkeyvault.vault.azure.net/`, resource group
 `Affect_Data`, subscription `73932b34-3bb6-4a94-bd4b-4b7623d4f7d6`, tenant "Affect Build LLC"
-`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`. the build account holds **Key Vault
+`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`. The build account holds **Key Vault
 Administrator** on the resource group, so reading and writing secrets needs no further grant.
 
 Key Vault names cannot contain underscores, so the environment-variable name is never the

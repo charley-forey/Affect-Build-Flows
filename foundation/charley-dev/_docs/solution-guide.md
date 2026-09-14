@@ -462,7 +462,7 @@ the pipework was built and tested throughout.
 | Blocker | Unlocks | Owner |
 |---|---|---|
 | ~~**SharePoint lists**~~ | ✅ **Provisioned.** The 18 lists landed 2026-08-19 and their 142 columns and 19 `CD Projects` rows 2026-08-20, on `AffectProjectReporting_main`. What is left is signing `CD_Manual_Ingest` in — ours, not Affect's | — |
-| ~~**`OUTBUILD_API_TOKEN`**~~ | ✅ **Received 2026-08-19** — 3,078 rows across 15 endpoints in bronze. Repointing `sv_outbuild_activities` off Rebecca's `Silver_Lakehouse` is ours to do | — |
+| ~~**`OUTBUILD_API_TOKEN`**~~ | ✅ **Received 2026-08-19** — 3,078 rows across 15 endpoints in bronze. Repointing `sv_outbuild_activities` off the Affect reporting lead's `Silver_Lakehouse` is ours to do | — |
 | **Sage gateway connection grant** | AR/AP detail incl. `arivln`/`apivln` — no longer needed for retainage. The dataflow is deployed and inert | Affect IT |
 | ~~**Key Vault role assignment** on vault `OneLake`~~ | ❌ **Withdrawn 2026-08-19 — wrong vault.** `AffectKeyVault` was already writable by this account. The remaining gate on running ingestion inside Fabric is the **Procore credential rotation** | — |
 
