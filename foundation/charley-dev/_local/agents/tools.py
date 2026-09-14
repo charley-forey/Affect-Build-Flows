@@ -46,7 +46,7 @@ REPO = CHARLEY_DEV.parent.parent
 WRITE_ROOT = CHARLEY_DEV.resolve()
 
 # Reading is wider than writing on purpose: agents need the analysis, the workbook notes and
-# Rebecca's schemas to make good decisions. They just cannot change any of it.
+# the Affect reporting lead's schemas to make good decisions. They just cannot change any of it.
 READ_ROOT = REPO.resolve()
 
 DEPLOY_SCRIPTS = {

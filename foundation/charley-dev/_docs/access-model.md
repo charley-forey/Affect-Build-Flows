@@ -99,7 +99,7 @@ the fix: **the cheapest unblock never required Affect to do anything at all.**
 
 | | Route | Needs | Ties Sage to |
 |---|---|---|---|
-| **Today, free** | The Affect reporting lead opens `CD_Sage_Ingest` and clicks **Take over** | Nothing. She already has Can use, workspace access and a Pro licence | The Affect reporting lead — a permanent employee, not a consultant |
+| **Today, free** | The Affect reporting lead opens `CD_Sage_Ingest` and clicks **Take over** | Nothing. They already have Can use, workspace access and a Pro licence | The Affect reporting lead — a permanent employee, not a consultant |
 | **Durable** | The gateway service account owns it (`--take-ownership`) | Add it to the `Build` workspace + a **Power BI Pro** licence, $14/mo | Nobody. No human in the path |
 | Fallback | `--grant` adds the build account as Can use | Nothing | A consultant's account. Somebody redoes this later |
 
@@ -167,11 +167,11 @@ nothing in the document grants gateway-admin rights to the Affect reporting lead
 
 If that is right, then the only identity that can grant "Can use" on this gateway is a service
 account whose password lives in 1Password. That is a single point of failure worth fixing on
-its own merits, independent of this engagement: **add the Affect reporting lead as a gateway admin.** She is
-already the F2 capacity administrator, so it is a role she is expected to hold.
+its own merits, independent of this engagement: **add the Affect reporting lead as a gateway admin.** They are
+already the F2 capacity administrator, so it is a role they are expected to hold.
 
-It also means "ask the Affect reporting lead to grant it" may simply fail for her, through no fault of hers, and
-that is worth knowing before she is asked.
+It also means "ask the Affect reporting lead to grant it" may simply fail for them, through no fault of theirs, and
+that is worth knowing before they are asked.
 
 ## Sage: the four honest options
 

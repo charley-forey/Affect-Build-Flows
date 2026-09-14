@@ -15,7 +15,7 @@ THREE PREFIXES ARE PRE-REGISTERED as temporary views so a query can name any lay
     <table>      our gold, which is the notebook's default lakehouse
 
 READ-ONLY BY CONSTRUCTION. Anything that is not a SELECT or a WITH is refused before the
-notebook is built - this reads Rebecca's lakehouse, and a tool that can casually write to
+notebook is built - this reads the Affect reporting lead's lakehouse, and a tool that can casually write to
 it has no business existing. That is a guard against a slip, not against an adversary;
 anyone who wants to write can edit a deploy script.
 

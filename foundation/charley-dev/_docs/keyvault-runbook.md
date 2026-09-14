@@ -137,7 +137,7 @@ reads as fixed and is not.
 
 1. **Regenerate in Procore.** Developer Portal → the Data Connector app → regenerate the client
    secret. This invalidates the old one immediately, so expect the Affect reporting lead's `procore_auth`
-   notebook to start failing from this moment — that is the point, and it is worth telling her
+   notebook to start failing from this moment — that is the point, and it is worth telling them
    before rather than after.
 
 2. **Put the new values in `.env`** at `C:\Users\charl\Documents\Affect\.env`:

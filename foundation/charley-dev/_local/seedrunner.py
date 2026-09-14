@@ -79,7 +79,7 @@ MACROS = (
     # start, end). Overloading by arity is allowed, so the Spark spelling works here too.
     "CREATE OR REPLACE MACRO datediff(e, s) AS date_diff('day', CAST(s AS DATE), CAST(e AS DATE))",
     # Spark's date_format(d, 'yyyy-MM'); DuckDB spells it strftime with C-style codes.
-    # 26_sage_silver.sql needs it because Sage has no billing-period column - Rebecca's
+    # 26_sage_silver.sql needs it because Sage has no billing-period column - the Affect reporting lead's
     # Revenue_AllTime carried one and gold reads it, so it is derived from the invoice date
     # at the monthly grain the workbook reports at. ONLY 'yyyy-MM' is translated; any other
     # pattern would silently come back wrong, so assert on the output if one is ever added.

@@ -9,9 +9,9 @@ This is the other half of `lib/fabric_common.get_secret()`, which already looks 
 `notebookutils.credentials.getSecret(vault, name)` inside Fabric and falls back to an
 environment variable locally. That helper had nothing to read until now.
 
-Fixes F2 in _docs/security-findings.md for OUR notebooks. It does not touch Rebecca's - F1
-(hardcoded credentials in the live `procore_auth`) is hers to rotate, and rotating on her
-behalf would break her running pipeline without warning.
+Fixes F2 in _docs/security-findings.md for OUR notebooks. It does not touch the Affect reporting lead's - F1
+(hardcoded credentials in the live `procore_auth`) is theirs to rotate, and rotating on their
+behalf would break their running pipeline without warning.
 
 WHAT IS AND IS NOT PUSHED
 -------------------------
@@ -60,7 +60,7 @@ def find_env() -> Path | None:
 # The vault the platform actually uses. Not the one _docs/keyvault-runbook.md named until
 # 2026-08-19: that was `OneLake` in subscription 0bee26ab, which this account cannot read
 # (403, no role assignment). AffectKeyVault lives in resource group Affect_Data of
-# subscription 73932b34 and already holds OutbuildToken, and cforey-c@affect-group.com has
+# subscription 73932b34 and already holds OutbuildToken, and the build account has
 # Key Vault Administrator on the resource group - so nothing here needs a new grant.
 DEFAULT_VAULT = "AffectKeyVault"
 DEFAULT_RESOURCE_GROUP = "Affect_Data"

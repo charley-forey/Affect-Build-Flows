@@ -42,7 +42,7 @@ KEYVAULT_URL = "https://affectkeyvault.vault.azure.net/"
 
 # Key Vault secret names cannot contain underscores, so the environment-variable name is
 # not the secret name. Every secret in AffectKeyVault was created by hand in the portal by
-# Rebecca, in PascalCase rather than the mechanical kebab-case this used to assume, so each
+# the Affect reporting lead, in PascalCase rather than the mechanical kebab-case this used to assume, so each
 # one is mapped explicitly. Mapped, not renamed: something we cannot see may already read
 # them under these names, and renaming a secret to satisfy a convention breaks that caller
 # silently. Verified against `az keyvault secret list` on 2026-08-24.

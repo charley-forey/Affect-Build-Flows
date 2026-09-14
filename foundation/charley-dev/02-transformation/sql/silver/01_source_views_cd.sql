@@ -1,6 +1,6 @@
 -- silver: THE SWITCH. Same sv_* contract, sourced from OUR OWN CD_Silver.
 --
--- 00_source_views.sql reads Rebecca's existing Silver_Lakehouse read-only, which is how
+-- 00_source_views.sql reads the Affect reporting lead's existing Silver_Lakehouse read-only, which is how
 -- the gold model was validated against real data before Procore credentials landed.
 -- This file is its replacement: identical view names, identical column names, different
 -- source.
@@ -92,7 +92,7 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_budgets`;
 -- Copied verbatim from 00_source_views.sql, including the casts. Retyping it from memory
 -- got the column names wrong; the two must stay identical anyway, because gold reads the
 -- same sv_ar_invoices either way.
--- REPOINTED 2026-08-25 off Rebecca's Revenue_AllTime onto our own Sage ingestion.
+-- REPOINTED 2026-08-25 off the Affect reporting lead's Revenue_AllTime onto our own Sage ingestion.
 --
 -- CD_Sage_Ingest went live at 09:25 UTC and lands acrinv directly, so gold no longer reads
 -- a warehouse table built by a dataflow we do not control. Two differences worth knowing
@@ -167,12 +167,12 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_rfis`;
 -- Outbuild is the ONLY source of milestone data anywhere in the estate - Procore's OAS has
 -- no milestone endpoint.
 --
--- REPOINTED 2026-08-20 onto our own ingestion. This read Rebecca's
+-- REPOINTED 2026-08-20 onto our own ingestion. This read the Affect reporting lead's
 -- `Silver_Lakehouse/Outbuild_activities` until then, because our Outbuild ingestion could
 -- not run without a token; the token arrived 2026-08-19 and 25_outbuild_silver.sql now
 -- parses our own bronze. Measured either side of the switch:
 --
---                              hers        ours
+--                              theirs      ours
 --     activities             1,196       1,860
 --     critical                 168         406
 --     fct_Milestone rows        52         126

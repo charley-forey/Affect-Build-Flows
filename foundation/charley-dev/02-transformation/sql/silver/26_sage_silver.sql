@@ -241,7 +241,7 @@ LEFT JOIN cd_silver_sage_ar_invoices h
 WHERE p._idref IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
--- Vendor master (actpay). Replaces Rebecca's Dim_Sage_Vendors, which was actpay.recnum /
+-- Vendor master (actpay). Replaces the Affect reporting lead's Dim_Sage_Vendors, which was actpay.recnum /
 -- vndnme verbatim: measured 2026-09-13, 1,073 of 1,073 ids in actpay with 0 name
 -- differences, and actpay carries 9 more. `recnum` is the id AP invoices carry in `vndnum`
 -- and the id Procore writes into a vendor's `origin_code` when it syncs to Sage.

@@ -74,7 +74,7 @@ KEEP_CONNECTION_KINDS = {"SQL"}
 #
 # The resolution is not here. Build_Sage_Test's definition is byte-identical to ours -
 # same gatewayObjectId, same SQL connection, same Lakehouse connection 44379bed on cluster
-# e1e7d5c7 - and it works, because it runs as Rebecca and 44379bed is HER connection.
+# e1e7d5c7 - and it works, because it runs as the Affect reporting lead and 44379bed is THEIR connection.
 # e1e7d5c7 returns 404 for us: it is a per-user cloud cluster, so 44379bed is a personal
 # connection and personal connections cannot be shared. Whoever owns the dataflow needs
 # their OWN Lakehouse connection, created through the Power Query "Configure connection"
@@ -108,8 +108,8 @@ def build_definition(tok: str) -> tuple[dict, list[str]]:
     `--apply` silently reverted it and took Sage down again.
 
     The mashup is the versioned artifact - it is the logic, it is diffable, and it belongs in
-    git. The connection ids are not: they are per-user (`Lakehouse cforey-c` is a personal
-    cloud connection; the one we inherited from Build_Sage_Test was Rebecca's, which is what
+    git. The connection ids are not: they are per-user (`Lakehouse <build account>` is a personal
+    cloud connection; the one we inherited from Build_Sage_Test was the Affect reporting lead's, which is what
     caused the original defect) and they differ per environment. Committing them is how this
     dataflow came to be pointing at a connection nobody here could use.
 

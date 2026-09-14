@@ -57,7 +57,7 @@ HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
 ENDPOINTS_YML = CHARLEY_DEV / "01-ingestion" / "Outbuild" / "config" / "endpoints.yml"
 
-# Key Vault holding the Outbuild token. Rebecca created the secret by hand, so it is named
+# Key Vault holding the Outbuild token. The Affect reporting lead created the secret by hand, so it is named
 # OutbuildToken rather than the outbuild-api-token that kv_name() would generate - mapped
 # in fabric_common.SECRET_NAMES, not renamed, because something else may already read it.
 VAULT_NAME = "AffectKeyVault"

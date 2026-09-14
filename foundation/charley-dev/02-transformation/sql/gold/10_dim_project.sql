@@ -23,7 +23,7 @@
 --
 -- That makes referential integrity hold BY CONSTRUCTION rather than by hope, and turns
 -- "which projects have no Sage mapping?" into a filter on the model instead of a
--- pipeline failure. IsInCrosswalk = FALSE is a real finding for Rebecca: those projects
+-- pipeline failure. IsInCrosswalk = FALSE is a real finding for the Affect reporting lead: those projects
 -- cannot join to any Sage financial data until the crosswalk is extended.
 -- =====================================================================================
 --

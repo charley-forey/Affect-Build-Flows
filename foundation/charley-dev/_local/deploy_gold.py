@@ -8,7 +8,7 @@ The generated notebook:
   2. runs every sql/gold/1*, 2*, 3* file in order
   3. asserts the result, so a Completed run means the numbers are right
 
-Reading Rebecca's Silver lakehouse is what lets the gold layer be validated against real
+Reading the Affect reporting lead's Silver lakehouse is what lets the gold layer be validated against real
 data now, rather than waiting for Procore credentials. It is a read: Spark opens the Delta
 files, and everything written goes to CD_Gold_Lakehouse. When our own ingestion has
 populated CD_Silver, only sql/silver/00_source_views.sql changes - no gold file moves.
@@ -38,7 +38,7 @@ SILVER_SQL = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
 # measures and report visuals are identical either way, which is why source naming was
 # isolated in one file instead of spread across nine.
 #
-#   existing  read Rebecca's Silver_Lakehouse (how the model was validated before we had
+#   existing  read the Affect reporting lead's Silver_Lakehouse (how the model was validated before we had
 #             Procore credentials)
 #   cd        read OUR CD_Silver_Lakehouse, fed by our own Procore ingestion
 #
@@ -56,13 +56,13 @@ DEFAULT_SOURCE = "cd"
 
 NOTEBOOK_NAME = "cd_30_build_gold"
 
-# The lakehouse we READ. Rebecca's, untouched - Spark only opens its Delta files.
+# The lakehouse we READ. The Affect reporting lead's, untouched - Spark only opens its Delta files.
 SILVER_SOURCE_ID = "2e05dca7-ff80-4646-b711-6681dd4993e1"
 SILVER_ABFSS = (
     f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/{SILVER_SOURCE_ID}/Tables/dbo"
 )
 
-# Ours. Read from fabric_ids.json rather than hardcoded, because unlike Rebecca's it can be
+# Ours. Read from fabric_ids.json rather than hardcoded, because unlike the Affect reporting lead's it can be
 # dropped and recreated (enableSchemas is creation-only) and the id changes when it is.
 CD_SILVER_ABFSS = (
     f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/"

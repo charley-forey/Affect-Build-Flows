@@ -413,7 +413,7 @@ Delta or DAX before acting on it.
 `cd_silver_outbuild_activities` (`sql/silver/25_outbuild_silver.sql`), and `fct_Milestone`
 was rebuilt and the model reframed. Measured live either side:
 
-| | hers | ours |
+| | existing reporting | ours |
 |---|---:|---:|
 | activities | 1,196 | **1,860** |
 | critical | 168 | **406** |

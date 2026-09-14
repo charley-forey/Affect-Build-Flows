@@ -158,7 +158,7 @@ three that matter:
 **So if the Affect reporting lead's dataflows stop, our dashboard's financial and schedule data stops with
 them** — and it would not error, it would just quietly stop moving. Nothing currently alerts
 on that. Sage is running **~19 days behind** as re-measured on 2026-08-19: max `SentDate`
-reached **2026-07-31**, up from the **2026-07-20** recorded on 2026-08-02, so her feed did
+reached **2026-07-31**, up from the **2026-07-20** recorded on 2026-08-02, so their feed did
 refresh at some point in between rather than stopping dead in July. The Outbuild figure of
 **2026-07-14** is as measured on 2026-08-02 and has **not been re-verified since** —
 `fct_Milestone` is unchanged at 52 rows, and the only date the table carries

@@ -6,7 +6,7 @@
 --
 -- THE COLUMN NAMES HERE ARE A CONTRACT. They must match what sql/silver/00_source_views.sql
 -- exposes as sv_*, because every gold file reads sv_* and nothing else. Get this right and
--- switching gold from Rebecca's Silver_Lakehouse to our own CD_Silver is a one-file change
+-- switching gold from the Affect reporting lead's Silver_Lakehouse to our own CD_Silver is a one-file change
 -- with no gold file, measure or visual touched. That is the whole reason the naming was
 -- isolated in one place.
 --

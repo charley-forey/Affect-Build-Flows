@@ -29,10 +29,10 @@ the `Build` workspace and a Power BI Pro licence ($14/mo), and is the target to 
 than the thing to wait for. See [`access-model.md`](access-model.md).
 
 > **Worth raising on the same call:** re-measured live on **2026-08-19**, the Affect reporting lead's Sage data
-> now runs to **2026-07-31** — up from the **2026-07-20** we recorded on 2026-08-02, so her
+> now runs to **2026-07-31** — up from the **2026-07-20** we recorded on 2026-08-02, so their
 > feed refreshed at some point in between rather than stopping dead. It is still **~19 days
 > behind**: lag, not a dead feed. Outbuild's **2026-07-14** is as measured on 2026-08-02 and
-> has **not been re-verified since**. If her dataflows are lagging on the same gateway, the
+> has **not been re-verified since**. If their dataflows are lagging on the same gateway, the
 > *existing* reporting is running on numbers nearly three weeks old and nobody has noticed —
 > which makes the grant below no less urgent, and `CD_Sage_Ingest` still cannot run at all
 > without it.
@@ -125,7 +125,7 @@ that when the gateway lands" item on this subject area is now checked.
 
 Worth one sentence to the Affect reporting lead all the same: Affect withholds retainage on Procore contracts
 but records none of it in Sage, so the two systems disagree by design. That is a process
-observation, not a defect, and she is the right person to say whether it is intended.
+observation, not a defect, and they are the right person to say whether it is intended.
 
 ### The join keys, verified rather than assumed
 
@@ -192,11 +192,11 @@ why this looked unfixable from the UI as well as from the API.
 
 Its definition is byte-identical to ours — same `gatewayObjectId`, same SQL connection, same
 Lakehouse connection `44379bed-…` on cluster `e1e7d5c7-…`. It works because it runs as the Affect reporting lead
-and `44379bed` is **her personal connection**; `e1e7d5c7` returns 404 for us because it is a
+and `44379bed` is **their personal connection**; `e1e7d5c7` returns 404 for us because it is a
 per-user cloud cluster. Personal connections cannot be shared. Whoever owns the dataflow needs
 their own, and ours is now `Lakehouse <build account>`.
 
-We had copied her definition wholesale, connection ids and all, when this dataflow was
+We had copied their definition wholesale, connection ids and all, when this dataflow was
 authored — and it survived unnoticed from 2026-08-02 until now because the item had no deploy
 script. It has one now (`deploy_sage.py`).
 
