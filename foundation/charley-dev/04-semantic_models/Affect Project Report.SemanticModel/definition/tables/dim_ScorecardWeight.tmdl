@@ -11,7 +11,7 @@ table dim_ScorecardWeight
 		sourceColumn: CategoryName
 
 	column Weight
-		dataType: decimal
+		dataType: double
 		summarizeBy: none
 		sourceColumn: Weight
 		formatString: 0%

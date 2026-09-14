@@ -42,4 +42,5 @@ ref table man_DailyLogCompliance
 ref table dim_ProjectCrosswalk
 ref table dim_VendorCrosswalk
 ref table dim_CostCodeCrosswalk
+ref table dq_DataGap
 ref table meta_PipelineRun

@@ -9,10 +9,10 @@
     "itemId": "77fe4969-f886-47c1-b1fa-750f5bebc2df",
     "jobType": "RunNotebook",
     "invokeType": "Manual",
-    "status": "InProgress",
+    "status": "Completed",
     "failureReason": null,
     "rootActivityId": "3f7cfe83-393e-41a9-8506-a4d661d83c72",
-    "startTimeUtc": "2026-09-14T02:59:32.0395027",
-    "endTimeUtc": null
+    "startTimeUtc": "2026-09-14T02:59:34.3170479",
+    "endTimeUtc": "2026-09-14T03:30:04.3271281"
   }
 }

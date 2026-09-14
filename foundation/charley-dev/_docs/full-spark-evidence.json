@@ -1,6 +1,6 @@
 {
-  "run_id": "12d2dab8478b49d893b6b517e2407141",
-  "completed_at": "2026-09-14T02:52:20.274669+00:00",
+  "run_id": "cadcd0d8617e45309eb4886d289b4880",
+  "completed_at": "2026-09-14T03:29:08.901631+00:00",
   "validation_lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
   "scope": "candidate silver and gold from existing bronze; upstream freshness not certified",
   "checks": [
@@ -208,6 +208,34 @@
       "blocking": false
     },
     {
+      "name": "fct_Invoice.PaymentsReceived conserves sv_ar_payments",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_ar_payments rows with no AR invoice",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice receipts reconcile to AmountPaid",
+      "severity": "warn",
+      "failing_rows": 3,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "fct_Invoice.PaidDate is not before SentDate",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
       "name": "fct_BudgetLine.MonthStart resolves to dim_Date",
       "severity": "error",
       "failing_rows": 0,
@@ -301,7 +329,7 @@
     {
       "name": "every project is in Outbuild",
       "severity": "warn",
-      "failing_rows": 17,
+      "failing_rows": 14,
       "passed": false,
       "blocking": false
     },
@@ -1008,7 +1036,7 @@
     {
       "name": "unattributed Outbuild critical activities dropped from fct_Milestone",
       "severity": "warn",
-      "failing_rows": 280,
+      "failing_rows": 243,
       "passed": false,
       "blocking": false
     },
