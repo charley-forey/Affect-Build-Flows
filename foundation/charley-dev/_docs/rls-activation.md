@@ -26,6 +26,8 @@ without anyone remembering to:
 - **In `PUBLIC_TABLES`** (dates, cost codes, status vocabularies, scorecard config, QC seeds,
   pipeline heartbeat): unfiltered.
 - **Anything else**: `FALSE ()`. The table is empty for the role until it is classified.
+  `dq_TradeMappingCandidate` (PQP) lands here on purpose: its counts span every project, so
+  the Trade Mapping Decisions page is empty for Project Viewers.
 - **`man_ProjectAccess`**: the user's own grant rows only. The table is also hidden from
   report view.
 
