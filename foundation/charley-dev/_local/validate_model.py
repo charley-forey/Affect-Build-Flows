@@ -260,10 +260,17 @@ class Recompute:
             self._cache[(table, s)] = out
         return self._cache[(table, s)]
 
+    def after_last_loaded(self, table, s):
+        """The measures' cap: a month after the table's latest MonthStart anywhere is BLANK."""
+        loaded = [_ts(r["MonthStart"]) for r in self.data[table] if r["MonthStart"]]
+        return s.month is not None and bool(loaded) and _ts(s.month) > max(loaded)
+
     def latest(self, table, column, s):
         """SUMX(VALUES(ProjectKey), LASTNONBLANKVALUE(date, SUM(column))) over every date up to
         the end of the selected period: each project's last value ON OR BEFORE it, carried
         forward through months where it has no row."""
+        if self.after_last_loaded(table, s):
+            return None
         months = {}
         end = None if s.month is None else _ts(s.month)
         for r in self.rows(table, s._replace(month=None)):
@@ -460,7 +467,8 @@ def monthly_expected():
                                               if r[flag] is True and r["ProjectKey"] is not None], "LineTotal")
 
     # REMOVEFILTERS(dim_Date): the budget is one current-state snapshot.
-    budget = lambda column: lambda c, s: _sum(c.rows("fct_BudgetLine", s._replace(month=None)), column)
+    budget = lambda column: lambda c, s: (None if c.after_last_loaded("fct_BudgetLine", s)
+                                          else _sum(c.rows("fct_BudgetLine", s._replace(month=None)), column))
 
     def insurance(c, s):
         """IF(ISFILTERED(dim_Project), TREATAS(project vendors), company-wide)."""

@@ -1303,7 +1303,7 @@ def test_refresh_request_identity():
 def test_daily_snapshot():
     """fct_DailySnapshot: executes the generated gate + capture cells against DuckDB."""
     import json
-    from datetime import date, datetime
+    from datetime import date, datetime, timedelta
     import seedrunner
     sys.path.insert(0, str(seedrunner.CHARLEY_DEV / "02-transformation" / "dq"))
     import expectations
@@ -1422,6 +1422,15 @@ def test_daily_snapshot():
     assert E["Open Submittals (Month End)"](c, validate_model.PORTFOLIO) == 1
     assert E["Snapshot History Note"](c, month("2026-03-01T00:00:00")) == \
         "History starts 2026-01-15; earlier months are unavailable, not zero"
+    # Balances and budget stop at the last loaded month instead of filling the axis to 2035.
+    for name, table in (("Current Contract", "fct_FinancialPeriod"), ("Pending Change Orders", "fct_FinancialPeriod"),
+                        ("Budget", "fct_BudgetLine"), ("Spent To Date", "fct_BudgetLine")):
+        last = max(r["MonthStart"] for r in c.data[table] if r["MonthStart"])
+        after = (datetime.fromisoformat(last) + timedelta(days=32)).replace(day=1).isoformat()
+        assert E[name](c, month(last)) is not None, (name, last)
+        assert E[name](c, month(after)) is None, (name, after)
+        assert f"MAX ( {table}[MonthStart] ), REMOVEFILTERS ( {table} )" in \
+            next(m[1] for m in deploy_model.MEASURES if m[0] == name), name
     blank_dax = [m[1] for m in deploy_model.MEASURES if m[0].endswith("(Month End)")]
     assert len(blank_dax) == len(deploy_model.SNAPSHOT_KPIS) and not any("COALESCE" in d for d in blank_dax)
 

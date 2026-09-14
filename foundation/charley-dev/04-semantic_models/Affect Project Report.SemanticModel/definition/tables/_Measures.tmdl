@@ -1,20 +1,28 @@
 table _Measures
 
-	/// Replaces FINANCIALS!C3
+	/// Replaces FINANCIALS!C3 - blank for months after the last loaded period
 	measure 'Original Contract' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) ), 0 ), BLANK (),
 			VAR EndDate = MAX ( dim_Date[Date] )
-			RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
-			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[OriginalContract] ) ) ) ),
+			VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			"@M", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[OriginalContract] ) ) ),
 			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )
+			RETURN CALCULATE ( SUM ( fct_FinancialPeriod[OriginalContract] ),
+			TREATAS ( SELECTCOLUMNS ( LastRows, "K", fct_FinancialPeriod[ProjectKey], "M", [@M] ), fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),
+			REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
-	/// Replaces FINANCIALS!C4
+	/// Replaces FINANCIALS!C4 - blank for months after the last loaded period
 	measure 'Current Contract' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) ), 0 ), BLANK (),
 			VAR EndDate = MAX ( dim_Date[Date] )
-			RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
-			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[CurrentContract] ) ) ) ),
+			VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			"@M", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[CurrentContract] ) ) ),
 			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )
+			RETURN CALCULATE ( SUM ( fct_FinancialPeriod[CurrentContract] ),
+			TREATAS ( SELECTCOLUMNS ( LastRows, "K", fct_FinancialPeriod[ProjectKey], "M", [@M] ), fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),
+			REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
@@ -23,12 +31,16 @@ table _Measures
 		formatString: "0.0%"
 		displayFolder: 01 Contract & Change
 
-	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell
+	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell; blank for months after the last loaded period
 	measure 'Pending Change Orders' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) ), 0 ), BLANK (),
 			VAR EndDate = MAX ( dim_Date[Date] )
-			RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
-			CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) ),
+			VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
+			"@M", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[PendingChangeOrders] ) ) ),
 			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )
+			RETURN CALCULATE ( SUM ( fct_FinancialPeriod[PendingChangeOrders] ),
+			TREATAS ( SELECTCOLUMNS ( LastRows, "K", fct_FinancialPeriod[ProjectKey], "M", [@M] ), fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),
+			REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
@@ -52,28 +64,38 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
-	/// Replaces FINANCIALS!C19:C20 - as of the last budget snapshot
-	measure 'Budget' = CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )
+	/// Replaces FINANCIALS!C19:C20 - as of the last budget snapshot; blank for months after it
+	measure 'Budget' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
-	/// Replaces FINANCIALS!D19:D20 - as of the last budget snapshot
-	measure 'Forecast' = CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )
+	/// Replaces FINANCIALS!D19:D20 - as of the last budget snapshot; blank for months after it
+	measure 'Forecast' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
-	/// Replaces FINANCIALS!D61 - as of the last budget snapshot
-	measure 'Committed' = CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )
+	/// Replaces FINANCIALS!D61 - as of the last budget snapshot; blank for months after it
+	measure 'Committed' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
-	/// Replaces FINANCIALS!E19:E20 - as of the last budget snapshot
-	measure 'Spent To Date' = CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )
+	/// Replaces FINANCIALS!E19:E20 - as of the last budget snapshot; blank for months after it
+	measure 'Spent To Date' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
-	/// Replaces FINANCIALS!C15 - as of the last budget snapshot
-	measure 'Cost To Complete' = CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )
+	/// Replaces FINANCIALS!C15 - as of the last budget snapshot; blank for months after it
+	measure 'Cost To Complete' =
+			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
@@ -327,8 +349,9 @@ table _Measures
 
 	/// Replaces DASHBOARD!AT15 - billed to date at period end over contract; was a TEXT string
 	measure 'Total Billed %' =
-			DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),
-			FILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) ),
+			VAR EndDate = MAX ( dim_Date[Date] )
+			RETURN DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),
+			REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate ),
 			[Current Contract] )
 		formatString: "0.0%"
 		displayFolder: 05 Cash & AR

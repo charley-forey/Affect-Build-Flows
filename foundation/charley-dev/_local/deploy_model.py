@@ -217,11 +217,32 @@ REPORT_MONTH_LABEL_DAX = (
     'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) ) )')
 
 
-BALANCE_AT_PERIOD_END = (
+# Each project's value at its latest non-blank MonthStart on or before the period end, summed.
+# fct_FinancialPeriod is unique per ProjectKey x MonthStart and only has rows on MonthStart,
+# so this equals SUMX(projects, LASTNONBLANKVALUE(dim_Date[Date], SUM(col))) - measured equal
+# on six live grids - without iterating every calendar date per project per cell
+# (project x month matrix, no date filter: 6.5s -> 1.25s).
+#
+# CAPPED at the last loaded month: past the latest MonthStart anywhere in the fact (all its
+# filters removed), the value is BLANK rather than carried forward. Without the cap a month
+# axis filled every calendar month to Dec 2035 with the current value.
+def last_loaded_cap(table: str, expression: str) -> str:
+    return (f"IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( {table}[MonthStart] ), "
+            f"REMOVEFILTERS ( {table} ) ), 0 ), BLANK (),\n{expression} )")
+
+
+BALANCE_AT_PERIOD_END = last_loaded_cap("fct_FinancialPeriod", (
     "VAR EndDate = MAX ( dim_Date[Date] )\n"
-    "RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
-    "CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[{column}] ) ) ) ),\n"
-    "REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )")
+    "VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
+    "\"@M\", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[{column}] ) ) ),\n"
+    "REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )\n"
+    "RETURN CALCULATE ( SUM ( fct_FinancialPeriod[{column}] ),\n"
+    "TREATAS ( SELECTCOLUMNS ( LastRows, \"K\", fct_FinancialPeriod[ProjectKey], \"M\", [@M] ), "
+    "fct_FinancialPeriod[ProjectKey], fct_FinancialPeriod[MonthStart] ),\n"
+    "REMOVEFILTERS ( dim_Date ) )"))
+# Budget measures ignore the month (one current snapshot); blank for months after its month.
+BUDGET_AS_OF_SNAPSHOT = last_loaded_cap(
+    "fct_BudgetLine", "CALCULATE ( SUM ( fct_BudgetLine[{column}] ), REMOVEFILTERS ( dim_Date ) )")
 
 
 def _project_vendors(expression: str) -> str:
@@ -251,10 +272,10 @@ MEASURES = [
     # selected period, so each project contributes its last value on or before it.
     ("Original Contract",
      BALANCE_AT_PERIOD_END.format(column="OriginalContract"),
-     '"$#,0"', "FINANCIALS!C3"),
+     '"$#,0"', "FINANCIALS!C3 - blank for months after the last loaded period"),
     ("Current Contract",
      BALANCE_AT_PERIOD_END.format(column="CurrentContract"),
-     '"$#,0"', "FINANCIALS!C4"),
+     '"$#,0"', "FINANCIALS!C4 - blank for months after the last loaded period"),
     ("Contract Growth %",
      "DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )",
      '"0.0%"', "DASHBOARD!AT11"),
@@ -262,7 +283,7 @@ MEASURES = [
     # new change orders - adding twelve months of it counts the same open CO twelve times.
     ("Pending Change Orders",
      BALANCE_AT_PERIOD_END.format(column="PendingChangeOrders"),
-     '"$#,0"', "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"),
+     '"$#,0"', "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell; blank for months after the last loaded period"),
     ("Age Of Oldest Unapproved CO", "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
      '"#,0"', "FINANCIALS!C6 - typed by hand. Pending-status COs only: Procore keeps drafts out of Pending Changes"),
     # The Project Detail change-order table asked for this by name and it had never been
@@ -285,16 +306,16 @@ MEASURES = [
     # billing cards beside them still showed values. REMOVEFILTERS(dim_Date) makes the
     # cards say what the data is: the budget position as last ingested, whatever month is
     # selected. The Financial page titles them that way.
-    ("Budget", "CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )",
-     '"$#,0"', "FINANCIALS!C19:C20 - as of the last budget snapshot"),
-    ("Forecast", "CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )",
-     '"$#,0"', "FINANCIALS!D19:D20 - as of the last budget snapshot"),
-    ("Committed", "CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )",
-     '"$#,0"', "FINANCIALS!D61 - as of the last budget snapshot"),
-    ("Spent To Date", "CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )",
-     '"$#,0"', "FINANCIALS!E19:E20 - as of the last budget snapshot"),
-    ("Cost To Complete", "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
-     '"$#,0"', "FINANCIALS!C15 - as of the last budget snapshot"),
+    ("Budget", BUDGET_AS_OF_SNAPSHOT.format(column="BudgetAmount"),
+     '"$#,0"', "FINANCIALS!C19:C20 - as of the last budget snapshot; blank for months after it"),
+    ("Forecast", BUDGET_AS_OF_SNAPSHOT.format(column="ForecastAmount"),
+     '"$#,0"', "FINANCIALS!D19:D20 - as of the last budget snapshot; blank for months after it"),
+    ("Committed", BUDGET_AS_OF_SNAPSHOT.format(column="CommittedAmount"),
+     '"$#,0"', "FINANCIALS!D61 - as of the last budget snapshot; blank for months after it"),
+    ("Spent To Date", BUDGET_AS_OF_SNAPSHOT.format(column="SpentToDate"),
+     '"$#,0"', "FINANCIALS!E19:E20 - as of the last budget snapshot; blank for months after it"),
+    ("Cost To Complete", BUDGET_AS_OF_SNAPSHOT.format(column="CostToComplete"),
+     '"$#,0"', "FINANCIALS!C15 - as of the last budget snapshot; blank for months after it"),
     # REMAINING, not variance: budget less spend to date is what is left to spend. The
     # variance a PM means - will we finish over - is budget less FORECAST, below.
     ("Budget Remaining", "[Budget] - [Spent To Date]", '"$#,0"', "derived - budget less spend to date"),
@@ -521,8 +542,9 @@ MEASURES = [
     # billed-to-date %. Invoices with no matched project are excluded: they carry no
     # contract, so counting them in the numerator overstated the portfolio figure.
     ("Total Billed %",
-     "DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),\n"
-     "\t\t\tFILTER ( ALL ( dim_Date ), dim_Date[Date] <= MAX ( dim_Date[Date] ) ) ),\n"
+     "VAR EndDate = MAX ( dim_Date[Date] )\n"
+     "\t\t\tRETURN DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), fct_Invoice[HasUnmatchedProject] <> TRUE (),\n"
+     "\t\t\tREMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate ),\n"
      "\t\t\t[Current Contract] )", '"0.0%"',
      "DASHBOARD!AT15 - billed to date at period end over contract; was a TEXT string"),
     # DIVIDE, not "/", so a new project with no prior month returns blank instead of
