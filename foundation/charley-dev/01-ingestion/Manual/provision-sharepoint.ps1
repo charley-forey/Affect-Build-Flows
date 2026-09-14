@@ -45,6 +45,12 @@ $ErrorActionPreference = 'Stop'
 
 if (-not (Get-PnPContext)) { throw 'Connect-PnPOnline first.' }
 
+# Add-PnPField does not fail on a taken internal name - it creates Name0, Name1. This
+# matches internal OR display name, so a list that already has copies gets no more.
+function Test-Field($list, $name) {
+    $null -ne (Get-PnPField -List $list -Identity $name -ErrorAction SilentlyContinue)
+}
+
 function Ensure-List($title) {
     $existing = Get-PnPList -Identity $title -ErrorAction SilentlyContinue
     if ($null -eq $existing) {
@@ -64,8 +70,8 @@ function Ensure-List($title) {
 # how '1100 Fulton' and '1100 Fulton St' become two projects in a report that then
 # under-counts both. A lookup column cannot be misspelled.
 $projectsList = Ensure-List "CD Projects"
-Add-PnPField -List "CD Projects" -DisplayName "ProjectName" -InternalName "ProjectName" -Type Text -AddToDefaultView -ErrorAction SilentlyContinue | Out-Null
-Add-PnPField -List "CD Projects" -DisplayName "IsActive" -InternalName "IsActive" -Type Boolean -AddToDefaultView -ErrorAction SilentlyContinue | Out-Null
+if (-not (Test-Field "CD Projects" "ProjectName")) { Add-PnPField -List "CD Projects" -DisplayName "ProjectName" -InternalName "ProjectName" -Type Text -AddToDefaultView | Out-Null }
+if (-not (Test-Field "CD Projects" "IsActive")) { Add-PnPField -List "CD Projects" -DisplayName "IsActive" -InternalName "IsActive" -Type Boolean -AddToDefaultView | Out-Null }
 
 # Title holds the Procore project id, e.g. 562949955001573.
 #
@@ -92,16 +98,16 @@ if (Test-Path $csv) {
 # CD Wins  ->  man_Wins
 $list = Ensure-List "CD Wins"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "WinNumber" -InternalName "WinNumber" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Description" -InternalName "Description" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "WinType" -InternalName "WinType" -Type Text -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "WinNumber")) { Add-PnPField -List $list -DisplayName "WinNumber" -InternalName "WinNumber" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Description")) { Add-PnPField -List $list -DisplayName "Description" -InternalName "Description" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "WinType")) { Add-PnPField -List $list -DisplayName "WinType" -InternalName "WinType" -Type Text -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -109,19 +115,19 @@ try {
 # CD Risks  ->  man_Risks
 $list = Ensure-List "CD Risks"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "RiskNumber" -InternalName "RiskNumber" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Description" -InternalName "Description" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ImpactCode" -InternalName "ImpactCode" -Type Choice -Choices "HIGH","MEDIUM","LOW" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Mitigation" -InternalName "Mitigation" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "OwnerRole" -InternalName "OwnerRole" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","PLANNED","IN_PROGRESS","COMPLETE" -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "RiskNumber")) { Add-PnPField -List $list -DisplayName "RiskNumber" -InternalName "RiskNumber" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Description")) { Add-PnPField -List $list -DisplayName "Description" -InternalName "Description" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ImpactCode")) { Add-PnPField -List $list -DisplayName "ImpactCode" -InternalName "ImpactCode" -Type Choice -Choices "HIGH","MEDIUM","LOW" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Mitigation")) { Add-PnPField -List $list -DisplayName "Mitigation" -InternalName "Mitigation" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "OwnerRole")) { Add-PnPField -List $list -DisplayName "OwnerRole" -InternalName "OwnerRole" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","PLANNED","IN_PROGRESS","COMPLETE" -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -129,20 +135,20 @@ try {
 # CD Priority Items  ->  man_PriorityItems
 $list = Ensure-List "CD Priority Items"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "ItemNumber" -InternalName "ItemNumber" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ScheduleItem" -InternalName "ScheduleItem" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "ON_TRACK","BEHIND","AT_RISK" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "CriticalDelays" -InternalName "CriticalDelays" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "RecoveryPlan" -InternalName "RecoveryPlan" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ForecastImpact" -InternalName "ForecastImpact" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ItemNumber")) { Add-PnPField -List $list -DisplayName "ItemNumber" -InternalName "ItemNumber" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ScheduleItem")) { Add-PnPField -List $list -DisplayName "ScheduleItem" -InternalName "ScheduleItem" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "ON_TRACK","BEHIND","AT_RISK" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "CriticalDelays")) { Add-PnPField -List $list -DisplayName "CriticalDelays" -InternalName "CriticalDelays" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "RecoveryPlan")) { Add-PnPField -List $list -DisplayName "RecoveryPlan" -InternalName "RecoveryPlan" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ForecastImpact")) { Add-PnPField -List $list -DisplayName "ForecastImpact" -InternalName "ForecastImpact" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -150,20 +156,20 @@ try {
 # CD Flags  ->  man_Flags
 $list = Ensure-List "CD Flags"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "ProfitabilityCode" -InternalName "ProfitabilityCode" -Type Choice -Choices "Within Range","Out of Range, but has a plan","Margin fade but no plan" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ContingencyRemaining" -InternalName "ContingencyRemaining" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "BaselineApproved" -InternalName "BaselineApproved" -Type Boolean -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "BaselineRevision" -InternalName "BaselineRevision" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "MonthEndClosedOut" -InternalName "MonthEndClosedOut" -Type Boolean -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ForecastingInLine" -InternalName "ForecastingInLine" -Type Boolean -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ResourcesUpdated" -InternalName "ResourcesUpdated" -Type Boolean -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProfitabilityCode")) { Add-PnPField -List $list -DisplayName "ProfitabilityCode" -InternalName "ProfitabilityCode" -Type Choice -Choices "Within Range","Out of Range, but has a plan","Margin fade but no plan" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ContingencyRemaining")) { Add-PnPField -List $list -DisplayName "ContingencyRemaining" -InternalName "ContingencyRemaining" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "BaselineApproved")) { Add-PnPField -List $list -DisplayName "BaselineApproved" -InternalName "BaselineApproved" -Type Boolean -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "BaselineRevision")) { Add-PnPField -List $list -DisplayName "BaselineRevision" -InternalName "BaselineRevision" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "MonthEndClosedOut")) { Add-PnPField -List $list -DisplayName "MonthEndClosedOut" -InternalName "MonthEndClosedOut" -Type Boolean -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ForecastingInLine")) { Add-PnPField -List $list -DisplayName "ForecastingInLine" -InternalName "ForecastingInLine" -Type Boolean -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ResourcesUpdated")) { Add-PnPField -List $list -DisplayName "ResourcesUpdated" -InternalName "ResourcesUpdated" -Type Boolean -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -171,17 +177,17 @@ try {
 # CD Survey  ->  man_Survey
 $list = Ensure-List "CD Survey"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "QuestionNumber" -InternalName "QuestionNumber" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "QuestionText" -InternalName "QuestionText" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Score" -InternalName "Score" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "SurveyedParty" -InternalName "SurveyedParty" -Type Text -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "QuestionNumber")) { Add-PnPField -List $list -DisplayName "QuestionNumber" -InternalName "QuestionNumber" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "QuestionText")) { Add-PnPField -List $list -DisplayName "QuestionText" -InternalName "QuestionText" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Score")) { Add-PnPField -List $list -DisplayName "Score" -InternalName "Score" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "SurveyedParty")) { Add-PnPField -List $list -DisplayName "SurveyedParty" -InternalName "SurveyedParty" -Type Text -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -189,17 +195,17 @@ try {
 # CD Safety Monthly  ->  man_SafetyMonthly
 $list = Ensure-List "CD Safety Monthly"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "HoursWorked" -InternalName "HoursWorked" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "RecordableIncidents" -InternalName "RecordableIncidents" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Orientations" -InternalName "Orientations" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "OtHours" -InternalName "OtHours" -Type Number -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "HoursWorked")) { Add-PnPField -List $list -DisplayName "HoursWorked" -InternalName "HoursWorked" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "RecordableIncidents")) { Add-PnPField -List $list -DisplayName "RecordableIncidents" -InternalName "RecordableIncidents" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Orientations")) { Add-PnPField -List $list -DisplayName "Orientations" -InternalName "Orientations" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "OtHours")) { Add-PnPField -List $list -DisplayName "OtHours" -InternalName "OtHours" -Type Number -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -207,17 +213,17 @@ try {
 # CD Quality Monthly  ->  man_QualityMonthly
 $list = Ensure-List "CD Quality Monthly"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "Observations" -InternalName "Observations" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "PunchlistItems" -InternalName "PunchlistItems" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "AvgDaysPastDue" -InternalName "AvgDaysPastDue" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "AvgDaysToClose" -InternalName "AvgDaysToClose" -Type Number -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "Observations")) { Add-PnPField -List $list -DisplayName "Observations" -InternalName "Observations" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "PunchlistItems")) { Add-PnPField -List $list -DisplayName "PunchlistItems" -InternalName "PunchlistItems" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "AvgDaysPastDue")) { Add-PnPField -List $list -DisplayName "AvgDaysPastDue" -InternalName "AvgDaysPastDue" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "AvgDaysToClose")) { Add-PnPField -List $list -DisplayName "AvgDaysToClose" -InternalName "AvgDaysToClose" -Type Number -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -225,18 +231,18 @@ try {
 # CD Milestones  ->  man_Milestones
 $list = Ensure-List "CD Milestones"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "ActivityKey" -InternalName "ActivityKey" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "MilestoneName" -InternalName "MilestoneName" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ContractStart" -InternalName "ContractStart" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ContractFinish" -InternalName "ContractFinish" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "BaselineStart" -InternalName "BaselineStart" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "BaselineFinish" -InternalName "BaselineFinish" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "IsSubstantialCompletion" -InternalName "IsSubstantialCompletion" -Type Boolean -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "ActivityKey")) { Add-PnPField -List $list -DisplayName "ActivityKey" -InternalName "ActivityKey" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "MilestoneName")) { Add-PnPField -List $list -DisplayName "MilestoneName" -InternalName "MilestoneName" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ContractStart")) { Add-PnPField -List $list -DisplayName "ContractStart" -InternalName "ContractStart" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ContractFinish")) { Add-PnPField -List $list -DisplayName "ContractFinish" -InternalName "ContractFinish" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "BaselineStart")) { Add-PnPField -List $list -DisplayName "BaselineStart" -InternalName "BaselineStart" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "BaselineFinish")) { Add-PnPField -List $list -DisplayName "BaselineFinish" -InternalName "BaselineFinish" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "IsSubstantialCompletion")) { Add-PnPField -List $list -DisplayName "IsSubstantialCompletion" -InternalName "IsSubstantialCompletion" -Type Boolean -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -244,15 +250,15 @@ try {
 # CD Daily Log Compliance  ->  man_DailyLogCompliance
 $list = Ensure-List "CD Daily Log Compliance"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "MonthStart")) { Add-PnPField -List $list -DisplayName "MonthStart" -InternalName "MonthStart" -Type DateTime -AddToDefaultView | Out-Null }
     Set-PnPField -List $list -Identity "MonthStart" -Values @{ Required = $true; Description = "Always the FIRST of the reporting month, e.g. 2026-08-01." }
-    Add-PnPField -List $list -DisplayName "LogsExpected" -InternalName "LogsExpected" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "LogsMissedSameDay" -InternalName "LogsMissedSameDay" -Type Number -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "LogsExpected")) { Add-PnPField -List $list -DisplayName "LogsExpected" -InternalName "LogsExpected" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "LogsMissedSameDay")) { Add-PnPField -List $list -DisplayName "LogsMissedSameDay" -InternalName "LogsMissedSameDay" -Type Number -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -260,19 +266,19 @@ try {
 # CD QC DFOW  ->  man_QcDfow
 $list = Ensure-List "CD QC DFOW"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "DfowRef" -InternalName "DfowRef" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "DfowDescription" -InternalName "DfowDescription" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "RiskTier" -InternalName "RiskTier" -Type Number -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ControlMeasure" -InternalName "ControlMeasure" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "OwnerRole" -InternalName "OwnerRole" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","COMPLETE","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "DfowRef")) { Add-PnPField -List $list -DisplayName "DfowRef" -InternalName "DfowRef" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "DfowDescription")) { Add-PnPField -List $list -DisplayName "DfowDescription" -InternalName "DfowDescription" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "TradeKey")) { Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "RiskTier")) { Add-PnPField -List $list -DisplayName "RiskTier" -InternalName "RiskTier" -Type Number -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ControlMeasure")) { Add-PnPField -List $list -DisplayName "ControlMeasure" -InternalName "ControlMeasure" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "OwnerRole")) { Add-PnPField -List $list -DisplayName "OwnerRole" -InternalName "OwnerRole" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","COMPLETE","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -280,23 +286,23 @@ try {
 # CD QC ITP  ->  man_QcItp
 $list = Ensure-List "CD QC ITP"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "ItpRef" -InternalName "ItpRef" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Activity" -InternalName "Activity" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "InspectionType" -InternalName "InspectionType" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "AcceptanceCriteria" -InternalName "AcceptanceCriteria" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "HoldPointType" -InternalName "HoldPointType" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "PlannedDate" -InternalName "PlannedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ActualDate" -InternalName "ActualDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ResultCode" -InternalName "ResultCode" -Type Choice -Choices "PASS","FAIL","PENDING","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","SCHEDULED","COMPLETE","RE_TEST_REQUIRED","CLOSED","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "ItpRef")) { Add-PnPField -List $list -DisplayName "ItpRef" -InternalName "ItpRef" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "TradeKey")) { Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Activity")) { Add-PnPField -List $list -DisplayName "Activity" -InternalName "Activity" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "InspectionType")) { Add-PnPField -List $list -DisplayName "InspectionType" -InternalName "InspectionType" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "AcceptanceCriteria")) { Add-PnPField -List $list -DisplayName "AcceptanceCriteria" -InternalName "AcceptanceCriteria" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "HoldPointType")) { Add-PnPField -List $list -DisplayName "HoldPointType" -InternalName "HoldPointType" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Responsible")) { Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "PlannedDate")) { Add-PnPField -List $list -DisplayName "PlannedDate" -InternalName "PlannedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ActualDate")) { Add-PnPField -List $list -DisplayName "ActualDate" -InternalName "ActualDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ResultCode")) { Add-PnPField -List $list -DisplayName "ResultCode" -InternalName "ResultCode" -Type Choice -Choices "PASS","FAIL","PENDING","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","SCHEDULED","COMPLETE","RE_TEST_REQUIRED","CLOSED","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -304,20 +310,20 @@ try {
 # CD QC Gate  ->  man_QcGate
 $list = Ensure-List "CD QC Gate"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "GateKey" -InternalName "GateKey" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "GateType" -InternalName "GateType" -Type Choice -Choices "TCO","FIRE_ALARM","STATUTORY" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","SCHEDULED","COMPLETE","FAILED_RE_TEST","BLOCKED","N_A","SUBMITTED","OPEN","REQUESTED","CLOSED","PASS","FAIL","RE_INSPECT","PENDING" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "TargetDate" -InternalName "TargetDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "SubmittedDate" -InternalName "SubmittedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "CompletedDate" -InternalName "CompletedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "EvidenceLink" -InternalName "EvidenceLink" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "BlockerNote" -InternalName "BlockerNote" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "GateKey")) { Add-PnPField -List $list -DisplayName "GateKey" -InternalName "GateKey" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "GateType")) { Add-PnPField -List $list -DisplayName "GateType" -InternalName "GateType" -Type Choice -Choices "TCO","FIRE_ALARM","STATUTORY" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","SCHEDULED","COMPLETE","FAILED_RE_TEST","BLOCKED","N_A","SUBMITTED","OPEN","REQUESTED","CLOSED","PASS","FAIL","RE_INSPECT","PENDING" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Responsible")) { Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "TargetDate")) { Add-PnPField -List $list -DisplayName "TargetDate" -InternalName "TargetDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "SubmittedDate")) { Add-PnPField -List $list -DisplayName "SubmittedDate" -InternalName "SubmittedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "CompletedDate")) { Add-PnPField -List $list -DisplayName "CompletedDate" -InternalName "CompletedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "EvidenceLink")) { Add-PnPField -List $list -DisplayName "EvidenceLink" -InternalName "EvidenceLink" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "BlockerNote")) { Add-PnPField -List $list -DisplayName "BlockerNote" -InternalName "BlockerNote" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -325,22 +331,22 @@ try {
 # CD QC Special Inspection  ->  man_QcSpecialInspection
 $list = Ensure-List "CD QC Special Inspection"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "InspectionRef" -InternalName "InspectionRef" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Category" -InternalName "Category" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Agency" -InternalName "Agency" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "InspectorName" -InternalName "InspectorName" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "RequiredCode" -InternalName "RequiredCode" -Type Choice -Choices "YES","NO","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "PerformedCode" -InternalName "PerformedCode" -Type Choice -Choices "YES","NO" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ScheduledDate" -InternalName "ScheduledDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "PerformedDate" -InternalName "PerformedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ReportReceivedDate" -InternalName "ReportReceivedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "OPEN","SCHEDULED","REPORT_PENDING","CLOSED","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "InspectionRef")) { Add-PnPField -List $list -DisplayName "InspectionRef" -InternalName "InspectionRef" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Category")) { Add-PnPField -List $list -DisplayName "Category" -InternalName "Category" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Agency")) { Add-PnPField -List $list -DisplayName "Agency" -InternalName "Agency" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "InspectorName")) { Add-PnPField -List $list -DisplayName "InspectorName" -InternalName "InspectorName" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "RequiredCode")) { Add-PnPField -List $list -DisplayName "RequiredCode" -InternalName "RequiredCode" -Type Choice -Choices "YES","NO","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "PerformedCode")) { Add-PnPField -List $list -DisplayName "PerformedCode" -InternalName "PerformedCode" -Type Choice -Choices "YES","NO" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ScheduledDate")) { Add-PnPField -List $list -DisplayName "ScheduledDate" -InternalName "ScheduledDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "PerformedDate")) { Add-PnPField -List $list -DisplayName "PerformedDate" -InternalName "PerformedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ReportReceivedDate")) { Add-PnPField -List $list -DisplayName "ReportReceivedDate" -InternalName "ReportReceivedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "OPEN","SCHEDULED","REPORT_PENDING","CLOSED","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -348,19 +354,19 @@ try {
 # CD QC Commissioning  ->  man_QcCommissioning
 $list = Ensure-List "CD QC Commissioning"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "SystemRef" -InternalName "SystemRef" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "SystemName" -InternalName "SystemName" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "PlannedDate" -InternalName "PlannedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ActualDate" -InternalName "ActualDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","READY_FOR_CX","TESTED","ACCEPTED","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "SystemRef")) { Add-PnPField -List $list -DisplayName "SystemRef" -InternalName "SystemRef" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "SystemName")) { Add-PnPField -List $list -DisplayName "SystemName" -InternalName "SystemName" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "TradeKey")) { Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Responsible")) { Add-PnPField -List $list -DisplayName "Responsible" -InternalName "Responsible" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "PlannedDate")) { Add-PnPField -List $list -DisplayName "PlannedDate" -InternalName "PlannedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ActualDate")) { Add-PnPField -List $list -DisplayName "ActualDate" -InternalName "ActualDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "NOT_STARTED","IN_PROGRESS","READY_FOR_CX","TESTED","ACCEPTED","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -368,20 +374,20 @@ try {
 # CD QC Inspector Sign In  ->  man_QcInspectorSignIn
 $list = Ensure-List "CD QC Inspector Sign In"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "SignInRef" -InternalName "SignInRef" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "VisitDate" -InternalName "VisitDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "InspectorName" -InternalName "InspectorName" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "AgencyCode" -InternalName "AgencyCode" -Type Choice -Choices "NYC_DOB","FDNY","NYC_DOH","NYC_DEP","SPECIAL_INSP_AGENCY","TESTING_LABORATORY","OSHA","CON_EDISON","NATIONAL_GRID","LANDLORD_CONDO","OTHER" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Purpose" -InternalName "Purpose" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "AreaInspected" -InternalName "AreaInspected" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "OutcomeCode" -InternalName "OutcomeCode" -Type Choice -Choices "PASS","FAIL","RE_INSPECT","OBSERVATION_ONLY","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "FollowUpRequired" -InternalName "FollowUpRequired" -Type Boolean -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "SignInRef")) { Add-PnPField -List $list -DisplayName "SignInRef" -InternalName "SignInRef" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "VisitDate")) { Add-PnPField -List $list -DisplayName "VisitDate" -InternalName "VisitDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "InspectorName")) { Add-PnPField -List $list -DisplayName "InspectorName" -InternalName "InspectorName" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "AgencyCode")) { Add-PnPField -List $list -DisplayName "AgencyCode" -InternalName "AgencyCode" -Type Choice -Choices "NYC_DOB","FDNY","NYC_DOH","NYC_DEP","SPECIAL_INSP_AGENCY","TESTING_LABORATORY","OSHA","CON_EDISON","NATIONAL_GRID","LANDLORD_CONDO","OTHER" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Purpose")) { Add-PnPField -List $list -DisplayName "Purpose" -InternalName "Purpose" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "AreaInspected")) { Add-PnPField -List $list -DisplayName "AreaInspected" -InternalName "AreaInspected" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "OutcomeCode")) { Add-PnPField -List $list -DisplayName "OutcomeCode" -InternalName "OutcomeCode" -Type Choice -Choices "PASS","FAIL","RE_INSPECT","OBSERVATION_ONLY","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "FollowUpRequired")) { Add-PnPField -List $list -DisplayName "FollowUpRequired" -InternalName "FollowUpRequired" -Type Boolean -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -389,18 +395,18 @@ try {
 # CD QC Checklist Result  ->  man_QcChecklistResult
 $list = Ensure-List "CD QC Checklist Result"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ItemKey" -InternalName "ItemKey" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StageCode" -InternalName "StageCode" -Type Choice -Choices "1_PREPARATORY","2_WORK_READINESS","3_FIRST_WORK_REVIEW","4_FOLLOW_UP" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ResultCode" -InternalName "ResultCode" -Type Choice -Choices "PASS","FAIL","N_A" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "InspectedDate" -InternalName "InspectedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "InspectedBy" -InternalName "InspectedBy" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "TradeKey")) { Add-PnPField -List $list -DisplayName "TradeKey" -InternalName "TradeKey" -Type Choice -Choices "EXCAVATION","CONCRETE_FORMWORK","CONC_REINFORCEMENT","CIP_CONCRETE","PRECAST_CONCRETE","UNIT_MASONRY","METAL_DECK","SLAB_ON_GRADE","SLAB_ON_DECK","WATERPROOFING","DRYWALL_FRAMING","DRYWALL_BOARD","FIRESTOPPING","METAL_FRAMES","METAL_DOORS","DOORS_HARDWARE","TILE_STONE","RESILIENT_FLOORING","ACT_CEILINGS","MILLWORK_CASEWORK","PAINTING","ELECTRICAL","PLUMBING","HVAC_DUCTWORK","FIRE_SPRINKLER","FIRE_ALARM" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ItemKey")) { Add-PnPField -List $list -DisplayName "ItemKey" -InternalName "ItemKey" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StageCode")) { Add-PnPField -List $list -DisplayName "StageCode" -InternalName "StageCode" -Type Choice -Choices "1_PREPARATORY","2_WORK_READINESS","3_FIRST_WORK_REVIEW","4_FOLLOW_UP" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ResultCode")) { Add-PnPField -List $list -DisplayName "ResultCode" -InternalName "ResultCode" -Type Choice -Choices "PASS","FAIL","N_A" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "InspectedDate")) { Add-PnPField -List $list -DisplayName "InspectedDate" -InternalName "InspectedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "InspectedBy")) { Add-PnPField -List $list -DisplayName "InspectedBy" -InternalName "InspectedBy" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 
@@ -408,18 +414,18 @@ try {
 # CD QC DOH Result  ->  man_QcDohResult
 $list = Ensure-List "CD QC DOH Result"
 try {
-    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
-    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }
-    Add-PnPField -List $list -DisplayName "ItemKey" -InternalName "ItemKey" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "ResponsibilityCode" -InternalName "ResponsibilityCode" -Type Choice -Choices "AFFECT_BUILD","OWNER_S_SEPARATE_TRADES","SHARED_AB_OWNER_S_VENDOR","OWNER_DOH_CONSULTANT" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "OPEN","IN_PROGRESS","VERIFIED","NOT_APPLICABLE","N_A","QUERY_RAISED" -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "VerifiedDate" -InternalName "VerifiedDate" -Type DateTime -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "VerifiedBy" -InternalName "VerifiedBy" -Type Text -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "EvidenceLink" -InternalName "EvidenceLink" -Type Note -AddToDefaultView | Out-Null
-    Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null
+    if (-not (Test-Field $list "ProjectKey")) { Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" -Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null
+    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }
+    if (-not (Test-Field $list "ItemKey")) { Add-PnPField -List $list -DisplayName "ItemKey" -InternalName "ItemKey" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "ResponsibilityCode")) { Add-PnPField -List $list -DisplayName "ResponsibilityCode" -InternalName "ResponsibilityCode" -Type Choice -Choices "AFFECT_BUILD","OWNER_S_SEPARATE_TRADES","SHARED_AB_OWNER_S_VENDOR","OWNER_DOH_CONSULTANT" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "StatusCode")) { Add-PnPField -List $list -DisplayName "StatusCode" -InternalName "StatusCode" -Type Choice -Choices "OPEN","IN_PROGRESS","VERIFIED","NOT_APPLICABLE","N_A","QUERY_RAISED" -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "VerifiedDate")) { Add-PnPField -List $list -DisplayName "VerifiedDate" -InternalName "VerifiedDate" -Type DateTime -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "VerifiedBy")) { Add-PnPField -List $list -DisplayName "VerifiedBy" -InternalName "VerifiedBy" -Type Text -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "EvidenceLink")) { Add-PnPField -List $list -DisplayName "EvidenceLink" -InternalName "EvidenceLink" -Type Note -AddToDefaultView | Out-Null }
+    if (-not (Test-Field $list "Notes")) { Add-PnPField -List $list -DisplayName "Notes" -InternalName "Notes" -Type Note -AddToDefaultView | Out-Null }
 } catch [System.Management.Automation.RuntimeException] {
-    # Add-PnPField throws if the column already exists. That is the idempotent
-    # path, not a failure - anything else rethrows.
+    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0
+    # rather than throwing). An 'already exists' from PnP is still tolerated.
     if ($_.Exception.Message -notmatch 'already exists') { throw }
 }
 

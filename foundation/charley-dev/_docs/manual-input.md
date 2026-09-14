@@ -13,6 +13,16 @@ that nobody entered, indistinguishable from real ones.
 
 ## How to put data in, today
 
+> **One writer per list (2026-09-14).** SharePoint (`CD_Manual_Ingest`) is now the single
+> source for all 17 lists: `cd_06_land_manual` ignores `Files/_manual/<list>.csv` for them
+> and writes no template. To take a list back to CSV, add its name (e.g. `"wins"`) to
+> `CSV_SOURCED` in `_local/make_sharepoint.py`, run `python make_sharepoint.py`, publish the
+> regenerated dataflow and `python deploy_manual.py --apply`. That also removes the list's
+> dataflow query, so the two paths can never overwrite each other. Bronze is flat either
+> way: `ProjectKey` is the project id as text, then `Modified`, `_source`, `_ingested_at`
+> (no editor names, no record columns - a Dataflow Gen2 Lakehouse destination cannot write
+> them). The CSV instructions below apply only to lists in `CSV_SOURCED`.
+
 Drop a CSV in the lakehouse at `Files/_manual/<list>.csv` and re-run **`cd_06_land_manual`**.
 Templates with a worked example row are regenerated at `Files/_manual/_templates/` on every
 run. The header row must match the column names exactly; the file is read against the

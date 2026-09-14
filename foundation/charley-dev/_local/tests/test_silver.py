@@ -348,9 +348,10 @@ COLUMNS = "_key, _project_id, payload, _ingested_at, _batch_id"
 # Manual bronze - a DIFFERENT shape, which is exactly why it needs its own fixtures.
 #
 # The Procore tables above hold one JSON string. The manual tables hold one typed column
-# per list column, with ProjectKey and Editor as SharePoint's {Title: ...} struct. A stub
-# of NULL scalars cannot satisfy `ProjectKey.Title`, which is why these parsers went
-# untested for as long as they did.
+# per list column, ALL SCALAR - ProjectKey is the project id as text, then Modified, _source
+# and _ingested_at (make_sharepoint.AUDIT_COLUMNS). That is the flat shape both writers land,
+# because a Dataflow Gen2 Lakehouse destination cannot write the {Title: ...} lookup record
+# silver used to read. A struct creeping back into a parser fails here: TRIM(struct) errors.
 #
 # GENERATED from the same two sources the pipeline uses - make_sharepoint.tables() for the
 # columns and deploy_manual.EXAMPLES for the values - rather than hand-written. Seventeen
@@ -495,13 +496,14 @@ def manual_bronze() -> dict[str, str]:
     out: dict[str, str] = {}
     for table, cols in ms.tables().items():
         example = dm.EXAMPLES[ms.csv_name(table)]
-        names = ", ".join(c for c, _ in cols) + ", Modified, Editor"
+        names = ", ".join(c for c, _ in cols + ms.AUDIT_COLUMNS)
         rows = []
         for project in (GOOD_PROJECT, BAD_PROJECT):
-            values = [f"{{'Title': '{project}'}}"]
+            values = [f"'{project}'"]
             values += [_literal(v, t) for (c, t), v in zip(cols, example) if c != "ProjectKey"]
             values.append("TIMESTAMP '2026-08-01 12:00:00'")
-            values.append("{'Title': 'csv:fixture'}")
+            values.append("'csv:fixture'")
+            values.append("TIMESTAMP '2026-08-01 12:05:00'")
             rows.append("(" + ", ".join(values) + ")")
         out[ms.bronze_table(table)] = (
             f"CREATE OR REPLACE TABLE {ms.bronze_table(table)} AS "
@@ -518,9 +520,9 @@ def manual_bronze() -> dict[str, str]:
     # Row 3 is a job somebody has just asked for and the flow has not numbered yet - the
     # normal resting state of a healthy register, and it must not be dropped either.
     # Row 5 repeats Id 4 at an older timestamp: THAT is what dedup is for.
-    url = "{{'Url': '{}'}}"
-    none_url = "CAST(NULL AS STRUCT(Url VARCHAR))"
-    editor = "{'Title': 'flow:EstimatingSetup'}"
+    url = "'{}'"
+    none_url = "CAST(NULL AS VARCHAR)"
+    editor = "'sharepoint:Job Register', TIMESTAMP '2026-08-01 12:05:00'"
     # DuckDB types a bare NULL in a VALUES list as INTEGER, and a column that is NULL in
     # every fixture row then reaches TRIM() as an integer. Spelled out rather than relying
     # on inference from whichever row happens to be first.
@@ -558,7 +560,7 @@ def manual_bronze() -> dict[str, str]:
         f"SELECT * FROM (VALUES {', '.join(register_rows)}) AS t("
         "Id, Title, JobYear, JobSeq, JobNumber, Stage, EstimatingFolderUrl, "
         "ProjectFolderUrl, RequestedBy, RequestedAt, CompletedAt, CopyJobStatus, "
-        "ErrorDetail, Modified, Editor)"
+        "ErrorDetail, Modified, _source, _ingested_at)"
     )
     return out
 
@@ -962,7 +964,7 @@ def test_manual_parsers(con) -> None:
                     "WHERE register_id = 3") is None
     check("a job still awaiting its number is kept, not dropped")
 
-    # URL columns arrive as records; silver takes .Url or the link is lost.
+    # URL columns land as the link itself (the dataflow keeps .Url); silver passes it on.
     assert one(con, "SELECT project_folder_url FROM cd_silver_man_job_register "
                     "WHERE register_id = 2").endswith("26-002-Bergen Street Retail")
     check("SharePoint URL columns are unwrapped to the link itself")
@@ -1015,7 +1017,7 @@ def _rejected(con, ledger, silver, reason_like="%"):
 
 def test_manual_reject_conservation(con) -> None:
     """Every manual row is accepted, rejected with a reason, or an exact copy collapsed."""
-    good = f"ProjectKey.Title = '{GOOD_PROJECT}'"
+    good = f"ProjectKey = '{GOOD_PROJECT}'"
     con.execute("BEGIN")
     try:
         for bronze, *_ in _manual_lists():
@@ -1023,7 +1025,7 @@ def test_manual_reject_conservation(con) -> None:
             con.execute(f"INSERT INTO {bronze} SELECT * REPLACE (Modified + INTERVAL 1 DAY AS Modified) "
                         f"FROM {bronze} WHERE {good}")
             con.execute(f"INSERT INTO {bronze} SELECT * REPLACE "
-                        f"(CAST(NULL AS STRUCT(Title VARCHAR)) AS ProjectKey) FROM {bronze} "
+                        f"(CAST(NULL AS VARCHAR) AS ProjectKey) FROM {bronze} "
                         f"WHERE {good} AND Modified = TIMESTAMP '2026-08-01 12:00:00'")
         con.execute("INSERT INTO cd_bronze_man_survey SELECT * REPLACE "
                     "(CAST(NULL AS INTEGER) AS Score) FROM cd_bronze_man_survey "

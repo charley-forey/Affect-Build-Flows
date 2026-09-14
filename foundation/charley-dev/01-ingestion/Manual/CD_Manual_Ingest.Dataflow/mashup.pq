@@ -14,24 +14,23 @@ section Section1;
 // gates, special inspections, commissioning, the inspector sign-in log, and the per-project
 // answers against the 625-item checklist and the DOH checklist.
 //
-// SITE URL IS A PLACEHOLDER. The lists live in Affect's tenant and need SharePoint admin
-// rights to create - see _docs/sharepoint-lists.md. Replace SITE below with the real URL
-// and this dataflow is ready to bind.
+// FLAT AND TYPED, VALIDATED IN SQL. A Dataflow Gen2 Lakehouse destination cannot write a
+// record column, so each query flattens the ProjectKey lookup to its Title (the Procore
+// project id - the lookup targets CD Projects.Title, so this is the id, not a display
+// name), keeps only the declared columns plus Modified, types them explicitly, and stamps
+// _source and _ingested_at. Modified-by (a person's name) and SharePoint's system columns are
+// not landed. Everything else - trimming, codes, rejects - stays in
+// sql/silver/30_manual_silver.sql and 31_qc_manual_silver.sql, which are diffable and
+// testable offline. cd_06_land_manual writes the identical shape for CSV-sourced lists.
 //
-// LANDED RAW, SHAPED IN SQL. No filtering, renaming or retyping happens here. Power Query
-// steps are not diffable in review, not testable offline, and not re-runnable against data
-// already pulled; sql/silver/30_manual_silver.sql and 31_qc_manual_silver.sql are all
-// three. Same bronze rule the Procore and Sage sides follow - never drop a column at the
-// boundary, so a transform bug is a re-run rather than asking people to retype a month of
-// work.
+// Column names are SharePoint INTERNAL names (ApiVersion 15). A column missing from a list
+// fails the refresh rather than landing nulls.
 //
-// Expand=false on lookup columns keeps ProjectKey as the raw lookup record. Silver reads
-// the id out of it; expanding here would bake a display name into bronze, and a renamed
-// project would then silently orphan its history.
+// Lists in make_sharepoint.CSV_SOURCED have no query here: one writer per bronze table.
 //
 // TWO SITES. Everything except the last query reads the reporting site (SITE). The Job
 // Register lives on the BUILD site (SITE_BUILD) because it is owned by the two Power
-// Automate job flows, not by this platform. Both are placeholders; both must be set.
+// Automate job flows, not by this platform.
 // ============================================================================
 
 SITE = "https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main";
@@ -47,129 +46,218 @@ shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){[workspa
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_projects = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Projects"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Projects"]}[Items],
+  Selected = Table.SelectColumns(Items, {"Title", "ProjectName", "IsActive", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"Title", type text}, {"ProjectName", type text}, {"IsActive", type logical}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Projects", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_wins = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Wins"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Wins"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "WinNumber", "Description", "WinType", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"WinNumber", Int64.Type}, {"Description", type text}, {"WinType", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Wins", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_risks = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Risks"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Risks"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "RiskNumber", "Description", "ImpactCode", "Mitigation", "OwnerRole", "StatusCode", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"RiskNumber", Int64.Type}, {"Description", type text}, {"ImpactCode", type text}, {"Mitigation", type text}, {"OwnerRole", type text}, {"StatusCode", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Risks", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_priority_items = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Priority Items"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Priority Items"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "ItemNumber", "ScheduleItem", "StatusCode", "CriticalDelays", "RecoveryPlan", "ForecastImpact", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"ItemNumber", Int64.Type}, {"ScheduleItem", type text}, {"StatusCode", type text}, {"CriticalDelays", type text}, {"RecoveryPlan", type text}, {"ForecastImpact", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Priority Items", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_flags = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Flags"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Flags"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "ProfitabilityCode", "ContingencyRemaining", "BaselineApproved", "BaselineRevision", "MonthEndClosedOut", "ForecastingInLine", "ResourcesUpdated", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"ProfitabilityCode", type text}, {"ContingencyRemaining", type number}, {"BaselineApproved", type logical}, {"BaselineRevision", type text}, {"MonthEndClosedOut", type logical}, {"ForecastingInLine", type logical}, {"ResourcesUpdated", type logical}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Flags", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_survey = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Survey"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Survey"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "QuestionNumber", "QuestionText", "Score", "SurveyedParty", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"QuestionNumber", Int64.Type}, {"QuestionText", type text}, {"Score", Int64.Type}, {"SurveyedParty", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Survey", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_safety_monthly = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Safety Monthly"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Safety Monthly"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "HoursWorked", "RecordableIncidents", "Orientations", "OtHours", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"HoursWorked", type number}, {"RecordableIncidents", Int64.Type}, {"Orientations", Int64.Type}, {"OtHours", type number}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Safety Monthly", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_quality_monthly = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Quality Monthly"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Quality Monthly"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "Observations", "PunchlistItems", "AvgDaysPastDue", "AvgDaysToClose", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"Observations", Int64.Type}, {"PunchlistItems", Int64.Type}, {"AvgDaysPastDue", type number}, {"AvgDaysToClose", type number}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Quality Monthly", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_milestones = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Milestones"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Milestones"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ActivityKey", "MilestoneName", "ContractStart", "ContractFinish", "BaselineStart", "BaselineFinish", "IsSubstantialCompletion", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"ActivityKey", type text}, {"MilestoneName", type text}, {"ContractStart", type date}, {"ContractFinish", type date}, {"BaselineStart", type date}, {"BaselineFinish", type date}, {"IsSubstantialCompletion", type logical}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Milestones", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_daily_log_compliance = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD Daily Log Compliance"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD Daily Log Compliance"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "LogsExpected", "LogsMissedSameDay", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"LogsExpected", Int64.Type}, {"LogsMissedSameDay", Int64.Type}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Daily Log Compliance", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_dfow = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC DFOW"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC DFOW"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "DfowRef", "DfowDescription", "TradeKey", "RiskTier", "ControlMeasure", "OwnerRole", "StatusCode", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"DfowRef", type text}, {"DfowDescription", type text}, {"TradeKey", type text}, {"RiskTier", Int64.Type}, {"ControlMeasure", type text}, {"OwnerRole", type text}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC DFOW", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_itp = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC ITP"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC ITP"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ItpRef", "TradeKey", "Activity", "InspectionType", "AcceptanceCriteria", "HoldPointType", "Responsible", "PlannedDate", "ActualDate", "ResultCode", "StatusCode", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"ItpRef", type text}, {"TradeKey", type text}, {"Activity", type text}, {"InspectionType", type text}, {"AcceptanceCriteria", type text}, {"HoldPointType", type text}, {"Responsible", type text}, {"PlannedDate", type date}, {"ActualDate", type date}, {"ResultCode", type text}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC ITP", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_gate = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC Gate"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC Gate"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "GateKey", "GateType", "StatusCode", "Responsible", "TargetDate", "SubmittedDate", "CompletedDate", "EvidenceLink", "BlockerNote", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"GateKey", type text}, {"GateType", type text}, {"StatusCode", type text}, {"Responsible", type text}, {"TargetDate", type date}, {"SubmittedDate", type date}, {"CompletedDate", type date}, {"EvidenceLink", type text}, {"BlockerNote", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Gate", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_special_inspection = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC Special Inspection"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC Special Inspection"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "InspectionRef", "Category", "Agency", "InspectorName", "RequiredCode", "PerformedCode", "ScheduledDate", "PerformedDate", "ReportReceivedDate", "StatusCode", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"InspectionRef", type text}, {"Category", type text}, {"Agency", type text}, {"InspectorName", type text}, {"RequiredCode", type text}, {"PerformedCode", type text}, {"ScheduledDate", type date}, {"PerformedDate", type date}, {"ReportReceivedDate", type date}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Special Inspection", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_commissioning = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC Commissioning"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC Commissioning"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "SystemRef", "SystemName", "TradeKey", "Responsible", "PlannedDate", "ActualDate", "StatusCode", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"SystemRef", type text}, {"SystemName", type text}, {"TradeKey", type text}, {"Responsible", type text}, {"PlannedDate", type date}, {"ActualDate", type date}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Commissioning", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_inspector_sign_in = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC Inspector Sign In"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC Inspector Sign In"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "SignInRef", "VisitDate", "InspectorName", "AgencyCode", "Purpose", "AreaInspected", "OutcomeCode", "FollowUpRequired", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"SignInRef", type text}, {"VisitDate", type date}, {"InspectorName", type text}, {"AgencyCode", type text}, {"Purpose", type text}, {"AreaInspected", type text}, {"OutcomeCode", type text}, {"FollowUpRequired", type logical}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Inspector Sign In", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_checklist_result = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC Checklist Result"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC Checklist Result"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "TradeKey", "ItemKey", "StageCode", "ResultCode", "InspectedDate", "InspectedBy", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"TradeKey", type text}, {"ItemKey", type text}, {"StageCode", type text}, {"ResultCode", type text}, {"InspectedDate", type date}, {"InspectedBy", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Checklist Result", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_doh_result = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "CD QC DOH Result"]}[Items]
+  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Items = Source{[Title = "CD QC DOH Result"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
+  Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ItemKey", "ResponsibilityCode", "StatusCode", "VerifiedDate", "VerifiedBy", "EvidenceLink", "Notes", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"ItemKey", type text}, {"ResponsibilityCode", type text}, {"StatusCode", type text}, {"VerifiedDate", type date}, {"VerifiedBy", type text}, {"EvidenceLink", type text}, {"Notes", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC DOH Result", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
 
 // ---------------------------------------------------------------- the BUILD site
 // The job flows' register: one row per job from the moment somebody asks for it. Feeds
@@ -178,7 +266,13 @@ in
 // it existed.
 [BindToDefaultDestination = true]
 shared cd_bronze_man_job_register = let
-  Source = SharePoint.Tables(SITE_BUILD, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{[Title = "Job Register"]}[Items]
+  Source = SharePoint.Tables(SITE_BUILD, [ApiVersion = 15]),
+  Items = Source{[Title = "Job Register"]}[Items],
+  Flat0 = Table.ExpandRecordColumn(Items, "EstimatingFolderUrl", {"Url"}, {"EstimatingFolderUrl"}),
+  Flat1 = Table.ExpandRecordColumn(Flat0, "ProjectFolderUrl", {"Url"}, {"ProjectFolderUrl"}),
+  Selected = Table.SelectColumns(Flat1, {"Id", "Title", "JobYear", "JobSeq", "JobNumber", "Stage", "EstimatingFolderUrl", "ProjectFolderUrl", "RequestedBy", "RequestedAt", "CompletedAt", "CopyJobStatus", "ErrorDetail", "Modified"}),
+  Typed = Table.TransformColumnTypes(Selected, {{"Id", Int64.Type}, {"Title", type text}, {"JobYear", Int64.Type}, {"JobSeq", Int64.Type}, {"JobNumber", type text}, {"Stage", type text}, {"EstimatingFolderUrl", type text}, {"ProjectFolderUrl", type text}, {"RequestedBy", type text}, {"RequestedAt", type datetime}, {"CompletedAt", type datetime}, {"CopyJobStatus", type text}, {"ErrorDetail", type text}, {"Modified", type datetime}}),
+  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:Job Register", type text),
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
 in
-  Navigation;
+  Stamped;
