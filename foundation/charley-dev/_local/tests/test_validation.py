@@ -959,14 +959,65 @@ def test_lineage_bindings():
 
 def test_missing_manual_csv_preserves_bronze():
     source = "".join(deploy_manual.build_notebook()["cells"][2]["source"])
-    scope = dict(SPEC={"wins": []}, MANUAL_DIR="Files/_manual", TYPES={},
-                 StructType=lambda fields: fields,
+    scope = dict(SPEC={"wins": []}, SOURCE={"wins": "csv"}, MANUAL_DIR="Files/_manual", TYPES={},
+                 StructType=lambda fields: fields, flat_table=lambda table, cols: ([], True),
                  notebookutils=SimpleNamespace(fs=SimpleNamespace(exists=lambda path: False)),
                  spark=SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda table: True),
                                        table=lambda table: SimpleNamespace(count=lambda: 7)))
     # Spark has no writer here: any attempt to overwrite an existing table fails the test.
     exec(compile(source, "manual:load", "exec"), scope)
     assert scope["loaded"]["wins"] == {"rows": 7, "source": "existing bronze preserved"}
+
+    # SHAREPOINT-SOURCED: an uploaded CSV is ignored - never read, never written over the
+    # dataflow's rows. `spark` has no reader or writer, so touching the CSV fails the test.
+    with contextlib.redirect_stdout(io.StringIO()) as out:
+        exec(compile(source, "manual:load", "exec"),
+             {**scope, "SOURCE": {"wins": "sharepoint"},
+              "notebookutils": SimpleNamespace(fs=SimpleNamespace(exists=lambda path: True))})
+    assert "IGNORING Files/_manual/wins.csv" in out.getvalue(), out.getvalue()
+    # ...and before the dataflow's first refresh it is declared empty, flat, so silver runs.
+    writes = []
+    writer = SimpleNamespace()
+    for step in ("format", "mode", "option"):
+        setattr(writer, step, lambda *a, _w=writer: _w)
+    writer.saveAsTable = writes.append
+    missing = {**scope, "SOURCE": {"wins": "sharepoint"}, "flat_table": lambda table, cols: ("S", False),
+               "spark": SimpleNamespace(createDataFrame=lambda rows, schema: SimpleNamespace(write=writer))}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(compile(source, "manual:load", "exec"), missing)
+    assert writes == ["cd_bronze_man_wins"] and missing["loaded"]["wins"] == {"rows": 0, "source": "sharepoint"}
+
+    # The generated SOURCE follows make_sharepoint.CSV_SOURCED, the same flag that removes
+    # the list from the dataflow - so a list always has exactly one writer.
+    ms = deploy_manual.ms
+    header = "".join(deploy_manual.build_notebook()["cells"][0]["source"])
+    assert '"wins": "sharepoint"' in header and "shared cd_bronze_man_wins =" in ms.build_mashup()
+    with patch.object(ms, "CSV_SOURCED", frozenset({"wins"})):
+        header = "".join(deploy_manual.build_notebook()["cells"][0]["source"])
+        assert '"wins": "csv"' in header and '"risks": "sharepoint"' in header
+        assert "cd_bronze_man_wins" not in ms.build_mashup()
+        assert "cd_bronze_man_wins" not in ms.build_query_metadata()
+
+    # flat_table: an empty table in the old nested shape is rebuilt; one holding rows raises.
+    fn = header[header.index("def flat_table"):]
+    for rows, expect in (([], ("schema", False)), ([1], ValueError)):
+        old = SimpleNamespace(columns=["ProjectKey", "Editor"], take=lambda n, _r=rows: _r)
+        ns = dict(AUDIT=[("Modified", "timestamp")], TYPES={"string": "S", "timestamp": "T"},
+                  StructField=lambda c, t, n: c,
+                  StructType=lambda f: SimpleNamespace(fieldNames=lambda: f),
+                  spark=SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda t: True),
+                                        table=lambda t: old))
+        exec(compile(fn, "manual:flat", "exec"), ns)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                schema, ok = ns["flat_table"]("cd_bronze_man_wins", [("ProjectKey", "string")])
+        except ValueError:
+            assert expect is ValueError
+        else:
+            assert expect != ValueError and ok is False
+    ok_table = SimpleNamespace(columns=["ProjectKey", "Modified"], take=lambda n: [1])
+    ns["spark"] = SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda t: True), table=lambda t: ok_table)
+    assert ns["flat_table"]("cd_bronze_man_wins", [("ProjectKey", "string")])[1] is True
     def unavailable(path):
         raise OSError("storage unavailable")
     scope["notebookutils"].fs.exists = unavailable
@@ -977,9 +1028,9 @@ def test_missing_manual_csv_preserves_bronze():
     else:
         raise AssertionError("storage failure was treated as missing input")
     # A supplied but empty export is also not proof that all existing records were deleted.
-    guard = source[source.index("    if exists and"):source.index("    out =")]
+    guard = source[source.index("    if exists and"):source.index("    # On the CSV path")]
     for incoming, existing, blocked in (([], [1], True), ([], [], False), ([1], [1], False)):
-        scope = dict(exists=True, table="cd_bronze_man_wins", df=SimpleNamespace(take=lambda n: incoming),
+        scope = dict(exists=True, table_ok=True, table="cd_bronze_man_wins", df=SimpleNamespace(take=lambda n: incoming),
                      spark=SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda table: True),
                                            table=lambda table: SimpleNamespace(take=lambda n: existing)))
         try:

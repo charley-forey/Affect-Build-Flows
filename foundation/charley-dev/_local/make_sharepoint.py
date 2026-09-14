@@ -75,6 +75,53 @@ SITE_URL = "https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_m
 SITE_BUILD = "https://affectbuildllc.sharepoint.com/sites/AFFECTBUILD1"
 JOB_REGISTER_LIST = "Job Register"
 JOB_REGISTER_QUERY = "cd_bronze_man_job_register"
+# The register columns silver reads, by SharePoint INTERNAL name (checked against Graph
+# 2026-09-14). The two folder columns are hyperlink columns: the dataflow keeps only .Url.
+JOB_REGISTER_COLUMNS: list[tuple[str, str]] = [
+    ("Id", "INT"), ("Title", "STRING"), ("JobYear", "INT"), ("JobSeq", "INT"),
+    ("JobNumber", "STRING"), ("Stage", "STRING"), ("EstimatingFolderUrl", "STRING"),
+    ("ProjectFolderUrl", "STRING"), ("RequestedBy", "STRING"), ("RequestedAt", "TIMESTAMP"),
+    ("CompletedAt", "TIMESTAMP"), ("CopyJobStatus", "STRING"), ("ErrorDetail", "STRING"),
+]
+JOB_REGISTER_URL_COLUMNS = ("EstimatingFolderUrl", "ProjectFolderUrl")
+PROJECTS_COLUMNS: list[tuple[str, str]] = [
+    ("Title", "STRING"), ("ProjectName", "STRING"), ("IsActive", "BOOLEAN"),
+]
+
+# THE FLAT BRONZE CONTRACT. Both writers (the dataflow and cd_06_land_manual) land every
+# cd_bronze_man_* table as its declared columns, all SCALAR, followed by these three.
+#
+# Scalar because a Dataflow Gen2 Lakehouse destination cannot write a record column: the
+# lookup ProjectKey (a {Title} record) and Editor would be dropped from the mapping or fail
+# the refresh, and silver used to read ProjectKey.Title - so the first real refresh would
+# have broken Bronze To Silver for the whole pipeline. ProjectKey is now the lookup's Title
+# (the Procore project id) as text.
+#
+# Editor is DROPPED, not flattened: a person's name is not needed anywhere downstream and
+# does not belong in a DQ page. `_source` says which writer and which list instead
+# ("sharepoint:CD Wins", "csv:wins.csv"); Modified keeps the when.
+AUDIT_COLUMNS: list[tuple[str, str]] = [
+    ("Modified", "TIMESTAMP"), ("_source", "STRING"), ("_ingested_at", "TIMESTAMP"),
+]
+
+# ONE WRITER PER LIST. The man_* tables (csv_name) whose bronze comes from a CSV upload
+# instead of the SharePoint list. Empty = SharePoint is the single source for all 17.
+#
+# A list in here is left OUT of CD_Manual_Ingest entirely, and every list NOT in here is
+# skipped by cd_06_land_manual's CSV loader (an uploaded CSV is reported and ignored). Two
+# writers into one table was the failure: an uploaded Files/_manual/<list>.csv overwrote
+# that list's SharePoint rows, and the next dataflow refresh overwrote the CSV back.
+#
+# TO SWITCH a list to CSV: add its csv_name (e.g. "wins"), run `python make_sharepoint.py`,
+# publish the regenerated dataflow (updateDefinition) and `python deploy_manual.py --apply`.
+# To switch back, remove it and do the same. Nothing else changes: both writers land the
+# same flat shape, so silver cannot tell which one wrote a table.
+CSV_SOURCED: frozenset[str] = frozenset()
+
+
+def sharepoint_sourced(table: str) -> bool:
+    """True if CD_Manual_Ingest, not the CSV loader, writes this man_* table's bronze."""
+    return csv_name(table) not in CSV_SOURCED
 
 # Where the dataflow lands. Read from fabric_ids.json rather than pasted in, because that
 # file is already the one place workspace and lakehouse ids are recorded - deploy_gold.py
@@ -253,12 +300,20 @@ def csv_name(table: str) -> str:
 
 
 def field_xml(table: str, col: str, sql_type: str) -> str:
+    # EVERY Add-PnPField IS GUARDED BY Test-Field. Add-PnPField does NOT throw when the
+    # internal name is taken - SharePoint quietly creates "ProjectKey0", then "ProjectKey1",
+    # under the same display name. The script was run three times, and on 2026-09-14 (Graph,
+    # read-only) every list carried each column three times over, all copies required. The
+    # dataflow reads the internal name, so a value typed into the "wrong" ProjectKey on the
+    # form arrives blank. The catch below never fired; this guard is what makes a re-run
+    # actually idempotent.
+    guard = f'    if (-not (Test-Field $list "{col}")) {{ '
     if col == "ProjectKey":
         return (
-            f'    Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" '
-            f'-Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null\n'
-            f'    Set-PnPField -List $list -Identity "ProjectKey" -Values @{{ '
-            f'LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true }}\n'
+            guard + 'Add-PnPField -List $list -DisplayName "ProjectKey" -InternalName "ProjectKey" '
+            '-Type Lookup -AddToDefaultView -ErrorAction Stop | Out-Null\n'
+            '    Set-PnPField -List $list -Identity "ProjectKey" -Values @{ '
+            'LookupList = $projectsList.Id.ToString(); LookupField = "Title"; Required = $true } }\n'
         )
 
     values = vocab_choices(table, col)
@@ -268,8 +323,8 @@ def field_xml(table: str, col: str, sql_type: str) -> str:
     if values:
         joined = ",".join(f'"{v}"' for v in values)
         return (
-            f'    Add-PnPField -List $list -DisplayName "{col}" -InternalName "{col}" '
-            f'-Type Choice -Choices {joined} -AddToDefaultView | Out-Null\n'
+            guard + f'Add-PnPField -List $list -DisplayName "{col}" -InternalName "{col}" '
+            f'-Type Choice -Choices {joined} -AddToDefaultView | Out-Null }}\n'
         )
 
     pnp = SQL_TO_PNP[sql_type]
@@ -285,8 +340,8 @@ def field_xml(table: str, col: str, sql_type: str) -> str:
     if col in MULTILINE:
         pnp = "Note"
     return (
-        f'    Add-PnPField -List $list -DisplayName "{col}" -InternalName "{col}" '
-        f'-Type {pnp} -AddToDefaultView | Out-Null{extra}\n'
+        guard + f'Add-PnPField -List $list -DisplayName "{col}" -InternalName "{col}" '
+        f'-Type {pnp} -AddToDefaultView | Out-Null }}{extra}\n'
     )
 
 
@@ -342,6 +397,12 @@ def build() -> str:
         "",
         "if (-not (Get-PnPContext)) { throw 'Connect-PnPOnline first.' }",
         "",
+        "# Add-PnPField does not fail on a taken internal name - it creates Name0, Name1. This",
+        "# matches internal OR display name, so a list that already has copies gets no more.",
+        "function Test-Field($list, $name) {",
+        "    $null -ne (Get-PnPField -List $list -Identity $name -ErrorAction SilentlyContinue)",
+        "}",
+        "",
         "function Ensure-List($title) {",
         "    $existing = Get-PnPList -Identity $title -ErrorAction SilentlyContinue",
         "    if ($null -eq $existing) {",
@@ -361,10 +422,10 @@ def build() -> str:
         "# how '1100 Fulton' and '1100 Fulton St' become two projects in a report that then",
         "# under-counts both. A lookup column cannot be misspelled.",
         f'$projectsList = Ensure-List "{LOOKUP_LIST}"',
-        f'Add-PnPField -List "{LOOKUP_LIST}" -DisplayName "ProjectName" -InternalName "ProjectName" '
-        "-Type Text -AddToDefaultView -ErrorAction SilentlyContinue | Out-Null",
-        f'Add-PnPField -List "{LOOKUP_LIST}" -DisplayName "IsActive" -InternalName "IsActive" '
-        "-Type Boolean -AddToDefaultView -ErrorAction SilentlyContinue | Out-Null",
+        f'if (-not (Test-Field "{LOOKUP_LIST}" "ProjectName")) {{ Add-PnPField -List "{LOOKUP_LIST}" '
+        '-DisplayName "ProjectName" -InternalName "ProjectName" -Type Text -AddToDefaultView | Out-Null }',
+        f'if (-not (Test-Field "{LOOKUP_LIST}" "IsActive")) {{ Add-PnPField -List "{LOOKUP_LIST}" '
+        '-DisplayName "IsActive" -InternalName "IsActive" -Type Boolean -AddToDefaultView | Out-Null }',
         "",
         "# Title holds the Procore project id, e.g. 562949955001573.",
         "#",
@@ -401,8 +462,8 @@ def build() -> str:
             lines.append(field_xml(table, col, sql_type).rstrip("\n"))
         lines += [
             "} catch [System.Management.Automation.RuntimeException] {",
-            "    # Add-PnPField throws if the column already exists. That is the idempotent",
-            "    # path, not a failure - anything else rethrows.",
+            "    # Test-Field above is the real idempotency guard (Add-PnPField creates Name0",
+            "    # rather than throwing). An 'already exists' from PnP is still tolerated.",
             "    if ($_.Exception.Message -notmatch 'already exists') { throw }",
             "}",
             "",
@@ -427,7 +488,7 @@ def query_names() -> list[str]:
     SITE constant.
     """
     return (["cd_bronze_man_projects"]
-            + [bronze_table(t) for t in tables()]
+            + [bronze_table(t) for t in tables() if sharepoint_sourced(t)]
             + [JOB_REGISTER_QUERY])
 
 
@@ -455,24 +516,23 @@ section Section1;
 // gates, special inspections, commissioning, the inspector sign-in log, and the per-project
 // answers against the 625-item checklist and the DOH checklist.
 //
-// SITE URL IS A PLACEHOLDER. The lists live in Affect's tenant and need SharePoint admin
-// rights to create - see _docs/sharepoint-lists.md. Replace SITE below with the real URL
-// and this dataflow is ready to bind.
+// FLAT AND TYPED, VALIDATED IN SQL. A Dataflow Gen2 Lakehouse destination cannot write a
+// record column, so each query flattens the ProjectKey lookup to its Title (the Procore
+// project id - the lookup targets CD Projects.Title, so this is the id, not a display
+// name), keeps only the declared columns plus Modified, types them explicitly, and stamps
+// _source and _ingested_at. Modified-by (a person's name) and SharePoint's system columns are
+// not landed. Everything else - trimming, codes, rejects - stays in
+// sql/silver/30_manual_silver.sql and 31_qc_manual_silver.sql, which are diffable and
+// testable offline. cd_06_land_manual writes the identical shape for CSV-sourced lists.
 //
-// LANDED RAW, SHAPED IN SQL. No filtering, renaming or retyping happens here. Power Query
-// steps are not diffable in review, not testable offline, and not re-runnable against data
-// already pulled; sql/silver/30_manual_silver.sql and 31_qc_manual_silver.sql are all
-// three. Same bronze rule the Procore and Sage sides follow - never drop a column at the
-// boundary, so a transform bug is a re-run rather than asking people to retype a month of
-// work.
+// Column names are SharePoint INTERNAL names (ApiVersion 15). A column missing from a list
+// fails the refresh rather than landing nulls.
 //
-// Expand=false on lookup columns keeps ProjectKey as the raw lookup record. Silver reads
-// the id out of it; expanding here would bake a display name into bronze, and a renamed
-// project would then silently orphan its history.
+// Lists in make_sharepoint.CSV_SOURCED have no query here: one writer per bronze table.
 //
 // TWO SITES. Everything except the last query reads the reporting site (SITE). The Job
 // Register lives on the BUILD site (SITE_BUILD) because it is owned by the two Power
-// Automate job flows, not by this platform. Both are placeholders; both must be set.
+// Automate job flows, not by this platform.
 // ============================================================================
 
 SITE = "{SITE_URL}";
@@ -487,35 +547,58 @@ SITE_BUILD = "{SITE_BUILD}";
 shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){{[workspaceId = "{workspace_id}"]}}[Data]{{[lakehouseId = "{bronze_id}"]}}[Data];
 '''
     parts = [header]
-    # The lookup list first, then one query per man_* table.
-    for query, title in [("cd_bronze_man_projects", LOOKUP_LIST)] + [
-        (bronze_table(t), list_name(t)) for t in tables()
-    ]:
-        parts.append(f'''
-[BindToDefaultDestination = true]
-shared {query} = let
-  Source = SharePoint.Tables(SITE, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{{[Title = "{title}"]}}[Items]
-in
-  Navigation;
-''')
+    # The lookup list first, then one query per SharePoint-sourced man_* table.
+    parts.append(mashup_query("cd_bronze_man_projects", "SITE", LOOKUP_LIST, PROJECTS_COLUMNS))
+    for t, cols in tables().items():
+        if sharepoint_sourced(t):
+            parts.append(mashup_query(bronze_table(t), "SITE", list_name(t), cols,
+                                      expand={"ProjectKey": "Title"}))
     # The Job Register, off the OTHER site. Emitted separately rather than folded into the
     # loop above because the only thing that distinguishes it is which SITE constant it
     # reads, and that is precisely the difference a loop would hide.
-    parts.append(f'''
+    parts.append('''
 // ---------------------------------------------------------------- the BUILD site
 // The job flows' register: one row per job from the moment somebody asks for it. Feeds
 // dim_Job (sql/gold/13_dim_job.sql), which is what actually connects the two Power Automate
 // flows to this platform - power-automate/README.md described that link long before any of
-// it existed.
-[BindToDefaultDestination = true]
-shared {JOB_REGISTER_QUERY} = let
-  Source = SharePoint.Tables(SITE_BUILD, [Implementation = "2.0", ViewMode = "All"]),
-  Navigation = Source{{[Title = "{JOB_REGISTER_LIST}"]}}[Items]
-in
-  Navigation;
-''')
+// it existed.''')
+    parts.append(mashup_query(JOB_REGISTER_QUERY, "SITE_BUILD", JOB_REGISTER_LIST,
+                              JOB_REGISTER_COLUMNS,
+                              expand={c: "Url" for c in JOB_REGISTER_URL_COLUMNS}))
     return "".join(parts)
+
+
+M_TYPES = {"STRING": "type text", "INT": "Int64.Type", "DOUBLE": "type number",
+           "BOOLEAN": "type logical", "DATE": "type date", "TIMESTAMP": "type datetime"}
+
+
+def mashup_query(query: str, site: str, title: str, cols: list[tuple[str, str]],
+                 expand: dict[str, str] | None = None) -> str:
+    """One list -> one flat, explicitly typed bronze table.
+
+    Columns are SharePoint INTERNAL names, which the 1.0 connector (ApiVersion 15) returns;
+    2.0 returns display names, and every list currently has three columns per display name.
+    `expand` turns a record column (lookup, hyperlink) into the one scalar field silver
+    needs, under the column's own name. No MissingField option on SelectColumns: a renamed
+    or deleted list column must fail the refresh, not land as a column of nulls.
+    """
+    expand = expand or {}
+    names = [c for c, _ in cols] + ["Modified"]
+    steps = [f'  Source = SharePoint.Tables({site}, [ApiVersion = 15]),',
+             f'  Items = Source{{[Title = "{title}"]}}[Items],']
+    prev = "Items"
+    for i, (col, field) in enumerate(expand.items()):
+        steps.append(f'  Flat{i} = Table.ExpandRecordColumn({prev}, "{col}", {{"{field}"}}, {{"{col}"}}),')
+        prev = f"Flat{i}"
+    typed = ", ".join(f'{{"{c}", {M_TYPES[t]}}}' for c, t in cols + [("Modified", "TIMESTAMP")])
+    steps += [
+        f'  Selected = Table.SelectColumns({prev}, {{{", ".join(chr(34) + n + chr(34) for n in names)}}}),',
+        f'  Typed = Table.TransformColumnTypes(Selected, {{{typed}}}),',
+        f'  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:{title}", type text),',
+        '  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)',
+    ]
+    return ("\n[BindToDefaultDestination = true]\n"
+            f"shared {query} = let\n" + "\n".join(steps) + "\nin\n  Stamped;\n")
 
 
 def build_query_metadata() -> str:

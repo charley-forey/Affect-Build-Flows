@@ -38,7 +38,7 @@ SILVER_DIR = CHARLEY_DEV / "02-transformation" / "sql" / "silver"
 # SharePoint lists that live in Affect's tenant. The note here said "add 30 the day the
 # lists exist". They effectively do: `cd_06_land_manual` (deploy_manual.py) creates every
 # cd_bronze_man_* table from CSV - empty and correctly typed when nobody has uploaded
-# anything, with ProjectKey/Editor already wrapped in the {Title: ...} struct the parsers
+# anything, in the flat shape (ProjectKey as text, Modified/_source/_ingested_at) the parsers
 # read. The empty-stub objection is answered by that notebook, not by this filter.
 #
 # Keeping 30 out was the ROOT CAUSE of the manual pipeline being permanently empty: with no
