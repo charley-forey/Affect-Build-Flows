@@ -22,7 +22,10 @@ without anyone remembering to:
   individually, not only on `dim_Project`. A NULL, unmapped (`fct_ApInvoice`, `dq_DataGap`)
   or `UNMATCHED` key is never in the granted set, so it never leaks through the blank member.
 - **Has `VendorKey` but no `ProjectKey`** (`dim_Vendor`, `dim_VendorCrosswalk`,
-  `fct_VendorInsurance`): only vendors that appear on a granted project.
+  `fct_VendorInsurance`): only vendors that appear on a granted project, read from tables
+  with no relationship to a vendor-filtered table (`bridge_ProjectVendor`, `fct_Billing`,
+  `fct_DirectCost`). `fct_ApInvoice` and `bridge_VendorCostCode` relate to `dim_Vendor`, so
+  they are never a vendor source: the filter would feed back into the tables it filters.
 - **In `PUBLIC_TABLES`** (dates, cost codes, status vocabularies, scorecard config, QC seeds,
   pipeline heartbeat): unfiltered.
 - **Anything else**: `FALSE ()`. The table is empty for the role until it is classified.
@@ -33,12 +36,26 @@ without anyone remembering to:
 
 A grant is live when `UserPrincipalName = USERPRINCIPALNAME()` (lower-cased on both sides)
 and `EffectiveFrom <= TODAY() <= EffectiveTo`. A blank bound is open, and `TODAY()` is the
-service's UTC date. `ProjectKey = ALL` grants every real project, but still **not**
+service's UTC date. **The boundary is UTC midnight, not New York midnight:** a grant with
+`EffectiveFrom = 2026-10-01` starts at 8pm EDT on 30 September, and one with
+`EffectiveTo = 2026-10-31` ends at 8pm EDT on 31 October (7pm EST in winter). Set the bounds
+a day wide when the exact hour matters. `ProjectKey = ALL` grants every real project, but still **not**
 `UNMATCHED` or blank-project rows. Those rows pool data nobody could attribute, so they
 belong to Portfolio Viewer.
 
 **Fail closed.** Silver (`30_manual_silver.sql`) rejects an unknown project, a malformed UPN,
-an inverted date window, or two conflicting rows for one (user, project). A rejected grant
+an inverted date window, or two rows for one (user, project, EffectiveFrom) with different
+EffectiveTo.
+
+**Duplicates and windows.** The grant key is (user, project, EffectiveFrom).
+- Exact duplicates collapse to one row.
+- Rows that differ only in `Role` are one grant, not a conflict. `Role` is informational, and
+  the most recently modified row's `Role` is kept.
+- Rows with different `EffectiveFrom` are separate grants even when their windows overlap.
+  They **merge**: the role filter takes the union, so access is live on any day inside any
+  of the user's windows for that project.
+- Picking `ALL` on any list other than CD Project Access is rejected with the reason
+  "ALL is only valid on CD Project Access". A rejected grant
 grants nothing, and the reason appears on the DQ page (`dq_DataGap`, "Rejected manual
 entry"). The DQ gate also fails on a gold grant to a non-project or a non-normalised UPN.
 
@@ -151,6 +168,19 @@ EVALUATE man_ProjectAccess
 
 Over XMLA (SSMS / DAX Studio), connect with `EffectiveUserName=jane.doe@affectbuild.com;Roles=Project Viewer`
 on the connection string and run the same queries.
+
+4. **Required before sharing: AP Job Cost per project equals the unfiltered value.** For
+   each project granted to the test user, run as that user and as Portfolio Viewer (or with
+   no impersonation), and compare row by row. They must be equal. A difference means a vendor
+   filter is removing AP rows from a granted project.
+
+```dax
+EVALUATE SUMMARIZECOLUMNS ( dim_Project[ProjectKey], "AP", [AP Job Cost] )
+```
+
+**Month caps under RLS.** The balance and budget measures blank months after the last loaded
+month, and that month is computed inside the role: `REMOVEFILTERS` does not lift RLS, so a
+Project Viewer's cap is the latest month among *their* projects, not the portfolio's.
 
 Record the results in `_docs/validation-history/` like the other live checks.
 

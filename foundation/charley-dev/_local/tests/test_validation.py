@@ -1421,7 +1421,7 @@ def test_daily_snapshot():
     assert E["Open Submittals (Month End)"](c, month("2026-03-01T00:00:00")) is None
     assert E["Open Submittals (Month End)"](c, validate_model.PORTFOLIO) == 1
     assert E["Snapshot History Note"](c, month("2026-03-01T00:00:00")) == \
-        "History starts 2026-01-15; earlier months are unavailable, not zero"
+        f"History starts 2026-01-15; earlier months are unavailable, not zero. CO and RFI draft rules changed {deploy_model.DEFINITION_CHANGE_DATE}"
     # Balances and budget stop at the last loaded month instead of filling the axis to 2035.
     for name, table in (("Current Contract", "fct_FinancialPeriod"), ("Pending Change Orders", "fct_FinancialPeriod"),
                         ("Budget", "fct_BudgetLine"), ("Spent To Date", "fct_BudgetLine")):
@@ -1429,8 +1429,18 @@ def test_daily_snapshot():
         after = (datetime.fromisoformat(last) + timedelta(days=32)).replace(day=1).isoformat()
         assert E[name](c, month(last)) is not None, (name, last)
         assert E[name](c, month(after)) is None, (name, after)
-        assert f"MAX ( {table}[MonthStart] ), REMOVEFILTERS ( {table} )" in \
-            next(m[1] for m in deploy_model.MEASURES if m[0] == name), name
+        dax = next(m[1] for m in deploy_model.MEASURES if m[0] == name)
+        assert f"MAX ( {table}[MonthStart] ), REMOVEFILTERS ( {table} )" in dax, name
+        assert "NOT ISBLANK ( _LastLoaded ) &&" in dax, name
+        # No loaded month at all: the cap must not blank anything.
+        saved = c.data[table]
+        c.data[table] = [dict(r, MonthStart=None) for r in saved]
+        c._cache.clear()
+        try:
+            assert E[name](c, month(after)) == E[name](c, validate_model.PORTFOLIO), (name, "null MonthStart")
+        finally:
+            c.data[table] = saved
+            c._cache.clear()
     blank_dax = [m[1] for m in deploy_model.MEASURES if m[0].endswith("(Month End)")]
     assert len(blank_dax) == len(deploy_model.SNAPSHOT_KPIS) and not any("COALESCE" in d for d in blank_dax)
 

@@ -66,6 +66,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.DfowRef IS NULL
                      THEN 'missing DfowRef'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -115,6 +117,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.ItpRef IS NULL
                      THEN 'missing ItpRef'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -167,6 +171,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.GateKey IS NULL
                      THEN 'missing GateKey'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
                 WHEN UPPER(TRIM(COALESCE(b.GateType, ''))) NOT IN ('TCO', 'FIRE_ALARM', 'STATUTORY')
@@ -217,6 +223,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.InspectionRef IS NULL
                      THEN 'missing InspectionRef'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -262,6 +270,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.SystemRef IS NULL
                      THEN 'missing SystemRef'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -308,6 +318,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.SignInRef IS NULL
                      THEN 'missing SignInRef'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -359,6 +371,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.ItemKey IS NULL
                      THEN 'missing ItemKey - the answer cannot be attached to a checklist item'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -403,6 +417,8 @@ FROM (
                      THEN 'missing ProjectKey'
                 WHEN b.ItemKey IS NULL
                      THEN 'missing ItemKey - the answer cannot be attached to a checklist item'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason

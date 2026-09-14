@@ -527,7 +527,17 @@ def test_rls_roles():
     if "dim_Vendor" in schema:
         vendor = blocks["dim_Vendor"]
         assert "RETURN dim_Vendor[VendorKey] IN _vendors" in vendor and "UNION (" in vendor
-        assert "fct_ApInvoice[ProjectKey] IN _projects" in vendor
+        assert "bridge_ProjectVendor[ProjectKey] IN _projects" in vendor
+        assert "fct_ApInvoice" not in vendor and "bridge_VendorCostCode" not in vendor, vendor
+    # No filter reads a table related to the filtered table, or to a vendor-filtered table
+    # (dim_Project is the grant resolver every filter shares, and is the one side).
+    vendor_filtered = {t for t, c in schema.items()
+                       if "VendorKey" in {n for n, _ in c} and "ProjectKey" not in {n for n, _ in c}}
+    for table, dax in blocks.items():
+        for source in set(re.findall(r"ALL \( (\w+) \)", dax)) - {dm.ACCESS_TABLE, "dim_Project"}:
+            for child, _, parent, _ in dm.RELATIONSHIPS:
+                pair = {child, parent}
+                assert not (source in pair and pair & ({table} | vendor_filtered)), (table, source, child, parent)
 
     # String-level DAX parse: balanced brackets and quotes, one RETURN per VAR block, every
     # variable defined before use, every Table[Column] a real model column, and TMDL's

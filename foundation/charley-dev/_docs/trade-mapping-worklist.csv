@@ -1,21 +1,20 @@
 RawTrade,MappingStatus,AffectedRecords,ObservationCount,PunchCount,InspectionCount,ProjectCount,FirstSeen,LastSeen,CurrentTradeKey,ProposedTradeKeys,ProposalSource,ProposalReason,IsDecisionNeeded
 Drywall/Carpentry,AMBIGUOUS,281,60,221,0,9,2024-09-23,2026-09-08,,DRYWALL_FRAMING|DRYWALL_BOARD|MILLWORK_CASEWORK,CURATED_PROPOSAL,"One label spans framing, board and finish carpentry; Affect to say which trade it means or split it in Procore",True
 Concrete Superstructure,AMBIGUOUS,110,64,46,0,2,2025-03-21,2025-12-19,,CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|SLAB_ON_DECK,CURATED_PROPOSAL,"Superstructure concrete covers formwork, rebar, cast-in-place and slab on deck",True
-Concrete,AMBIGUOUS,73,57,7,9,3,2025-03-25,2026-07-23,,CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|PRECAST_CONCRETE|SLAB_ON_GRADE|SLAB_ON_DECK,CURATED_PROPOSAL,Six library trades are concrete; the label does not say which,True
+Concrete,AMBIGUOUS,64,57,7,9,3,2025-03-25,2026-07-23,,CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|PRECAST_CONCRETE|SLAB_ON_GRADE|SLAB_ON_DECK,CURATED_PROPOSAL,Six library trades are concrete; the label does not say which,True
 Housekeeping,NO_EQUIVALENT,15,15,0,0,4,2025-12-08,2026-09-04,,,CURATED_PROPOSAL,Not a construction trade; site housekeeping has no checklist,True
 Roofing,NO_EQUIVALENT,12,4,8,0,2,2026-05-02,2026-08-06,,,CURATED_PROPOSAL,No roofing trade in the 26-sheet library (Division 07 50 00),True
 Glazing,NO_EQUIVALENT,11,2,9,0,3,2024-09-25,2026-08-19,,,CURATED_PROPOSAL,No glazing or curtain wall trade in the library (Division 08 80 00),True
 Light Fixtures,UNMAPPED,11,11,0,0,1,2026-04-15,2026-08-24,,ELECTRICAL,CURATED_PROPOSAL,Fixtures sit inside the electrical scope,True
-Foundation / Excavation,AMBIGUOUS,9,2,0,7,1,2026-08-27,2026-09-11,,EXCAVATION|CIP_CONCRETE,CURATED_PROPOSAL,Excavation is a library trade; foundations are usually cast-in-place concrete,True
 Windows,NO_EQUIVALENT,8,2,6,0,2,2025-11-24,2026-05-22,,,CURATED_PROPOSAL,No window trade in the library (Division 08 50 00),True
 Structural Steel,NO_EQUIVALENT,7,7,0,0,2,2025-12-19,2026-05-26,,,CURATED_PROPOSAL,Metal Deck is the only Division 05 trade; structural steel framing has no sheet,True
 Low Voltage,NO_EQUIVALENT,5,3,2,0,3,2024-11-25,2026-08-14,,,CURATED_PROPOSAL,No low-voltage or communications trade; Fire Alarm is life-safety only,True
 Demolition,NO_EQUIVALENT,4,0,4,0,1,2025-11-21,2025-11-21,,,CURATED_PROPOSAL,No demolition trade in the library (Division 02),True
 Specalties,NO_EQUIVALENT,3,2,1,0,1,2026-04-15,2026-06-16,,,CURATED_PROPOSAL,Division 10 specialties have no sheet (Procore spelling kept as entered),True
 Window Treatments,NO_EQUIVALENT,3,0,3,0,1,2024-10-12,2024-10-12,,,CURATED_PROPOSAL,Division 12 furnishings have no sheet,True
+Foundation / Excavation,AMBIGUOUS,2,2,0,7,1,2026-08-27,2026-09-11,,EXCAVATION|CIP_CONCRETE,CURATED_PROPOSAL,Excavation is a library trade; foundations are usually cast-in-place concrete,True
 Safety Documentation,NO_EQUIVALENT,2,2,0,0,1,2025-12-08,2025-12-08,,,CURATED_PROPOSAL,Not a construction trade; safety is outside the quality checklist library,True
 Closets,UNMAPPED,1,1,0,0,1,2026-04-03,2026-04-03,,MILLWORK_CASEWORK,CURATED_PROPOSAL,Closet systems are usually casework; confirm they are not wire shelving (Division 10),True
-ELEVATOR,NO_EQUIVALENT,1,0,0,1,1,2026-04-01,2026-04-01,,,CURATED_PROPOSAL,Division 14 conveying equipment has no sheet,True
 Fabric Wrapped Wall Panels,NO_EQUIVALENT,1,1,0,0,1,2026-06-08,2026-06-08,,,CURATED_PROPOSAL,Acoustic wall panels (09 84 00) have no sheet,True
 Plumbing Fixtures,UNMAPPED,1,1,0,0,1,2026-05-05,2026-05-05,,PLUMBING,CURATED_PROPOSAL,Fixtures sit inside the plumbing scope,True
 Protection,NO_EQUIVALENT,1,1,0,0,1,2025-12-08,2025-12-08,,,CURATED_PROPOSAL,Not a construction trade; protection of finished work has no checklist,True
@@ -23,16 +22,17 @@ Safety,NO_EQUIVALENT,1,1,0,0,1,2025-12-08,2025-12-08,,,CURATED_PROPOSAL,Not a co
 Storage Partitions,NO_EQUIVALENT,1,1,0,0,1,2026-06-08,2026-06-08,,,CURATED_PROPOSAL,Division 10 specialties have no sheet,True
 Trash Chute/Compactors,NO_EQUIVALENT,1,0,1,0,1,2026-05-01,2026-05-01,,,CURATED_PROPOSAL,Division 14 / 11 equipment has no sheet,True
 WINDOW TREATMENT,NO_EQUIVALENT,1,0,1,0,1,2026-06-16,2026-06-16,,,CURATED_PROPOSAL,Division 12 furnishings have no sheet (second Procore spelling),True
-Electrical,MAPPED,371,125,244,2,8,2022-03-23,2026-09-08,ELECTRICAL,,,Resolved: label equals a library TradeKey,False
+ELEVATOR,NO_EQUIVALENT,0,0,0,1,0,2026-04-01,2026-04-01,,,CURATED_PROPOSAL,Division 14 conveying equipment has no sheet,True
+Electrical,MAPPED,369,125,244,2,8,2022-03-23,2026-09-08,ELECTRICAL,,,Resolved: label equals a library TradeKey,False
 Painting,MAPPED,200,39,161,0,6,2024-09-25,2026-09-10,PAINTING,,,Resolved: label equals a library TradeKey,False
 Plumbing,MAPPED,191,44,147,0,5,2025-08-15,2026-09-08,PLUMBING,,,Resolved: label equals a library TradeKey,False
 Millwork,MAPPED,123,62,61,0,5,2024-10-02,2026-09-10,MILLWORK_CASEWORK,,,Resolved: approved alias in qc_trade_alias.csv,False
-HVAC,MAPPED,108,86,21,1,6,2024-10-12,2026-08-11,HVAC_DUCTWORK,,,Resolved: approved alias in qc_trade_alias.csv,False
+HVAC,MAPPED,107,86,21,1,6,2024-10-12,2026-08-11,HVAC_DUCTWORK,,,Resolved: approved alias in qc_trade_alias.csv,False
 Masonry/Stucco,MAPPED,56,6,50,0,1,2025-09-26,2026-07-09,UNIT_MASONRY,,,Resolved: approved alias in qc_trade_alias.csv,False
 Flooring,MAPPED,55,25,30,0,6,2024-10-11,2026-09-08,RESILIENT_FLOORING,,,Resolved: approved alias in qc_trade_alias.csv,False
 "Doors, Frames & Hardware",MAPPED,41,3,38,0,4,2024-10-22,2026-08-11,DOORS_HARDWARE,,,Resolved: approved alias in qc_trade_alias.csv,False
 Sprinkler,MAPPED,40,25,15,0,5,2024-09-25,2026-06-25,FIRE_SPRINKLER,,,Resolved: approved alias in qc_trade_alias.csv,False
-Ceramic Tile,MAPPED,36,33,2,1,3,2026-01-27,2026-09-08,TILE_STONE,,,Resolved: approved alias in qc_trade_alias.csv,False
+Ceramic Tile,MAPPED,35,33,2,1,3,2026-01-27,2026-09-08,TILE_STONE,,,Resolved: approved alias in qc_trade_alias.csv,False
 Drywall,MAPPED,31,26,5,0,4,2024-10-22,2026-06-10,DRYWALL_BOARD,,,Resolved: approved alias in qc_trade_alias.csv,False
 Stone/Tile,MAPPED,25,10,15,0,5,2025-12-16,2026-09-09,TILE_STONE,,,Resolved: approved alias in qc_trade_alias.csv,False
 Carpet,MAPPED,16,1,15,0,3,2024-10-30,2026-06-26,RESILIENT_FLOORING,,,Resolved: approved alias in qc_trade_alias.csv,False

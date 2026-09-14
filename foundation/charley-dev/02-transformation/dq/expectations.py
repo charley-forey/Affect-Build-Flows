@@ -1084,15 +1084,17 @@ CONSERVATION = (
     ("fct_ChangeOrder", "sv_prime_change_orders",           # 21_fct_changeorder.sql
      "project_id, change_order_id, amount, TRIM(status), "
      "CASE WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'approved' THEN 'Approved' "
-     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing', "
-     "'not_pricing', 'proceeding', 'not_proceeding') THEN 'Pending' "
+     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('in_review', 'revised', 'pricing', "
+     "'not_pricing', 'proceeding', 'not_proceeding') "
+     "OR REPLACE(LOWER(TRIM(status)), ' ', '_') LIKE 'pending%' THEN 'Pending' "
      "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'draft' THEN 'Draft' "
      "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'rejected' THEN 'Rejected' "
      "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'void' THEN 'Void' "
      "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'no_charge' THEN 'NoCharge' "
      "ELSE 'Unknown' END, "
-     "COALESCE(REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing', "
-     "'not_pricing', 'proceeding', 'not_proceeding'), FALSE)",
+     "COALESCE(REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('in_review', 'revised', 'pricing', "
+     "'not_pricing', 'proceeding', 'not_proceeding') "
+     "OR REPLACE(LOWER(TRIM(status)), ' ', '_') LIKE 'pending%', FALSE)",
      "ProjectKey, ChangeOrderKey, Amount, StatusLabel, StatusCategory, IsPending",
      "project_id IS NOT NULL"),
     ("fct_BudgetLine", "sv_budgets",                        # 20_fct_budgetline.sql
@@ -1205,7 +1207,7 @@ def _add_key_and_vocabulary_rules(suite: Suite) -> None:
         ("man_QcInspectorSignIn", ["ProjectKey", "SignInRef"]),
         ("man_QcChecklistResult", ["ProjectKey", "ItemKey"]),
         ("man_QcDohResult", ["ProjectKey", "ItemKey"]),
-        ("man_ProjectAccess", ["UserPrincipalName", "ProjectKey"]),
+        ("man_ProjectAccess", ["UserPrincipalName", "ProjectKey", "EffectiveFrom"]),
     ):
         suite.add(unique_key(table, cols))
 

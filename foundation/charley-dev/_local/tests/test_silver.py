@@ -1009,12 +1009,51 @@ def test_manual_parsers(con) -> None:
         _rerun_manual(con)
     check("access register: ALL and mixed-case UPNs accepted, malformed UPNs and inverted windows rejected")
 
+    # Key = (user, project, EffectiveFrom). Role-only differences and exact duplicates are one
+    # grant; overlapping windows with different starts are two; a second EffectiveTo for the
+    # same start is a conflict and denies.
+    con.execute("BEGIN")
+    try:
+        editor = "{'Title': 'csv:fixture'}"
+        for upn, role, start, end, modified in (
+            ("dup@example.com", "PM", "DATE '2026-01-01'", "NULL", "12:00:00"),
+            ("dup@example.com", "PM", "DATE '2026-01-01'", "NULL", "12:00:00"),              # exact duplicate
+            ("dup@example.com", "QTEAM", "DATE '2026-01-01'", "NULL", "13:00:00"),           # role only
+            ("dup@example.com", "PM", "DATE '2026-03-01'", "DATE '2026-06-30'", "12:00:00"), # overlapping
+            ("clash@example.com", "PM", "DATE '2026-01-01'", "NULL", "12:00:00"),
+            ("clash@example.com", "PM", "DATE '2026-01-01'", "DATE '2026-02-01'", "12:00:00"),
+        ):
+            con.execute(f"INSERT INTO cd_bronze_man_project_access VALUES ('{upn}', "
+                        f"{{'Title': '{GOOD_PROJECT}'}}, '{role}', {start}, {end}, "
+                        f"TIMESTAMP '2026-08-01 {modified}', {editor})")
+        # ALL picked on a list that is not the access register.
+        con.execute("INSERT INTO cd_bronze_man_wins SELECT * REPLACE ({'Title': 'ALL'} AS ProjectKey) "
+                    "FROM cd_bronze_man_wins LIMIT 1")
+        _rerun_manual(con)
+        rows = con.execute("SELECT role, effective_from FROM cd_silver_man_project_access "
+                           "WHERE user_principal_name = 'dup@example.com' ORDER BY effective_from").fetchall()
+        assert [(r[0], str(r[1])) for r in rows] == [("QTEAM", "2026-01-01"), ("PM", "2026-03-01")], rows
+        assert one(con, "SELECT COUNT(*) FROM cd_silver_man_project_access WHERE user_principal_name = 'clash@example.com'") == 0
+        reasons = [r[0] for r in con.execute(
+            "SELECT reason FROM cd_dq_rejects_manual WHERE item_ref LIKE '%@example.com'").fetchall()]
+        assert sum(r.startswith("conflicting duplicate - (user, project, EffectiveFrom)") for r in reasons) == 2, reasons
+        assert not any("dup@" in r for r in reasons), reasons
+        assert one(con, "SELECT COUNT(*) FROM cd_dq_rejects_manual WHERE target_table = 'cd_silver_man_wins' "
+                        "AND reason = 'ALL is only valid on CD Project Access'") == 1
+    finally:
+        con.execute("ROLLBACK")
+        _rerun_manual(con)
+    check("access register key is (user, project, EffectiveFrom): duplicates and role-only rows collapse, "
+          "overlaps merge, a second EffectiveTo denies; ALL elsewhere says why")
+
 
 # Natural-key and domain columns: never mutated to manufacture a conflicting version.
 _MANUAL_KEYS = {"ProjectKey", "MonthStart", "WinNumber", "RiskNumber", "ItemNumber",
                 "QuestionNumber", "MilestoneName", "DfowRef", "ItpRef", "GateKey",
                 "InspectionRef", "SystemRef", "SignInRef", "ItemKey", "WinType", "ImpactCode",
-                "GateType", "UserPrincipalName"}
+                "GateType", "UserPrincipalName",
+                # man_ProjectAccess: Role-only differences collapse by design; EffectiveFrom is key.
+                "Role", "EffectiveFrom"}
 
 
 def _manual_lists():
@@ -1024,8 +1063,10 @@ def _manual_lists():
         bronze = ms.bronze_table(table)
         silver = bronze.replace("cd_bronze_", "cd_silver_")
         ledger = "cd_dq_rejects_qc" if "_qc_" in bronze else "cd_dq_rejects_manual"
-        name, kind = next((c, t) for c, t in cols
-                          if c not in _MANUAL_KEYS and t in ("STRING", "INT", "DOUBLE"))
+        candidates = [(c, t) for c, t in cols if c not in _MANUAL_KEYS]
+        # A DATE only when nothing else is left (man_ProjectAccess: EffectiveTo).
+        name, kind = next((c, t) for c, t in candidates + candidates
+                          if t in ("STRING", "INT", "DOUBLE") or t == "DATE" and len(candidates) == 1)
         yield bronze, silver, ledger, name, kind
 
 
@@ -1073,7 +1114,8 @@ def test_manual_reject_conservation(con) -> None:
     con.execute("BEGIN")
     try:
         for bronze, _, _, column, kind in _manual_lists():
-            value = "'a conflicting value'" if kind == "STRING" else f"CAST(987 AS {kind})"
+            value = ("'a conflicting value'" if kind == "STRING" else "DATE '2099-12-31'" if kind == "DATE"
+                     else f"CAST(987 AS {kind})")
             con.execute(f"INSERT INTO {bronze} SELECT * REPLACE ({value} AS {column}) "
                         f"FROM {bronze} WHERE {good}")
         _rerun_manual(con)

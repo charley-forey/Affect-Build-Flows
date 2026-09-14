@@ -174,7 +174,10 @@ SOURCE_FIXTURES = (
         -- CO8 is the workbook's 4,620 addend.
         ('P1','CO6','C1', DATE '2025-06-18',   7000.0,  '6', 'Rejected'),
         ('P1','CO7','C1', DATE '2025-06-20',    500.0,  '7', 'no_charge'),
-        ('P1','CO8','C1', DATE '2025-05-25',   4620.0,  '8', 'Not Proceeding')
+        ('P1','CO8','C1', DATE '2025-05-25',   4620.0,  '8', 'Not Proceeding'),
+        -- Custom "Pending - <variant>" labels. CO20 is the workbook's 65,000 addend.
+        ('P1','CO20','C1', DATE '2025-05-26', 65000.0, '20', 'Pending - Pricing'),
+        ('P1','CO21','C1', DATE '2025-05-27',   250.0, '21', 'Pending - Not Proceeding')
     ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES

@@ -517,8 +517,10 @@ def test_trade_mapping_worklist(con) -> None:
     assert all(listed[k][0] != "MAPPED" and listed[k][1] for k in unmapped)
     assert listed["HVAC"] == ("MAPPED", False, "HVAC_DUCTWORK")
     assert one(con, "SELECT SUM(AffectedRecords) FROM dq_TradeMappingCandidate") == one(con, """
-        SELECT COUNT(*) FROM (SELECT trade FROM sv_qc_ncr UNION ALL SELECT trade FROM sv_qc_punch
-        UNION ALL SELECT trade FROM sv_qc_inspection) s WHERE NULLIF(TRIM(trade), '') IS NOT NULL""")
+        SELECT COUNT(*) FROM (SELECT trade, project_id FROM sv_qc_ncr UNION ALL SELECT trade, project_id FROM sv_qc_punch) s
+        WHERE NULLIF(TRIM(trade), '') IS NOT NULL AND project_id IS NOT NULL""")
+    assert one(con, "SELECT SUM(InspectionCount) FROM dq_TradeMappingCandidate") == one(con, """
+        SELECT COUNT(*) FROM sv_qc_inspection WHERE NULLIF(TRIM(trade), '') IS NOT NULL AND project_id IS NOT NULL""")
     check("dq_TradeMappingCandidate covers every unmapped fixture label, with record counts")
 
     # The proposal seed is curated input: every proposed key is a real library trade, and a

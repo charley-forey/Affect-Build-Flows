@@ -70,6 +70,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
                 WHEN UPPER(TRIM(COALESCE(b.WinType, ''))) NOT IN ('REALIZED', 'FOCUSAREA')
@@ -114,6 +116,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
                 WHEN UPPER(TRIM(COALESCE(b.ImpactCode, ''))) NOT IN ('HIGH', 'MEDIUM', 'LOW')
@@ -159,6 +163,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -212,6 +218,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -258,6 +266,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
                 WHEN b.Score IS NULL
@@ -300,6 +310,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -336,6 +348,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -387,6 +401,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MilestoneName IS NULL
                      THEN 'missing ProjectKey or MilestoneName'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -430,6 +446,8 @@ FROM (
             CASE
                 WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                     THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
@@ -456,13 +474,17 @@ WHERE _reject_reason IS NULL AND _versions = 1 AND _copy = 1;
 
 CREATE OR REPLACE TEMPORARY VIEW mv_project_access AS
 SELECT *,
-       MAX(_version) OVER (PARTITION BY _reject_reason, user_principal_name, project_id) AS _versions,
-       ROW_NUMBER() OVER (PARTITION BY _reject_reason, user_principal_name, project_id, _version
+       MAX(_version) OVER (PARTITION BY _reject_reason, user_principal_name, project_id, effective_from) AS _versions,
+       ROW_NUMBER() OVER (PARTITION BY _reject_reason, user_principal_name, project_id, effective_from, _version
                           ORDER BY last_modified DESC) AS _copy
 FROM (
+    -- KEY = (user, project, EffectiveFrom). Role is informational, so rows that differ only
+    -- in Role are one grant (the latest edit's Role is kept); exact duplicates collapse the
+    -- same way. Only a different EffectiveTo for the same key is a conflict. Different
+    -- EffectiveFrom rows are separate grants and merge in the role filter (union of windows).
     SELECT *,
-           DENSE_RANK() OVER (PARTITION BY _reject_reason, user_principal_name, project_id
-                              ORDER BY role, effective_from, effective_to) AS _version
+           DENSE_RANK() OVER (PARTITION BY _reject_reason, user_principal_name, project_id, effective_from
+                              ORDER BY effective_to) AS _version
     FROM (
         SELECT
             LOWER(TRIM(b.UserPrincipalName))                     AS user_principal_name,
@@ -636,7 +658,7 @@ WHERE _reject_reason IS NOT NULL OR _versions > 1
 UNION ALL
 SELECT 'cd_silver_man_project_access' AS target_table, project_id, CAST(NULL AS DATE) AS month_start,
        CONCAT('access for ', COALESCE(user_principal_name, '(blank)')) AS item_ref,
-       COALESCE(_reject_reason, 'conflicting duplicate - (user, project) has more than one version; access DENIED until resolved in SharePoint') AS reason,
+       COALESCE(_reject_reason, 'conflicting duplicate - (user, project, EffectiveFrom) has more than one EffectiveTo; access DENIED until resolved in SharePoint') AS reason,
        last_modified, last_modified_by
 FROM mv_project_access
 WHERE _reject_reason IS NOT NULL OR _versions > 1

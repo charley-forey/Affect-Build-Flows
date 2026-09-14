@@ -89,7 +89,7 @@ if (Test-Path $csv) {
 }
 
 # The access register's 'every project' grant. Picking it on any OTHER list is rejected
-# in silver as an unknown project, with a reason on the DQ page.
+# in silver (ALL is only valid on CD Project Access), with a reason on the DQ page.
 if (-not ((Get-PnPListItem -List "CD Projects" -PageSize 500).FieldValues.Title -contains 'ALL')) {
     Add-PnPListItem -List "CD Projects" -Values @{
         Title = 'ALL'; ProjectName = 'All projects (CD Project Access only)'; IsActive = $true

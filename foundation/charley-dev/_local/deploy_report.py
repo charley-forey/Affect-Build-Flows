@@ -167,7 +167,8 @@ SLICER_TITLE = 10
 # is asserted against the DAX in the tests so this cannot drift from the model.
 CARD_TEXT_SAMPLES = {
     "Pipeline Status": "Gold checked with warnings; source completeness unverified",
-    "Snapshot History Note": "History starts 2026-01-31; earlier months are unavailable, not zero",
+    "Snapshot History Note": "History starts 2026-01-31; earlier months are unavailable, not zero. "
+                             "CO and RFI draft rules changed 2026-09-15",
     "DQ Registers Awaiting Input": "8/8 registers empty in current filters; completeness unverified",
     "Last Checked Run": "2026-09-14 04:00",
     "Category Band": "Not measured",

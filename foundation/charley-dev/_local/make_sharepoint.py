@@ -111,7 +111,7 @@ CHOICES = {
 }
 
 # The one CD Projects item that is not a project. man_ProjectAccess needs "every project" as a
-# pickable lookup value; every other list rejects it in silver as an unknown project.
+# pickable lookup value; every other list rejects it in silver ("ALL is only valid on CD Project Access").
 ALL_PROJECTS = "ALL"
 
 # The PQP choice columns, read out of seed/qc_status_vocab.csv rather than retyped. That
@@ -395,7 +395,7 @@ def build() -> str:
         "}",
         "",
         "# The access register's 'every project' grant. Picking it on any OTHER list is rejected",
-        "# in silver as an unknown project, with a reason on the DQ page.",
+        "# in silver (ALL is only valid on CD Project Access), with a reason on the DQ page.",
         "if (-not ((Get-PnPListItem -List \"" + LOOKUP_LIST + "\" -PageSize 500).FieldValues.Title "
         f"-contains '{ALL_PROJECTS}')) {{",
         "    Add-PnPListItem -List \"" + LOOKUP_LIST + "\" -Values @{",

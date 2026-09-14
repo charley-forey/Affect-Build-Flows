@@ -22,14 +22,15 @@
 
 CREATE OR REPLACE TABLE dq_TradeMappingCandidate AS
 WITH src AS (
+    -- project_id IS NOT NULL: the same rows 33_fct_qc.sql keeps.
     SELECT 'Observation' AS SourceType, project_id, TRIM(trade) AS label, created_date AS seen
-    FROM sv_qc_ncr WHERE NULLIF(TRIM(trade), '') IS NOT NULL
+    FROM sv_qc_ncr WHERE NULLIF(TRIM(trade), '') IS NOT NULL AND project_id IS NOT NULL
     UNION ALL
     SELECT 'Punch', project_id, TRIM(trade), created_date
-    FROM sv_qc_punch WHERE NULLIF(TRIM(trade), '') IS NOT NULL
+    FROM sv_qc_punch WHERE NULLIF(TRIM(trade), '') IS NOT NULL AND project_id IS NOT NULL
     UNION ALL
     SELECT 'Inspection', project_id, TRIM(trade), inspection_date
-    FROM sv_qc_inspection WHERE NULLIF(TRIM(trade), '') IS NOT NULL
+    FROM sv_qc_inspection WHERE NULLIF(TRIM(trade), '') IS NOT NULL AND project_id IS NOT NULL
 ),
 labels AS (
     -- Grouped case-insensitively, as the alias join matches and as Power BI groups text.
@@ -38,8 +39,11 @@ labels AS (
            SUM(CASE WHEN SourceType = 'Observation' THEN 1 ELSE 0 END) AS ObservationCount,
            SUM(CASE WHEN SourceType = 'Punch' THEN 1 ELSE 0 END)       AS PunchCount,
            SUM(CASE WHEN SourceType = 'Inspection' THEN 1 ELSE 0 END)  AS InspectionCount,
-           COUNT(*)                                                  AS AffectedRecords,
-           COUNT(DISTINCT project_id)                                AS ProjectCount,
+           -- AFFECTED = records a mapping would change: observations and punch items only.
+           -- fct_ProcoreInspection never resolves a trade, so inspections are counted in
+           -- InspectionCount for context and kept out of AffectedRecords and ProjectCount.
+           SUM(CASE WHEN SourceType <> 'Inspection' THEN 1 ELSE 0 END) AS AffectedRecords,
+           COUNT(DISTINCT CASE WHEN SourceType <> 'Inspection' THEN project_id END) AS ProjectCount,
            MIN(seen)                                                 AS FirstSeen,
            MAX(seen)                                                 AS LastSeen
     FROM src

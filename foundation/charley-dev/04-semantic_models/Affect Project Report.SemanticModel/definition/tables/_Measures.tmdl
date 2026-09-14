@@ -2,7 +2,8 @@ table _Measures
 
 	/// Replaces FINANCIALS!C3 - blank for months after the last loaded period
 	measure 'Original Contract' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			VAR EndDate = MAX ( dim_Date[Date] )
 			VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
 			"@M", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[OriginalContract] ) ) ),
@@ -15,7 +16,8 @@ table _Measures
 
 	/// Replaces FINANCIALS!C4 - blank for months after the last loaded period
 	measure 'Current Contract' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			VAR EndDate = MAX ( dim_Date[Date] )
 			VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
 			"@M", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[CurrentContract] ) ) ),
@@ -33,7 +35,8 @@ table _Measures
 
 	/// Replaces FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell; blank for months after the last loaded period
 	measure 'Pending Change Orders' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), REMOVEFILTERS ( fct_FinancialPeriod ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			VAR EndDate = MAX ( dim_Date[Date] )
 			VAR LastRows = CALCULATETABLE ( ADDCOLUMNS ( VALUES ( fct_FinancialPeriod[ProjectKey] ),
 			"@M", CALCULATE ( MAX ( fct_FinancialPeriod[MonthStart] ), NOT ISBLANK ( fct_FinancialPeriod[PendingChangeOrders] ) ) ),
@@ -66,35 +69,40 @@ table _Measures
 
 	/// Replaces FINANCIALS!C19:C20 - as of the last budget snapshot; blank for months after it
 	measure 'Budget' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D19:D20 - as of the last budget snapshot; blank for months after it
 	measure 'Forecast' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!D61 - as of the last budget snapshot; blank for months after it
 	measure 'Committed' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!E19:E20 - as of the last budget snapshot; blank for months after it
 	measure 'Spent To Date' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
 
 	/// Replaces FINANCIALS!C15 - as of the last budget snapshot; blank for months after it
 	measure 'Cost To Complete' =
-			IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) ), 0 ), BLANK (),
+			VAR _LastLoaded = CALCULATE ( MAX ( fct_BudgetLine[MonthStart] ), REMOVEFILTERS ( fct_BudgetLine ) )
+			RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), BLANK (),
 			CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
@@ -539,7 +547,7 @@ table _Measures
 			RETURN IF ( NOT ISFILTERED ( dim_Date ), "All months", IF ( L = H, FORMAT ( L, "MMMM YYYY" ), FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) ) )
 		displayFolder: 00 Report context
 
-	/// Replaces no workbook equivalent - [Open Submittals] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Open Submittals] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Open Submittals (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -547,7 +555,7 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Open Submittals Past Due] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Open Submittals Past Due (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -555,7 +563,7 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Open RFIs] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Open RFIs] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Open RFIs (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -563,7 +571,7 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Open Observations] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Open Observations] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Open Observations (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -571,7 +579,7 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Open Punch Items] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Open Punch Items] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Open Punch Items (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -579,7 +587,7 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [AR Outstanding] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [AR Outstanding] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'AR Outstanding (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -587,7 +595,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Total Billed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Total Billed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Total Billed (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -595,7 +603,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Budget] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Budget] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Budget (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -603,7 +611,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Spent To Date] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Spent To Date] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Spent To Date (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -611,7 +619,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Committed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Committed] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Committed (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -619,7 +627,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Current Contract] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Current Contract] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Current Contract (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -627,7 +635,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Pending Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Pending Change Orders (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -635,7 +643,7 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - [Approved Change Orders] as saved at the last capture in the period. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Approved Change Orders (Month End)' =
 			VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )
 			RETURN IF ( ISBLANK ( D ), BLANK (),
@@ -643,16 +651,16 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - first saved capture. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night
+	/// Replaces no workbook equivalent - first saved capture. SnapshotDate is the UTC date of the DQ batch that saved it: the build that ran overnight into that date, so sources as of the previous night. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Snapshot History Starts' = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )
 		formatString: "yyyy-mm-dd"
 		displayFolder: 16 Month-end snapshots
 
-	/// Replaces no workbook equivalent - states where saved history begins
+	/// Replaces no workbook equivalent - states where saved history begins. Change-order pending/draft and RFI draft semantics changed on 2026-09-15; earlier captures used the prior definition
 	measure 'Snapshot History Note' =
 			VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )
 			RETURN IF ( ISBLANK ( F ), "No month-end history captured yet",
-			"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero" )
+			"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero. CO and RFI draft rules changed 2026-09-15" )
 		displayFolder: 16 Month-end snapshots
 
 	/// Replaces FINANCIALS!F56 - now from Sage AR receipts (acrpmt)

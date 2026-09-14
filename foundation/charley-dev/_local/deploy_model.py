@@ -191,22 +191,28 @@ SNAPSHOT_KPIS = [
 # SnapshotDate semantics, stated wherever a reader meets a snapshot measure.
 SNAPSHOT_DATE_NOTE = ("SnapshotDate is the UTC date of the DQ batch that saved it: the build that "
                       "ran overnight into that date, so sources as of the previous night")
+# Gold definitions that changed under saved history. Set to the date the release3 gold build
+# first runs in production: captures before it used the previous definition.
+DEFINITION_CHANGE_DATE = "2026-09-15"
+SNAPSHOT_DEFINITION_NOTE = (f"Change-order pending/draft and RFI draft semantics changed on "
+                            f"{DEFINITION_CHANGE_DATE}; earlier captures used the prior definition")
 SNAPSHOT_MEASURES = [
     (f"{name} (Month End)",
      "VAR D = MAX ( fct_DailySnapshot[SnapshotDate] )\n"
      "RETURN IF ( ISBLANK ( D ), BLANK (),\n"
      f"CALCULATE ( SUM ( fct_DailySnapshot[{col}] ), fct_DailySnapshot[SnapshotDate] = D ) )",
-     fmt, f"no workbook equivalent - [{name}] as saved at the last capture in the period. {SNAPSHOT_DATE_NOTE}")
+     fmt, f"no workbook equivalent - [{name}] as saved at the last capture in the period. {SNAPSHOT_DATE_NOTE}. {SNAPSHOT_DEFINITION_NOTE}")
     for name, col, fmt in SNAPSHOT_KPIS
 ] + [
     ("Snapshot History Starts",
      "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
-     '"yyyy-mm-dd"', f"no workbook equivalent - first saved capture. {SNAPSHOT_DATE_NOTE}"),
+     '"yyyy-mm-dd"', f"no workbook equivalent - first saved capture. {SNAPSHOT_DATE_NOTE}. {SNAPSHOT_DEFINITION_NOTE}"),
     ("Snapshot History Note",
      "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\n"
      'RETURN IF ( ISBLANK ( F ), "No month-end history captured yet",\n'
-     '"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero" )',
-     None, "no workbook equivalent - states where saved history begins"),
+     '"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero. '
+     f'CO and RFI draft rules changed {DEFINITION_CHANGE_DATE}" )',
+     None, f"no workbook equivalent - states where saved history begins. {SNAPSHOT_DEFINITION_NOTE}"),
 ]
 
 
@@ -226,9 +232,17 @@ REPORT_MONTH_LABEL_DAX = (
 # CAPPED at the last loaded month: past the latest MonthStart anywhere in the fact (all its
 # filters removed), the value is BLANK rather than carried forward. Without the cap a month
 # axis filled every calendar month to Dec 2035 with the current value.
+#   - No loaded month at all (every MonthStart blank): no cap, the expression is returned -
+#     EOMONTH(BLANK) would otherwise blank every month.
+#   - RLS: REMOVEFILTERS does not lift the role, so the cap is the latest month among the
+#     viewer's granted projects.
+#   - fct_FinancialPeriod has a month for every invoice, so a future-dated invoice (a typo,
+#     or a pre-dated pay app) moves the balance cap forward to that month. The budget cap
+#     reads fct_BudgetLine's snapshot month, which no invoice touches.
 def last_loaded_cap(table: str, expression: str) -> str:
-    return (f"IF ( MIN ( dim_Date[Date] ) > EOMONTH ( CALCULATE ( MAX ( {table}[MonthStart] ), "
-            f"REMOVEFILTERS ( {table} ) ), 0 ), BLANK (),\n{expression} )")
+    return (f"VAR _LastLoaded = CALCULATE ( MAX ( {table}[MonthStart] ), REMOVEFILTERS ( {table} ) )\n"
+            f"RETURN IF ( NOT ISBLANK ( _LastLoaded ) && MIN ( dim_Date[Date] ) > EOMONTH ( _LastLoaded, 0 ), "
+            f"BLANK (),\n{expression} )")
 
 
 BALANCE_AT_PERIOD_END = last_loaded_cap("fct_FinancialPeriod", (
@@ -999,7 +1013,15 @@ def rls_filter(table: str, schema: dict[str, list[tuple[str, str]]]) -> str | No
     if "ProjectKey" in cols:
         return f"{ALLOWED_PROJECTS_DAX}\nRETURN {table}[ProjectKey] IN _projects"
     if "VendorKey" in cols:
-        sources = [t for t, c in schema.items() if t != ACCESS_TABLE
+        # Vendor sources must not be related to any vendor-filtered table. fct_ApInvoice and
+        # bridge_VendorCostCode relate to dim_Vendor, so reading them inside dim_Vendor's own
+        # filter makes the role filter depend on a table that same filter propagates into -
+        # AP Job Cost per project would then depend on the vendor filter, not the project one.
+        vendor_filtered = {t for t, c in schema.items()
+                           if "VendorKey" in {n for n, _ in c} and "ProjectKey" not in {n for n, _ in c}}
+        related = {r[0] for r in RELATIONSHIPS if r[2] in vendor_filtered} | \
+                  {r[2] for r in RELATIONSHIPS if r[0] in vendor_filtered}
+        sources = [t for t, c in schema.items() if t != ACCESS_TABLE and t not in related
                    and {"ProjectKey", "VendorKey"} <= {n for n, _ in c}]
         if not sources:
             return "FALSE ()"

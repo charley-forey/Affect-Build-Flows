@@ -37,19 +37,22 @@ SELECT
     -- Approved -> Approved Changes; the Pending variants -> Pending Changes; Draft, Rejected,
     -- No Charge and Void are "not reflected". So Draft is NOT pending (9 live, $8.4k, until
     -- 2026-09-14 counted pending). Procore has no 'closed' CO status. Normalised lower-case
-    -- with spaces as underscores, so "Not Proceeding" and not_proceeding agree. Anything else
+    -- with spaces as underscores, so "Not Proceeding" and not_proceeding agree, and any
+    -- status starting "Pending" ("Pending - In Review" -> pending_-_in_review) is Pending. Anything else
     -- is Unknown: neither pending nor approved, and flagged by a WARN DQ rule.
     -- expectations.py CONSERVATION repeats both expressions verbatim - change them together.
     CASE WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'approved' THEN 'Approved'
-         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing',
-              'not_pricing', 'proceeding', 'not_proceeding') THEN 'Pending'
+         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('in_review', 'revised', 'pricing',
+              'not_pricing', 'proceeding', 'not_proceeding')
+              OR REPLACE(LOWER(TRIM(status)), ' ', '_') LIKE 'pending%' THEN 'Pending'
          WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'draft' THEN 'Draft'
          WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'rejected' THEN 'Rejected'
          WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'void' THEN 'Void'
          WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'no_charge' THEN 'NoCharge'
          ELSE 'Unknown' END          AS StatusCategory,
-    COALESCE(REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing',
-              'not_pricing', 'proceeding', 'not_proceeding'), FALSE) AS IsPending,
+    COALESCE(REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('in_review', 'revised', 'pricing',
+              'not_pricing', 'proceeding', 'not_proceeding')
+              OR REPLACE(LOWER(TRIM(status)), ' ', '_') LIKE 'pending%', FALSE) AS IsPending,
     CASE WHEN created_date IS NULL THEN NULL
          ELSE datediff(CURRENT_DATE, created_date) END AS DaysOpen
 FROM sv_prime_change_orders

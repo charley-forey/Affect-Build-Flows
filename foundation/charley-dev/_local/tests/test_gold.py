@@ -137,21 +137,22 @@ def test_fct_budgetline(con) -> None:
 
 
 def test_fct_changeorder(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 8
+    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 10
     cats = dict(con.execute("SELECT ChangeOrderKey, StatusCategory FROM fct_ChangeOrder").fetchall())
     assert cats == {"CO1": "Approved", "CO2": "Pending", "CO3": "Draft", "CO4": "Approved",
-                    "CO5": "Void", "CO6": "Rejected", "CO7": "NoCharge", "CO8": "Pending"}, cats
+                    "CO5": "Void", "CO6": "Rejected", "CO7": "NoCharge", "CO8": "Pending",
+                    "CO20": "Pending", "CO21": "Pending"}, cats
     check("fct_ChangeOrder[StatusCategory] maps every Procore status, UI label or API code")
     # Procore's budget treatment: only the Pending variants are pending. Draft, Rejected,
     # No Charge and Void are "not reflected", however much money they carry.
     pending = dict(con.execute("SELECT ChangeOrderKey, IsPending FROM fct_ChangeOrder").fetchall())
-    assert {k for k, v in pending.items() if v} == {"CO2", "CO8"}, pending
+    assert {k for k, v in pending.items() if v} == {"CO2", "CO8", "CO20", "CO21"}, pending
     check("fct_ChangeOrder[IsPending] is the Pending variants only - Draft is not pending")
 
     # FINANCIALS!C5 addends, recoverable as rows instead of lost inside a formula.
     pending = one(con, "SELECT ROUND(SUM(Amount), 2) FROM fct_ChangeOrder WHERE IsPending")
-    assert float(pending) == 7778.46, pending
-    check("pending CO total is recoverable from rows (3,158.46 + 4,620)")
+    assert float(pending) == 73028.46, pending
+    check("pending CO total is recoverable from rows (3,158.46 + 4,620 + 65,000 + 250)")
 
     # Oldest unapproved is the oldest PENDING CO: the older draft CO3 does not set it.
     ages = con.execute("SELECT MAX(AgeOfOldestUnapprovedCO) FROM fct_FinancialPeriod").fetchone()[0]
@@ -319,7 +320,7 @@ def test_fct_financialperiod(con) -> None:
 
     # Only Pending-variant COs are pending; the approved one has already moved into the
     # contract, and the 11,550 draft is not reflected anywhere (Procore's treatment).
-    assert pending == 7778.46, pending
+    assert pending == 73028.46, pending
     check("fct_FinancialPeriod[PendingChangeOrders] excludes the approved and draft COs")
 
     # committed 1,380,000 / budget 1,550,000

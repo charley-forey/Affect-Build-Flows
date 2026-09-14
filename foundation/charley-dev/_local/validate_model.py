@@ -621,7 +621,8 @@ def monthly_expected():
     E["Snapshot History Starts"] = history_start
     E["Snapshot History Note"] = lambda c, s: (
         "No month-end history captured yet" if (first := history_start(c, s)) is None
-        else f"History starts {_ts(first):%Y-%m-%d}; earlier months are unavailable, not zero")
+        else f"History starts {_ts(first):%Y-%m-%d}; earlier months are unavailable, not zero. "
+             f"CO and RFI draft rules changed {dm.DEFINITION_CHANGE_DATE}")
     for number, name in enumerate(("Accounts Receivable", "Profitability", "Cash Position", "Change Orders",
                                    "Safety Incidents", "Schedule Performance", "Completion Variance",
                                    "Observations", "Daily Reports"), 1):
