@@ -137,7 +137,8 @@ def test_fct_budgetline(con) -> None:
 
 
 def test_fct_changeorder(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 4
+    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 5
+    assert one(con, "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO5'") is False
     # Approved is settled; Pending AND Draft are both still outstanding.
     assert one(con, "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO1'") is False
     assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder WHERE IsPending") == 2

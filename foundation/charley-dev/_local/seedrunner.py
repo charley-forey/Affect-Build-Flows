@@ -163,7 +163,11 @@ SOURCE_FIXTURES = (
         -- A SECOND MONTH, deliberately. Every CO used to sit in May, which made per-month
         -- and cumulative roll-ups identical and let a $4.85M understatement pass the gate
         -- (see 30_fct_financialperiod.sql). June's row must carry May's approved CO too.
-        ('P1','CO4','C1', DATE '2025-06-11', 100000.0,  '4', 'Approved')
+        ('P1','CO4','C1', DATE '2025-06-11', 100000.0,  '4', 'Approved'),
+        -- A void CO, deliberately with money on it: dead, so neither pending nor contract
+        -- growth. Without it the DQ conservation rule's IsPending expression never met a void
+        -- and passed offline while the live candidate (3 real void COs) blocked.
+        ('P1','CO5','C1', DATE '2025-06-15',  25000.0,  '5', 'Void')
     ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES

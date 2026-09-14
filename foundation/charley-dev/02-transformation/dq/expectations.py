@@ -1074,7 +1074,7 @@ _BILLING_LATEST_APPROVED = (f"(ROW_NUMBER() OVER (PARTITION BY billing_type, con
 CONSERVATION = (
     ("fct_ChangeOrder", "sv_prime_change_orders",           # 21_fct_changeorder.sql
      "project_id, change_order_id, amount, TRIM(status), "
-     "CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed') THEN FALSE ELSE TRUE END",
+     "CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed', 'void') THEN FALSE ELSE TRUE END",
      "ProjectKey, ChangeOrderKey, Amount, StatusLabel, IsPending",
      "project_id IS NOT NULL"),
     ("fct_BudgetLine", "sv_budgets",                        # 20_fct_budgetline.sql

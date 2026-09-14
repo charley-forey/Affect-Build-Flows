@@ -84,6 +84,44 @@ def main() -> int:
             assert mutated(con, name, *orphan) == 0, f"{name}: fired on a row gold drops by design"
             checks += 2
 
+    # Semantic edge rows. A conservation rule re-derives gold's flags on the source side, so it
+    # only proves anything on rows where the derivation branches. The candidate run blocked on
+    # 3 real void COs the fixture never had (rule said pending, gold said not). Append each
+    # edge to the source, rebuild the real gold file, and the rule must stay clean.
+    edges = {
+        ("sv_prime_change_orders", "21_fct_changeorder.sql"): [
+            "SELECT * REPLACE ('CO_V' AS change_order_id, ' VOID ' AS status) FROM snap LIMIT 1",
+            "SELECT * REPLACE ('CO_C' AS change_order_id, 'Closed' AS status) FROM snap LIMIT 1",
+            "SELECT * REPLACE ('CO_N' AS change_order_id, CAST(NULL AS VARCHAR) AS status) FROM snap LIMIT 1"],
+        # Newest sub pay app UNDER_REVIEW: IsLatestPeriod and IsLatestApprovedPeriod part ways.
+        ("sv_billing", "27_fct_billing.sql"): [
+            "SELECT * REPLACE ('B7' AS billing_id, 2 AS period_number, 'UNDER_REVIEW' AS status_label, "
+            "DATE '2025-06-30' AS period_end) FROM snap WHERE billing_id = 'B5'",
+            "SELECT * REPLACE ('B8' AS billing_id, 'C8' AS contract_id, 'APPROVED_AS_NOTED' AS status_label) "
+            "FROM snap WHERE billing_id = 'B5'"],
+        ("sv_budgets", "20_fct_budgetline.sql"): [
+            "SELECT * REPLACE ('BL_N' AS budget_line_id, CAST(NULL AS DOUBLE) AS invoiced_to_date) FROM snap LIMIT 1"],
+        ("sv_direct_costs", "28_fct_directcost.sql"): [
+            "SELECT * REPLACE ('D_L' AS direct_cost_id, 'approved' AS status_label) FROM snap LIMIT 1",
+            "SELECT * REPLACE ('D_N' AS direct_cost_id, CAST(NULL AS VARCHAR) AS status_label) FROM snap LIMIT 1"],
+        ("sv_ar_invoices", "22_fct_invoice.sql"): [
+            "SELECT * REPLACE ('INV_N' AS invoice_uid, CAST(NULL AS DOUBLE) AS invoice_balance) FROM snap LIMIT 1"],
+        ("sv_ap_lines", "34_fct_apinvoice.sql"): [
+            "SELECT * REPLACE ('L_X' AS line_uid, 'ABC' AS ledger_account) FROM snap LIMIT 1",
+            "SELECT * REPLACE ('L_B' AS line_uid, '50999' AS ledger_account) FROM snap LIMIT 1"],
+    }
+    import seedrunner
+    by_view = {view: gold for gold, view, *_ in expectations.CONSERVATION}
+    assert set(by_view) == {v for v, _ in edges}, "every conservation rule needs its edge rows"
+    for (view, gold_file), rows in edges.items():
+        name = f"{by_view[view]} conserves {view} rows and amounts exactly"
+        gold_sql = (CHARLEY_DEV / "02-transformation/sql/gold" / gold_file).read_text(encoding="utf-8")
+        n = mutated(con, name, "CREATE TEMP TABLE snap AS SELECT * FROM " + view,
+                    f"CREATE OR REPLACE VIEW {view} AS SELECT * FROM snap UNION ALL " + " UNION ALL ".join(
+                        f"({r})" for r in rows), *seedrunner.split_statements(gold_sql))
+        assert n == 0, f"{name}: source-side derivation disagrees with {gold_file} on edge rows ({n})"
+        checks += 1
+
     check_fails(con, "unattributed Outbuild critical activities dropped from fct_Milestone",
                 "CREATE TEMP TABLE ob_snap AS SELECT * FROM sv_outbuild_activities",
                 "CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM ob_snap UNION ALL "
