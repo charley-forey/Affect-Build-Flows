@@ -42,6 +42,7 @@ SUITES = [
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
     ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),
+    ("data dictionary is current", TESTS / "test_data_dictionary.py"),
 ]
 
 
