@@ -159,6 +159,10 @@ def main() -> int:
                 "CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM xw_snap WHERE sage_project_id <> 'S100'",
                 clean=False)
     vn = "CREATE TEMP TABLE vn_snap AS SELECT * FROM sv_vendors"
+    check_fails(con, "Sage AP invoices with no job",
+                "CREATE TEMP TABLE ap_snap AS SELECT * FROM sv_ap_invoices",
+                "CREATE OR REPLACE VIEW sv_ap_invoices AS SELECT * REPLACE (CAST(NULL AS VARCHAR) AS sage_project_id) FROM ap_snap",
+                clean=False)  # the shared fixture's AP3 has no job by design
     check_fails(con, "sv_vendors Sage vendor id exists in actpay", vn,
                 "CREATE OR REPLACE VIEW sv_vendors AS SELECT * REPLACE ('SV404' AS sage_vendor_id) FROM vn_snap")
     check_fails(con, "sv_vendors Sage vendor maps to only one Procore vendor", vn,
@@ -166,13 +170,14 @@ def main() -> int:
     check_fails(con, "ERP-synced vendors without origin_code", vn,
                 "CREATE OR REPLACE VIEW sv_vendors AS SELECT * REPLACE (CAST(NULL AS VARCHAR) AS sage_vendor_id) FROM vn_snap")
     for name, sev in (("sv_project_crosswalk Sage job maps to only one project", "error"),
-                      ("sv_project_crosswalk rows exist in Procore and Sage", "error"),
+                      ("sv_project_crosswalk rows exist in Procore and Sage", "warn"),
                       ("Sage jobs with AR/AP but no crosswalk mapping", "warn"),
-                      ("sv_vendors Sage vendor id exists in actpay", "error"),
+                      ("sv_vendors Sage vendor id exists in actpay", "warn"),
+                      ("Sage AP invoices with no job", "warn"),
                       ("sv_vendors Sage vendor maps to only one Procore vendor", "error"),
                       ("ERP-synced vendors without origin_code", "warn")):
         assert RULES[name].severity == sev, name
-    checks += 6
+    checks += 7
 
     con.close()
     print(f"test_dq_rules: {checks} mutation checks passed")

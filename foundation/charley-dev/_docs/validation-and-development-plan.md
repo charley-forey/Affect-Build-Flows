@@ -667,3 +667,15 @@ New run 9835a75b9243452c97f53fc443c97d1c uses the current native item transforms
 ### Source completion formatting remains unverified
 
 The model generator now marks fct_ProcoreInspection.SourcePercentComplete as non-additive instead of its default numeric sum. Its description explicitly says the source unit and scale require confirmation; the format displays the raw number without percentage scaling or an asserted percent suffix. Captured inspection records have no populated percent_complete values, so a 0-100 interpretation is not proven by this data. No derived completion value was introduced. A generated-TMDL regression check passes along with the 9-page PQP report checks. This model-only change is local pending live schema/model generation.
+
+
+### Owned crosswalks: expected changes on the first gold run after deploy
+
+sv_vendors, sv_project_crosswalk and sv_sage_vendors no longer read the legacy Silver_Lakehouse. Vendors map by Procore origin_code = Sage actpay.recnum (933 of 1,117 carry one; all 125 legacy pairs agree), projects by the committed seed/project_crosswalk.csv (the 15 legacy pairs, identical). These movements are EXPECTED and are not regressions:
+
+- dim_Vendor grows from 126 to 1,118 rows (every Procore vendor plus Unassigned, not just the 125 legacy-mapped ones).
+- Vendors Missing From Sage goes from 0 to 184 - the Procore vendors with no origin_code, which the legacy view simply did not list.
+- 204 bridge rows ($6.9M) and 77 insurance rows move from the blank/unknown vendor member to named vendors.
+- Unmatched AR is unchanged at 37 invoices / $1,474,973.01. Data Gap Amount stays unmatched AR only: the new "Sage job without Procore project" (per job and direction) and "AP invoice with no Sage job" (303 invoices, $4,205,597.50) rows are counted with figures in text and a NULL Amount, so nothing is double-counted.
+
+Deploy seeds and silver before gold: gold now reads seed_ProjectCrosswalk and cd_silver_sage_vendors.

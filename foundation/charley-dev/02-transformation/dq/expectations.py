@@ -120,8 +120,10 @@ def build_suite() -> Suite:
     #
     # sv_project_crosswalk is our committed seed and sv_vendors carries Procore's
     # origin_code; neither is Rebecca's warehouse any more, so their integrity is ours to
-    # prove. A key that points nowhere or at two things BLOCKS - it attaches money to the
-    # wrong entity. An unmapped job or unsynced vendor WARNS - a real, fixable gap.
+    # prove. A key shared by two entities BLOCKS - it attaches money to the wrong one. A key
+    # that points nowhere WARNS: the usual cause is timing between systems (a job created in
+    # Sage before silver refreshes, a vendor synced before actpay lands), and the join then
+    # attaches nothing rather than the wrong thing. Unmapped jobs and unsynced vendors WARN.
     suite.add(
         Expectation(
             name="sv_project_crosswalk Sage job maps to only one project",
@@ -138,8 +140,8 @@ def build_suite() -> Suite:
             failing_sql=("SELECT x.* FROM sv_project_crosswalk x "
                          "WHERE x.procore_project_id NOT IN (SELECT project_id FROM sv_projects WHERE project_id IS NOT NULL) "
                          "OR x.sage_project_id NOT IN (SELECT sage_project_id FROM sv_sage_jobs WHERE sage_project_id IS NOT NULL)"),
-            severity=SEVERITY_ERROR,
-            description="a seed row names a project or job the sources do not hold - a typo or a deleted record; fix the CSV",
+            severity=SEVERITY_WARN,
+            description="a seed row names a project or job the sources do not hold yet - source lag, a typo or a deleted record; check the CSV",
         ),
         Expectation(
             name="Sage jobs with AR/AP but no crosswalk mapping",
@@ -151,7 +153,14 @@ def build_suite() -> Suite:
                          "(SELECT sage_project_id FROM sv_project_crosswalk WHERE sage_project_id IS NOT NULL) "
                          "GROUP BY sage_project_id"),
             severity=SEVERITY_WARN,
-            description="money on a Sage job no project owns - amounts in dq_DataGap, proposals in dq_CrosswalkCandidate; Affect decides",
+            description="money on a Sage job no project owns - figures in dq_DataGap, proposals in dq_CrosswalkCandidate; Affect decides",
+        ),
+        Expectation(
+            name="Sage AP invoices with no job",
+            table="sv_ap_invoices",
+            failing_sql="SELECT invoice_id, invoice_total FROM sv_ap_invoices WHERE sage_project_id IS NULL",
+            severity=SEVERITY_WARN,
+            description="AP booked to no Sage job cannot reach any project - listed in dq_DataGap; normal for overhead, worth reviewing",
         ),
         Expectation(
             name="sv_vendors Sage vendor id exists in actpay",
@@ -159,8 +168,8 @@ def build_suite() -> Suite:
             failing_sql=("SELECT v.* FROM sv_vendors v WHERE v.sage_vendor_id IS NOT NULL "
                          "AND v.sage_vendor_id NOT IN (SELECT sage_vendor_id FROM sv_sage_vendors "
                          "WHERE sage_vendor_id IS NOT NULL)"),
-            severity=SEVERITY_ERROR,
-            description="a Procore origin_code that is not a Sage vendor - the vendor-to-Sage join would silently miss",
+            severity=SEVERITY_WARN,
+            description="a Procore origin_code that is not (yet) a Sage vendor - the join attaches no Sage name until actpay lands",
         ),
         Expectation(
             name="sv_vendors Sage vendor maps to only one Procore vendor",

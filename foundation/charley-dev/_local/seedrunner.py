@@ -220,7 +220,7 @@ SOURCE_FIXTURES = (
     # Sage jobs and AP, read by dq_CrosswalkCandidate and dq_DataGap. S200's short name is
     # P2's name in different case and padding - the one exact-name candidate. S999 carries
     # AR (INV3) and AP with no mapping, so it must surface as a job-level gap in BOTH
-    # directions. S100 is mapped, so neither its AP nor its name may appear.
+    # directions. AP3 has no job at all. S100 is mapped, so neither its AP nor its name may appear.
     """CREATE OR REPLACE VIEW sv_sage_jobs AS SELECT * FROM (VALUES
         ('S100', 'Tower A', 'TWRA', '501', 'Brooklyn', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
         ('S200', 'Depot B warehouse', ' depot b ', '502', 'Queens', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
@@ -231,7 +231,9 @@ SOURCE_FIXTURES = (
 
     """CREATE OR REPLACE VIEW sv_ap_invoices AS SELECT * FROM (VALUES
         ('AP1', 'INV-77', 'SV1', 'S100', 'Tower A', DATE '2025-05-10', DATE '2025-06-10', 'Draw', 8000.0, 2000.0, 6000.0, '2025-05'),
-        ('AP2', 'INV-78', 'SV1', 'S999', 'Office',  DATE '2025-05-12', DATE '2025-06-12', 'Rent', 2500.0,    0.0, 2500.0, '2025-05')
+        ('AP2', 'INV-78', 'SV1', 'S999', 'Office',  DATE '2025-05-12', DATE '2025-06-12', 'Rent', 2500.0,    0.0, 2500.0, '2025-05'),
+        -- No job at all: counted under 'AP invoice with no Sage job', never valued.
+        ('AP3', 'INV-79', 'SV1', NULL,   NULL,      DATE '2025-05-14', DATE '2025-06-14', 'Stock', 700.0,    0.0,  700.0, '2025-05')
     ) AS t(invoice_id, invoice_number, sage_vendor_id, sage_project_id, job_name,
            invoice_date, due_date, description, invoice_total, amount_paid,
            invoice_balance, billing_period)""",
