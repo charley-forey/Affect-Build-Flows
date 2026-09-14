@@ -112,6 +112,13 @@ def test_notebooks():
                 compile("".join(cell["source"]), f"{name}:cell{i}", "exec")
                 count += 1
     print(f"  {count} generated Python cells compile across {len(notebooks)} notebooks")
+    # No %%configure (2026-09-14, _docs/capacity-operations.md): CU is capped by the workspace
+    # pool (deploy_spark_settings.py). Custom session properties forfeit starter-pool fast start
+    # (2-5 min on-demand), the smallest documented driverCores is 4 (half a Medium node, which
+    # a single-node pool already gives), and a differing config splits high-concurrency
+    # session sharing. Outside the first code cell it also fails pipeline runs outright.
+    for name, nb in notebooks.items():
+        assert not any("%%configure" in "".join(c["source"]) for c in nb["cells"]), name
     source = "\n".join("".join(c["source"]) for c in notebooks["extraction"]["cells"])
     assert "session = rl.RateLimitedSession(requests.Session())" in source
     assert any(remote == "Files/lib/ratelimit.py" and local.exists()
@@ -847,6 +854,22 @@ def test_pipeline():
     assert by_name["Extract Procore"]["policy"]["retry"] == 0, "a same-hour retry has no quota"
     assert by_name["Extract Procore"]["policy"]["timeout"] == "0.02:00:00"
     assert by_name["Land To Bronze"]["policy"]["timeout"] == "0.01:00:00"
+    # One session tag on every notebook, so high-concurrency pipeline runs pack them together.
+    notebooks = [a for a in activities if a["type"] == "TridentNotebook"]
+    assert notebooks and all(a["typeProperties"]["sessionTag"] == deploy_pipeline.SESSION_TAG
+                             for a in notebooks)
+    import deploy_spark_settings as dss
+    current = {"pool": {"starterPool": {"maxNodeCount": 2, "maxExecutors": 1}},
+               "job": {"sessionTimeoutInMinutes": 20, "conservativeJobAdmissionEnabled": False},
+               "highConcurrency": {"notebookPipelineRunEnabled": False}}
+    assert dss.proposal(current, False) == {
+        "pool": {"starterPool": {"maxNodeCount": 1}}, "job": {"sessionTimeoutInMinutes": 10},
+        "highConcurrency": {"notebookPipelineRunEnabled": True}}
+    assert dss.proposal(dss.TARGET, False) == {}
+    assert dss.proposal(dss.TARGET, True) == {"pool": {"defaultPool": {"name": "cd_small", "type": "Workspace"}}}
+    with patch.object(sys, "argv", ["x", "--workspace", "00000000-0000-0000-0000-000000000000", "--apply"]), \
+            patch.object(dss.dp, "token", side_effect=AssertionError("must refuse before auth")):
+        assert dss.main() == 2
     def visit(name, active):
         assert name in by_name, f"missing dependency {name}"
         assert name not in active, f"pipeline cycle at {name}"
