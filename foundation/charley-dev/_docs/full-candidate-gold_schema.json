@@ -545,6 +545,10 @@
     [
       "IsRetainageReleased",
       "boolean"
+    ],
+    [
+      "IsLatestApprovedPeriod",
+      "boolean"
     ]
   ],
   "fct_DirectCost": [
@@ -736,6 +740,10 @@
     ],
     [
       "InsuranceType",
+      "string"
+    ],
+    [
+      "InsuranceCategory",
       "string"
     ],
     [
@@ -999,6 +1007,14 @@
     [
       "IsPastDue",
       "boolean"
+    ],
+    [
+      "IsDraft",
+      "boolean"
+    ],
+    [
+      "TurnaroundDays",
+      "int"
     ]
   ],
   "fct_Milestone": [
@@ -1123,6 +1139,80 @@
     [
       "PercentBoughtOut",
       "double"
+    ]
+  ],
+  "fct_ApInvoice": [
+    [
+      "ApLineKey",
+      "string"
+    ],
+    [
+      "InvoiceKey",
+      "string"
+    ],
+    [
+      "InvoiceID",
+      "string"
+    ],
+    [
+      "InvoiceNumber",
+      "string"
+    ],
+    [
+      "ProjectKey",
+      "string"
+    ],
+    [
+      "SageJobId",
+      "string"
+    ],
+    [
+      "VendorKey",
+      "string"
+    ],
+    [
+      "SageVendorId",
+      "string"
+    ],
+    [
+      "LedgerAccount",
+      "string"
+    ],
+    [
+      "IsJobCost",
+      "boolean"
+    ],
+    [
+      "IsErpOnlyVendor",
+      "boolean"
+    ],
+    [
+      "LineTotal",
+      "double"
+    ],
+    [
+      "InvoiceTotal",
+      "double"
+    ],
+    [
+      "AmountPaid",
+      "double"
+    ],
+    [
+      "InvoiceBalance",
+      "double"
+    ],
+    [
+      "InvoiceDate",
+      "date"
+    ],
+    [
+      "MonthStart",
+      "date"
+    ],
+    [
+      "StatusCode",
+      "int"
     ]
   ],
   "fct_QcNcr": [
@@ -1365,6 +1455,14 @@
     [
       "IsOverdue",
       "boolean"
+    ],
+    [
+      "IsDraft",
+      "boolean"
+    ],
+    [
+      "DaysOpen",
+      "int"
     ]
   ],
   "fct_ProcoreInspection": [
@@ -1534,6 +1632,36 @@
     ],
     [
       "RunBatchId",
+      "string"
+    ]
+  ],
+  "dq_CrosswalkCandidate": [
+    [
+      "ProcoreProjectId",
+      "string"
+    ],
+    [
+      "ProjectName",
+      "string"
+    ],
+    [
+      "SageJobNumber",
+      "string"
+    ],
+    [
+      "SageJobName",
+      "string"
+    ],
+    [
+      "MatchRule",
+      "string"
+    ],
+    [
+      "IsAmbiguous",
+      "boolean"
+    ],
+    [
+      "Status",
       "string"
     ]
   ],

@@ -144,6 +144,10 @@
     "ok": true
   },
   {
+    "step": "26_sage_silver.sql:6",
+    "ok": true
+  },
+  {
     "step": "27_sage_rejects.sql:0",
     "ok": true
   },
@@ -449,6 +453,7 @@
       "cd_silver_sage_ar_lines": 259,
       "cd_silver_sage_ar_payments": 86,
       "cd_silver_sage_jobs": 28,
+      "cd_silver_sage_vendors": 1082,
       "cd_silver_submittals": 2474,
       "cd_silver_vendor_insurance": 105,
       "cd_silver_vendors": 1117

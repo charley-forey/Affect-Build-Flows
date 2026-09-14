@@ -1,6 +1,6 @@
 {
-  "run_id": "cadcd0d8617e45309eb4886d289b4880",
-  "completed_at": "2026-09-14T03:29:08.901631+00:00",
+  "run_id": "75316de012644b2b8dfec56c1086d09e",
+  "completed_at": "2026-09-14T06:20:06.288234+00:00",
   "validation_lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
   "scope": "candidate silver and gold from existing bronze; upstream freshness not certified",
   "checks": [
@@ -173,8 +173,64 @@
       "blocking": false
     },
     {
+      "name": "dim_CostCode.Division is two digits or NULL",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
       "name": "dim_Project.SageJobNumber resolves for at least one project",
       "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_project_crosswalk Sage job maps to only one project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_project_crosswalk rows exist in Procore and Sage",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "Sage jobs with AR/AP but no crosswalk mapping",
+      "severity": "warn",
+      "failing_rows": 13,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "Sage AP invoices with no job",
+      "severity": "warn",
+      "failing_rows": 309,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "sv_vendors Sage vendor id exists in actpay",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_vendors Sage vendor maps to only one Procore vendor",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "ERP-synced vendors without origin_code",
+      "severity": "warn",
       "failing_rows": 0,
       "passed": true,
       "blocking": false
@@ -308,6 +364,27 @@
     {
       "name": "fct_Invoice.SentDate has no sentinel dates",
       "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_RfiSubmittal: no responded submittal is counted open",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_QcSubmittal: no responded submittal is counted open",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "submittal responded before it was created",
+      "severity": "warn",
       "failing_rows": 0,
       "passed": true,
       "blocking": false
@@ -971,6 +1048,76 @@
       "blocking": false
     },
     {
+      "name": "fct_ApInvoice.ApLineKey.unique",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.ApLineKey.not_null",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.ProjectKey.fk_dim_Project",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.VendorKey.fk_dim_Vendor",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice.MonthStart resolves to dim_Date",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice conserves sv_ap_invoices header rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "sv_ap_invoices headers with no lines absent from fct_ApInvoice",
+      "severity": "warn",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "dq_DataGap: Cost reconciliation variance",
+      "severity": "warn",
+      "failing_rows": 8,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "dq_DataGap: ERP-only vendor cost",
+      "severity": "warn",
+      "failing_rows": 62,
+      "passed": false,
+      "blocking": false
+    },
+    {
+      "name": "dq_DataGap: Project with no Procore budget or zero Spent To Date while AP/requisitions exist",
+      "severity": "warn",
+      "failing_rows": 4,
+      "passed": false,
+      "blocking": false
+    },
+    {
       "name": "fct_ChangeOrder conserves sv_prime_change_orders rows and amounts exactly",
       "severity": "error",
       "failing_rows": 0,
@@ -1028,6 +1175,13 @@
     },
     {
       "name": "fct_Invoice conserves sv_ar_invoices rows and amounts exactly",
+      "severity": "error",
+      "failing_rows": 0,
+      "passed": true,
+      "blocking": false
+    },
+    {
+      "name": "fct_ApInvoice conserves sv_ap_lines rows and amounts exactly",
       "severity": "error",
       "failing_rows": 0,
       "passed": true,
@@ -1190,15 +1344,15 @@
     {
       "name": "fct_VendorInsurance.VendorKey.fk_dim_Vendor",
       "severity": "warn",
-      "failing_rows": 77,
-      "passed": false,
+      "failing_rows": 0,
+      "passed": true,
       "blocking": false
     },
     {
       "name": "bridge_VendorCostCode.VendorKey.fk_dim_Vendor",
       "severity": "warn",
-      "failing_rows": 210,
-      "passed": false,
+      "failing_rows": 0,
+      "passed": true,
       "blocking": false
     },
     {

@@ -324,6 +324,10 @@
     "ok": true
   },
   {
+    "step": "34_fct_apinvoice.sql",
+    "ok": true
+  },
+  {
     "step": "40_man_tables.sql",
     "ok": true
   },
@@ -457,6 +461,10 @@
   },
   {
     "step": "41_man_qc_tables.sql",
+    "ok": true
+  },
+  {
+    "step": "44_dq_crosswalkcandidate.sql",
     "ok": true
   },
   {
@@ -467,11 +475,11 @@
     "step": "verification",
     "ok": true,
     "counts": {
-      "dim_Project": 20,
-      "dim_Vendor": 126,
+      "dim_Project": 21,
+      "dim_Vendor": 1118,
       "dim_CostCode": 5768,
       "dim_ProjectCrosswalk": 20,
-      "dim_VendorCrosswalk": 125,
+      "dim_VendorCrosswalk": 1117,
       "dim_CostCodeCrosswalk": 5767,
       "fct_BudgetLine": 435,
       "fct_QualityItem": 2583,
@@ -486,12 +494,14 @@
       "fct_RfiSubmittal": 3131,
       "fct_Milestone": 253,
       "fct_FinancialPeriod": 151,
+      "fct_ApInvoice": 911,
       "fct_QcNcr": 966,
       "fct_QcPunch": 1617,
       "fct_QcSubmittal": 2474,
       "fct_ProcoreInspection": 26,
       "fct_ProcoreInspectionItem": 705,
-      "dq_DataGap": 1147,
+      "dq_DataGap": 1546,
+      "dq_CrosswalkCandidate": 1,
       "man_DailyLogCompliance": 0,
       "man_Flags": 0,
       "man_Milestones": 0,
