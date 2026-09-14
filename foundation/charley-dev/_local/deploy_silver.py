@@ -161,10 +161,13 @@ def _json_field(payload, key):
 spark.udf.register("json_field", _json_field, "string")
 
 BRONZE = "{bronze_abfss}"
+# Candidate validation only (validate_gold_candidate.py): manual bronze that deploy_manual would
+# declare flat is declared in the validation lakehouse instead. Absent in production runs.
+BRONZE_AT = globals().get("CANDIDATE_BRONZE", {{}})
 for t in {BRONZE_TABLES!r}:
     try:
         spark.sql(f"CREATE OR REPLACE TEMPORARY VIEW {{t}} AS "
-                  f"SELECT * FROM delta.`{{BRONZE}}/{{t}}`")
+                  f"SELECT * FROM delta.`{{BRONZE_AT.get(t, BRONZE)}}/{{t}}`")
     except Exception as exc:
         results.append({{"step": f"source:{{t}}", "ok": False,
                          "error": f"{{type(exc).__name__}}: {{exc}}"[:1500]}})

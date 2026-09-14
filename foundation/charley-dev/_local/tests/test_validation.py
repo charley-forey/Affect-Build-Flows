@@ -138,7 +138,8 @@ def test_notebooks():
     assert "CREATE OR REPLACE TEMPORARY VIEW" in candidate
     assert notebooks["gold candidate"]["metadata"]["dependencies"]["lakehouse"]["default_lakehouse"] == "validation-only"
     assert notebooks["silver candidate"]["metadata"]["dependencies"]["lakehouse"]["default_lakehouse"] == "validation-only"
-    assert notebooks["silver candidate"]["cells"][:-1] == notebooks["silver"]["cells"]
+    silver_candidate = notebooks["silver candidate"]["cells"]
+    assert silver_candidate[:1] + silver_candidate[2:-1] == notebooks["silver"]["cells"]
     full = notebooks["full candidate"]
     assert full["metadata"]["dependencies"]["lakehouse"]["default_lakehouse"] == "validation-only"
     assert full["cells"][:len(notebooks["silver candidate"]["cells"])] == notebooks["silver candidate"]["cells"]
@@ -153,6 +154,65 @@ def test_notebooks():
     # fallback query reads post-frame gold - bypassing the publish barrier.
     expressions = deploy_model.expressions_tmdl("x")
     assert "AzureStorage.DataLake" in expressions and "Sql.Database" not in expressions
+
+
+def test_candidate_declares_pre_flat_manual_bronze():
+    """Run 0f66cc16 died reading published bronze that predates deploy_manual's flat rebuild:
+    cd_bronze_man_project_access absent, the other lists empty in the nested shape. The
+    candidate must declare those flat in ITS lakehouse, and still refuse one holding rows."""
+    import types
+    target = {"id": "validation-only"}
+    source = "".join(validate_gold_candidate.manual_bronze_cell(target)["source"])
+    source_cols = {t: [c for c, _ in cols] for t, cols in validate_gold_candidate.manual_bronze_spec().items()}
+    manual = {t for t in deploy_silver.BRONZE_TABLES if t.startswith("cd_bronze_man_")}
+    assert manual <= set(source_cols), manual - set(source_cols)
+
+    stub = types.ModuleType("pyspark.sql.types")
+    for name in ("StringType", "IntegerType", "DoubleType", "DateType", "BooleanType", "TimestampType"):
+        setattr(stub, name, lambda: None)
+    stub.StructField = lambda name, *a: name
+    stub.StructType = lambda fields: SimpleNamespace(fieldNames=lambda: list(fields))
+    flat = next(t for t in manual if t != "cd_bronze_man_project_access" and t != "cd_bronze_man_wins")
+
+    def run(rows_in_wins):
+        written = []
+        class Frame:
+            def __init__(self, columns, rows=()):
+                self.columns, self.rows = columns, list(rows)
+            def take(self, n):
+                return self.rows[:n]
+        def load(path):
+            t = path.rsplit("/", 1)[1]
+            if t == "cd_bronze_man_project_access":
+                raise Exception("[PATH_NOT_FOUND] Path does not exist")
+            if t == flat:
+                return Frame(source_cols[t])
+            return Frame(["ProjectKey", "Editor", "Modified"], [1] if rows_in_wins and t == "cd_bronze_man_wins" else [])
+        writer = SimpleNamespace()
+        writer.format = writer.mode = writer.option = lambda *a: writer
+        spark = SimpleNamespace(read=SimpleNamespace(format=lambda f: SimpleNamespace(load=load)),
+                                createDataFrame=lambda rows, schema: SimpleNamespace(write=writer))
+        writer.save = written.append
+        scope = {"spark": spark, "print": lambda *a: None}
+        with patch.dict(sys.modules, {"pyspark": types.ModuleType("pyspark"),
+                                      "pyspark.sql": types.ModuleType("pyspark.sql"),
+                                      "pyspark.sql.types": stub}):
+            exec(compile(source, "manual-bronze", "exec"), scope)
+        return scope["CANDIDATE_BRONZE"], written
+
+    declared, written = run(False)
+    assert flat not in declared and "cd_bronze_man_project_access" in declared and "cd_bronze_man_wins" in declared
+    assert set(declared.values()) == {"abfss://%s@onelake.dfs.fabric.microsoft.com/validation-only/Tables/dbo" % deploy_silver.dp.WORKSPACE_ID}
+    assert all("/validation-only/" in p for p in written) and len(written) == len(declared)
+    try:
+        run(True)
+    except ValueError as exc:
+        assert "cd_bronze_man_wins" in str(exc)
+    else:
+        raise AssertionError("pre-flat bronze holding rows was silently replaced")
+    silver = "".join(deploy_silver.build_notebook()["cells"][1]["source"])
+    assert "BRONZE_AT.get(t, BRONZE)" in silver
+    print(f"  candidate declares absent/pre-flat manual bronze ({len(declared)} of {len(source_cols)}) in validation only")
 
 
 def test_candidate_preserves_evaluation_on_write_failure():
@@ -1586,6 +1646,7 @@ if __name__ == "__main__":
     test_daily_snapshot()
     test_deployment_lookup()
     test_notebooks()
+    test_candidate_declares_pre_flat_manual_bronze()
     test_candidate_preserves_evaluation_on_write_failure()
     test_validation_target_isolation()
     test_model_counts_from_build()

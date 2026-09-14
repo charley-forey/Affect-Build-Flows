@@ -7,14 +7,62 @@ import deploy_seeds as ds
 import deploy_gold as dg
 import deploy_silver
 import deploy_dq
+import deploy_manual
+import make_sharepoint as ms
 from make_notebooks import cell, notebook
 
 HERE = Path(__file__).resolve().parent
 LAKEHOUSE_NAME = "CD_Validation_Lakehouse"
 
 
+def manual_bronze_spec():
+    """The flat cd_bronze_man_* schemas deploy_manual declares: list columns + audit columns."""
+    types = deploy_manual.SQL_TO_SPARK
+    audit = [(c, types[t]) for c, t in ms.AUDIT_COLUMNS]
+    spec = {f"cd_bronze_man_{name}": cols + audit for name, cols in deploy_manual.LISTS.items()}
+    spec["cd_bronze_man_job_register"] = [(c, types[t]) for c, t in ms.JOB_REGISTER_COLUMNS] + audit
+    return spec
+
+
+def manual_bronze_cell(target):
+    """Stand in for deploy_manual, which runs before silver in production.
+
+    deploy_manual declares every cd_bronze_man_* table flat and empty when it is absent or
+    still in the pre-flat nested shape, and refuses when such a table holds rows. The
+    candidate reads PUBLISHED bronze, which may predate that deploy - so it applies the same
+    rule but writes the declared table into the validation lakehouse, never into bronze.
+    """
+    spec = manual_bronze_spec()
+    bronze_id = json.loads((HERE / "fabric_ids.json").read_text())["CD_Bronze_Lakehouse"]["id"]
+    published = f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/{bronze_id}/Tables/dbo"
+    local = f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/{target['id']}/Tables/dbo"
+    return cell(f'''
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, DateType, BooleanType, TimestampType
+_TYPES = {{"string": StringType(), "int": IntegerType(), "double": DoubleType(),
+          "date": DateType(), "boolean": BooleanType(), "timestamp": TimestampType()}}
+CANDIDATE_BRONZE = {{}}
+for _t, _cols in {spec!r}.items():
+    _schema = StructType([StructField(c, _TYPES[k], True) for c, k in _cols])
+    try:
+        _existing = spark.read.format("delta").load(f"{published}/{{_t}}")
+    except Exception as exc:
+        if "PATH_NOT_FOUND" not in str(exc) and "not a Delta table" not in str(exc):
+            raise
+        _existing = None
+    if _existing is not None and set(_existing.columns) == set(_schema.fieldNames()):
+        continue
+    if _existing is not None and _existing.take(1):
+        raise ValueError(f"{{_t}}: published bronze holds rows in a pre-flat shape; deploy_manual refuses this too")
+    spark.createDataFrame([], _schema).write.format("delta").mode("overwrite") \\
+         .option("overwriteSchema", "true").save(f"{local}/{{_t}}")
+    CANDIDATE_BRONZE[_t] = {local!r}
+    print(f"  {{_t}}: {{'absent' if _existing is None else 'pre-flat, empty'}} in bronze - declared flat for the candidate")
+''')
+
+
 def build_silver(run_id, target):
     nb = deploy_silver.build_notebook()
+    nb["cells"].insert(1, manual_bronze_cell(target))
     nb["cells"].append(cell(f'''
 from datetime import datetime, timezone
 evidence = {{"run_id": {run_id!r}, "completed_at": datetime.now(timezone.utc).isoformat(),

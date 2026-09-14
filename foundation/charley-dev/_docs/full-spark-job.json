@@ -1,18 +1,23 @@
 {
-  "run_id": "75316de012644b2b8dfec56c1086d09e",
+  "run_id": "0f66cc16d62449a68b9b515fd2aaee35",
   "item_id": "77fe4969-f886-47c1-b1fa-750f5bebc2df",
   "lakehouse_id": "0c26a970-705b-44c2-8366-9101cd6f4e7f",
-  "definition_sha256": "76b24c4caa5525484d82f6a2aa89abd50e8db14407cf6a22e2f587118ba5c27c",
-  "location": "https://api.fabric.microsoft.com/v1/workspaces/1f7caed6-f88a-4e52-bc83-9a498a165301/items/77fe4969-f886-47c1-b1fa-750f5bebc2df/jobs/instances/54af46fe-5c07-4749-8719-dabca632334f",
+  "definition_sha256": "1fca0b818b3af4af1acc5ac8aa8ee123aa485c37e199342424cfc78d05eb774c",
+  "location": "https://api.fabric.microsoft.com/v1/workspaces/1f7caed6-f88a-4e52-bc83-9a498a165301/items/77fe4969-f886-47c1-b1fa-750f5bebc2df/jobs/instances/3e805f78-4fd7-442c-af4f-4a578d309c8c",
   "latest_job": {
-    "id": "54af46fe-5c07-4749-8719-dabca632334f",
+    "id": "3e805f78-4fd7-442c-af4f-4a578d309c8c",
     "itemId": "77fe4969-f886-47c1-b1fa-750f5bebc2df",
     "jobType": "RunNotebook",
     "invokeType": "Manual",
-    "status": "Completed",
-    "failureReason": null,
-    "rootActivityId": "1828752c-6fc4-4f94-81b5-2b555a352e57",
-    "startTimeUtc": "2026-09-14T05:47:59.2018643",
-    "endTimeUtc": "2026-09-14T06:21:05.1681948"
+    "status": "Failed",
+    "failureReason": {
+      "requestId": "514998f1-d996-469d-bf9c-9b60dfbf2393",
+      "errorCode": "System_Cancelled_Session_Statements_Failed",
+      "message": "System cancelled the Spark session due to statement execution failures",
+      "isRetriable": false
+    },
+    "rootActivityId": "e9851282-a8b3-40c5-978b-92780e7fbe33",
+    "startTimeUtc": "2026-09-14T12:01:14.0222543",
+    "endTimeUtc": "2026-09-14T12:02:05.1557838"
   }
 }
