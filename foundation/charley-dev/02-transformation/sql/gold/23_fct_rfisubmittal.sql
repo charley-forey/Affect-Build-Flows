@@ -92,20 +92,27 @@ SELECT
     CASE WHEN created_date IS NOT NULL
               AND (created_date < DATE '2015-01-01' OR created_date > DATE '2035-12-31')
          THEN TRUE ELSE FALSE END     AS HasOutOfRangeDate,
-    -- Open means not yet responded to. Derived from the data rather than from status text,
-    -- which varies by Procore configuration.
-    CASE WHEN responded_date IS NULL THEN TRUE ELSE FALSE END AS IsOpen,
+    -- OPEN = awaiting a response: not responded, not in a closed status, not a draft - the
+    -- submittal arm's rule. RFI status is Procore's fixed vocabulary (open, draft, closed,
+    -- closed_draft, closed_with_revision). Until 2026-09-14 this was responded_date IS NULL
+    -- alone, which counted the 16 live drafts open (47 shown, 31 real).
+    NOT is_closed AND NOT is_draft    AS IsOpen,
+    -- "Critical" is still UNMEASURED - no confirmed rule. Candidates put to Affect: open and
+    -- >14 days past due, or open with schedule impact yes_*. Priority is blank on every RFI.
     CAST(NULL AS BOOLEAN)             AS IsCritical,
-    -- Open items only, same as the submittal arm; answered RFIs carry TurnaroundDays.
-    CASE WHEN responded_date IS NULL AND created_date IS NOT NULL
+    CASE WHEN NOT is_closed AND NOT is_draft AND created_date IS NOT NULL
          THEN datediff(CURRENT_DATE, created_date) END AS DaysOpen,
     -- Past due only counts while still open: a late-but-answered item is not outstanding.
-    CASE WHEN responded_date IS NULL AND due_date IS NOT NULL AND due_date < CURRENT_DATE
+    CASE WHEN NOT is_closed AND NOT is_draft AND due_date IS NOT NULL AND due_date < CURRENT_DATE
          THEN TRUE ELSE FALSE END     AS IsPastDue,
-    -- ponytail: RFI drafts (16 live) are not split out and still count open; derive from
-    -- status_label like the submittal arm if the RFI open count is ever questioned.
-    FALSE                             AS IsDraft,
+    is_draft AND NOT is_closed        AS IsDraft,
     CASE WHEN responded_date IS NOT NULL AND created_date IS NOT NULL
          THEN datediff(responded_date, created_date) END AS TurnaroundDays
-FROM sv_rfis
+FROM (
+    SELECT *,
+           COALESCE(responded_date IS NOT NULL
+                    OR LOWER(TRIM(status_label)) LIKE 'closed%', FALSE)          AS is_closed,
+           COALESCE(LOWER(TRIM(status_label)) = 'draft', FALSE)                  AS is_draft
+    FROM sv_rfis
+) r
 WHERE project_id IS NOT NULL;

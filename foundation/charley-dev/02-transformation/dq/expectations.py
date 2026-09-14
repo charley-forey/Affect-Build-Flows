@@ -367,6 +367,15 @@ def build_suite() -> Suite:
             description="distributed/closed submittals must not count as open",
         ))
     suite.add(Expectation(
+        # WARN: a status outside Procore's default vocabulary is neither pending nor approved,
+        # so it silently leaves both totals. Map it in 21_fct_changeorder.sql.
+        name="fct_ChangeOrder: status maps to a known category",
+        table="fct_ChangeOrder",
+        failing_sql="SELECT * FROM fct_ChangeOrder WHERE StatusCategory = 'Unknown'",
+        severity=SEVERITY_WARN,
+        description="unrecognised change order status - counted neither pending nor approved",
+    ))
+    suite.add(Expectation(
         # WARN: a negative turnaround means the response date is really an intake date or a
         # back-dated entry. Real data can do it; a large count means a wrong source field.
         name="submittal responded before it was created",
@@ -1074,8 +1083,17 @@ _BILLING_LATEST_APPROVED = (f"(ROW_NUMBER() OVER (PARTITION BY billing_type, con
 CONSERVATION = (
     ("fct_ChangeOrder", "sv_prime_change_orders",           # 21_fct_changeorder.sql
      "project_id, change_order_id, amount, TRIM(status), "
-     "CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed', 'void') THEN FALSE ELSE TRUE END",
-     "ProjectKey, ChangeOrderKey, Amount, StatusLabel, IsPending",
+     "CASE WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'approved' THEN 'Approved' "
+     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing', "
+     "'not_pricing', 'proceeding', 'not_proceeding') THEN 'Pending' "
+     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'draft' THEN 'Draft' "
+     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'rejected' THEN 'Rejected' "
+     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'void' THEN 'Void' "
+     "WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'no_charge' THEN 'NoCharge' "
+     "ELSE 'Unknown' END, "
+     "COALESCE(REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing', "
+     "'not_pricing', 'proceeding', 'not_proceeding'), FALSE)",
+     "ProjectKey, ChangeOrderKey, Amount, StatusLabel, StatusCategory, IsPending",
      "project_id IS NOT NULL"),
     ("fct_BudgetLine", "sv_budgets",                        # 20_fct_budgetline.sql
      "project_id, budget_line_id, original_budget, budget_modifications, updated_budget, "

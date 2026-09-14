@@ -52,6 +52,11 @@ table fct_ChangeOrder
 		summarizeBy: none
 		sourceColumn: HasOutOfRangeDate
 
+	column StatusCategory
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusCategory
+
 	column IsPending
 		dataType: boolean
 		summarizeBy: none

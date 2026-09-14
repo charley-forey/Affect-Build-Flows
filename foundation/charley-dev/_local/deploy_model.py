@@ -264,15 +264,20 @@ MEASURES = [
      BALANCE_AT_PERIOD_END.format(column="PendingChangeOrders"),
      '"$#,0"', "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"),
     ("Age Of Oldest Unapproved CO", "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
-     '"#,0"', "FINANCIALS!C6 - typed by hand"),
+     '"#,0"', "FINANCIALS!C6 - typed by hand. Pending-status COs only: Procore keeps drafts out of Pending Changes"),
     # The Project Detail change-order table asked for this by name and it had never been
     # written, so the visual rendered as "there's something wrong with one or more fields".
     # Summed from the fact rather than derived as [Current Contract] - [Original Contract],
     # because the table shows it PER CHANGE ORDER - the contract measures are balances that
     # collapse to one value per project and would repeat that value down every row.
     ("Approved Change Orders",
-     'CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> "void" )',
-     '"$#,0"', "derived - approved COs, the complement of [Pending Change Orders]"),
+     'CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), fct_ChangeOrder[StatusCategory] = "Approved" )',
+     '"$#,0"', "derived - status Approved; Draft, Rejected, No Charge and Void are neither approved nor pending"),
+    # Procore does not reflect drafts in the budget, so they are out of [Pending Change
+    # Orders] - but 9 live drafts ($8.4k) should stay visible rather than vanish.
+    ("Draft Change Orders",
+     'CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), fct_ChangeOrder[StatusCategory] = "Draft" )',
+     '"$#,0"', "derived - draft COs, not yet submitted, so excluded from [Pending Change Orders]"),
     ("Change Order Amount", "SUM ( fct_ChangeOrder[Amount] )", '"$#,0"',
      "change-order grain; responds to status and item filters"),
     # AS OF THE LAST SNAPSHOT. fct_BudgetLine is one current-state snapshot keyed to the

@@ -33,10 +33,23 @@ SELECT
     CASE WHEN created_date IS NOT NULL
               AND (created_date < DATE '2015-01-01' OR created_date > DATE '2035-12-31')
          THEN TRUE ELSE FALSE END    AS HasOutOfRangeDate,
-    -- "Pending" is anything not yet approved. Matching case-insensitively because status
-    -- text casing is not guaranteed consistent across Procore configurations. A void CO is
-    -- dead, not outstanding, so it is not pending either.
-    CASE WHEN LOWER(TRIM(status)) IN ('approved', 'closed', 'void') THEN FALSE ELSE TRUE END AS IsPending,
+    -- Procore's own budget treatment ("What are the default statuses for change orders"):
+    -- Approved -> Approved Changes; the Pending variants -> Pending Changes; Draft, Rejected,
+    -- No Charge and Void are "not reflected". So Draft is NOT pending (9 live, $8.4k, until
+    -- 2026-09-14 counted pending). Procore has no 'closed' CO status. Normalised lower-case
+    -- with spaces as underscores, so "Not Proceeding" and not_proceeding agree. Anything else
+    -- is Unknown: neither pending nor approved, and flagged by a WARN DQ rule.
+    -- expectations.py CONSERVATION repeats both expressions verbatim - change them together.
+    CASE WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'approved' THEN 'Approved'
+         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing',
+              'not_pricing', 'proceeding', 'not_proceeding') THEN 'Pending'
+         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'draft' THEN 'Draft'
+         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'rejected' THEN 'Rejected'
+         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'void' THEN 'Void'
+         WHEN REPLACE(LOWER(TRIM(status)), ' ', '_') = 'no_charge' THEN 'NoCharge'
+         ELSE 'Unknown' END          AS StatusCategory,
+    COALESCE(REPLACE(LOWER(TRIM(status)), ' ', '_') IN ('pending', 'in_review', 'revised', 'pricing',
+              'not_pricing', 'proceeding', 'not_proceeding'), FALSE) AS IsPending,
     CASE WHEN created_date IS NULL THEN NULL
          ELSE datediff(CURRENT_DATE, created_date) END AS DaysOpen
 FROM sv_prime_change_orders

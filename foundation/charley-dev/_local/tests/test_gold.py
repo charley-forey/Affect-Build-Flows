@@ -137,24 +137,36 @@ def test_fct_budgetline(con) -> None:
 
 
 def test_fct_changeorder(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 5
-    assert one(con, "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO5'") is False
-    # Approved is settled; Pending AND Draft are both still outstanding.
-    assert one(con, "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO1'") is False
-    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder WHERE IsPending") == 2
-    check("fct_ChangeOrder[IsPending] treats Draft as outstanding, not just 'Pending'")
+    assert one(con, "SELECT COUNT(*) FROM fct_ChangeOrder") == 8
+    cats = dict(con.execute("SELECT ChangeOrderKey, StatusCategory FROM fct_ChangeOrder").fetchall())
+    assert cats == {"CO1": "Approved", "CO2": "Pending", "CO3": "Draft", "CO4": "Approved",
+                    "CO5": "Void", "CO6": "Rejected", "CO7": "NoCharge", "CO8": "Pending"}, cats
+    check("fct_ChangeOrder[StatusCategory] maps every Procore status, UI label or API code")
+    # Procore's budget treatment: only the Pending variants are pending. Draft, Rejected,
+    # No Charge and Void are "not reflected", however much money they carry.
+    pending = dict(con.execute("SELECT ChangeOrderKey, IsPending FROM fct_ChangeOrder").fetchall())
+    assert {k for k, v in pending.items() if v} == {"CO2", "CO8"}, pending
+    check("fct_ChangeOrder[IsPending] is the Pending variants only - Draft is not pending")
 
     # FINANCIALS!C5 addends, recoverable as rows instead of lost inside a formula.
     pending = one(con, "SELECT ROUND(SUM(Amount), 2) FROM fct_ChangeOrder WHERE IsPending")
-    assert float(pending) == 14708.46, pending
-    check("pending CO total is recoverable from rows (14,708.46)")
+    assert float(pending) == 7778.46, pending
+    check("pending CO total is recoverable from rows (3,158.46 + 4,620)")
+
+    # Oldest unapproved is the oldest PENDING CO: the older draft CO3 does not set it.
+    ages = con.execute("SELECT MAX(AgeOfOldestUnapprovedCO) FROM fct_FinancialPeriod").fetchone()[0]
+    assert ages == one(con, "SELECT DaysOpen FROM fct_ChangeOrder WHERE ChangeOrderKey='CO2'"), ages
+    check("Age Of Oldest Unapproved CO ignores drafts")
 
     rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
-        ('P1','CO9','C1', DATE '2025-05-02', 0.0, '9', 'Void')
+        ('P1','CO9','C1', DATE '2025-05-02', 0.0, '9', 'Void'),
+        ('P1','CO10','C1', DATE '2025-05-02', 1.0, '10', 'closed'),
+        ('P1','CO11','C1', DATE '2025-05-02', 1.0, '11', NULL)
         ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
-        "21_fct_changeorder.sql", "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO9'")
-    assert rows == [(False,)], rows
-    check("a void change order is not pending")
+        "21_fct_changeorder.sql",
+        "SELECT ChangeOrderKey, IsPending, StatusCategory FROM fct_ChangeOrder ORDER BY ChangeOrderKey")
+    assert rows == [("CO10", False, "Unknown"), ("CO11", False, "Unknown"), ("CO9", False, "Void")], rows
+    check("a void CO is not pending; an unrecognised or blank status is Unknown, not pending")
 
 
 def test_fct_invoice(con) -> None:
@@ -217,15 +229,15 @@ def test_fct_rfisubmittal(con) -> None:
     # BOTH arms, as of 2026-08-02. RFIs are the half of the workbook's only chart that has
     # never been automated anywhere - no RFI table exists in the existing warehouse - so
     # asserting the union is asserting the new capability, not just the row count.
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 7
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal") == 9
     assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 5
-    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='RFI'") == 2
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='RFI'") == 4
     check("fct_RfiSubmittal unions submittals AND RFIs, split by ItemType")
 
     # ItemKey is only unique WITHIN an arm - Procore numbers RFIs and submittals
     # independently, so the model keys on the pair.
     assert one(con, "SELECT COUNT(*) FROM (SELECT DISTINCT ItemType, ItemKey "
-                    "FROM fct_RfiSubmittal)") == 7
+                    "FROM fct_RfiSubmittal)") == 9
     check("ItemType + ItemKey is unique across both arms")
 
     # The RFI arm must behave identically to the submittal arm - same derivations, not a
@@ -248,6 +260,12 @@ def test_fct_rfisubmittal(con) -> None:
     assert one(con, "SELECT DaysOpen FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") is None
     assert one(con, "SELECT TurnaroundDays FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey='R2'") == 9
     check("an answered RFI has a turnaround and no today-minus-created DaysOpen")
+    def rfi(item):
+        return con.execute("SELECT IsOpen, IsDraft, IsPastDue, DaysOpen IS NOT NULL, TurnaroundDays "
+                           "FROM fct_RfiSubmittal WHERE ItemType='RFI' AND ItemKey=?", [item]).fetchone()
+    assert rfi("R3") == (False, True, False, False, None)
+    assert rfi("R4") == (False, False, False, False, None)
+    check("RFI IsOpen excludes drafts and closed statuses, like the submittal arm")
 
     # A responded item is not past due even if its due date has gone.
     assert one(con, "SELECT IsPastDue FROM fct_RfiSubmittal WHERE ItemKey='SB2'") is False
@@ -299,9 +317,10 @@ def test_fct_financialperiod(con) -> None:
     assert round(growth * 100, 2) == 3.60, growth
     check("GATE: [Contract Growth %] = 3.60% - matches the workbook exactly")
 
-    # Only unapproved COs are pending; the approved one has already moved into the contract.
-    assert pending == 14708.46, pending
-    check("fct_FinancialPeriod[PendingChangeOrders] excludes the approved CO")
+    # Only Pending-variant COs are pending; the approved one has already moved into the
+    # contract, and the 11,550 draft is not reflected anywhere (Procore's treatment).
+    assert pending == 7778.46, pending
+    check("fct_FinancialPeriod[PendingChangeOrders] excludes the approved and draft COs")
 
     # committed 1,380,000 / budget 1,550,000
     assert bought_out == 0.8903, bought_out
@@ -341,7 +360,7 @@ def test_fct_financialperiod(con) -> None:
         "           (PARTITION BY f.ProjectKey ORDER BY f.MonthStart) AS d,"
         "         (SELECT COALESCE(SUM(c.Amount), 0) FROM fct_ChangeOrder c"
         "           WHERE c.ProjectKey = f.ProjectKey AND c.MonthStart = f.MonthStart"
-        "             AND NOT c.IsPending) AS approved"
+        "             AND c.StatusCategory = 'Approved') AS approved"
         "  FROM fct_FinancialPeriod f"
         ") WHERE d < -0.005 AND ABS(d - approved) > 0.005",
     ) == 0

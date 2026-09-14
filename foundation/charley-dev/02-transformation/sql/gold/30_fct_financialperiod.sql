@@ -45,9 +45,9 @@ billing AS (
 ),
 co_monthly AS (
     SELECT ProjectKey, MonthStart,
-           -- Void COs never reach the contract (IsPending is FALSE for them too).
-           CAST(SUM(CASE WHEN LOWER(TRIM(StatusLabel)) <> 'void' OR StatusLabel IS NULL
-                         THEN Amount END) AS DOUBLE)                             AS ChangeOrderValue,
+           -- Only Approved COs reach the contract. Draft, Rejected, NoCharge, Void and
+           -- Unknown never do, and are not pending either (21_fct_changeorder.sql).
+           CAST(SUM(CASE WHEN StatusCategory = 'Approved' THEN Amount END) AS DOUBLE) AS ApprovedChangeOrderValue,
            CAST(SUM(CASE WHEN IsPending THEN Amount ELSE 0 END) AS DOUBLE)      AS PendingChangeOrders,
            CAST(MAX(CASE WHEN IsPending THEN DaysOpen END) AS BIGINT)           AS AgeOfOldestUnapprovedCO,
            COUNT(*)                                             AS ChangeOrderCount
@@ -67,9 +67,9 @@ co_monthly AS (
 -- order still carries the contract as it stood, instead of falling back to original.
 change_orders AS (
     SELECT m.ProjectKey, m.MonthStart,
-           CAST(SUM(COALESCE(c.ChangeOrderValue, 0)) OVER (
+           CAST(SUM(COALESCE(c.ApprovedChangeOrderValue, 0)) OVER (
                 PARTITION BY m.ProjectKey ORDER BY m.MonthStart
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE)    AS ChangeOrderValue,
+                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE)    AS ApprovedChangeOrderValue,
            CAST(SUM(COALESCE(c.PendingChangeOrders, 0)) OVER (
                 PARTITION BY m.ProjectKey ORDER BY m.MonthStart
                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE)    AS PendingChangeOrders,
@@ -91,8 +91,7 @@ SELECT
     -- are running totals (see change_orders above), so this row is the contract as it
     -- stood that month - it never goes down unless a CO was itself negative.
     CAST(COALESCE(p.OriginalContractAmount, 0)
-         + COALESCE(c.ChangeOrderValue, 0)
-         - COALESCE(c.PendingChangeOrders, 0) AS DOUBLE) AS CurrentContract,
+         + COALESCE(c.ApprovedChangeOrderValue, 0) AS DOUBLE) AS CurrentContract,
     c.PendingChangeOrders,
     c.AgeOfOldestUnapprovedCO,
     c.ChangeOrderCount,

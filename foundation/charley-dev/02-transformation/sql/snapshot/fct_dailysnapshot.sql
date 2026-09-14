@@ -111,12 +111,11 @@ pending AS (
     GROUP BY f.ProjectKey
 ),
 approved AS (
-    -- [Approved Change Orders]: NOT IsPending, where DAX reads a blank flag as FALSE, and
-    -- not void (a void CO is not pending either, and never reaches the contract). DAX's
-    -- StatusLabel <> "void" is case-insensitive and keeps a blank label.
+    -- [Approved Change Orders]: StatusCategory = "Approved". Draft, Rejected, NoCharge, Void
+    -- and Unknown are neither approved nor pending (21_fct_changeorder.sql). OpenRfis above
+    -- and [Pending Change Orders] follow gold's IsOpen / IsPending, so drafts stay out.
     SELECT ProjectKey,
-           ROUND(CAST(SUM(CASE WHEN NOT COALESCE(IsPending, FALSE)
-                          AND (StatusLabel IS NULL OR LOWER(StatusLabel) <> 'void')
+           ROUND(CAST(SUM(CASE WHEN StatusCategory = 'Approved'
                          THEN Amount END) AS DOUBLE), 2) AS ApprovedChangeOrders
     FROM fct_ChangeOrder GROUP BY ProjectKey
 )

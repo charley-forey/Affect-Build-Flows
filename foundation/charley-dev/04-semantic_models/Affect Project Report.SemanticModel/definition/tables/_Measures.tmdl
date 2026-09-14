@@ -32,13 +32,18 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 
-	/// Replaces FINANCIALS!C6 - typed by hand
+	/// Replaces FINANCIALS!C6 - typed by hand. Pending-status COs only: Procore keeps drafts out of Pending Changes
 	measure 'Age Of Oldest Unapproved CO' = MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )
 		formatString: "#,0"
 		displayFolder: 01 Contract & Change
 
-	/// Replaces derived - approved COs, the complement of [Pending Change Orders]
-	measure 'Approved Change Orders' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> "void" )
+	/// Replaces derived - status Approved; Draft, Rejected, No Charge and Void are neither approved nor pending
+	measure 'Approved Change Orders' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), fct_ChangeOrder[StatusCategory] = "Approved" )
+		formatString: "$#,0"
+		displayFolder: 01 Contract & Change
+
+	/// Replaces derived - draft COs, not yet submitted, so excluded from [Pending Change Orders]
+	measure 'Draft Change Orders' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), fct_ChangeOrder[StatusCategory] = "Draft" )
 		formatString: "$#,0"
 		displayFolder: 01 Contract & Change
 

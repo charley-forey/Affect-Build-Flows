@@ -137,7 +137,7 @@ RAW_COLUMNS = {
     "dim_ScorecardWeight": ["CategoryKey", "Weight"],
     "dim_ScorecardBand": ["CategoryKey", "MinValue", "MaxValue", "MatchValue", "Score", "BandLabel"],
     "fct_BudgetLine": ["BudgetAmount", "ForecastAmount", "CommittedAmount", "SpentToDate", "CostToComplete"],
-    "fct_ChangeOrder": ["Amount", "IsPending", "StatusLabel"],
+    "fct_ChangeOrder": ["Amount", "IsPending", "StatusLabel", "StatusCategory"],
     "fct_Invoice": ["Amount", "AmountPaid", "Balance", "HasUnmatchedProject", "DaysToPayment", "PaidDate"],
     "fct_RfiSubmittal": ["IsOpen", "IsPastDue", "ItemType", "DaysOpen"],
     "fct_Milestone": ["IsOverdue", "PercentComplete", "CurrentFinish", "HasDateInversion"],
@@ -180,6 +180,11 @@ def _ts(text):
 
 def _eq(value, text):
     return isinstance(value, str) and value.casefold() == text.casefold()
+
+
+def _co_status(row):
+    """Procore change order status code: "Not Proceeding" and not_proceeding are one status."""
+    return (row["StatusLabel"] or "").strip().lower().replace(" ", "_")
 
 
 def _sum(rows, column):
@@ -486,8 +491,9 @@ def monthly_expected():
         "Contract Growth %": lambda c, s: _div(_add(E["Current Contract"](c, s), E["Original Contract"](c, s), -1),
                                               E["Original Contract"](c, s)),
         "Age Of Oldest Unapproved CO": lambda c, s: _max(c.rows("fct_FinancialPeriod", s), "AgeOfOldestUnapprovedCO"),
-        "Approved Change Orders": lambda c, s: _sum(R(c, "fct_ChangeOrder", s, lambda r: not r["IsPending"]
-                                                     and not _eq(r["StatusLabel"], "void")), "Amount"),
+        # Independent of the gold CASE: Procore's own status codes, read from StatusLabel.
+        "Approved Change Orders": lambda c, s: _sum(R(c, "fct_ChangeOrder", s, lambda r: _co_status(r) == "approved"), "Amount"),
+        "Draft Change Orders": lambda c, s: _sum(R(c, "fct_ChangeOrder", s, lambda r: _co_status(r) == "draft"), "Amount"),
         "Change Order Amount": lambda c, s: _sum(c.rows("fct_ChangeOrder", s), "Amount"),
         "Budget": budget("BudgetAmount"), "Forecast": budget("ForecastAmount"),
         "Committed": budget("CommittedAmount"), "Spent To Date": budget("SpentToDate"),

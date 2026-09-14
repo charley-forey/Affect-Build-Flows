@@ -167,7 +167,14 @@ SOURCE_FIXTURES = (
         -- A void CO, deliberately with money on it: dead, so neither pending nor contract
         -- growth. Without it the DQ conservation rule's IsPending expression never met a void
         -- and passed offline while the live candidate (3 real void COs) blocked.
-        ('P1','CO5','C1', DATE '2025-06-15',  25000.0,  '5', 'Void')
+        ('P1','CO5','C1', DATE '2025-06-15',  25000.0,  '5', 'Void'),
+        -- Every other Procore status, each with money so an exclusion that leaks shows in a
+        -- total. Rejected and No Charge are "not reflected" in the budget; Not Proceeding is
+        -- a Pending variant, spelled as the UI label to exercise the space normalisation.
+        -- CO8 is the workbook's 4,620 addend.
+        ('P1','CO6','C1', DATE '2025-06-18',   7000.0,  '6', 'Rejected'),
+        ('P1','CO7','C1', DATE '2025-06-20',    500.0,  '7', 'no_charge'),
+        ('P1','CO8','C1', DATE '2025-05-25',   4620.0,  '8', 'Not Proceeding')
     ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES
@@ -204,7 +211,11 @@ SOURCE_FIXTURES = (
     # is exercised on both arms rather than only on the one that existed first.
     """CREATE OR REPLACE VIEW sv_rfis AS SELECT * FROM (VALUES
         ('P1','R1','RFI-1','Slab edge detail','Open',  'High',  'CC1', DATE '2025-05-03', DATE '2025-05-17', NULL),
-        ('P1','R2','RFI-2','Closed one',      'Closed','Normal', NULL, DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-10')
+        ('P1','R2','RFI-2','Closed one',      'Closed','Normal', NULL, DATE '2025-04-01', DATE '2025-04-20', DATE '2025-04-10'),
+        -- A past-due draft: not open, not past due, counted as a draft (16 live).
+        ('P1','R3','RFI-3','Draft question',  'draft', NULL,     'CC1', DATE '2025-05-04', DATE '2025-05-10', NULL),
+        -- Closed by status with no time_resolved: not open, no invented turnaround.
+        ('P1','R4','RFI-4','Closed no date',  'closed_with_revision', NULL, 'CC1', DATE '2025-04-05', DATE '2025-04-25', NULL)
     ) AS t(project_id, item_id, item_number, subject, status_label, priority, cost_code_id,
            created_date, due_date, responded_date)""",
 
