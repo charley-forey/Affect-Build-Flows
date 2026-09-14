@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "533cb1cec1f76d1b742c",
+  "position": {
+    "x": 20,
+    "y": 60,
+    "z": 0,
+    "width": 1240,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Proposals are not applied. Approving one means adding the label and its TradeKey to qc_trade_alias.csv, the approved alias seed; until then its records stay unmapped. Portfolio-wide: project and month selections do not filter this page.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Proposals are not applied. Approving one means adding the label and its TradeKey to qc_trade_alias.csv, the approved alias seed; until then its records stay unmapped. Portfolio-wide: project and month selections do not filter this page.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

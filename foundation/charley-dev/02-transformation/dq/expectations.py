@@ -888,7 +888,7 @@ def build_suite() -> Suite:
             table="fct_QcNcr",
             failing_sql="SELECT * FROM fct_QcNcr WHERE HasUnmappedTrade",
             severity=SEVERITY_WARN,
-            description="an unmapped trade cannot roll up by trade - alias it or fix Procore",
+            description="an unmapped trade cannot roll up by trade - decide it in dq_TradeMappingCandidate, then alias it or fix Procore",
         ),
         # ERROR, not warn, and the distinction is the point. An unmapped trade is a fact
         # about Procore's vocabulary; an alias pointing at a TradeKey that does not exist

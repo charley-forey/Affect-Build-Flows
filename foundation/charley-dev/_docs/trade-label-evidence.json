@@ -1,0 +1,412 @@
+{
+ "captured": "2026-09-14",
+ "source": "CD_Silver_Lakehouse SQL endpoint, read-only",
+ "query": "WITH raw AS (SELECT 'O' src, project_id, trade, CAST(created_date AS date) d FROM dbo.cd_silver_qc_ncr UNION ALL SELECT 'P', project_id, trade, CAST(created_date AS date) FROM dbo.cd_silver_qc_punch UNION ALL SELECT 'I', project_id, trade, CAST(inspection_date AS date) FROM dbo.cd_silver_qc_inspection) SELECT MIN(LTRIM(RTRIM(trade))) label, SUM(CASE WHEN src='O' THEN 1 ELSE 0 END) obs, SUM(CASE WHEN src='P' THEN 1 ELSE 0 END) punch, SUM(CASE WHEN src='I' THEN 1 ELSE 0 END) insp, COUNT(DISTINCT project_id) projects, MIN(d) first_seen, MAX(d) last_seen FROM raw WHERE NULLIF(LTRIM(RTRIM(trade)),'') IS NOT NULL GROUP BY UPPER(LTRIM(RTRIM(trade))) ORDER BY COUNT(*) DESC",
+ "labels": [
+  {
+   "label": "Electrical",
+   "obs": 125,
+   "punch": 244,
+   "insp": 2,
+   "projects": 8,
+   "first_seen": "2022-03-23",
+   "last_seen": "2026-09-08"
+  },
+  {
+   "label": "Drywall/Carpentry",
+   "obs": 60,
+   "punch": 221,
+   "insp": 0,
+   "projects": 9,
+   "first_seen": "2024-09-23",
+   "last_seen": "2026-09-08"
+  },
+  {
+   "label": "Painting",
+   "obs": 39,
+   "punch": 161,
+   "insp": 0,
+   "projects": 6,
+   "first_seen": "2024-09-25",
+   "last_seen": "2026-09-10"
+  },
+  {
+   "label": "Plumbing",
+   "obs": 44,
+   "punch": 147,
+   "insp": 0,
+   "projects": 5,
+   "first_seen": "2025-08-15",
+   "last_seen": "2026-09-08"
+  },
+  {
+   "label": "Millwork",
+   "obs": 62,
+   "punch": 61,
+   "insp": 0,
+   "projects": 5,
+   "first_seen": "2024-10-02",
+   "last_seen": "2026-09-10"
+  },
+  {
+   "label": "Concrete Superstructure",
+   "obs": 64,
+   "punch": 46,
+   "insp": 0,
+   "projects": 2,
+   "first_seen": "2025-03-21",
+   "last_seen": "2025-12-19"
+  },
+  {
+   "label": "HVAC",
+   "obs": 86,
+   "punch": 21,
+   "insp": 1,
+   "projects": 6,
+   "first_seen": "2024-10-12",
+   "last_seen": "2026-08-11"
+  },
+  {
+   "label": "Concrete",
+   "obs": 57,
+   "punch": 7,
+   "insp": 9,
+   "projects": 3,
+   "first_seen": "2025-03-25",
+   "last_seen": "2026-07-23"
+  },
+  {
+   "label": "Masonry/Stucco",
+   "obs": 6,
+   "punch": 50,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2025-09-26",
+   "last_seen": "2026-07-09"
+  },
+  {
+   "label": "Flooring",
+   "obs": 25,
+   "punch": 30,
+   "insp": 0,
+   "projects": 6,
+   "first_seen": "2024-10-11",
+   "last_seen": "2026-09-08"
+  },
+  {
+   "label": "Doors, Frames & Hardware",
+   "obs": 3,
+   "punch": 38,
+   "insp": 0,
+   "projects": 4,
+   "first_seen": "2024-10-22",
+   "last_seen": "2026-08-11"
+  },
+  {
+   "label": "Sprinkler",
+   "obs": 25,
+   "punch": 15,
+   "insp": 0,
+   "projects": 5,
+   "first_seen": "2024-09-25",
+   "last_seen": "2026-06-25"
+  },
+  {
+   "label": "Ceramic Tile",
+   "obs": 33,
+   "punch": 2,
+   "insp": 1,
+   "projects": 3,
+   "first_seen": "2026-01-27",
+   "last_seen": "2026-09-08"
+  },
+  {
+   "label": "Drywall",
+   "obs": 26,
+   "punch": 5,
+   "insp": 0,
+   "projects": 4,
+   "first_seen": "2024-10-22",
+   "last_seen": "2026-06-10"
+  },
+  {
+   "label": "Stone/Tile",
+   "obs": 10,
+   "punch": 15,
+   "insp": 0,
+   "projects": 5,
+   "first_seen": "2025-12-16",
+   "last_seen": "2026-09-09"
+  },
+  {
+   "label": "Carpet",
+   "obs": 1,
+   "punch": 15,
+   "insp": 0,
+   "projects": 3,
+   "first_seen": "2024-10-30",
+   "last_seen": "2026-06-26"
+  },
+  {
+   "label": "Housekeeping",
+   "obs": 15,
+   "punch": 0,
+   "insp": 0,
+   "projects": 4,
+   "first_seen": "2025-12-08",
+   "last_seen": "2026-09-04"
+  },
+  {
+   "label": "Doors & Frames (Hardware)",
+   "obs": 2,
+   "punch": 11,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-04-28",
+   "last_seen": "2026-06-08"
+  },
+  {
+   "label": "Roofing",
+   "obs": 4,
+   "punch": 8,
+   "insp": 0,
+   "projects": 2,
+   "first_seen": "2026-05-02",
+   "last_seen": "2026-08-06"
+  },
+  {
+   "label": "Masonry",
+   "obs": 6,
+   "punch": 5,
+   "insp": 0,
+   "projects": 2,
+   "first_seen": "2025-08-07",
+   "last_seen": "2026-07-29"
+  },
+  {
+   "label": "Light Fixtures",
+   "obs": 11,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-04-15",
+   "last_seen": "2026-08-24"
+  },
+  {
+   "label": "Glazing",
+   "obs": 2,
+   "punch": 9,
+   "insp": 0,
+   "projects": 3,
+   "first_seen": "2024-09-25",
+   "last_seen": "2026-08-19"
+  },
+  {
+   "label": "Foundation / Excavation",
+   "obs": 2,
+   "punch": 0,
+   "insp": 7,
+   "projects": 1,
+   "first_seen": "2026-08-27",
+   "last_seen": "2026-09-11"
+  },
+  {
+   "label": "Windows",
+   "obs": 2,
+   "punch": 6,
+   "insp": 0,
+   "projects": 2,
+   "first_seen": "2025-11-24",
+   "last_seen": "2026-05-22"
+  },
+  {
+   "label": "Structural Steel",
+   "obs": 7,
+   "punch": 0,
+   "insp": 0,
+   "projects": 2,
+   "first_seen": "2025-12-19",
+   "last_seen": "2026-05-26"
+  },
+  {
+   "label": "Doors",
+   "obs": 5,
+   "punch": 1,
+   "insp": 0,
+   "projects": 3,
+   "first_seen": "2025-11-07",
+   "last_seen": "2026-05-18"
+  },
+  {
+   "label": "Fire Protection",
+   "obs": 6,
+   "punch": 0,
+   "insp": 0,
+   "projects": 4,
+   "first_seen": "2025-05-09",
+   "last_seen": "2026-04-30"
+  },
+  {
+   "label": "Low Voltage",
+   "obs": 3,
+   "punch": 2,
+   "insp": 0,
+   "projects": 3,
+   "first_seen": "2024-11-25",
+   "last_seen": "2026-08-14"
+  },
+  {
+   "label": "Fire Alarm",
+   "obs": 1,
+   "punch": 3,
+   "insp": 0,
+   "projects": 3,
+   "first_seen": "2025-09-08",
+   "last_seen": "2026-06-24"
+  },
+  {
+   "label": "Cabinetry",
+   "obs": 0,
+   "punch": 4,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2024-10-28",
+   "last_seen": "2024-10-29"
+  },
+  {
+   "label": "Demolition",
+   "obs": 0,
+   "punch": 4,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2025-11-21",
+   "last_seen": "2025-11-21"
+  },
+  {
+   "label": "Window Treatments",
+   "obs": 0,
+   "punch": 3,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2024-10-12",
+   "last_seen": "2024-10-12"
+  },
+  {
+   "label": "Specalties",
+   "obs": 2,
+   "punch": 1,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-04-15",
+   "last_seen": "2026-06-16"
+  },
+  {
+   "label": "Safety Documentation",
+   "obs": 2,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2025-12-08",
+   "last_seen": "2025-12-08"
+  },
+  {
+   "label": "Flooring (Self Levelling)",
+   "obs": 2,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-02-19",
+   "last_seen": "2026-03-16"
+  },
+  {
+   "label": "Firestopping",
+   "obs": 2,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-05-08",
+   "last_seen": "2026-05-11"
+  },
+  {
+   "label": "Safety",
+   "obs": 1,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2025-12-08",
+   "last_seen": "2025-12-08"
+  },
+  {
+   "label": "Closets",
+   "obs": 1,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-04-03",
+   "last_seen": "2026-04-03"
+  },
+  {
+   "label": "Plumbing Fixtures",
+   "obs": 1,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-05-05",
+   "last_seen": "2026-05-05"
+  },
+  {
+   "label": "Protection",
+   "obs": 1,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2025-12-08",
+   "last_seen": "2025-12-08"
+  },
+  {
+   "label": "Storage Partitions",
+   "obs": 1,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-06-08",
+   "last_seen": "2026-06-08"
+  },
+  {
+   "label": "Trash Chute/Compactors",
+   "obs": 0,
+   "punch": 1,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-05-01",
+   "last_seen": "2026-05-01"
+  },
+  {
+   "label": "ELEVATOR",
+   "obs": 0,
+   "punch": 0,
+   "insp": 1,
+   "projects": 1,
+   "first_seen": "2026-04-01",
+   "last_seen": "2026-04-01"
+  },
+  {
+   "label": "WINDOW TREATMENT",
+   "obs": 0,
+   "punch": 1,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-06-16",
+   "last_seen": "2026-06-16"
+  },
+  {
+   "label": "Fabric Wrapped Wall Panels",
+   "obs": 1,
+   "punch": 0,
+   "insp": 0,
+   "projects": 1,
+   "first_seen": "2026-06-08",
+   "last_seen": "2026-06-08"
+  }
+ ]
+}

@@ -74,6 +74,16 @@ SEEDS: tuple[tuple[str, str, dict[str, str], tuple[str, ...]], ...] = (
         ("ProcoreTrade",),
     ),
     (
+        # PROPOSALS ONLY, for the ambiguous and no-equivalent labels above. Read by
+        # dq_TradeMappingCandidate and nothing else - never by the fct_Qc* trade joins.
+        # Approving one means copying it into qc_trade_alias.csv; until then it changes
+        # no fact row. ProposedTradeKeys is pipe-separated (test_qc checks every key).
+        "qc_trade_synonym_proposals.csv", "qc_seed_TradeSynonymProposal",
+        {"ProcoreTrade": "STRING", "Kind": "STRING", "ProposedTradeKeys": "STRING",
+         "Reason": "STRING"},
+        ("ProcoreTrade",),
+    ),
+    (
         "qc_checklist_items.csv", "qc_seed_ChecklistItem",
         {"TradeKey": "STRING", "ItemNumber": "INT", "ItemText": "STRING",
          "ItemKey": "STRING"},
@@ -120,6 +130,8 @@ EXPECTED_ROWS = {
     # Grows as Affect resolves the ambiguous labels. Bump it deliberately when it does -
     # the assertion is here so an alias cannot be added or lost without somebody noticing.
     "qc_seed_TradeAlias": 16,
+    # Shrinks as proposals are approved into the alias seed or ruled out of scope.
+    "qc_seed_TradeSynonymProposal": 24,
     # The 15 legacy dim_projects_procoreXsage pairs. Bump deliberately when Affect approves one.
     "seed_ProjectCrosswalk": 15,
 }

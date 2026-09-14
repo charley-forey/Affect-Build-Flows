@@ -305,6 +305,35 @@ def page_data_quality() -> tuple[str, list[dict]]:
     ]
 
 
+def page_trade_mapping() -> tuple[str, list[dict]]:
+    """The unmapped-trade warning as a decision list: which labels, how many records, what
+    a reviewer might map each to. Proposals only - nothing on this page changes a fact."""
+    p = "qctrademap"
+    t = "dq_TradeMappingCandidate"
+    return p, [
+        textbox(p, "title", "Trade Mapping Decisions", 20, 16, 600, 44),
+        textbox(p, "note",
+                "Proposals are not applied. Approving one means adding the label and its "
+                "TradeKey to qc_trade_alias.csv, the approved alias seed; until then its records "
+                "stay unmapped. Portfolio-wide: project and month selections do not filter this page.",
+                20, 56, 1160, 44, size=10, color=MUTED),
+        dr.sort_desc(dr.keep_true(visual(p, "worklist", "tableEx", 20, ROW1, 740, FULL_BOTTOM - ROW1,
+               {"Values": [column(t, "RawTrade"), column(t, "MappingStatus"),
+                           column(t, "AffectedRecords"), column(t, "ProjectCount"),
+                           column(t, "ProposedTradeKeys")]},
+               title="Decisions needed - most affected records first",
+               alt="Table. Procore trade labels that do not resolve to a library trade, with "
+                   "their status, affected records, projects and proposed trade keys, largest "
+                   "first."), t, "IsDecisionNeeded"), column(t, "AffectedRecords")),
+        dr.sort_desc(dr.keep_true(visual(p, "no_equivalent", "tableEx", 780, ROW1, 404, FULL_BOTTOM - ROW1,
+               {"Values": [column(t, "RawTrade"), column(t, "AffectedRecords")]},
+               title="No library equivalent - scope decisions",
+               alt="Table. Procore trade labels with no trade in the checklist library. Each "
+                   "needs a scope decision: add a checklist or leave it out of quality by trade."),
+               t, "IsNoLibraryEquivalent"), column(t, "AffectedRecords")),
+    ]
+
+
 dr.PAGES = [
     ("Quality Portfolio", page_portfolio, False),
     ("Observations", page_ncr, False),
@@ -315,6 +344,7 @@ dr.PAGES = [
     ("Statutory Gates", page_gates, False),
     ("Trade Checklists & DFOW", page_checklists, False),
     ("Data Quality", page_data_quality, False),
+    ("Trade Mapping Decisions", page_trade_mapping, False),
 ]
 
 

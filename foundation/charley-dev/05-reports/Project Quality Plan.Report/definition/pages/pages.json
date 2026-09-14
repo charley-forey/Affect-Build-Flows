@@ -9,7 +9,8 @@
     "qcinspectionitems",
     "qcgates",
     "qcchecklists",
-    "qcdq"
+    "qcdq",
+    "qctrademap"
   ],
   "activePageName": "qcportfolio"
 }

@@ -1,0 +1,25 @@
+ProcoreTrade,Kind,ProposedTradeKeys,Reason
+Drywall/Carpentry,AMBIGUOUS,DRYWALL_FRAMING|DRYWALL_BOARD|MILLWORK_CASEWORK,"One label spans framing, board and finish carpentry; Affect to say which trade it means or split it in Procore"
+Concrete Superstructure,AMBIGUOUS,CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|SLAB_ON_DECK,"Superstructure concrete covers formwork, rebar, cast-in-place and slab on deck"
+Concrete,AMBIGUOUS,CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|PRECAST_CONCRETE|SLAB_ON_GRADE|SLAB_ON_DECK,Six library trades are concrete; the label does not say which
+Foundation / Excavation,AMBIGUOUS,EXCAVATION|CIP_CONCRETE,Excavation is a library trade; foundations are usually cast-in-place concrete
+Plumbing Fixtures,SYNONYM,PLUMBING,Fixtures sit inside the plumbing scope
+Light Fixtures,SYNONYM,ELECTRICAL,Fixtures sit inside the electrical scope
+Closets,SYNONYM,MILLWORK_CASEWORK,Closet systems are usually casework; confirm they are not wire shelving (Division 10)
+Roofing,NO_EQUIVALENT,,No roofing trade in the 26-sheet library (Division 07 50 00)
+Glazing,NO_EQUIVALENT,,No glazing or curtain wall trade in the library (Division 08 80 00)
+Windows,NO_EQUIVALENT,,No window trade in the library (Division 08 50 00)
+Structural Steel,NO_EQUIVALENT,,Metal Deck is the only Division 05 trade; structural steel framing has no sheet
+Low Voltage,NO_EQUIVALENT,,No low-voltage or communications trade; Fire Alarm is life-safety only
+Demolition,NO_EQUIVALENT,,No demolition trade in the library (Division 02)
+Housekeeping,NO_EQUIVALENT,,Not a construction trade; site housekeeping has no checklist
+Protection,NO_EQUIVALENT,,Not a construction trade; protection of finished work has no checklist
+Safety,NO_EQUIVALENT,,Not a construction trade; safety is outside the quality checklist library
+Safety Documentation,NO_EQUIVALENT,,Not a construction trade; safety is outside the quality checklist library
+Specalties,NO_EQUIVALENT,,Division 10 specialties have no sheet (Procore spelling kept as entered)
+Storage Partitions,NO_EQUIVALENT,,Division 10 specialties have no sheet
+Window Treatments,NO_EQUIVALENT,,Division 12 furnishings have no sheet
+WINDOW TREATMENT,NO_EQUIVALENT,,Division 12 furnishings have no sheet (second Procore spelling)
+Fabric Wrapped Wall Panels,NO_EQUIVALENT,,Acoustic wall panels (09 84 00) have no sheet
+Trash Chute/Compactors,NO_EQUIVALENT,,Division 14 / 11 equipment has no sheet
+ELEVATOR,NO_EQUIVALENT,,Division 14 conveying equipment has no sheet

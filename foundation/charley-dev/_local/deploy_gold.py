@@ -88,7 +88,8 @@ statements = split_statements
 # The gold SQL stays byte-identical across both sources. Only the SELECTION differs, which
 # is what --source has always been for.
 GOLD_CD_ONLY = ("13_dim_job.sql", "33_fct_qc.sql", "34_fct_apinvoice.sql","40_man_tables.sql",
-                "41_man_qc_tables.sql", "44_dq_crosswalkcandidate.sql", "45_dq_datagap.sql")
+                "41_man_qc_tables.sql", "44_dq_crosswalkcandidate.sql", "45_dq_datagap.sql",
+                "46_dq_trademappingcandidate.sql")
 
 
 def gold_files(source: str = "cd") -> list[Path]:
@@ -266,14 +267,16 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           # zero gaps is the goal, not a failed build.
           "dq_DataGap",
           # Proposed Procore<->Sage pairs; empty once every name match is reviewed.
-          "dq_CrosswalkCandidate"]
+          "dq_CrosswalkCandidate",
+          # Procore trade labels awaiting an Affect mapping decision. Proposals only.
+          "dq_TradeMappingCandidate"]
 
 counts, bad = {}, []
 for t in tables + manual_tables:
     n = spark.sql(f"SELECT COUNT(*) AS n FROM {t}").collect()[0]["n"]
     counts[t] = n
     print(f"  {t:<24} {n:>7} rows")
-    if t in tables and n == 0 and t not in ("dq_DataGap", "dq_CrosswalkCandidate"):
+    if t in tables and n == 0 and t not in ("dq_DataGap", "dq_CrosswalkCandidate", "dq_TradeMappingCandidate"):
         bad.append(f"{t} is EMPTY")
     if t in loaded and n != loaded[t]:
         bad.append(f"{t}: materialisation changed row count from {loaded[t]} to {n}")
@@ -335,7 +338,7 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    # PQP seeds. Built by cd_20_seed_gold, which runs before this notebook,
                    # so they are readable here - but they are not in `tables`, because the
                    # seed runner already asserts their row counts.
-                   "qc_seed_Trade", "qc_seed_TradeAlias", "qc_seed_ChecklistItem",
+                   "qc_seed_Trade", "qc_seed_TradeAlias", "qc_seed_TradeSynonymProposal", "qc_seed_ChecklistItem",
                    "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 

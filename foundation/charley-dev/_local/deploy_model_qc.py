@@ -52,6 +52,8 @@ dm.MODEL_TABLES = [
     "man_QcDohResult",
     # Every known data gap in one register - silver rejects included - for the DQ page.
     "dq_DataGap",
+    # Procore trade labels awaiting a mapping decision - portfolio-wide, no relationships.
+    "dq_TradeMappingCandidate",
     # The pipeline heartbeat - how the report answers "are these numbers from last night?".
     "meta_PipelineRun",
 ]

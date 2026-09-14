@@ -85,6 +85,39 @@ FROM (VALUES
     ('Drywall', 'DRYWALL_BOARD', 'Board unless the label says framing; framing is a separate trade')
 ) AS t(c1, c2, c3);
 
+-- qc_seed_TradeSynonymProposal: 24 row(s) from seed/qc_trade_synonym_proposals.csv
+CREATE OR REPLACE TABLE qc_seed_TradeSynonymProposal AS
+SELECT CAST(c1 AS STRING) AS ProcoreTrade,
+       CAST(c2 AS STRING) AS Kind,
+       CAST(c3 AS STRING) AS ProposedTradeKeys,
+       CAST(c4 AS STRING) AS Reason
+FROM (VALUES
+    ('Drywall/Carpentry', 'AMBIGUOUS', 'DRYWALL_FRAMING|DRYWALL_BOARD|MILLWORK_CASEWORK', 'One label spans framing, board and finish carpentry; Affect to say which trade it means or split it in Procore'),
+    ('Concrete Superstructure', 'AMBIGUOUS', 'CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|SLAB_ON_DECK', 'Superstructure concrete covers formwork, rebar, cast-in-place and slab on deck'),
+    ('Concrete', 'AMBIGUOUS', 'CIP_CONCRETE|CONCRETE_FORMWORK|CONC_REINFORCEMENT|PRECAST_CONCRETE|SLAB_ON_GRADE|SLAB_ON_DECK', 'Six library trades are concrete; the label does not say which'),
+    ('Foundation / Excavation', 'AMBIGUOUS', 'EXCAVATION|CIP_CONCRETE', 'Excavation is a library trade; foundations are usually cast-in-place concrete'),
+    ('Plumbing Fixtures', 'SYNONYM', 'PLUMBING', 'Fixtures sit inside the plumbing scope'),
+    ('Light Fixtures', 'SYNONYM', 'ELECTRICAL', 'Fixtures sit inside the electrical scope'),
+    ('Closets', 'SYNONYM', 'MILLWORK_CASEWORK', 'Closet systems are usually casework; confirm they are not wire shelving (Division 10)'),
+    ('Roofing', 'NO_EQUIVALENT', NULL, 'No roofing trade in the 26-sheet library (Division 07 50 00)'),
+    ('Glazing', 'NO_EQUIVALENT', NULL, 'No glazing or curtain wall trade in the library (Division 08 80 00)'),
+    ('Windows', 'NO_EQUIVALENT', NULL, 'No window trade in the library (Division 08 50 00)'),
+    ('Structural Steel', 'NO_EQUIVALENT', NULL, 'Metal Deck is the only Division 05 trade; structural steel framing has no sheet'),
+    ('Low Voltage', 'NO_EQUIVALENT', NULL, 'No low-voltage or communications trade; Fire Alarm is life-safety only'),
+    ('Demolition', 'NO_EQUIVALENT', NULL, 'No demolition trade in the library (Division 02)'),
+    ('Housekeeping', 'NO_EQUIVALENT', NULL, 'Not a construction trade; site housekeeping has no checklist'),
+    ('Protection', 'NO_EQUIVALENT', NULL, 'Not a construction trade; protection of finished work has no checklist'),
+    ('Safety', 'NO_EQUIVALENT', NULL, 'Not a construction trade; safety is outside the quality checklist library'),
+    ('Safety Documentation', 'NO_EQUIVALENT', NULL, 'Not a construction trade; safety is outside the quality checklist library'),
+    ('Specalties', 'NO_EQUIVALENT', NULL, 'Division 10 specialties have no sheet (Procore spelling kept as entered)'),
+    ('Storage Partitions', 'NO_EQUIVALENT', NULL, 'Division 10 specialties have no sheet'),
+    ('Window Treatments', 'NO_EQUIVALENT', NULL, 'Division 12 furnishings have no sheet'),
+    ('WINDOW TREATMENT', 'NO_EQUIVALENT', NULL, 'Division 12 furnishings have no sheet (second Procore spelling)'),
+    ('Fabric Wrapped Wall Panels', 'NO_EQUIVALENT', NULL, 'Acoustic wall panels (09 84 00) have no sheet'),
+    ('Trash Chute/Compactors', 'NO_EQUIVALENT', NULL, 'Division 14 / 11 equipment has no sheet'),
+    ('ELEVATOR', 'NO_EQUIVALENT', NULL, 'Division 14 conveying equipment has no sheet')
+) AS t(c1, c2, c3, c4);
+
 -- qc_seed_ChecklistItem: 625 row(s) from seed/qc_checklist_items.csv
 CREATE OR REPLACE TABLE qc_seed_ChecklistItem AS
 SELECT CAST(c1 AS STRING) AS TradeKey,

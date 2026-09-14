@@ -493,6 +493,92 @@ def test_dim_job_links_the_flows_to_fabric(con) -> None:
     check("a job still awaiting its number does not trip the gate")
 
 
+def test_trade_mapping_worklist(con) -> None:
+    """dq_TradeMappingCandidate lists every unmapped label; its proposals change no fact."""
+    from seedrunner import split_statements
+    gold = CHARLEY_DEV / "02-transformation" / "sql" / "gold"
+
+    def run(name: str) -> None:
+        for statement in split_statements((gold / name).read_text(encoding="utf-8")):
+            con.execute(statement)
+
+    def worklist() -> dict:
+        return {r[0]: r[1:] for r in q(con, "SELECT RawTrade, MappingStatus, ProposedTradeKeys, "
+                                            "ProposalSource FROM dq_TradeMappingCandidate")}
+
+    # Every unmapped label in the fixtures is on the worklist, flagged for a decision, and
+    # every mapped one agrees with the fact's own resolution.
+    unmapped = {r[0].upper() for r in q(con, """
+        SELECT TRIM(trade) FROM sv_qc_ncr n JOIN fct_QcNcr f ON f.NcrKey = n.ncr_id WHERE f.HasUnmappedTrade
+        UNION SELECT TRIM(trade) FROM sv_qc_punch n JOIN fct_QcPunch f ON f.PunchKey = n.punch_id WHERE f.HasUnmappedTrade""")}
+    listed = {r[0].upper(): r[1:] for r in q(con, "SELECT RawTrade, MappingStatus, IsDecisionNeeded, "
+                                                  "CurrentTradeKey FROM dq_TradeMappingCandidate")}
+    assert unmapped and unmapped <= set(listed), unmapped - set(listed)
+    assert all(listed[k][0] != "MAPPED" and listed[k][1] for k in unmapped)
+    assert listed["HVAC"] == ("MAPPED", False, "HVAC_DUCTWORK")
+    assert one(con, "SELECT SUM(AffectedRecords) FROM dq_TradeMappingCandidate") == one(con, """
+        SELECT COUNT(*) FROM (SELECT trade FROM sv_qc_ncr UNION ALL SELECT trade FROM sv_qc_punch
+        UNION ALL SELECT trade FROM sv_qc_inspection) s WHERE NULLIF(TRIM(trade), '') IS NOT NULL""")
+    check("dq_TradeMappingCandidate covers every unmapped fixture label, with record counts")
+
+    # The proposal seed is curated input: every proposed key is a real library trade, and a
+    # label is never both proposed and already approved.
+    def read(name):
+        with (SEED_DIR / name).open(encoding="utf-8-sig", newline="") as fh:
+            return list(csv.DictReader(fh))
+    trades = {r["TradeKey"] for r in read("qc_trades.csv")}
+    aliases = {r["ProcoreTrade"].upper() for r in read("qc_trade_alias.csv")}
+    for r in read("qc_trade_synonym_proposals.csv"):
+        assert r["Kind"] in ("AMBIGUOUS", "NO_EQUIVALENT", "SYNONYM"), r
+        keys = [k for k in r["ProposedTradeKeys"].split("|") if k]
+        assert set(keys) <= trades, f"{r['ProcoreTrade']}: unknown key in {keys}"
+        assert (r["Kind"] == "NO_EQUIVALENT") == (not keys), r
+        assert r["ProcoreTrade"].upper() not in aliases, f"{r['ProcoreTrade']} is already an approved alias"
+    check("every proposed TradeKey is seeded, and no proposal duplicates an approved alias")
+
+    # PROPOSALS NEVER RESOLVE A FACT. Neither fact file names the proposal seed, and a
+    # proposal or token match for a label leaves its fact rows unmapped when rebuilt.
+    for name in ("25_fct_qualityitem.sql", "33_fct_qc.sql"):
+        text = (gold / name).read_text(encoding="utf-8")
+        assert "TradeSynonymProposal" not in text and "dq_TradeMappingCandidate" not in text, name
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO qc_seed_TradeSynonymProposal VALUES "
+                    "('Metals', 'SYNONYM', 'METAL_DECK', 'test proposal')")
+        con.execute("CREATE TEMP TABLE _tok AS SELECT * FROM sv_qc_punch")
+        con.execute("UPDATE _tok SET trade = 'Plumbing Fixtures' WHERE punch_id = 'PI1'")
+        con.execute("INSERT INTO _tok SELECT * REPLACE ('PI9' AS punch_id, 'Concrete' AS trade) "
+                    "FROM _tok WHERE punch_id = 'PI1'")
+        con.execute("CREATE OR REPLACE VIEW sv_qc_punch AS SELECT * FROM _tok")
+        run("33_fct_qc.sql")
+        run("46_dq_trademappingcandidate.sql")
+        assert q(con, "SELECT TradeKey, HasUnmappedTrade FROM fct_QcNcr WHERE NcrKey='OB2'") == [(None, True)]
+        assert one(con, "SELECT COUNT(*) FROM fct_QcPunch WHERE TradeKey IS NOT NULL") == 0
+        tok = worklist()
+        assert tok["Metals"] == ("UNMAPPED", "METAL_DECK", "CURATED_PROPOSAL")
+        assert tok["Plumbing Fixtures"] == ("UNMAPPED", "PLUMBING", "CURATED_PROPOSAL")
+
+        # Without curated rows the token rule still proposes: one whole-word match is a
+        # proposal, several are AMBIGUOUS, none is no proposal at all.
+        con.execute("DELETE FROM qc_seed_TradeSynonymProposal")
+        run("46_dq_trademappingcandidate.sql")
+        tok = worklist()
+        assert tok["Plumbing Fixtures"] == ("UNMAPPED", "PLUMBING", "EXACT_TOKEN_MATCH")
+        assert tok["Concrete"][0] == "AMBIGUOUS" and tok["Concrete"][2] == "EXACT_TOKEN_MATCH"
+        assert tok["Concrete"][1].startswith("CIP_CONCRETE|") and "more" in tok["Concrete"][1]
+        assert tok["Metals"] == ("UNMAPPED", None, None)
+    finally:
+        con.execute("ROLLBACK")
+    assert q(con, "SELECT TradeKey FROM fct_QcPunch WHERE PunchKey='PI1'") == [("CONCRETE_FORMWORK",)]
+    check("proposals and token matches never alter fct_QcNcr / fct_QcPunch trade resolution")
+
+    # The offline worklist is regenerated from the committed evidence through this SQL.
+    result = subprocess.run([sys.executable, str(CHARLEY_DEV / "_local" / "export_trade_worklist.py"),
+                             "--check"], capture_output=True, text=True)
+    assert result.returncode == 0, result.stdout + result.stderr
+    check("_docs/trade-mapping-worklist.csv matches the evidence and the gold SQL")
+
+
 def main() -> int:
     con = build()
     for fn in (test_seed_sql_is_current, test_checklist_collapse, test_gate_collapse,
@@ -500,7 +586,7 @@ def main() -> int:
                test_dim_job_links_the_flows_to_fabric,
                test_every_pqp_table_carries_a_project,
                test_pqp_results_resolve_to_their_templates, test_pqp_keys_are_unique,
-               test_status_codes_resolve, test_procore_facts):
+               test_status_codes_resolve, test_procore_facts, test_trade_mapping_worklist):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

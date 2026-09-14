@@ -466,6 +466,12 @@ def test_qc_disclosures():
     completion = dm.table_tmdl("fct_ProcoreInspection", [("SourcePercentComplete", "double")])
     assert "summarizeBy: none" in completion and "formatString: 0.##\n" in completion
     assert "unit and scale require confirmation" in completion
+    trade_map = json.dumps(qc.page_trade_mapping())
+    assert "qc_trade_alias.csv" in trade_map and "Proposals are not applied" in trade_map
+    assert "No library equivalent" in trade_map and "IsNoLibraryEquivalent" in trade_map
+    assert '"IsDecisionNeeded"' in trade_map and '"Descending"' in trade_map
+    assert "dq_TradeMappingCandidate" in dm.MODEL_TABLES
+    assert not any("dq_TradeMappingCandidate" in r[:1] + r[2:3] for r in dm.RELATIONSHIPS)
 
 
 if __name__ == "__main__":
