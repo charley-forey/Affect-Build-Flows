@@ -1,0 +1,100 @@
+table fct_ApInvoice
+
+	column ApLineKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ApLineKey
+
+	column InvoiceKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceKey
+
+	column InvoiceID
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceID
+
+	column InvoiceNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: InvoiceNumber
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column SageJobId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageJobId
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column SageVendorId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageVendorId
+
+	column LedgerAccount
+		dataType: string
+		summarizeBy: none
+		sourceColumn: LedgerAccount
+
+	column IsJobCost
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsJobCost
+
+	column IsErpOnlyVendor
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsErpOnlyVendor
+
+	column LineTotal
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: LineTotal
+
+	column InvoiceTotal
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: InvoiceTotal
+
+	column AmountPaid
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: AmountPaid
+
+	column InvoiceBalance
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: InvoiceBalance
+
+	column InvoiceDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: InvoiceDate
+		formatString: yyyy-mm-dd
+
+	column MonthStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MonthStart
+		formatString: yyyy-mm-dd
+
+	column StatusCode
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: StatusCode
+
+	partition fct_ApInvoice = entity
+		mode: directLake
+		source
+			entityName: fct_apinvoice
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

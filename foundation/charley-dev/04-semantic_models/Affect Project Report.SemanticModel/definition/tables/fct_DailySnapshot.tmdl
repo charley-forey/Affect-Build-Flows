@@ -1,0 +1,95 @@
+table fct_DailySnapshot
+
+	column SnapshotDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: SnapshotDate
+		formatString: yyyy-mm-dd
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column OpenSubmittals
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: OpenSubmittals
+
+	column SubmittalsPastDue
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SubmittalsPastDue
+
+	column OpenRfis
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: OpenRfis
+
+	column OpenObservations
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: OpenObservations
+
+	column OpenPunchItems
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: OpenPunchItems
+
+	column ArOutstanding
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ArOutstanding
+
+	column BilledToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BilledToDate
+
+	column BudgetAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BudgetAmount
+
+	column SpentToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: SpentToDate
+
+	column CommittedAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CommittedAmount
+
+	column CurrentContract
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CurrentContract
+
+	column PendingChangeOrders
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PendingChangeOrders
+
+	column ApprovedChangeOrders
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ApprovedChangeOrders
+
+	column RunId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RunId
+
+	column CapturedAt
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CapturedAt
+		formatString: yyyy-mm-dd
+
+	partition fct_DailySnapshot = entity
+		mode: directLake
+		source
+			entityName: fct_dailysnapshot
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

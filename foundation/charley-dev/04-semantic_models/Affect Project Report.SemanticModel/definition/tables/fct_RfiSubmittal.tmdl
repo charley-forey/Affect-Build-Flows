@@ -91,7 +91,7 @@ table fct_RfiSubmittal
 
 	column TurnaroundDays
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: TurnaroundDays
 
 	partition fct_RfiSubmittal = entity

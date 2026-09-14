@@ -18,22 +18,6 @@
         }
       },
       {
-        "name": "Seed Gold Dimensions",
-        "type": "TridentNotebook",
-        "dependsOn": [],
-        "policy": {
-          "timeout": "0.00:30:00",
-          "retry": 1,
-          "retryIntervalInSeconds": 60,
-          "secureOutput": false,
-          "secureInput": false
-        },
-        "typeProperties": {
-          "notebookId": "4fb4f05d-da18-4348-a0a6-dff17742ff77",
-          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
-        }
-      },
-      {
         "name": "Land Manual Input",
         "type": "TridentNotebook",
         "dependsOn": [
@@ -150,6 +134,29 @@
         }
       },
       {
+        "name": "Seed Gold Dimensions",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Bronze To Silver",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.00:30:00",
+          "retry": 1,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "4fb4f05d-da18-4348-a0a6-dff17742ff77",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
         "name": "Build Gold",
         "type": "TridentNotebook",
         "dependsOn": [
@@ -198,6 +205,29 @@
         },
         "typeProperties": {
           "notebookId": "4940d038-fa40-4402-a315-e2ec85f02f38",
+          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
+        }
+      },
+      {
+        "name": "Publish Models",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          {
+            "activity": "Data Quality Gate",
+            "dependencyConditions": [
+              "Succeeded"
+            ]
+          }
+        ],
+        "policy": {
+          "timeout": "0.01:00:00",
+          "retry": 0,
+          "retryIntervalInSeconds": 60,
+          "secureOutput": false,
+          "secureInput": false
+        },
+        "typeProperties": {
+          "notebookId": "8af0dc95-fd32-42be-839a-fc8400670538",
           "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301"
         }
       },
