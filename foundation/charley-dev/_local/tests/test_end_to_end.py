@@ -16,11 +16,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def main():
     con = test_silver.build()
-    # External warehouse lookups remain fixtures. The production CD source views below
-    # replace every own-source fixture with the parsed bronze output.
-    for sql in (*seedrunner.UPSTREAM_STUBS, *seedrunner.SOURCE_FIXTURES,
-                *seedrunner.INTEGRATED_EXTERNAL_FIXTURES):
+    # The production CD source views below replace every fixture with the parsed bronze
+    # output - no view reads the external warehouse any more.
+    for sql in (*seedrunner.UPSTREAM_STUBS, *seedrunner.SOURCE_FIXTURES):
         con.execute(sql)
+    # Seeds first: sv_project_crosswalk reads seed_ProjectCrosswalk. The real 15 rows key to
+    # production ids, so the seed TABLE (not the view) is re-pointed at the bronze fixture's
+    # Procore project 7 / Sage job 11 - the real view SQL still runs over it.
+    for path in seedrunner.seed_files():
+        for sql in seedrunner.split_statements(path.read_text(encoding="utf-8")):
+            con.execute(sql)
+    con.execute("CREATE OR REPLACE TABLE seed_ProjectCrosswalk AS SELECT '7' AS ProcoreProjectId, "
+                "'11' AS SageJobNumber, 'primary' AS Relationship, 'fixture' AS Source")
     # Procore's project cost-code list carries every code a commitment line can reference;
     # test_silver's bronze holds only CC1 while PO line CL2 books to CC2.
     con.execute("INSERT INTO cd_bronze_procore_cost_codes VALUES " + test_silver.bronze_row(
@@ -33,8 +40,10 @@ def main():
             sql = re.sub(r"delta\.`\{CD_SILVER_ABFSS\}/(\w+)`", r"\1", sql)
             con.execute(sql)
             count += 1
-    assert count == 52, "source-view contract changed; review the linked integration scope"
-    for path in [*seedrunner.seed_files(), *seedrunner.gold_files()]:
+    assert count == 55, "source-view contract changed; review the linked integration scope"
+    assert con.execute("SELECT * FROM sv_project_crosswalk").fetchall() == [("7", "11", "Tower A")]
+    assert con.execute("SELECT procore_vendor_id, sage_vendor_id FROM sv_vendors").fetchall() == [("V1", "55")]
+    for path in seedrunner.gold_files():
         for sql in seedrunner.split_statements(path.read_text(encoding="utf-8")):
             con.execute(sql)
 
@@ -134,7 +143,7 @@ def main():
         assert len(con.execute(rule.failing_sql.replace("`", '"')).fetchall()) == source[0]
 
     # A conflicting crosswalk may not choose the lexically greatest ID as if verified.
-    con.execute("CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM (VALUES ('P1','S1'),('P1','S2')) AS t(procore_project_id,sage_project_id)")
+    con.execute("CREATE OR REPLACE TABLE seed_ProjectCrosswalk AS SELECT * FROM (VALUES ('P1','S1','primary','t'),('P1','S2','primary','t')) AS t(ProcoreProjectId,SageJobNumber,Relationship,Source)")
     con.execute("CREATE OR REPLACE TEMPORARY VIEW sv_projects AS SELECT 'P1' AS project_id, 'Test' AS project_name, 'PROCORE' AS origin_code")
     for name in ("10_dim_project.sql", "15_dim_projectcrosswalk.sql"):
         for sql in seedrunner.split_statements((ROOT / "02-transformation/sql/gold" / name).read_text()):

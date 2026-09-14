@@ -581,7 +581,7 @@ GAP_CATEGORIES = {
     "Rejected source row", "Rejected manual entry", "Rejected quality entry",
     "Unmatched AR invoice", "Unmapped trade", "Project missing from Sage",
     "Project missing from Outbuild", "Vendor without certificate", "Expired certificate",
-    "Empty manual register",
+    "Empty manual register", "Sage job without Procore project",
 }
 
 
@@ -636,9 +636,23 @@ def test_dq_datagap(con) -> None:
     finally:
         con.execute("ROLLBACK")
 
-    # Money only where the gap carries it: the orphan AR invoice's 1,000.
-    assert q(con, "SELECT EntityKey, Amount FROM dq_DataGap WHERE Amount IS NOT NULL") == [("INV3", 1000.0)]
-    check("Amount is populated only by unmatched AR, and carries the invoice total")
+    # Money only where the gap carries it: the orphan AR invoice's 1,000, and its unmapped
+    # job S999 once per direction (AR 1,000 and AP 2,500 - never summed). Mapped S100's AP
+    # must not appear, and nothing is excluded by job name ('Office').
+    assert q(con, "SELECT GapCategory, EntityType, EntityKey, Amount FROM dq_DataGap "
+                  "WHERE Amount IS NOT NULL ORDER BY 1, 2") == [
+        ("Sage job without Procore project", "sv_ap_invoices", "S999", 2500.0),
+        ("Sage job without Procore project", "sv_ar_invoices", "S999", 1000.0),
+        ("Unmatched AR invoice", "fct_Invoice", "INV3", 1000.0)]
+    check("Amount is populated only by unmatched AR/AP, per invoice and per unmapped job and direction")
+
+    # Candidates are proposals: exact normalised name only, unmapped on both sides, and
+    # nothing in the crosswalk reads them back.
+    assert q(con, "SELECT ProcoreProjectId, SageJobNumber, MatchRule FROM dq_CrosswalkCandidate") == [
+        ("P2", "S200", "EXACT_NAME_SHORT_NAME")]
+    views = (CHARLEY_DEV / "02-transformation/sql/silver/01_source_views_cd.sql").read_text(encoding="utf-8")
+    assert "dq_CrosswalkCandidate" not in views.split("CREATE OR REPLACE TEMPORARY VIEW sv_project_crosswalk")[1].split(";")[0]
+    check("dq_CrosswalkCandidate proposes the exact-name match and is never auto-applied")
 
     # Every ProjectKey resolves, so the model relationship never shows a blank member. The
     # manual reject for P9 keeps its raw id in Detail instead.

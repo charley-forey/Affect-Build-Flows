@@ -41,9 +41,11 @@ SELECT
     CAST(get_json_object(payload, '$.id')      AS STRING) AS procore_vendor_id,
     TRIM(get_json_object(payload, '$.name'))              AS vendor_name,
     TRIM(get_json_object(payload, '$.abbreviated_name'))  AS vendor_abbreviation,
-    -- The Sage counterpart is not on the Procore vendor record; it is resolved in gold
-    -- against the existing crosswalk. NULL here is correct, not missing data.
-    CAST(NULL AS STRING)                                  AS sage_vendor_id,
+    -- Procore's ERP sync writes the Sage vendor id (actpay.recnum) into origin_code.
+    -- Measured 2026-09-13: 933 of 1,117 vendors carry one, all 933 resolve in actpay, none
+    -- shared by two vendors, and all 125 of the legacy crosswalk's pairs agree. NULL means
+    -- never synced to Sage. Blank is NULL, so it can never look like a match.
+    NULLIF(TRIM(get_json_object(payload, '$.origin_code')), '') AS sage_vendor_id,
     CAST(get_json_object(payload, '$.is_active') AS BOOLEAN) AS is_active,
     _ingested_at, _batch_id
 FROM cd_bronze_procore_vendors

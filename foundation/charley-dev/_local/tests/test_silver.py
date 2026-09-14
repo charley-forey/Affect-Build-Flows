@@ -55,7 +55,9 @@ BRONZE = {
     ],
     "cd_bronze_procore_vendors": [
         bronze_row("V1", {"id": "V1", "name": "  Acme Concrete  ",
-                          "abbreviated_name": "ACME", "is_active": True}),
+                          "abbreviated_name": "ACME", "is_active": True,
+                          # Procore's ERP sync writes Sage actpay.recnum here.
+                          "origin_code": " 55 "}),
     ],
     "cd_bronze_procore_cost_codes": [
         bronze_row("CC1", {"id": "CC1", "full_code": "03-100", "name": "  Concrete  ",
@@ -438,6 +440,13 @@ def sage_bronze() -> dict[str, str]:
           "hldamt, invamt, actnum, subact, upddte)"
     )
 
+    # Vendor master. recnum 55 is what acpinv.vndnum and V1's origin_code both carry.
+    out["cd_bronze_sage_actpay"] = (
+        "CREATE OR REPLACE TABLE cd_bronze_sage_actpay AS SELECT * FROM (VALUES "
+        + row("'VND-UID-55'", "55", "'  Acme Concrete LLC  '", "TIMESTAMP '2026-08-01 09:00:00'")
+        + ") AS t(_idnum, recnum, vndnme, upddte)"
+    )
+
     # AR receipts, in the live shape: typed columns, `_idref` -> acrinv._idnum, and
     # `recnum` repeating the INVOICE's recnum. AR-UID-1 has a same-day receipt and its
     # reversal (+1000/-1000) on top of a real 4000 - the reversal is kept as its own row.
@@ -700,6 +709,9 @@ def test_column_contract(con) -> None:
     import re
 
     checked = 0
+    # sv_project_crosswalk reads the gold seed alongside silver; build the real seed first.
+    for statement in split_statements((CHARLEY_DEV / "02-transformation/sql/gold/09_seed_projectcrosswalk.sql").read_text(encoding="utf-8")):
+        con.execute(statement)
     for statement in split_statements(SWITCH_SQL.read_text(encoding="utf-8")):
         if "{CD_SILVER_ABFSS}" not in statement:
             continue                     # a view still sourced from the existing warehouse
@@ -1262,6 +1274,12 @@ def test_sage_parser(con) -> None:
     assert one(con, "SELECT description FROM cd_silver_sage_ar_invoices "
                     "WHERE invoice_id = '901'") == "Progress billing 1"
     check("Sage text values are trimmed at the silver boundary")
+
+    # The owned vendor crosswalk: origin_code (trimmed) joins to actpay.recnum.
+    assert con.execute("SELECT v.sage_vendor_id, s.vendor_name FROM cd_silver_vendors v "
+                       "JOIN cd_silver_sage_vendors s ON s.sage_vendor_id = v.sage_vendor_id"
+                       ).fetchall() == [("55", "Acme Concrete LLC")]
+    check("Procore vendor origin_code resolves to Sage actpay.recnum")
 
     # The header join, which the whole Procore-Sage crosswalk rests on.
     assert one(con, "SELECT job_name FROM cd_silver_sage_ar_invoices "

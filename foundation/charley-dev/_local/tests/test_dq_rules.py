@@ -146,6 +146,34 @@ def main() -> int:
         assert RULES[name].severity == expectations.SEVERITY_WARN, name
     checks += 3
 
+    # Owned crosswalks: a key pointing nowhere or at two entities blocks; a gap warns.
+    xw = "CREATE TEMP TABLE xw_snap AS SELECT * FROM sv_project_crosswalk"
+    check_fails(con, "sv_project_crosswalk Sage job maps to only one project", xw,
+                "CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM xw_snap "
+                "UNION ALL SELECT 'P2', 'S100', 'Depot B'")
+    # The shared fixture's P3/S300 row is deliberately in neither source, so not clean.
+    check_fails(con, "sv_project_crosswalk rows exist in Procore and Sage", xw,
+                "CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM xw_snap "
+                "UNION ALL SELECT 'P1', 'S404', 'Typo'", clean=False)
+    check_fails(con, "Sage jobs with AR/AP but no crosswalk mapping", xw,
+                "CREATE OR REPLACE VIEW sv_project_crosswalk AS SELECT * FROM xw_snap WHERE sage_project_id <> 'S100'",
+                clean=False)
+    vn = "CREATE TEMP TABLE vn_snap AS SELECT * FROM sv_vendors"
+    check_fails(con, "sv_vendors Sage vendor id exists in actpay", vn,
+                "CREATE OR REPLACE VIEW sv_vendors AS SELECT * REPLACE ('SV404' AS sage_vendor_id) FROM vn_snap")
+    check_fails(con, "sv_vendors Sage vendor maps to only one Procore vendor", vn,
+                "CREATE OR REPLACE VIEW sv_vendors AS SELECT * REPLACE (COALESCE(sage_vendor_id, 'SV1') AS sage_vendor_id) FROM vn_snap")
+    check_fails(con, "ERP-synced vendors without origin_code", vn,
+                "CREATE OR REPLACE VIEW sv_vendors AS SELECT * REPLACE (CAST(NULL AS VARCHAR) AS sage_vendor_id) FROM vn_snap")
+    for name, sev in (("sv_project_crosswalk Sage job maps to only one project", "error"),
+                      ("sv_project_crosswalk rows exist in Procore and Sage", "error"),
+                      ("Sage jobs with AR/AP but no crosswalk mapping", "warn"),
+                      ("sv_vendors Sage vendor id exists in actpay", "error"),
+                      ("sv_vendors Sage vendor maps to only one Procore vendor", "error"),
+                      ("ERP-synced vendors without origin_code", "warn")):
+        assert RULES[name].severity == sev, name
+    checks += 6
+
     con.close()
     print(f"test_dq_rules: {checks} mutation checks passed")
     return 0

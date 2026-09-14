@@ -107,6 +107,33 @@ FROM dim_ProjectCrosswalk x
 WHERE NOT x.IsInSage
 
 UNION ALL
+-- The other side of the crosswalk: a Sage job carrying money that maps to no Procore project.
+-- One row per job AND direction, because AR and AP must never be summed into one figure.
+-- AR is also itemised per invoice under 'Unmatched AR invoice' - do not add the two
+-- categories together. Nothing is excluded (the office overhead job included): which jobs
+-- are legitimately outside Procore is Affect's call, not a filter in this file.
+SELECT 'Sage job without Procore project', 'Sage', g.src, g.sage_project_id, CAST(NULL AS STRING),
+       CONCAT('Sage job ', g.sage_project_id, ' has ', CAST(g.n AS STRING), ' ', g.kind,
+              ' invoice(s) and no Procore project in the crosswalk'),
+       g.amount,
+       concat_ws('; ', CONCAT('job ', COALESCE(j.job_name, '(not in sv_sage_jobs)')),
+                 'see dq_CrosswalkCandidate for proposed matches'),
+       CAST(NULL AS STRING)
+FROM (
+    SELECT 'sv_ar_invoices' AS src, 'AR' AS kind, sage_project_id,
+           COUNT(*) AS n, CAST(SUM(invoice_total) AS DOUBLE) AS amount
+    FROM sv_ar_invoices GROUP BY sage_project_id
+    UNION ALL
+    SELECT 'sv_ap_invoices', 'AP', sage_project_id,
+           COUNT(*), CAST(SUM(invoice_total) AS DOUBLE)
+    FROM sv_ap_invoices GROUP BY sage_project_id
+) g
+LEFT JOIN sv_sage_jobs j ON j.sage_project_id = g.sage_project_id
+WHERE g.sage_project_id IS NOT NULL
+  AND g.sage_project_id NOT IN (SELECT sage_project_id FROM sv_project_crosswalk
+                                WHERE sage_project_id IS NOT NULL)
+
+UNION ALL
 SELECT 'Project missing from Outbuild', 'Outbuild', 'dim_ProjectCrosswalk', x.ProjectKey, x.ProjectKey,
        CASE WHEN x.HasAmbiguousOutbuildMatch
             THEN 'Linked from more than one Outbuild project - no milestones until resolved'
