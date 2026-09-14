@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "a9a74f12201a54fabac3",
+  "name": "84e56badd11e30e32fa3",
   "position": {
-    "x": 646,
-    "y": 360,
+    "x": 20,
+    "y": 522,
     "z": 0,
-    "width": 614,
-    "height": 150,
-    "tabOrder": 22
+    "width": 1240,
+    "height": 132,
+    "tabOrder": 23
   },
   "visual": {
     "visualType": "tableEx",
@@ -20,84 +20,84 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "VendorName"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.VendorName",
-              "nativeQueryRef": "VendorName"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName"
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "TradeName"
+                  "Property": "Spent To Date"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.TradeName",
-              "nativeQueryRef": "TradeName"
+              "queryRef": "_Measures.Spent To Date",
+              "nativeQueryRef": "Spent To Date"
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "City"
+                  "Property": "AP Job Cost"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.City",
-              "nativeQueryRef": "City"
+              "queryRef": "_Measures.AP Job Cost",
+              "nativeQueryRef": "AP Job Cost"
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "LicenseNumber"
+                  "Property": "AP vs Procore Spent Variance"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.LicenseNumber",
-              "nativeQueryRef": "LicenseNumber"
+              "queryRef": "_Measures.AP vs Procore Spent Variance",
+              "nativeQueryRef": "AP vs Procore Spent Variance"
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "IsPrequalified"
+                  "Property": "AP / Procore Spent Ratio"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.IsPrequalified",
-              "nativeQueryRef": "IsPrequalified"
+              "queryRef": "_Measures.AP / Procore Spent Ratio",
+              "nativeQueryRef": "AP / Procore Spent Ratio"
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "bridge_ProjectVendor"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "SyncedToErp"
+                  "Property": "ERP-only Vendor Cost"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.SyncedToErp",
-              "nativeQueryRef": "SyncedToErp"
+              "queryRef": "_Measures.ERP-only Vendor Cost",
+              "nativeQueryRef": "ERP-only Vendor Cost"
             }
           ]
         }
@@ -111,7 +111,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Vendor list - prequalification and ERP sync. Shows VendorName, TradeName, City, LicenseNumber, IsPrequalified, SyncedToErp for the current selection.'"
+                  "Value": "'Table. One row per project: Procore Spent To Date, Sage AP job cost, the variance and ratio between them, and AP job cost at vendors with no Procore commitment or direct cost on the project. Sage AP history starts 2025-03-11 and timing differs between the systems; AP is a check and is not added to Spent To Date. Not month-filtered.'"
                 }
               }
             }
@@ -124,7 +124,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Vendor list - prequalification and ERP sync'"
+                  "Value": "'Procore Spent To Date vs Sage AP job cost (AP from 2025-03-11; not added to Spent)'"
                 }
               }
             },

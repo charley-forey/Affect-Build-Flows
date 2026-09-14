@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Direct costs are discrete transactions, so unlike the billing balances these totals are correct at any grouping. The vendor list is Procore's prequalification record, which is not the same as current insurance. Vendor commitments and vendor counts are not month-filtered.",
+                    "value": "Direct costs sum at any grouping. The vendor list is Procore prequalification, not current insurance. Vendor figures and the Sage AP table are not month-filtered. Sage AP starts 2025-03-11 and lags or leads Procore, so it checks Spent To Date and is never added to it.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Direct costs are discrete transactions, so unlike the billing balances these totals are correct at any grouping. The vendor list is Procore''s prequalification record, which is not the same as current insurance. Vendor commitments and vendor counts are not month-filtered.'"
+                  "Value": "'Direct costs sum at any grouping. The vendor list is Procore prequalification, not current insurance. Vendor figures and the Sage AP table are not month-filtered. Sage AP starts 2025-03-11 and lags or leads Procore, so it checks Spent To Date and is never added to it.'"
                 }
               }
             }

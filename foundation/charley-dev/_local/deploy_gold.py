@@ -87,7 +87,7 @@ statements = split_statements
 #
 # The gold SQL stays byte-identical across both sources. Only the SELECTION differs, which
 # is what --source has always been for.
-GOLD_CD_ONLY = ("13_dim_job.sql", "33_fct_qc.sql", "40_man_tables.sql",
+GOLD_CD_ONLY = ("13_dim_job.sql", "33_fct_qc.sql", "34_fct_apinvoice.sql","40_man_tables.sql",
                 "41_man_qc_tables.sql", "44_dq_crosswalkcandidate.sql", "45_dq_datagap.sql")
 
 
@@ -252,6 +252,8 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
                   "fct_VendorInsurance",
           "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal", "fct_Milestone",
           "fct_FinancialPeriod",
+          # Sage AP at line grain - the ERP side of the cost reconciliation.
+          "fct_ApInvoice",
           # PQP quality facts, read from Procore (the client's system of record for
           # quality). Listed here so they get the same empty-table guard as everything
           # else AND so their schema is published - a gold table missing from
@@ -296,7 +298,7 @@ for fact, col, dim, key in [
 # Every fact month must exist in dim_Date or time intelligence silently returns blank -
 # the exact failure dim_Date was built to eliminate.
 for fact in ["fct_BudgetLine", "fct_ChangeOrder", "fct_Invoice", "fct_RfiSubmittal",
-             "fct_Milestone", "fct_FinancialPeriod"]:
+             "fct_Milestone", "fct_FinancialPeriod", "fct_ApInvoice"]:
     missing = spark.sql(
         f"SELECT COUNT(*) AS n FROM {fact} f LEFT JOIN dim_Date d ON f.MonthStart = d.Date "
         f"WHERE f.MonthStart IS NOT NULL AND d.Date IS NULL"

@@ -281,6 +281,27 @@ def test_report_formats():
     assert E["Vendors With Insurance"](c, a) + E["Vendors Without Insurance"](c, a) == E["Vendors On Project"](c, a)
     assert E["Report Month Label"](c, a) == "All months"
 
+    # AP reconciliation: mapped job cost only, month ignored, BLANK variance when a side is blank.
+    feb = "2026-02-01T00:00:00"
+    ap = dict(dim_Project=[{"ProjectKey": "a"}, {"ProjectKey": "b"}],
+              dim_Date=[{"Date": jan, "MonthStart": jan}, {"Date": feb, "MonthStart": feb}],
+              fct_BudgetLine=[{"ProjectKey": "a", "MonthStart": jan, "SpentToDate": 100.0}],
+              fct_ApInvoice=[
+                  {"ProjectKey": "a", "MonthStart": jan, "LineTotal": 70.0, "IsJobCost": True, "IsErpOnlyVendor": False},
+                  {"ProjectKey": "a", "MonthStart": feb, "LineTotal": 60.0, "IsJobCost": True, "IsErpOnlyVendor": True},
+                  {"ProjectKey": "a", "MonthStart": jan, "LineTotal": 9.0, "IsJobCost": False, "IsErpOnlyVendor": False},
+                  {"ProjectKey": None, "MonthStart": jan, "LineTotal": 500.0, "IsJobCost": True, "IsErpOnlyVendor": False},
+                  {"ProjectKey": "b", "MonthStart": feb, "LineTotal": 5.0, "IsJobCost": True, "IsErpOnlyVendor": True}])
+    c = vm.Recompute(ap, dm.RELATIONSHIPS)
+    b, jan_only = vm.Scope("b", None, None), vm.Scope("a", jan, None)
+    assert E["AP Job Cost"](c, a) == 130.0 and E["AP Job Cost"](c, jan_only) == 130.0
+    assert E["AP Job Cost"](c, vm.PORTFOLIO) == 135.0, "unmapped AP must not reach the portfolio figure"
+    assert E["ERP-only Vendor Cost"](c, a) == 60.0
+    assert E["AP vs Procore Spent Variance"](c, a) == 30.0 and E["AP / Procore Spent Ratio"](c, a) == 1.3
+    assert E["AP vs Procore Spent Variance"](c, b) is None and E["AP / Procore Spent Ratio"](c, b) is None
+    exprs = {m[0]: m[1] for m in dm.MEASURES}
+    assert "Spent To Date" not in exprs["AP Job Cost"] and "fct_ApInvoice" not in exprs["Spent To Date"]
+
 
 def test_qc_disclosures():
     import deploy_report_qc as qc

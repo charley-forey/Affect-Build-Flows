@@ -235,13 +235,29 @@ SOURCE_FIXTURES = (
            beginning_balance, ending_balance)""",
 
     """CREATE OR REPLACE VIEW sv_ap_invoices AS SELECT * FROM (VALUES
-        ('AP1', 'INV-77', 'SV1', 'S100', 'Tower A', DATE '2025-05-10', DATE '2025-06-10', 'Draw', 8000.0, 2000.0, 6000.0, '2025-05'),
-        ('AP2', 'INV-78', 'SV1', 'S999', 'Office',  DATE '2025-05-12', DATE '2025-06-12', 'Rent', 2500.0,    0.0, 2500.0, '2025-05'),
+        ('AP1', 'INV-77', 'SV1', 'S100', 'Tower A', DATE '2025-05-10', DATE '2025-06-10', 'Draw', 8000.0, 2000.0, 6000.0, '2025-05', 'U1', 1),
+        ('AP2', 'INV-78', 'SV1', 'S999', 'Office',  DATE '2025-05-12', DATE '2025-06-12', 'Rent', 2500.0,    0.0, 2500.0, '2025-05', 'U2', 1),
         -- No job at all: counted under 'AP invoice with no Sage job', never valued.
-        ('AP3', 'INV-79', 'SV1', NULL,   NULL,      DATE '2025-05-14', DATE '2025-06-14', 'Stock', 700.0,    0.0,  700.0, '2025-05')
+        ('AP3', 'INV-79', 'SV1', NULL,   NULL,      DATE '2025-05-14', DATE '2025-06-14', 'Stock', 700.0,    0.0,  700.0, '2025-05', 'U3', 1),
+        -- SV2 is a Sage vendor no Procore vendor carries: its job cost on P1 is ERP-only.
+        ('AP4', 'INV-80', 'SV2', 'S100', 'Tower A', DATE '2025-06-02', DATE '2025-07-02', 'Bill', 6000.0, 6000.0,    0.0, '2025-06', 'U4', 2)
     ) AS t(invoice_id, invoice_number, sage_vendor_id, sage_project_id, job_name,
            invoice_date, due_date, description, invoice_total, amount_paid,
-           invoice_balance, billing_period)""",
+           invoice_balance, billing_period, invoice_uid, status_code)""",
+
+    # AP lines -> fct_ApInvoice. L1 is job cost at a vendor Procore carries on P1 (V1 has a
+    # subcontract there); L2 is the same invoice on an overhead GL (outside 50000-50999, so
+    # not job cost); L3 is job cost on an unmapped job; L4 has no job; L5 is ERP-only.
+    # line_total is DOUBLE, as in silver, so threshold tests can set large amounts.
+    """CREATE OR REPLACE VIEW sv_ap_lines AS SELECT * REPLACE (CAST(line_total AS DOUBLE) AS line_total) FROM (VALUES
+        ('L1', 'AP1', 'S100', 'SV1', 1, 'Pour',   1.0, 7000.0, 7000.0, 0.0, '50004', NULL, 'U1'),
+        ('L2', 'AP1', 'S100', 'SV1', 2, 'Office', 1.0, 1000.0, 1000.0, 0.0, '60010', NULL, 'U1'),
+        ('L3', 'AP2', 'S999', 'SV1', 1, 'Rent',   1.0, 2500.0, 2500.0, 0.0, '50004', NULL, 'U2'),
+        ('L4', 'AP3', NULL,   'SV1', 1, 'Stock',  1.0,  700.0,  700.0, 0.0, '50001', NULL, 'U3'),
+        ('L5', 'AP4', 'S100', 'SV2', 1, 'Bill',   1.0, 6000.0, 6000.0, 0.0, '50001', NULL, 'U4')
+    ) AS t(line_uid, invoice_id, sage_project_id, sage_vendor_id, line_number,
+           description, quantity, unit_price, line_total, invoiced_amount,
+           ledger_account, sub_account, invoice_uid)""",
 
     # Field ops. Values exercise the paths that matter: one open and past due, one closed
     # (so IsPastDue must be FALSE even though its due date has gone), and a punch item with

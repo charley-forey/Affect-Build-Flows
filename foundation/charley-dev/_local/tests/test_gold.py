@@ -657,6 +657,8 @@ GAP_CATEGORIES = {
     "Unmatched AR invoice", "Unmapped trade", "Project missing from Sage",
     "Project missing from Outbuild", "Vendor without certificate", "Expired certificate",
     "Empty manual register", "Sage job without Procore project", "AP invoice with no Sage job",
+    "Cost reconciliation variance", "ERP-only vendor cost",
+    "Project with no Procore budget or zero Spent To Date while AP/requisitions exist",
 }
 
 
@@ -672,6 +674,10 @@ def test_dq_datagap(con) -> None:
         con.execute("INSERT INTO bridge_ProjectVendor SELECT * REPLACE ('V9' AS VendorKey, "
                     "'Uninsured Co' AS VendorName) FROM bridge_ProjectVendor LIMIT 1")
         con.execute("DELETE FROM man_QcItp")
+        # P2 has requisitions in Procore and no budget at all: the 25-012 pattern.
+        con.execute("CREATE TEMP TABLE cm_gap AS SELECT * FROM sv_commitments")
+        con.execute("CREATE OR REPLACE VIEW sv_commitments AS SELECT * FROM cm_gap UNION ALL "
+                    "SELECT * REPLACE ('P2' AS project_id, 'SC9' AS commitment_id) FROM cm_gap WHERE commitment_id = 'SC1'")
         # Fact rows on a project gold has never heard of: ProjectKey must come out NULL.
         con.execute("INSERT INTO bridge_ProjectVendor SELECT * REPLACE ('V8' AS VendorKey, "
                     "'P404' AS ProjectKey) FROM bridge_ProjectVendor LIMIT 1")
@@ -751,13 +757,72 @@ def test_dq_datagap(con) -> None:
     check("every reject ledger row reaches dq_DataGap exactly once, with its batch id")
 
 
+def test_fct_apinvoice(con) -> None:
+    """Sage AP at line grain: the ERP side of the Procore cost reconciliation."""
+    rows = {r[0]: r[1:] for r in q(con, "SELECT ApLineKey, ProjectKey, VendorKey, IsJobCost, IsErpOnlyVendor, "
+                                         "LineTotal FROM fct_ApInvoice")}
+    assert rows == {
+        "L1": ("P1", "V1", True, False, 7000.0),          # mapped job, vendor Procore carries on P1
+        "L2": ("P1", "V1", False, False, 1000.0),         # overhead GL 60010: not job cost
+        "L3": (None, "V1", True, False, 2500.0),          # unmapped job: no ProjectKey, never ERP-only
+        "L4": (None, "V1", False, False, 700.0),          # no job at all
+        "L5": ("P1", "UNASSIGNED", True, True, 6000.0),   # Sage vendor unknown to Procore
+    }, rows
+    check("fct_ApInvoice classifies mapped/unmapped jobs, GL outside 50000-50999 and ERP-only vendors")
+    assert one(con, "SELECT SUM(LineTotal) FROM fct_ApInvoice") == one(con, "SELECT SUM(line_total) FROM sv_ap_lines")
+    assert q(con, "SELECT DISTINCT InvoiceKey, InvoiceTotal, MonthStart FROM fct_ApInvoice WHERE ApLineKey IN ('L1','L2')") == [
+        ("U1", 8000.0, date(2025, 5, 1))]
+    check("fct_ApInvoice keeps every AP line once and carries its header on each line")
+
+    # dq_DataGap thresholds, at the boundary. P1 AP job cost is 13,000 (L1 + L5).
+    from seedrunner import CHARLEY_DEV, split_statements
+    gap_sql = split_statements((CHARLEY_DEV / "02-transformation/sql/gold/45_dq_datagap.sql").read_text(encoding="utf-8"))
+
+    def gaps(category, *mutations):
+        con.execute("BEGIN")
+        try:
+            for m in mutations:
+                con.execute(m)
+            for sql in gap_sql:
+                con.execute(sql)
+            return q(con, f"SELECT EntityKey FROM dq_DataGap WHERE GapCategory = '{category}' ORDER BY 1")
+        finally:
+            con.execute("ROLLBACK")
+
+    variance = "Cost reconciliation variance"
+    spent = lambda v: f"UPDATE fct_BudgetLine SET SpentToDate = CASE BudgetLineID WHEN 'B1' THEN {v} ELSE 0 END"
+    assert gaps(variance) == [("P1",)]                      # 13,000 vs 500,000
+    assert gaps(variance, spent(38000.0)) == []              # |diff| exactly 25,000 = floor
+    assert gaps(variance, spent(38000.1)) == [("P1",)]
+    big = "UPDATE fct_ApInvoice SET LineTotal = 300000.0 WHERE ApLineKey = 'L1'"   # AP 306,000
+    assert gaps(variance, big, spent(275400.0)) == []        # exactly 10% of the larger side
+    assert gaps(variance, big, spent(275399.9)) == [("P1",)]
+    check("cost reconciliation variance fires above max($25k, 10%) and not at exactly either boundary")
+
+    nobudget = "Project with no Procore budget or zero Spent To Date while AP/requisitions exist"
+    assert gaps(nobudget) == []
+    assert gaps(nobudget, spent(0)) == [("P1",)]             # the variance arm then stays quiet
+    assert gaps(variance, spent(0)) == []
+    assert gaps(nobudget, "DELETE FROM fct_BudgetLine") == [("P1",)]
+    check("no-budget / zero Spent To Date fires on AP or requisitions, and never double-lists as variance")
+
+    erp = "ERP-only vendor cost"
+    assert gaps(erp) == [("P1:SV2",)]
+    assert gaps(erp, "UPDATE fct_ApInvoice SET LineTotal = 5000.0 WHERE ApLineKey = 'L5'") == []
+    assert gaps(erp, "UPDATE fct_ApInvoice SET LineTotal = 5000.01 WHERE ApLineKey = 'L5'") == [("P1:SV2",)]
+    check("ERP-only vendor cost lists a project-vendor above $5,000, not at exactly $5,000")
+    assert one(con, "SELECT COUNT(*) FROM dq_DataGap WHERE EntityType IN ('fct_ApInvoice', 'fct_BudgetLine') "
+                    "AND Amount IS NOT NULL") == 0
+    check("cost reconciliation gaps carry no Amount - Data Gap Amount stays unmatched AR")
+
+
 def main() -> int:
     con = build()
     for fn in (
         test_dim_project, test_dim_vendor, test_dim_costcode,
         test_fct_budgetline, test_fct_changeorder, test_fct_invoice,
         test_fct_rfisubmittal, test_fct_milestone, test_fct_financialperiod,
-        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance, test_dq_datagap):
+        test_referential_integrity, test_crosswalks, test_fct_qualityitem, test_fct_safetymonthly, test_fct_billing, test_fct_directcost, test_bridge_projectvendor, test_bridge_vendorcostcode, test_fct_vendorinsurance, test_fct_apinvoice, test_dq_datagap):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

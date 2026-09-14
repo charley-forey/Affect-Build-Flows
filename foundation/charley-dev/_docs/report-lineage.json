@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-14T04:57:02.922595+00:00",
+  "generated_at": "2026-09-14T04:58:33.814145+00:00",
   "scope": "Declared visual bindings, DAX, relationships and SQL producers; not proof of source completeness.",
   "models": [
     {
@@ -43,6 +43,7 @@
         "bridge_ProjectVendor",
         "bridge_VendorCostCode",
         "fct_VendorInsurance",
+        "fct_ApInvoice",
         "man_Wins",
         "man_Risks",
         "man_PriorityItems",
@@ -152,6 +153,24 @@
         ],
         [
           "fct_DirectCost",
+          "MonthStart",
+          "dim_Date",
+          "Date"
+        ],
+        [
+          "fct_ApInvoice",
+          "ProjectKey",
+          "dim_Project",
+          "ProjectKey"
+        ],
+        [
+          "fct_ApInvoice",
+          "VendorKey",
+          "dim_Vendor",
+          "VendorKey"
+        ],
+        [
+          "fct_ApInvoice",
           "MonthStart",
           "dim_Date",
           "Date"
@@ -463,6 +482,30 @@
           "expression": "DIVIDE ( [Committed], [Budget] )",
           "format": "\"0.0%\"",
           "origin": "FINANCIALS!D62"
+        },
+        {
+          "name": "AP Job Cost",
+          "expression": "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (),\n\t\t\tNOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - Sage AP job cost (GL 50000-50999 on a job mapped to a Procore project), to date. AP history starts 2025-03-11. NOT added to Spent To Date (no double counting)"
+        },
+        {
+          "name": "AP vs Procore Spent Variance",
+          "expression": "VAR AP = [AP Job Cost]\nVAR Spent = [Spent To Date]\nRETURN IF ( ISBLANK ( AP ) || ISBLANK ( Spent ), BLANK (), AP - Spent )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - [AP Job Cost] minus [Spent To Date], BLANK when either is blank. AP history starts 2025-03-11, so older jobs read Procore-high for timing. AP is NOT added to Spent To Date"
+        },
+        {
+          "name": "AP / Procore Spent Ratio",
+          "expression": "DIVIDE ( [AP Job Cost], [Spent To Date] )",
+          "format": "\"0.00\"",
+          "origin": "no workbook equivalent - [AP Job Cost] over [Spent To Date]. AP history starts 2025-03-11; AP is NOT added to Spent To Date"
+        },
+        {
+          "name": "ERP-only Vendor Cost",
+          "expression": "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (),\n\t\t\tNOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )",
+          "format": "\"$#,0\"",
+          "origin": "no workbook equivalent - AP job cost at vendors with no Procore commitment or direct cost on the project: cost Spent To Date cannot contain. AP history starts 2025-03-11; NOT added to Spent To Date"
         },
         {
           "name": "Last Checked Run",
@@ -2247,6 +2290,48 @@
           "visual": "a9a74f12201a54fabac3",
           "table": "bridge_ProjectVendor",
           "field": "VendorName",
+          "kind": "Column"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "84e56badd11e30e32fa3",
+          "table": "_Measures",
+          "field": "AP / Procore Spent Ratio",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "84e56badd11e30e32fa3",
+          "table": "_Measures",
+          "field": "AP Job Cost",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "84e56badd11e30e32fa3",
+          "table": "_Measures",
+          "field": "AP vs Procore Spent Variance",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "84e56badd11e30e32fa3",
+          "table": "_Measures",
+          "field": "ERP-only Vendor Cost",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "84e56badd11e30e32fa3",
+          "table": "_Measures",
+          "field": "Spent To Date",
+          "kind": "Measure"
+        },
+        {
+          "page": "Direct Costs & Vendors",
+          "visual": "84e56badd11e30e32fa3",
+          "table": "dim_Project",
+          "field": "ProjectName",
           "kind": "Column"
         },
         {
@@ -4765,6 +4850,9 @@
     ],
     "fct_ProcoreInspectionItem": [
       "02-transformation\\sql\\gold\\33_fct_qc.sql"
+    ],
+    "fct_ApInvoice": [
+      "02-transformation\\sql\\gold\\34_fct_apinvoice.sql"
     ],
     "man_Wins": [
       "02-transformation\\sql\\gold\\40_man_tables.sql"

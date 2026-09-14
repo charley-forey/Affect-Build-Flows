@@ -184,6 +184,36 @@ def main() -> int:
                       ("ERP-synced vendors without origin_code", "warn")):
         assert RULES[name].severity == sev, name
     checks += 7
+    # Sage AP headers -> fct_ApInvoice. Line conservation runs in the CONSERVATION loop above.
+    header = "fct_ApInvoice conserves sv_ap_invoices header rows and amounts exactly"
+    assert RULES[header].severity == expectations.SEVERITY_ERROR
+    for sql in ("UPDATE fct_ApInvoice SET InvoiceTotal = InvoiceTotal + 1 WHERE ApLineKey = 'L1'",
+                "UPDATE fct_ApInvoice SET AmountPaid = AmountPaid + 1",
+                "UPDATE fct_ApInvoice SET InvoiceBalance = NULL WHERE InvoiceKey = 'U4'",
+                "UPDATE fct_ApInvoice SET StatusCode = 9 WHERE InvoiceKey = 'U2'",
+                "DELETE FROM fct_ApInvoice WHERE InvoiceKey = 'U4'"):
+        check_fails(con, header, sql)
+        checks += 1
+    ap = "CREATE TEMP TABLE aph_snap AS SELECT * FROM sv_ap_invoices"
+    check_fails(con, header, ap, "CREATE OR REPLACE VIEW sv_ap_invoices AS SELECT * FROM aph_snap "
+                                 "UNION ALL SELECT * FROM aph_snap WHERE invoice_id = 'AP4'")
+    lineless = (ap, "CREATE OR REPLACE VIEW sv_ap_invoices AS SELECT * FROM aph_snap UNION ALL "
+                    "SELECT * REPLACE ('U9' AS invoice_uid, 'AP9' AS invoice_id) FROM aph_snap WHERE invoice_id = 'AP4'")
+    check_fails(con, "sv_ap_invoices headers with no lines absent from fct_ApInvoice", *lineless)
+    assert mutated(con, header, *lineless) == 0, "header conservation fired on a header gold drops by design"
+    for rule in ("fct_ApInvoice.ProjectKey.fk_dim_Project", "fct_ApInvoice.ApLineKey.unique"):
+        assert RULES[rule].severity == expectations.SEVERITY_ERROR
+    check_fails(con, "fct_ApInvoice.ProjectKey.fk_dim_Project", "UPDATE fct_ApInvoice SET ProjectKey = 'P404' WHERE ApLineKey = 'L1'")
+    check_fails(con, "fct_ApInvoice.ApLineKey.unique", "INSERT INTO fct_ApInvoice SELECT * FROM fct_ApInvoice LIMIT 1")
+    checks += 4
+    # The reconciliation gap categories warn and never block; the shared fixture has two.
+    for category in expectations.AP_GAP_CATEGORIES:
+        name = f"dq_DataGap: {category}"
+        assert RULES[name].severity == expectations.SEVERITY_WARN, name
+        check_fails(con, name, "INSERT INTO dq_DataGap SELECT * REPLACE "
+                               f"('{category}' AS GapCategory) FROM dq_DataGap LIMIT 1", clean=False)
+        checks += 1
+
     # Submittal date rules: the pre-2026-09-14 mapping (responded submittals open, and an
     # intake date before creation as the "response") must trip both.
     for fact, where in (("fct_RfiSubmittal", "ItemKey = 'SB2'"), ("fct_QcSubmittal", "SubmittalKey = 'SB2'")):

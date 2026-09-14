@@ -109,6 +109,33 @@ table _Measures
 		formatString: "0.0%"
 		displayFolder: 02 Budget & Cost
 
+	/// Replaces no workbook equivalent - Sage AP job cost (GL 50000-50999 on a job mapped to a Procore project), to date. AP history starts 2025-03-11. NOT added to Spent To Date (no double counting)
+	measure 'AP Job Cost' =
+			CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (),
+			NOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
+
+	/// Replaces no workbook equivalent - [AP Job Cost] minus [Spent To Date], BLANK when either is blank. AP history starts 2025-03-11, so older jobs read Procore-high for timing. AP is NOT added to Spent To Date
+	measure 'AP vs Procore Spent Variance' =
+			VAR AP = [AP Job Cost]
+			VAR Spent = [Spent To Date]
+			RETURN IF ( ISBLANK ( AP ) || ISBLANK ( Spent ), BLANK (), AP - Spent )
+		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
+
+	/// Replaces no workbook equivalent - [AP Job Cost] over [Spent To Date]. AP history starts 2025-03-11; AP is NOT added to Spent To Date
+	measure 'AP / Procore Spent Ratio' = DIVIDE ( [AP Job Cost], [Spent To Date] )
+		formatString: "0.00"
+		displayFolder: 02 Budget & Cost
+
+	/// Replaces no workbook equivalent - AP job cost at vendors with no Procore commitment or direct cost on the project: cost Spent To Date cannot contain. AP history starts 2025-03-11; NOT added to Spent To Date
+	measure 'ERP-only Vendor Cost' =
+			CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (),
+			NOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 02 Budget & Cost
+
 	/// Replaces nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built
 	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
 		formatString: "yyyy-mm-dd hh:nn"

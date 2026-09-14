@@ -147,6 +147,7 @@ RAW_COLUMNS = {
     "fct_Billing": ["RetainageHeld", "IsLatestPeriod", "BillingType", "CompletedToDate", "ContractSumToDate",
                     "BalanceToFinish", "CurrentPaymentDue", "StatusLabel"],
     "fct_DirectCost": ["GrandTotal", "CostType", "IsApproved"],
+    "fct_ApInvoice": ["LineTotal", "IsJobCost", "IsErpOnlyVendor", "ProjectKey"],
     "bridge_ProjectVendor": ["VendorKey", "IsMissingFromErp"],
     "bridge_VendorCostCode": ["VendorKey", "CostCodeKey", "Amount", "AmountType"],
     "fct_VendorInsurance": ["VendorKey", "ExpiryStatus", "ExpirationDate"],
@@ -435,6 +436,10 @@ def monthly_expected():
         values = {r[column] for r in rows}
         return values.pop() if len(values) == 1 else None
 
+    # AP to date on mapped projects: REMOVEFILTERS(dim_Date), blank ProjectKey excluded.
+    ap_cost = lambda flag: lambda c, s: _sum([r for r in c.rows("fct_ApInvoice", s._replace(month=None))
+                                              if r[flag] is True and r["ProjectKey"] is not None], "LineTotal")
+
     # REMOVEFILTERS(dim_Date): the budget is one current-state snapshot.
     budget = lambda column: lambda c, s: _sum(c.rows("fct_BudgetLine", s._replace(month=None)), column)
 
@@ -480,6 +485,12 @@ def monthly_expected():
         "Budget Status": budget_status,
         "Forecast Status": forecast_status,
         "Percent Bought Out": lambda c, s: _div(E["Committed"](c, s), E["Budget"](c, s)),
+        "AP Job Cost": ap_cost("IsJobCost"),
+        "ERP-only Vendor Cost": ap_cost("IsErpOnlyVendor"),
+        "AP vs Procore Spent Variance": lambda c, s: (
+            None if (ap := E["AP Job Cost"](c, s)) is None or (spent := E["Spent To Date"](c, s)) is None
+            else ap - spent),
+        "AP / Procore Spent Ratio": lambda c, s: _div(E["AP Job Cost"](c, s), E["Spent To Date"](c, s)),
         "Blocking Violations Last Run": lambda c, s: None if E["Last Checked Run"](c, s) is None else _zero(_sum(
             [r for r in c.rows("meta_PipelineRun", s) if r["RunAt"] == E["Last Checked Run"](c, s)], "Blocking")),
         "Vendor Spend": lambda c, s: _sum(R(c, "bridge_VendorCostCode", s, lambda r: _eq(r["AmountType"], "Actual")), "Amount"),
