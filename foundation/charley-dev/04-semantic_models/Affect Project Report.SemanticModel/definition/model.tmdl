@@ -30,6 +30,7 @@ ref table fct_DirectCost
 ref table bridge_ProjectVendor
 ref table bridge_VendorCostCode
 ref table fct_VendorInsurance
+ref table fct_ApInvoice
 ref table man_Wins
 ref table man_Risks
 ref table man_PriorityItems
@@ -44,3 +45,4 @@ ref table dim_VendorCrosswalk
 ref table dim_CostCodeCrosswalk
 ref table dq_DataGap
 ref table meta_PipelineRun
+ref table fct_DailySnapshot

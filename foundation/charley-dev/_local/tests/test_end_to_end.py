@@ -149,10 +149,20 @@ def main():
         for sql in seedrunner.split_statements((ROOT / "02-transformation/sql/gold" / name).read_text()):
             con.execute(sql)
     assert con.execute("SELECT SageJobNumber, IsInCrosswalk FROM dim_Project WHERE ProjectKey='P1'").fetchone() == (None, False)
+    # fct_DailySnapshot is created by cd_40_dq_checks after the gate, not by a gold file; its
+    # CREATE TABLE is the column contract the model binds to (USING DELTA is Spark-only).
+    snapshot = (ROOT / "02-transformation/sql/snapshot/fct_dailysnapshot.sql").read_text(encoding="utf-8")
+    con.execute(seedrunner.split_statements(snapshot)[0].replace(") USING DELTA", ")"))
     assert con.execute("SELECT SageProjectId, HasAmbiguousSageMatch, SageMatchMethod FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'").fetchone() == (None, True, "AMBIGUOUS")
 
     # No model column can silently disappear between the parsers and report binding.
     checked = 0
+    # fct_DailySnapshot is written by the DQ gate, not the gold build: run its real capture
+    # SQL (same substitution as test_report.py) so its model columns are checked too.
+    import deploy_dq
+    for statement in deploy_dq.snapshot_statements():
+        con.execute(statement.replace("{SNAPSHOT_DATE}", "2026-01-31").replace("{RUN_ID}", "test")
+                    .replace(") USING DELTA", ")"))
     for directory in (ROOT / "04-semantic_models").glob("*.SemanticModel"):
         for path in (directory / "definition/tables").glob("*.tmdl"):
             text = path.read_text(encoding="utf-8")

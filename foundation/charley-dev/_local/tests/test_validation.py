@@ -98,6 +98,7 @@ def test_notebooks():
         "seeds": deploy_seeds.build_notebook(),
         "silver": deploy_silver.build_notebook(),
         "extraction": make_notebooks.notebook(make_notebooks.EXTRACT_PROCORE),
+        "python extraction": make_notebooks.notebook(make_notebooks.extract_procore_python("ws", "lh"), "python"),
         "outbuild extraction": make_notebooks.notebook(make_notebooks.EXTRACT_OUTBUILD),
         "sage candidate": validate_sage_spark.build("offline-test"),
         "gold candidate": validate_gold_candidate.build("offline-test", {"id": "validation-only", "defaultSchema": "dbo"}),
@@ -112,11 +113,27 @@ def test_notebooks():
                 compile("".join(cell["source"]), f"{name}:cell{i}", "exec")
                 count += 1
     print(f"  {count} generated Python cells compile across {len(notebooks)} notebooks")
+    # No %%configure (2026-09-14, _docs/capacity-operations.md): CU is capped by the workspace
+    # pool (deploy_spark_settings.py). Custom session properties forfeit starter-pool fast start
+    # (2-5 min on-demand), the smallest documented driverCores is 4 (half a Medium node, which
+    # a single-node pool already gives), and a differing config splits high-concurrency
+    # session sharing. Outside the first code cell it also fails pipeline runs outright.
+    for name, nb in notebooks.items():
+        assert not any("%%configure" in "".join(c["source"]) for c in nb["cells"]), name
     source = "\n".join("".join(c["source"]) for c in notebooks["extraction"]["cells"])
     assert "session = rl.RateLimitedSession(requests.Session())" in source
     assert any(remote == "Files/lib/ratelimit.py" and local.exists()
                for local, remote in deploy_ingestion.UPLOADS)
-    candidate = "\n".join("".join(c["source"]) for c in notebooks["sage candidate"]["cells"])
+    # The Python-kernel variant shares every extraction cell and never touches Spark.
+    python = notebooks["python extraction"]
+    assert python["cells"][2:] == notebooks["extraction"]["cells"][2:]
+    assert python["metadata"]["microsoft"]["language_group"] == "jupyter_python"
+    python_code = "\n".join("".join(c["source"]) for c in python["cells"] if c["cell_type"] == "code")
+    assert "spark" not in python_code.lower()
+    assert "abfss://ws@onelake.dfs.fabric.microsoft.com/lh/Tables/dbo" in python_code
+    assert any(remote == "Files/lib/deltars.py" and local.exists()
+               for local, remote in deploy_ingestion.UPLOADS)
+    candidate ="\n".join("".join(c["source"]) for c in notebooks["sage candidate"]["cells"])
     assert "CREATE OR REPLACE TABLE" not in candidate
     assert "CREATE OR REPLACE TEMPORARY VIEW" in candidate
     assert notebooks["gold candidate"]["metadata"]["dependencies"]["lakehouse"]["default_lakehouse"] == "validation-only"
@@ -539,7 +556,7 @@ def test_extraction_scope_evidence():
             if scenario == "declared_now_available" and ep.name == "parent":
                 return [("good", 7), ("good", 8)]
             return [("good", 7)] + ([("disabled", 8)] if gap else [])
-        def merge(spark, rows, table, keys):
+        def merge(rows, table, keys):
             if scenario == "merge_failure" and table == "bronze_parent":
                 raise ValueError("conflicting key")
             written.append(table)
@@ -549,20 +566,21 @@ def test_extraction_scope_evidence():
                 ordered=[parent, child], project_ids=[7, 8], batch_id="batch-test",
                 DIAG=temp, os=os, _json=json, print=lambda *a, **k: None,
                 settings=SimpleNamespace(company_id=1, base_url="unused"), session=None, token=None,
-                spark=SimpleNamespace(createDataFrame=lambda rows, schema: rows),
+                # The four bronze-write hooks each kernel's setup cell defines.
+                write_bronze=merge, log_run=lambda *a: None,
+                read_since=lambda *a: "previous-watermark",
+                write_watermark=lambda *a: watermarks.append(a),
                 px=SimpleNamespace(build_headers=lambda token, company, ep: {"endpoint": ep.name},
                     build_params=lambda ep, company, since: {"since": since},
                     iter_records=records, stamp_project=lambda record, pid: dict(record, normalized_project=pid),
-                    to_bronze_row=lambda record, *a: record, bronze_schema=lambda: None,
+                    to_bronze_row=lambda record, *a: record,
                     bronze_merge_keys=lambda ep: ["id"], is_tool_not_enabled=lambda exc: isinstance(exc, Disabled)),
                 ps=SimpleNamespace(expand_paths=paths, collect_parent_ids=lambda records, parent: [r["id"] for r in records],
                                    declared_unavailable=lambda ep, pid: "tool not enabled" if (
                                        scenario in ("declared", "declared_now_available") and ep.name == "parent" and pid == 8) else None,
                                    normalize_records=lambda ep, record, path: [record]),
-                fc=SimpleNamespace(utc_now=lambda: "now", row_hash=lambda r: "hash",
-                                   merge_delta=merge, log_run=lambda *a: None),
-                wm=SimpleNamespace(read_since=lambda *a: "previous-watermark", high_water=lambda *a: "high",
-                                   write_watermark=lambda *a: watermarks.append(a)))
+                fc=SimpleNamespace(utc_now=lambda: "now", row_hash=lambda r: "hash"),
+                wm=SimpleNamespace(high_water=lambda *a: "high"))
             if scenario in ("archive_failure", "checkpoint_failure"):
                 def unavailable_archive(path, *args, **kwargs):
                     if str(path).endswith(".jsonl" if scenario == "archive_failure" else ".audit.json"):
@@ -847,6 +865,22 @@ def test_pipeline():
     assert by_name["Extract Procore"]["policy"]["retry"] == 0, "a same-hour retry has no quota"
     assert by_name["Extract Procore"]["policy"]["timeout"] == "0.02:00:00"
     assert by_name["Land To Bronze"]["policy"]["timeout"] == "0.01:00:00"
+    # One session tag on every notebook, so high-concurrency pipeline runs pack them together.
+    notebooks = [a for a in activities if a["type"] == "TridentNotebook"]
+    assert notebooks and all(a["typeProperties"]["sessionTag"] == deploy_pipeline.SESSION_TAG
+                             for a in notebooks)
+    import deploy_spark_settings as dss
+    current = {"pool": {"starterPool": {"maxNodeCount": 2, "maxExecutors": 1}},
+               "job": {"sessionTimeoutInMinutes": 20, "conservativeJobAdmissionEnabled": False},
+               "highConcurrency": {"notebookPipelineRunEnabled": False}}
+    assert dss.proposal(current, False) == {
+        "pool": {"starterPool": {"maxNodeCount": 1}}, "job": {"sessionTimeoutInMinutes": 10},
+        "highConcurrency": {"notebookPipelineRunEnabled": True}}
+    assert dss.proposal(dss.TARGET, False) == {}
+    assert dss.proposal(dss.TARGET, True) == {"pool": {"defaultPool": {"name": "cd_small", "type": "Workspace"}}}
+    with patch.object(sys, "argv", ["x", "--workspace", "00000000-0000-0000-0000-000000000000", "--apply"]), \
+            patch.object(dss.dp, "token", side_effect=AssertionError("must refuse before auth")):
+        assert dss.main() == 2
     def visit(name, active):
         assert name in by_name, f"missing dependency {name}"
         assert name not in active, f"pipeline cycle at {name}"
@@ -959,14 +993,65 @@ def test_lineage_bindings():
 
 def test_missing_manual_csv_preserves_bronze():
     source = "".join(deploy_manual.build_notebook()["cells"][2]["source"])
-    scope = dict(SPEC={"wins": []}, MANUAL_DIR="Files/_manual", TYPES={},
-                 StructType=lambda fields: fields,
+    scope = dict(SPEC={"wins": []}, SOURCE={"wins": "csv"}, MANUAL_DIR="Files/_manual", TYPES={},
+                 StructType=lambda fields: fields, flat_table=lambda table, cols: ([], True),
                  notebookutils=SimpleNamespace(fs=SimpleNamespace(exists=lambda path: False)),
                  spark=SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda table: True),
                                        table=lambda table: SimpleNamespace(count=lambda: 7)))
     # Spark has no writer here: any attempt to overwrite an existing table fails the test.
     exec(compile(source, "manual:load", "exec"), scope)
     assert scope["loaded"]["wins"] == {"rows": 7, "source": "existing bronze preserved"}
+
+    # SHAREPOINT-SOURCED: an uploaded CSV is ignored - never read, never written over the
+    # dataflow's rows. `spark` has no reader or writer, so touching the CSV fails the test.
+    with contextlib.redirect_stdout(io.StringIO()) as out:
+        exec(compile(source, "manual:load", "exec"),
+             {**scope, "SOURCE": {"wins": "sharepoint"},
+              "notebookutils": SimpleNamespace(fs=SimpleNamespace(exists=lambda path: True))})
+    assert "IGNORING Files/_manual/wins.csv" in out.getvalue(), out.getvalue()
+    # ...and before the dataflow's first refresh it is declared empty, flat, so silver runs.
+    writes = []
+    writer = SimpleNamespace()
+    for step in ("format", "mode", "option"):
+        setattr(writer, step, lambda *a, _w=writer: _w)
+    writer.saveAsTable = writes.append
+    missing = {**scope, "SOURCE": {"wins": "sharepoint"}, "flat_table": lambda table, cols: ("S", False),
+               "spark": SimpleNamespace(createDataFrame=lambda rows, schema: SimpleNamespace(write=writer))}
+    with contextlib.redirect_stdout(io.StringIO()):
+        exec(compile(source, "manual:load", "exec"), missing)
+    assert writes == ["cd_bronze_man_wins"] and missing["loaded"]["wins"] == {"rows": 0, "source": "sharepoint"}
+
+    # The generated SOURCE follows make_sharepoint.CSV_SOURCED, the same flag that removes
+    # the list from the dataflow - so a list always has exactly one writer.
+    ms = deploy_manual.ms
+    header = "".join(deploy_manual.build_notebook()["cells"][0]["source"])
+    assert '"wins": "sharepoint"' in header and "shared cd_bronze_man_wins =" in ms.build_mashup()
+    with patch.object(ms, "CSV_SOURCED", frozenset({"wins"})):
+        header = "".join(deploy_manual.build_notebook()["cells"][0]["source"])
+        assert '"wins": "csv"' in header and '"risks": "sharepoint"' in header
+        assert "cd_bronze_man_wins" not in ms.build_mashup()
+        assert "cd_bronze_man_wins" not in ms.build_query_metadata()
+
+    # flat_table: an empty table in the old nested shape is rebuilt; one holding rows raises.
+    fn = header[header.index("def flat_table"):]
+    for rows, expect in (([], ("schema", False)), ([1], ValueError)):
+        old = SimpleNamespace(columns=["ProjectKey", "Editor"], take=lambda n, _r=rows: _r)
+        ns = dict(AUDIT=[("Modified", "timestamp")], TYPES={"string": "S", "timestamp": "T"},
+                  StructField=lambda c, t, n: c,
+                  StructType=lambda f: SimpleNamespace(fieldNames=lambda: f),
+                  spark=SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda t: True),
+                                        table=lambda t: old))
+        exec(compile(fn, "manual:flat", "exec"), ns)
+        try:
+            with contextlib.redirect_stdout(io.StringIO()):
+                schema, ok = ns["flat_table"]("cd_bronze_man_wins", [("ProjectKey", "string")])
+        except ValueError:
+            assert expect is ValueError
+        else:
+            assert expect != ValueError and ok is False
+    ok_table = SimpleNamespace(columns=["ProjectKey", "Modified"], take=lambda n: [1])
+    ns["spark"] = SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda t: True), table=lambda t: ok_table)
+    assert ns["flat_table"]("cd_bronze_man_wins", [("ProjectKey", "string")])[1] is True
     def unavailable(path):
         raise OSError("storage unavailable")
     scope["notebookutils"].fs.exists = unavailable
@@ -977,9 +1062,9 @@ def test_missing_manual_csv_preserves_bronze():
     else:
         raise AssertionError("storage failure was treated as missing input")
     # A supplied but empty export is also not proof that all existing records were deleted.
-    guard = source[source.index("    if exists and"):source.index("    out =")]
+    guard = source[source.index("    if exists and"):source.index("    # On the CSV path")]
     for incoming, existing, blocked in (([], [1], True), ([], [], False), ([1], [1], False)):
-        scope = dict(exists=True, table="cd_bronze_man_wins", df=SimpleNamespace(take=lambda n: incoming),
+        scope = dict(exists=True, table_ok=True, table="cd_bronze_man_wins", df=SimpleNamespace(take=lambda n: incoming),
                      spark=SimpleNamespace(catalog=SimpleNamespace(tableExists=lambda table: True),
                                            table=lambda table: SimpleNamespace(take=lambda n: existing)))
         try:

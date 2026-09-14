@@ -16,8 +16,12 @@ expensive way round.
 So this is the same destination by a road nobody has to unlock: fill a CSV, drop it in
 OneLake, and it lands in exactly the bronze tables the SharePoint dataflow would have
 written - same table names, same column shapes, same downstream parsers. When the lists are
-provisioned, the dataflow takes over and nothing downstream changes. Neither path is
-"temporary"; they are two writers into one contract.
+provisioned, the dataflow takes over and nothing downstream changes.
+
+ONE WRITER PER LIST. make_sharepoint.CSV_SOURCED decides, per list, whether the dataflow or
+this loader owns its bronze. SharePoint-sourced lists (all 17 by default) ignore any
+uploaded CSV here and have no template; CSV-sourced lists have no dataflow query. Two
+writers into one table meant an upload overwrote SharePoint rows and vice versa.
 
     Files/_manual/_templates/<list>.csv     generated here - the blank to fill in
     Files/_manual/<list>.csv                what somebody uploads
@@ -63,7 +67,7 @@ NOTEBOOK_NAME = "cd_06_land_manual"
 # reject rules in 30/31_*_silver.sql rather than failing the load - a typo in one cell of
 # one row must not stop the other sixteen lists.
 SQL_TO_SPARK = {"STRING": "string", "INT": "int", "DOUBLE": "double",
-                "DATE": "date", "BOOLEAN": "boolean"}
+                "DATE": "date", "BOOLEAN": "boolean", "TIMESTAMP": "timestamp"}
 
 LISTS: dict[str, list[tuple[str, str]]] = {
     ms.csv_name(table): [(col, SQL_TO_SPARK[sql_type]) for col, sql_type in cols]
@@ -122,6 +126,12 @@ EXAMPLES: dict[str, list[str]] = {
 def build_notebook() -> dict:
     spec = {name: cols for name, cols in LISTS.items()}
     examples = EXAMPLES
+    # Which writer owns each list's bronze - generated from make_sharepoint.CSV_SOURCED,
+    # the same flag that decides whether CD_Manual_Ingest has a query for it.
+    source = {ms.csv_name(t): "sharepoint" if ms.sharepoint_sourced(t) else "csv"
+              for t in ms.tables()}
+    audit = [(c, SQL_TO_SPARK[t]) for c, t in ms.AUDIT_COLUMNS]
+    register = [(c, SQL_TO_SPARK[t]) for c, t in ms.JOB_REGISTER_COLUMNS]
 
     cells = [
         cell(f'''
@@ -136,12 +146,38 @@ from pyspark.sql.types import (StructType, StructField, StringType, IntegerType,
 
 SPEC = {json.dumps(spec, indent=1)}
 EXAMPLES = {json.dumps(examples, indent=1)}
+# "sharepoint": CD_Manual_Ingest writes this list's bronze and any CSV is IGNORED.
+# "csv": this loader writes it. Switch in _local/make_sharepoint.py CSV_SOURCED.
+SOURCE = {json.dumps(source, indent=1)}
+AUDIT = {json.dumps(audit)}
+JOB_REGISTER_SPEC = {json.dumps(register)}
 
 MANUAL_DIR = "Files/_manual"
 TEMPLATE_DIR = f"{{MANUAL_DIR}}/_templates"
 
 TYPES = {{"string": StringType(), "int": IntegerType(), "double": DoubleType(),
-          "date": DateType(), "boolean": BooleanType()}}
+          "date": DateType(), "boolean": BooleanType(), "timestamp": TimestampType()}}
+
+
+def flat_table(table, cols):
+    """The flat bronze schema, and whether `table` already has it.
+
+    Bronze used to hold ProjectKey/Editor as {{Title}} structs, which a Dataflow Gen2
+    Lakehouse destination cannot write. An EMPTY table in the old shape is rebuilt; one that
+    holds rows raises rather than being overwritten - hand-typed data is never discarded to
+    fix a schema.
+    """
+    schema = StructType([StructField(c, TYPES[t], True) for c, t in cols + AUDIT])
+    if not spark.catalog.tableExists(table):
+        return schema, False
+    existing = spark.table(table)
+    if set(existing.columns) == set(schema.fieldNames()):
+        return schema, True
+    if existing.take(1):
+        raise ValueError(f"{{table}}: holds rows in a pre-flat bronze shape "
+                         f"({{sorted(existing.columns)}}); migrate it by hand, not overwritten")
+    print(f"  {{table}}: empty and in the old nested shape - rebuilding flat")
+    return schema, False
 '''),
 
         cell('''
@@ -156,6 +192,8 @@ local_templates = "/lakehouse/default/Files/_manual/_templates"
 os.makedirs(local_templates, exist_ok=True)
 
 for name, cols in SPEC.items():
+    if SOURCE[name] != "csv":
+        continue  # a template for a SharePoint-sourced list invites an upload that is ignored
     header = ",".join(c for c, _ in cols)
     example = ",".join(f'"{v}"' if ("," in v or " " in v) else v
                        for v in EXAMPLES.get(name, []))
@@ -163,25 +201,45 @@ for name, cols in SPEC.items():
         fh.write(header + "\\n")
         if example:
             fh.write(example + "\\n")
-print(f"templates written: {len(SPEC)} file(s) in Files/_manual/_templates/")
+print(f"templates written for {sum(v == 'csv' for v in SOURCE.values())} CSV-sourced list(s)")
 '''),
 
         cell('''
 # ------------------------------------------------------------------- load
 #
-# ProjectKey and Editor are wrapped into {Title: ...}. SharePoint lookup and person columns
-# arrive that shape, 30_manual_silver.sql reads ProjectKey.Title, and the whole design
-# depends on both writers producing identical bronze - so the CSV path adapts to
-# SharePoint's shape rather than the parsers being forked.
+# ONE WRITER PER LIST. SOURCE says who owns each cd_bronze_man_* table:
+#   sharepoint - CD_Manual_Ingest writes it. An uploaded CSV is reported and IGNORED; it used
+#                to overwrite that list's SharePoint rows, and the next refresh overwrote it
+#                back. The table is only declared (empty, flat) if it does not exist yet, so
+#                silver runs before the dataflow's first refresh.
+#   csv        - this loader writes it from Files/_manual/<list>.csv.
+# Switch a list in _local/make_sharepoint.py CSV_SOURCED (see the comment there).
+#
+# Both writers land the same FLAT shape: declared columns (ProjectKey = the project id as
+# text), then Modified, _source, _ingested_at. No structs - a Dataflow Gen2 Lakehouse
+# destination cannot write them, so the CSV path matches the dataflow, not the reverse.
 loaded = {}
 for name, cols in SPEC.items():
     path = f"{MANUAL_DIR}/{name}.csv"
-    schema = StructType([StructField(c, TYPES[t], True) for c, t in cols])
-    # A missing CSV is not an instruction to delete SharePoint data. Filesystem errors
+    table = f"cd_bronze_man_{name}"
+    schema, table_ok = flat_table(table, cols)
+
+    if SOURCE[name] == "sharepoint":
+        if notebookutils.fs.exists(path):
+            print(f"  {table}: IGNORING {path} - SharePoint is this list's only writer")
+        if not table_ok:
+            spark.createDataFrame([], schema).write.format("delta").mode("overwrite") \\
+                 .option("overwriteSchema", "true").saveAsTable(table)
+        n = spark.table(table).count() if table_ok else 0
+        loaded[name] = {"rows": n, "source": "sharepoint"}
+        print(f"  {table:<38} {n:>5} row(s)  (sharepoint{'' if table_ok else ', declared empty'})")
+        continue
+
+    csv_schema = StructType([StructField(c, TYPES[t], True) for c, t in cols])
+    # A missing CSV is not an instruction to delete existing data. Filesystem errors
     # must fail the run rather than masquerade as an empty source.
     exists = notebookutils.fs.exists(path)
-    table = f"cd_bronze_man_{name}"
-    if not exists and spark.catalog.tableExists(table):
+    if not exists and table_ok:
         loaded[name] = {"rows": spark.table(table).count(), "source": "existing bronze preserved"}
         print(f"  {table}: no CSV; existing bronze preserved")
         continue
@@ -189,31 +247,30 @@ for name, cols in SPEC.items():
     if exists:
         df = (spark.read.option("header", True).option("mode", "FAILFAST")
               .option("enforceSchema", False)
-              .schema(schema).csv(path))
+              .schema(csv_schema).csv(path))
         source = "csv"
     else:
         # Empty but correctly typed. Silver and gold then run to completion and the report
         # shows an honest blank - rather than the pipeline failing until every list is
         # populated, which would mean it never runs at all.
-        df = spark.createDataFrame([], schema)
+        df = spark.createDataFrame([], csv_schema)
         source = "empty"
 
-    if exists and spark.catalog.tableExists(table) and not df.take(1) and spark.table(table).take(1):
+    if exists and table_ok and not df.take(1) and spark.table(table).take(1):
         raise ValueError(f"{table}: empty CSV would erase existing records; existing table preserved")
 
+    # On the CSV path there is no per-row edit time, so Modified is the load time - the
+    # truth: this row is only known to be as fresh as the upload.
     out = (df
-           .withColumn("ProjectKey", F.struct(F.col("ProjectKey").alias("Title")))
-           # Modified/Editor are SharePoint's audit columns. On the CSV path there is no
-           # per-row editor, so the load time and the file are recorded instead - which is
-           # the truth: this row is only known to be as fresh as the upload.
            .withColumn("Modified", F.current_timestamp())
-           .withColumn("Editor", F.struct(F.lit(f"csv:{name}.csv").alias("Title"))))
+           .withColumn("_source", F.lit(f"csv:{name}.csv"))
+           .withColumn("_ingested_at", F.current_timestamp()))
 
     out.write.format("delta").mode("overwrite") \\
-       .option("overwriteSchema", "true").saveAsTable(f"cd_bronze_man_{name}")
+       .option("overwriteSchema", "true").saveAsTable(table)
     n = out.count()
     loaded[name] = {"rows": n, "source": source}
-    print(f"  cd_bronze_man_{name:<24} {n:>5} row(s)  ({source})")
+    print(f"  {table:<38} {n:>5} row(s)  ({source})")
 '''),
 
         cell('''
@@ -225,48 +282,27 @@ for name, cols in SPEC.items():
 # published the table does not exist: silver would fail on "table not found" and take the
 # whole nightly pipeline with it, on a chain that is otherwise ready to run.
 #
-# CREATED ONLY IF ABSENT. Every other table above is written with mode("overwrite"), which
-# is correct for them - the CSV is the whole truth each run. Doing that here would delete
-# the register the dataflow just landed, every single night. That exact bug (a leftover
-# overwrite that would have wiped gold the moment it started populating) has already been
-# found once in this repo; this is the same shape and it is not repeated.
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
-
+# CREATED ONLY IF ABSENT (or empty in the old nested shape). Overwriting it would delete the
+# register the dataflow just landed, every single night. The flat shape - folder links as
+# text, no Editor - is make_sharepoint.JOB_REGISTER_COLUMNS, the same list the dataflow
+# selects.
 JOB_REGISTER = "cd_bronze_man_job_register"
 
-if spark.catalog.tableExists(JOB_REGISTER):
+schema, table_ok = flat_table(JOB_REGISTER, JOB_REGISTER_SPEC)
+if table_ok:
     print(f"  {JOB_REGISTER:<26} exists - left alone (the dataflow owns it)")
 else:
-    # The shape SharePoint.Tables returns. URL and person columns arrive as records, the
-    # same way lookup columns do, which is why silver reads EstimatingFolderUrl.Url and
-    # Editor.Title rather than the bare column.
-    url = StructType([StructField("Url", StringType(), True)])
-    schema = StructType([
-        StructField("Id", IntegerType(), True),
-        StructField("Title", StringType(), True),
-        StructField("JobYear", IntegerType(), True),
-        StructField("JobSeq", IntegerType(), True),
-        StructField("JobNumber", StringType(), True),
-        StructField("Stage", StringType(), True),
-        StructField("EstimatingFolderUrl", url, True),
-        StructField("ProjectFolderUrl", url, True),
-        StructField("RequestedBy", StringType(), True),
-        StructField("RequestedAt", TimestampType(), True),
-        StructField("CompletedAt", TimestampType(), True),
-        StructField("CopyJobStatus", StringType(), True),
-        StructField("ErrorDetail", StringType(), True),
-        StructField("Modified", TimestampType(), True),
-        StructField("Editor", StructType([StructField("Title", StringType(), True)]), True),
-    ])
-    spark.createDataFrame([], schema).write.format("delta").saveAsTable(JOB_REGISTER)
+    spark.createDataFrame([], schema).write.format("delta").mode("overwrite") \\
+         .option("overwriteSchema", "true").saveAsTable(JOB_REGISTER)
     print(f"  {JOB_REGISTER:<26} declared empty - publish CD_Manual_Ingest to fill it")
 '''),
 
         cell('''
 total = sum(v["rows"] for v in loaded.values())
-from_csv = [k for k, v in loaded.items() if v["source"] == "csv"]
-print(f"\\n{total} manual row(s) across {len(loaded)} list(s); "
-      f"{len(from_csv)} loaded from CSV, {len(loaded) - len(from_csv)} empty")
+by_source = {}
+for v in loaded.values():
+    by_source[v["source"]] = by_source.get(v["source"], 0) + 1
+print(f"\\n{total} manual row(s) across {len(loaded)} list(s); lists by writer: {by_source}")
 
 DIAG = "/lakehouse/default/Files/_diag"
 import os
@@ -275,11 +311,9 @@ with open(f"{DIAG}/manual_run.json", "w", encoding="utf-8") as fh:
     json.dump(loaded, fh, indent=1)
 
 if total == 0:
-    print("\\nNo manual data yet. This is EXPECTED until somebody fills a template:")
-    print("  1. download Files/_manual/_templates/<list>.csv")
-    print("  2. fill it in (one row per project per month)")
-    print("  3. upload it to Files/_manual/<list>.csv")
-    print("  4. re-run this notebook")
+    print("\\nNo manual data yet. This is EXPECTED until somebody types rows into the CD")
+    print("SharePoint lists and CD_Manual_Ingest refreshes (or, for a list switched to CSV,")
+    print("uploads Files/_manual/<list>.csv from Files/_manual/_templates/).")
     print("\\nUntil then the scorecard's manual categories score BLANK, not zero -")
     print("which is the honest answer and what [Scorecard Coverage %] reports.")
 '''),

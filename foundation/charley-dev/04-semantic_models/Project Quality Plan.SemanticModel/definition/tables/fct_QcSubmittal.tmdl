@@ -91,7 +91,7 @@ table fct_QcSubmittal
 
 	column DaysOpen
 		dataType: int64
-		summarizeBy: sum
+		summarizeBy: none
 		sourceColumn: DaysOpen
 
 	partition fct_QcSubmittal = entity

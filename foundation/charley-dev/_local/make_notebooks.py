@@ -23,20 +23,29 @@ def cell(source: str, kind: str = "code") -> dict:
     return base
 
 
-def notebook(cells: list[dict]) -> dict:
+# Fabric kernel metadata. "python" is the pure-Python (no Spark) kernel: 2 vCores = 1 CU by
+# default. Its ipynb values are not in Microsoft's definition docs; they are what Fabric's own
+# ipynb export of a Python notebook carries. Confirm with getDefinition after the first deploy.
+KERNELS = {
+    "pyspark": {"kernelspec": {"display_name": "Synapse PySpark", "name": "synapse_pyspark"},
+                "microsoft": {"language": "python"}},
+    "python": {"kernel_info": {"name": "jupyter", "jupyter_kernel_name": "python3.11"},
+               "kernelspec": {"display_name": "Jupyter", "name": "jupyter"},
+               "microsoft": {"language": "python", "language_group": "jupyter_python"}},
+}
+
+
+def notebook(cells: list[dict], kernel: str = "pyspark") -> dict:
     """A Fabric-compatible notebook. No outputs are ever stored.
 
     The Fabric export in foundation/ had to be scrubbed because saved cell outputs held
     18 live Procore access tokens. Generating with empty outputs means that class of leak
     cannot happen here in the first place.
     """
+    *spec, microsoft = KERNELS[kernel].items()
     return {
         "cells": cells,
-        "metadata": {
-            "kernelspec": {"display_name": "Synapse PySpark", "name": "synapse_pyspark"},
-            "language_info": {"name": "python"},
-            "microsoft": {"language": "python"},
-        },
+        "metadata": dict(spec) | {"language_info": {"name": "python"}, "microsoft": microsoft[1]},
         "nbformat": 4,
         "nbformat_minor": 5,
     }
@@ -87,6 +96,20 @@ CONFIG = "/lakehouse/default/Files/config/endpoints.yml"
 
 batch_id = fc.new_batch_id()
 print(f"batch {batch_id}")
+
+# Every bronze write goes through these four. The cells below never touch Spark, so
+# extract_procore_python() runs them unchanged on the Python kernel with delta-rs.
+def read_since(table, endpoint):
+    return wm.read_since(spark, table, endpoint)
+
+def write_bronze(rows, table, keys):
+    return fc.merge_delta(spark, spark.createDataFrame(rows, px.bronze_schema()), table, keys)
+
+def write_watermark(table, endpoint, value, batch):
+    wm.write_watermark(spark, table, endpoint, value, batch)
+
+def log_run(batch, step, table, n):
+    fc.log_run(spark, batch, step, table, n)
 """
     ),
     cell(
@@ -190,7 +213,7 @@ for ep in ordered:
     # parent population, or unchanged contracts lose their new lines/applications.
     # Child endpoints can still use their own supported incremental filters.
     full_parent_discovery = ep.name in parent_endpoints
-    since = wm.read_since(spark, ep.bronze_table, ep.name) if ep.incremental and not full_parent_discovery else None
+    since = read_since(ep.bronze_table, ep.name) if ep.incremental and not full_parent_discovery else None
     audit["full_parent_discovery"] = full_parent_discovery
     audit["mode"] = "incremental" if since else "full"
     audit["since"] = str(since) if since else None
@@ -269,10 +292,9 @@ for ep in ordered:
     audit["raw_archive_complete"] = True
 
     if rows:
-        df = spark.createDataFrame(rows, px.bronze_schema())
         # MERGE on the natural key, not DROP + append: re-running is a no-op, so the
         # deliberate one-hour watermark overlap cannot duplicate rows.
-        audit["written_rows"] = fc.merge_delta(spark, df, ep.bronze_table, px.bronze_merge_keys(ep))
+        audit["written_rows"] = write_bronze(rows, ep.bronze_table, px.bronze_merge_keys(ep))
         audit["duplicate_rows_removed"] = len(rows) - audit["written_rows"]
         if audit["duplicate_rows_removed"] < 0:
             raise RuntimeError("merge reported more input rows than were received")
@@ -281,7 +303,7 @@ for ep in ordered:
         # A global watermark must not move past a scope that was not read.
         # Declared exclusions also hold it back, or the project would miss history once enabled.
         if ep.incremental and high and not skipped and not excluded and not parent_incomplete and not parent_excluded:
-            wm.write_watermark(spark, ep.bronze_table, ep.name, high, batch_id)
+            write_watermark(ep.bronze_table, ep.name, high, batch_id)
             audit["watermark_advanced"] = True
 
     else:
@@ -289,7 +311,7 @@ for ep in ordered:
 
     fetched[ep.name] = records
     audit["status"] = "incomplete_scope" if skipped or parent_incomplete else "complete"
-    fc.log_run(spark, batch_id, "extract_procore", ep.bronze_table, len(rows))
+    log_run(batch_id, "extract_procore", ep.bronze_table, len(rows))
     summary.append((ep.name, len(rows), "incremental" if since else "full"))
     print(f"  {ep.name:<32} {len(rows):>7} rows  ({summary[-1][2]})")
 
@@ -359,6 +381,65 @@ if incomplete:
 """
     ),
 ]
+
+
+def extract_procore_python(workspace_id: str, lakehouse_id: str) -> list[dict]:
+    """cd_01_extract_procore on the pure-Python kernel: same cells, delta-rs writes.
+
+    Why: the run is ~80 minutes, almost all of it waiting on Procore's 600 requests/hour.
+    A Spark session holds 4-8 CU for that wait; the Python kernel holds 1 CU. Only the
+    markdown and the setup cell differ - auth, scope, archive, audit and failure policy are
+    the Spark notebook's own cells. `lakehouse_id` is where bronze tables are written, so a
+    validation lakehouse can take a side-by-side run (see _docs/procore-python-kernel.md).
+    """
+    tables = (f"abfss://{workspace_id}@onelake.dfs.fabric.microsoft.com/"
+              f"{lakehouse_id}/Tables/dbo")
+    intro = cell("""
+# cd_01_extract_procore_py
+
+`cd_01_extract_procore` on the **Python kernel** (no Spark). Same extraction cells; bronze
+MERGE, watermarks and the run log are written with delta-rs (`deltars.py`) instead of Spark.
+
+Generated by `_local/make_notebooks.py`; deployed by `_local/deploy_ingestion.py --python-kernel`.
+Rollback: point the pipeline back at `cd_01_extract_procore` (`deploy_pipeline.py` without
+`--procore-python`). See `_docs/procore-python-kernel.md`.
+""", "markdown")
+    setup = cell(f"""
+import sys, os
+sys.path.insert(0, "/lakehouse/default/Files/lib")
+
+import requests
+
+import fabric_common as fc
+import procore_scope as ps
+import procore_extract as px
+import watermark as wm
+import ratelimit as rl
+import deltars as dr
+
+CONFIG = "/lakehouse/default/Files/config/endpoints.yml"
+# abfss, not the /lakehouse/default mount: delta-rs commits by rename, which the mount
+# does not guarantee. Tables/dbo because the lakehouse is schema-enabled.
+TABLES = "{tables}"
+
+batch_id = fc.new_batch_id()
+print(f"batch {{batch_id}} -> {{TABLES}}")
+
+# The same four writes as cd_01_extract_procore, through delta-rs. onelake_options() fetches a
+# fresh storage token per call because the run outlives a single token.
+def read_since(table, endpoint):
+    return wm.apply_overlap(dr.read_watermark(TABLES, table, endpoint, dr.onelake_options()))
+
+def write_bronze(rows, table, keys):
+    return dr.merge_rows(f"{{TABLES}}/{{table}}", rows, keys, storage_options=dr.onelake_options())
+
+def write_watermark(table, endpoint, value, batch):
+    dr.write_watermark(TABLES, table, endpoint, value, batch, dr.onelake_options())
+
+def log_run(batch, step, table, n):
+    dr.log_run(TABLES, batch, step, table, n, storage_options=dr.onelake_options())
+""")
+    return [intro, setup, *EXTRACT_PROCORE[2:]]
 
 
 # ==========================================================================
@@ -447,11 +528,20 @@ NOTEBOOKS = {
 }
 
 
+def bronze_ids() -> tuple[str, str]:
+    ids = json.loads((CHARLEY_DEV / "_local" / "fabric_ids.json").read_text())
+    return ids["_workspace"]["id"], ids["CD_Bronze_Lakehouse"]["id"]
+
+
 def main() -> int:
-    for rel, cells in NOTEBOOKS.items():
+    generated = {rel: notebook(cells) for rel, cells in NOTEBOOKS.items()}
+    generated["01-ingestion/Procore/cd_01_extract_procore_py.ipynb"] = notebook(
+        extract_procore_python(*bronze_ids()), "python")
+    for rel, nb in generated.items():
+        cells = nb["cells"]
         path = CHARLEY_DEV / rel
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(notebook(cells), indent=1) + "\n", encoding="utf-8")
+        path.write_text(json.dumps(nb, indent=1) + "\n", encoding="utf-8")
 
         # A notebook that will not parse is worse than no notebook.
         reloaded = json.loads(path.read_text(encoding="utf-8"))

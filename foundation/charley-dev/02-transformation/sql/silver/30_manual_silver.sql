@@ -30,13 +30,15 @@
 --      dim_Date stops building. The outer CAST is because both engines return a TIMESTAMP,
 --      and a MonthStart that is silently a timestamp does not equal dim_Date[Date].
 --
--- SharePoint shapes worth knowing:
---   - A lookup column arrives as a STRUCT. ProjectKey.Title carries the Procore project id.
---     Expanding it in Power Query instead would bake a display name into bronze, and a
---     renamed project would silently orphan its history.
---   - Modified / Editor are SharePoint's own audit fields. They are carried through so the
---     report can answer "who last touched this risk, and when" - which the spreadsheet
---     cannot answer at all.
+-- BRONZE IS FLAT (make_sharepoint.AUDIT_COLUMNS). A Dataflow Gen2 Lakehouse destination
+-- cannot write record columns, so both writers land scalars only:
+--   - ProjectKey is the lookup's Title as text - the Procore project id (the lookup targets
+--     CD Projects.Title, which holds the id, not a display name).
+--   - Modified is SharePoint's last-edit time (the load time on the CSV path).
+--   - _source names the writer and list ("sharepoint:CD Risks", "csv:risks.csv"). It fills
+--     last_modified_by: the editor's NAME is deliberately not landed - no measure needs a
+--     person, and the DQ page must not show one.
+--   - _ingested_at is when the writer ran. Not read here; it is for bronze forensics.
 
 -- ---------------------------------------------------------------------------
 -- Shared: resolve + validate the two columns every list has
@@ -60,17 +62,17 @@ FROM (
                               ORDER BY description, win_type) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.WinNumber AS INT)                             AS win_number,
             TRIM(b.Description)                                  AS description,
             UPPER(TRIM(b.WinType))                               AS win_type,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
@@ -78,7 +80,7 @@ FROM (
                      THEN CONCAT('invalid WinType: ', COALESCE(b.WinType, '(blank)'))
             END AS _reject_reason
         FROM cd_bronze_man_wins b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -103,7 +105,7 @@ FROM (
                               ORDER BY description, impact_code, mitigation, owner_role, status_code) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.RiskNumber AS INT)                            AS risk_number,
             TRIM(b.Description)                                  AS description,
@@ -112,11 +114,11 @@ FROM (
             TRIM(b.OwnerRole)                                    AS owner_role,
             UPPER(TRIM(b.StatusCode))                            AS status_code,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
@@ -124,7 +126,7 @@ FROM (
                      THEN CONCAT('invalid ImpactCode: ', COALESCE(b.ImpactCode, '(blank)'))
             END AS _reject_reason
         FROM cd_bronze_man_risks b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -149,7 +151,7 @@ FROM (
                               ORDER BY schedule_item, status_code, critical_delays, recovery_plan, forecast_impact, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.ItemNumber AS INT)                            AS item_number,
             TRIM(b.ScheduleItem)                                 AS schedule_item,
@@ -159,17 +161,17 @@ FROM (
             TRIM(b.ForecastImpact)                               AS forecast_impact,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_priority_items b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -204,7 +206,7 @@ FROM (
                               ORDER BY profitability_code, contingency_remaining, baseline_approved, baseline_revision, month_end_closed_out, forecasting_in_line, resources_updated) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             TRIM(b.ProfitabilityCode)                            AS profitability_code,
             CAST(b.ContingencyRemaining AS DOUBLE)               AS contingency_remaining,
@@ -214,17 +216,17 @@ FROM (
             CAST(b.ForecastingInLine AS BOOLEAN)                 AS forecasting_in_line,
             CAST(b.ResourcesUpdated AS BOOLEAN)                  AS resources_updated,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_flags b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -249,7 +251,7 @@ FROM (
                               ORDER BY question_text, score, surveyed_party) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.QuestionNumber AS INT)                        AS question_number,
             -- The workbook stores the six scores but NOT the question text, so nobody now
@@ -262,11 +264,11 @@ FROM (
             -- and gold has always had the column.
             TRIM(b.SurveyedParty)                                AS surveyed_party,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
@@ -274,7 +276,7 @@ FROM (
                      THEN 'missing Score'
             END AS _reject_reason
         FROM cd_bronze_man_survey b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -299,24 +301,24 @@ FROM (
                               ORDER BY hours_worked, recordable_incidents, orientations, ot_hours) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.HoursWorked AS DOUBLE)                        AS hours_worked,
             CAST(b.RecordableIncidents AS INT)                   AS recordable_incidents,
             CAST(b.Orientations AS INT)                          AS orientations,
             CAST(b.OtHours AS DOUBLE)                            AS ot_hours,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_safety_monthly b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -337,24 +339,24 @@ FROM (
                               ORDER BY observations, punchlist_items, avg_days_past_due, avg_days_to_close) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.Observations AS INT)                          AS observations,
             CAST(b.PunchlistItems AS INT)                        AS punchlist_items,
             CAST(b.AvgDaysPastDue AS DOUBLE)                     AS avg_days_past_due,
             CAST(b.AvgDaysToClose AS DOUBLE)                     AS avg_days_to_close,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_quality_monthly b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -388,7 +390,7 @@ FROM (
                               ORDER BY activity_key, contract_start, contract_finish, baseline_start, baseline_finish, is_substantial_completion) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             TRIM(b.MilestoneName)                                AS milestone_name,
             TRIM(b.ActivityKey)                                  AS activity_key,
             CAST(b.ContractStart AS DATE)                        AS contract_start,
@@ -397,17 +399,17 @@ FROM (
             CAST(b.BaselineFinish AS DATE)                       AS baseline_finish,
             CAST(b.IsSubstantialCompletion AS BOOLEAN)           AS is_substantial_completion,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MilestoneName IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MilestoneName IS NULL
                      THEN 'missing ProjectKey or MilestoneName'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_milestones b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -432,7 +434,7 @@ FROM (
                               ORDER BY logs_expected, logs_missed_same_day) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             CAST(date_trunc('MONTH', CAST(b.MonthStart AS DATE)) AS DATE) AS month_start,
             CAST(b.LogsExpected AS INT)                          AS logs_expected,
             -- MISSED SAME DAY, not submitted. SCORECARD CALC!E28 scores whether the log went
@@ -442,17 +444,17 @@ FROM (
             -- the harder one.
             CAST(b.LogsMissedSameDay AS INT)                     AS logs_missed_same_day,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.MonthStart IS NULL
+                WHEN b.ProjectKey IS NULL OR b.MonthStart IS NULL
                      THEN 'missing ProjectKey or MonthStart'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_daily_log_compliance b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -488,26 +490,26 @@ FROM (
     FROM (
         SELECT
             LOWER(TRIM(b.UserPrincipalName))                     AS user_principal_name,
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             TRIM(b.Role)                                         AS role,
             CAST(b.EffectiveFrom AS DATE)                        AS effective_from,
             CAST(b.EffectiveTo AS DATE)                          AS effective_to,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL OR b.UserPrincipalName IS NULL
+                WHEN b.ProjectKey IS NULL OR b.UserPrincipalName IS NULL
                      THEN 'missing ProjectKey or UserPrincipalName'
                 WHEN TRIM(b.UserPrincipalName) NOT LIKE '%_@_%._%'
                      OR TRIM(b.UserPrincipalName) LIKE '% %'
                      OR TRIM(b.UserPrincipalName) LIKE '%@%@%'
                      THEN CONCAT('malformed UserPrincipalName: ', b.UserPrincipalName)
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) <> 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) <> 'ALL'
                      THEN 'unknown project - is CD Projects stale?'
                 WHEN CAST(b.EffectiveTo AS DATE) < CAST(b.EffectiveFrom AS DATE)
                      THEN 'EffectiveTo is before EffectiveFrom'
             END AS _reject_reason
         FROM cd_bronze_man_project_access b
-        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN mv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -556,18 +558,18 @@ SELECT * FROM (
         -- the same shape as every other code in this platform, so a measure over Stage
         -- reads like a measure over StatusCode rather than like a special case.
         UPPER(TRIM(Stage))                                  AS stage,
-        -- A SharePoint URL column arrives as a record, the same way a lookup does. Taking
-        -- .Url keeps the link and drops the display text, which is the folder name and is
-        -- already carried by project_name.
-        EstimatingFolderUrl.Url                             AS estimating_folder_url,
-        ProjectFolderUrl.Url                                AS project_folder_url,
+        -- A SharePoint URL column is a record; CD_Manual_Ingest keeps only its .Url, so
+        -- bronze holds the link and drops the display text (the folder name, already
+        -- carried by project_name).
+        EstimatingFolderUrl                             AS estimating_folder_url,
+        ProjectFolderUrl                                AS project_folder_url,
         TRIM(RequestedBy)                                   AS requested_by,
         CAST(RequestedAt AS TIMESTAMP)                      AS requested_at,
         CAST(CompletedAt AS TIMESTAMP)                      AS completed_at,
         TRIM(CopyJobStatus)                                 AS copy_job_status,
         TRIM(ErrorDetail)                                   AS error_detail,
         CAST(Modified AS TIMESTAMP)                         AS last_modified,
-        TRIM(Editor.Title)                                  AS last_modified_by,
+        TRIM(_source)                                  AS last_modified_by,
         ROW_NUMBER() OVER (PARTITION BY CAST(Id AS INT)
                            ORDER BY CAST(Modified AS TIMESTAMP) DESC) AS _rn
     FROM cd_bronze_man_job_register
@@ -668,10 +670,10 @@ UNION ALL
 -- A MonthStart that is not the 1st is corrected, not rejected - but it is recorded, because
 -- a silent correction is still a difference between what someone typed and what the report
 -- shows.
-SELECT 'cd_silver_man_risks', TRIM(ProjectKey.Title), CAST(MonthStart AS DATE),
+SELECT 'cd_silver_man_risks', TRIM(ProjectKey), CAST(MonthStart AS DATE),
        CONCAT('risk #', CAST(RiskNumber AS STRING)),
        'MonthStart was not the 1st - floored to the 1st',
-       CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
+       CAST(Modified AS TIMESTAMP), TRIM(_source)
 FROM cd_bronze_man_risks
 WHERE MonthStart IS NOT NULL
   AND CAST(MonthStart AS DATE) <> CAST(date_trunc('MONTH', CAST(MonthStart AS DATE)) AS DATE)
@@ -686,7 +688,7 @@ SELECT 'cd_silver_man_job_register', CAST(NULL AS STRING), CAST(NULL AS DATE),
        CONCAT('job "', COALESCE(TRIM(Title), '(unnamed)'), '"'),
        CONCAT('Stage is ', COALESCE(Stage, '(blank)'), ' but JobNumber is empty - ',
               'the flow did not finish. Check ErrorDetail on the row.'),
-       CAST(Modified AS TIMESTAMP), TRIM(Editor.Title)
+       CAST(Modified AS TIMESTAMP), TRIM(_source)
 FROM cd_bronze_man_job_register
 WHERE UPPER(TRIM(COALESCE(Stage, ''))) IN ('ESTIMATING', 'BIDDING')
   AND (JobNumber IS NULL OR TRIM(JobNumber) = '');

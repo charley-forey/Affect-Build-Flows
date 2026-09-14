@@ -146,6 +146,17 @@ DEFAULT_TIMEOUT = "0.00:30:00"
 # No retry on publish: a retry resubmits a refresh whose first request may still be running.
 RETRIES = {"cd_01_extract_procore": 0, "cd_50_publish_models": 0}
 
+# Session tag (Notebook activity > Advanced settings > Session tag). With workspace
+# highConcurrency.notebookPipelineRunEnabled on (deploy_spark_settings.py), notebooks with the
+# same tag pack into one high-concurrency session instead of starting one each - less startup
+# CU on an F2. Sharing also needs the same default lakehouse, so it only packs neighbours on
+# the same lakehouse; max 5 notebooks per session, then Fabric opens another. Without the
+# workspace switch the tag has no effect.
+# https://learn.microsoft.com/fabric/data-engineering/configure-high-concurrency-session-notebooks-in-pipelines
+# Property name as exported by Fabric (typeProperties.sessionTag); the pipeline JSON schema
+# itself is not in the REST reference.
+SESSION_TAG = "cd_master"
+
 
 # Dataflow Gen2 stages. Separate from STAGES because a dataflow activity is a different
 # activity TYPE with different typeProperties - not a notebook with a different id.
@@ -199,6 +210,7 @@ def activity(name: str, notebook_id: str, upstream: list[str], timeout: str, ret
         "typeProperties": {
             "notebookId": notebook_id,
             "workspaceId": dp.WORKSPACE_ID,
+            "sessionTag": SESSION_TAG,
         },
     }
 
@@ -240,7 +252,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--run", action="store_true")
+    parser.add_argument("--procore-python", action="store_true",
+                        help="run Extract Procore on cd_01_extract_procore_py (Python kernel); "
+                             "omit to roll back to the Spark notebook")
     args = parser.parse_args()
+    # Same stage, same timeout/retry policy; only the notebook item behind it changes.
+    item_names = {"cd_01_extract_procore": "cd_01_extract_procore_py"} if args.procore_python else {}
 
     tok = dp.token()
 
@@ -248,7 +265,7 @@ def main() -> int:
     # notebook that does not exist deploys fine and fails at run time.
     notebook_ids = {}
     for _, nb, _ in STAGES:
-        item = ds.find_item(tok, nb, "Notebook")
+        item = ds.find_item(tok, item_names.get(nb, nb), "Notebook")
         if not item:
             print(f"ERROR: notebook {nb!r} not found - deploy it before the pipeline")
             return 1

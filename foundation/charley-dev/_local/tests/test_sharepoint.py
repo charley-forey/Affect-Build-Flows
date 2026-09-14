@@ -105,6 +105,75 @@ def test_list_names_agree_across_writers() -> None:
     check("the CSV loader collects exactly the columns the man_* tables declare")
 
 
+SCALAR_M_TYPES = {"type text", "Int64.Type", "type number", "type logical", "type date",
+                  "type datetime"}
+
+
+def _query_block(mashup: str, query: str) -> str:
+    return mashup.split(f"shared {query} = let", 1)[1].split("\nin\n", 1)[0]
+
+
+def test_mashup_lands_only_flat_typed_columns() -> None:
+    """A Dataflow Gen2 Lakehouse destination cannot write a record column.
+
+    The dataflow used to land each list raw, ProjectKey as its lookup record and Editor as a
+    person record, while silver read ProjectKey.Title. On the first real refresh those
+    columns are dropped from the mapping (or the refresh fails) and Bronze To Silver breaks
+    for the whole pipeline. So every query must: expand its record columns to a scalar,
+    select exactly the declared columns, type every one of them as a scalar, and stamp
+    _source / _ingested_at - the same flat shape cd_06_land_manual writes.
+    """
+    mashup = ms.OUT_PQ.read_text(encoding="utf-8")
+    assert 'Implementation = "2.0"' not in mashup and "Expand" not in mashup.replace(
+        "Table.ExpandRecordColumn", ""), "a raw 2.0 navigation is back - it lands records"
+    assert "Editor" not in mashup, "the editor's name must not be landed"
+
+    import deploy_manual as dm  # noqa: E402
+
+    specs = [("cd_bronze_man_projects", ms.PROJECTS_COLUMNS, {}),
+             (ms.JOB_REGISTER_QUERY, ms.JOB_REGISTER_COLUMNS, ms.JOB_REGISTER_URL_COLUMNS)]
+    specs += [(ms.bronze_table(t), cols, ("ProjectKey",)) for t, cols in ms.tables().items()]
+    for query, cols, records in specs:
+        block = _query_block(mashup, query)
+        declared = [c for c, _ in cols] + ["Modified"]
+        selected = re.search(r"Table\.SelectColumns\(\w+, \{(.*?)\}\)", block)
+        assert selected, f"{query}: no Table.SelectColumns - SharePoint system columns would land"
+        assert re.findall(r'"([^"]+)"', selected[1]) == declared, f"{query}: selects {selected[1]}"
+        assert "MissingField" not in block, f"{query}: a missing list column must fail, not null"
+        typed = dict(re.findall(r'\{"([^"]+)", ([\w. ]+)\}', block.split("Table.TransformColumnTypes", 1)[1]))
+        assert list(typed) == declared, f"{query}: types {list(typed)}, declared {declared}"
+        assert set(typed.values()) <= SCALAR_M_TYPES, f"{query}: non-scalar type {set(typed.values())}"
+        for col in records:
+            assert f'Table.ExpandRecordColumn(' in block and f', "{col}", {{' in block, (
+                f"{query}: {col} is a record column and is never flattened")
+        assert 'AddColumn(Typed, "_source", each "sharepoint:' in block
+        assert '"_ingested_at", each DateTime.FixedLocalNow(), type datetime' in block
+        # Nothing after the typing step may introduce another (untyped) column.
+        steps = re.findall(r"^  (\w+) = ", block, re.M)
+        assert steps[-4:] == ["Selected", "Typed", "Sourced", "Stamped"], (query, steps)
+    check(f"all {len(specs)} dataflow queries land only declared, scalar-typed columns")
+
+    # Same flat contract on both writers: the CSV loader's columns + AUDIT are exactly what the
+    # dataflow emits (selected columns + _source + _ingested_at).
+    audit = [c for c, _ in ms.AUDIT_COLUMNS]
+    for table in ms.tables():
+        block = _query_block(mashup, ms.bronze_table(table))
+        emitted = re.findall(r'"([^"]+)"', re.search(r"SelectColumns\(\w+, \{(.*?)\}", block)[1])
+        emitted += re.findall(r'Table\.AddColumn\(\w+, "(\w+)"', block)
+        assert emitted == [c for c, _ in dm.LISTS[ms.csv_name(table)]] + audit, (table, emitted)
+    check("the CSV loader and the dataflow land the identical flat column list")
+
+
+def test_ps1_does_not_duplicate_columns() -> None:
+    """Add-PnPField does not fail on a taken internal name - it creates Name0, Name1. Graph
+    showed every list with three copies of every column on 2026-09-14."""
+    script = ms.OUT.read_text(encoding="utf-8")
+    adds = [line for line in script.splitlines() if "Add-PnPField" in line and not line.lstrip().startswith("#")]
+    assert adds and all("Test-Field" in line for line in adds), \
+        [line for line in adds if "Test-Field" not in line][:3]
+    check(f"all {len(adds)} Add-PnPField calls are guarded, so a re-run adds no Name0 copies")
+
+
 def test_every_column_is_provisioned() -> None:
     script = ms.OUT.read_text(encoding="utf-8")
     defs = ms.tables()
@@ -245,6 +314,8 @@ def test_script_parses_as_powershell() -> None:
 def main() -> int:
     test_committed_script_is_current()
     test_list_names_agree_across_writers()
+    test_mashup_lands_only_flat_typed_columns()
+    test_ps1_does_not_duplicate_columns()
     test_every_column_is_provisioned()
     test_project_key_is_a_lookup_everywhere()
     test_project_access_register()

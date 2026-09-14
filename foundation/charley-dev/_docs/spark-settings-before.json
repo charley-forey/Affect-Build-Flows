@@ -1,0 +1,51 @@
+{
+  "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
+  "settings": {
+    "automaticLog": {
+      "enabled": true
+    },
+    "highConcurrency": {
+      "notebookInteractiveRunEnabled": true,
+      "notebookPipelineRunEnabled": false
+    },
+    "pool": {
+      "customizeComputeEnabled": true,
+      "defaultPool": {
+        "name": "Starter Pool",
+        "type": "Workspace",
+        "id": "00000000-0000-0000-0000-000000000000"
+      },
+      "starterPool": {
+        "maxNodeCount": 2,
+        "maxExecutors": 1
+      }
+    },
+    "environment": {
+      "runtimeVersion": "1.3"
+    },
+    "job": {
+      "conservativeJobAdmissionEnabled": false,
+      "sessionTimeoutInMinutes": 20
+    }
+  },
+  "pools": [
+    {
+      "id": "00000000-0000-0000-0000-000000000000",
+      "type": "Workspace",
+      "name": "Starter Pool",
+      "nodeFamily": "MemoryOptimized",
+      "nodeSize": "Medium",
+      "autoScale": {
+        "enabled": true,
+        "minNodeCount": 1,
+        "maxNodeCount": 2
+      },
+      "dynamicExecutorAllocation": {
+        "enabled": true,
+        "minExecutors": 1,
+        "maxExecutors": 1
+      }
+    }
+  ],
+  "environments": []
+}

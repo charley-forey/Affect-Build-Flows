@@ -50,7 +50,7 @@ FROM (
                               ORDER BY dfow_description, trade_key, risk_tier, control_measure, owner_role, status_code, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.DfowRef))                               AS dfow_ref,
             TRIM(b.DfowDescription)                              AS dfow_description,
             UPPER(TRIM(b.TradeKey))                              AS trade_key,
@@ -60,19 +60,19 @@ FROM (
             UPPER(TRIM(b.StatusCode))                            AS status_code,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.DfowRef IS NULL
                      THEN 'missing DfowRef'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_dfow b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -97,7 +97,7 @@ FROM (
                               ORDER BY trade_key, activity, inspection_type, acceptance_criteria, hold_point_type, responsible, planned_date, actual_date, result_code, status_code, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.ItpRef))                                AS itp_ref,
             UPPER(TRIM(b.TradeKey))                              AS trade_key,
             TRIM(b.Activity)                                     AS activity,
@@ -111,19 +111,19 @@ FROM (
             UPPER(TRIM(b.StatusCode))                            AS status_code,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.ItpRef IS NULL
                      THEN 'missing ItpRef'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_itp b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -154,7 +154,7 @@ FROM (
                               ORDER BY gate_type, status_code, responsible, target_date, submitted_date, completed_date, evidence_link, blocker_note) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.GateKey))                               AS gate_key,
             UPPER(TRIM(b.GateType))                              AS gate_type,
             UPPER(TRIM(b.StatusCode))                            AS status_code,
@@ -165,13 +165,13 @@ FROM (
             TRIM(b.EvidenceLink)                                 AS evidence_link,
             TRIM(b.BlockerNote)                                  AS blocker_note,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.GateKey IS NULL
                      THEN 'missing GateKey'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
@@ -179,7 +179,7 @@ FROM (
                      THEN CONCAT('invalid GateType: ', COALESCE(b.GateType, '(blank)'))
             END AS _reject_reason
         FROM cd_bronze_man_qc_gate b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -204,7 +204,7 @@ FROM (
                               ORDER BY category, agency, inspector_name, required_code, performed_code, scheduled_date, performed_date, report_received_date, status_code, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.InspectionRef))                         AS inspection_ref,
             TRIM(b.Category)                                     AS category,
             TRIM(b.Agency)                                       AS agency,
@@ -217,19 +217,19 @@ FROM (
             UPPER(TRIM(b.StatusCode))                            AS status_code,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.InspectionRef IS NULL
                      THEN 'missing InspectionRef'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_special_inspection b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -254,7 +254,7 @@ FROM (
                               ORDER BY system_name, trade_key, responsible, planned_date, actual_date, status_code, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.SystemRef))                             AS system_ref,
             TRIM(b.SystemName)                                   AS system_name,
             UPPER(TRIM(b.TradeKey))                              AS trade_key,
@@ -264,19 +264,19 @@ FROM (
             UPPER(TRIM(b.StatusCode))                            AS status_code,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.SystemRef IS NULL
                      THEN 'missing SystemRef'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_commissioning b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -301,7 +301,7 @@ FROM (
                               ORDER BY visit_date, inspector_name, agency_code, purpose, area_inspected, outcome_code, follow_up_required, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.SignInRef))                             AS sign_in_ref,
             CAST(b.VisitDate AS DATE)                            AS visit_date,
             TRIM(b.InspectorName)                                AS inspector_name,
@@ -312,19 +312,19 @@ FROM (
             CAST(b.FollowUpRequired AS BOOLEAN)                  AS follow_up_required,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.SignInRef IS NULL
                      THEN 'missing SignInRef'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_inspector_sign_in b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -356,7 +356,7 @@ FROM (
                               ORDER BY trade_key, stage_code, result_code, inspected_date, inspected_by, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.ItemKey))                               AS item_key,
             UPPER(TRIM(b.TradeKey))                              AS trade_key,
             UPPER(TRIM(b.StageCode))                             AS stage_code,
@@ -365,19 +365,19 @@ FROM (
             TRIM(b.InspectedBy)                                  AS inspected_by,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.ItemKey IS NULL
                      THEN 'missing ItemKey - the answer cannot be attached to a checklist item'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_checklist_result b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 
@@ -402,7 +402,7 @@ FROM (
                               ORDER BY responsibility_code, status_code, verified_date, verified_by, evidence_link, notes) AS _version
     FROM (
         SELECT
-            TRIM(b.ProjectKey.Title)                             AS project_id,
+            TRIM(b.ProjectKey)                             AS project_id,
             UPPER(TRIM(b.ItemKey))                               AS item_key,
             UPPER(TRIM(b.ResponsibilityCode))                    AS responsibility_code,
             UPPER(TRIM(b.StatusCode))                            AS status_code,
@@ -411,19 +411,19 @@ FROM (
             TRIM(b.EvidenceLink)                                 AS evidence_link,
             TRIM(b.Notes)                                        AS notes,
             CAST(b.Modified AS TIMESTAMP)                        AS last_modified,
-            TRIM(b.Editor.Title)                                 AS last_modified_by,
+            TRIM(b._source)                                 AS last_modified_by,
             CASE
-                WHEN b.ProjectKey.Title IS NULL
+                WHEN b.ProjectKey IS NULL
                      THEN 'missing ProjectKey'
                 WHEN b.ItemKey IS NULL
                      THEN 'missing ItemKey - the answer cannot be attached to a checklist item'
-                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey.Title)) = 'ALL'
+                WHEN v.project_id IS NULL AND UPPER(TRIM(b.ProjectKey)) = 'ALL'
                      THEN 'ALL is only valid on CD Project Access'
                 WHEN v.project_id IS NULL
                      THEN 'unknown project - is CD Projects stale?'
             END AS _reject_reason
         FROM cd_bronze_man_qc_doh_result b
-        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey.Title)
+        LEFT JOIN qcv_valid_projects v ON v.project_id = TRIM(b.ProjectKey)
     )
 );
 

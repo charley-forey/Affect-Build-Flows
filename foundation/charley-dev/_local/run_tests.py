@@ -36,11 +36,13 @@ SUITES = [
     ("raw inputs to model columns", TESTS / "test_end_to_end.py"),
     ("dq rule mutations", TESTS / "test_dq_rules.py"),
     ("extractor compatibility", TESTS / "test_extractor_compat.py"),
+    ("delta-rs bronze writes match the Spark merge", TESTS / "test_deltars.py"),
     ("report accessibility and chrome", TESTS / "test_report.py"),
     ("generated notebooks and quality gate failures", TESTS / "test_validation.py"),
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
     ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),
+    ("data dictionary is current", TESTS / "test_data_dictionary.py"),
 ]
 
 
