@@ -315,6 +315,7 @@ dr.PAGES = [
     ("Statutory Gates", page_gates, False),
     ("Trade Checklists & DFOW", page_checklists, False),
     ("Data Quality", page_data_quality, False),
+    ("KPI Definitions", dr.page_definitions, True),   # hidden; header button target
 ]
 
 

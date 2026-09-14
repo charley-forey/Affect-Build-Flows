@@ -38,6 +38,10 @@ DQ_DIR = CHARLEY_DEV / "02-transformation" / "dq"
 
 NOTEBOOK_NAME = "cd_40_dq_checks"
 
+# Read-only: the extractors' manifests and the Sage bronze table history, for meta_SourceFreshness.
+BRONZE_ROOT = (f"abfss://{dp.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/"
+               f"{json.loads((HERE / 'fabric_ids.json').read_text())['CD_Bronze_Lakehouse']['id']}")
+
 # Uploaded to the gold lakehouse so the notebook imports the SAME code the offline suite
 # asserts - not a copy that can drift.
 UPLOADS = [
@@ -161,6 +165,14 @@ except Exception as exc:
 #
 # APPEND, never overwrite: the history is what makes "it has been failing since Tuesday"
 # answerable, and that is usually the more useful question than "is it broken now".
+#
+# SOURCE FRESHNESS first: when each source system last extracted successfully, so the
+# reports' KPI Definitions page can say how current a number's source is - [Last Refresh]
+# is only the gold build time. Unreadable evidence is recorded as unknown, not raised.
+try:
+    dq.persist_source_freshness(spark, ''' + json.dumps(BRONZE_ROOT) + ''', batch_id, DIAG)
+except Exception as exc:
+    raise RuntimeError("source freshness could not be persisted; pipeline blocked") from exc
 try:
     dq.persist_heartbeat(spark, results, batch_id, DIAG)
 except Exception as exc:

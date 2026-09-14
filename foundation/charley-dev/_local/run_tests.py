@@ -41,6 +41,8 @@ SUITES = [
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
     ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),
+    ("kpi catalog self-check", HERE / "kpi_catalog.py"),
+    ("kpi definitions, descriptions and source freshness", TESTS / "test_kpi_catalog.py"),
 ]
 
 

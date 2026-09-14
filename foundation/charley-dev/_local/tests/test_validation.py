@@ -1203,6 +1203,7 @@ def test_candidate_count_snapshot():
         source = source.replace("/lakehouse/default/Files/_diag", temp.replace("\\", "/"))
         scope = dict(expectations=SimpleNamespace(build_suite=lambda: SimpleNamespace(run=lambda *a, **k: [result])),
                      dq=SimpleNamespace(_persist_results=lambda *a: None, persist_heartbeat=lambda *a: None,
+                                        persist_source_freshness=lambda *a: 3,
                                         assert_no_blocking=dq.assert_no_blocking),
                      spark=SimpleNamespace(table=lambda name: SimpleNamespace(count=lambda: 3)),
                      datetime=datetime, timezone=timezone, json=json, os=__import__("os"),
@@ -1212,7 +1213,7 @@ def test_candidate_count_snapshot():
         path = Path(temp) / "candidate_counts_count-test.json"
         saved = json.loads(path.read_text())
         assert saved["run_id"] == "count-test" and saved["validation_lakehouse_id"] == "validation-only"
-        assert saved["seeds"] == {"dim_Date": 10} and saved["heartbeat"] == {"meta_PipelineRun": 3}
+        assert saved["seeds"] == {"dim_Date": 10} and saved["heartbeat"] == {"meta_PipelineRun": 3, "meta_SourceFreshness": 3}
         assert saved["gold"][0]["counts"] == {"dim_Project": 2}
         scope["candidate_seed_counts"]["dim_Date"] = 99
         assert json.loads(path.read_text())["seeds"]["dim_Date"] == 10

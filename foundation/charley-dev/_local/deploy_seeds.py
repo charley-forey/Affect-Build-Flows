@@ -24,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deploy as dp  # noqa: E402
+import kpi_catalog  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
 from seedrunner import seed_files, split_statements  # noqa: E402
 
@@ -93,6 +94,8 @@ built = []
         "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
         "qc_seed_DohItem": 101, "dim_QcStatus": 141,
         "seed_ProjectCrosswalk": 15,
+        # Generated from kpi_catalog.py, so the count follows the catalog.
+        "seed_KpiCatalog": len(kpi_catalog.rows()),
     }
     cells.append(
         cell(

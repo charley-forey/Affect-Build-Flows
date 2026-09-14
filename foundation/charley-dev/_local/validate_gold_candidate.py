@@ -6,6 +6,7 @@ import deploy as dp
 import deploy_seeds as ds
 import deploy_gold as dg
 import deploy_silver
+import deploy_dq
 from make_notebooks import cell, notebook
 
 HERE = Path(__file__).resolve().parent
@@ -87,11 +88,13 @@ dq._persist_results(spark, results, run_id)
 for result in results:
     if result.failing_rows > 0:
         dq._persist_rejects(spark, result.expectation, spark.sql(result.expectation.failing_sql), run_id)
+dq.persist_source_freshness(spark, {deploy_dq.BRONZE_ROOT!r}, run_id, "/lakehouse/default/Files/_diag")
 dq.persist_heartbeat(spark, results, run_id, "/lakehouse/default/Files/_diag")
 dq.assert_no_blocking(results)
 count_evidence = {{"run_id": run_id, "validation_lakehouse_id": {target['id']!r},
                   "gold": candidate_gold_evidence, "seeds": candidate_seed_counts,
-                  "heartbeat": {{"meta_PipelineRun": spark.table("meta_PipelineRun").count()}}}}
+                  "heartbeat": {{"meta_PipelineRun": spark.table("meta_PipelineRun").count(),
+                                "meta_SourceFreshness": spark.table("meta_SourceFreshness").count()}}}}
 with open(f"/lakehouse/default/Files/_diag/candidate_counts_{{run_id}}.json", "x", encoding="utf-8") as fh:
     json.dump(count_evidence, fh, indent=2)
 '''))

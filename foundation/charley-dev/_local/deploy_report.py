@@ -321,7 +321,8 @@ def textbox(page: str, key: str, text: str, x, y, w, h, size: int = 20,
     # slicers share y 4-58, and the subtitle runs the full canvas width beneath both. It
     # used to stop at x=748 beside slicers that reached y=72, and wrapped out of its box.
     if key == "title":
-        h = 44
+        # 540 wide at most: x 560-760 holds the KPI definitions button (see chrome()).
+        h, w = 44, min(w, 540)
     if y in (56, 58):
         x, y, w = 20, 60, 1240
     position = {"x": x, "y": y, "z": 0, "width": w, "height": h}
@@ -410,8 +411,8 @@ def no_totals(v: dict) -> dict:
     return v
 
 
-def keep_true(v: dict, table: str, col: str) -> dict:
-    """Visual-level filter: only rows where table[col] is TRUE."""
+def keep_true(v: dict, table: str, col: str, value: str = "true") -> dict:
+    """Visual-level filter: only rows where table[col] is TRUE (or the literal `value`)."""
     v["filterConfig"] = {"filters": [{
         "name": oid(v["name"], table, col),
         "field": {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}},
@@ -421,7 +422,7 @@ def keep_true(v: dict, table: str, col: str) -> dict:
             "From": [{"Name": "t", "Entity": table, "Type": 0}],
             "Where": [{"Condition": {"In": {
                 "Expressions": [{"Column": {"Expression": {"SourceRef": {"Source": "t"}}, "Property": col}}],
-                "Values": [[{"Literal": {"Value": "true"}}]],
+                "Values": [[{"Literal": {"Value": value}}]],
             }}}],
         },
         "howCreated": "User",
@@ -495,6 +496,7 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
         "dataLabels": [{"properties": {"fontSize": _num(FOOTER_VALUE)}}],
         "categoryLabels": [{"properties": {"fontSize": _num(FOOTER_LABEL)}}],
     }
+    items.append(nav_button(page))
     # A drill-through page receives its project from the caller. Putting a project slicer
     # on it would let a reader change that selection out from under the filter they
     # arrived by, so the page would answer a different question than the one asked.
@@ -515,6 +517,34 @@ def chrome(page: str, slicers: bool = True) -> list[dict]:
                 "header": [{"properties": {"show": _OFF}}],
             }
     return items
+
+
+DEFINITIONS = "definitions"
+
+
+def nav_button(page: str) -> dict:
+    """Header button to the hidden KPI Definitions page; on that page, Back.
+
+    Every headline number needs its definition, period, source, exclusions and freshness one
+    click away, and a hidden page is reachable only through navigation like this.
+    """
+    here = page == DEFINITIONS
+    text = "Back" if here else "KPI definitions"
+    v = visual(page, "nav_definitions", "actionButton", 572, 12, 184, 40, {}, tab=3,
+               alt="Button. Returns to the previous page." if here else
+               "Button. Opens KPI definitions: what each figure means, its period, source, "
+               "exclusions, caveats and source freshness.")
+    del v["visual"]["query"]
+    v["visual"]["objects"] = {"text": [
+        {"properties": {"show": _ON}},
+        {"properties": {"text": lit(text),"fontSize": _num(11)},
+         "selector": {"id": "default"}},
+    ]}
+    link = {"show": _ON, "type": lit("Back" if here else "PageNavigation")}
+    if not here:
+        link["navigationSection"] = lit(DEFINITIONS)
+    v["visual"]["visualContainerObjects"]["visualLink"] = [{"properties": link}]
+    return v
 
 
 FOOTER_Y = 662     # everything else on a page ends at or above this line
@@ -1296,6 +1326,38 @@ def page_insurance() -> tuple[str, list[dict]]:
     ]
 
 
+def page_definitions() -> tuple[str, list[dict]]:
+    """What every headline figure means, and how current its source is. Shared by both reports.
+
+    Hidden: reached from the KPI definitions button in every page header. Rows come from gold
+    seed_KpiCatalog, generated from _local/kpi_catalog.py - the same text as the measure
+    descriptions - filtered to this report's model. Freshness is meta_SourceFreshness, which the
+    DQ gate writes from the extractors' own evidence.
+    """
+    p = DEFINITIONS
+    catalog = ("KpiName", "Definition", "Formula", "Period", "Sources", "Exclusions", "GapCategory", "Caveats")
+    return p, [
+        textbox(p, "title", "KPI Definitions", 20, 16, 540, 44),
+        textbox(p, "note",
+                "What each headline figure counts, the period it describes, its source systems, what "
+                "it leaves out and known caveats. Last Refresh is the gold build time; the freshness "
+                "table below is when each source system last extracted successfully.",
+                20, 56, 1240, 44, size=10, color=MUTED),
+        keep_true(visual(p, "catalog", "tableEx", 20, 112, 1240, 388,
+               {"Values": [column("seed_KpiCatalog", c) for c in catalog]},
+               title="KPI definitions for this report",
+               alt="Table. One row per headline KPI on this report: definition, formula, period "
+                   "semantics, source systems, exclusions, data gap category and caveats."),
+            "seed_KpiCatalog", "ModelName", "'" + MODEL_NAME.replace("'", "''") + "'"),
+        no_totals(visual(p, "freshness", "tableEx", 20, 508, 1240, 150,
+               {"Values": [column("meta_SourceFreshness", c)
+                           for c in ("Source", "LastSuccessAt", "Status", "Batch", "Evidence", "CheckedAt")]},
+               title="Source freshness - last successful extraction per source system",
+               alt="Table. One row per source system: when it last extracted successfully, the "
+                   "batch, whether a later attempt failed, the evidence read, and when it was checked.")),
+    ]
+
+
 PAGES = [
     # Portfolio first: leadership was named a primary audience and had no page at all.
     # Overview stays second because it is the per-project page that gets exported to PDF.
@@ -1311,6 +1373,7 @@ PAGES = [
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target
     ("Data Quality", page_data_quality, False),
+    ("KPI Definitions", page_definitions, True),      # hidden; header button target
 ]
 
 

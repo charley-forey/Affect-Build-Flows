@@ -54,6 +54,8 @@ dm.MODEL_TABLES = [
     "dq_DataGap",
     # The pipeline heartbeat - how the report answers "are these numbers from last night?".
     "meta_PipelineRun",
+    # KPI definitions and per-source freshness, for the KPI Definitions page.
+    "seed_KpiCatalog", "meta_SourceFreshness",
 ]
 
 # fact.column -> dimension.column, single direction. Note TradeKey resolves to

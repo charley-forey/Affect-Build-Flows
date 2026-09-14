@@ -58,6 +58,99 @@ def publish_schema(spark, diagnostic_dir, table):
     path.write_text(json.dumps(schema, indent=1), encoding="utf-8")
 
 
+# --------------------------------------------------------------------------
+# Source freshness - "how current is the system behind this number"
+#
+# [Last Refresh] says when gold was BUILT, which is not when Procore, Sage or Outbuild were last
+# read: a build over a failed extraction re-publishes yesterday's source rows with today's
+# stamp. This records the last SUCCESSFUL extraction per source from the evidence the
+# extractors already write, for the reports' KPI Definitions page.
+# --------------------------------------------------------------------------
+
+SOURCE_FRESHNESS_TABLE = "meta_SourceFreshness"
+SOURCE_FRESHNESS_SCHEMA = ("Source STRING, LastSuccessAt TIMESTAMP, Batch STRING, Status STRING, "
+                           "Evidence STRING, CheckedAt TIMESTAMP, RunId STRING")
+# CD_Sage_Ingest is a dataflow with no manifest; its last write to this bronze table is the
+# refresh evidence the gate can read without a Fabric API token.
+SAGE_FRESHNESS_TABLE = "cd_bronze_sage_acrinv"
+
+
+def batch_time(batch):
+    """20260914T040238Z (or with a -suffix) -> naive UTC datetime; None when unparseable."""
+    from datetime import datetime
+    try:
+        return datetime.strptime(str(batch)[:15], "%Y%m%dT%H%M%S")
+    except ValueError:
+        return None
+
+
+def source_freshness(manifests, sage_last_write=None):
+    """One row per source: the latest successful extraction, and whether a later attempt failed.
+
+    Procore: nightly manifests (source_scope active_projects) with status complete - repair and
+    selected-endpoint runs are partial scopes, not a refresh. Outbuild: manifests with source
+    outbuild and status complete or complete_with_warnings (only unconsumed endpoints failed).
+    """
+    def latest(source, docs, ok, evidence):
+        docs = sorted((d for d in docs if batch_time(d.get("batch"))), key=lambda d: d["batch"])
+        good = [d for d in docs if d.get("status") in ok]
+        last_good = good[-1] if good else None
+        if not last_good:
+            status = "no successful extraction on record"
+        elif docs[-1] is last_good:
+            status = last_good["status"]
+        else:
+            status = f"latest attempt {docs[-1]['batch']} {docs[-1].get('status')}; last success shown"
+        return dict(Source=source, LastSuccessAt=batch_time(last_good["batch"]) if last_good else None,
+                    Batch=last_good["batch"] if last_good else None, Status=status, Evidence=evidence)
+
+    return [
+        latest("Procore", [m for m in manifests if "source" not in m and m.get("source_scope") == "active_projects"],
+               ("complete",), "Files/_diag/ingestion/<batch>.json (cd_01_extract_procore)"),
+        latest("Outbuild", [m for m in manifests if m.get("source") == "outbuild"],
+               ("complete", "complete_with_warnings"), "Files/_diag/ingestion/<batch>.json (cd_02_extract_outbuild)"),
+        dict(Source="Sage", LastSuccessAt=sage_last_write, Batch=None,
+             Status="last bronze write" if sage_last_write else "no bronze write found",
+             Evidence=f"Delta history of {SAGE_FRESHNESS_TABLE} (CD_Sage_Ingest dataflow)"),
+    ]
+
+
+def persist_source_freshness(spark, bronze_root, run_id, diagnostic_dir):
+    """Read bronze extraction evidence, overwrite meta_SourceFreshness, publish its schema.
+
+    Unreadable evidence becomes an explicit "no successful extraction" row rather than an
+    error: freshness unknown is a finding to show, not a reason to block validated gold.
+    """
+    import json
+    from datetime import datetime, timezone
+
+    manifests = []
+    try:
+        for row in (spark.read.option("wholetext", True)
+                    .text(f"{bronze_root}/Files/_diag/ingestion/*.json").collect()):
+            try:
+                manifests.append(json.loads(row.value))
+            except ValueError:
+                print("skipping an unparseable ingestion manifest")
+    except Exception as exc:  # noqa: BLE001
+        print(f"ingestion manifests unreadable ({type(exc).__name__}: {exc})")
+    try:
+        sage = max((r["timestamp"] for r in spark.sql(
+            f"DESCRIBE HISTORY delta.`{bronze_root}/Tables/dbo/{SAGE_FRESHNESS_TABLE}`").collect()), default=None)
+    except Exception as exc:  # noqa: BLE001
+        print(f"Sage bronze history unreadable ({type(exc).__name__}: {exc})")
+        sage = None
+    checked = datetime.now(timezone.utc).replace(tzinfo=None)
+    rows = source_freshness(manifests, sage)
+    (spark.createDataFrame([(r["Source"], r["LastSuccessAt"], r["Batch"], r["Status"], r["Evidence"],
+                             checked, run_id) for r in rows], SOURCE_FRESHNESS_SCHEMA)
+     .write.format("delta").mode("overwrite").saveAsTable(SOURCE_FRESHNESS_TABLE))
+    publish_schema(spark, diagnostic_dir, SOURCE_FRESHNESS_TABLE)
+    for r in rows:
+        print(f"  freshness {r['Source']:<9} {r['LastSuccessAt']}  {r['Status']}")
+    return len(rows)
+
+
 @dataclass(frozen=True)
 class Expectation:
     """One check against one table.
@@ -340,6 +433,18 @@ def _selftest() -> None:
         pass
     else:
         raise AssertionError("blocking failure should raise")
+
+    # Freshness: the last SUCCESS wins, a later failure is named, partial scopes are not refreshes.
+    fresh = {r["Source"]: r for r in source_freshness([
+        {"batch": "20260912T060000Z", "source_scope": "active_projects", "status": "complete"},
+        {"batch": "20260913T060000-ab12", "source_scope": "active_projects", "status": "failed"},
+        {"batch": "20260914T090000Z", "source_scope": "active_projects_selected_endpoints", "status": "complete"},
+        {"batch": "20260914T061000Z", "source": "outbuild", "status": "complete_with_warnings"},
+    ])}
+    assert str(fresh["Procore"]["LastSuccessAt"]) == "2026-09-12 06:00:00"
+    assert "20260913T060000-ab12 failed" in fresh["Procore"]["Status"]
+    assert fresh["Outbuild"]["Batch"] == "20260914T061000Z" and fresh["Outbuild"]["Status"] == "complete_with_warnings"
+    assert fresh["Sage"]["LastSuccessAt"] is None and fresh["Sage"]["Status"] == "no bronze write found"
 
     print("dq: all checks passed")
 

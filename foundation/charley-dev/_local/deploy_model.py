@@ -29,6 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import deploy as dp  # noqa: E402
 import scorecard  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
+import kpi_catalog  # noqa: E402
 from seedrunner import build  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -74,6 +75,9 @@ MODEL_TABLES = [
     # Saved point-in-time KPIs, one row-set per passing nightly run. The only honest source
     # for "as of month X": every other fact is current state.
     "fct_DailySnapshot",
+    # What each headline KPI means (generated from kpi_catalog.py) and how current each source
+    # system is - both read by the hidden KPI Definitions page. Disconnected on purpose.
+    "seed_KpiCatalog", "meta_SourceFreshness",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -836,7 +840,9 @@ def measures_tmdl() -> str:
     for measure_name, expression, fmt, origin in MEASURES:
         # TMDL: the /// description PRECEDES the object it documents. Placing it after the
         # properties is a parse error ("Unexpected line type"), not a style preference.
-        lines.append(f"\t/// Replaces {origin}")
+        # The catalog's reader-facing definition where one exists, so the field-list hover
+        # explains the KPI; the workbook lineage is kept at the end either way.
+        lines.append(f"\t/// {kpi_catalog.description(MODEL_NAME, measure_name, origin)}")
         if "\n" in expression:
             # Multi-line DAX: TMDL requires the `=` to end the line, with EVERY expression
             # line below it and indented deeper. Leaving the first line beside the `=` and

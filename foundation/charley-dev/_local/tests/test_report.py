@@ -260,6 +260,10 @@ def test_report_refs() -> None:
     # New model tables can be reviewed before a live build publishes their Spark schema.
     # Validate their bindings against executed local SQL; live TMDL generation still
     # requires the actual Fabric schema and is checked separately.
+    # Written by the DQ gate from a schema string, not by SQL: take its columns from that string.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "00-platform" / "lib"))
+    import dq
+    known.setdefault(dq.SOURCE_FRESHNESS_TABLE, {c.split()[0] for c in dq.SOURCE_FRESHNESS_SCHEMA.split(",")})
     missing_tables = set(dm.MODEL_TABLES) - set(known) - {"meta_PipelineRun"}
     if missing_tables:
         from seedrunner import build
