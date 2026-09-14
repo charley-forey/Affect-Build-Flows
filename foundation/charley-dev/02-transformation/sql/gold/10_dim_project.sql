@@ -95,4 +95,23 @@ SELECT
 FROM all_projects a
 LEFT JOIN sv_projects x  ON a.project_id = x.project_id
 LEFT JOIN crosswalk   xw ON a.project_id = xw.procore_project_id
-LEFT JOIN contracts   c  ON a.project_id = c.project_id;
+LEFT JOIN contracts   c  ON a.project_id = c.project_id
+
+UNION ALL
+
+-- The member fct_Invoice (and so fct_FinancialPeriod) points at when a Sage job resolves to
+-- no Procore project. Without it those rows render as "(Blank)". Same pattern as
+-- dim_CostCode's UNASSIGNED row; portfolio project counts exclude this key explicitly.
+SELECT
+    'UNMATCHED'                                   AS ProjectKey,
+    NULL                                     AS ProcoreProjectId,
+    NULL                                     AS SageJobNumber,
+    NULL                                     AS ProjectNumber,
+    'Unassigned project (no Procore match)'       AS ProjectName,
+    NULL                                     AS OriginCode,
+    NULL                                     AS OriginalContractAmount,
+    NULL                                     AS RetainagePercent,
+    NULL                                       AS ContractStart,
+    NULL                                       AS ContractFinish,
+    FALSE                                         AS HasPrimeContract,
+    FALSE                                         AS IsInCrosswalk;

@@ -45,7 +45,9 @@ billing AS (
 ),
 co_monthly AS (
     SELECT ProjectKey, MonthStart,
-           CAST(SUM(Amount) AS DOUBLE)                                          AS ChangeOrderValue,
+           -- Void COs never reach the contract (IsPending is FALSE for them too).
+           CAST(SUM(CASE WHEN LOWER(TRIM(StatusLabel)) <> 'void' OR StatusLabel IS NULL
+                         THEN Amount END) AS DOUBLE)                             AS ChangeOrderValue,
            CAST(SUM(CASE WHEN IsPending THEN Amount ELSE 0 END) AS DOUBLE)      AS PendingChangeOrders,
            CAST(MAX(CASE WHEN IsPending THEN DaysOpen END) AS BIGINT)           AS AgeOfOldestUnapprovedCO,
            COUNT(*)                                             AS ChangeOrderCount

@@ -44,7 +44,8 @@ BALANCE_QUERY = '''EVALUATE ROW(
         fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = "Owner"), fct_Billing[RetainageHeld]),
     "Sub", [Retainage Held Sub],
     "ExpectedSub", SUMX(FILTER(fct_Billing,
-        fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = "Subcontractor"), fct_Billing[RetainageHeld]),
+        fct_Billing[IsLatestPeriod] = TRUE() && fct_Billing[BillingType] = "Subcontractor"
+        && fct_Billing[StatusLabel] IN {"APPROVED", "APPROVED_AS_NOTED"}), fct_Billing[RetainageHeld]),
     "Net", [Net Retainage Position],
     "ExpectedNet", [Retainage Held Owner] - [Retainage Held Sub],
     "Contract", [Current Contract],
@@ -79,7 +80,7 @@ def check_spend_status(dataset_id, tok):
              ("boundary", "-0.05", "Spend over budget up to 5%"),
              ("larger_overrun", "-0.0501", "Spend over budget above 5%")]
     query = "EVALUATE ROW(" + ",".join(
-        f'"{label}",' + expression.replace("[Budget Variance %]", value) for label, value, _ in cases) + ")"
+        f'"{label}",' + expression.replace("[Budget Remaining %]", value) for label, value, _ in cases) + ")"
     rows = dax(dataset_id, tok, query)
     if rows != [{f"[{label}]": expected for label, _, expected in cases}]:
         raise AssertionError("spend status did not preserve unknowns or the defined band boundaries")
@@ -136,8 +137,8 @@ RAW_COLUMNS = {
     "dim_ScorecardWeight": ["CategoryKey", "Weight"],
     "dim_ScorecardBand": ["CategoryKey", "MinValue", "MaxValue", "MatchValue", "Score", "BandLabel"],
     "fct_BudgetLine": ["BudgetAmount", "ForecastAmount", "CommittedAmount", "SpentToDate", "CostToComplete"],
-    "fct_ChangeOrder": ["Amount", "IsPending"],
-    "fct_Invoice": ["Amount", "AmountPaid", "Balance", "HasUnmatchedProject", "DaysToPayment"],
+    "fct_ChangeOrder": ["Amount", "IsPending", "StatusLabel"],
+    "fct_Invoice": ["Amount", "AmountPaid", "Balance", "HasUnmatchedProject", "DaysToPayment", "PaidDate"],
     "fct_RfiSubmittal": ["IsOpen", "IsPastDue", "ItemType", "DaysOpen"],
     "fct_Milestone": ["IsOverdue", "PercentComplete", "CurrentFinish", "HasDateInversion"],
     "fct_FinancialPeriod": ["OriginalContract", "CurrentContract", "PendingChangeOrders", "AgeOfOldestUnapprovedCO"],
@@ -148,7 +149,7 @@ RAW_COLUMNS = {
     "fct_DirectCost": ["GrandTotal", "CostType", "IsApproved"],
     "bridge_ProjectVendor": ["VendorKey", "IsMissingFromErp"],
     "bridge_VendorCostCode": ["VendorKey", "CostCodeKey", "Amount", "AmountType"],
-    "fct_VendorInsurance": ["VendorKey", "ExpiryStatus"],
+    "fct_VendorInsurance": ["VendorKey", "ExpiryStatus", "ExpirationDate"],
     "man_Flags": ["ProfitabilityCode"], "man_Survey": ["Score"], "man_Milestones": ["BaselineFinish"],
     "man_DailyLogCompliance": ["LogsMissedSameDay"],
     "dim_ProjectCrosswalk": ["SystemCount", "IsInSage", "IsInOutbuild"], "dim_VendorCrosswalk": ["IsInSage"],
@@ -253,9 +254,14 @@ class Recompute:
         return self._cache[(table, s)]
 
     def latest(self, table, column, s):
-        """SUMX(VALUES(ProjectKey), LASTNONBLANKVALUE(date, SUM(column)))."""
+        """SUMX(VALUES(ProjectKey), LASTNONBLANKVALUE(date, SUM(column))) over every date up to
+        the end of the selected period: each project's last value ON OR BEFORE it, carried
+        forward through months where it has no row."""
         months = {}
-        for r in self.rows(table, s):
+        end = None if s.month is None else _ts(s.month)
+        for r in self.rows(table, s._replace(month=None)):
+            if end is not None and (r["MonthStart"] is None or _ts(r["MonthStart"]) > end):
+                continue
             months.setdefault(r["ProjectKey"], {}).setdefault(r["MonthStart"], []).append(r)
         values = []
         for by_month in months.values():
@@ -388,7 +394,7 @@ def monthly_expected():
     def projects_at_risk(c, s):
         count = 0
         for p in c.rows("dim_Project", s):
-            if p["ProjectKey"] is None:
+            if p["ProjectKey"] in (None, "UNMATCHED"):
                 continue
             value = E["Project Scorecard (Measured Only)"](c, s._replace(project=p["ProjectKey"]))
             count += value is not None and value < 0.6
@@ -404,9 +410,26 @@ def monthly_expected():
         return None if baseline is None or forecast is None else (_ts(forecast).date() - _ts(baseline).date()).days
 
     def budget_status(c, s):
-        v = E["Budget Variance %"](c, s)
+        v = E["Budget Remaining %"](c, s)
         return (None if v is None else "Spend within budget" if v >= 0
                 else "Spend over budget up to 5%" if v >= -0.05 else "Spend over budget above 5%")
+
+    def forecast_status(c, s):
+        v = E["Forecast Variance %"](c, s)
+        return (None if v is None else "Forecast within budget" if v >= 0
+                else "Forecast over budget up to 5%" if v >= -0.05 else "Forecast over budget above 5%")
+
+    def cash_received(c, s):
+        """USERELATIONSHIP(PaidDate, Date): the month filter moves from sent month to paid date."""
+        rows = [r for r in c.rows("fct_Invoice", s._replace(month=None)) if r["PaidDate"] is not None]
+        if s.month is not None:
+            start = _ts(s.month)
+            rows = [r for r in rows if _ts(r["PaidDate"]).replace(day=1, hour=0, minute=0, second=0) == start]
+        return _sum(rows, "AmountPaid")
+
+    def critical_milestones(c, s):
+        n = _count(c.rows("fct_Milestone", s))
+        return 0 if n is None and _count(c.rows("fct_Milestone", s._replace(month=None))) else n
 
     def selected(rows, column):
         values = {r[column] for r in rows}
@@ -444,14 +467,18 @@ def monthly_expected():
         "Contract Growth %": lambda c, s: _div(_add(E["Current Contract"](c, s), E["Original Contract"](c, s), -1),
                                               E["Original Contract"](c, s)),
         "Age Of Oldest Unapproved CO": lambda c, s: _max(c.rows("fct_FinancialPeriod", s), "AgeOfOldestUnapprovedCO"),
-        "Approved Change Orders": lambda c, s: _sum(R(c, "fct_ChangeOrder", s, false("IsPending")), "Amount"),
+        "Approved Change Orders": lambda c, s: _sum(R(c, "fct_ChangeOrder", s, lambda r: not r["IsPending"]
+                                                     and not _eq(r["StatusLabel"], "void")), "Amount"),
         "Change Order Amount": lambda c, s: _sum(c.rows("fct_ChangeOrder", s), "Amount"),
         "Budget": budget("BudgetAmount"), "Forecast": budget("ForecastAmount"),
         "Committed": budget("CommittedAmount"), "Spent To Date": budget("SpentToDate"),
         "Cost To Complete": budget("CostToComplete"),
-        "Budget Variance": lambda c, s: _add(E["Budget"](c, s), E["Spent To Date"](c, s), -1),
-        "Budget Variance %": lambda c, s: _div(E["Budget Variance"](c, s), E["Budget"](c, s)),
+        "Budget Remaining": lambda c, s: _add(E["Budget"](c, s), E["Spent To Date"](c, s), -1),
+        "Budget Remaining %": lambda c, s: _div(E["Budget Remaining"](c, s), E["Budget"](c, s)),
+        "Forecast Variance": lambda c, s: _add(E["Budget"](c, s), E["Forecast"](c, s), -1),
+        "Forecast Variance %": lambda c, s: _div(E["Forecast Variance"](c, s), E["Budget"](c, s)),
         "Budget Status": budget_status,
+        "Forecast Status": forecast_status,
         "Percent Bought Out": lambda c, s: _div(E["Committed"](c, s), E["Budget"](c, s)),
         "Blocking Violations Last Run": lambda c, s: None if E["Last Checked Run"](c, s) is None else _zero(_sum(
             [r for r in c.rows("meta_PipelineRun", s) if r["RunAt"] == E["Last Checked Run"](c, s)], "Blocking")),
@@ -465,10 +492,13 @@ def monthly_expected():
         "Certificates Expiring Soon": lambda c, s: len([r for r in insurance(c, s)
                                                         if _eq(r["ExpiryStatus"], "Expiring within 30 days")]),
         "Vendors Without Insurance": vendors_without_insurance,
+        "Latest Certificate Expiration": lambda c, s: _max(c.rows("fct_VendorInsurance", s), "ExpirationDate", key=_ts),
         "Retainage Held Owner": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), lambda r: r["IsLatestPeriod"] is True
                                                      and _eq(r["BillingType"], "Owner")), "RetainageHeld"),
         "Retainage Held Sub": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), lambda r: r["IsLatestPeriod"] is True
-                                                   and _eq(r["BillingType"], "Subcontractor")), "RetainageHeld"),
+                                                   and _eq(r["BillingType"], "Subcontractor")
+                                                   and (_eq(r["StatusLabel"], "APPROVED")
+                                                        or _eq(r["StatusLabel"], "APPROVED_AS_NOTED"))), "RetainageHeld"),
         "Net Retainage Position": lambda c, s: _add(E["Retainage Held Owner"](c, s), E["Retainage Held Sub"](c, s), -1),
         "Owner Billed To Date": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "CompletedToDate"),
         "Owner Contract Sum": lambda c, s: _sum(R(c, "fct_Billing", s._replace(month=None), latest_owner), "ContractSumToDate"),
@@ -484,6 +514,7 @@ def monthly_expected():
         "Vendors Missing From ERP": lambda c, s: _zero(_distinct(R(c, "bridge_ProjectVendor", s, true("IsMissingFromErp")), "VendorKey")),
         "Total Billed": lambda c, s: _sum(c.rows("fct_Invoice", s), "Amount"),
         "Total Paid": lambda c, s: _sum(c.rows("fct_Invoice", s), "AmountPaid"),
+        "Cash Received": cash_received,
         "AR Outstanding": lambda c, s: _sum(c.rows("fct_Invoice", s), "Balance"),
         "Total Billed %": billed_to_date_pct,
         "Total Billed MoM %": mom,
@@ -491,7 +522,7 @@ def monthly_expected():
         "Open Submittals Past Due": lambda c, s: _count(R(c, "fct_RfiSubmittal", s, lambda r: r["IsPastDue"] is True and _eq(r["ItemType"], "Submittal"))),
         "Avg Days Open": lambda c, s: _avg(R(c, "fct_RfiSubmittal", s, lambda r: r["IsOpen"] is True), "DaysOpen"),
         "Draft Submittals": lambda c, s: _count(R(c, "fct_RfiSubmittal", s, lambda r: r["IsDraft"] is True and _eq(r["ItemType"], "Submittal"))),
-        "Critical Milestones": lambda c, s: _count(c.rows("fct_Milestone", s)),
+        "Critical Milestones": critical_milestones,
         "Overdue Milestones": lambda c, s: _count(R(c, "fct_Milestone", s, true("IsOverdue"))),
         "Milestones Overdue %": lambda c, s: _div(E["Overdue Milestones"](c, s), E["Critical Milestones"](c, s)),
         "Avg Milestone Progress": lambda c, s: _avg(c.rows("fct_Milestone", s), "PercentComplete"),
@@ -505,7 +536,8 @@ def monthly_expected():
         "Projects Missing From Outbuild": lambda c, s: len(R(c, "dim_ProjectCrosswalk", s, false("IsInOutbuild"))),
         "Source Coverage %": lambda c, s: _div(E["Projects Fully Mapped"](c, s), _count(c.rows("dim_ProjectCrosswalk", s))),
         "Vendors Missing From Sage": lambda c, s: len(R(c, "dim_VendorCrosswalk", s, false("IsInSage"))),
-        "DQ Projects Without Crosswalk": lambda c, s: _count(R(c, "dim_Project", s, false("IsInCrosswalk"))),
+        "DQ Projects Without Crosswalk": lambda c, s: _count(R(c, "dim_Project", s, lambda r: not r["IsInCrosswalk"]
+                                                             and r["ProjectKey"] != "UNMATCHED")),
         "DQ Cost Codes Not In Source": lambda c, s: _count(R(c, "dim_CostCode", s, false("IsInSource"))),
         "DQ Milestones With Inverted Dates": lambda c, s: _count(R(c, "fct_Milestone", s, true("HasDateInversion"))),
         "DQ Unmatched Invoices": lambda c, s: _count(R(c, "fct_Invoice", s._replace(project=None), true("HasUnmatchedProject"))),
@@ -514,7 +546,7 @@ def monthly_expected():
         "Billed Cumulative": billed_cumulative,
         "Billed Cumulative % Of Contract": lambda c, s: _div(billed_cumulative(c, s), E["Current Contract"](c, s)),
         "Projects Reporting": lambda c, s: len({r["ProjectKey"] for r in c.rows("fct_FinancialPeriod", s)
-                                                if r["ProjectKey"] is not None}) or None,
+                                                if r["ProjectKey"] not in (None, "UNMATCHED")}) or None,
         "Projects At Risk": projects_at_risk,
         "Avg Days To Payment": lambda c, s: _avg(c.rows("fct_Invoice", s), "DaysToPayment"),
         "Cash Position %": lambda c, s: _div(_add(E["Total Paid"](c, s), E["AR Outstanding"](c, s)),
@@ -951,14 +983,14 @@ def main() -> int:
         EVALUATE
         ROW(
             "BudgetMinusSpent", [Budget] - [Spent To Date],
-            "Variance",         [Budget Variance],
+            "Variance",         [Budget Remaining],
             "Billed",           [Total Billed],
             "Paid",             [Total Paid],
             "Outstanding",      [AR Outstanding]
         )
     """)[0]
     assert abs(consistency["[BudgetMinusSpent]"] - consistency["[Variance]"]) < 0.01
-    CHECKS.append("[Budget Variance] equals Budget - Spent To Date")
+    CHECKS.append("[Budget Remaining] equals Budget - Spent To Date")
 
     # Billed must equal paid plus what is still outstanding, or the AR numbers do not add up.
     billed = consistency["[Billed]"]

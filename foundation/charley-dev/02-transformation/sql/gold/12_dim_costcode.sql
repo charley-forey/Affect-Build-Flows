@@ -43,9 +43,12 @@ SELECT
     -- division in it - "Concrete" cannot yield "03". Parsing the name left 5,429 of 5,433
     -- codes with a NULL division, which the DQ suite reported as unparseable codes; the
     -- defect was one level upstream, in what sv_cost_codes exposed.
+    -- ZERO-PADDED to two digits, as 17_dim_costcodecrosswalk.sql does: Affect writes
+    -- divisions 1-9 without the leading zero, and "1" beside "01" split one division in two.
     CASE
         WHEN TRIM(s.cost_code) LIKE '%-%'
-        THEN TRIM(SUBSTRING(TRIM(s.cost_code), 1, POSITION('-' IN TRIM(s.cost_code)) - 1))
+         AND rlike_(TRIM(SUBSTRING(TRIM(s.cost_code), 1, POSITION('-' IN TRIM(s.cost_code)) - 1)), '^[0-9]{1,2}$')
+        THEN LPAD(TRIM(SUBSTRING(TRIM(s.cost_code), 1, POSITION('-' IN TRIM(s.cost_code)) - 1)), 2, '0')
     END AS Division,
     CASE WHEN s.cost_code_id IS NULL THEN FALSE ELSE TRUE END AS IsInSource
 FROM all_codes a

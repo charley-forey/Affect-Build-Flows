@@ -397,6 +397,12 @@ def test_procore_facts(con) -> None:
     assert one(con, "SELECT TradeKey FROM fct_QcNcr WHERE NcrKey='OB2'") is None
     assert one(con, "SELECT HasUnmappedTrade FROM fct_QcNcr WHERE NcrKey='OB2'") is True
     assert one(con, "SELECT HasUnmappedTrade FROM fct_QcNcr WHERE NcrKey='OB1'") is False
+    # The label never renders (Blank): unmapped source text is prefixed, a missing trade is
+    # "Unassigned trade". TradeKey and the unmapped flag above are untouched by the label.
+    assert one(con, "SELECT TradeLabel FROM fct_QcNcr WHERE NcrKey='OB1'") == "Concrete Formwork"
+    assert one(con, "SELECT TradeLabel FROM fct_QcNcr WHERE NcrKey='OB2'") == "Unmapped trade: Metals"
+    assert one(con, "SELECT COUNT(*) FROM fct_QcNcr WHERE TradeLabel IS NULL") == 0
+    assert one(con, "SELECT COUNT(*) FROM fct_QcPunch WHERE TradeLabel IS NULL") == 0
     # OB3 is the alias path, and it is the only thing that tests it. 'HVAC' does not
     # normalise to HVAC_DUCTWORK by any string rule - it resolves through
     # qc_seed_TradeAlias or not at all, so this assertion fails the moment that join

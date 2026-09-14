@@ -133,6 +133,12 @@ RELATIONSHIPS = [
     ("fct_DailySnapshot", "SnapshotDate", "dim_Date", "Date"),
 ]
 
+# Inactive: reachable only through USERELATIONSHIP in a measure. fct_Invoice already reaches
+# dim_Date on MonthStart (sent month); a second active path would be ambiguous.
+INACTIVE_RELATIONSHIPS = [
+    ("fct_Invoice", "PaidDate", "dim_Date", "Date"),
+]
+
 # Measures. Each carries the workbook cell it replaces, so anyone reading the model can
 # trace a number back to the spreadsheet it came from.
 PIPELINE_STATUS_DAX = '''VAR Last = MAX ( meta_PipelineRun[RunAt] )
@@ -201,6 +207,13 @@ REPORT_MONTH_LABEL_DAX = (
     'FORMAT ( L, "MMMM YYYY" ) & " - " & FORMAT ( H, "MMMM YYYY" ) ) )')
 
 
+BALANCE_AT_PERIOD_END = (
+    "VAR EndDate = MAX ( dim_Date[Date] )\n"
+    "RETURN CALCULATE ( SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
+    "CALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date], SUM ( fct_FinancialPeriod[{column}] ) ) ) ),\n"
+    "REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )")
+
+
 def _project_vendors(expression: str) -> str:
     """Scope an insurance count to the selected project's vendors; company-wide otherwise."""
     return ("COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( " + expression + ", "
@@ -221,15 +234,16 @@ MEASURES = [
     # So: per project take the value at the last date in filter context, then add up
     # across projects. One month selected gives that month; none gives the current
     # position rather than a running total of history.
+    #
+    # CARRIED FORWARD. fct_FinancialPeriod only has a row in months with budget, invoice or
+    # CO activity, so inside a month filter a project with no row that month vanished:
+    # Aug 2026 read $24.9M against $35.3M. The window is every date up to the end of the
+    # selected period, so each project contributes its last value on or before it.
     ("Original Contract",
-     "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
-     "\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n"
-     "\t\t\tSUM ( fct_FinancialPeriod[OriginalContract] ) ) ) )",
+     BALANCE_AT_PERIOD_END.format(column="OriginalContract"),
      '"$#,0"', "FINANCIALS!C3"),
     ("Current Contract",
-     "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
-     "\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n"
-     "\t\t\tSUM ( fct_FinancialPeriod[CurrentContract] ) ) ) )",
+     BALANCE_AT_PERIOD_END.format(column="CurrentContract"),
      '"$#,0"', "FINANCIALS!C4"),
     ("Contract Growth %",
      "DIVIDE ( [Current Contract] - [Original Contract], [Original Contract] )",
@@ -237,9 +251,7 @@ MEASURES = [
     # Also a balance. What is pending in a month is a standing amount, not that month's
     # new change orders - adding twelve months of it counts the same open CO twelve times.
     ("Pending Change Orders",
-     "SUMX ( VALUES ( fct_FinancialPeriod[ProjectKey] ),\n"
-     "\t\t\tCALCULATE ( LASTNONBLANKVALUE ( dim_Date[Date],\n"
-     "\t\t\tSUM ( fct_FinancialPeriod[PendingChangeOrders] ) ) ) )",
+     BALANCE_AT_PERIOD_END.format(column="PendingChangeOrders"),
      '"$#,0"', "FINANCIALS!C5 - was =65000+3158.46+11550+4620 typed in a value cell"),
     ("Age Of Oldest Unapproved CO", "MAX ( fct_FinancialPeriod[AgeOfOldestUnapprovedCO] )",
      '"#,0"', "FINANCIALS!C6 - typed by hand"),
@@ -249,7 +261,7 @@ MEASURES = [
     # because the table shows it PER CHANGE ORDER - the contract measures are balances that
     # collapse to one value per project and would repeat that value down every row.
     ("Approved Change Orders",
-     "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending] )",
+     'CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> "void" )',
      '"$#,0"', "derived - approved COs, the complement of [Pending Change Orders]"),
     ("Change Order Amount", "SUM ( fct_ChangeOrder[Amount] )", '"$#,0"',
      "change-order grain; responds to status and item filters"),
@@ -268,16 +280,26 @@ MEASURES = [
      '"$#,0"', "FINANCIALS!E19:E20 - as of the last budget snapshot"),
     ("Cost To Complete", "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
      '"$#,0"', "FINANCIALS!C15 - as of the last budget snapshot"),
-    ("Budget Variance", "[Budget] - [Spent To Date]", '"$#,0"', "derived"),
-    ("Budget Variance %", "DIVIDE ( [Budget Variance], [Budget] )", '"0.0%"',
+    # REMAINING, not variance: budget less spend to date is what is left to spend. The
+    # variance a PM means - will we finish over - is budget less FORECAST, below.
+    ("Budget Remaining", "[Budget] - [Spent To Date]", '"$#,0"', "derived - budget less spend to date"),
+    ("Budget Remaining %", "DIVIDE ( [Budget Remaining], [Budget] )", '"0.0%"',
      "the rule written out in FINANCIALS!H18:J21 but hand-picked from a dropdown"),
+    ("Forecast Variance", "[Budget] - [Forecast]", '"$#,0"',
+     "derived - budget less forecast final cost; negative = forecast over budget"),
+    ("Forecast Variance %", "DIVIDE ( [Forecast Variance], [Budget] )", '"0.0%"', "derived"),
     # The rule the workbook wrote down and then ignored. SWITCH(TRUE(),...) is the
     # idiomatic DAX for banded IFs - flat instead of nested.
     ("Budget Status",
-     'VAR V = [Budget Variance %]\n'
+     'VAR V = [Budget Remaining %]\n'
      '\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "Spend within budget", '
      'V >= -0.05, "Spend over budget up to 5%", "Spend over budget above 5%" )',
      None, "FINANCIALS!F19:F20 bands applied to spend-to-date; not a forecast or completion assessment"),
+    ("Forecast Status",
+     'VAR V = [Forecast Variance %]\n'
+     '\t\t\tRETURN SWITCH ( TRUE(), ISBLANK ( V ), BLANK (), V >= 0, "Forecast within budget", '
+     'V >= -0.05, "Forecast over budget up to 5%", "Forecast over budget above 5%" )',
+     None, "FINANCIALS!F19:F20 bands applied to forecast final cost against budget"),
     ("Percent Bought Out", "DIVIDE ( [Committed], [Budget] )", '"0.0%"', "FINANCIALS!D62"),
 
 
@@ -350,6 +372,9 @@ MEASURES = [
      _project_vendors('CALCULATE ( COUNTROWS ( fct_VendorInsurance ), '
                       'fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" )'), '"#,0"',
      "D8 - the renewals to chase this month"),
+    # Explains an all-expired page: the newest certificate in Procore, not a count.
+    ("Latest Certificate Expiration", "MAX ( fct_VendorInsurance[ExpirationDate] )", '"yyyy-mm-dd"',
+     "D8 - latest certificate expiration on file"),
     # The gap the vendor list is really for: vendors on a project with NO certificate at
     # all. Counted from the bridge rather than the insurance table, because a vendor with
     # no record does not appear in the insurance table to be counted.
@@ -379,12 +404,16 @@ MEASURES = [
      '"$#,0"', "no workbook equivalent - Sage holds no header retainage"),
     ("Retainage Held Sub",
      'CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), fct_Billing[IsLatestPeriod] = TRUE (), REMOVEFILTERS ( dim_Date ), '
-     'fct_Billing[BillingType] = "Subcontractor" )',
-     '"$#,0"', "no workbook equivalent"),
+     'fct_Billing[BillingType] = "Subcontractor", '
+     'fct_Billing[StatusLabel] IN { "APPROVED", "APPROVED_AS_NOTED" } )',
+     # Approved only: an UNDER_REVIEW or PENDING_OWNER_APPROVAL pay app is not yet money
+     # Affect holds, and those set $351K of a $408K balance. A contract whose latest pay app
+     # is unapproved contributes nothing here rather than its earlier approved balance.
+     '"$#,0"', "no workbook equivalent - approved subcontractor pay apps only"),
     # Owner retainage is money owed TO Affect, sub retainage is money Affect holds FROM
     # others. Netting them is the cash question a GC actually asks at month end.
     ("Net Retainage Position", "[Retainage Held Owner] - [Retainage Held Sub]", '"$#,0"',
-     "derived - what Affect is owed, less what Affect holds"),
+     "derived - Owner-held minus sub-held; negative = Affect holds more than it is owed"),
 
     # Billed from the billing side, as opposed to [Total Billed] which comes from Sage
     # invoices. Two independent paths to the same figure is the point: they are sourced
@@ -407,7 +436,7 @@ MEASURES = [
     ("Billed This Period",
      'CALCULATE ( SUM ( fct_Billing[CurrentPaymentDue] ), fct_Billing[BillingType] = "Owner", '
      "fct_Billing[StatusLabel] <> \"DRAFT\" )",
-     '"$#,0"', "derived - safe to sum, unlike the cumulative columns"),
+     '"$#,0"', "derived - owner billed net of retainage (payment due, Procore); safe to sum, unlike the cumulative columns"),
     ("Billing Periods", "COALESCE ( COUNTROWS ( fct_Billing ), 0 )", '"#,0"', "derived"),
     ("Draft Billings",
      'COALESCE ( CALCULATE ( COUNTROWS ( fct_Billing ), '
@@ -437,7 +466,14 @@ MEASURES = [
      "bridge_ProjectVendor[IsMissingFromErp] = TRUE () ), 0 )",
      '"#,0"', "derived"),
     ("Total Billed", "SUM ( fct_Invoice[Amount] )", '"$#,0"', "FINANCIALS!C10"),
-    ("Total Paid", "SUM ( fct_Invoice[AmountPaid] )", '"$#,0"', "FINANCIALS!C12"),
+    ("Total Paid", "SUM ( fct_Invoice[AmountPaid] )", '"$#,0"',
+     "FINANCIALS!C12 - paid on invoices SENT in the period, not cash received in it"),
+    # Cash by the day it arrived. PaidDate is when receipts first fully covered the invoice
+    # (22_fct_invoice.sql), so a partially paid invoice is not counted until it settles.
+    ("Cash Received",
+     "CALCULATE ( SUM ( fct_Invoice[AmountPaid] ), NOT ISBLANK ( fct_Invoice[PaidDate] ),\n"
+     "USERELATIONSHIP ( fct_Invoice[PaidDate], dim_Date[Date] ) )",
+     '"$#,0"', "no workbook equivalent - invoices fully paid in the period, by paid date"),
     ("AR Outstanding", "SUM ( fct_Invoice[Balance] )", '"$#,0"', "FINANCIALS!F57"),
     # BILLED TO DATE as of the end of the selected period, against the contract as of that
     # same point. It used to be [Total Billed] / [Current Contract], which with a month
@@ -468,7 +504,12 @@ MEASURES = [
     ("Draft Submittals",
      'CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), fct_RfiSubmittal[IsDraft] = TRUE, fct_RfiSubmittal[ItemType] = "Submittal" )',
      '"#,0"', "derived - drafts are not yet submitted, so excluded from Open Submittals"),
-    ("Critical Milestones", "COUNTROWS ( fct_Milestone )", '"#,0"', "SCHEDULE!Table5"),
+    # 0 only where the project has Outbuild data at all; BLANK where it has none, so "no
+    # schedule" does not read as "no milestones due".
+    ("Critical Milestones",
+     "VAR N = COUNTROWS ( fct_Milestone )\n"
+     "RETURN IF ( ISBLANK ( N ) && NOT ISBLANK ( CALCULATE ( COUNTROWS ( fct_Milestone ), REMOVEFILTERS ( dim_Date ) ) ), 0, N )",
+     '"#,0"', "SCHEDULE!Table5"),
     ("Overdue Milestones",
      "CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )",
      '"#,0"', "derived"),
@@ -524,7 +565,7 @@ MEASURES = [
      "COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )",
      '"#,0"', "mostly expected - a vendor invited to bid is not a vendor who was paid"),
     ("DQ Projects Without Crosswalk",
-     "CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE )",
+     'CALCULATE ( COUNTROWS ( dim_Project ), dim_Project[IsInCrosswalk] = FALSE, dim_Project[ProjectKey] <> "UNMATCHED" )',
      '"#,0"', "diagnostics - cannot join to Sage until fixed"),
     ("DQ Cost Codes Not In Source",
      "CALCULATE ( COUNTROWS ( dim_CostCode ), dim_CostCode[IsInSource] = FALSE )",
@@ -567,13 +608,15 @@ MEASURES = [
     # never given a number that spans the jobs.
     # Projects with a financial period in context - not every row of dim_Project, which
     # ignored the month slicer and counted projects that have never reported anything.
-    ("Projects Reporting", "DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] )", '"#,0"',
+    # UNMATCHED is the unassigned-AR member, not a project.
+    ("Projects Reporting",
+     'CALCULATE ( DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] ), fct_FinancialPeriod[ProjectKey] <> "UNMATCHED" )', '"#,0"',
      "portfolio scope - projects with financial-period rows in the current filters"),
     ("Projects At Risk",
      # Below 0.60 on the measured-only score, so a project is not flagged merely for being
      # under-instrumented - that is what [Scorecard Coverage %] is for.
-     "COUNTROWS ( FILTER ( dim_Project, "
-     "NOT ISBLANK ( [Project Scorecard (Measured Only)] ) "
+     "COUNTROWS ( FILTER ( dim_Project, dim_Project[ProjectKey] <> \"UNMATCHED\" "
+     "&& NOT ISBLANK ( [Project Scorecard (Measured Only)] ) "
      "&& [Project Scorecard (Measured Only)] < 0.6 ) )",
      '"#,0"', "no workbook equivalent - one workbook per project cannot rank them"),
 
@@ -832,6 +875,16 @@ def relationships_tmdl() -> str:
             f"\ttoColumn: {dim}.{dcol}",
             "",
         ]
+    # Only where both tables are in this model: deploy_model_qc reuses this generator.
+    for fact, fcol, dim, dcol in INACTIVE_RELATIONSHIPS:
+        if fact in MODEL_TABLES and dim in MODEL_TABLES:
+            out += [
+                f"relationship rel_inactive_{fact}_{dim}_{fcol}",
+                "\tisActive: false",
+                f"\tfromColumn: {fact}.{fcol}",
+                f"\ttoColumn: {dim}.{dcol}",
+                "",
+            ]
     return "\n".join(out)
 
 

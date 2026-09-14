@@ -1,0 +1,158 @@
+{
+  "as_of": "2026-09-14",
+  "model": "Affect Project Report 4cdfb689-232a-4f33-a6bf-d53e90e8025a (workspace Build), read-only DAX",
+  "method": "before = measures as deployed in production; after = revised expressions from deploy_model.MEASURES evaluated via DEFINE MEASURE (Cash Received uses TREATAS on PaidDate in place of USERELATIONSHIP because the inactive relationship is not deployed yet). Aggregates only.",
+  "portfolio_no_filter": {
+    "before": {
+      "Original Contract": 31295506.499999996,
+      "Current Contract": 36538861.11000001,
+      "Pending Change Orders": 49463.97,
+      "Approved Change Orders": 5243354.610000002,
+      "Budget Variance": 15005974.77000003,
+      "Budget Status": "Spend within budget",
+      "Retainage Held Sub": 407988.13,
+      "Net Retainage Position": -61758.62000000005,
+      "Total Paid": 18713981.77,
+      "Critical Milestones": 253,
+      "Projects Reporting": 20,
+      "Projects At Risk": 5,
+      "DQ Projects Without Crosswalk": 5,
+      "Billed This Period": 29255670.519999992
+    },
+    "after": {
+      "Original Contract": 31295506.499999996,
+      "Current Contract": 36538861.11000001,
+      "Pending Change Orders": 49463.97,
+      "Approved Change Orders": 5243354.61,
+      "Budget Remaining": 15005974.77000003,
+      "Forecast Variance": -509441.2300000042,
+      "Budget Status": "Spend within budget",
+      "Forecast Status": "Forecast over budget up to 5%",
+      "Retainage Held Sub": 56828.43,
+      "Net Retainage Position": 289401.07999999996,
+      "Cash Received": 18460348.21,
+      "Critical Milestones": 253,
+      "Projects Reporting": 16,
+      "Projects At Risk": 5,
+      "DQ Projects Without Crosswalk": 5,
+      "Latest Certificate Expiration": "2025-04-01T00:00:00"
+    }
+  },
+  "month_2026_08": {
+    "before": {
+      "Original Contract": 22676717.389999997,
+      "Current Contract": 24888744.990000002,
+      "Pending Change Orders": 251.0,
+      "Approved Change Orders": 191859.23,
+      "Budget Variance": null,
+      "Budget Status": null,
+      "Retainage Held Sub": 214025.96,
+      "Net Retainage Position": -214025.96,
+      "Total Paid": 0.0,
+      "Critical Milestones": 32,
+      "Projects Reporting": 20,
+      "Projects At Risk": 4,
+      "DQ Projects Without Crosswalk": 5,
+      "Billed This Period": null
+    },
+    "after": {
+      "Original Contract": 30254551.24,
+      "Current Contract": 35301887.38999999,
+      "Pending Change Orders": 49463.97,
+      "Approved Change Orders": 191859.23,
+      "Budget Remaining": null,
+      "Forecast Variance": null,
+      "Budget Status": null,
+      "Forecast Status": null,
+      "Retainage Held Sub": 56828.43,
+      "Net Retainage Position": -56828.43,
+      "Cash Received": 1585183.49,
+      "Critical Milestones": 32,
+      "Projects Reporting": 6,
+      "Projects At Risk": 4,
+      "DQ Projects Without Crosswalk": 5,
+      "Latest Certificate Expiration": "2025-04-01T00:00:00"
+    }
+  },
+  "carry_forward_independent": {
+    "dax_row_level_max_monthstart_per_project": {
+      "all": 36538861.11,
+      "2026-08": 35301887.39,
+      "2025-06": 16119327.47
+    },
+    "python_validate_model_Recompute_latest": {
+      "None": {
+        "Current Contract": 36538861.11,
+        "Pending Change Orders": 49463.97,
+        "Original Contract": 31295506.5
+      },
+      "2026-08-01T00:00:00": {
+        "Current Contract": 35301887.39,
+        "Pending Change Orders": 49463.97,
+        "Original Contract": 30254551.24
+      },
+      "2025-06-01T00:00:00": {
+        "Current Contract": 16119327.47,
+        "Pending Change Orders": 9166.130000000001,
+        "Original Contract": 14994177.85
+      }
+    },
+    "agrees_with_revised_measure": true
+  },
+  "critical_milestones_per_project": {
+    "projects": 21,
+    "blank_before": 15,
+    "blank_after_all_months": 15,
+    "zero_after_2026_08": 3,
+    "blank_after_2026_08": 15
+  },
+  "change_orders_by_status": {
+    "approved": {
+      "rows": 314,
+      "amount": 5243354.61
+    },
+    "pending": {
+      "rows": 9,
+      "amount": 41099.89
+    },
+    "draft": {
+      "rows": 9,
+      "amount": 8364.08
+    },
+    "void": {
+      "rows": 3,
+      "amount": 0.0,
+      "was_pending": true,
+      "now_pending": false
+    }
+  },
+  "sub_retainage_latest_by_status": {
+    "APPROVED": 56828.43,
+    "APPROVED_AS_NOTED": 0.0,
+    "REVISE_AND_RESUBMIT": 0.0,
+    "UNDER_REVIEW": 175957.03,
+    "PENDING_OWNER_APPROVAL": 175202.67
+  },
+  "division_before_fix": {
+    "single_digit_codes": 1040,
+    "blank_division_codes": 114,
+    "two_digit_codes_ok": true,
+    "non_numeric_segments": 0
+  },
+  "insurance_type_to_category": {
+    "Auto": 21,
+    "General Liability": 24,
+    "Workers Comp": 19,
+    "Umbrella/Excess": 29,
+    "Disability": 6,
+    "Other": 6,
+    "distinct_raw_types": 20,
+    "latest_expiration": "2025-04-01"
+  },
+  "notes": [
+    "Projects Reporting before=20 in production at every grain; revised measure excludes UNMATCHED (16 all months, 6 in Aug 2026).",
+    "Production Retainage Held Owner/Sub respond to the month slicer (older deployment); portfolio figures are the comparable ones: Net Retainage -61,758.62 -> +289,401.08.",
+    "Cash Received Aug 2026 = 1,585,183.49 vs Total Paid (invoices sent in Aug) = 0.",
+    "Gold SQL changes (Division padding, UNMATCHED project member, void COs, trade labels, InsuranceCategory) take effect on the next gold build; not verifiable live until then."
+  ]
+}

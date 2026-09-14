@@ -31,7 +31,12 @@ SELECT
     n.description                       AS Description,
     n.observation_type                  AS ObservationType,
     n.category                          AS Category,
-    n.trade                             AS TradeLabel,
+    -- "Unassigned trade" when Procore has none, "Unmapped trade: <raw>" when it has one the
+    -- seed cannot resolve - so neither renders as (Blank). TradeKey and HasUnmappedTrade
+    -- below are unchanged.
+    CASE WHEN NULLIF(TRIM(n.trade), '') IS NULL THEN 'Unassigned trade'
+         WHEN COALESCE(t.TradeKey, x.TradeKey) IS NULL THEN 'Unmapped trade: ' || TRIM(n.trade)
+         ELSE n.trade END             AS TradeLabel,
     -- Procore's `trade` is free text and the workbook's TradeKey is a controlled key, so
     -- this resolves what it can and leaves the rest NULL next to a flag. A fuzzy match
     -- would attach an NCR to the wrong trade, which is worse than attaching it to none.
@@ -89,7 +94,12 @@ SELECT
     p.punch_number                      AS PunchNumber,
     p.title                             AS Title,
     p.punch_item_type                   AS PunchItemType,
-    p.trade                             AS TradeLabel,
+    -- "Unassigned trade" when Procore has none, "Unmapped trade: <raw>" when it has one the
+    -- seed cannot resolve - so neither renders as (Blank). TradeKey and HasUnmappedTrade
+    -- below are unchanged.
+    CASE WHEN NULLIF(TRIM(p.trade), '') IS NULL THEN 'Unassigned trade'
+         WHEN COALESCE(t.TradeKey, x.TradeKey) IS NULL THEN 'Unmapped trade: ' || TRIM(p.trade)
+         ELSE p.trade END             AS TradeLabel,
     COALESCE(t.TradeKey, x.TradeKey)    AS TradeKey,
     CASE WHEN p.trade IS NOT NULL AND COALESCE(t.TradeKey, x.TradeKey) IS NULL
          THEN TRUE ELSE FALSE END       AS HasUnmappedTrade,

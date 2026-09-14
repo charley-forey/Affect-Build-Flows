@@ -20,6 +20,20 @@ from seedrunner import build  # noqa: E402
 CHECKS: list[str] = []
 
 
+def rebuild_with(con, view_sql: str, gold_file: str, query: str):
+    """Swap one silver view, rebuild one gold file, read the result, roll it all back."""
+    import seedrunner
+    con.execute("BEGIN")
+    try:
+        con.execute(view_sql)
+        gold_sql = (seedrunner.CHARLEY_DEV / "02-transformation/sql/gold" / gold_file).read_text()
+        for sql in seedrunner.split_statements(gold_sql):
+            con.execute(sql)
+        return q(con, query)
+    finally:
+        con.execute("ROLLBACK")
+
+
 def check(label: str) -> None:
     CHECKS.append(label)
 
@@ -39,8 +53,11 @@ def q(con, sql: str):
 
 
 def test_dim_project(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM dim_Project") == 2
-    assert one(con, "SELECT COUNT(DISTINCT ProjectKey) FROM dim_Project") == 2
+    # Two real projects plus the UNMATCHED member unmatched AR points at.
+    assert one(con, "SELECT COUNT(*) FROM dim_Project") == 3
+    assert one(con, "SELECT COUNT(DISTINCT ProjectKey) FROM dim_Project") == 3
+    assert q(con, "SELECT ProjectName, SageJobNumber FROM dim_Project WHERE ProjectKey='UNMATCHED'")         == [("Unassigned project (no Procore match)", None)]
+    check("dim_Project carries an UNMATCHED member, so unmatched AR is labelled, not (Blank)")
     check("dim_Project[ProjectKey] is unique")
 
     # OriginalContract is FINANCIALS!C3 verbatim.
@@ -92,6 +109,14 @@ def test_dim_costcode(con) -> None:
     assert one(con, "SELECT Division FROM dim_CostCode WHERE CostCodeKey='CC2'") is None
     check("dim_CostCode[Division] parses '03-100' and NULLs what it cannot parse")
 
+    rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_cost_codes AS SELECT * FROM (VALUES
+        ('CC1', '03-100', 'Concrete'), ('D1', '1-1000', 'General Requirements'),
+        ('D2', 'AB-100', 'Not numeric'), ('D3', '123-4', 'Three digits')
+        ) AS t(cost_code_id, cost_code, cost_code_name)""", "12_dim_costcode.sql",
+        "SELECT CostCodeKey, Division FROM dim_CostCode WHERE CostCodeKey IN ('CC1','D1','D2','D3') ORDER BY 1")
+    assert rows == [("CC1", "03"), ("D1", "01"), ("D2", None), ("D3", None)], rows
+    check("dim_CostCode[Division] zero-pads '1' to '01' so one division is not split in two")
+
 
 # --------------------------------------------------------------------------
 # Facts
@@ -122,6 +147,13 @@ def test_fct_changeorder(con) -> None:
     pending = one(con, "SELECT ROUND(SUM(Amount), 2) FROM fct_ChangeOrder WHERE IsPending")
     assert float(pending) == 14708.46, pending
     check("pending CO total is recoverable from rows (14,708.46)")
+
+    rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
+        ('P1','CO9','C1', DATE '2025-05-02', 0.0, '9', 'Void')
+        ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
+        "21_fct_changeorder.sql", "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO9'")
+    assert rows == [(False,)], rows
+    check("a void change order is not pending")
 
 
 def test_fct_invoice(con) -> None:
@@ -422,6 +454,19 @@ def test_fct_qualityitem(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE CostCodeKey IS NULL") == 3
     check("items without a cost code are kept, not dropped")
 
+    rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_observations AS SELECT * FROM (VALUES
+        ('P1','T1','1','a','Q','OPEN','High',NULL,'A', DATE '2025-05-01', NULL, NULL),
+        ('P1','T2','2','b','Q','OPEN','High','Roofing','A', DATE '2025-05-01', NULL, NULL),
+        ('P1','T3','3','c','Q','OPEN','High','Concrete Formwork','A', DATE '2025-05-01', NULL, NULL),
+        ('P1','T4','4','d','Q','OPEN','High','HVAC','A', DATE '2025-05-01', NULL, NULL)
+        ) AS t(project_id, observation_id, observation_number, title, observation_type,
+               status_label, priority, trade, assignee_name, created_date, due_date, closed_date)""",
+        "25_fct_qualityitem.sql",
+        "SELECT ItemKey, Trade FROM fct_QualityItem WHERE ItemType='Observation' ORDER BY 1")
+    assert rows == [("T1", "Unassigned trade"), ("T2", "Unmapped trade: Roofing"),
+                    ("T3", "Concrete Formwork"), ("T4", "HVAC")], rows
+    check("fct_QualityItem[Trade] says Unassigned or Unmapped instead of (Blank)")
+
 
 def test_fct_safetymonthly(con) -> None:
     """Hours worked and incidents per project-month - SAFETY!Table1, typed by hand today.
@@ -585,6 +630,27 @@ def test_fct_vendorinsurance(con) -> None:
     assert one(con, "SELECT IsExpired FROM fct_VendorInsurance WHERE InsuranceKey='I1'") is True
     assert one(con, "SELECT IsExpired FROM fct_VendorInsurance WHERE InsuranceKey='I2'") is False
     check("expiry is evaluated at load time and stored, not recomputed per render")
+
+    types = ["Auto Mobile Liability", "AUTOMOBILE LIABILITY", "Commercial General Liability", "Commercial GL",
+             "GL", "Workers' Compensation Insurance", "Workers Comp & Employers Liability", "Umbrella Liab Excess Liab",
+             "Excess", "NYS DBL", "Disability", "CERTIFICATE OF LIABILITY INSURANCE", "Contractors Pollution Excess",
+             "Equipment Floater"]
+    values = ", ".join(f"('X{i}','V1','{v.replace(chr(39), chr(39) * 2)}','p','n','s', DATE '2024-01-01', DATE '2025-01-01',"
+                       " 1.0, FALSE, TRUE, TRUE, NULL)" for i, v in enumerate(types))
+    cols = [r[0] for r in q(con, "SELECT column_name FROM information_schema.columns "
+                                 "WHERE table_name = 'sv_vendor_insurance' ORDER BY ordinal_position")]
+    rows = rebuild_with(con, f"CREATE OR REPLACE VIEW sv_vendor_insurance AS SELECT * FROM (VALUES {values}) "
+                             f"AS t({', '.join(cols)})", "32_fct_vendorinsurance.sql",
+                        "SELECT InsuranceType, InsuranceCategory FROM fct_VendorInsurance")
+    assert dict(rows) == {
+        "Auto Mobile Liability": "Auto", "AUTOMOBILE LIABILITY": "Auto",
+        "Commercial General Liability": "General Liability", "Commercial GL": "General Liability",
+        "GL": "General Liability", "Workers' Compensation Insurance": "Workers Comp",
+        "Workers Comp & Employers Liability": "Workers Comp", "Umbrella Liab Excess Liab": "Umbrella/Excess",
+        "Excess": "Umbrella/Excess", "NYS DBL": "Disability", "Disability": "Disability",
+        "CERTIFICATE OF LIABILITY INSURANCE": "Other", "Contractors Pollution Excess": "Other",
+        "Equipment Floater": "Other"}, rows
+    check("fct_VendorInsurance[InsuranceCategory] folds free-text types into six categories")
 
 GAP_CATEGORIES = {
     "Rejected source row", "Rejected manual entry", "Rejected quality entry",

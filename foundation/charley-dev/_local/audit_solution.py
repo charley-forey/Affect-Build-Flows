@@ -74,7 +74,7 @@ def live_check(model, fabric_token, pbi_token):
     if model["model"] == "Affect Project Report":
         query("financial_reconciliation", '''EVALUATE ROW(
             "InvoiceDifference", [Total Billed] - [Total Paid] - [AR Outstanding],
-            "BudgetDifference", [Budget] - [Spent To Date] - [Budget Variance],
+            "BudgetDifference", [Budget] - [Spent To Date] - [Budget Remaining],
             "UnmatchedInvoiceAmount", CALCULATE(SUM(fct_Invoice[Amount]), fct_Invoice[HasUnmatchedProject] = TRUE()),
             "UnmatchedInvoices", [DQ Unmatched Invoices],
             "ActualOpenSubmittals", CALCULATE(COUNTROWS(fct_RfiSubmittal), fct_RfiSubmittal[ItemType] = "Submittal", fct_RfiSubmittal[IsOpen] = TRUE()),

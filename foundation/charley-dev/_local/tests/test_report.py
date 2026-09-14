@@ -173,7 +173,8 @@ def test_report_refs() -> None:
     # to MEASURES counts immediately instead of only after the next deploy writes it out.
     known.setdefault("_Measures", set()).update(m[0] for m in dm.MEASURES)
     assert len({m[0] for m in dm.MEASURES}) == len(dm.MEASURES), "duplicate measure name"
-    for child, fk, parent, pk in dm.RELATIONSHIPS:
+    for child, fk, parent, pk in dm.RELATIONSHIPS + [r for r in dm.INACTIVE_RELATIONSHIPS
+                                                     if r[0] in dm.MODEL_TABLES and r[2] in dm.MODEL_TABLES]:
         assert fk in known.get(child, set()), f"missing relationship field {child}[{fk}]"
         assert pk in known.get(parent, set()), f"missing relationship field {parent}[{pk}]"
     for name, expression, _, _ in dm.MEASURES:
@@ -237,6 +238,17 @@ def test_report_formats():
     assert overdue["filterConfig"]["filters"][0]["field"]["Column"]["Property"] == "IsPastDue"
     assert overdue["visual"]["query"]["sortDefinition"]["sort"][0]["direction"] == "Descending"
     assert overdue["visual"]["objects"]["total"][0]["properties"]["totals"]["expr"]["Literal"]["Value"] == "false"
+    # Semantic fixes: remaining vs forecast variance, retainage sign, billing and insurance labels.
+    financial = json.dumps(get("financial", "budget_table"))
+    assert all(f'"{m}"' in financial for m in ("Budget Remaining", "Forecast Variance", "Forecast Status", "Budget Status"))
+    assert "Budget Variance" not in json.dumps(visuals)
+    assert "negative = Affect holds more" in json.dumps(get("billing", "b_net"))
+    assert "Owner billed (net of retainage)" in json.dumps(get("billing", "b_period"))
+    assert '"InsuranceCategory"' in json.dumps(get("insurance", "i_by_type"))
+    assert "Latest Certificate Expiration" in json.dumps(get("insurance", "i_latest"))
+    assert dr.CARD_TITLES["Total Paid"] == "Total Paid (on invoices sent in period)"
+    assert "USERELATIONSHIP ( fct_Invoice[PaidDate], dim_Date[Date] )" in {m[0]: m[1] for m in dm.MEASURES}["Cash Received"]
+    assert "isActive: false\n\tfromColumn: fct_Invoice.PaidDate" in dm.relationships_tmdl()
     co = json.dumps(get("projectdetail", "pd_co"))
     assert "Change Order Amount" in co, "pending change orders drop out of an approved-only table"
     # Month labels sort chronologically; day counts and fractions are never summed.

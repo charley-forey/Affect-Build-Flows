@@ -25,7 +25,11 @@ SELECT
     observation_type                    AS ItemCategory,
     status_label                        AS StatusLabel,
     priority                            AS Priority,
-    trade                               AS Trade,
+    -- Same labels as 33_fct_qc.sql: never (Blank). Resolved against the PQP trade seed
+    -- (exact key or alias) only to decide the label; no key is stored here.
+    CASE WHEN NULLIF(TRIM(o.trade), '') IS NULL THEN 'Unassigned trade'
+         WHEN t.TradeKey IS NULL AND x.k IS NULL THEN 'Unmapped trade: ' || TRIM(o.trade)
+         ELSE o.trade END             AS Trade,
     COALESCE(assignee_name, 'UNASSIGNED') AS AssignedTo,
     CAST(NULL AS STRING)                AS CostCodeKey,
     created_date                        AS CreatedDate,
@@ -54,8 +58,12 @@ SELECT
          THEN TRUE ELSE FALSE END       AS IsPastDue,
     CASE WHEN closed_date IS NULL AND due_date IS NOT NULL AND due_date < CURRENT_DATE
          THEN datediff(CURRENT_DATE, due_date) END AS DaysPastDue
-FROM sv_observations
-WHERE project_id IS NOT NULL
+FROM sv_observations o
+LEFT JOIN qc_seed_Trade t
+       ON t.TradeKey = UPPER(REPLACE(TRIM(COALESCE(o.trade, '')), ' ', '_'))
+LEFT JOIN (SELECT DISTINCT UPPER(TRIM(ProcoreTrade)) AS k FROM qc_seed_TradeAlias) x
+       ON x.k = UPPER(TRIM(COALESCE(o.trade, '')))
+WHERE o.project_id IS NOT NULL
 
 UNION ALL
 
@@ -68,7 +76,11 @@ SELECT
     punch_item_type                     AS ItemCategory,
     status_label                        AS StatusLabel,
     priority                            AS Priority,
-    trade                               AS Trade,
+    -- Same labels as 33_fct_qc.sql: never (Blank). Resolved against the PQP trade seed
+    -- (exact key or alias) only to decide the label; no key is stored here.
+    CASE WHEN NULLIF(TRIM(o.trade), '') IS NULL THEN 'Unassigned trade'
+         WHEN t.TradeKey IS NULL AND x.k IS NULL THEN 'Unmapped trade: ' || TRIM(o.trade)
+         ELSE o.trade END             AS Trade,
     COALESCE(manager_name, 'UNASSIGNED') AS AssignedTo,
     cost_code_id                        AS CostCodeKey,
     created_date                        AS CreatedDate,
@@ -91,5 +103,9 @@ SELECT
          THEN TRUE ELSE FALSE END       AS IsPastDue,
     CASE WHEN closed_date IS NULL AND due_date IS NOT NULL AND due_date < CURRENT_DATE
          THEN datediff(CURRENT_DATE, due_date) END AS DaysPastDue
-FROM sv_punch_items
-WHERE project_id IS NOT NULL;
+FROM sv_punch_items o
+LEFT JOIN qc_seed_Trade t
+       ON t.TradeKey = UPPER(REPLACE(TRIM(COALESCE(o.trade, '')), ' ', '_'))
+LEFT JOIN (SELECT DISTINCT UPPER(TRIM(ProcoreTrade)) AS k FROM qc_seed_TradeAlias) x
+       ON x.k = UPPER(TRIM(COALESCE(o.trade, '')))
+WHERE o.project_id IS NOT NULL;
