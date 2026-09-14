@@ -206,7 +206,7 @@ def pull(px, ps, session, settings, token, endpoint, project_ids: list[int],
                                             project_ids, parent_ids):
         try:
             for record in px.iter_records(session, settings.base_url, path, headers,
-                                          params=params):
+                                          params=params, per_page=endpoint.per_page):
                 for normalized in ps.normalize_records(endpoint, record, path):
                     normalized = px.stamp_project(normalized, project_id)
                     raw.append(normalized)

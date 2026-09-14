@@ -73,7 +73,17 @@ class Endpoint:
     # 403/404 still blocks - the declaration is the justification the gate asks for.
     unavailable_projects: dict = field(default_factory=dict, hash=False)
 
+    # Page size. 100 is safe everywhere; 1000 cuts requests ~10x on large collections but
+    # the tenant 400s it ("exceeding max per_page of 100") on every nested sub-resource,
+    # every v2.0 path and daily_logs (measured 2026-08-25), so those are refused here.
+    per_page: int = 100
+
     def __post_init__(self) -> None:
+        if not 1 <= self.per_page <= 1000:
+            raise ValueError(f"{self.name}: per_page must be 1..1000")
+        if self.per_page > 100 and (self.scope == SCOPE_PARENT or self.major_version >= 2
+                                    or "daily_logs" in self.path):
+            raise ValueError(f"{self.name}: per_page > 100 is rejected by Procore on this path shape")
         if any(not str(r).strip() for r in self.unavailable_projects.values()):
             raise ValueError(f"{self.name}: every unavailable_projects entry needs a reason")
         if self.unavailable_projects and self.scope == SCOPE_COMPANY:
@@ -402,6 +412,13 @@ def _selftest() -> None:
                  "exclusion without a reason")
     expect_error(lambda: _ep("x", "/a", SCOPE_COMPANY, unavailable_projects={1: "r"}),
                  "project exclusion on a company endpoint")
+
+    assert _ep("big", "/rest/v1.0/cost_codes", SCOPE_PROJECT, per_page=1000).per_page == 1000
+    expect_error(lambda: _ep("x", "/a/{parent_id}", SCOPE_PARENT, parent=ParentRef("y"), per_page=1000),
+                 "per_page 1000 on a nested path")
+    expect_error(lambda: _ep("x", "/rest/v2.0/a", SCOPE_PROJECT, api_version="2.0", per_page=1000),
+                 "per_page 1000 on v2.0")
+    expect_error(lambda: _ep("x", "/a", SCOPE_PROJECT, per_page=0), "per_page 0")
 
     expect_error(lambda: _ep("x", "/a", "galaxy"), "unknown scope")
     expect_error(
