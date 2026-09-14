@@ -218,7 +218,7 @@ for ep in ordered:
             audit["scopes"].append(scope_audit)
             try:
                 for record in px.iter_records(session, settings.base_url, path, headers,
-                                              params=params):
+                                              params=params, per_page=ep.per_page):
                     # Preserve the decoded source record before normalization or merging.
                     scope_audit["received_rows"] += 1
                     audit["received_rows"] += 1

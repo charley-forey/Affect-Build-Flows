@@ -31,10 +31,9 @@ from typing import Any, Callable, Iterator
 # split is not v1.0 vs v2.0, it is top-level vs nested, which is not a property the
 # registry records.
 #
-# ponytail: one global cap, ~10x the requests on the few large collections (cost_codes is
-# 5,433 rows = 55 pages). Well inside Procore's rate limit and the nightly window. If the
-# request count ever matters, raise it per endpoint in endpoints.yml rather than guessing
-# a rule from the path shape.
+# The request count did come to matter (2026-09-13: ~1,165 calls against 600/hour), so
+# endpoints.yml now raises it per endpoint via `per_page: 1000`, only on top-level v1.x
+# collections that returned complete data at 1000 on 2026-08-02. This stays the default.
 MAX_PER_PAGE = 100
 
 # Stop a runaway pagination loop rather than hammering the API forever.
@@ -294,9 +293,15 @@ def iter_records(
 
         if total is None:
             total = _int_or_none(response.headers.get("Total"))
-        if total is not None and seen >= total:
-            return
-        if len(rows) < per_page:
+        if total is not None:
+            # Total is authoritative. A short page with rows still owed means the server
+            # capped per_page below what we asked for - keep paging, don't truncate.
+            if seen >= total:
+                return
+        # No Total: a short page ends the list - unless it is exactly the 100-row cap
+        # Procore applies to nested/v2.0 paths. Asking for 1000 and silently getting 100
+        # would otherwise stop after page one. Costs one extra call on a 100-row list.
+        elif len(rows) < per_page and len(rows) != MAX_PER_PAGE:
             return
 
 

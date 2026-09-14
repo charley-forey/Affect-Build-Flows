@@ -142,6 +142,51 @@ def test_real_registry_round_trips() -> None:
     check("no endpoint claims an unverified incremental filter")
 
 
+def test_quota_plan_keeps_every_record() -> None:
+    """Old request plan (per_page 100 everywhere) vs new (registry per_page) over fixture
+    collections, against three server behaviours: honest with a Total header, silently
+    capping per_page at 100 with no Total, and capping at 100 while still sending Total.
+    Record sets must be identical; only the request count may change."""
+    import dataclasses
+
+    class Server:
+        def __init__(self, sizes, cap, send_total):
+            self.data = {f"/p/{n}": [{"id": i} for i in range(n)] for n in sizes}
+            self.cap, self.send_total, self.calls = cap, send_total, 0
+
+        def get(self, url, headers=None, params=None, timeout=None):
+            self.calls += 1
+            rows = self.data[url.removeprefix("https://x")]
+            size = min(params["per_page"], self.cap)
+            start = (params["page"] - 1) * size
+            headers = {"Total": str(len(rows))} if self.send_total else {}
+            return type("R", (), {"status_code": 200, "headers": headers,
+                                  "json": lambda self, page=rows[start:start + size]: page,
+                                  "raise_for_status": lambda self: None})()
+
+    registry = ps.load_registry(str(CHARLEY_DEV / "01-ingestion" / "Procore" / "config" / "endpoints.yml"))
+    raised = [e for e in registry if e.per_page > 100]
+    assert {e.name for e in raised} >= {"cost_codes", "manpower_logs", "vendors", "submittals"}
+    assert "commitments" not in {e.name for e in registry}
+
+    sizes = (0, 1, 99, 100, 101, 999, 1000, 1001, 2500, 5767)
+    for cap, send_total in ((1000, True), (1000, False), (100, False), (100, True)):
+        for ep in raised:
+            old_ep = dataclasses.replace(ep, per_page=100)
+            got, calls = {}, {}
+            for label, plan in (("old", old_ep), ("new", ep)):
+                server = Server(sizes, cap, send_total)
+                got[label] = {n: [r["id"] for r in px.iter_records(server, "https://x", f"/p/{n}", {},
+                                                                   per_page=plan.per_page, sleep=lambda s: None)]
+                              for n in sizes}
+                calls[label] = server.calls
+            assert got["old"] == got["new"] == {n: list(range(n)) for n in sizes}, (ep.name, cap, send_total)
+            assert calls["new"] <= calls["old"], (ep.name, cap, calls)
+            if cap == 1000:
+                assert calls["new"] < calls["old"] / 3, (ep.name, calls)
+    check(f"per_page 1000 on {len(raised)} endpoints returns identical records, honest or silently capped")
+
+
 def test_lib_has_no_relative_imports() -> None:
     """Everything in 00-platform/lib is uploaded FLAT into Files/lib.
 
@@ -165,7 +210,7 @@ def main() -> int:
     for fn in (
         test_attribute_contract, test_build_headers, test_watermark_params,
         test_to_bronze_row, test_real_registry_round_trips,
-        test_lib_has_no_relative_imports,
+        test_quota_plan_keeps_every_record, test_lib_has_no_relative_imports,
     ):
         fn()
     for label in CHECKS:

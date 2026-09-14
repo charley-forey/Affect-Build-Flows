@@ -489,12 +489,12 @@ def test_extraction_scope_evidence():
         def __init__(self, message, status):
             super().__init__(message)
             self.response = SimpleNamespace(status_code=status)
-    parent = SimpleNamespace(name="parent", bronze_table="bronze_parent", parent=None, incremental=True)
-    child = SimpleNamespace(name="child", bronze_table="bronze_child",
+    parent = SimpleNamespace(name="parent", bronze_table="bronze_parent", parent=None, incremental=True, per_page=100)
+    child = SimpleNamespace(name="child", bronze_table="bronze_child", per_page=100,
                             parent=SimpleNamespace(endpoint="parent"), incremental=True)
     for scenario in ("complete", "duplicates", "disabled", "declared", "declared_now_available", "partial_page", "merge_failure", "disabled_parent", "archive_failure", "checkpoint_failure"):
         written, watermarks = [], []
-        def records(session, base, path, headers, params):
+        def records(session, base, path, headers, params, per_page):
             # No changed parent since the watermark, but its child has new data.
             # Filtering parent discovery would hide the child entirely.
             if headers.get("endpoint") == "parent" and params.get("since"):

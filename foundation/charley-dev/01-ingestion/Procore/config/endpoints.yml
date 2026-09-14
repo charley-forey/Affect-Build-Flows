@@ -17,6 +17,9 @@
 #   key           natural key used for the MERGE (default "id")
 #   incremental   watermark filter param; omit for a full reload.
 #                 A full reload is still idempotent - the load is a MERGE on `key`.
+#   per_page      page size (default 100). 1000 only on top-level v1.x collections that
+#                 returned complete data at 1000 on 2026-08-02; the loader refuses it on
+#                 nested, v2.0 and daily_logs paths, which 400 at 1000.
 #   parent        for scope: parent - which endpoint supplies {parent_id}, and the
 #                 field on those records to read it from. See lib/procore_scope.py.
 #
@@ -44,6 +47,7 @@ endpoints:
     scope: company
     api_version: "1.0"
     bronze_table: cd_bronze_procore_vendors # cheatsheet:31
+    per_page: 1000
 
   - name: project_vendors
     path: /rest/v1.0/projects/{project_id}/vendors
@@ -71,6 +75,7 @@ endpoints:
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_cost_codes        # cheatsheet:33
+    per_page: 1000
 
   # standard_cost_codes REMOVED 2026-09-13: the request lacked the required
   # standard_cost_code_list_id (403/404 nightly) and nothing in silver/gold reads it.
@@ -118,6 +123,7 @@ endpoints:
     scope: project
     api_version: "1.1"
     bronze_table: cd_bronze_procore_requisitions           # cheatsheet:141
+    per_page: 1000
 
   - name: work_order_contracts
     path: /rest/v1.0/work_order_contracts?project_id={project_id}
@@ -158,11 +164,9 @@ endpoints:
       endpoint: purchase_order_contracts
       field: id
 
-  - name: commitments
-    path: /rest/v1.0/commitments?project_id={project_id}
-    scope: project
-    api_version: "1.0"
-    bronze_table: cd_bronze_procore_commitments            # cheatsheet:162
+  # commitments REMOVED 2026-09-14: 20 calls/night for a strict projection of
+  # work_order_contracts + purchase_order_contracts. Batch 20260913T060433: same 316
+  # (project, id) pairs, every field equal (vendor is {id} only). Nothing reads it.
 
   # v2.0 - requires the Procore-Company-Id header. Version mixing across one pipeline is
   # normal for Procore, not a mistake to correct. source-mapping.md:248-251
@@ -226,6 +230,7 @@ endpoints:
     scope: project
     api_version: "1.1"
     bronze_table: cd_bronze_procore_direct_costs           # cheatsheet:164
+    per_page: 1000
 
 
   # PHASE 0 ITEM 3 - the vendor <-> cost-code linkage, "invoice as the bridge".
@@ -275,6 +280,7 @@ endpoints:
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_rfis                   # cheatsheet:69
+    per_page: 1000
 
   - name: rfi_statuses
     path: /rest/v1.0/projects/{project_id}/rfis/filter_options/status
@@ -296,6 +302,7 @@ endpoints:
     scope: project
     api_version: "1.1"
     bronze_table: cd_bronze_procore_submittals             # cheatsheet:72
+    per_page: 1000
 
   # Fixes Excel defect #2: QUALITY!D5:D6 currently read SAFETY orientations instead.
   - name: observations
@@ -303,6 +310,7 @@ endpoints:
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_observations           # cheatsheet:89
+    per_page: 1000
 
   - name: observation_types
     path: /rest/v1.0/observations/types
@@ -315,6 +323,7 @@ endpoints:
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_punch_items            # cheatsheet:92
+    per_page: 1000
 
   # punch_item_types REMOVED 2026-09-13: 403/404 nightly and nothing reads it - silver
   # takes punch_item_type.name from the punch item itself (24_qc_procore_silver.sql).
@@ -409,6 +418,7 @@ endpoints:
     scope: project
     api_version: "1.0"
     bronze_table: cd_bronze_procore_manpower_logs          # cheatsheet:49
+    per_page: 1000
 
   # Derives SCORECARD CALC!E28 ("Daily Reports"), typed by hand today.
   - name: daily_log_headers
