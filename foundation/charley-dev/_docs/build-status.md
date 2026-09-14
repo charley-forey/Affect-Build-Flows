@@ -9,12 +9,40 @@ inventory, blockers, Azure position and every PQP figure were measured live on
 value — see [`assessment.md`](assessment.md) for how each was obtained.
 
 **This page is the single source for two numbers that get restated elsewhere:** the
-endpoint-registry count (**44**, generated into
+endpoint-registry count (**44** as of 2026-08-19; 39 Procore entries on release2 as of 2026-09-14; generated into
 [`endpoint-inventory.md`](endpoint-inventory.md) — 42 before the PQP work added
-`checklist_lists` and `checklist_list_items`) and **scorecard coverage (59%)**. Other
+`checklist_lists` and `checklist_list_items`) and **scorecard coverage (59%** as of 2026-08-19; 71% measured 2026-09-14). Other
 documents should link here rather than repeat them.
 
-## 2026-08-25 — Sage and Procore both live in Fabric, twelve defects fixed
+## Current state — measured 2026-09-14
+
+Sections from "2026-08-25" down are **historical**. Their counts were true on the dates they
+carry and are not current. Status, open decisions and remaining work are in
+[validation-and-development-plan.md](validation-and-development-plan.md). Procedures are in
+[operations-runbook.md](operations-runbook.md).
+
+| Measure | Value | Measured | Source |
+|---|---|---|---|
+| Production build | candidate `cadcd0d8`, run `20260914T040238Z`, checked 04:08 UTC | 2026-09-14 | `a263265`, live-reconciliation check 8 |
+| Gold build statements | 117, 0 failed | 2026-09-14 | `a263265` |
+| DQ rules (production) | 189: 178 passed, 11 warned, 0 blocking | 2026-09-14 | `full-spark-evidence.json` (main) |
+| DQ rules (candidate #3 `457dbeb9`, integration `6e786a9`) | 199: 188 passed, 11 warned, 0 blocking | 2026-09-14 | `0502968` |
+| Monthly model | 13 tables match build row counts, 37 model tables resolve, 105 measures evaluate, 18 checks pass | 2026-09-14 | `validate_model.py` |
+| Scorecard coverage | 71% of the agreed weight (6 of 9 categories scored) | 2026-09-14 | `validate_model.py` |
+| `fct_Invoice` (Sage AR) | 149 rows, $26,153,291.94 billed, $18,713,981.77 paid, $7,439,310.17 balance. Bronze = silver = model. | 2026-09-14 | live-reconciliation check 1 |
+| Unmatched AR | 38 invoices, 11 jobs, $2,014,605.29 | 2026-09-14 | live-reconciliation check 2 |
+| Sage AP invoices | 879, $15,518,864.70 | 2026-09-14 | AP cost reconciliation |
+| Vendor insurance certificates | 105, all expired (latest 2025-04-01) | 2026-09-14 | live-reconciliation check 7 |
+| Procore endpoint registry | 39 entries on release2 (40 on main). Five removed 2026-09-13/14. | 2026-09-14 | `endpoints.yml` |
+| Procore requests per full extract | ~1,165 (batch `20260913T060433`) → ~954 planned. Quota 600/hour. | 2026-09-13/14 | `a2d49ef` |
+| Outbuild endpoint registry | 16 | 2026-09-14 | `endpoints.yml` |
+| Live pipeline activities | 9: serial, includes Extract Outbuild. Publish Models not yet deployed. | 2026-09-14 | pipeline definition read |
+| Offline suites | 19 on release2, 18 on main | 2026-09-14 | `run_tests.py` |
+| Manual registers | 17 SharePoint data lists + Job Register, 0 items. `CD_Manual_Ingest` never run. | 2026-09-13 | manual intake investigation |
+
+---
+
+## 2026-08-25 (historical) — Sage and Procore both live in Fabric, twelve defects fixed
 
 The two subject areas that had never once run correctly now both do, on the nightly
 schedule, with no laptop anywhere in the data path.
@@ -54,8 +82,8 @@ Worth separating from the rest, because nothing would ever have alerted on them:
 
 ### The Sage blocker was ours
 
-The ask carried since 2026-08-02 — *"grant `cforey-c@` Can use on the gateway"* — was a
-mis-diagnosis. Measured by signing in as the gateway's own registration account: **Rebecca
+The ask carried since 2026-08-02 — *"grant the build account Can use on the gateway"* — was a
+mis-diagnosis. Measured by signing in as the gateway's own registration account: **Affect's reporting lead
 and IT already held that permission.** A Dataflow Gen2 runs as its owner, and we had deployed
 it owned by an account that did not, then reported the resulting failure as something Affect
 was withholding.
@@ -104,7 +132,7 @@ cannot reproduce on a fresh environment is the worst schedule one can keep.
 - All **17** live model checks pass, including `[Total Billed] = [Total Paid] + [AR
   Outstanding]` on the new numbers, and all 26 measures evaluate.
 
-## Live in Fabric
+## Live in Fabric (historical, 2026-08-19/25)
 
 Workspace `Build`, folder `charley-dev` (`25dd1e34-…`). **Nothing outside `charley-dev` has
 been touched** — `fabric_backup.py` diffed to a scratch directory is the acceptance gate, not
@@ -356,12 +384,12 @@ been run against the real API. Both are written up in
 
 | Blocker | Effect | Owner |
 |---|---|---|
-| ~~**Key Vault role assignment** on vault `OneLake`~~ | **RESOLVED 2026-08-19 — and the ask is withdrawn.** It targeted the wrong vault. The vault in use is **`AffectKeyVault`** (`https://affectkeyvault.vault.azure.net/`, RG `Affect_Data`, subscription `73932b34-…`), where `cforey-c@affect-group.com` already holds **Key Vault Administrator** inherited at resource-group scope. Reading and writing secrets needs no grant from anyone. `OneLake` remains unreadable by this account and holds nothing we depend on. | — |
+| ~~**Key Vault role assignment** on vault `OneLake`~~ | **RESOLVED 2026-08-19 — and the ask is withdrawn.** It targeted the wrong vault. The vault in use is **`AffectKeyVault`** (`https://affectkeyvault.vault.azure.net/`, RG `Affect_Data`, subscription `73932b34-…`), where the build account already holds **Key Vault Administrator** inherited at resource-group scope. Reading and writing secrets needs no grant from anyone. `OneLake` remains unreadable by this account and holds nothing we depend on. | — |
 | **Procore credentials not yet rotated** | `cd_01_extract_procore` has failed on every run since 2026-08-02 with `Secret 'PROCORE_CLIENT_ID' not found`, and is held out of the nightly DAG so it does not redden it. The vault path is now built and proven; what is missing is the credential itself. Runbook: [`keyvault-runbook.md`](keyvault-runbook.md). | Affect — regenerate in Procore, then `setup_keyvault.py --apply` |
 | **Sage gateway connection grant** | `CD_Sage_Ingest` is deployed and correct but its runner has no rights on the gateway, so it fails in ~5 seconds before reaching Sage. One grant: *Can use* on `nc-affect-1\sage100con;Affect Group`. | Affect / their Sage consultant |
 | **Procore 403s** on `punch_item_types` and `schedule` | Two report sections cannot be sourced. | Affect — Procore role permissions |
 | ~~**No Azure subscription** on this tenant~~ | **RESOLVED 2026-08-19.** "Azure subscription 1" (`0bee26ab-eeb7-4dc9-ab92-fb46d068f6b6`) exists on tenant "Affect Build LLC" (`b2a2225b-4b4e-42ec-ba52-c7e1c2dea580`). | — |
-| ~~**`OUTBUILD_API_TOKEN` not issued**~~ | **RESOLVED 2026-08-19.** Rebecca placed it in `AffectKeyVault` as `OutbuildToken` at 18:27 UTC. It reads back through `get_secret` and authenticates: **3,078 rows across 15 endpoints** landed into `cd_bronze_outbuild_*`. | — |
+| ~~**`OUTBUILD_API_TOKEN` not issued**~~ | **RESOLVED 2026-08-19.** Affect's reporting lead placed it in `AffectKeyVault` as `OutbuildToken` at 18:27 UTC. It reads back through `get_secret` and authenticates: **3,078 rows across 15 endpoints** landed into `cd_bronze_outbuild_*`. | — |
 
 #### Outbuild — measured live, 2026-08-19
 
@@ -403,7 +431,7 @@ and unattributable, and gold's `WHERE project_id IS NOT NULL` drops them. That n
 when Affect connects more projects to Procore, not when we fix anything.
 
 **Two traps, both measured rather than assumed.** Outbuild returns `progress` as 0-100 and
-gold's contract is a 0-1 fraction (Rebecca's silver had already normalised it, which is what
+gold's contract is a 0-1 fraction (the existing reporting silver had already normalised it, which is what
 hid the difference) - left alone, `Avg Milestone Progress` reads 5000% and `IsOverdue`, which
 tests `progress < 1`, reports **zero overdue milestones on a late job**. And 4 of 15 projects
 have more than one schedule, so the portable-looking `$.schedules[0].id` would have silently
@@ -446,7 +474,7 @@ account can approve itself**, if the PnP route is ever wanted.
 #### Sage: the database name is `Affect Group`, not `ABMI`
 
 The Sage 100 handoff document (Nerds That Care, May 20 2026) records the validated gateway
-connection as database **`ABMI`**, and §12 admits the choice was inferred from Rebecca saying
+connection as database **`ABMI`**, and §12 admits the choice was inferred from Affect's reporting lead saying
 "Affect Build", listing `Affect Group` among the other databases on the instance. The repo's
 `CD_Sage_Ingest` queries `Affect Group`.
 
@@ -602,7 +630,7 @@ listed as "not deployed" for two weeks after it was deployed. Corrected below.
 | Area | Status |
 |---|---|
 | Procore ingestion **run inside Fabric** | Notebook and 44-endpoint registry built and tested; still needs `PROCORE_CLIENT_ID`/`SECRET` in Key Vault. Extraction runs **locally** and lands files; `cd_05_land_to_bronze` merges them. The nightly pipeline therefore re-processes whatever was last landed — **it does not call the Procore API.** |
-| Sage dataflow (`CD_Sage_Ingest`) | **Built and deployed** — live in the `charley-dev` folder, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze`. Inert until `cforey-c@affect-group.com` is granted *Can use* on `nc-affect-1\sage100con;Affect Group`. Deployed-and-inert is deliberate: it turns the remaining work into one grant plus one refresh |
+| Sage dataflow (`CD_Sage_Ingest`) | **Built and deployed** — live in the `charley-dev` folder, bound to gateway `1e798beb` and datasource `835e72c8`, writing to `CD_Bronze`. Inert until the build account is granted *Can use* on `nc-affect-1\sage100con;Affect Group`. Deployed-and-inert is deliberate: it turns the remaining work into one grant plus one refresh |
 | Manual dataflow (`CD_Manual_Ingest`) | **Published 2026-08-19**, workspace `Build`, folder `charley-dev`, item `54addfb1-df2f-4ab0-9f5f-d0f36c64376e`. **19 queries** — 18 against the reporting site plus `cd_bronze_man_job_register` against BUILD, which is why the generator carries two site constants rather than one. **Not yet authenticated or refreshed**: `queryMetadata.json` ships `connections: []`, the honest not-bound-yet state Fabric fills in on first sign-in, and the destination is pinned in the mashup as `shared DefaultDestination` so it cannot write anywhere unintended while it waits. **The lists it reads are complete**: the 18 lists were created 2026-08-19 and their **142 of 142 columns** and 19 `CD Projects` rows 2026-08-20, read back through Graph rather than taken from the run status. Both site constants were `REPLACE-ME` until 2026-08-19 and are now the real sites. A second defect was found and fixed 2026-08-19: the mashup bound all 18 queries to a `DefaultDestination` it never defined, so it would have deployed and then failed at run on every query. `test_sharepoint.py` now asserts the destination exists. The list-name defect it used to carry is **fixed at the source**: `_local/make_sharepoint.py` now generates the PS1, the mashup, `queryMetadata.json` and `deploy_manual.LISTS` from the `man_*` gold DDL, so one function decides a list name and `test_sharepoint.py` fails the build if the four writers drift. See [`sharepoint-lists.md`](sharepoint-lists.md) |
 | Outbuild ingestion | **Live 2026-08-19, consumed 2026-08-20** — token in Key Vault, 3,078 rows in `cd_bronze_outbuild_*`, parsed by `25_outbuild_silver.sql` and read by `fct_Milestone`: **52 → 126 rows across 3 projects**. Only 3 of 15 Outbuild projects carry a `procore_id`, so 280 of 406 critical activities stay unattributable |
 | `man_*` manual tables | **Built and deployed** — 9 tables live in gold, currently empty. The silver → gold `INSERT`s are now written, so the chain runs end to end; the tables stay empty because nobody has entered a row, not because the join is missing. Four column-spec questions still need Affect — [`manual-input.md`](manual-input.md) |

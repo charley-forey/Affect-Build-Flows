@@ -1,6 +1,135 @@
+# Validation and development status — 2026-09-14
+
+This section supersedes the headline statements in the 2026-09-10 assessment below: "nightly
+ingestion is failing", "published models and reports have not been replaced" and "paid date
+is unavailable". Those statements are kept for history and marked where they appear. Every
+figure here comes from a commit message or an evidence file under `_docs/`. Operating
+procedures are in [operations-runbook.md](operations-runbook.md).
+
+## Live in production now
+
+- **Candidate `cadcd0d8` was promoted** (commit `a263265`) in this order: seeds, manual
+  landing, silver, gold (117 statements, 0 failed), DQ gate (**189 rules, 178 passed, 11
+  warned, 0 blocking**, identical to the candidate), both semantic models, both reports.
+- Both models show pipeline run `20260914T040238Z`, checked **2026-09-14 04:08 UTC**. Before
+  the promotion they showed 2026-08-28, so the reports were 17 days stale.
+  `validate_model.py`: all 13 tables match the build's row counts, 105 measures evaluate, 18
+  checks pass.
+- The nightly pipeline is restored in the repo and the live definition (commit `e2aa1f4`).
+  Its fixes:
+  - It runs serially and includes `cd_02_extract_outbuild`.
+  - Extract Procore has no retry.
+  - One project is declared excluded for Prime Contracts.
+  - Four malformed, unconsumed Procore endpoints were removed.
+
+  The failure history it replaces: failing since 2026-08-29, last completed scheduled run
+  2026-08-28 06:00 (`pipeline-diagnosis`).
+- Sage AR receipts give a real PaidDate. 82 of 85 paid invoices reconcile to the cent. The
+  other 3 are opening balances dated 2024-12-31 totalling $227,667.54, with no receipt rows
+  (`sage-payments-evidence.json`).
+- First live reconciliation (`live-reconciliation/20260914T045541Z.json`, production):
+  - AR is conserved: bronze = silver = model at 149 invoices, $26,153,291.94 billed,
+    $18,713,981.77 paid, $7,439,310.17 balance. Receipts match paid, and model freshness
+    passes.
+  - Checks **5 (submittal sanity), 6 (balance carry-forward) and 9 (division format) FAIL**.
+    This is expected, because their fixes are in release2 and not yet in production.
+  - Checks 2, 4, 7 and 10 WARN (unmatched AR, AP vs Procore, insurance expiry, (Blank)
+    members).
+
+## Validated but not yet promoted (`wt/release2`, head `26986b1`)
+
+| Change | Commit |
+|---|---|
+| Owned vendor/project crosswalks. Gold no longer reads the legacy Silver_Lakehouse. `dq_DataGap` categories. | `343d137`, `d851063` |
+| `fct_DailySnapshot` appended only after a passing gate, plus 13 "(Month End)" measures | `57bc6cb` |
+| Report display semantics from the format audit | `43e698d` |
+| Publish barrier: `cd_50_publish_models`, pipeline Publish Models step, `set_autosync.py`, auto-framing detection | `9f91344`, `34e93fd` |
+| Procore quota: ~1,165 to ~954 requests per full run, pagination fix | `a2d49ef` |
+| Submittal response/due date fields, open/draft semantics, turnaround measures | `c36a549` |
+| Report text-fit layout, with an offline clipping test | `cb3be8a` |
+| Sage AP fact `fct_ApInvoice` and AP vs Procore Spent reconciliation | `264852a` |
+| Carry-forward balances, division padding, void COs, UNMATCHED project, Cash Received, insurance category, forecast measures | `81a9ca6` |
+| Sub retainage held at each commitment's latest approved pay app | `c76830a` |
+| Read-only live reconciliation suite (`reconcile_live.py`, 19th offline suite) | `baa92e3` |
+
+**Candidate #3 `457dbeb9`: 199 rules, 188 passed, 11 warned, 0 blocking** (commit `0502968`,
+on `wt/integration`). It was built from `6e786a9`, which covers crosswalks, snapshots, report
+semantics, the publish barrier, quota and submittals. **It does not cover** the later merges:
+semantics, AP, layout and retainage (`31cd779`..`c76830a`). A new full candidate on the
+release2 head is required before promotion. Offline: 19/19 suites.
+
+## Defects found and fixed (before → after)
+
+| Defect | Before | After | Source |
+|---|---|---|---|
+| Nightly pipeline red every night | Scope gate failed a complete extract (7 endpoints, same scopes daily). Outbuild link merge key collapsed to `'|'`. Parallel starts starved Spark sessions. The retry burned the Procore quota. | Declared exclusion, endpoints removed, composite Outbuild link keys, serial DAG, retry 0 | `pipeline-diagnosis`, `e2aa1f4` |
+| Submittal responded date read `$.received_date`, an intake date on 3.8% of rows | Open 1,656, past due 10, avg turnaround 0.36 d (n=66) | Open 303, past due 222, avg 67.98 d (n=887), median 32, drafts 467 (valid-JSON subset n=1,722) | `submittal-date-fix-evidence.json` |
+| Submittals, full silver population (n=2,474) | Open 2,369, avg closed turnaround 0.99 d | Expected open 311, draft 467, closed 1,696 | same |
+| Balances under a month filter (Aug 2026) | Current Contract $24,888,744.99, Pending COs $251, Original $22,676,717.39 | $35,301,887.39, $49,463.97, $30,254,551.24. Portfolio unchanged at $36,538,861.11. | `semantic-fix-evidence.json` |
+| Void change orders counted pending | 3 void rows pending | not pending | same |
+| Sub retainage included unapproved pay apps | $407,988.13 (latest pay app, any status) | $434,457.40: latest approved per commitment, 145 contracts (71 latest-approved $56,828.43 + 74 carried $377,628.97) | `c76830a` |
+| Net Retainage Position (portfolio, approved-only interim definition) | −$61,758.62 | +$289,401.08. Not re-measured after `c76830a`. | `semantic-fix-evidence.json` |
+| Division unpadded (`1` vs `01`) | 1,040 single-digit codes, 114 blank | LPAD to 2 digits, with an ERROR DQ rule | same, `81a9ca6` |
+| UNMATCHED invoices shown as a (Blank) project | Projects Reporting 20 | 16 (UNMATCHED member excluded) | same |
+| Budget Variance was Budget − Spent | "Budget Variance" $15,005,974.77 | Renamed Budget Remaining. Forecast Variance −$509,441.23, "Forecast over budget up to 5%". | same |
+| Total Paid by invoice-sent month | Aug 2026 $0 | Cash Received by PaidDate, Aug 2026 $1,585,183.49 | same |
+| Certificate types were raw free text | 20 distinct types | 6 categories | same |
+| `dq_DataGap` Amount double-counted AR | Sum nearly tripled unmatched AR | Data Gap Amount = unmatched AR only. "AP invoice with no Sage job" is count-only (303 / $4,205,597.50). | `d851063` |
+| Scorecard weights fixed-decimal | Project Scorecard rounding shift | DOUBLE | `e2aa1f4` |
+| Direct Lake models framed gold before the gate | Automatic update inferred ON (service framings through 2026-08-26) | Publish only after the gate, autosync off (deploy pending) | `publication-isolation`, `9f91344` |
+| Report text clipped on nearly every page | Geometry tests passed while text clipped | Text-fit sizing plus offline clipping test | `render-verification`, `cb3be8a` |
+| No check of Sage AP against Procore cost | Not surfaced | `fct_ApInvoice`. Mapped 15 jobs: AP $11,066,806.51 vs Spent $20,224,135.65 (ratio 0.547). Live: 11/15 projects outside tolerance, 67 ERP-only job/vendor rows $3,583,827.05 (WARN). | `ap-cost-reconciliation`, `264852a`, live check 4 |
+
+**Not a regression.** Unmatched AR moved from 37 invoices / $1,474,973.01 to **38 invoices /
+11 jobs / $2,014,605.29**. The whole difference is one new Sage invoice on new job 28, dated
+2026-09-11, for $539,632.28. The 37 baseline invoices are unchanged to the cent
+(`unmatched-ar-reconciliation`).
+
+## Open business decisions for Affect
+
+| # | Decision | Facts | Owner (role) |
+|---|---|---|---|
+| 1 | Map Sage job 28 to Procore project 25-034? | Exact name match, the only candidate. It is the largest unmatched invoice at $539,632.28. | Affect finance lead |
+| 2 | Exclude office job 2 from unmatched AR? | Overhead "Office" job: 15 invoices, $816,455.42 AR, plus $28,327.77 AP | Affect finance lead |
+| 3 | Ambiguous project mappings | Job 24 ($52,993.63): roll up to 24-011 or leave unmatched? Job 27 ($34,332.38): possibly 26-056, but the scope differs. Jobs 4, 7, 8, 21, 23, 25, 26 have no Procore project. | Affect finance lead + project managers |
+| 4 | Ambiguous trades | Unmapped free-text trades (e.g. Drywall/Carpentry, Concrete, Roofing, Glazing, Low Voltage). Blank trade share: 27% of fct_QualityItem, 49% of punch, 47% of observations. | Quality lead |
+| 5 | Insurance module not maintained since 2025-04 | 105 certificates, latest expiry 2025-04-01, 105/105 expired, all NON_COMPLIANT in Procore | Affect admin / compliance owner |
+| 6 | Change order and RFI semantics | Pending COs $49,463.97 includes 9 drafts ($8,364.08) beside 9 pending ($41,099.89). 16 draft RFIs still count as open. | Affect finance lead, project managers |
+| 7 | Submittal turnaround definition | Created → responded median 32 d (current). Issue → distributed median 11 d. Approver sent → returned median 6 d. 65 closed submittals have neither date. | Quality lead |
+| 8 | Manual register owners | All 17 SharePoint data lists and Job Register hold 0 items. The dataflow owner/service account is undecided. | Affect admin, project managers, Q-Team, safety lead |
+| 9 | Retainage policy confirmation | Sub retainage is now the latest approved pay app per commitment (`c76830a`) | Affect finance lead |
+
+## Remaining engineering work
+
+1. **New full candidate on the release2 head**, then promote in runbook order. After that,
+   `validate_model.py` and `reconcile_live.py` must show checks 5, 6 and 9 passing.
+2. **Publish barrier deploy.** `deploy_publish.py --apply` and `deploy_pipeline.py` (the
+   live pipeline has 9 activities and no Publish Models, read 2026-09-14). Then
+   `set_autosync.py --apply` and a portal confirmation that automatic update is off on both
+   models, since the setting cannot be read by API.
+3. **Browser verification after release2.** The render check of the promoted build found
+   clipping, alphabetical month axes, one-row slicers and (Blank) members. Offline tests do
+   not prove rendering.
+4. **Manual intake needs a human SharePoint sign-in.** `CD_Manual_Ingest` has no connection,
+   has never run and is not in the pipeline. An OAuth2 SharePoint connection needs an
+   interactive sign-in by the chosen owner. Pre-flight the struct columns (ProjectKey,
+   Editor) before the first refresh (`manual-intake-runbook`, scratch).
+5. **Outbuild landing batch cleanup.** Landing batch `20260819T234949Z` (Outbuild, 3,078
+   rows) is re-merged every night. `cd_02_extract_outbuild` now overwrites it, so archive it
+   out of `Files/_landing`.
+6. **Corrupted Outbuild link rows.** `roadblock_tasks`, `rfv_tasks`, `activity_tags` and
+   `task_tags` in bronze hold rows written under the collapsed merge key `'|'` (measured
+   2026-09-13: 55 / 2 / 5 / 10 rows, 1 distinct key each). Drop or overwrite those four tables
+   once, and re-extract with the composite keys.
+7. **Watch the quota.** The ~954-request plan still exceeds one 600/hour window.
+8. **QC status codes** that are not in `qc_status_vocab.csv` pass silver and then block the
+   gate. Move that check into silver rejects before registers go live.
+
+---
+
 # Validation and development assessment — 2026-09-10
 
-**The solution is not yet certified as complete, current, or safe to publish without qualification.** The latest completed integrated candidate, `a09823bcf0bd4a59b2ac7f15e86f64ef`, executed 124 rules: 117 passed and seven warned, with zero blocking failures. The next candidate, `9835a75b9243452c97f53fc443c97d1c`, is running with the complete native item transformations, model link keys and 134-rule suite. All 17 local test suites pass. Published models and reports have not been replaced. Historical findings below retain their original scope; dated evidence records subsequent fixes and their verification limits.
+**The solution is not yet certified as complete, current, or safe to publish without qualification.** The latest completed integrated candidate, `a09823bcf0bd4a59b2ac7f15e86f64ef`, executed 124 rules: 117 passed and seven warned, with zero blocking failures. The next candidate, `9835a75b9243452c97f53fc443c97d1c`, is running with the complete native item transformations, model link keys and 134-rule suite. All 17 local test suites pass. Published models and reports have not been replaced. *(Superseded 2026-09-14: both models and reports were replaced by candidate `cadcd0d8`. See the 2026-09-14 status above.)* Historical findings below retain their original scope; dated evidence records subsequent fixes and their verification limits.
 
 **Latest source result:** the filtered inspection repair completed and independently reconciled 21 inspections and 563 unique items across the 20 discovered active-project scopes. Every returned item matched its requested project/inspection and every header item total reconciled. The verified route and runtime parent guard are deployed. The earlier full extraction still has unresolved endpoint/scope gaps; this targeted success does not certify all sources or historical coverage.
 
@@ -19,7 +148,7 @@ Azure MCP subscription discovery succeeded after earlier timeouts whose root cau
 
 | Finding | Evidence | Consequence |
 |---|---|---|
-| Nightly ingestion is failing | Recent master-pipeline runs failed; September 9 includes `GatewayDataSourceOpenConnectionTimeout`, September 5–8 include Procore HTTP 429 | A configured schedule is not evidence that the report is current |
+| Nightly ingestion is failing *(superseded 2026-09-14: root causes fixed in e2aa1f4, see status above)* | Recent master-pipeline runs failed; September 9 includes `GatewayDataSourceOpenConnectionTimeout`, September 5–8 include Procore HTTP 429 | A configured schedule is not evidence that the report is current |
 | Latest recorded DQ notebook completion is August 28 | Fabric job history and `dq_run.json` batch `20260828T064735Z` | No claim of a validated September refresh is justified |
 | 37 invoices remain unattributed | Model query: unmatched invoice amount **$1,474,973.01** | These amounts cannot be assigned to a project by guessing; portfolio and project-filtered totals need explicit coverage information |
 | Open Submittals includes RFIs | Displayed 2,211; independent row filters find 2,156 submittals and 55 RFIs | The label and calculation disagree |
@@ -122,7 +251,7 @@ The Monthly Data Quality page is visible. Its unmatched AR count and amount igno
 
 ## Business definitions that must remain explicit
 
-- Paid date is unavailable in the current invoice fact. Due date is not payment date; days-to-payment and its score must remain unmeasured until supported.
+- *(Superseded 2026-09-14: Sage AR receipts now give a real PaidDate and Cash Received, see status above.)* Paid date is unavailable in the current invoice fact. Due date is not payment date; days-to-payment and its score must remain unmeasured until supported.
 - “Critical” RFI/submittal is not a confirmed rule. Preserve unknown rather than infer it from words or priority names.
 - Outbuild baseline dates are landed, but a maintained baseline is not yet established. Do not sell current-versus-imported dates as verified schedule variance.
 - Current status grouped by creation month is not a historical month-end snapshot. Past-due/open counts can change when a record closes. Historical reporting requires event history or saved monthly snapshots.
