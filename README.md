@@ -6,6 +6,18 @@ It brings Procore, Sage and Outbuild data through bronze, silver and gold layers
 Power BI models and reports. Manual registers provide information that source systems do
 not supply.
 
+## Current state — September 30, 2026
+
+- **Nightly pipeline down since 2026-09-19.** The Azure subscription holding `AffectKeyVault`
+  is a disabled free trial; every `getSecret` returns 403. Reports serve 2026-09-18 data.
+  Fix: Affect's account admin upgrades the subscription to pay-as-you-go.
+- **Cost codes.** Old→new mapping (client workbook v1) is in source and tested, not deployed.
+  2026 projects map 100%; 2023–2025 projects use original Procore trade codes the workbook
+  does not cover. See [solution guide](foundation/charley-dev/_docs/solution-guide.md).
+- **SharePoint.** Both sites and all 18 lists are ready; `CD Projects` updated (26-056 added).
+  `CD_Manual_Ingest` is signed in to the reporting site; its first refresh failed, most likely because
+  the BUILD site (`AFFECTBUILD1`, Job Register) has no connection yet. Not in the pipeline.
+
 ## Verified state — September 14, 2026
 
 **Production is not fully certified.** Read-only validation of actual production Delta
