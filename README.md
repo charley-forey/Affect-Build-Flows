@@ -15,8 +15,8 @@ not supply.
   2026 projects map 100%; 2023–2025 projects use original Procore trade codes the workbook
   does not cover. See [solution guide](foundation/charley-dev/_docs/solution-guide.md).
 - **SharePoint.** Both sites and all 18 lists are ready; `CD Projects` updated (26-056 added).
-  `CD_Manual_Ingest` is signed in to the reporting site; its first refresh failed, most likely because
-  the BUILD site (`AFFECTBUILD1`, Job Register) has no connection yet. Not in the pipeline.
+  `CD_Manual_Ingest` is signed in to both sites (reporting site and `AFFECTBUILD1`).
+  Not yet in the nightly pipeline; add it once the subscription is restored.
 
 ## Verified state — September 14, 2026
 
