@@ -53,6 +53,7 @@ AREAS = {
                           "bridge_VendorCostCode", "fct_VendorInsurance"],
     "Sage AR/AP": ["fct_Invoice", "fct_ApInvoice", "seed_ProjectCrosswalk",
                    "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
+                   "seed_CostCodeNew", "seed_CostCodeMap",
                    "dq_CrosswalkCandidate"],
     "Quality": ["fct_QualityItem", "fct_SafetyMonthly", "fct_RfiSubmittal", "fct_QcNcr",
                 "fct_QcPunch", "fct_QcSubmittal", "fct_ProcoreInspection",

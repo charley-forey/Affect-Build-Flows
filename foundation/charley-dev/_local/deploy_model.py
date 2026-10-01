@@ -136,6 +136,11 @@ RELATIONSHIPS = [
     ("man_Milestones", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_DailySnapshot", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_DailySnapshot", "SnapshotDate", "dim_Date", "Date"),
+    # Snowflake, not a second fact relationship: dim_CostCodeCrosswalk is one row per
+    # CostCodeKey, so it hangs off dim_CostCode and every fact already related there groups
+    # by NewCostCode / NewDivisionCode with no fan-out and no second path to the facts.
+    # Only UNASSIGNED has no crosswalk row; it reads as (Blank) under the new division.
+    ("dim_CostCode", "CostCodeKey", "dim_CostCodeCrosswalk", "CostCodeKey"),
 ]
 
 # Inactive: reachable only through USERELATIONSHIP in a measure. fct_Invoice already reaches
@@ -594,6 +599,12 @@ MEASURES = [
     ("Source Coverage %",
      "DIVIDE ( [Projects Fully Mapped], COUNTROWS ( dim_ProjectCrosswalk ) )",
      '"0.0%"', "share of projects present in all three systems"),
+    # Coverage of the client's new cost-code scheme: budget on a code that is either new
+    # already or an old Sage code with a mapped target. LEGACY_UNMAPPED (pre-2026 Procore
+    # CSI codes) is the expected remainder; OLD_UNMAPPED is a gap in the client's map.
+    ("Budget On New Cost Codes %",
+     'DIVIDE ( CALCULATE ( [Budget], dim_CostCodeCrosswalk[MappingStatus] IN { "NATIVE_NEW", "MAPPED" } ), [Budget] )',
+     '"0.0%"', "nothing - share of budget that rolls up to a new cost code and division"),
     ("Vendors Missing From Sage",
      "COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )",
      '"#,0"', "mostly expected - a vendor invited to bid is not a vendor who was paid"),

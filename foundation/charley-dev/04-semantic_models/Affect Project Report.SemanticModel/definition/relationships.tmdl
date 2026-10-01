@@ -202,6 +202,10 @@ relationship rel_50_fct_DailySnapshot_dim_Date_SnapshotDate
 	fromColumn: fct_DailySnapshot.SnapshotDate
 	toColumn: dim_Date.Date
 
+relationship rel_51_dim_CostCode_dim_CostCodeCrosswalk_CostCodeKey
+	fromColumn: dim_CostCode.CostCodeKey
+	toColumn: dim_CostCodeCrosswalk.CostCodeKey
+
 relationship rel_inactive_fct_Invoice_dim_Date_PaidDate
 	isActive: false
 	fromColumn: fct_Invoice.PaidDate

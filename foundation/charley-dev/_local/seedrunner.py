@@ -138,9 +138,15 @@ SOURCE_FIXTURES = (
     # Procore returns the CODE and the NAME as separate fields. Parsing a division out of
     # the name is meaningless - "Concrete" has no division in it - so the code is carried
     # separately. CC2 has no parseable code, exercising that path.
+    # CC3 / CC4 are old Sage codes as Affect forced them into Procore in Jan 2026, CSI
+    # division in front: CC3 maps to a new code, CC4 (ALLOWANCES) is one of the two the
+    # client left unmapped. Neither carries money, so the OLD_UNMAPPED dollars rule is clean
+    # here and test_dq_rules proves it fires once a budget line moves onto CC4.
     """CREATE OR REPLACE VIEW sv_cost_codes AS SELECT * FROM (VALUES
         ('CC1', '03-100', 'Concrete'),
-        ('CC2', 'General', 'General')
+        ('CC2', 'General', 'General'),
+        ('CC3', '1-1018.000', 'Reimbursables'),
+        ('CC4', '1-340000', 'Allowances')
     ) AS t(cost_code_id, cost_code, cost_code_name)""",
 
     """CREATE OR REPLACE VIEW sv_budgets AS SELECT * FROM (VALUES

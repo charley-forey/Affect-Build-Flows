@@ -421,8 +421,53 @@ def test_crosswalks(con) -> None:
     # A code that does not parse still appears - flagged, not silently dropped from a subtotal.
     assert one(con, "SELECT HasUnparseableCode FROM dim_CostCodeCrosswalk "
                     "WHERE CostCodeName='General'") is True
-    assert one(con, "SELECT SageMatchMethod FROM dim_CostCodeCrosswalk LIMIT 1") == "PENDING_SAGE_INGEST"
     check("dim_CostCodeCrosswalk parses the CSI division and flags codes that do not")
+
+    # The normaliser, case by case. Each input is a shape measured in Affect's Procore or
+    # Sage on 2026-09-30; the targets come from the committed seed (client workbook v1).
+    rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_cost_codes AS SELECT * FROM (VALUES
+            ('A','1-1018.000','x'), ('B','1-1018','x'), ('C','15-230000 - HVAC','x'),
+            ('D','09-20-00','x'), ('E','1012.0000','x'), ('F','10111.000','x'), ('G','1','x'),
+            ('H','9-92000','x'), ('I','1-350049','x'), ('J','1-340000','x'), ('K','General','x'),
+            ('L','23-000','x'), ('M','01-013','x')
+        ) AS t(cost_code_id, cost_code, cost_code_name)""", "17_dim_costcodecrosswalk.sql",
+        "SELECT CostCodeKey, NormalizedCode, CodeScheme, NewCostCode, NewDivisionCode, "
+        "MappingStatus, SageCostCode FROM dim_CostCodeCrosswalk ORDER BY 1")
+    assert rows == [
+        ("A", "1018.000", "OLD_SAGE", "10111.000", "01", "MAPPED", "1018.000"),
+        ("B", "1018.000", "OLD_SAGE", "10111.000", "01", "MAPPED", "1018.000"),
+        ("C", "230000.000", "OLD_SAGE", "12305.000", "23", "MAPPED", "230000.000"),
+        ("D", None, "LEGACY_PROCORE", None, None, "LEGACY_UNMAPPED", None),
+        ("E", "1012.000", "OLD_SAGE", "10111.000", "01", "MAPPED", "1012.000"),
+        ("F", "10111.000", "NEW", "10111.000", "01", "NATIVE_NEW", None),
+        ("G", "1.000", "LEGACY_PROCORE", None, None, "LEGACY_UNMAPPED", None),
+        ("H", "92000.000", "OLD_SAGE", "10920.000", "09", "MAPPED", "92000.000"),
+        ("I", "350049.000", "OLD_SAGE", "10172.020", "01", "MAPPED", "350049.000"),
+        ("J", "340000.000", "OLD_SAGE", None, None, "OLD_UNMAPPED", "340000.000"),
+        ("K", None, "UNPARSEABLE", None, None, "LEGACY_UNMAPPED", None),
+        # Leading zeros stay: '013' is not old code 13.
+        ("L", "000.000", "LEGACY_PROCORE", None, None, "LEGACY_UNMAPPED", None),
+        ("M", "013.000", "LEGACY_PROCORE", None, None, "LEGACY_UNMAPPED", None),
+    ], rows
+    check("dim_CostCodeCrosswalk normalises prefixed, suffixed, 4-decimal and bare codes "
+          "and classifies NEW / OLD_SAGE / LEGACY_PROCORE / UNPARSEABLE")
+
+    # An old code mapped to two different targets resolves to none rather than the first.
+    assert rebuild_with(con, "INSERT INTO seed_CostCodeMap VALUES ('1018.000', '10130.190', 'dup')",
+                        "17_dim_costcodecrosswalk.sql",
+                        "SELECT NewCostCode, MappingStatus FROM dim_CostCodeCrosswalk "
+                        "WHERE CostCodeKey='CC3'") == [(None, "OLD_UNMAPPED")]
+    check("an ambiguous old -> new mapping is left unmapped, never picked")
+
+    # No fan-out: grouping budget dollars through dim_CostCode -> crosswalk keeps the total.
+    assert one(con, "SELECT COUNT(*) - COUNT(DISTINCT CostCodeKey) FROM dim_CostCodeCrosswalk") == 0
+    assert one(con, "SELECT SUM(b.BudgetAmount) FROM fct_BudgetLine b "
+                    "JOIN dim_CostCode d ON d.CostCodeKey = b.CostCodeKey "
+                    "LEFT JOIN dim_CostCodeCrosswalk x ON x.CostCodeKey = d.CostCodeKey") \
+        == one(con, "SELECT SUM(BudgetAmount) FROM fct_BudgetLine")
+    assert one(con, "SELECT SageMatchMethod FROM dim_CostCodeCrosswalk WHERE CostCodeKey='CC3'") \
+        == "NORMALIZED_CODE"
+    check("dim_CostCodeCrosswalk is one row per CostCodeKey, so budget grouped by new code does not fan out")
 
 
 def test_fct_qualityitem(con) -> None:

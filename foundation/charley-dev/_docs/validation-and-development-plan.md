@@ -256,6 +256,7 @@ release2 head is required before promotion. Offline: 19/19 suites.
 | 7 | Submittal turnaround definition | Created → responded median 32 d (current). Issue → distributed median 11 d. Approver sent → returned median 6 d. 65 closed submittals have neither date. | Quality lead |
 | 8 | Manual register owners | All 17 SharePoint data lists and Job Register hold 0 items. The dataflow owner/service account is undecided. | Affect admin, project managers, Q-Team, safety lead |
 | 9 | Retainage policy confirmation | Sub retainage is now the latest approved pay app per commitment (`c76830a`) | Affect finance lead |
+| 10 | Old → new cost-code gaps | ALLOWANCES `340000.000`/`340001.000` have no target. Pre-2026 projects use legacy Procore CSI codes that no mapping covers; confirm they are complete. No line uses a new code yet. See solution-guide.md, "Old → new cost codes". | Affect finance lead |
 
 ## Remaining engineering work — latest verified position
 

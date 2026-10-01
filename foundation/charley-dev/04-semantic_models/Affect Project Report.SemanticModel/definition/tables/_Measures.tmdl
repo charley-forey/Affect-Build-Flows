@@ -422,6 +422,11 @@ table _Measures
 		formatString: "0.0%"
 		displayFolder: 09 Source Coverage
 
+	/// Replaces nothing - share of budget that rolls up to a new cost code and division
+	measure 'Budget On New Cost Codes %' = DIVIDE ( CALCULATE ( [Budget], dim_CostCodeCrosswalk[MappingStatus] IN { "NATIVE_NEW", "MAPPED" } ), [Budget] )
+		formatString: "0.0%"
+		displayFolder: 09 Source Coverage
+
 	/// Replaces mostly expected - a vendor invited to bid is not a vendor who was paid
 	measure 'Vendors Missing From Sage' = COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )
 		formatString: "#,0"

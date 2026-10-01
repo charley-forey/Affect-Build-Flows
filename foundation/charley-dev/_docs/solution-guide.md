@@ -292,6 +292,60 @@ lapsed record both fail a single "compliant" flag and need completely different 
 **This is a question for Affect, not a conclusion from us.**
 
 
+## Old → new cost codes
+
+Affect is moving to a new cost-code list. The client workbook *Cost Code Mapping_OldvsNew_v1*
+maps each of the 318 old Sage codes to one of 284 new codes. 316 have a target. The two
+ALLOWANCES codes, `340000.000` and `340001.000`, have none. Sixty-four old codes map to
+`10111.000 General Requirements`. Old and new numbering do not overlap; the client
+confirmed this and we checked it.
+
+**Three code schemes coexist in Procore**, measured live on 2026-09-30:
+
+| Scheme | Example | Where it is used |
+|---|---|---|
+| NEW | `10111.000` | Nowhere yet: $0 on any money line |
+| OLD_SAGE | `1-1018.000`, `1-1018`, `9-92000`, `15-230000 - HVAC` | Forced into Procore in Jan 2026 with a CSI division prefix. All four 2026 projects (26-022, 26-025, 26-026, 26-056) use it for 100% of their dollars, and every one of those codes maps |
+| LEGACY_PROCORE | `09-20-00`, `23-000`, `01-013` | Every pre-2026 project (23-006, 24-011, 25-0xx). No mapping exists |
+
+Dollar coverage is measured in absolute dollars on Procore lines. Mapped codes hold
+$7.02M of $35.31M budget (19.9%), $4.24M of $27.05M commitments (15.7%) and $0.10M of
+$2.09M direct costs (4.9%). Everything else is LEGACY_PROCORE. Project 23-006 has 5% of its
+dollars on old Sage codes.
+
+On the Sage side, AP lines carry only a GL account. Of the AR lines, 269 have no cost code
+and 25 carry `1012.0000`. A blank AR cost code is expected, not a defect, because Affect
+bills lump-sum jobs at division level.
+
+**How it is built.** `_local/import_cost_code_map.py` reads the workbook into
+`seed/cost_code_new.csv` and `seed/cost_code_map.csv`. `make_qc_seeds.py` then inlines them
+as `seed_CostCodeNew` and `seed_CostCodeMap`. To load v2, run both scripts and review the CSV
+diff. `dim_CostCodeCrosswalk` normalises each Procore code: it drops any ` - NAME` suffix,
+strips a leading `N-`/`NN-` division and pads the decimals to three places, so `1-1018` becomes
+`1018.000`. It then classifies the code (`CodeScheme`) and resolves `NewCostCode`,
+`NewDivisionCode` and `MappingStatus` (NATIVE_NEW / MAPPED / OLD_UNMAPPED / LEGACY_UNMAPPED).
+In the model, the crosswalk hangs off `dim_CostCode`, with one row per `CostCodeKey`. Budget,
+commitment and RFI facts can therefore group by new division without fan-out.
+
+That rollup is also how divisions are included or excluded. General Requirements (01) and
+General Conditions (45) are separate new divisions, so a page filter on
+`dim_CostCodeCrosswalk[NewDivisionCode]` handles both. `[Budget On New Cost Codes %]` reports
+coverage. The DQ suite warns, and never blocks, on four conditions: a map target missing from
+the new list, an old code listed twice, dollars on an unmapped old code, and legacy-code
+budget (reported only).
+
+**Open questions for Affect:**
+1. Where should the two ALLOWANCES codes (`340000.000`, `340001.000`) map?
+2. Are all pre-2026 projects complete? The agreed position is to leave legacy-coded projects
+   unmapped. Any project still active on legacy codes (24-011, 25-0xx) would need its own
+   mapping or a recode in Procore.
+3. When will Procore and Sage switch to the new codes? Until then, no line carries a NEW
+   code. The mapping sheet's "New Description" column reads "Not uploaded", which suggests
+   the new list is not yet in Sage.
+4. Sixty-four old codes collapse into `10111.000`. Confirm that losing that detail in the
+   new-code view is intended. The old code is still available as `SageCostCode`.
+
+
 ## Retainage — an answer, not a blocker
 
 The workbook has no retainage figure anywhere, and Sage cannot supply one: `retain` on the

@@ -425,6 +425,65 @@ def build_suite() -> Suite:
         ),
     )
 
+    # ------------------------------------------- old -> new cost-code mapping
+    #
+    # All WARN. The map is the client's workbook (seed/cost_code_map.csv); a gap in it is
+    # the client's decision to make, not a pipeline defect, and blocking on it would hold
+    # every other number hostage to a spreadsheet edit.
+    suite.add(
+        Expectation(
+            name="cost-code map targets exist in the new code list",
+            table="seed_CostCodeMap",
+            failing_sql=("SELECT m.* FROM seed_CostCodeMap m "
+                         "LEFT JOIN seed_CostCodeNew n ON n.NewCostCode = m.NewCostCode "
+                         "WHERE m.NewCostCode IS NOT NULL AND n.NewCostCode IS NULL"),
+            severity=SEVERITY_WARN,
+            description="a target missing from 'New Cost Codes' has no name or division to roll up to",
+        ),
+        Expectation(
+            name="cost-code map has one row per old code",
+            table="seed_CostCodeMap",
+            failing_sql=("SELECT OldCostCode, COUNT(*) AS n FROM seed_CostCodeMap "
+                         "GROUP BY OldCostCode HAVING COUNT(*) > 1"),
+            severity=SEVERITY_WARN,
+            description="an old code listed twice is left unmapped by gold rather than guessed",
+        ),
+        # Money on an old Sage code with no new target cannot reach a new division. v1 leaves
+        # 340000.000 / 340001.000 (ALLOWANCES) unmapped; this fires once any job books to them.
+        Expectation(
+            name="no budget or commitment dollars on unmapped old cost codes",
+            table="dim_CostCodeCrosswalk",
+            failing_sql=(
+                "SELECT 'fct_BudgetLine' AS Source, b.ProjectKey, b.CostCodeKey, "
+                "b.BudgetAmount AS Amount FROM fct_BudgetLine b "
+                "JOIN dim_CostCodeCrosswalk x ON x.CostCodeKey = b.CostCodeKey "
+                "WHERE x.MappingStatus = 'OLD_UNMAPPED' "
+                "AND (COALESCE(b.BudgetAmount, 0) <> 0 OR COALESCE(b.CommittedAmount, 0) <> 0) "
+                "UNION ALL "
+                "SELECT 'bridge_VendorCostCode', v.ProjectKey, v.CostCodeKey, v.Amount "
+                "FROM bridge_VendorCostCode v "
+                "JOIN dim_CostCodeCrosswalk x ON x.CostCodeKey = v.CostCodeKey "
+                "WHERE x.MappingStatus = 'OLD_UNMAPPED' AND COALESCE(v.Amount, 0) <> 0"
+            ),
+            severity=SEVERITY_WARN,
+            description="these dollars fall outside every new-division rollup until the client maps the code",
+        ),
+        # REPORT ONLY. Every pre-2026 project is on Procore's legacy CSI codes, and the client
+        # has said completed projects stay unmapped - so this is expected to fail, and its
+        # count is the size of what sits outside the new scheme, not a to-do list.
+        Expectation(
+            name="budget dollars on legacy Procore cost codes (report only)",
+            table="dim_CostCodeCrosswalk",
+            failing_sql=(
+                "SELECT b.ProjectKey, b.CostCodeKey, b.BudgetAmount FROM fct_BudgetLine b "
+                "JOIN dim_CostCodeCrosswalk x ON x.CostCodeKey = b.CostCodeKey "
+                "WHERE x.CodeScheme = 'LEGACY_PROCORE' AND COALESCE(b.BudgetAmount, 0) <> 0"
+            ),
+            severity=SEVERITY_WARN,
+            description="expected for completed pre-2026 projects; a current project here needs a mapping",
+        ),
+    )
+
     # ------------------------------------------------------------ money
     #
     # A negative contract or budget is not a rounding artefact - it means a sign convention

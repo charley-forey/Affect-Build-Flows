@@ -53,6 +53,20 @@ def main() -> int:
         check_fails(con, name, f"UPDATE dim_CostCode SET Division = {bad} WHERE CostCodeKey = 'CC1'")
         checks += 1
 
+    # Old -> new cost-code mapping. WARN, never blocking: the map is the client's workbook.
+    for name, mutation in (
+        ("cost-code map targets exist in the new code list",
+         "INSERT INTO seed_CostCodeMap VALUES ('9999.000', '99999.999', 'typo target')"),
+        ("cost-code map has one row per old code",
+         "INSERT INTO seed_CostCodeMap VALUES ('1018.000', '10130.190', 'second target')"),
+        # CC4 is the fixture's unmapped ALLOWANCES code; moving a budget line onto it.
+        ("no budget or commitment dollars on unmapped old cost codes",
+         "UPDATE fct_BudgetLine SET CostCodeKey = 'CC4' WHERE BudgetLineID = 'B1'"),
+    ):
+        assert RULES[name].severity == expectations.SEVERITY_WARN
+        check_fails(con, name, mutation)
+        checks += 1
+
     # Conservation: altered amount, dropped row, fanned-out row, extra source row.
     for gold, view, src_cols, gold_cols, keep in expectations.CONSERVATION:
         name = f"{gold} conserves {view} rows and amounts exactly"

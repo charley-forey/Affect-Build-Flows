@@ -93,6 +93,7 @@ built = []
         "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
         "qc_seed_DohItem": 101, "dim_QcStatus": 141,
         "seed_ProjectCrosswalk": 15,
+        "seed_CostCodeNew": 284, "seed_CostCodeMap": 318,
     }
     cells.append(
         cell(

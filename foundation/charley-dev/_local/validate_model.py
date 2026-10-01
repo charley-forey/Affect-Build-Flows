@@ -155,6 +155,7 @@ RAW_COLUMNS = {
     "man_Flags": ["ProfitabilityCode"], "man_Survey": ["Score"], "man_Milestones": ["BaselineFinish"],
     "man_DailyLogCompliance": ["LogsMissedSameDay"],
     "dim_ProjectCrosswalk": ["SystemCount", "IsInSage", "IsInOutbuild"], "dim_VendorCrosswalk": ["IsInSage"],
+    "dim_CostCodeCrosswalk": ["MappingStatus"],
     "meta_PipelineRun": ["RunAt", "Status", "Blocking", "Failing"], "dq_DataGap": ["Amount"],
     "fct_DailySnapshot": ["SnapshotDate", "OpenSubmittals", "SubmittalsPastDue", "OpenRfis", "OpenObservations",
                           "OpenPunchItems", "ArOutstanding", "BilledToDate", "BudgetAmount", "SpentToDate",
@@ -457,6 +458,12 @@ def monthly_expected():
     # REMOVEFILTERS(dim_Date): the budget is one current-state snapshot.
     budget = lambda column: lambda c, s: _sum(c.rows("fct_BudgetLine", s._replace(month=None)), column)
 
+    def new_code_budget_pct(c, s):
+        mapped = {x["CostCodeKey"] for x in c.data["dim_CostCodeCrosswalk"]
+                  if x["MappingStatus"] in ("NATIVE_NEW", "MAPPED")}
+        rows = [r for r in c.rows("fct_BudgetLine", s._replace(month=None)) if r["CostCodeKey"] in mapped]
+        return _div(_sum(rows, "BudgetAmount"), E["Budget"](c, s))
+
     def insurance(c, s):
         """IF(ISFILTERED(dim_Project), TREATAS(project vendors), company-wide)."""
         rows = c.rows("fct_VendorInsurance", s)
@@ -557,6 +564,9 @@ def monthly_expected():
         "Projects Missing From Sage": lambda c, s: len(R(c, "dim_ProjectCrosswalk", s, false("IsInSage"))),
         "Projects Missing From Outbuild": lambda c, s: len(R(c, "dim_ProjectCrosswalk", s, false("IsInOutbuild"))),
         "Source Coverage %": lambda c, s: _div(E["Projects Fully Mapped"](c, s), _count(c.rows("dim_ProjectCrosswalk", s))),
+        # Crosswalk reaches the budget only through dim_CostCode; a key with no crosswalk row
+        # (UNASSIGNED) is outside the numerator, as the DAX filter leaves it.
+        "Budget On New Cost Codes %": new_code_budget_pct,
         "Vendors Missing From Sage": lambda c, s: len(R(c, "dim_VendorCrosswalk", s, false("IsInSage"))),
         "DQ Projects Without Crosswalk": lambda c, s: _count(R(c, "dim_Project", s, lambda r: not r["IsInCrosswalk"]
                                                              and r["ProjectKey"] != "UNMATCHED")),

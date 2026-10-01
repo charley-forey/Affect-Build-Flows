@@ -50,6 +50,41 @@ table dim_CostCodeCrosswalk
 		summarizeBy: none
 		sourceColumn: HasUnparseableCode
 
+	column NormalizedCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NormalizedCode
+
+	column CodeScheme
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CodeScheme
+
+	column NewCostCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NewCostCode
+
+	column NewCostCodeName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NewCostCodeName
+
+	column NewDivisionCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NewDivisionCode
+
+	column NewDivisionName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: NewDivisionName
+
+	column MappingStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MappingStatus
+
 	partition dim_CostCodeCrosswalk = entity
 		mode: directLake
 		source
