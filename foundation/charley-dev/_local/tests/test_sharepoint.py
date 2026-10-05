@@ -81,11 +81,15 @@ def test_list_names_agree_across_writers() -> None:
     # the BUILD site are different tenanted sites; crossing them wires the register to a
     # site that does not have it and returns nothing, silently.
     assert f'shared {ms.JOB_REGISTER_QUERY} =' in mashup
-    assert "SITE_BUILD = " in mashup
-    register_block = mashup.split(f"shared {ms.JOB_REGISTER_QUERY} =")[1]
-    assert "SharePoint.Tables(SITE_BUILD" in register_block, (
-        "the Job Register must read SITE_BUILD, not the reporting site"
+    head, register_block = mashup.split(f"shared {ms.JOB_REGISTER_QUERY} =")
+    assert f'SharePoint.Tables("{ms.SITE_BUILD}"' in register_block, (
+        "the Job Register must read the BUILD site, not the reporting site"
     )
+    assert ms.SITE_BUILD not in head, "only the Job Register may read the BUILD site"
+    # A shared text query is loaded by Dataflow Gen2 as a one-column table; every
+    # SharePoint.Tables call then fails "cannot convert Table to Text" (2026-10-05).
+    assert "SITE = " not in mashup and "SITE_BUILD = " not in mashup
+    assert "FastCopy" not in mashup, "SharePoint lists do not support fast copy"
     assert f'Ensure-List "{ms.JOB_REGISTER_LIST}"' not in script, (
         "the Job Register is created by power-automate/provision-sharepoint-build.ps1 on "
         "the BUILD site - this script must not create a second one on the reporting site"

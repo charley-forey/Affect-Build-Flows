@@ -500,7 +500,7 @@ def build_mashup() -> str:
     in one and "CD Priority Items" in the other.
     """
     workspace_id, bronze_id = fabric_ids()
-    header = f'''[DefaultOutputDestinationSettings = [DestinationDefinition = [Kind = "Reference", QueryName = "DefaultDestination", IsNewTarget = true], UpdateMethod = [Kind = "Replace"], DestinationTypeSettings = [Kind = "Table"]], StagingDefinition = [Kind = "FastCopy"]]
+    header = f'''[DefaultOutputDestinationSettings = [DestinationDefinition = [Kind = "Reference", QueryName = "DefaultDestination", IsNewTarget = true], UpdateMethod = [Kind = "Replace"], DestinationTypeSettings = [Kind = "Table"]]]
 section Section1;
 
 // ============================================================================
@@ -530,13 +530,13 @@ section Section1;
 //
 // Lists in make_sharepoint.CSV_SOURCED have no query here: one writer per bronze table.
 //
-// TWO SITES. Everything except the last query reads the reporting site (SITE). The Job
-// Register lives on the BUILD site (SITE_BUILD) because it is owned by the two Power
-// Automate job flows, not by this platform.
+// TWO SITES. Everything except the last query reads the reporting site. The Job Register
+// lives on the BUILD site because it is owned by the two Power Automate job flows, not by
+// this platform. Each query carries its site URL as a literal: a shared text query
+// holding the URL is loaded by Dataflow Gen2 as a one-column table, and every
+// SharePoint.Tables call then fails with "cannot convert a value of type Table to Text".
+// No fast copy: SharePoint lists do not support it.
 // ============================================================================
-
-SITE = "{SITE_URL}";
-SITE_BUILD = "{SITE_BUILD}";
 
 // Where every query below lands. Referenced by DefaultOutputDestinationSettings at the top
 // of this file; without it the dataflow parses and then fails at run with an unresolved
@@ -548,21 +548,21 @@ shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){{[worksp
 '''
     parts = [header]
     # The lookup list first, then one query per SharePoint-sourced man_* table.
-    parts.append(mashup_query("cd_bronze_man_projects", "SITE", LOOKUP_LIST, PROJECTS_COLUMNS))
+    parts.append(mashup_query("cd_bronze_man_projects", SITE_URL, LOOKUP_LIST, PROJECTS_COLUMNS))
     for t, cols in tables().items():
         if sharepoint_sourced(t):
-            parts.append(mashup_query(bronze_table(t), "SITE", list_name(t), cols,
+            parts.append(mashup_query(bronze_table(t), SITE_URL, list_name(t), cols,
                                       expand={"ProjectKey": "Title"}))
     # The Job Register, off the OTHER site. Emitted separately rather than folded into the
-    # loop above because the only thing that distinguishes it is which SITE constant it
-    # reads, and that is precisely the difference a loop would hide.
+    # loop above because the only thing that distinguishes it is which site it reads, and
+    # that is precisely the difference a loop would hide.
     parts.append('''
 // ---------------------------------------------------------------- the BUILD site
 // The job flows' register: one row per job from the moment somebody asks for it. Feeds
 // dim_Job (sql/gold/13_dim_job.sql), which is what actually connects the two Power Automate
 // flows to this platform - power-automate/README.md described that link long before any of
 // it existed.''')
-    parts.append(mashup_query(JOB_REGISTER_QUERY, "SITE_BUILD", JOB_REGISTER_LIST,
+    parts.append(mashup_query(JOB_REGISTER_QUERY, SITE_BUILD, JOB_REGISTER_LIST,
                               JOB_REGISTER_COLUMNS,
                               expand={c: "Url" for c in JOB_REGISTER_URL_COLUMNS}))
     return "".join(parts)
@@ -584,7 +584,7 @@ def mashup_query(query: str, site: str, title: str, cols: list[tuple[str, str]],
     """
     expand = expand or {}
     names = [c for c, _ in cols] + ["Modified"]
-    steps = [f'  Source = SharePoint.Tables({site}, [ApiVersion = 15]),',
+    steps = [f'  Source = SharePoint.Tables("{site}", [ApiVersion = 15]),',
              f'  Items = Source{{[Title = "{title}"]}}[Items],']
     prev = "Items"
     for i, (col, field) in enumerate(expand.items()):

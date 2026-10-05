@@ -1,4 +1,4 @@
-[DefaultOutputDestinationSettings = [DestinationDefinition = [Kind = "Reference", QueryName = "DefaultDestination", IsNewTarget = true], UpdateMethod = [Kind = "Replace"], DestinationTypeSettings = [Kind = "Table"]], StagingDefinition = [Kind = "FastCopy"]]
+[DefaultOutputDestinationSettings = [DestinationDefinition = [Kind = "Reference", QueryName = "DefaultDestination", IsNewTarget = true], UpdateMethod = [Kind = "Replace"], DestinationTypeSettings = [Kind = "Table"]]]
 section Section1;
 
 // ============================================================================
@@ -28,13 +28,13 @@ section Section1;
 //
 // Lists in make_sharepoint.CSV_SOURCED have no query here: one writer per bronze table.
 //
-// TWO SITES. Everything except the last query reads the reporting site (SITE). The Job
-// Register lives on the BUILD site (SITE_BUILD) because it is owned by the two Power
-// Automate job flows, not by this platform.
+// TWO SITES. Everything except the last query reads the reporting site. The Job Register
+// lives on the BUILD site because it is owned by the two Power Automate job flows, not by
+// this platform. Each query carries its site URL as a literal: a shared text query
+// holding the URL is loaded by Dataflow Gen2 as a one-column table, and every
+// SharePoint.Tables call then fails with "cannot convert a value of type Table to Text".
+// No fast copy: SharePoint lists do not support it.
 // ============================================================================
-
-SITE = "https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main";
-SITE_BUILD = "https://affectbuildllc.sharepoint.com/sites/AFFECTBUILD1";
 
 // Where every query below lands. Referenced by DefaultOutputDestinationSettings at the top
 // of this file; without it the dataflow parses and then fails at run with an unresolved
@@ -46,7 +46,7 @@ shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){[workspa
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_projects = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Projects"]}[Items],
   Selected = Table.SelectColumns(Items, {"Title", "ProjectName", "IsActive", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"Title", type text}, {"ProjectName", type text}, {"IsActive", type logical}, {"Modified", type datetime}}),
@@ -57,7 +57,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_wins = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Wins"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "WinNumber", "Description", "WinType", "Modified"}),
@@ -69,7 +69,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_risks = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Risks"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "RiskNumber", "Description", "ImpactCode", "Mitigation", "OwnerRole", "StatusCode", "Modified"}),
@@ -81,7 +81,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_priority_items = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Priority Items"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "ItemNumber", "ScheduleItem", "StatusCode", "CriticalDelays", "RecoveryPlan", "ForecastImpact", "Notes", "Modified"}),
@@ -93,7 +93,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_flags = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Flags"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "ProfitabilityCode", "ContingencyRemaining", "BaselineApproved", "BaselineRevision", "MonthEndClosedOut", "ForecastingInLine", "ResourcesUpdated", "Modified"}),
@@ -105,7 +105,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_survey = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Survey"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "QuestionNumber", "QuestionText", "Score", "SurveyedParty", "Modified"}),
@@ -117,7 +117,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_safety_monthly = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Safety Monthly"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "HoursWorked", "RecordableIncidents", "Orientations", "OtHours", "Modified"}),
@@ -129,7 +129,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_quality_monthly = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Quality Monthly"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "Observations", "PunchlistItems", "AvgDaysPastDue", "AvgDaysToClose", "Modified"}),
@@ -141,7 +141,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_milestones = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Milestones"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ActivityKey", "MilestoneName", "ContractStart", "ContractFinish", "BaselineStart", "BaselineFinish", "IsSubstantialCompletion", "Modified"}),
@@ -153,7 +153,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_daily_log_compliance = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD Daily Log Compliance"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "LogsExpected", "LogsMissedSameDay", "Modified"}),
@@ -165,7 +165,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_dfow = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC DFOW"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "DfowRef", "DfowDescription", "TradeKey", "RiskTier", "ControlMeasure", "OwnerRole", "StatusCode", "Notes", "Modified"}),
@@ -177,7 +177,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_itp = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC ITP"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ItpRef", "TradeKey", "Activity", "InspectionType", "AcceptanceCriteria", "HoldPointType", "Responsible", "PlannedDate", "ActualDate", "ResultCode", "StatusCode", "Notes", "Modified"}),
@@ -189,7 +189,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_gate = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC Gate"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "GateKey", "GateType", "StatusCode", "Responsible", "TargetDate", "SubmittedDate", "CompletedDate", "EvidenceLink", "BlockerNote", "Modified"}),
@@ -201,7 +201,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_special_inspection = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC Special Inspection"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "InspectionRef", "Category", "Agency", "InspectorName", "RequiredCode", "PerformedCode", "ScheduledDate", "PerformedDate", "ReportReceivedDate", "StatusCode", "Notes", "Modified"}),
@@ -213,7 +213,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_commissioning = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC Commissioning"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "SystemRef", "SystemName", "TradeKey", "Responsible", "PlannedDate", "ActualDate", "StatusCode", "Notes", "Modified"}),
@@ -225,7 +225,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_inspector_sign_in = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC Inspector Sign In"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "SignInRef", "VisitDate", "InspectorName", "AgencyCode", "Purpose", "AreaInspected", "OutcomeCode", "FollowUpRequired", "Notes", "Modified"}),
@@ -237,7 +237,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_checklist_result = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC Checklist Result"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "TradeKey", "ItemKey", "StageCode", "ResultCode", "InspectedDate", "InspectedBy", "Notes", "Modified"}),
@@ -249,7 +249,7 @@ in
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_doh_result = let
-  Source = SharePoint.Tables(SITE, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AffectProjectReporting_main", [ApiVersion = 15]),
   Items = Source{[Title = "CD QC DOH Result"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "ProjectKey", {"Title"}, {"ProjectKey"}),
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ItemKey", "ResponsibilityCode", "StatusCode", "VerifiedDate", "VerifiedBy", "EvidenceLink", "Notes", "Modified"}),
@@ -266,7 +266,7 @@ in
 // it existed.
 [BindToDefaultDestination = true]
 shared cd_bronze_man_job_register = let
-  Source = SharePoint.Tables(SITE_BUILD, [ApiVersion = 15]),
+  Source = SharePoint.Tables("https://affectbuildllc.sharepoint.com/sites/AFFECTBUILD1", [ApiVersion = 15]),
   Items = Source{[Title = "Job Register"]}[Items],
   Flat0 = Table.ExpandRecordColumn(Items, "EstimatingFolderUrl", {"Url"}, {"EstimatingFolderUrl"}),
   Flat1 = Table.ExpandRecordColumn(Flat0, "ProjectFolderUrl", {"Url"}, {"ProjectFolderUrl"}),
