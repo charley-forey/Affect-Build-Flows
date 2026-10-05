@@ -6,17 +6,28 @@ It brings Procore, Sage and Outbuild data through bronze, silver and gold layers
 Power BI models and reports. Manual registers provide information that source systems do
 not supply.
 
-## Current state — September 30, 2026
+## Current state — October 5, 2026
 
-- **Nightly pipeline down since 2026-09-19.** The Azure subscription holding `AffectKeyVault`
-  is a disabled free trial; every `getSecret` returns 403. Reports serve 2026-09-18 data.
-  Fix: Affect's account admin upgrades the subscription to pay-as-you-go.
-- **Cost codes.** Old→new mapping (client workbook v1) is in source and tested, not deployed.
-  2026 projects map 100%; 2023–2025 projects use original Procore trade codes the workbook
-  does not cover. See [solution guide](foundation/charley-dev/_docs/solution-guide.md).
+- **Nightly pipeline running again.** The `AffectKeyVault` subscription is enabled and its
+  secrets read. The nightly runs failed 2026-09-30 to 10-02 at Ingest Sage because the
+  on-premises gateway was offline. Affect IT set the gateway service to automatic and
+  restarted it. The 10-03 and 10-04 runs completed, and the Sage connection was last used
+  2026-10-04 06:01 UTC.
+- **Sage outages no longer freeze Procore reporting.** Since 2026-10-05, Bronze To Silver runs
+  once Ingest Sage *completes*, not only when it succeeds. Silver rebuilds from the last good
+  Sage bronze, and the run still ends Failed so the outage stays visible.
+- **Cost codes.** The new list now comes from the client's *COST CODE_WBS MASTER* (2026-09-30):
+  291 codes uploaded to Sage, matching the Sage 6-5 export except three division headers.
+  It adds 13160.010 and six other codes that were dropped from the first Sage upload. Old Sage
+  codes map through workbook v1. Pre-2026 Procore codes map through the client's legacy map.
+  The notebooks were deployed 2026-10-05 and the first production build was triggered
+  2026-10-05 01:00 UTC. Until that build, production gold had no cost-code mapping. The
+  model must be redeployed after the build (`deploy_model.py --apply`, then
+  `deploy_publish.py --apply --run`) to expose the mapping columns. See the
+  [solution guide](foundation/charley-dev/_docs/solution-guide.md).
 - **SharePoint.** Both sites and all 18 lists are ready; `CD Projects` updated (26-056 added).
   `CD_Manual_Ingest` is signed in to both sites (reporting site and `AFFECTBUILD1`).
-  Not yet in the nightly pipeline; add it once the subscription is restored.
+  Not yet in the nightly pipeline. Now that Key Vault is restored, it can be added.
 
 ## Verified state — September 14, 2026
 
