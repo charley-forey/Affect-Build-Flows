@@ -741,7 +741,8 @@ def test_empty_freshness():
 
 def test_evidence_write_failure():
     # Execute the generated evaluation cell, not a second implementation of the gate.
-    source = "".join(deploy_dq.build_notebook()["cells"][2]["source"])
+    source = next(src for src in ("".join(c["source"]) for c in deploy_dq.build_notebook()["cells"])
+                  if "suite.run(" in src)
     passing = dq.Result(dq.not_null("t", "id"), 0)
     with tempfile.TemporaryDirectory() as temp:
         scope = dict(suite=SimpleNamespace(run=lambda *a, **k: [passing]),
@@ -1461,7 +1462,9 @@ def test_daily_snapshot():
                 for r in con.execute(f'DESCRIBE "{name}"').fetchall()]))
 
     cells = deploy_dq.build_notebook()["cells"]
-    gate_and_capture = "".join(cells[3]["source"]) + "\n" + "".join(cells[4]["source"])
+    # The two cells after the evaluation; `results` is supplied in scope below.
+    ev = next(i for i, c in enumerate(cells) if "suite.run(" in "".join(c["source"]))
+    gate_and_capture = "".join(cells[ev + 1]["source"]) + "\n" + "".join(cells[ev + 2]["source"])
     passing = [dq.Result(dq.not_null("t", "id"), 0)]
     blocked = [dq.Result(dq.not_null("t", "id"), 3)]
     spark = DuckSpark()

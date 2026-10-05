@@ -101,6 +101,18 @@ def main():
                 con.execute(statement)
             except Exception as exc:
                 evidence["view_errors"][name] = type(exc).__name__
+    # The same test-project exclusion the gold and DQ notebooks apply; without it every
+    # conservation rule compares filtered gold against unfiltered views.
+    try:
+        con.register("seed_ProjectExclusion", DeltaTable(
+            f"abfss://{deploy.WORKSPACE_ID}@onelake.dfs.fabric.microsoft.com/{GOLD}/Tables/dbo/seed_projectexclusion",
+            storage_options=options).to_pyarrow_table())
+        keyed = [n for n in views if n in needed and n not in evidence["view_errors"]
+                 and "project_id" in [c[0] for c in con.execute(f"DESCRIBE {n}").fetchall()]]
+        for statement in seedrunner.exclusion_statements(keyed, "TEMPORARY VIEW"):
+            con.execute(statement)
+    except Exception as exc:
+        evidence["load_errors"]["seed_ProjectExclusion"] = type(exc).__name__
     evidence["checks"] = evaluate(con, rules)
     for name, handle in handles.items():
         try:

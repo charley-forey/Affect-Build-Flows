@@ -97,6 +97,32 @@ def gold_files(source: str = "cd") -> list[Path]:
                   and not (source == "existing" and p.name in GOLD_CD_ONLY))
 
 
+def exclusion_code(execute: str) -> str:
+    """Notebook code applying seedrunner.exclusion_statements to every project-keyed sv_* view.
+
+    Shared by cd_30_build_gold and cd_40_dq_checks: the gate re-registers the source views in
+    its own session, and an unfiltered copy there would fail every conservation rule. Which
+    views carry project_id is read at run time, so a new view is covered without a list.
+    `execute` is one statement of notebook code running `s` (the SQL), given `v` and `i`.
+    """
+    template = exclusion_statements(["{v}"], "TEMPORARY VIEW")
+    return f"""
+# --- exclude test projects (seed_ProjectExclusion) from every project-keyed source view ---
+views = []
+for t in spark.catalog.listTables():
+    if t.isTemporary and t.name.startswith("sv_"):
+        try:
+            if "project_id" in spark.table(t.name).columns:
+                views.append(t.name)
+        except Exception:
+            pass  # a view that failed to build is already reported by its own step
+for v in sorted(views):
+    for i, s in enumerate({template!r}):
+        {execute}
+print(f"test-project exclusion applied to {{len(views)}} view(s)")
+"""
+
+
 def build_notebook(source_views: Path, source: str = "cd", silver_abfss: str = CD_SILVER_ABFSS) -> dict:
     cells = [
         cell(
@@ -187,24 +213,8 @@ def write_diag():
     cells.append(cell(f'{body}\nprint("source views done")'))
 
     # Test projects (seed_ProjectExclusion) leave every project-keyed sv_* view before any
-    # gold file runs - see seedrunner.exclusion_statements. Which views carry project_id is
-    # read at run time, so a new view is covered without editing a list.
-    template = exclusion_statements(["{v}"], "TEMPORARY VIEW")
-    cells.append(cell(f"""
-# --- exclude test projects from every project-keyed source view ---
-views = []
-for t in spark.catalog.listTables():
-    if t.isTemporary and t.name.startswith("sv_"):
-        try:
-            if "project_id" in spark.table(t.name).columns:
-                views.append(t.name)
-        except Exception:
-            pass  # a view that failed to build is already recorded in results
-for v in sorted(views):
-    for i, s in enumerate({template!r}):
-        run_sql(f"exclude:{{v}}:{{i}}", s.replace("{{v}}", v))
-print(f"test-project exclusion applied to {{len(views)}} view(s)")
-"""))
+    # gold file runs - see seedrunner.exclusion_statements.
+    cells.append(cell(exclusion_code('run_sql(f"exclude:{v}:{i}", s.replace("{v}", v))')))
 
     for path in gold_files(source):
         stmts = statements(path.read_text(encoding="utf-8"))

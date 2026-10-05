@@ -108,6 +108,9 @@ for _sql in SOURCE_VIEWS:
 print(f"{len(SOURCE_VIEWS)} source view(s) registered")
 '''
         ),
+        # The same test-project exclusion gold applied, or conservation rules compare
+        # filtered gold against unfiltered views and block publication.
+        cell(dg.exclusion_code('spark.sql(s.replace("{v}", v))')),
         cell(
             '''
 # EVALUATE FIRST, PERSIST SECOND.
