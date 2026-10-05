@@ -42,6 +42,12 @@ CROSSWALK = ("project_crosswalk.csv", "seed_ProjectCrosswalk",
               "relationship": "STRING", "source": "STRING"},
              ("procore_project_id", "sage_job_number"))
 CROSSWALK_NAMES = ("ProcoreProjectId", "SageJobNumber", "Relationship", "Source")
+# Procore projects kept out of every report (test projects). Applied at the sv_* views by
+# seedrunner.exclusion_statements, so it reaches every gold table at once.
+EXCLUSION = ("project_exclusion.csv", "seed_ProjectExclusion",
+             {"procore_project_id": "STRING", "project_name": "STRING", "reason": "STRING"},
+             ("procore_project_id",))
+EXCLUSION_NAMES = ("ProcoreProjectId", "ProjectName", "Reason")
 
 # The client's old Sage -> new cost-code mapping. Same mechanism again; the CSVs are written
 # by import_cost_code_map.py from the client's workbook, never edited by hand.
@@ -144,8 +150,11 @@ EXPECTED_ROWS = {
     # Grows as Affect resolves the ambiguous labels. Bump it deliberately when it does -
     # the assertion is here so an alias cannot be added or lost without somebody noticing.
     "qc_seed_TradeAlias": 16,
-    # The 15 legacy dim_projects_procoreXsage pairs. Bump deliberately when Affect approves one.
-    "seed_ProjectCrosswalk": 15,
+    # The 15 legacy dim_projects_procoreXsage pairs, plus 25-034 -> job 28 and 26-056 -> job
+    # 27 (confirmed 2026-10-05). Bump deliberately when Affect approves one.
+    "seed_ProjectCrosswalk": 17,
+    # The two Procore test projects numbered 1234.
+    "seed_ProjectExclusion": 2,
     # Cost Code Mapping_OldvsNew_v1.xlsx. Bump deliberately when the client sends v2.
     "seed_CostCodeNew": 291, "seed_CostCodeMap": 318,
     # Legacy Procore Codes to New_v1_CE.xlsx. Bump deliberately when the client sends v2.
@@ -244,6 +253,9 @@ def build_crosswalk() -> str:
         "-- proposal becomes a row here only through a reviewed CSV edit, never automatically.",
         "",
         table_sql(*CROSSWALK, out_names=CROSSWALK_NAMES),
+        "-- seed_ProjectExclusion: Procore projects kept out of every report (test projects).",
+        "-- deploy_gold.py filters every project-keyed sv_* view through it before gold builds.",
+        table_sql(*EXCLUSION, out_names=EXCLUSION_NAMES),
     ])
 
 
@@ -284,7 +296,7 @@ def main() -> int:
     for path, text in outputs.items():
         path.write_text(text, encoding="utf-8")
         print(f"wrote {path.relative_to(CHARLEY_DEV)}")
-    for csv_name, table, _, key in (*SEEDS, CROSSWALK, COSTCODE_NEW, COSTCODE_MAP, COSTCODE_LEGACY):
+    for csv_name, table, _, key in (*SEEDS, CROSSWALK, EXCLUSION, COSTCODE_NEW, COSTCODE_MAP, COSTCODE_LEGACY):
         n = len(rows(csv_name, key))
         flag = "" if n == EXPECTED_ROWS[table] else f"   <-- EXPECTED {EXPECTED_ROWS[table]}"
         print(f"  {table:<24} {n:>4} rows{flag}")

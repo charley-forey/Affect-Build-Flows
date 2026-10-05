@@ -70,10 +70,26 @@ def test_dim_project(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM dim_Project WHERE ProjectKey='P2'") == 1
     check("dim_Project keeps contract-less projects, flagged not dropped")
 
-    # ProjectNumber stays NULL until the YY-000 mapping is confirmed. A wrong join key is
-    # worse than an absent one - it produces plausible numbers.
-    assert one(con, "SELECT COUNT(*) FROM dim_Project WHERE ProjectNumber IS NOT NULL") == 0
-    check("dim_Project[ProjectNumber] left NULL rather than guessed")
+    # ProjectNumber is Procore's project_number; the UNMATCHED member has none.
+    assert q(con, "SELECT ProjectKey, ProjectNumber FROM dim_Project ORDER BY 1") == [
+        ("P1", "24-001"), ("P2", "25-002"), ("UNMATCHED", None)]
+    check("dim_Project[ProjectNumber] is Procore's project number")
+
+    # Excluded projects (seed_ProjectExclusion) leave every sv_* view, so they reach no
+    # dimension, fact or DQ table - not just dim_Project.
+    import seedrunner
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO seed_ProjectExclusion VALUES ('P2', 'Depot B', 'test')")
+        for sql in seedrunner.split_statements(
+                (seedrunner.CHARLEY_DEV / "02-transformation/sql/gold/10_dim_project.sql").read_text()):
+            con.execute(sql)
+        assert q(con, "SELECT ProjectKey FROM dim_Project ORDER BY 1") == [("P1",), ("UNMATCHED",)]
+        assert one(con, "SELECT COUNT(*) FROM sv_budgets WHERE project_id = 'P2'") == 0
+        assert one(con, "SELECT COUNT(*) FROM sv_budgets WHERE project_id = 'P1'") > 0
+    finally:
+        con.execute("ROLLBACK")
+    check("an excluded project leaves dim_Project and every project-keyed source view")
 
     # THE SAGE JOIN. sv_projects.sage_project_id is a hardcoded NULL in production
     # (01_source_views_cd.sql:43), so SageJobNumber has to come from sv_project_crosswalk.

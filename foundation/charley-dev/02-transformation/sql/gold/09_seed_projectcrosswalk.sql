@@ -6,7 +6,7 @@
 -- dim_projects_procoreXsage verbatim. gold dq_CrosswalkCandidate proposes new pairs; a
 -- proposal becomes a row here only through a reviewed CSV edit, never automatically.
 
--- seed_ProjectCrosswalk: 15 row(s) from seed/project_crosswalk.csv
+-- seed_ProjectCrosswalk: 17 row(s) from seed/project_crosswalk.csv
 CREATE OR REPLACE TABLE seed_ProjectCrosswalk AS
 SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
        CAST(c2 AS STRING) AS SageJobNumber,
@@ -27,5 +27,19 @@ FROM (VALUES
     ('562949955318524', '18', 'primary', 'legacy_verified_2026-09-13'),
     ('562949955286476', '19', 'primary', 'legacy_verified_2026-09-13'),
     ('562949955375634', '20', 'primary', 'legacy_verified_2026-09-13'),
-    ('562949955365267', '22', 'primary', 'legacy_verified_2026-09-13')
+    ('562949955365267', '22', 'primary', 'legacy_verified_2026-09-13'),
+    ('562949955423662', '28', 'primary', 'client_confirmed_2026-10-05'),
+    ('562949955455437', '27', 'primary', 'client_confirmed_2026-10-05')
 ) AS t(c1, c2, c3, c4);
+
+-- seed_ProjectExclusion: Procore projects kept out of every report (test projects).
+-- deploy_gold.py filters every project-keyed sv_* view through it before gold builds.
+-- seed_ProjectExclusion: 2 row(s) from seed/project_exclusion.csv
+CREATE OR REPLACE TABLE seed_ProjectExclusion AS
+SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
+       CAST(c2 AS STRING) AS ProjectName,
+       CAST(c3 AS STRING) AS Reason
+FROM (VALUES
+    ('562949953807489', 'Sandbox Test Project', 'Procore test project (number 1234); excluded 2026-10-05'),
+    ('562949955173068', 'TEST - ABM SUBORDINATE', 'Procore test project (number 1234); excluded 2026-10-05')
+) AS t(c1, c2, c3);

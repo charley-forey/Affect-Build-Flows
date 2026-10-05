@@ -45,6 +45,8 @@
 
 CREATE OR REPLACE TEMPORARY VIEW sv_projects AS
 SELECT project_id, project_name,
+       -- Procore's own project number ('26-022'), the number Affect's staff use.
+       project_number,
        -- The Sage id is not on the Procore project record; it comes from the crosswalk.
        CAST(NULL AS STRING) AS sage_project_id,
        'PROCORE' AS origin_code

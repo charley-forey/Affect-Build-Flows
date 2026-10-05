@@ -27,6 +27,7 @@ CREATE OR REPLACE TEMPORARY VIEW sv_projects AS
 SELECT
     CAST(`Project ID`      AS STRING) AS project_id,
     CAST(`Project Name`    AS STRING) AS project_name,
+    CAST(NULL              AS STRING) AS project_number,   -- not in the legacy table
     CAST(`Sage Project ID` AS STRING) AS sage_project_id,
     CAST(origin_code       AS STRING) AS origin_code
 FROM delta.`{SILVER_ABFSS}/dim_projects_procoreXsage`;

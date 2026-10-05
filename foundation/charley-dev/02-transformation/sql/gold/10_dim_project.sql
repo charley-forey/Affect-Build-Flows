@@ -27,9 +27,8 @@
 -- cannot join to any Sage financial data until the crosswalk is extended.
 -- =====================================================================================
 --
--- STILL OPEN: whether the Excel's YY-000 ProjectNumber maps onto this crosswalk, or needs
--- a third mapping. ProjectNumber is therefore left NULL rather than guessed - a wrong join
--- key is worse than an absent one, because it silently produces plausible numbers.
+-- ProjectNumber is Procore's own project_number ('23-006' ... '26-056'), confirmed by Affect
+-- 2026-10-05 as the reporting number. A display attribute only: nothing joins on it.
 
 CREATE OR REPLACE TABLE dim_Project AS
 WITH observed AS (
@@ -74,7 +73,7 @@ SELECT
     a.project_id                                  AS ProjectKey,
     a.project_id                                  AS ProcoreProjectId,
     xw.sage_project_id                            AS SageJobNumber,
-    CAST(NULL AS STRING)                          AS ProjectNumber,
+    CAST(x.project_number AS STRING)              AS ProjectNumber,
     COALESCE(x.project_name, 'Project ' || a.project_id) AS ProjectName,
     x.origin_code                                 AS OriginCode,
     c.contract_value                              AS OriginalContractAmount,

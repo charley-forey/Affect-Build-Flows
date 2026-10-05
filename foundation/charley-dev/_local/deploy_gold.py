@@ -27,7 +27,7 @@ import deploy as dp  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
 from make_sharepoint import tables as man_tables  # noqa: E402
-from seedrunner import split_statements  # noqa: E402
+from seedrunner import exclusion_statements, split_statements  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
@@ -185,6 +185,26 @@ def write_diag():
         for i, s in enumerate(statements(view_sql))
     )
     cells.append(cell(f'{body}\nprint("source views done")'))
+
+    # Test projects (seed_ProjectExclusion) leave every project-keyed sv_* view before any
+    # gold file runs - see seedrunner.exclusion_statements. Which views carry project_id is
+    # read at run time, so a new view is covered without editing a list.
+    template = exclusion_statements(["{v}"], "TEMPORARY VIEW")
+    cells.append(cell(f"""
+# --- exclude test projects from every project-keyed source view ---
+views = []
+for t in spark.catalog.listTables():
+    if t.isTemporary and t.name.startswith("sv_"):
+        try:
+            if "project_id" in spark.table(t.name).columns:
+                views.append(t.name)
+        except Exception:
+            pass  # a view that failed to build is already recorded in results
+for v in sorted(views):
+    for i, s in enumerate({template!r}):
+        run_sql(f"exclude:{{v}}:{{i}}", s.replace("{{v}}", v))
+print(f"test-project exclusion applied to {{len(views)}} view(s)")
+"""))
 
     for path in gold_files(source):
         stmts = statements(path.read_text(encoding="utf-8"))

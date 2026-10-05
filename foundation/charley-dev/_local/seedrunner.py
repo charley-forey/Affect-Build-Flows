@@ -113,9 +113,9 @@ SOURCE_FIXTURES = (
     # suite exercise a path that cannot exist live and hid a dead Sage join for weeks.
     # The Sage id must reach dim_Project via sv_project_crosswalk. Do not repopulate this.
     """CREATE OR REPLACE VIEW sv_projects AS SELECT * FROM (VALUES
-        ('P1', 'Tower A', NULL, 'PROCORE'),
-        ('P2', 'Depot B', NULL, 'PROCORE')
-    ) AS t(project_id, project_name, sage_project_id, origin_code)""",
+        ('P1', 'Tower A', '24-001', NULL, 'PROCORE'),
+        ('P2', 'Depot B', '25-002', NULL, 'PROCORE')
+    ) AS t(project_id, project_name, project_number, sage_project_id, origin_code)""",
 
     # 8,800,000 is FINANCIALS!C3 verbatim. Combined with the approved change order below,
     # this reproduces the workbook's own Current Contract (9,116,960.48) and Contract
@@ -770,6 +770,27 @@ SOURCE_FIXTURES += tuple(s for s in split_statements(
     if s.startswith("CREATE OR REPLACE TEMPORARY VIEW sv_observed_projects AS"))
 
 
+def exclusion_statements(views: list[str], view_kind: str = "VIEW") -> list[str]:
+    """Re-point every project-keyed sv_* view through seed_ProjectExclusion.
+
+    Excluded projects (Procore test projects, seed/project_exclusion.csv) are removed at the
+    SOURCE VIEWS, once, rather than in each of ~40 gold files: every dimension, fact and DQ
+    table reads sv_*, so nothing downstream can forget the filter. The original view is
+    renamed to <view>__all and stays readable for investigation. A NULL project_id is
+    kept - unmatched Sage rows carry none and must still be counted.
+
+    Shared with deploy_gold.py so the offline build tests the statements Fabric runs.
+    Fabric needs TEMPORARY views (gold must not persist views into the lakehouse); the
+    DuckDB fixtures are plain views, and a temp view would shadow the tests' replacements.
+    """
+    return [s for v in views for s in (
+        f"ALTER VIEW {v} RENAME TO {v}__all",
+        f"CREATE OR REPLACE {view_kind} {v} AS SELECT * FROM {v}__all "
+        f"WHERE project_id IS NULL OR CAST(project_id AS STRING) NOT IN "
+        f"(SELECT ProcoreProjectId FROM seed_ProjectExclusion)",
+    )]
+
+
 def build(verbose: bool = False) -> Any:
     """Create an in-memory database with every seed table built."""
     import duckdb
@@ -781,6 +802,13 @@ def build(verbose: bool = False) -> Any:
     # Seeds first, then dimensions and facts - the same order the pipeline runs, and the
     # order the facts' foreign keys require.
     for path in [*seed_files(), *gold_files()]:
+        if path == gold_files()[0]:
+            # Seeds are built; exclude test projects before any gold file reads sv_*.
+            views = [r[0] for r in con.execute(
+                "SELECT DISTINCT table_name FROM information_schema.columns "
+                "WHERE column_name = 'project_id' AND table_name LIKE 'sv_%' ORDER BY 1").fetchall()]
+            for statement in exclusion_statements(views):
+                con.execute(statement)
         for statement in split_statements(path.read_text(encoding="utf-8")):
             try:
                 con.execute(statement)
