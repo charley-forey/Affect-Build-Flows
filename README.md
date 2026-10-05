@@ -41,9 +41,11 @@ not supply.
   - **Unresolved Records report page:** live now. It lists every record to fix, by source
     system, plus suggested Procore↔Sage matches. Every page already shows data freshness in
     its footer.
+- **`CD_Manual_Ingest` working (2026-10-05).** First successful refresh at 05:23 UTC. It is
+  in the nightly pipeline beside Ingest Sage, and a failure there does not hold up silver.
+  The deployed dataflow had been replaced in the UI by a raw version and is now the
+  generated one. The lists are still empty.
 - **Still open:**
-  - **`CD_Manual_Ingest` refreshes fail** with a generic service error. Its pipeline stage
-    waits on branch `ingest-manual-stage`.
   - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
     about 1 of about 942 nightly requests, because Procore is called once per project or
     contract.
