@@ -896,14 +896,16 @@ def test_pipeline():
         if name in visited:
             return
         for dep in by_name[name]["dependsOn"]:
-            want = ["Completed"] if (name, dep["activity"]) == ("Bronze To Silver", "Ingest Sage") else ["Succeeded"]
+            want = ["Completed"] if (name, dep["activity"]) in {
+                ("Bronze To Silver", "Ingest Sage"), ("Bronze To Silver", "Ingest Manual")} else ["Succeeded"]
             assert dep["dependencyConditions"] == want
             visit(dep["activity"], active | {name})
         visited.add(name)
     for name in by_name:
         visit(name, set())
     silver_deps = {d["activity"] for d in by_name["Bronze To Silver"]["dependsOn"]}
-    assert {"Extract Procore", "Extract Outbuild", "Ingest Sage", "Land To Bronze", "Land Manual Input"} <= silver_deps
+    assert {"Extract Procore", "Extract Outbuild", "Ingest Sage", "Ingest Manual", "Land To Bronze",
+            "Land Manual Input"} <= silver_deps
     assert by_name["Data Quality Gate"]["dependsOn"] == [
         {"activity": "Build Gold", "dependencyConditions": ["Succeeded"]}]
     # The only frame after autosync is off: strictly behind a passed gate, and not retried.
