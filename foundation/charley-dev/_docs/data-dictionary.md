@@ -1228,18 +1228,18 @@ flowchart LR
 - **Primary key:** No DQ unique rule.
 - **Produced by:** `02-transformation/sql/gold/44_dq_crosswalkcandidate.sql`
 - **Upstream:** gold: `seed_ProjectCrosswalk`; source views: `sv_project_crosswalk`, `sv_projects`, `sv_sage_jobs`; silver: `cd_silver_projects`, `cd_silver_sage_jobs`; bronze: `cd_bronze_procore_projects`, `cd_bronze_sage_actrec`
-- **Semantic models:** none
+- **Semantic models:** Affect Project Report
 - **Relationships:** none
 
 | Column | Type | Type source |
 |---|---|---|
-| ProcoreProjectId | - | type unverified (SQL projection) |
-| ProjectName | - | type unverified (SQL projection) |
-| SageJobNumber | - | type unverified (SQL projection) |
-| SageJobName | - | type unverified (SQL projection) |
-| MatchRule | - | type unverified (SQL projection) |
-| IsAmbiguous | - | type unverified (SQL projection) |
-| Status | - | type unverified (SQL projection) |
+| ProcoreProjectId | string | TMDL |
+| ProjectName | string | TMDL |
+| SageJobNumber | string | TMDL |
+| SageJobName | string | TMDL |
+| MatchRule | string | TMDL |
+| IsAmbiguous | boolean | TMDL |
+| Status | string | TMDL |
 
 ### dq_DataGap
 

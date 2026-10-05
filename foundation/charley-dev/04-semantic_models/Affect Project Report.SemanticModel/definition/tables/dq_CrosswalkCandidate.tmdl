@@ -1,0 +1,43 @@
+table dq_CrosswalkCandidate
+
+	column ProcoreProjectId
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProcoreProjectId
+
+	column ProjectName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectName
+
+	column SageJobNumber
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageJobNumber
+
+	column SageJobName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageJobName
+
+	column MatchRule
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MatchRule
+
+	column IsAmbiguous
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsAmbiguous
+
+	column Status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Status
+
+	partition dq_CrosswalkCandidate = entity
+		mode: directLake
+		source
+			entityName: dq_crosswalkcandidate
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

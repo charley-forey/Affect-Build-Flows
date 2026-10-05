@@ -1,0 +1,309 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "31590390fcfae0a24bce",
+  "position": {
+    "x": 20,
+    "y": 484,
+    "z": 0,
+    "width": 1240,
+    "height": 174,
+    "tabOrder": 17
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dq_CrosswalkCandidate"
+                    }
+                  },
+                  "Property": "ProjectName"
+                }
+              },
+              "queryRef": "dq_CrosswalkCandidate.ProjectName",
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project Name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dq_CrosswalkCandidate"
+                    }
+                  },
+                  "Property": "ProcoreProjectId"
+                }
+              },
+              "queryRef": "dq_CrosswalkCandidate.ProcoreProjectId",
+              "nativeQueryRef": "ProcoreProjectId",
+              "displayName": "Procore Project Id"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dq_CrosswalkCandidate"
+                    }
+                  },
+                  "Property": "SageJobNumber"
+                }
+              },
+              "queryRef": "dq_CrosswalkCandidate.SageJobNumber",
+              "nativeQueryRef": "SageJobNumber",
+              "displayName": "Sage Job Number"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dq_CrosswalkCandidate"
+                    }
+                  },
+                  "Property": "SageJobName"
+                }
+              },
+              "queryRef": "dq_CrosswalkCandidate.SageJobName",
+              "nativeQueryRef": "SageJobName",
+              "displayName": "Sage Job Name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dq_CrosswalkCandidate"
+                    }
+                  },
+                  "Property": "MatchRule"
+                }
+              },
+              "queryRef": "dq_CrosswalkCandidate.MatchRule",
+              "nativeQueryRef": "MatchRule",
+              "displayName": "Match Rule"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dq_CrosswalkCandidate"
+                    }
+                  },
+                  "Property": "Status"
+                }
+              },
+              "queryRef": "dq_CrosswalkCandidate.Status",
+              "nativeQueryRef": "Status",
+              "displayName": "Status"
+            }
+          ]
+        }
+      }
+    },
+    "drillFilterOtherVisuals": true,
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Table. Procore projects and Sage jobs with the same name and no mapping yet. Each is a suggestion; it is linked only after someone confirms it.'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Suggested Procore project - Sage job matches (confirm before adding)'"
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#252423'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "12D"
+                }
+              }
+            },
+            "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "columnHeaders": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "autoSizeColumnWidth": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "values": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "10D"
+                }
+              }
+            },
+            "wordWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "columnWidth": [
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "299D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_CrosswalkCandidate.ProjectName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "154D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_CrosswalkCandidate.ProcoreProjectId"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "154D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_CrosswalkCandidate.SageJobNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "299D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_CrosswalkCandidate.SageJobName"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "154D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_CrosswalkCandidate.MatchRule"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "154D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dq_CrosswalkCandidate.Status"
+          }
+        }
+      ]
+    }
+  }
+}

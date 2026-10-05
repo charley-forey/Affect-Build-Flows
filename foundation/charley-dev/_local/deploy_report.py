@@ -805,6 +805,62 @@ def page_data_quality() -> tuple[str, list[dict]]:
     ]
 
 
+def page_unresolved() -> tuple[str, list[dict]]:
+    """Every unresolved record, one row each, so Affect can clear them at source.
+
+    The Data Quality page counts gaps by category; this lists them. dq_DataGap already says
+    where each fix has to happen (SourceSystem) and how to find the row (EntityKey, Detail),
+    so the page is a worklist: filter to your system, fix the record there, and it drops off
+    after the next nightly build. Power BI cannot write back, so nothing is fixed here.
+    """
+    p = "unresolved"
+    filters = [
+        visual(p, "fix_in", "slicer", 20, 106, 300, 60,
+               {"Values": [column("dq_DataGap", "SourceSystem")]}, title="Fix In",
+               title_size=SLICER_TITLE),
+        visual(p, "category", "slicer", 336, 106, 400, 60,
+               {"Values": [column("dq_DataGap", "GapCategory")]}, title="Category",
+               title_size=SLICER_TITLE),
+    ]
+    for s in filters:  # same dropdown treatment as the page-chrome slicers
+        s["visual"]["objects"] = {
+            "data": [{"properties": {"mode": {"expr": {"Literal": {"Value": "'Dropdown'"}}}}}],
+            "header": [{"properties": {"show": _OFF}}],
+        }
+    return p, [*filters,
+        textbox(p, "title", "Unresolved Records", 20, 16, 600, 44),
+        textbox(p, "note",
+                "One row per record that is missing, unmatched or unassigned. Fix it in the "
+                "system named under Fix In; it leaves this list after the next nightly build. "
+                "Project matches are suggestions only - a match is added after review.",
+                20, 56, 1240, 44, size=10, color=MUTED),
+        card(p, "ur_count", "Data Gaps", 752, 106, 240, 100, title="Unresolved records"),
+        card(p, "ur_amount", "Data Gap Amount", 1008, 106, 252, 100, title="Money they carry"),
+        visual(p, "rows", "tableEx", 20, 216, 1240, 256,
+               {"Values": [column("dq_DataGap", "GapCategory"),
+                           column("dq_DataGap", "SourceSystem"),
+                           column("dim_Project", "ProjectName"),
+                           column("dq_DataGap", "EntityKey"),
+                           column("dq_DataGap", "Reason"),
+                           column("dq_DataGap", "Detail"),
+                           column("dq_DataGap", "Amount")]},
+               title="Records to fix",
+               alt="Table. One row per unresolved record: its category, the system where it "
+                   "must be fixed, the project, the record identifier, the reason, detail to "
+                   "find it at source, and the amount it carries."),
+        visual(p, "candidates", "tableEx", 20, 484, 1240, 174,
+               {"Values": [column("dq_CrosswalkCandidate", "ProjectName"),
+                           column("dq_CrosswalkCandidate", "ProcoreProjectId"),
+                           column("dq_CrosswalkCandidate", "SageJobNumber"),
+                           column("dq_CrosswalkCandidate", "SageJobName"),
+                           column("dq_CrosswalkCandidate", "MatchRule"),
+                           column("dq_CrosswalkCandidate", "Status")]},
+               title="Suggested Procore project - Sage job matches (confirm before adding)",
+               alt="Table. Procore projects and Sage jobs with the same name and no mapping "
+                   "yet. Each is a suggestion; it is linked only after someone confirms it."),
+    ]
+
+
 def page_scorecard() -> tuple[str, list[dict]]:
     """The nine-category weighted health score.
 
@@ -1311,6 +1367,7 @@ PAGES = [
     ("Source Coverage", page_source_coverage, False),
     ("Project Detail", page_project_detail, True),    # drill-through target
     ("Data Quality", page_data_quality, False),
+    ("Unresolved Records", page_unresolved, False),
 ]
 
 

@@ -11,7 +11,8 @@
     "insurance",
     "scorecard",
     "sourcecoverage",
-    "dataquality"
+    "dataquality",
+    "unresolved"
   ],
   "activePageName": "portfolio"
 }

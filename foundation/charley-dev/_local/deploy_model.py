@@ -68,6 +68,9 @@ MODEL_TABLES = [
     "dim_ProjectCrosswalk", "dim_VendorCrosswalk", "dim_CostCodeCrosswalk",
     # Every known data gap in one register - silver rejects included - for the DQ page.
     "dq_DataGap",
+    # Proposed Procore project <-> Sage job pairs, listed on Unresolved Records for review.
+    # Standalone: no relationship, a suggestion must not filter or be filtered as if mapped.
+    "dq_CrosswalkCandidate",
     # The pipeline heartbeat. Not project data - it is how the report answers
     # "are these numbers from last night, or from three weeks ago?".
     "meta_PipelineRun",
