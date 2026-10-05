@@ -117,7 +117,8 @@ STAGES = [
     # Extraction. Reads Key Vault, calls Procore, merges straight into bronze.
     ("Extract Procore", "cd_01_extract_procore", ["Extract Outbuild"]),
     ("Bronze To Silver", "cd_10_bronze_to_silver",
-     ["Extract Procore", "Extract Outbuild", "Ingest Sage", "Land To Bronze", "Land Manual Input"]),
+     ["Extract Procore", "Extract Outbuild", "Ingest Sage", "Ingest Manual", "Land To Bronze",
+      "Land Manual Input"]),
     # Seeds after silver, not in parallel with landing (2026-09-14): started at 06:00 beside
     # Land To Bronze it waited for a Spark session and hit its 30-min timeout twice. Gold is
     # the only consumer, so running it immediately before gold costs nothing.
@@ -166,6 +167,9 @@ SESSION_TAG = "cd_master"
 # minutes to the critical path for no benefit. Bronze To Silver waits for both.
 DATAFLOW_STAGES = [
     ("Ingest Sage", "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8", []),
+    # The SharePoint lists (2026-10-05). Safe beside Land Manual Input: for a SharePoint-
+    # sourced list cd_06 only declares the bronze table if it is missing, never overwrites it.
+    ("Ingest Manual", "54addfb1-df2f-4ab0-9f5f-d0f36c64376e", []),
 ]
 
 
@@ -198,7 +202,8 @@ def dataflow_activity(name: str, dataflow_id: str, upstream: list[str]) -> dict:
 # so the outage stays visible.
 # ponytail: stale Sage is visible only as a failed run; add a Sage freshness DQ rule if that
 # proves too quiet.
-COMPLETED_ONLY = {("Bronze To Silver", "Ingest Sage")}
+# Same for the SharePoint lists: a sign-in lapse must not freeze Procore and Sage reporting.
+COMPLETED_ONLY = {("Bronze To Silver", "Ingest Sage"), ("Bronze To Silver", "Ingest Manual")}
 
 
 def activity(name: str, notebook_id: str, upstream: list[str], timeout: str, retry: int = 1) -> dict:
