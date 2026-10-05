@@ -568,6 +568,9 @@ shared DefaultDestination = Lakehouse.Contents([EnableFolding = false]){{[worksp
     return "".join(parts)
 
 
+# The same types as record-type fields, for the declared empty table.
+M_FIELD = {"STRING": "text", "INT": "Int64.Type", "DOUBLE": "number", "BOOLEAN": "logical",
+           "DATE": "date", "TIMESTAMP": "datetime"}
 M_TYPES = {"STRING": "type text", "INT": "Int64.Type", "DOUBLE": "type number",
            "BOOLEAN": "type logical", "DATE": "type date", "TIMESTAMP": "type datetime"}
 
@@ -597,8 +600,16 @@ def mashup_query(query: str, site: str, title: str, cols: list[tuple[str, str]],
         f'  Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:{title}", type text),',
         '  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)',
     ]
+    # AN EMPTY LIST HAS NO COLUMNS. ApiVersion 15 infers a list's columns from the rows it
+    # returns, so a list nobody has typed into yet comes back without ProjectKey and the
+    # expand fails ("The column 'ProjectKey' of the table wasn't found", 2026-10-05). An
+    # empty list lands as the declared empty table instead; `if` is lazy, so the strict
+    # path - which still fails on a renamed column - runs whenever there are rows.
+    fields = ", ".join(f'#"{c}" = {M_FIELD[t]}' for c, t in cols + AUDIT_COLUMNS)
+    steps[-1] += ","
+    steps.append(f'  Result = if Table.IsEmpty(Items) then #table(type table [{fields}], {{}}) else Stamped')
     return ("\n[BindToDefaultDestination = true]\n"
-            f"shared {query} = let\n" + "\n".join(steps) + "\nin\n  Stamped;\n")
+            f"shared {query} = let\n" + "\n".join(steps) + "\nin\n  Result;\n")
 
 
 def build_query_metadata() -> str:

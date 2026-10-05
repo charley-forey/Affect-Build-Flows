@@ -51,9 +51,10 @@ shared cd_bronze_man_projects = let
   Selected = Table.SelectColumns(Items, {"Title", "ProjectName", "IsActive", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"Title", type text}, {"ProjectName", type text}, {"IsActive", type logical}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Projects", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"Title" = text, #"ProjectName" = text, #"IsActive" = logical, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_wins = let
@@ -63,9 +64,10 @@ shared cd_bronze_man_wins = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "WinNumber", "Description", "WinType", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"WinNumber", Int64.Type}, {"Description", type text}, {"WinType", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Wins", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"WinNumber" = Int64.Type, #"Description" = text, #"WinType" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_risks = let
@@ -75,9 +77,10 @@ shared cd_bronze_man_risks = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "RiskNumber", "Description", "ImpactCode", "Mitigation", "OwnerRole", "StatusCode", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"RiskNumber", Int64.Type}, {"Description", type text}, {"ImpactCode", type text}, {"Mitigation", type text}, {"OwnerRole", type text}, {"StatusCode", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Risks", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"RiskNumber" = Int64.Type, #"Description" = text, #"ImpactCode" = text, #"Mitigation" = text, #"OwnerRole" = text, #"StatusCode" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_priority_items = let
@@ -87,9 +90,10 @@ shared cd_bronze_man_priority_items = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "ItemNumber", "ScheduleItem", "StatusCode", "CriticalDelays", "RecoveryPlan", "ForecastImpact", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"ItemNumber", Int64.Type}, {"ScheduleItem", type text}, {"StatusCode", type text}, {"CriticalDelays", type text}, {"RecoveryPlan", type text}, {"ForecastImpact", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Priority Items", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"ItemNumber" = Int64.Type, #"ScheduleItem" = text, #"StatusCode" = text, #"CriticalDelays" = text, #"RecoveryPlan" = text, #"ForecastImpact" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_flags = let
@@ -99,9 +103,10 @@ shared cd_bronze_man_flags = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "ProfitabilityCode", "ContingencyRemaining", "BaselineApproved", "BaselineRevision", "MonthEndClosedOut", "ForecastingInLine", "ResourcesUpdated", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"ProfitabilityCode", type text}, {"ContingencyRemaining", type number}, {"BaselineApproved", type logical}, {"BaselineRevision", type text}, {"MonthEndClosedOut", type logical}, {"ForecastingInLine", type logical}, {"ResourcesUpdated", type logical}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Flags", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"ProfitabilityCode" = text, #"ContingencyRemaining" = number, #"BaselineApproved" = logical, #"BaselineRevision" = text, #"MonthEndClosedOut" = logical, #"ForecastingInLine" = logical, #"ResourcesUpdated" = logical, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_survey = let
@@ -111,9 +116,10 @@ shared cd_bronze_man_survey = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "QuestionNumber", "QuestionText", "Score", "SurveyedParty", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"QuestionNumber", Int64.Type}, {"QuestionText", type text}, {"Score", Int64.Type}, {"SurveyedParty", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Survey", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"QuestionNumber" = Int64.Type, #"QuestionText" = text, #"Score" = Int64.Type, #"SurveyedParty" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_safety_monthly = let
@@ -123,9 +129,10 @@ shared cd_bronze_man_safety_monthly = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "HoursWorked", "RecordableIncidents", "Orientations", "OtHours", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"HoursWorked", type number}, {"RecordableIncidents", Int64.Type}, {"Orientations", Int64.Type}, {"OtHours", type number}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Safety Monthly", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"HoursWorked" = number, #"RecordableIncidents" = Int64.Type, #"Orientations" = Int64.Type, #"OtHours" = number, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_quality_monthly = let
@@ -135,9 +142,10 @@ shared cd_bronze_man_quality_monthly = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "Observations", "PunchlistItems", "AvgDaysPastDue", "AvgDaysToClose", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"Observations", Int64.Type}, {"PunchlistItems", Int64.Type}, {"AvgDaysPastDue", type number}, {"AvgDaysToClose", type number}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Quality Monthly", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"Observations" = Int64.Type, #"PunchlistItems" = Int64.Type, #"AvgDaysPastDue" = number, #"AvgDaysToClose" = number, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_milestones = let
@@ -147,9 +155,10 @@ shared cd_bronze_man_milestones = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ActivityKey", "MilestoneName", "ContractStart", "ContractFinish", "BaselineStart", "BaselineFinish", "IsSubstantialCompletion", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"ActivityKey", type text}, {"MilestoneName", type text}, {"ContractStart", type date}, {"ContractFinish", type date}, {"BaselineStart", type date}, {"BaselineFinish", type date}, {"IsSubstantialCompletion", type logical}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Milestones", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"ActivityKey" = text, #"MilestoneName" = text, #"ContractStart" = date, #"ContractFinish" = date, #"BaselineStart" = date, #"BaselineFinish" = date, #"IsSubstantialCompletion" = logical, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_daily_log_compliance = let
@@ -159,9 +168,10 @@ shared cd_bronze_man_daily_log_compliance = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "MonthStart", "LogsExpected", "LogsMissedSameDay", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"MonthStart", type date}, {"LogsExpected", Int64.Type}, {"LogsMissedSameDay", Int64.Type}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD Daily Log Compliance", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"MonthStart" = date, #"LogsExpected" = Int64.Type, #"LogsMissedSameDay" = Int64.Type, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_dfow = let
@@ -171,9 +181,10 @@ shared cd_bronze_man_qc_dfow = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "DfowRef", "DfowDescription", "TradeKey", "RiskTier", "ControlMeasure", "OwnerRole", "StatusCode", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"DfowRef", type text}, {"DfowDescription", type text}, {"TradeKey", type text}, {"RiskTier", Int64.Type}, {"ControlMeasure", type text}, {"OwnerRole", type text}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC DFOW", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"DfowRef" = text, #"DfowDescription" = text, #"TradeKey" = text, #"RiskTier" = Int64.Type, #"ControlMeasure" = text, #"OwnerRole" = text, #"StatusCode" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_itp = let
@@ -183,9 +194,10 @@ shared cd_bronze_man_qc_itp = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ItpRef", "TradeKey", "Activity", "InspectionType", "AcceptanceCriteria", "HoldPointType", "Responsible", "PlannedDate", "ActualDate", "ResultCode", "StatusCode", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"ItpRef", type text}, {"TradeKey", type text}, {"Activity", type text}, {"InspectionType", type text}, {"AcceptanceCriteria", type text}, {"HoldPointType", type text}, {"Responsible", type text}, {"PlannedDate", type date}, {"ActualDate", type date}, {"ResultCode", type text}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC ITP", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"ItpRef" = text, #"TradeKey" = text, #"Activity" = text, #"InspectionType" = text, #"AcceptanceCriteria" = text, #"HoldPointType" = text, #"Responsible" = text, #"PlannedDate" = date, #"ActualDate" = date, #"ResultCode" = text, #"StatusCode" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_gate = let
@@ -195,9 +207,10 @@ shared cd_bronze_man_qc_gate = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "GateKey", "GateType", "StatusCode", "Responsible", "TargetDate", "SubmittedDate", "CompletedDate", "EvidenceLink", "BlockerNote", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"GateKey", type text}, {"GateType", type text}, {"StatusCode", type text}, {"Responsible", type text}, {"TargetDate", type date}, {"SubmittedDate", type date}, {"CompletedDate", type date}, {"EvidenceLink", type text}, {"BlockerNote", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Gate", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"GateKey" = text, #"GateType" = text, #"StatusCode" = text, #"Responsible" = text, #"TargetDate" = date, #"SubmittedDate" = date, #"CompletedDate" = date, #"EvidenceLink" = text, #"BlockerNote" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_special_inspection = let
@@ -207,9 +220,10 @@ shared cd_bronze_man_qc_special_inspection = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "InspectionRef", "Category", "Agency", "InspectorName", "RequiredCode", "PerformedCode", "ScheduledDate", "PerformedDate", "ReportReceivedDate", "StatusCode", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"InspectionRef", type text}, {"Category", type text}, {"Agency", type text}, {"InspectorName", type text}, {"RequiredCode", type text}, {"PerformedCode", type text}, {"ScheduledDate", type date}, {"PerformedDate", type date}, {"ReportReceivedDate", type date}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Special Inspection", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"InspectionRef" = text, #"Category" = text, #"Agency" = text, #"InspectorName" = text, #"RequiredCode" = text, #"PerformedCode" = text, #"ScheduledDate" = date, #"PerformedDate" = date, #"ReportReceivedDate" = date, #"StatusCode" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_commissioning = let
@@ -219,9 +233,10 @@ shared cd_bronze_man_qc_commissioning = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "SystemRef", "SystemName", "TradeKey", "Responsible", "PlannedDate", "ActualDate", "StatusCode", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"SystemRef", type text}, {"SystemName", type text}, {"TradeKey", type text}, {"Responsible", type text}, {"PlannedDate", type date}, {"ActualDate", type date}, {"StatusCode", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Commissioning", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"SystemRef" = text, #"SystemName" = text, #"TradeKey" = text, #"Responsible" = text, #"PlannedDate" = date, #"ActualDate" = date, #"StatusCode" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_inspector_sign_in = let
@@ -231,9 +246,10 @@ shared cd_bronze_man_qc_inspector_sign_in = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "SignInRef", "VisitDate", "InspectorName", "AgencyCode", "Purpose", "AreaInspected", "OutcomeCode", "FollowUpRequired", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"SignInRef", type text}, {"VisitDate", type date}, {"InspectorName", type text}, {"AgencyCode", type text}, {"Purpose", type text}, {"AreaInspected", type text}, {"OutcomeCode", type text}, {"FollowUpRequired", type logical}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Inspector Sign In", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"SignInRef" = text, #"VisitDate" = date, #"InspectorName" = text, #"AgencyCode" = text, #"Purpose" = text, #"AreaInspected" = text, #"OutcomeCode" = text, #"FollowUpRequired" = logical, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_checklist_result = let
@@ -243,9 +259,10 @@ shared cd_bronze_man_qc_checklist_result = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "TradeKey", "ItemKey", "StageCode", "ResultCode", "InspectedDate", "InspectedBy", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"TradeKey", type text}, {"ItemKey", type text}, {"StageCode", type text}, {"ResultCode", type text}, {"InspectedDate", type date}, {"InspectedBy", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC Checklist Result", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"TradeKey" = text, #"ItemKey" = text, #"StageCode" = text, #"ResultCode" = text, #"InspectedDate" = date, #"InspectedBy" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 [BindToDefaultDestination = true]
 shared cd_bronze_man_qc_doh_result = let
@@ -255,9 +272,10 @@ shared cd_bronze_man_qc_doh_result = let
   Selected = Table.SelectColumns(Flat0, {"ProjectKey", "ItemKey", "ResponsibilityCode", "StatusCode", "VerifiedDate", "VerifiedBy", "EvidenceLink", "Notes", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"ProjectKey", type text}, {"ItemKey", type text}, {"ResponsibilityCode", type text}, {"StatusCode", type text}, {"VerifiedDate", type date}, {"VerifiedBy", type text}, {"EvidenceLink", type text}, {"Notes", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:CD QC DOH Result", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"ProjectKey" = text, #"ItemKey" = text, #"ResponsibilityCode" = text, #"StatusCode" = text, #"VerifiedDate" = date, #"VerifiedBy" = text, #"EvidenceLink" = text, #"Notes" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;
 
 // ---------------------------------------------------------------- the BUILD site
 // The job flows' register: one row per job from the moment somebody asks for it. Feeds
@@ -273,6 +291,7 @@ shared cd_bronze_man_job_register = let
   Selected = Table.SelectColumns(Flat1, {"Id", "Title", "JobYear", "JobSeq", "JobNumber", "Stage", "EstimatingFolderUrl", "ProjectFolderUrl", "RequestedBy", "RequestedAt", "CompletedAt", "CopyJobStatus", "ErrorDetail", "Modified"}),
   Typed = Table.TransformColumnTypes(Selected, {{"Id", Int64.Type}, {"Title", type text}, {"JobYear", Int64.Type}, {"JobSeq", Int64.Type}, {"JobNumber", type text}, {"Stage", type text}, {"EstimatingFolderUrl", type text}, {"ProjectFolderUrl", type text}, {"RequestedBy", type text}, {"RequestedAt", type datetime}, {"CompletedAt", type datetime}, {"CopyJobStatus", type text}, {"ErrorDetail", type text}, {"Modified", type datetime}}),
   Sourced = Table.AddColumn(Typed, "_source", each "sharepoint:Job Register", type text),
-  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime)
+  Stamped = Table.AddColumn(Sourced, "_ingested_at", each DateTime.FixedLocalNow(), type datetime),
+  Result = if Table.IsEmpty(Items) then #table(type table [#"Id" = Int64.Type, #"Title" = text, #"JobYear" = Int64.Type, #"JobSeq" = Int64.Type, #"JobNumber" = text, #"Stage" = text, #"EstimatingFolderUrl" = text, #"ProjectFolderUrl" = text, #"RequestedBy" = text, #"RequestedAt" = datetime, #"CompletedAt" = datetime, #"CopyJobStatus" = text, #"ErrorDetail" = text, #"Modified" = datetime, #"_source" = text, #"_ingested_at" = datetime], {}) else Stamped
 in
-  Stamped;
+  Result;

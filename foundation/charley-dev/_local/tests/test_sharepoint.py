@@ -154,7 +154,14 @@ def test_mashup_lands_only_flat_typed_columns() -> None:
         assert '"_ingested_at", each DateTime.FixedLocalNow(), type datetime' in block
         # Nothing after the typing step may introduce another (untyped) column.
         steps = re.findall(r"^  (\w+) = ", block, re.M)
-        assert steps[-4:] == ["Selected", "Typed", "Sourced", "Stamped"], (query, steps)
+        assert steps[-5:] == ["Selected", "Typed", "Sourced", "Stamped", "Result"], (query, steps)
+        # An empty list (no columns at all from ApiVersion 15) lands as the same declared,
+        # typed, empty table; any rows take the strict path above.
+        empty = re.search(r"Result = if Table\.IsEmpty\(Items\) then #table\(type table \[(.*?)\], \{\}\) else Stamped", block)
+        assert empty, f"{query}: no empty-list fallback"
+        fields = re.findall(r'#"([^"]+)" = ([\w.]+)', empty[1])
+        assert [c for c, _ in fields] == declared + ["_source", "_ingested_at"], (query, fields)
+        assert {t for _, t in fields} <= set(ms.M_FIELD.values()), (query, fields)
     check(f"all {len(specs)} dataflow queries land only declared, scalar-typed columns")
 
     # Same flat contract on both writers: the CSV loader's columns + AUDIT are exactly what the
