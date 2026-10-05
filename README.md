@@ -20,11 +20,28 @@ not supply.
   291 codes uploaded to Sage, matching the Sage 6-5 export except three division headers.
   It adds 13160.010 and six other codes that were dropped from the first Sage upload. Old Sage
   codes map through workbook v1. Pre-2026 Procore codes map through the client's legacy map.
-  The notebooks were deployed 2026-10-05 and the first production build was triggered
-  2026-10-05 01:00 UTC. Until that build, production gold had no cost-code mapping. The
-  model must be redeployed after the build (`deploy_model.py --apply`, then
-  `deploy_publish.py --apply --run`) to expose the mapping columns. See the
+  First built in production 2026-10-05 (run `20261005T025439Z`). Every real project's budget
+  maps 100%. The only unmapped dollars are on the two Procore test projects (number `1234`).
+  City Harvest (25-034) already uses new codes natively on 37 budget lines. See the
   [solution guide](foundation/charley-dev/_docs/solution-guide.md).
+- **Build of 2026-10-05, validated live.** All pipeline stages succeeded. Publish Models
+  first failed because its deployed copy predated the new DQ rules. It was redeployed with
+  the model and then published.
+  - `validate_model.py`: 18/18 checks, all 131 measures evaluate.
+  - DQ: 217 rules, no blocking failure, 15 warnings.
+  - `reconcile_live.py`: no FAIL; checks 2, 4, 7 and 10 warn. AR billed reconciles at
+    $27,402,642.48 across bronze, silver and model.
+- **Open findings from that build:**
+  - **Test projects counted in totals.** The two `1234` test projects add $0.50M budget and
+    $2.20M commitments to portfolio totals; nothing excludes them.
+  - **ProjectNumber is NULL on every project by design.** Procore's `project_number`
+    (23-006 … 26-056) is clean and could fill it.
+  - **Sage crosswalk gaps by name:**
+    - Job 28 *City Harvest* matches 25-034 *City Harvest*.
+    - Job 27 *360 Lexington Avenue 15th & 17th Floor* likely matches 26-056 *360 Lexington
+      15th Floor Fitout*.
+    - Job 29 *Profoods 10101 Foster Avenue* (new, 3 AR invoices) has no Procore project.
+  - Unmatched AR: 42 invoices, 12 jobs, $2,074,705.45. Insurance: 105/105 certificates expired.
 - **SharePoint.** Both sites and all 18 lists are ready; `CD Projects` updated (26-056 added).
   `CD_Manual_Ingest` is signed in to both sites (reporting site and `AFFECTBUILD1`).
   Not yet in the nightly pipeline. Now that Key Vault is restored, it can be added.
