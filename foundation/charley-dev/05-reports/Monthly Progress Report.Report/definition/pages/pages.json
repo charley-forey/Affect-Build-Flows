@@ -12,7 +12,8 @@
     "scorecard",
     "sourcecoverage",
     "dataquality",
-    "unresolved"
+    "unresolved",
+    "projectdetail"
   ],
   "activePageName": "portfolio"
 }

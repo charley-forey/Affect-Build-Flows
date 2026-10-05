@@ -1499,9 +1499,11 @@ def build(model_id: str) -> dict[str, str]:
     visible_order = [n for n in page_names if n not in DRILLTHROUGH]
     files["definition/pages/pages.json"] = json.dumps({
         "$schema": f"{SCHEMA}/pagesMetadata/1.0.0/schema.json",
-        # Drill-through targets are deliberately absent: a page in the order appears in the
-        # tab strip, and opening it cold shows every project - which reads as broken.
-        "pageOrder": visible_order,
+        # EVERY page is in the order, drill-through targets last. A page folder missing from
+        # pageOrder left the service viewer stuck on "Loading your report..." (2026-10-05).
+        # The drill-through page stays out of the tab strip through its own
+        # visibility = HiddenInViewMode, not by being left out of the order.
+        "pageOrder": visible_order + [n for n in page_names if n in DRILLTHROUGH],
         "activePageName": visible_order[0],
     }, indent=2)
 
