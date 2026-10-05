@@ -500,7 +500,46 @@ def test_observation_close_duration():
     assert "NOT fct_QualityItem[IsOpen]" in expression
 
 
+def test_load_contract() -> None:
+    """Two definition faults that pass every other check and leave the service viewer stuck
+    on "Loading your report..." for the WHOLE report (2026-10-05): a page folder missing from
+    pageOrder, and a query SourceRef by Entity instead of an alias declared in its From."""
+    files = build_report()
+    order = json.loads(files["definition/pages/pages.json"])["pageOrder"]
+    folders = {rel.split("/")[2] for rel in files if rel.startswith("definition/pages/") and rel.count("/") >= 3}
+    assert set(order) == folders, f"pages missing from pageOrder: {folders - set(order)}"
+
+    def walk(node, aliases):
+        if isinstance(node, dict):
+            if "Query" in node or ("From" in node and "Version" in node):
+                q = node.get("Query", node)
+                aliases = aliases | {f["Name"] for f in q.get("From", [])}
+            ref = node.get("SourceRef")
+            if isinstance(ref, dict) and "Source" in ref:
+                assert ref["Source"] in aliases, f"SourceRef to undeclared alias {ref['Source']}"
+            for k, v in node.items():
+                # A filter's own `field` sits outside any query and may use Entity.
+                if k == "filter" or k == "Subquery" or k not in ("field",):
+                    walk(v, aliases)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v, aliases)
+
+    for rel, content in files.items():
+        if rel.endswith(".json"):
+            doc = json.loads(content)
+            for flt in doc.get("filterConfig", {}).get("filters", []):
+                if "filter" in flt:
+                    query = flt["filter"]
+                    walk(query, set())
+                    # Inside a query, measures and columns reference aliases, never entities.
+                    inner = json.dumps(query.get("From", []))
+                    assert '"SourceRef": {"Entity"' not in inner, f"{rel}: SourceRef by Entity inside a query"
+    print("  load contract: every page in pageOrder, every query SourceRef a declared alias")
+
+
 if __name__ == "__main__":
+    test_load_contract()
     test_export_screening()
     test_observation_close_duration()
     if "--qc" in sys.argv:

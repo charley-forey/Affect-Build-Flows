@@ -380,10 +380,14 @@ def top_n(v: dict, table: str, col: str, by: str, n: int) -> dict:
             "From": [
                 {"Name": "subquery", "Type": 2, "Expression": {"Subquery": {"Query": {
                     "Version": 2,
-                    "From": [{"Name": "d", "Entity": table, "Type": 0}],
+                    # Every SourceRef inside a query names an alias declared in its From.
+                    # Referencing _Measures by Entity here left the service viewer stuck on
+                    # "Loading your report..." for the whole report (2026-10-05).
+                    "From": [{"Name": "d", "Entity": table, "Type": 0},
+                             {"Name": "m", "Entity": "_Measures", "Type": 0}],
                     "Select": [dict(ref, Name="field")],
                     "OrderBy": [{"Direction": 2, "Expression": {"Measure": {
-                        "Expression": {"SourceRef": {"Entity": "_Measures"}}, "Property": by}}}],
+                        "Expression": {"SourceRef": {"Source": "m"}}, "Property": by}}}],
                     "Top": n,
                 }}}},
                 {"Name": "d", "Entity": table, "Type": 0},
