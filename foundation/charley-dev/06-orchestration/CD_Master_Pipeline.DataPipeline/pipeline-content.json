@@ -113,12 +113,6 @@
             ]
           },
           {
-            "activity": "Ingest Manual",
-            "dependencyConditions": [
-              "Completed"
-            ]
-          },
-          {
             "activity": "Land To Bronze",
             "dependencyConditions": [
               "Succeeded"
@@ -259,23 +253,6 @@
         },
         "typeProperties": {
           "dataflowId": "9d1dc6db-405b-4cc6-bd3e-a8fdb8795ab8",
-          "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
-          "notifyOption": "NoNotification"
-        }
-      },
-      {
-        "name": "Ingest Manual",
-        "type": "RefreshDataflow",
-        "dependsOn": [],
-        "policy": {
-          "timeout": "0.01:00:00",
-          "retry": 1,
-          "retryIntervalInSeconds": 60,
-          "secureOutput": false,
-          "secureInput": false
-        },
-        "typeProperties": {
-          "dataflowId": "54addfb1-df2f-4ab0-9f5f-d0f36c64376e",
           "workspaceId": "1f7caed6-f88a-4e52-bc83-9a498a165301",
           "notifyOption": "NoNotification"
         }
