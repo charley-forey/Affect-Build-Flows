@@ -45,6 +45,10 @@ not supply.
   in the nightly pipeline beside Ingest Sage, and a failure there does not hold up silver.
   The deployed dataflow had been replaced in the UI by a raw version and is now the
   generated one. The lists are still empty.
+- **Monthly Progress Report loads again (2026-10-05).** It had been stuck on "Loading your
+  report..." because the Top 10 filter on Direct Costs & Vendors referenced `_Measures`
+  without an alias in its subquery. Fixed, verified in the browser, and guarded by
+  `test_load_contract`.
 - **Still open:**
   - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
     about 1 of about 942 nightly requests, because Procore is called once per project or
