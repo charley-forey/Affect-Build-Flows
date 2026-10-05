@@ -31,16 +31,22 @@ not supply.
   - DQ: 217 rules, no blocking failure, 15 warnings.
   - `reconcile_live.py`: no FAIL; checks 2, 4, 7 and 10 warn. AR billed reconciles at
     $27,402,642.48 across bronze, silver and model.
-- **Open findings from that build:**
-  - **Test projects counted in totals.** The two `1234` test projects add $0.50M budget and
-    $2.20M commitments to portfolio totals; nothing excludes them.
-  - **ProjectNumber is NULL on every project by design.** Procore's `project_number`
-    (23-006 … 26-056) is clean and could fill it.
-  - **Sage crosswalk gaps by name:**
-    - Job 28 *City Harvest* matches 25-034 *City Harvest*.
-    - Job 27 *360 Lexington Avenue 15th & 17th Floor* likely matches 26-056 *360 Lexington
-      15th Floor Fitout*.
-    - Job 29 *Profoods 10101 Foster Avenue* (new, 3 AR invoices) has no Procore project.
+- **Deployed 2026-10-05, applied by the next nightly build (2026-10-06 02:00 Eastern; the
+  2026-10-05 run was skipped to spare capacity):**
+  - **Test projects excluded.** The two `1234` test projects were adding $0.50M budget and
+    $2.20M commitments; `seed/project_exclusion.csv` now filters them from every source view.
+  - **ProjectNumber** is Procore's `project_number` (23-006 … 26-056).
+  - **Crosswalk:** 25-034 City Harvest → Sage job 28; 26-056 360 Lexington → job 27.
+    Job 29 *Profoods 10101 Foster Avenue* (3 AR invoices) still has no Procore project.
+  - **Unresolved Records report page:** live now. It lists every record to fix, by source
+    system, plus suggested Procore↔Sage matches. Every page already shows data freshness in
+    its footer.
+- **Still open:**
+  - **`CD_Manual_Ingest` refreshes fail** with a generic service error. Its pipeline stage
+    waits on branch `ingest-manual-stage`.
+  - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
+    about 1 of about 942 nightly requests, because Procore is called once per project or
+    contract.
   - Unmatched AR: 42 invoices, 12 jobs, $2,074,705.45. Insurance: 105/105 certificates expired.
 - **SharePoint.** Both sites and all 18 lists are ready; `CD Projects` updated (26-056 added).
   `CD_Manual_Ingest` is signed in to both sites (reporting site and `AFFECTBUILD1`).
