@@ -460,7 +460,7 @@ def monthly_expected():
 
     def new_code_budget_pct(c, s):
         mapped = {x["CostCodeKey"] for x in c.data["dim_CostCodeCrosswalk"]
-                  if x["MappingStatus"] in ("NATIVE_NEW", "MAPPED")}
+                  if x["MappingStatus"] in ("NATIVE_NEW", "MAPPED", "MAPPED_LEGACY")}
         rows = [r for r in c.rows("fct_BudgetLine", s._replace(month=None)) if r["CostCodeKey"] in mapped]
         return _div(_sum(rows, "BudgetAmount"), E["Budget"](c, s))
 

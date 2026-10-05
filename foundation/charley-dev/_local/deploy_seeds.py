@@ -93,7 +93,7 @@ built = []
         "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
         "qc_seed_DohItem": 101, "dim_QcStatus": 141,
         "seed_ProjectCrosswalk": 15,
-        "seed_CostCodeNew": 284, "seed_CostCodeMap": 318,
+        "seed_CostCodeNew": 291, "seed_CostCodeMap": 318, "seed_CostCodeLegacyMap": 156,
     }
     cells.append(
         cell(
@@ -203,6 +203,8 @@ def gold_tables(tok: str, lh: dict) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--no-run", action="store_true",
+                        help="with --apply: update the notebook only; the nightly pipeline runs it")
     parser.add_argument("--verify", action="store_true")
     args = parser.parse_args()
 
@@ -255,6 +257,9 @@ def main() -> int:
         item_id = item["id"]
         print(f"  created {NOTEBOOK_NAME} ({item_id})")
 
+    if args.no_run:
+        print("  not run (--no-run): the nightly pipeline runs it")
+        return 0
     print("  running ...", end=" ", flush=True)
     print(run_notebook(tok, item_id))
 

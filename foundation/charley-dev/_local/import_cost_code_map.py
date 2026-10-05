@@ -1,9 +1,13 @@
 """Regenerate the old -> new cost-code seeds from the client's mapping workbook.
 
     python import_cost_code_map.py "<path>/Cost Code Mapping_OldvsNew_v1.xlsx"
+    python import_cost_code_map.py --legacy "<path>/Legacy Procore Codes to New_v1_CE.xlsx"
+    python import_cost_code_map.py --master "<path>/COST CODE_WBS MASTER.xlsx"
     python make_qc_seeds.py            # then inline the CSVs as 09_seed_costcode.sql
 
-Writes 02-transformation/seed/cost_code_new.csv and cost_code_map.csv. The client will send
+The first writes 02-transformation/seed/cost_code_new.csv and cost_code_map.csv; --legacy
+writes cost_code_legacy_map.csv (either or both in one run); --master rewrites only
+cost_code_new.csv from the client's master list, which supersedes 'New Cost Codes'. The client will send
 v2/v3 of the workbook; re-running this and make_qc_seeds.py is the whole update, and the
 diff of the two CSVs is the review.
 
@@ -65,6 +69,45 @@ def read(xlsx: Path) -> tuple[list[dict], list[dict]]:
     return new, old
 
 
+def read_master(xlsx: Path) -> list[dict]:
+    """The new code list from 'Affect CC_WBS_UPLOAD' in the client's COST CODE_WBS MASTER.
+
+    Only rows marked Uploaded to SAGE = YES: the Division 00 design codes are on the sheet but
+    'No', and a code Sage does not have is not one Procore or Sage can post to. Data from row 3.
+    """
+    import openpyxl
+
+    ws = openpyxl.load_workbook(xlsx, data_only=True, read_only=True)["Affect CC_WBS_UPLOAD"]
+    header = next(ws.iter_rows(min_row=2, max_row=2, values_only=True))
+    assert header[0] == "Combined Code" and header[4] == "SAGE", f"master header moved: {header}"
+    new = []
+    for row in ws.iter_rows(min_row=3, values_only=True):
+        if not code(row[0]) or str(row[4] or "").strip().upper() != "YES":
+            continue
+        m = re.match(r"^(\d{1,2})\s*-\s*(.+)$", str(row[3] or "").strip())
+        assert m, f"new code {row[0]}: division {row[3]!r} is not 'N - NAME'"
+        new.append({"new_cost_code": code(row[0]), "description": str(row[1] or "").strip(),
+                    "division_code": m.group(1).zfill(2), "division_name": m.group(2).strip()})
+    return new
+
+
+def read_legacy(xlsx: Path) -> list[dict]:
+    """Pre-2026 Procore CSI codes -> new code, from the 'Legacy to New' sheet we sent the client.
+
+    The legacy code is kept as the exact Procore string ('09-20-00', '01-00 00'): it is matched
+    against Procore's code text, not normalised. Column G is the client's answer; column E was
+    only our suggestion and is ignored.
+    """
+    import openpyxl
+
+    ws = openpyxl.load_workbook(xlsx, data_only=True, read_only=True)["Legacy to New"]
+    header = next(ws.iter_rows(min_row=4, max_row=4, values_only=True))
+    assert header[0] == "Legacy Code" and header[6] == "New Code", f"legacy header moved: {header}"
+    return [{"legacy_cost_code": str(r[0]).strip(), "new_cost_code": code(r[6]),
+             "legacy_description": str(r[1] or "").strip()}
+            for r in ws.iter_rows(min_row=5, values_only=True) if r[0] is not None and str(r[0]).strip()]
+
+
 def write(path: Path, rows: list[dict]) -> None:
     with path.open("w", encoding="utf-8", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0]), lineterminator="\n")
@@ -74,8 +117,33 @@ def write(path: Path, rows: list[dict]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("xlsx", type=Path)
+    parser.add_argument("xlsx", type=Path, nargs="?", help="old -> new mapping workbook")
+    parser.add_argument("--legacy", type=Path, help="legacy Procore -> new mapping workbook")
+    parser.add_argument("--master", type=Path, help="COST CODE_WBS MASTER workbook (new codes)")
     args = parser.parse_args()
+    if not (args.xlsx or args.legacy or args.master):
+        parser.error("give the mapping workbook, --legacy, --master, or a combination")
+    if args.xlsx and args.master:
+        parser.error("the mapping workbook and --master both write cost_code_new.csv; pick one")
+
+    if args.master:
+        new = read_master(args.master)
+        write(SEED_DIR / "cost_code_new.csv", new)
+        print(f"cost_code_new.csv  {len(new)} new codes (uploaded to Sage)")
+
+    if args.legacy:
+        legacy = read_legacy(args.legacy)
+        write(SEED_DIR / "cost_code_legacy_map.csv", legacy)
+        with (SEED_DIR / "cost_code_new.csv").open(encoding="utf-8") as fh:
+            known = {r["new_cost_code"] for r in csv.DictReader(fh)}
+        dangling = sorted({r["legacy_cost_code"] + " -> " + r["new_cost_code"] for r in legacy
+                           if r["new_cost_code"] and r["new_cost_code"] not in known})
+        print(f"cost_code_legacy_map.csv  {len(legacy)} legacy codes")
+        if dangling:
+            print(f"  WARNING legacy targets absent from New Cost Codes: {dangling}")
+    if not args.xlsx:
+        print("now run make_qc_seeds.py to regenerate 09_seed_costcode.sql")
+        return 0
 
     new, old = read(args.xlsx)
     write(SEED_DIR / "cost_code_new.csv", new)

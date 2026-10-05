@@ -285,6 +285,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--no-run", action="store_true",
+                        help="with --apply: update the notebook only; the nightly pipeline runs it")
     args = parser.parse_args()
 
     tok = dp.token()
@@ -338,6 +340,9 @@ def main() -> int:
         item_id = ds.find_item(tok, NOTEBOOK_NAME, "Notebook")["id"]
         print(f"  created {NOTEBOOK_NAME} ({item_id})")
 
+    if args.no_run:
+        print("  not run (--no-run): the nightly pipeline runs it")
+        return 0
     print("  running ...", end=" ", flush=True)
     print(ds.run_notebook(tok, item_id))
     return 0

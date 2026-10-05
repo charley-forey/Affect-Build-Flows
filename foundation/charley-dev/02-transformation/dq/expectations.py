@@ -468,16 +468,36 @@ def build_suite() -> Suite:
             severity=SEVERITY_WARN,
             description="these dollars fall outside every new-division rollup until the client maps the code",
         ),
-        # REPORT ONLY. Every pre-2026 project is on Procore's legacy CSI codes, and the client
-        # has said completed projects stay unmapped - so this is expected to fail, and its
-        # count is the size of what sits outside the new scheme, not a to-do list.
+        # The client's pre-2026 Procore code -> new code answers (seed/cost_code_legacy_map.csv).
+        # A target not on the new list leaves the legacy code unmapped in gold; this rule
+        # names it. (v1_CE's 03-30-00 -> 13160.010 was one until the 2026-09-30 master.)
         Expectation(
-            name="budget dollars on legacy Procore cost codes (report only)",
+            name="legacy cost-code map targets exist in the new code list",
+            table="seed_CostCodeLegacyMap",
+            failing_sql=("SELECT m.* FROM seed_CostCodeLegacyMap m "
+                         "LEFT JOIN seed_CostCodeNew n ON n.NewCostCode = m.NewCostCode "
+                         "WHERE m.NewCostCode IS NOT NULL AND n.NewCostCode IS NULL"),
+            severity=SEVERITY_WARN,
+            description="gold leaves the legacy code unmapped until the client names a code that exists",
+        ),
+        Expectation(
+            name="legacy cost-code map has one row per legacy code",
+            table="seed_CostCodeLegacyMap",
+            failing_sql=("SELECT LegacyCostCode, COUNT(*) AS n FROM seed_CostCodeLegacyMap "
+                         "GROUP BY LegacyCostCode HAVING COUNT(*) > 1"),
+            severity=SEVERITY_WARN,
+            description="a legacy code listed twice is left unmapped by gold rather than guessed",
+        ),
+        # REPORT ONLY. Pre-2026 Procore codes the client's legacy map does not cover: its count
+        # is the size of what still sits outside the new scheme (completed projects may stay
+        # there by agreement), not a to-do list.
+        Expectation(
+            name="budget dollars on unmapped legacy Procore cost codes (report only)",
             table="dim_CostCodeCrosswalk",
             failing_sql=(
                 "SELECT b.ProjectKey, b.CostCodeKey, b.BudgetAmount FROM fct_BudgetLine b "
                 "JOIN dim_CostCodeCrosswalk x ON x.CostCodeKey = b.CostCodeKey "
-                "WHERE x.CodeScheme = 'LEGACY_PROCORE' AND COALESCE(b.BudgetAmount, 0) <> 0"
+                "WHERE x.MappingStatus = 'LEGACY_UNMAPPED' AND COALESCE(b.BudgetAmount, 0) <> 0"
             ),
             severity=SEVERITY_WARN,
             description="expected for completed pre-2026 projects; a current project here needs a mapping",

@@ -415,6 +415,8 @@ def report_diagnostics(lakehouse_id: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--no-run", action="store_true",
+                        help="with --apply: update the notebook only; the nightly pipeline runs it")
     parser.add_argument("--diag", action="store_true", help="download the last run's diagnostics")
     parser.add_argument("--source", choices=sorted(SOURCES), default=DEFAULT_SOURCE,
                         help="which silver feeds gold (default: %(default)s)")
@@ -468,6 +470,9 @@ def main() -> int:
         item_id = ds.find_item(tok, NOTEBOOK_NAME, "Notebook")["id"]
         print(f"  created {NOTEBOOK_NAME} ({item_id})")
 
+    if args.no_run:
+        print("  not run (--no-run): the nightly pipeline runs it")
+        return 0
     print("  running ...", end=" ", flush=True)
     print(ds.run_notebook(tok, item_id))
     return 0

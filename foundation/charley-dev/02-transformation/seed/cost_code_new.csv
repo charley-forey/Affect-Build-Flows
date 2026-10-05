@@ -62,7 +62,7 @@ new_cost_code,description,division_code,division_name
 10660.000,Plastic Fabrications,06,"WOOD, PLASTICS, AND COMPOSITES"
 10670.000,Structural Composites,06,"WOOD, PLASTICS, AND COMPOSITES"
 10680.000,Composite Fabrications,06,"WOOD, PLASTICS, AND COMPOSITES"
-10710.000,Waterprooging,07,THERMAL AND MOISTURE PROTECTION
+10710.000,Waterproofing,07,THERMAL AND MOISTURE PROTECTION
 10720.000,Thermal Protection,07,THERMAL AND MOISTURE PROTECTION
 10721.000,Insulation,07,THERMAL AND MOISTURE PROTECTION
 10724.000,Exterior Insulation and Finish Systems,07,THERMAL AND MOISTURE PROTECTION
@@ -179,6 +179,7 @@ new_cost_code,description,division_code,division_name
 12630.000,Electrical Power,26,ELECTRICAL
 12650.000,Lighting,26,ELECTRICAL
 12700.000,COMMUNICATIONS,27,COMMUNICATIONS
+12710.000,Structured Cabling,27,COMMUNICATIONS
 12720.000,Data Communications,27,COMMUNICATIONS
 12730.000,Voice Communications,27,COMMUNICATIONS
 12740.000,Audio-Video Communications,27,COMMUNICATIONS
@@ -194,16 +195,22 @@ new_cost_code,description,division_code,division_name
 13123.160,Excavation,31,EARTHWORK
 13123.190,Dewatering,31,EARTHWORK
 13130.000,Earthwork Methods,31,EARTHWORK
+13140.000,Shoring & Underpinning,31,EARTHWORK
+13150.000,Excavation Support/Protection,31,EARTHWORK
+13160.000,Special Foundations and Load-Bearing Elements,31,EARTHWORK
+13160.010,Concrete Foundation,31,EARTHWORK
+13170.000,Tunneling & Mining,31,EARTHWORK
 13230.000,Site Improvements - BPP,32,EXTERIOR IMPROVEMENTS
 13270.000,Wetlands,32,EXTERIOR IMPROVEMENTS
 13280.000,Irrigation,32,EXTERIOR IMPROVEMENTS
 13290.000,Landscaping,32,EXTERIOR IMPROVEMENTS
-13300.000,UTILITIES,33,UTILITIES
+13300.000,Utilities,33,UTILITIES
 13301.000,Site Utilities,33,UTILITIES
 13305.000,Utilities Common Work Results,33,UTILITIES
 13310.000,Water Utilities,33,UTILITIES
 13320.000,Wells,33,UTILITIES
 13330.000,Sanitary Sewerage Utilities,33,UTILITIES
+13340.000,Storm Drainage Utilities,33,UTILITIES
 13350.000,Fuel Distribution Utilities,33,UTILITIES
 13360.000,Hydronic/Steam Enrgy Utilities,33,UTILITIES
 13370.000,Electrical Utilities,33,UTILITIES

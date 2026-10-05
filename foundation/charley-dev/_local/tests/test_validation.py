@@ -895,7 +895,8 @@ def test_pipeline():
         if name in visited:
             return
         for dep in by_name[name]["dependsOn"]:
-            assert dep["dependencyConditions"] == ["Succeeded"]
+            want = ["Completed"] if (name, dep["activity"]) == ("Bronze To Silver", "Ingest Sage") else ["Succeeded"]
+            assert dep["dependencyConditions"] == want
             visit(dep["activity"], active | {name})
         visited.add(name)
     for name in by_name:

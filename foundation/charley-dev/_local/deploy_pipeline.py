@@ -191,12 +191,24 @@ def dataflow_activity(name: str, dataflow_id: str, upstream: list[str]) -> dict:
     }
 
 
+# Upstreams that must have FINISHED, not succeeded (2026-10-02). Sage arrives through an
+# on-premises gateway Affect hosts; when that machine is offline (EvaluationGatewayUnreachable,
+# every night 2026-09-30 to 10-02) a Succeeded-only edge froze every report, Procore included.
+# Silver then rebuilds from the last good Sage bronze. The pipeline run still ends Failed,
+# so the outage stays visible.
+# ponytail: stale Sage is visible only as a failed run; add a Sage freshness DQ rule if that
+# proves too quiet.
+COMPLETED_ONLY = {("Bronze To Silver", "Ingest Sage")}
+
+
 def activity(name: str, notebook_id: str, upstream: list[str], timeout: str, retry: int = 1) -> dict:
     return {
         "name": name,
         "type": "TridentNotebook",
         "dependsOn": [
-            {"activity": u, "dependencyConditions": ["Succeeded"]} for u in upstream
+            {"activity": u,
+             "dependencyConditions": ["Completed"] if (name, u) in COMPLETED_ONLY else ["Succeeded"]}
+            for u in upstream
         ],
         "policy": {
             "timeout": timeout,

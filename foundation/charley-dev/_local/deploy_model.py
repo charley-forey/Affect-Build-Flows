@@ -603,7 +603,7 @@ MEASURES = [
     # already or an old Sage code with a mapped target. LEGACY_UNMAPPED (pre-2026 Procore
     # CSI codes) is the expected remainder; OLD_UNMAPPED is a gap in the client's map.
     ("Budget On New Cost Codes %",
-     'DIVIDE ( CALCULATE ( [Budget], dim_CostCodeCrosswalk[MappingStatus] IN { "NATIVE_NEW", "MAPPED" } ), [Budget] )',
+     'DIVIDE ( CALCULATE ( [Budget], dim_CostCodeCrosswalk[MappingStatus] IN { "NATIVE_NEW", "MAPPED", "MAPPED_LEGACY" } ), [Budget] )',
      '"0.0%"', "nothing - share of budget that rolls up to a new cost code and division"),
     ("Vendors Missing From Sage",
      "COALESCE ( CALCULATE ( COUNTROWS ( dim_VendorCrosswalk ), dim_VendorCrosswalk[IsInSage] = FALSE ), 0 )",

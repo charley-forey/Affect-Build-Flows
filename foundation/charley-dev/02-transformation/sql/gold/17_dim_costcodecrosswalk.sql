@@ -13,8 +13,9 @@
 --                   written in front: '1-1018.000', '1-1018', '9-92000', '15-230000'. All
 --                   four 2026 projects are 100% on this scheme by dollars, and it maps.
 --   LEGACY_PROCORE  Procore's own CSI codes before 2026 - '09-20-00', '23-000', '01-013'.
---                   No mapping covers them and none is invented here: the client's answer
---                   is that completed pre-2026 projects stay as they are.
+--                   Mapped only by the client's own 'Legacy to New' answers
+--                   (seed_CostCodeLegacyMap, matched on the exact code text); nothing is
+--                   inferred here. A legacy code the client has not mapped stays unmapped.
 -- Anything without even a division prefix is UNPARSEABLE (HasUnparseableCode, below).
 --
 -- THE SAGE SIDE. Sage holds cost codes on invoice LINE tables: AP lines carry only a GL
@@ -95,6 +96,21 @@ old_map AS (
     FROM seed_CostCodeMap
     GROUP BY OldCostCode
 ),
+-- One row per legacy Procore code, same rule as old_map. The key is the code TEXT with runs
+-- of spaces collapsed ('01-00 00' is a real Procore code). A target missing from the new
+-- list is dropped HERE, after the ambiguity check, so the code
+-- reads LEGACY_UNMAPPED rather than mapped to a code that does not exist; the DQ suite
+-- reports the dangling target.
+legacy_map AS (
+    SELECT g.LegacyKey, g.NewCostCode
+    FROM (
+        SELECT regexp_replace(TRIM(LegacyCostCode), '[ ]+', ' ') AS LegacyKey,
+               CASE WHEN COUNT(DISTINCT NewCostCode) = 1 THEN MAX(NewCostCode) END AS NewCostCode
+        FROM seed_CostCodeLegacyMap
+        GROUP BY regexp_replace(TRIM(LegacyCostCode), '[ ]+', ' ')
+    ) g
+    JOIN seed_CostCodeNew t ON t.NewCostCode = g.NewCostCode
+),
 classified AS (
     SELECT
         n.*,
@@ -103,11 +119,15 @@ classified AS (
              WHEN n.division_code IS NOT NULL THEN 'LEGACY_PROCORE'
              ELSE 'UNPARSEABLE' END                   AS code_scheme,
         -- The client confirmed old and new numbering do not overlap; NEW wins if they ever do.
-        COALESCE(nat.NewCostCode, m.NewCostCode)       AS new_cost_code,
-        m.OldCostCode                                  AS old_cost_code
+        COALESCE(nat.NewCostCode, m.NewCostCode, lg.NewCostCode) AS new_cost_code,
+        m.OldCostCode                                  AS old_cost_code,
+        lg.NewCostCode                                 AS legacy_new_cost_code
     FROM normalized n
     LEFT JOIN seed_CostCodeNew nat ON nat.NewCostCode = n.normalized_code
     LEFT JOIN old_map m           ON m.OldCostCode   = n.normalized_code
+    -- Only for codes that are neither new nor old Sage: a legacy entry never overrides them.
+    LEFT JOIN legacy_map lg       ON lg.LegacyKey    = regexp_replace(n.code_part, '[ ]+', ' ')
+                                 AND nat.NewCostCode IS NULL AND m.OldCostCode IS NULL
 )
 SELECT
     c.cost_code_id                                 AS CostCodeKey,
@@ -142,11 +162,13 @@ SELECT
     -- MAPPED      an old Sage code with a target in the client's map.
     -- OLD_UNMAPPED an old Sage code the client has not mapped (v1: the two ALLOWANCES
     --             codes). Dollars here are a DQ warning: they cannot reach a new division.
-    -- LEGACY_UNMAPPED pre-2026 Procore CSI codes, and anything unparseable. Expected, and
-    --             left aside by agreement - reported, not mapped.
+    -- MAPPED_LEGACY a pre-2026 Procore code with a target in the client's legacy map.
+    -- LEGACY_UNMAPPED pre-2026 Procore CSI codes the client has not mapped, and anything
+    --             unparseable - reported, not mapped.
     CASE WHEN c.code_scheme = 'NEW' THEN 'NATIVE_NEW'
          WHEN c.code_scheme = 'OLD_SAGE' AND c.new_cost_code IS NOT NULL THEN 'MAPPED'
          WHEN c.code_scheme = 'OLD_SAGE' THEN 'OLD_UNMAPPED'
+         WHEN c.legacy_new_cost_code IS NOT NULL THEN 'MAPPED_LEGACY'
          ELSE 'LEGACY_UNMAPPED' END                AS MappingStatus
 FROM classified c
 LEFT JOIN seed_CostCodeNew t ON t.NewCostCode = c.new_cost_code;

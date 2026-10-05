@@ -423,7 +423,7 @@ table _Measures
 		displayFolder: 09 Source Coverage
 
 	/// Replaces nothing - share of budget that rolls up to a new cost code and division
-	measure 'Budget On New Cost Codes %' = DIVIDE ( CALCULATE ( [Budget], dim_CostCodeCrosswalk[MappingStatus] IN { "NATIVE_NEW", "MAPPED" } ), [Budget] )
+	measure 'Budget On New Cost Codes %' = DIVIDE ( CALCULATE ( [Budget], dim_CostCodeCrosswalk[MappingStatus] IN { "NATIVE_NEW", "MAPPED", "MAPPED_LEGACY" } ), [Budget] )
 		formatString: "0.0%"
 		displayFolder: 09 Source Coverage
 

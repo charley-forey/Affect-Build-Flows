@@ -59,6 +59,8 @@ def main() -> int:
          "INSERT INTO seed_CostCodeMap VALUES ('9999.000', '99999.999', 'typo target')"),
         ("cost-code map has one row per old code",
          "INSERT INTO seed_CostCodeMap VALUES ('1018.000', '10130.190', 'second target')"),
+        ("legacy cost-code map has one row per legacy code",
+         "INSERT INTO seed_CostCodeLegacyMap VALUES ('09-20-00', '10111.000', 'second target')"),
         # CC4 is the fixture's unmapped ALLOWANCES code; moving a budget line onto it.
         ("no budget or commitment dollars on unmapped old cost codes",
          "UPDATE fct_BudgetLine SET CostCodeKey = 'CC4' WHERE BudgetLineID = 'B1'"),
@@ -66,6 +68,14 @@ def main() -> int:
         assert RULES[name].severity == expectations.SEVERITY_WARN
         check_fails(con, name, mutation)
         checks += 1
+
+    # Clean on the shipped seeds (13160.010 joined the new list in the 2026-09-30 master);
+    # fails on a target that does not exist.
+    name = "legacy cost-code map targets exist in the new code list"
+    assert RULES[name].severity == expectations.SEVERITY_WARN
+    assert failing(con, name) == 0
+    assert mutated(con, name, "INSERT INTO seed_CostCodeLegacyMap VALUES ('99-99-99', '99999.999', 'typo')") == 1
+    checks += 1
 
     # Conservation: altered amount, dropped row, fanned-out row, extra source row.
     for gold, view, src_cols, gold_cols, keep in expectations.CONSERVATION:
