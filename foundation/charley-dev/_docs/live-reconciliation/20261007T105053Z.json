@@ -1,0 +1,176 @@
+{
+ "run_at": "2026-10-07T10:50:53.496965+00:00",
+ "target": {
+  "model_id": "4cdfb689-232a-4f33-a6bf-d53e90e8025a",
+  "qc_model_id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+  "gold_lakehouse": "CD_Gold_Lakehouse",
+  "silver_lakehouse": "CD_Silver_Lakehouse",
+  "bronze_lakehouse": "CD_Bronze_Lakehouse"
+ },
+ "checks": [
+  {
+   "id": "1",
+   "severity": "ERROR",
+   "name": "AR conservation bronze=silver=model",
+   "status": "PASS",
+   "summary": "158 invoices, billed 27,402,642.48 equal across bronze_acrinv = silver_ar_invoices = model_fct_Invoice",
+   "detail": {
+    "layers": {
+     "bronze_acrinv": {
+      "rows": 158,
+      "billed": 27402642.48,
+      "paid": 20706298.2,
+      "balance": 6696344.28
+     },
+     "silver_ar_invoices": {
+      "rows": 158,
+      "billed": 27402642.48,
+      "paid": 20706298.2,
+      "balance": 6696344.28
+     },
+     "model_fct_Invoice": {
+      "rows": 158,
+      "billed": 27402642.48,
+      "paid": 20706298.2,
+      "balance": 6696344.28
+     }
+    }
+   }
+  },
+  {
+   "id": "2",
+   "severity": "WARN",
+   "name": "Unmatched AR by job",
+   "status": "PASS",
+   "summary": "38 invoices / 10 jobs / 1,485,715.75 unmatched",
+   "detail": {
+    "by_job": {
+     "2": {
+      "invoices": 15,
+      "amount": 816455.42
+     },
+     "23": {
+      "invoices": 4,
+      "amount": 21958.67
+     },
+     "26": {
+      "invoices": 3,
+      "amount": 23462.02
+     },
+     "25": {
+      "invoices": 2,
+      "amount": 47858.9
+     },
+     "29": {
+      "invoices": 3,
+      "amount": 45075.12
+     },
+     "4": {
+      "invoices": 5,
+      "amount": 365603.9
+     },
+     "21": {
+      "invoices": 1,
+      "amount": 536.0
+     },
+     "24": {
+      "invoices": 1,
+      "amount": 52993.63
+     },
+     "8": {
+      "invoices": 1,
+      "amount": 89990.85
+     },
+     "7": {
+      "invoices": 3,
+      "amount": 21781.24
+     }
+    },
+    "invoice_ids": [
+     "4",
+     "5",
+     "6",
+     "7",
+     "8",
+     "11",
+     "12",
+     "16",
+     "17",
+     "19",
+     "23",
+     "28",
+     "30",
+     "31",
+     "36",
+     "39",
+     "47",
+     "74",
+     "75",
+     "76",
+     "77",
+     "98",
+     "105",
+     "106",
+     "111",
+     "120",
+     "123",
+     "124",
+     "140",
+     "141",
+     "142",
+     "143",
+     "144",
+     "147",
+     "148",
+     "151",
+     "152",
+     "153"
+    ],
+    "total_invoices": 38,
+    "total_amount": 1485715.75,
+    "new_jobs": [],
+    "new_invoice_ids": [],
+    "previous_run": true
+   }
+  },
+  {
+   "id": "3",
+   "severity": "ERROR",
+   "name": "AR receipts vs paid",
+   "status": "PASS",
+   "summary": "receipts match paid; 3 documented opening balances excused",
+   "detail": {
+    "excused_opening_balances": [
+     {
+      "recnum": 20,
+      "paid": 113716.9,
+      "receipts": 0.0,
+      "difference": 113716.9
+     },
+     {
+      "recnum": 21,
+      "paid": 9190.68,
+      "receipts": 0.0,
+      "difference": 9190.68
+     },
+     {
+      "recnum": 22,
+      "paid": 104759.96,
+      "receipts": 0.0,
+      "difference": 104759.96
+     }
+    ],
+    "drifted_documented": [],
+    "new_mismatches": [],
+    "orphan_receipts": 0,
+    "documented_recnums": [
+     20,
+     21,
+     22
+    ]
+   }
+  }
+ ],
+ "failed": [],
+ "warned": []
+}

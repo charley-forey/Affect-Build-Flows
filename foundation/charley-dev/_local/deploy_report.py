@@ -1351,7 +1351,8 @@ def page_insurance() -> tuple[str, list[dict]]:
                            column("fct_VendorInsurance", "ExpirationDate"),
                            column("fct_VendorInsurance", "ExpiryStatus"),
                            column("fct_VendorInsurance", "DaysUntilExpiry"),
-                           measure("Certificates On File")]},
+                           # Blank-preserving, or every vendor x policy pair is listed.
+                           measure("Certificates Listed")]},
                title="Certificates - what to chase, and how overdue")),
     ]
 

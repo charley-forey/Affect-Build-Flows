@@ -230,11 +230,17 @@ BALANCE_AT_PERIOD_END = (
     "REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate )")
 
 
-def _project_vendors(expression: str) -> str:
-    """Scope an insurance count to the selected project's vendors; company-wide otherwise."""
-    return ("COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( " + expression + ", "
-            "TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), "
-            + expression + " ), 0 )")
+def _project_vendors(expression: str, zero: bool = True) -> str:
+    """Scope an insurance count to the selected project's vendors; company-wide otherwise.
+
+    zero=False keeps BLANK for no rows. A table needs that: Power BI drops a row only when
+    every measure on it is blank, so a 0 on every vendor x policy pair listed the full cross
+    join, blank-named vendors first, and the certificate list showed no vendor names.
+    """
+    scoped = ("IF ( ISFILTERED ( dim_Project ), CALCULATE ( " + expression + ", "
+              "TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), "
+              + expression + " )")
+    return f"COALESCE ( {scoped}, 0 )" if zero else scoped
 
 
 MEASURES = [
@@ -404,6 +410,9 @@ MEASURES = [
     # does not apply - certificates have no reporting month - and the page says so.
     ("Certificates On File", _project_vendors("COUNTROWS ( fct_VendorInsurance )"), '"#,0"',
      "D8"),
+    # The certificate list's row filter: the same count, BLANK (not 0) where there is none.
+    ("Certificates Listed", _project_vendors("COUNTROWS ( fct_VendorInsurance )", zero=False),
+     '"#,0"', "D8 - certificate list rows; blank where a vendor has no such certificate"),
     ("Vendors With Insurance",
      _project_vendors("DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] )"), '"#,0"', "D8"),
     ("Expired Certificates",

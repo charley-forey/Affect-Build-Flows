@@ -128,11 +128,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Certificates On File"
+                  "Property": "Certificates Listed"
                 }
               },
-              "queryRef": "_Measures.Certificates On File",
-              "nativeQueryRef": "Certificates On File"
+              "queryRef": "_Measures.Certificates Listed",
+              "nativeQueryRef": "Certificates Listed"
             }
           ]
         }
@@ -146,7 +146,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Certificates - what to chase, and how overdue. Shows VendorName, InsuranceType, Provider, PolicyNumber, ExpirationDate, ExpiryStatus, DaysUntilExpiry, Certificates On File for the current selection.'"
+                  "Value": "'Table. Certificates - what to chase, and how overdue. Shows VendorName, InsuranceType, Provider, PolicyNumber, ExpirationDate, ExpiryStatus, DaysUntilExpiry, Certificates Listed for the current selection.'"
                 }
               }
             }
@@ -357,7 +357,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Certificates On File"
+            "metadata": "_Measures.Certificates Listed"
           }
         }
       ],

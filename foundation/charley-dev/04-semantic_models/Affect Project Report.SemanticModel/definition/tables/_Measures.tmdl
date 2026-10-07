@@ -200,6 +200,11 @@ table _Measures
 		formatString: "#,0"
 		displayFolder: 15 Insurance
 
+	/// Replaces D8 - certificate list rows; blank where a vendor has no such certificate
+	measure 'Certificates Listed' = IF ( ISFILTERED ( dim_Project ), CALCULATE ( COUNTROWS ( fct_VendorInsurance ), TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), COUNTROWS ( fct_VendorInsurance ) )
+		formatString: "#,0"
+		displayFolder: 15 Insurance
+
 	/// Replaces D8
 	measure 'Vendors With Insurance' = COALESCE ( IF ( ISFILTERED ( dim_Project ), CALCULATE ( DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ), TREATAS ( VALUES ( bridge_ProjectVendor[VendorKey] ), fct_VendorInsurance[VendorKey] ) ), DISTINCTCOUNT ( fct_VendorInsurance[VendorKey] ) ), 0 )
 		formatString: "#,0"

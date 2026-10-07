@@ -519,6 +519,8 @@ def monthly_expected():
         "Cost Codes Per Vendor": lambda c, s: _zero(_distinct(c.rows("bridge_VendorCostCode", s), "CostCodeKey")),
         "Vendors Per Cost Code": lambda c, s: _zero(_distinct(c.rows("bridge_VendorCostCode", s), "VendorKey")),
         "Certificates On File": lambda c, s: len(insurance(c, s)),
+        # Same count, BLANK instead of 0 where there are no certificates.
+        "Certificates Listed": lambda c, s: len(insurance(c, s)) or None,
         "Vendors With Insurance": lambda c, s: _zero(_distinct(insurance(c, s), "VendorKey")),
         "Expired Certificates": lambda c, s: len([r for r in insurance(c, s) if _eq(r["ExpiryStatus"], "Expired")]),
         "Certificates Expiring Soon": lambda c, s: len([r for r in insurance(c, s)
