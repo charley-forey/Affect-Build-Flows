@@ -43,7 +43,7 @@ CROSSWALK = ("project_crosswalk.csv", "seed_ProjectCrosswalk",
              ("procore_project_id", "sage_job_number"))
 CROSSWALK_NAMES = ("ProcoreProjectId", "SageJobNumber", "Relationship", "Source")
 # Procore projects kept out of every report (test projects). Applied at the sv_* views by
-# seedrunner.exclusion_statements, so it reaches every gold table at once.
+# deploy_gold.source_view_code, so it reaches every gold table at once.
 EXCLUSION = ("project_exclusion.csv", "seed_ProjectExclusion",
              {"procore_project_id": "STRING", "project_name": "STRING", "reason": "STRING"},
              ("procore_project_id",))

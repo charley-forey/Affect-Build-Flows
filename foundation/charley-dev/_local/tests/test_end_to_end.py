@@ -80,7 +80,9 @@ def main():
     referenced = {v for e in expectations for v in re.findall(r"\bsv_\w+", e.failing_sql)}
     assert referenced, "no rule reads sv_* - regex or suite changed"
     assert referenced <= created, f"DQ notebook never creates {sorted(referenced - created)}"
-    assert "spark.sql(_sql)" in "".join(sources[:evaluate])
+    # Registered through source_view, which builds <view>__all and the test-project-filtered
+    # <view> over it - the same views gold read.
+    assert 'source_view(f"view:{_i}", _sql)' in "".join(sources[:evaluate])
     def blocking_failures():
         failed = []
         for rule in expectations:

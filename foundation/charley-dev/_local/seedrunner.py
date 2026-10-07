@@ -770,6 +770,12 @@ SOURCE_FIXTURES += tuple(s for s in split_statements(
     if s.startswith("CREATE OR REPLACE TEMPORARY VIEW sv_observed_projects AS"))
 
 
+# The test-project filter every project-keyed sv_* view carries. A NULL project_id is kept:
+# unmatched Sage rows carry none and must still be counted.
+EXCLUSION_WHERE = ("WHERE project_id IS NULL OR CAST(project_id AS STRING) NOT IN "
+                   "(SELECT ProcoreProjectId FROM seed_ProjectExclusion)")
+
+
 def exclusion_statements(views: list[str], view_kind: str = "VIEW") -> list[str]:
     """Re-point every project-keyed sv_* view through seed_ProjectExclusion.
 
@@ -779,15 +785,14 @@ def exclusion_statements(views: list[str], view_kind: str = "VIEW") -> list[str]
     renamed to <view>__all and stays readable for investigation. A NULL project_id is
     kept - unmatched Sage rows carry none and must still be counted.
 
-    Shared with deploy_gold.py so the offline build tests the statements Fabric runs.
-    Fabric needs TEMPORARY views (gold must not persist views into the lakehouse); the
-    DuckDB fixtures are plain views, and a temp view would shadow the tests' replacements.
+    OFFLINE ONLY. Spark cannot rename a temp view that other views were defined against
+    (every gold file failed "sv_budgets__all cannot be found", 2026-10-06), so the Fabric
+    notebooks build each view under <view>__all from the start instead - see
+    deploy_gold.source_view_code. Both use EXCLUSION_WHERE.
     """
     return [s for v in views for s in (
         f"ALTER VIEW {v} RENAME TO {v}__all",
-        f"CREATE OR REPLACE {view_kind} {v} AS SELECT * FROM {v}__all "
-        f"WHERE project_id IS NULL OR CAST(project_id AS STRING) NOT IN "
-        f"(SELECT ProcoreProjectId FROM seed_ProjectExclusion)",
+        f"CREATE OR REPLACE {view_kind} {v} AS SELECT * FROM {v}__all {EXCLUSION_WHERE}",
     )]
 
 

@@ -27,7 +27,7 @@ import deploy as dp  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
 from make_notebooks import cell, notebook  # noqa: E402
 from make_sharepoint import tables as man_tables  # noqa: E402
-from seedrunner import exclusion_statements, split_statements  # noqa: E402
+from seedrunner import EXCLUSION_WHERE, split_statements  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 CHARLEY_DEV = HERE.parent
@@ -97,30 +97,39 @@ def gold_files(source: str = "cd") -> list[Path]:
                   and not (source == "existing" and p.name in GOLD_CD_ONLY))
 
 
-def exclusion_code(execute: str) -> str:
-    """Notebook code applying seedrunner.exclusion_statements to every project-keyed sv_* view.
+def source_view_code(run: str) -> str:
+    """Notebook code defining source_view(label, sql): one sv_* statement, test projects excluded.
+
+    Each view is created as <view>__all, then <view> is created over it - filtered through
+    seed_ProjectExclusion when it has a project_id column. Statement by statement, in file
+    order, so a later view that reads an earlier one (sv_observed_projects reads sv_budgets)
+    reads the filtered one. No ALTER VIEW RENAME: Spark lost track of renamed temp views that
+    other views were defined against, and every gold file failed with "sv_budgets__all
+    cannot be found" (2026-10-06).
 
     Shared by cd_30_build_gold and cd_40_dq_checks: the gate re-registers the source views in
-    its own session, and an unfiltered copy there would fail every conservation rule. Which
-    views carry project_id is read at run time, so a new view is covered without a list.
-    `execute` is one statement of notebook code running `s` (the SQL), given `v` and `i`.
+    its own session, and an unfiltered copy there would fail every conservation rule.
+    `run` names a callable (label, sql) that executes one statement.
     """
-    template = exclusion_statements(["{v}"], "TEMPORARY VIEW")
-    return f"""
-# --- exclude test projects (seed_ProjectExclusion) from every project-keyed source view ---
-views = []
-for t in spark.catalog.listTables():
-    if t.isTemporary and t.name.startswith("sv_"):
-        try:
-            if "project_id" in spark.table(t.name).columns:
-                views.append(t.name)
-        except Exception:
-            pass  # a view that failed to build is already reported by its own step
-for v in sorted(views):
-    for i, s in enumerate({template!r}):
-        {execute}
-print(f"test-project exclusion applied to {{len(views)}} view(s)")
-"""
+    return f'''
+import re as _re
+_EXCLUDE = {EXCLUSION_WHERE!r}
+
+def source_view(label, sql):
+    m = _re.match(r"\\s*CREATE OR REPLACE TEMPORARY VIEW (\\w+) AS", sql)
+    if not m:
+        {run}(label, sql)
+        return
+    v = m.group(1)
+    {run}(label, sql.replace("VIEW " + v + " AS", "VIEW " + v + "__all AS", 1))
+    try:
+        keyed = "project_id" in spark.table(v + "__all").columns
+    except Exception:
+        keyed = False  # the __all view failed to build; its own step recorded why
+    {run}(label + ":view", "CREATE OR REPLACE TEMPORARY VIEW " + v + " AS SELECT * FROM "
+          + v + "__all" + (" " + _EXCLUDE if keyed else ""))
+
+'''
 
 
 def build_notebook(source_views: Path, source: str = "cd", silver_abfss: str = CD_SILVER_ABFSS) -> dict:
@@ -206,15 +215,13 @@ def write_diag():
     view_sql = (source_views.read_text(encoding="utf-8")
                 .replace("{SILVER_ABFSS}", SILVER_ABFSS)
                 .replace("{CD_SILVER_ABFSS}", silver_abfss))
-    body = "\n".join(
-        f"run_sql({json.dumps('view:' + str(i))}, {json.dumps(s)})\n"
+    # Test projects (seed_ProjectExclusion) leave every project-keyed sv_* view as it is
+    # built - see source_view_code.
+    body = source_view_code("run_sql") + "\n".join(
+        f"source_view({json.dumps('view:' + str(i))}, {json.dumps(s)})\n"
         for i, s in enumerate(statements(view_sql))
     )
     cells.append(cell(f'{body}\nprint("source views done")'))
-
-    # Test projects (seed_ProjectExclusion) leave every project-keyed sv_* view before any
-    # gold file runs - see seedrunner.exclusion_statements.
-    cells.append(cell(exclusion_code('run_sql(f"exclude:{v}:{i}", s.replace("{v}", v))')))
 
     for path in gold_files(source):
         stmts = statements(path.read_text(encoding="utf-8"))

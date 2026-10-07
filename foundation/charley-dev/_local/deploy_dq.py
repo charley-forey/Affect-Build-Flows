@@ -103,14 +103,16 @@ spark.conf.set("spark.sql.parquet.int96RebaseModeInRead", "CORRECTED")
 # notebook's session, and several rules read them. A failure here raises with its cause,
 # rather than surfacing later as "could not run".
 SOURCE_VIEWS = ''' + json.dumps(source_view_statements(), indent=1) + '''
-for _sql in SOURCE_VIEWS:
-    spark.sql(_sql)
+# The same test-project exclusion gold applied (deploy_gold.source_view_code), or the
+# conservation rules compare filtered gold against unfiltered views and block publication.
+def _run(label, sql):
+    spark.sql(sql)
+''' + dg.source_view_code("_run") + '''
+for _i, _sql in enumerate(SOURCE_VIEWS):
+    source_view(f"view:{_i}", _sql)
 print(f"{len(SOURCE_VIEWS)} source view(s) registered")
 '''
         ),
-        # The same test-project exclusion gold applied, or conservation rules compare
-        # filtered gold against unfiltered views and block publication.
-        cell(dg.exclusion_code('spark.sql(s.replace("{v}", v))')),
         cell(
             '''
 # EVALUATE FIRST, PERSIST SECOND.
