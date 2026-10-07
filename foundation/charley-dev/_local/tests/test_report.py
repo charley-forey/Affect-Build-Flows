@@ -535,7 +535,16 @@ def test_load_contract() -> None:
                     # Inside a query, measures and columns reference aliases, never entities.
                     inner = json.dumps(query.get("From", []))
                     assert '"SourceRef": {"Entity"' not in inner, f"{rel}: SourceRef by Entity inside a query"
-    print("  load contract: every page in pageOrder, every query SourceRef a declared alias")
+    # A drill-through target is only offered when its parameter is bound to the page's
+    # Drillthrough filter (2026-10-07: name-only parameters deployed but never appeared).
+    for pid in dr.DRILLTHROUGH:
+        page = json.loads(files[f"definition/pages/{pid}/page.json"])
+        filters = {f["name"]: f for f in page["filterConfig"]["filters"]}
+        for prm in page["pageBinding"]["parameters"]:
+            flt = filters[prm["boundFilter"]]
+            assert prm["fieldExpr"] == flt["field"], f"{pid}: parameter and filter disagree"
+            assert flt["type"] == "Categorical" and flt["howCreated"] == "Drillthrough", flt
+    print("  load contract: every page in pageOrder, every query SourceRef a declared alias, drill-through bound")
 
 
 if __name__ == "__main__":

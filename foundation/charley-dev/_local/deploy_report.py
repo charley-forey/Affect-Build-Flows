@@ -1478,6 +1478,7 @@ def build(model_id: str) -> dict[str, str]:
         # portfolio view the other pages already do better.
         if pid in DRILLTHROUGH:
             entity, prop = DRILLTHROUGH[pid]
+            field = {"Column": {"Expression": {"SourceRef": {"Entity": entity}}, "Property": prop}}
             page["pageBinding"] = {
                 "name": f"{pid}_binding",
                 "type": "Drillthrough",
@@ -1485,16 +1486,19 @@ def build(model_id: str) -> dict[str, str]:
                 # Without it the import fails with "DrillThrough pods cannot contain null
                 # parameters" - the filter alone only says what this page is restricted by,
                 # not what it receives.
-                "parameters": [{"name": prop}],
+                # boundFilter + fieldExpr wire the parameter to the page filter below. With
+                # the name alone the page deployed, but no visual offered "Drill through"
+                # (found 2026-10-07: the option never appeared, on any page).
+                "parameters": [{"name": prop, "boundFilter": f"{pid}_drill", "fieldExpr": field}],
             }
             page["filterConfig"] = {
                 "filters": [{
                     "name": f"{pid}_drill",
-                    "field": {"Column": {
-                        "Expression": {"SourceRef": {"Entity": entity}},
-                        "Property": prop,
-                    }},
-                    "type": "Passthrough",
+                    "field": field,
+                    # What Power BI Desktop writes for a drill-through field: Categorical,
+                    # created by Drillthrough. Passthrough was never offered as a target.
+                    "type": "Categorical",
+                    "howCreated": "Drillthrough",
                 }]
             }
         files[f"definition/pages/{pid}/page.json"] = json.dumps(page, indent=2)

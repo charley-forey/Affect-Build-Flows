@@ -11,7 +11,18 @@
     "type": "Drillthrough",
     "parameters": [
       {
-        "name": "ProjectName"
+        "name": "ProjectName",
+        "boundFilter": "projectdetail_drill",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_Project"
+              }
+            },
+            "Property": "ProjectName"
+          }
+        }
       }
     ]
   },
@@ -29,7 +40,8 @@
             "Property": "ProjectName"
           }
         },
-        "type": "Passthrough"
+        "type": "Categorical",
+        "howCreated": "Drillthrough"
       }
     ]
   }
