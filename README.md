@@ -49,6 +49,18 @@ not supply.
   report..." because the Top 10 filter on Direct Costs & Vendors referenced `_Measures`
   without an alias in its subquery. Fixed, verified in the browser, and guarded by
   `test_load_contract`.
+- **2026-10-07 nightly run: first full success with every change.** All 11 stages
+  succeeded and both models were published.
+  - `validate_model`: 18/18.
+  - DQ: 217 rules, 0 blocking, 13 warnings.
+  - `reconcile_live`: AR conserved; checks 4, 7 and 10 warn.
+  - 19 projects, with the test and template projects excluded. Budget $37.4M, 100% mapped.
+    Commitments $28.0M. Unmatched AR 38 invoices / $1.49M. 0 projects missing from Sage.
+  - All 13 report pages were checked in the browser. That pass fixed:
+    - **Vendor Insurance:** the certificate list showed no vendor names.
+    - **Project Detail:** the drill-through was never offered.
+  - The 2026-10-06 run had failed in Build Gold, because Spark lost track of the renamed
+    exclusion views. Fixed the same day.
 - **Still open:**
   - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
     about 1 of about 942 nightly requests, because Procore is called once per project or
