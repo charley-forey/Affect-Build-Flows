@@ -92,7 +92,7 @@ built = []
         "dim_ActivityCategory": 28, "dim_ScorecardWeight": 9, "dim_ScorecardBand": 27,
         "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
         "qc_seed_DohItem": 101, "dim_QcStatus": 141,
-        "seed_ProjectCrosswalk": 17, "seed_ProjectExclusion": 2,
+        "seed_ProjectCrosswalk": 17, "seed_ProjectExclusion": 3,
         "seed_CostCodeNew": 291, "seed_CostCodeMap": 318, "seed_CostCodeLegacyMap": 156,
     }
     cells.append(

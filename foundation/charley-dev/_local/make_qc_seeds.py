@@ -153,8 +153,8 @@ EXPECTED_ROWS = {
     # The 15 legacy dim_projects_procoreXsage pairs, plus 25-034 -> job 28 and 26-056 -> job
     # 27 (confirmed 2026-10-05). Bump deliberately when Affect approves one.
     "seed_ProjectCrosswalk": 17,
-    # The two Procore test projects numbered 1234.
-    "seed_ProjectExclusion": 2,
+    # The two Procore test projects numbered 1234, and the Procore project template.
+    "seed_ProjectExclusion": 3,
     # Cost Code Mapping_OldvsNew_v1.xlsx. Bump deliberately when the client sends v2.
     "seed_CostCodeNew": 291, "seed_CostCodeMap": 318,
     # Legacy Procore Codes to New_v1_CE.xlsx. Bump deliberately when the client sends v2.

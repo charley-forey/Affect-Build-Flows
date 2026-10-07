@@ -34,12 +34,13 @@ FROM (VALUES
 
 -- seed_ProjectExclusion: Procore projects kept out of every report (test projects).
 -- deploy_gold.py filters every project-keyed sv_* view through it before gold builds.
--- seed_ProjectExclusion: 2 row(s) from seed/project_exclusion.csv
+-- seed_ProjectExclusion: 3 row(s) from seed/project_exclusion.csv
 CREATE OR REPLACE TABLE seed_ProjectExclusion AS
 SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
        CAST(c2 AS STRING) AS ProjectName,
        CAST(c3 AS STRING) AS Reason
 FROM (VALUES
     ('562949953807489', 'Sandbox Test Project', 'Procore test project (number 1234); excluded 2026-10-05'),
-    ('562949955173068', 'TEST - ABM SUBORDINATE', 'Procore test project (number 1234); excluded 2026-10-05')
+    ('562949955173068', 'TEST - ABM SUBORDINATE', 'Procore test project (number 1234); excluded 2026-10-05'),
+    ('562949953807474', 'Standard Project Template', 'Procore project template (no number); excluded 2026-10-07')
 ) AS t(c1, c2, c3);

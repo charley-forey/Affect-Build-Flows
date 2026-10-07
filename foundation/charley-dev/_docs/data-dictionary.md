@@ -2785,7 +2785,7 @@ flowchart LR
 ### seed_ProjectExclusion
 
 - **Subject area:** Shared and platform tables
-- **Purpose:** seed_ProjectExclusion: Procore projects kept out of every report (test projects). deploy_gold.py filters every project-keyed sv_* view through it before gold builds. seed_ProjectExclusion: 2 row(s) from seed/project_exclusion.csv
+- **Purpose:** seed_ProjectExclusion: Procore projects kept out of every report (test projects). deploy_gold.py filters every project-keyed sv_* view through it before gold builds. seed_ProjectExclusion: 3 row(s) from seed/project_exclusion.csv
 - **Grain:** Not stated in the SQL comments.
 - **Primary key:** No DQ unique rule.
 - **Produced by:** `02-transformation/sql/gold/09_seed_projectcrosswalk.sql`
