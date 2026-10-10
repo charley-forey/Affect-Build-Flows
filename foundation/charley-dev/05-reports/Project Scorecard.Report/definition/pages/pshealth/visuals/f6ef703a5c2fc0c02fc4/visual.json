@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "f6ef703a5c2fc0c02fc4",
+  "position": {
+    "x": 20,
+    "y": 60,
+    "z": 0,
+    "width": 1240,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Pick one project in the Project slicer; with none picked, every figure blends the whole portfolio. Right-click the project in a table to drill through to its change orders or open quality items.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Pick one project in the Project slicer; with none picked, every figure blends the whole portfolio. Right-click the project in a table to drill through to its change orders or open quality items.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

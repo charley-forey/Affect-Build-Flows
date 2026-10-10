@@ -16,16 +16,19 @@
 -- column becomes a Power BI fixed-decimal (4 dp), which rounded every weighted intermediate
 -- and put Project Scorecard off by up to 7e-5 on 4 live projects - enough to flip the 0.6
 -- at-risk cutoff for a project sitting on it.
+-- Pillar groups categories for the Project Scorecard report, whose portfolio page re-ranks
+-- by one pillar ("show me just schedule"). Proposed on the 2026-10-09 call; Affect's
+-- scorecard workshop confirms it here, as a data edit, like the weights.
 CREATE OR REPLACE TABLE dim_ScorecardWeight AS
-SELECT CategoryKey, CategoryName, CAST(Weight AS DOUBLE) AS Weight, SortOrder, EffectiveFrom, EffectiveTo
+SELECT CategoryKey, CategoryName, CAST(Weight AS DOUBLE) AS Weight, SortOrder, EffectiveFrom, EffectiveTo, Pillar
 FROM (VALUES
-    (1, 'Accounts Receivable',   0.12, 1, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (2, 'Profitability',         0.12, 2, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (3, 'Cash Position',         0.12, 3, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (4, 'Change Orders',         0.08, 4, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (5, 'Safety Incidents',      0.14, 5, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (6, 'Schedule Performance',  0.15, 6, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (7, 'Completion Variance',   0.15, 7, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (8, 'Observations',          0.10, 8, DATE '2023-01-01', CAST(NULL AS DATE)),
-    (9, 'Daily Reports',         0.02, 9, DATE '2023-01-01', CAST(NULL AS DATE))
-) AS t(CategoryKey, CategoryName, Weight, SortOrder, EffectiveFrom, EffectiveTo);
+    (1, 'Accounts Receivable',   0.12, 1, DATE '2023-01-01', CAST(NULL AS DATE), 'Financial'),
+    (2, 'Profitability',         0.12, 2, DATE '2023-01-01', CAST(NULL AS DATE), 'Financial'),
+    (3, 'Cash Position',         0.12, 3, DATE '2023-01-01', CAST(NULL AS DATE), 'Financial'),
+    (4, 'Change Orders',         0.08, 4, DATE '2023-01-01', CAST(NULL AS DATE), 'Financial'),
+    (5, 'Safety Incidents',      0.14, 5, DATE '2023-01-01', CAST(NULL AS DATE), 'Safety & Quality'),
+    (6, 'Schedule Performance',  0.15, 6, DATE '2023-01-01', CAST(NULL AS DATE), 'Schedule'),
+    (7, 'Completion Variance',   0.15, 7, DATE '2023-01-01', CAST(NULL AS DATE), 'Schedule'),
+    (8, 'Observations',          0.10, 8, DATE '2023-01-01', CAST(NULL AS DATE), 'Safety & Quality'),
+    (9, 'Daily Reports',         0.02, 9, DATE '2023-01-01', CAST(NULL AS DATE), 'Reporting')
+) AS t(CategoryKey, CategoryName, Weight, SortOrder, EffectiveFrom, EffectiveTo, Pillar);

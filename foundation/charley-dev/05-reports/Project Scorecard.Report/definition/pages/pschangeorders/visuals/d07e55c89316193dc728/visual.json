@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "d07e55c89316193dc728",
+  "position": {
+    "x": 20,
+    "y": 60,
+    "z": 0,
+    "width": 1240,
+    "height": 44,
+    "tabOrder": 11
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Pending change orders for the project you drilled from, oldest first. The average can hide one sitting out at 90 days; this list cannot.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Pending change orders for the project you drilled from, oldest first. The average can hide one sitting out at 90 days; this list cannot.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

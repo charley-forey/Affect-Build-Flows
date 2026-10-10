@@ -95,6 +95,9 @@ than duplicated — but the correction is invisible, so it is better not to make
 
 ## 1. `CD Wins`
 
+> **Not used by the Project Scorecard report (2026-10-09).** The call dropped wins and focus
+> areas as scored inputs. The list and its pipeline stay, so nothing breaks; nobody needs to fill it.
+
 | Column | Type | Required | Choices / notes |
 |---|---|---|---|
 | `WinNumber` | Number (integer) | yes | 1, 2, 3… within the project-month |
@@ -105,6 +108,10 @@ The spreadsheet caps this at 4 realized + 4 focus areas because the dashboard re
 fixed cells. **There is no cap here.**
 
 ## 2. `CD Risks`
+
+> **The one manual input in the Project Scorecard report.** Shown on Project Health as
+> "Biggest challenges on site": `Description` is the challenge, `Mitigation` what the team is doing
+> about it. It is displayed, never scored. Three a month per project is the ask.
 
 | Column | Type | Required | Choices / notes |
 |---|---|---|---|

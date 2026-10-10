@@ -172,7 +172,9 @@ RAW_COLUMNS = {
 OWN_FILTER = {"dim_Project": ("ProjectKey", "project"), "dim_Date": ("MonthStart", "month"),
               "dim_ScorecardWeight": ("CategoryKey", "category")}
 # Checked by a synthetic fixture instead (check_milestone_geometry): they need ALLSELECTED.
-FIXTURE_ONLY = {"Milestone Offset Days", "Milestone Duration Days"}
+# Project Rank is RANKX over ALLSELECTED projects: it has no meaning in the single-context
+# evaluations below. Its input, [Pillar Score], is checked; the order is checked live.
+FIXTURE_ONLY = {"Milestone Offset Days", "Milestone Duration Days", "Project Rank"}
 
 
 def _ts(text):
@@ -321,6 +323,7 @@ def _shared_expected():
 
 
 def monthly_expected():
+    import scorecard as scorecard_module
     R = lambda c, table, s, keep=lambda r: True: [r for r in c.rows(table, s) if keep(r)]
     true = lambda column: lambda r: r[column] is True
     false = lambda column: lambda r: not r[column]
@@ -406,6 +409,13 @@ def monthly_expected():
         labels = [b["BandLabel"] for b in c.data["dim_ScorecardBand"]
                   if b["CategoryKey"] == key and b["Score"] == score and b["BandLabel"] is not None]
         return max(labels) if labels else None
+
+    def pillar_score(c, s):
+        """[Project Scorecard (Measured Only)] over the categories left in context."""
+        found = scores(c, s)
+        rows = [w for w in c.rows("dim_ScorecardWeight", s) if found.get(w["CategoryKey"]) is not None]
+        measured = sum(w["Weight"] for w in rows)
+        return sum(found[w["CategoryKey"]] * w["Weight"] for w in rows) / (3 * measured) if measured > 0 else None
 
     def projects_at_risk(c, s):
         count = 0
@@ -603,6 +613,18 @@ def monthly_expected():
                                            else None if (score := category_score(c, s)) is None
                                            else score * selected(c.rows("dim_ScorecardWeight", s), "Weight") / 3),
         "Category Band": category_band,
+        "Pillar Score": pillar_score,
+        "Categories Below Target": lambda c, s: sum(v is not None and v < 3 for v in scores(c, s).values()),
+        "Needs Attention": lambda c, s: ("Needs attention" if E["Categories Below Target"](c, s)
+                                         >= scorecard_module.ATTENTION_CATEGORIES else None),
+        "Outstanding CO Count": lambda c, s: len(R(c, "fct_ChangeOrder", s, true("IsPending"))),
+        "Avg CO Days Open": lambda c, s: _avg(R(c, "fct_ChangeOrder", s, true("IsPending")), "DaysOpen"),
+        "COs Over 30 Days": lambda c, s: len(R(c, "fct_ChangeOrder", s, lambda r: r["IsPending"] is True
+                                               and (r["DaysOpen"] or 0) > 30)),
+        "Open Observations": lambda c, s: _count(R(c, "fct_QualityItem", s, lambda r: r["IsOpen"] is True
+                                                   and _eq(r["ItemType"], "Observation"))),
+        "Open Punch Items": lambda c, s: _count(R(c, "fct_QualityItem", s, lambda r: r["IsOpen"] is True
+                                                  and _eq(r["ItemType"], "PunchItem"))),
     })
     # Month end: the last capture in the filter context, BLANK when there is none.
     def month_end(column):

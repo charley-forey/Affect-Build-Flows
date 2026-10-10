@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "ed96c9a5ea480118689e",
+  "position": {
+    "x": 860,
+    "y": 422,
+    "z": 0,
+    "width": 400,
+    "height": 36,
+    "tabOrder": 34
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "The one manual input. Daily reports: coming soon.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'The one manual input. Daily reports: coming soon.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

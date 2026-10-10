@@ -287,6 +287,19 @@ MEASURES = [
      '"$#,0"', "derived - approved COs, the complement of [Pending Change Orders]"),
     ("Change Order Amount", "SUM ( fct_ChangeOrder[Amount] )", '"$#,0"',
      "change-order grain; responds to status and item filters"),
+    # The Project Scorecard tile, as the 2026-10-09 call described it: how many are open,
+    # how old on average, and how many are past 30 days - the average alone hides the two
+    # sitting out at 90. Current state (DaysOpen is to today), like the CO table.
+    ("Outstanding CO Count",
+     "COALESCE ( CALCULATE ( COUNTROWS ( fct_ChangeOrder ), fct_ChangeOrder[IsPending] = TRUE ), 0 )",
+     '"#,0"', "derived - pending change orders, counted"),
+    ("Avg CO Days Open",
+     "AVERAGEX ( FILTER ( fct_ChangeOrder, fct_ChangeOrder[IsPending] ), fct_ChangeOrder[DaysOpen] )",
+     '"#,0"', "derived - mean age of pending change orders"),
+    ("COs Over 30 Days",
+     "COALESCE ( CALCULATE ( COUNTROWS ( fct_ChangeOrder ), fct_ChangeOrder[IsPending] = TRUE, "
+     "fct_ChangeOrder[DaysOpen] > 30 ), 0 )",
+     '"#,0"', "derived - pending change orders open more than 30 days"),
     # AS OF THE LAST SNAPSHOT. fct_BudgetLine is one current-state snapshot keyed to the
     # ingestion month, so a month slicer used to blank every budget card while contract and
     # billing cards beside them still showed values. REMOVEFILTERS(dim_Date) makes the
@@ -584,6 +597,16 @@ MEASURES = [
      "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), "
      "fct_QualityItem[IsOpen] = TRUE ), 0 )",
      '"#,0"', "observations and punch items still outstanding"),
+    # BLANK, not 0, when none are open - like [Open Submittals], and like the month-end
+    # capture that test_validation holds these equal to.
+    ("Open Observations",
+     "CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsOpen] = TRUE, "
+     "fct_QualityItem[ItemType] = \"Observation\" )",
+     '"#,0"', "Procore observations still open - today, not month end"),
+    ("Open Punch Items",
+     "CALCULATE ( COUNTROWS ( fct_QualityItem ), fct_QualityItem[IsOpen] = TRUE, "
+     "fct_QualityItem[ItemType] = \"PunchItem\" )",
+     '"#,0"', "Procore punch items still open - today, not month end"),
     ("Quality Items Past Due",
      "COALESCE ( CALCULATE ( COUNTROWS ( fct_QualityItem ), "
      "fct_QualityItem[IsPastDue] = TRUE ), 0 )",

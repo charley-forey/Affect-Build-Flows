@@ -33,6 +33,11 @@ table dim_ScorecardWeight
 		sourceColumn: EffectiveTo
 		formatString: yyyy-mm-dd
 
+	column Pillar
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Pillar
+
 	partition dim_ScorecardWeight = entity
 		mode: directLake
 		source

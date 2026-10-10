@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "c30a1e3fa8efc7401c7e",
+  "position": {
+    "x": 20,
+    "y": 388,
+    "z": 0,
+    "width": 400,
+    "height": 32,
+    "tabOrder": 27
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Safety",
+                    "textStyle": {
+                      "fontSize": "13pt",
+                      "color": "#252423",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Safety'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

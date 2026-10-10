@@ -308,7 +308,7 @@ def test_report_refs() -> None:
     assert not broken, "report references fields the model does not have:\n  " + "\n  ".join(
         sorted(set(broken))
     )
-    minimum = 50 if "--qc" in sys.argv else 100
+    minimum = 30 if "--scorecard" in sys.argv else 50 if "--qc" in sys.argv else 100
     assert len(seen) > minimum, f"only {len(seen)} refs found - the pattern stopped matching"
     print(f"  {len(seen)} field references, all resolve against the model")
 
@@ -548,6 +548,8 @@ def test_load_contract() -> None:
 
 
 if __name__ == "__main__":
+    if "--scorecard" in sys.argv:
+        import deploy_report_scorecard  # noqa: F401 - same model; swaps in its own pages
     test_load_contract()
     test_export_screening()
     test_observation_close_duration()
@@ -557,9 +559,9 @@ if __name__ == "__main__":
     test_report()
     test_text_fit()
     test_report_refs()
-    if "--qc" not in sys.argv:
+    if "--qc" in sys.argv:
+        test_qc_disclosures()
+    elif "--scorecard" not in sys.argv:
         test_schedule_grain()
         test_report_formats()
-    else:
-        test_qc_disclosures()
     print("report checks passed")

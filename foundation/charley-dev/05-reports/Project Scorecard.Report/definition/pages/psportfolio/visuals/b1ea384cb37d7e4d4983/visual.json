@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "b1ea384cb37d7e4d4983",
+  "position": {
+    "x": 640,
+    "y": 528,
+    "z": 0,
+    "width": 620,
+    "height": 128,
+    "tabOrder": 16
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Coming soon - not scored until the data can be verified: profitability (needs agreed margin bands), daily reports (Procore daily logs being parsed), client satisfaction, meeting agendas sent 24 hours ahead, 3-week look-ahead updates, and subcontractor insurance compliance from the carrier's verification report.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#605E5C",
+                      "fontWeight": "normal"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Coming soon - not scored until the data can be verified: profitability (needs agreed margin bands), daily reports (Procore daily logs being parsed), client satisfaction, meeting agendas sent 24 hours ahead, 3-week look-ahead updates, and subcontractor insurance compliance from the carrier''s verification report.'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

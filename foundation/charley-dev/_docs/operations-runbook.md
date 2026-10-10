@@ -128,7 +128,7 @@ Run from `_local/`, each with `--apply`, and stop at the first non-zero exit:
 7. `deploy_dq.py`: run the gate and confirm the result matches the candidate. Exits
    non-zero on a Failed, Cancelled or Deduped run.
 8. `deploy_model.py`, then `deploy_model_qc.py`
-9. `deploy_report.py`, then `deploy_report_qc.py`
+9. `deploy_report.py`, then `deploy_report_qc.py`, then `deploy_report_scorecard.py`
 10. `deploy_publish.py --apply`: the Publish Models notebook. An out-of-band publish is
     `deploy_publish.py --apply --run`. Only do it after a passing gate.
 11. `deploy_pipeline.py --apply`: the nightly pipeline, including Publish Models after the

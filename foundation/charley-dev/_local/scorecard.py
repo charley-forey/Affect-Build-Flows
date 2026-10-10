@@ -90,6 +90,9 @@ CATEGORY_MEASURES = [
     (DAILY, "Score - Daily Reports"),
 ]
 
+# A project below target on this many categories is flagged, whatever its weighted rank.
+ATTENTION_CATEGORIES = 2
+
 _SWITCH = "\n".join(
     f"            {key}, [{name}],"
     for key, name in CATEGORY_MEASURES
@@ -367,5 +370,65 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             ") )",
             None,
             "derived - the band the driver fell in, in the seed table's own words",
+        ),
+
+        # -- the Project Scorecard report: rank, re-rank by pillar, flag ----------
+        #
+        # The 2026-10-09 ask: stack-rank every project, then "show me just schedule" without
+        # leaving the page. A slicer on dim_ScorecardWeight[Pillar] narrows the categories,
+        # and this score is computed over whatever categories survive the filter - so with
+        # no pillar selected it IS [Project Scorecard (Measured Only)], the same SWITCH, and
+        # cannot disagree with it. Rescaled to measured weight for the same reason.
+        (
+            "Pillar Score",
+            "VAR T =\n"
+            "    ADDCOLUMNS (\n"
+            "        dim_ScorecardWeight,\n"
+            '        "@S",\n'
+            "        SWITCH (\n"
+            "            dim_ScorecardWeight[CategoryKey],\n"
+            f"{_SWITCH}\n"
+            "            BLANK ()\n"
+            "        )\n"
+            "    )\n"
+            "VAR Measured = SUMX ( FILTER ( T, NOT ISBLANK ( [@S] ) ), dim_ScorecardWeight[Weight] )\n"
+            "RETURN IF ( Measured > 0, DIVIDE ( SUMX ( T, [@S] * dim_ScorecardWeight[Weight] ), 3 * Measured ) )",
+            '"0.00"',
+            "derived - [Project Scorecard (Measured Only)] over the selected pillars",
+        ),
+        (
+            "Project Rank",
+            # Dense, highest score first; BLANK for a project with nothing measured, so an
+            # uninstrumented job is not ranked last as if it were failing.
+            "IF ( ISBLANK ( [Pillar Score] ), BLANK (),\n"
+            "RANKX ( ALLSELECTED ( dim_Project[ProjectName] ), [Pillar Score], , DESC, DENSE ) )",
+            '"#,0"',
+            "no workbook equivalent - one workbook per project cannot rank them",
+        ),
+        (
+            "Categories Below Target",
+            # Measured categories scoring under 3, across all nine whatever the pillar
+            # slicer says: "mediocre on three things" is a whole-project signal.
+            "SUMX (\n"
+            "    ALL ( dim_ScorecardWeight ),\n"
+            "    VAR S =\n"
+            "        SWITCH (\n"
+            "            dim_ScorecardWeight[CategoryKey],\n"
+            f"{_SWITCH}\n"
+            "            BLANK ()\n"
+            "        )\n"
+            "    RETURN IF ( NOT ISBLANK ( S ) && S < 3, 1, 0 )\n"
+            ")",
+            '"#,0"',
+            "derived - the 2026-10-09 'mediocre on several metrics' signal",
+        ),
+        (
+            "Needs Attention",
+            # Text, never colour alone. A project can rank mid-pack on the weighted sum while
+            # slipping on several categories at once; the call asked for that to stand out.
+            # ponytail: threshold is a constant; move it to a seed row if Affect retunes it.
+            f'IF ( [Categories Below Target] >= {ATTENTION_CATEGORIES}, "Needs attention" )',
+            None,
+            "derived - flags projects below target on several categories",
         ),
     ]
