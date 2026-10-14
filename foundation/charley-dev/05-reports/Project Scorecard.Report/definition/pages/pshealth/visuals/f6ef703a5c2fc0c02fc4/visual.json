@@ -3,11 +3,11 @@
   "name": "f6ef703a5c2fc0c02fc4",
   "position": {
     "x": 20,
-    "y": 60,
+    "y": 70,
     "z": 0,
     "width": 1240,
-    "height": 44,
-    "tabOrder": 12
+    "height": 34,
+    "tabOrder": 13
   },
   "visual": {
     "visualType": "textbox",
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "One project, opened from the Portfolio. Details opens the records behind a section. The rating is the bonus-policy tier; safety or quality below target caps it at Needs Improvement.",
+                    "value": "Select the project name above to enable Details, or right-click it and choose Drill through. Safety or quality below target caps the rating at Needs Improvement.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'One project, opened from the Portfolio. Details opens the records behind a section. The rating is the bonus-policy tier; safety or quality below target caps it at Needs Improvement.'"
+                  "Value": "'Select the project name above to enable Details, or right-click it and choose Drill through. Safety or quality below target caps the rating at Needs Improvement.'"
                 }
               }
             }

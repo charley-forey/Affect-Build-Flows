@@ -118,6 +118,11 @@ RATING_TIERS = [  # (minimum score, rating, multiplier %)
 GATE_CATEGORIES = ("Score - Safety Incidents", "Score - Observations")
 GATE_RATING = "Needs Improvement"
 
+# A project is scored, ranked and rated only once this share of the weight is measured.
+# Found live 2026-10-14: City Harvest, measured on one category (12%), ranked first as
+# "Outstanding" because the measured-only score rescales whatever little there is.
+MIN_COVERAGE = 0.5
+
 _SWITCH = "\n".join(
     f"            {key}, [{name}],"
     for key, name in CATEGORY_MEASURES
@@ -475,7 +480,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "        )\n"
             "    )\n"
             "VAR Measured = SUMX ( FILTER ( T, NOT ISBLANK ( [@S] ) ), dim_ScorecardWeight[Weight] )\n"
-            "RETURN IF ( Measured > 0, DIVIDE ( SUMX ( T, [@S] * dim_ScorecardWeight[Weight] ), 3 * Measured ) )",
+            f"RETURN IF ( Measured > 0 && [Scorecard Coverage %] >= {MIN_COVERAGE},\n"
+            "    DIVIDE ( SUMX ( T, [@S] * dim_ScorecardWeight[Weight] ), 3 * Measured ) )",
             '"0.00"',
             "derived - [Project Scorecard (Measured Only)] over the selected pillars",
         ),
@@ -543,7 +549,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             + "".join(f"        S >= {lo}, {mult},\n" for lo, _, mult in RATING_TIERS[:-1])
             + f"        {RATING_TIERS[-1][2]} )\n"
             f"VAR Cap = {next(m for _, r, m in RATING_TIERS if r == GATE_RATING)}\n"
-            "RETURN IF ( NOT ISBLANK ( S ),\n"
+            f"RETURN IF ( NOT ISBLANK ( S ) && [Scorecard Coverage %] >= {MIN_COVERAGE},\n"
             "    DIVIDE ( IF ( [Safety Quality Gate], MIN ( M, Cap ), M ), 100 ) )",
             '"0%"',
             "Bonus policy p.1 - performance score tier multiplier (cut-offs proposed)",
@@ -551,7 +557,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         (
             "Performance Rating",
             "VAR M = [Bonus Multiplier %] * 100\n"
-            "RETURN IF ( NOT ISBLANK ( M ),\n"
+            # "Not enough data" rather than blank: a measured-but-thin project is a different
+            # finding from one with no data at all.
+            "RETURN IF ( ISBLANK ( M ),\n"
+            '    IF ( [Scorecard Coverage %] > 0, "Not enough data" ),\n'
             "    SWITCH ( TRUE (),\n"
             + "".join(f'        M >= {mult - 0.5}, "{rating}",\n' for _, rating, mult in RATING_TIERS[:-1])
             + f'        "{RATING_TIERS[-1][1]}" ) )',

@@ -61,6 +61,14 @@ not supply.
     - **Project Detail:** the drill-through was never offered.
   - The 2026-10-06 run had failed in Build Gold, because Spark lost track of the renamed
     exclusion views. Fixed the same day.
+- **2026-10-14 Project Scorecard live and verified.** Daily-log columns were published, and
+  the coverage rule and project banner were deployed.
+  - `validate_model`: 18/18, 153 measures, 0 differences. `reconcile_live`: no FAIL.
+  - Data-entry flags show live: Embankment Phase III (schedule ended, site active, schedule
+    score 0), 360 Lex 8th & 20th (no daily log for 40 days), 64 Met Oval (no Outbuild schedule).
+  - Browser: Portfolio → drill-through → Project Health → Details → Schedule & Data Entry → Back.
+  - Projects under 50% coverage show "Not enough data" instead of ranking first.
+  - Open: Cal's 13 decisions (Sage-only jobs, Office job, CRS insurance, cut-offs).
 - **Still open:**
   - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
     about 1 of about 942 nightly requests, because Procore is called once per project or

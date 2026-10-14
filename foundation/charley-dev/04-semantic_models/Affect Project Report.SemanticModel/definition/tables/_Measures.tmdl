@@ -1061,7 +1061,8 @@ table _Measures
 			)
 			)
 			VAR Measured = SUMX ( FILTER ( T, NOT ISBLANK ( [@S] ) ), dim_ScorecardWeight[Weight] )
-			RETURN IF ( Measured > 0, DIVIDE ( SUMX ( T, [@S] * dim_ScorecardWeight[Weight] ), 3 * Measured ) )
+			RETURN IF ( Measured > 0 && [Scorecard Coverage %] >= 0.5,
+			DIVIDE ( SUMX ( T, [@S] * dim_ScorecardWeight[Weight] ), 3 * Measured ) )
 		formatString: "0.00"
 		displayFolder: 12 Scorecard
 
@@ -1138,7 +1139,7 @@ table _Measures
 			S >= 0.4, 50,
 			0 )
 			VAR Cap = 50
-			RETURN IF ( NOT ISBLANK ( S ),
+			RETURN IF ( NOT ISBLANK ( S ) && [Scorecard Coverage %] >= 0.5,
 			DIVIDE ( IF ( [Safety Quality Gate], MIN ( M, Cap ), M ), 100 ) )
 		formatString: "0%"
 		displayFolder: 12 Scorecard
@@ -1146,7 +1147,8 @@ table _Measures
 	/// Replaces Bonus policy p.1 - Outstanding / Exceeds / Meets / Needs Improvement / Unacceptable
 	measure 'Performance Rating' =
 			VAR M = [Bonus Multiplier %] * 100
-			RETURN IF ( NOT ISBLANK ( M ),
+			RETURN IF ( ISBLANK ( M ),
+			IF ( [Scorecard Coverage %] > 0, "Not enough data" ),
 			SWITCH ( TRUE (),
 			M >= 149.5, "Outstanding",
 			M >= 114.5, "Exceeds Expectations",

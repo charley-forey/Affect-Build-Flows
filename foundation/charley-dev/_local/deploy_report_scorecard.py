@@ -207,11 +207,19 @@ def page_project() -> tuple[str, list[dict]]:
     return p, [
         textbox(p, "title", "Project Health", 20, 16, 480, 44),
         back(p),
+        # A drill-through button enables only once a data point carrying the drill field is
+        # selected (found live 2026-10-14: every Details button stayed grey, because nothing
+        # on this page showed ProjectName). This one-row banner is that data point.
+        dr.no_totals(visual(p, "banner", "pivotTable", 520, 2, 600, 64,
+               {"Rows": [column("dim_Project", "ProjectName")],
+                "Values": [measure("Performance Rating")]},
+               alt="Matrix. The project this page is showing and its bonus rating. Select the "
+                   "project name to enable the Details buttons, or right-click it to drill "
+                   "through to a section.")),
         textbox(p, "note",
-                "One project, opened from the Portfolio. Details opens the records behind a "
-                "section. The rating is the bonus-policy tier; safety or quality below target "
-                "caps it at Needs Improvement.",
-                20, 56, 1240, 44, size=10, color=MUTED),
+                "Select the project name above to enable Details, or right-click it and choose "
+                "Drill through. Safety or quality below target caps the rating at Needs Improvement.",
+                20, 70, 1240, 34, size=10, color=MUTED),
         *tile(p, "score", "Health score", 0, 0,
               [("Project Scorecard (Measured Only)", "Health score (0-1)"),
                ("Performance Rating", "Bonus rating")], audit),

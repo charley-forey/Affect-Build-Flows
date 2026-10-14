@@ -138,6 +138,9 @@ Every layer has a check, and they run in this order:
    python deploy_report_scorecard.py --apply
    ```
    **Order matters.** A model that references columns gold does not have yet breaks every report on the model.
+   Then **publish at once**: `python deploy_publish.py --apply --run`. Automatic update is off, so new columns stay
+   unloaded until the model is reframed, and every measure that depends on them (24 on 2026-10-14, including
+   Project Scorecard on the Monthly Progress Report) errors in the meantime.
 4. Run `validate_model.py` and `reconcile_live.py`. Then confirm in DAX that, with no pillar filter, `Pillar Score` equals `Project Scorecard (Measured Only)` for every project.
 5. Do a browser check:
    - On the Portfolio, right-click a project and open Project Health.

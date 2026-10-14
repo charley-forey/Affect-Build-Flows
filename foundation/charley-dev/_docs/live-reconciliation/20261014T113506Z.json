@@ -1,0 +1,43 @@
+{
+ "run_at": "2026-10-14T11:35:06.595137+00:00",
+ "target": {
+  "model_id": "4cdfb689-232a-4f33-a6bf-d53e90e8025a",
+  "qc_model_id": "4b208da4-ca20-450d-bb1b-c7e542b5bb2c",
+  "gold_lakehouse": "CD_Gold_Lakehouse",
+  "silver_lakehouse": "CD_Silver_Lakehouse",
+  "bronze_lakehouse": "CD_Bronze_Lakehouse"
+ },
+ "checks": [
+  {
+   "id": "1",
+   "severity": "ERROR",
+   "name": "AR conservation bronze=silver=model",
+   "status": "PASS",
+   "summary": "160 invoices, billed 27,792,578.43 equal across bronze_acrinv = silver_ar_invoices = model_fct_Invoice",
+   "detail": {
+    "layers": {
+     "bronze_acrinv": {
+      "rows": 160,
+      "billed": 27792578.43,
+      "paid": 20939534.73,
+      "balance": 6853043.7
+     },
+     "silver_ar_invoices": {
+      "rows": 160,
+      "billed": 27792578.43,
+      "paid": 20939534.73,
+      "balance": 6853043.7
+     },
+     "model_fct_Invoice": {
+      "rows": 160,
+      "billed": 27792578.43,
+      "paid": 20939534.73,
+      "balance": 6853043.7
+     }
+    }
+   }
+  }
+ ],
+ "failed": [],
+ "warned": []
+}

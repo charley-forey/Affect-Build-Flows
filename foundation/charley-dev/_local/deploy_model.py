@@ -1103,6 +1103,10 @@ def main() -> int:
 
     item = ds.find_item(tok, MODEL_NAME, "SemanticModel")
     print(f"  semantic model id: {item['id']}")
+    # 2026-10-14: the definition deployed, but its new columns stayed unloaded until a
+    # reframe, and every measure built on them errored on both reports in the meantime.
+    print("  NEXT: python deploy_publish.py --apply --run  (automatic update is off; new "
+          "columns and the measures on them stay in error until the model is reframed)")
     return 0
 
 

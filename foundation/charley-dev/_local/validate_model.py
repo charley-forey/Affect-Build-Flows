@@ -416,7 +416,9 @@ def monthly_expected():
         rows = [w for w in c.rows("dim_ScorecardWeight", s) if found.get(w["CategoryKey"]) is not None
                 and (pillar is None or w["Pillar"] == pillar)]
         measured = sum(w["Weight"] for w in rows)
-        return sum(found[w["CategoryKey"]] * w["Weight"] for w in rows) / (3 * measured) if measured > 0 else None
+        if measured <= 0 or (scorecard(c, s, weighted=False) or 0) < scorecard_module.MIN_COVERAGE:
+            return None
+        return sum(found[w["CategoryKey"]] * w["Weight"] for w in rows) / (3 * measured)
 
     today = lambda c: _ts(c.now).date()
     day = lambda v: None if v is None else _ts(v).date()
@@ -453,7 +455,7 @@ def monthly_expected():
 
     def bonus_multiplier(c, s):
         score = E["Project Scorecard (Measured Only)"](c, s)
-        if score is None:
+        if score is None or (scorecard(c, s, weighted=False) or 0) < scorecard_module.MIN_COVERAGE:
             return None
         tiers = scorecard_module.RATING_TIERS
         m = next((mult for low, _, mult in tiers[:-1] if score >= low), tiers[-1][2])
@@ -464,7 +466,7 @@ def monthly_expected():
     def performance_rating(c, s):
         m = bonus_multiplier(c, s)
         if m is None:
-            return None
+            return "Not enough data" if (scorecard(c, s, weighted=False) or 0) > 0 else None
         tiers = scorecard_module.RATING_TIERS
         return next((r for _, r, mult in tiers[:-1] if m * 100 >= mult - 0.5), tiers[-1][1])
 
