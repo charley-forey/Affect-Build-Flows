@@ -5,8 +5,8 @@
     "x": 20,
     "y": 108,
     "z": 0,
-    "width": 600,
-    "height": 548,
+    "width": 1240,
+    "height": 400,
     "tabOrder": 12
   },
   "visual": {
@@ -66,6 +66,62 @@
                       "Entity": "_Measures"
                     }
                   },
+                  "Property": "Financial Score"
+                }
+              },
+              "queryRef": "_Measures.Financial Score",
+              "nativeQueryRef": "Financial Score"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Schedule Score"
+                }
+              },
+              "queryRef": "_Measures.Schedule Score",
+              "nativeQueryRef": "Schedule Score"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Safety & Quality Score"
+                }
+              },
+              "queryRef": "_Measures.Safety & Quality Score",
+              "nativeQueryRef": "Safety & Quality Score"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Reporting Score"
+                }
+              },
+              "queryRef": "_Measures.Reporting Score",
+              "nativeQueryRef": "Reporting Score"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
                   "Property": "Scorecard Coverage %"
                 }
               },
@@ -80,11 +136,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Categories Below Target"
+                  "Property": "Performance Rating"
                 }
               },
-              "queryRef": "_Measures.Categories Below Target",
-              "nativeQueryRef": "Categories Below Target"
+              "queryRef": "_Measures.Performance Rating",
+              "nativeQueryRef": "Performance Rating"
             },
             {
               "field": {
@@ -99,6 +155,20 @@
               },
               "queryRef": "_Measures.Needs Attention",
               "nativeQueryRef": "Needs Attention"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Input Check"
+                }
+              },
+              "queryRef": "_Measures.Input Check",
+              "nativeQueryRef": "Input Check"
             }
           ]
         }
@@ -130,7 +200,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Every project ranked by its weighted health score for the selected pillar, with the share of the score that is measured, how many categories are below target, and a Needs attention flag. Right-click a project to drill through to its records.'"
+                  "Value": "'Table. Every project ranked by its weighted health score for the selected pillar, with one column per pillar, the share of the score that is measured, the bonus-policy rating, a Needs attention flag, and any data-entry problem. Right-click a project to drill through to its health page or a section.'"
                 }
               }
             }
@@ -150,7 +220,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Projects ranked by health score (0-1, highest first)'"
+                  "Value": "'All projects - ranked score, each pillar (0-1), bonus rating and data-entry check'"
                 }
               }
             },
@@ -237,7 +307,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "92D"
+                  "Value": "105D"
                 }
               }
             }
@@ -251,7 +321,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "112D"
+                  "Value": "151D"
                 }
               }
             }
@@ -265,7 +335,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "92D"
+                  "Value": "105D"
                 }
               }
             }
@@ -279,7 +349,63 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "92D"
+                  "Value": "105D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Financial Score"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "105D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Schedule Score"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "105D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Safety & Quality Score"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "105D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Reporting Score"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "105D"
                 }
               }
             }
@@ -293,13 +419,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "96D"
+                  "Value": "116D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Categories Below Target"
+            "metadata": "_Measures.Performance Rating"
           }
         },
         {
@@ -307,13 +433,27 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "92D"
+                  "Value": "105D"
                 }
               }
             }
           },
           "selector": {
             "metadata": "_Measures.Needs Attention"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "105D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Input Check"
           }
         }
       ],

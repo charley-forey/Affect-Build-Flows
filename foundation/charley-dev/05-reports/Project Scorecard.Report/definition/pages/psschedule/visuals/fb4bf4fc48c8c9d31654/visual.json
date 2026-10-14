@@ -1,0 +1,52 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
+  "name": "fb4bf4fc48c8c9d31654",
+  "position": {
+    "x": 20,
+    "y": 16,
+    "z": 0,
+    "width": 600,
+    "height": 44,
+    "tabOrder": 10
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Schedule & Data Entry",
+                    "textStyle": {
+                      "fontSize": "20pt",
+                      "color": "#252423",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "general": [
+        {
+          "properties": {
+            "altText": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Schedule & Data Entry'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

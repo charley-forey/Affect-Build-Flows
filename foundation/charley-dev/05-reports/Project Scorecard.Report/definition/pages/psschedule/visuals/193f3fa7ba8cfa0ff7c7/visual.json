@@ -1,73 +1,115 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "e682c7102f102e53ae61",
+  "name": "193f3fa7ba8cfa0ff7c7",
   "position": {
-    "x": 640,
+    "x": 20,
     "y": 204,
     "z": 0,
-    "width": 620,
-    "height": 312,
-    "tabOrder": 15
+    "width": 760,
+    "height": 452,
+    "tabOrder": 18
   },
   "visual": {
-    "visualType": "pivotTable",
+    "visualType": "tableEx",
     "query": {
       "queryState": {
-        "Rows": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_Project"
-                    }
-                  },
-                  "Property": "ProjectName"
-                }
-              },
-              "queryRef": "dim_Project.ProjectName",
-              "nativeQueryRef": "ProjectName",
-              "displayName": "Project Name"
-            }
-          ]
-        },
-        "Columns": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_ScorecardWeight"
-                    }
-                  },
-                  "Property": "CategoryName"
-                }
-              },
-              "queryRef": "dim_ScorecardWeight.CategoryName",
-              "nativeQueryRef": "CategoryName"
-            }
-          ]
-        },
         "Values": {
           "projections": [
             {
               "field": {
-                "Measure": {
+                "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "_Measures"
+                      "Entity": "fct_Milestone"
                     }
                   },
-                  "Property": "Category Score"
+                  "Property": "MilestoneName"
                 }
               },
-              "queryRef": "_Measures.Category Score",
-              "nativeQueryRef": "Category Score"
+              "queryRef": "fct_Milestone.MilestoneName",
+              "nativeQueryRef": "MilestoneName",
+              "displayName": "Milestone Name"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "CurrentStart"
+                }
+              },
+              "queryRef": "fct_Milestone.CurrentStart",
+              "nativeQueryRef": "CurrentStart",
+              "displayName": "Current Start"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "CurrentFinish"
+                }
+              },
+              "queryRef": "fct_Milestone.CurrentFinish",
+              "nativeQueryRef": "CurrentFinish",
+              "displayName": "Current Finish"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "PercentComplete"
+                }
+              },
+              "queryRef": "fct_Milestone.PercentComplete",
+              "nativeQueryRef": "PercentComplete",
+              "displayName": "Percent Complete"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "IsOverdue"
+                }
+              },
+              "queryRef": "fct_Milestone.IsOverdue",
+              "nativeQueryRef": "IsOverdue",
+              "displayName": "Is Overdue"
             }
           ]
         }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fct_Milestone"
+                  }
+                },
+                "Property": "CurrentFinish"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
       }
     },
     "drillFilterOtherVisuals": true,
@@ -78,7 +120,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Matrix. One row per project, one column per scorecard category, showing each category score out of 3. Blank cells are not measured.'"
+                  "Value": "'Table. Critical-path milestones from Outbuild - latest finish first. Shows MilestoneName, CurrentStart, CurrentFinish, PercentComplete, IsOverdue for the current selection.'"
                 }
               }
             }
@@ -98,7 +140,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Score by category (0-3, blank = not measured)'"
+                  "Value": "'Critical-path milestones from Outbuild - latest finish first'"
                 }
               }
             },
@@ -179,108 +221,78 @@
           }
         }
       ],
-      "rowHeaders": [
+      "columnWidth": [
         {
           "properties": {
-            "fontSize": {
+            "value": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
-                }
-              }
-            },
-            "wordWrap": {
-              "expr": {
-                "Literal": {
-                  "Value": "true"
+                  "Value": "221D"
                 }
               }
             }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.MilestoneName"
           }
-        }
-      ],
-      "subTotals": [
+        },
         {
           "properties": {
-            "rowSubtotals": {
+            "value": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
-                }
-              }
-            },
-            "columnSubtotals": {
-              "expr": {
-                "Literal": {
-                  "Value": "false"
+                  "Value": "128D"
                 }
               }
             }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.CurrentStart"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "128D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.CurrentFinish"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "128D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.PercentComplete"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "128D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_Milestone.IsOverdue"
           }
         }
       ]
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "511f983052e2de5b18b6",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_Project"
-              }
-            },
-            "Property": "ProjectKey"
-          }
-        },
-        "type": "Categorical",
-        "filter": {
-          "Version": 2,
-          "From": [
-            {
-              "Name": "p",
-              "Entity": "dim_Project",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "Not": {
-                  "Expression": {
-                    "In": {
-                      "Expressions": [
-                        {
-                          "Column": {
-                            "Expression": {
-                              "SourceRef": {
-                                "Source": "p"
-                              }
-                            },
-                            "Property": "ProjectKey"
-                          }
-                        }
-                      ],
-                      "Values": [
-                        [
-                          {
-                            "Literal": {
-                              "Value": "'UNMATCHED'"
-                            }
-                          }
-                        ]
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          ]
-        },
-        "howCreated": "User"
-      }
-    ]
   }
 }

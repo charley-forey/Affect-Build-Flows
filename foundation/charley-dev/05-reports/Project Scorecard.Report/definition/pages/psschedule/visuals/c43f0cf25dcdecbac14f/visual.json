@@ -1,33 +1,33 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "de06003d1ea80cb43aa6",
+  "name": "c43f0cf25dcdecbac14f",
   "position": {
-    "x": 768,
-    "y": 4,
+    "x": 20,
+    "y": 108,
     "z": 0,
     "width": 240,
-    "height": 54,
-    "tabOrder": 1
+    "height": 84,
+    "tabOrder": 13
   },
   "visual": {
-    "visualType": "slicer",
+    "visualType": "card",
     "query": {
       "queryState": {
         "Values": {
           "projections": [
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_Project"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "ProjectName"
+                  "Property": "Scheduled Finish"
                 }
               },
-              "queryRef": "dim_Project.ProjectName",
-              "nativeQueryRef": "ProjectName"
+              "queryRef": "_Measures.Scheduled Finish",
+              "nativeQueryRef": "Scheduled Finish"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Slicer. Filters the report by ProjectName.'"
+                  "Value": "'Card. Scheduled finish. Shows Scheduled Finish for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Project'"
+                  "Value": "'Scheduled finish'"
                 }
               }
             },
@@ -94,26 +94,34 @@
         }
       ]
     },
-    "syncGroup": {
-      "groupName": "project",
-      "fieldChanges": false,
-      "filterChanges": true
-    },
     "objects": {
-      "data": [
+      "labels": [
         {
           "properties": {
-            "mode": {
+            "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dropdown'"
+                  "Value": "20D"
                 }
               }
             }
           }
         }
       ],
-      "header": [
+      "categoryLabels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "wordWrap": [
         {
           "properties": {
             "show": {
@@ -127,67 +135,5 @@
         }
       ]
     }
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "f29b0d1208d7c2f5b36d",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_Project"
-              }
-            },
-            "Property": "ProjectKey"
-          }
-        },
-        "type": "Categorical",
-        "filter": {
-          "Version": 2,
-          "From": [
-            {
-              "Name": "p",
-              "Entity": "dim_Project",
-              "Type": 0
-            }
-          ],
-          "Where": [
-            {
-              "Condition": {
-                "Not": {
-                  "Expression": {
-                    "In": {
-                      "Expressions": [
-                        {
-                          "Column": {
-                            "Expression": {
-                              "SourceRef": {
-                                "Source": "p"
-                              }
-                            },
-                            "Property": "ProjectKey"
-                          }
-                        }
-                      ],
-                      "Values": [
-                        [
-                          {
-                            "Literal": {
-                              "Value": "'UNMATCHED'"
-                            }
-                          }
-                        ]
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          ]
-        },
-        "howCreated": "User"
-      }
-    ]
   }
 }

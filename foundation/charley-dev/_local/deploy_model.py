@@ -1014,6 +1014,19 @@ def write_files(lakehouse_id: str, output_dir: Path | None = None,
     return files
 
 
+def missing_columns(files: dict[str, str]) -> list[str]:
+    """table[Column] references in MEASURES that no generated table has.
+
+    The tables come from the LIVE gold schema, the measures from this repo. Deploying a
+    measure before the nightly build has added its column leaves the model referencing a
+    column that does not exist - and every report on the model stops loading. Refuse instead.
+    """
+    cols = {rel.rsplit("/", 1)[1][:-5]: set(re.findall(r"^\tcolumn '?([^'\n]+?)'?$", body, re.M))
+            for rel, body in files.items() if rel.startswith("definition/tables/")}
+    return sorted({f"{t}[{c}]" for m in MEASURES for t, c in re.findall(r"'?\b(\w+)'?\[([^\]]+)\]", m[1])
+                   if t in cols and t != "_Measures" and c not in cols[t]})
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true")
@@ -1027,6 +1040,12 @@ def main() -> int:
     print(f"generated {len(files)} TMDL file(s): {len(tables)} tables, "
           f"{len(MEASURES)} measures, {len(RELATIONSHIPS)} relationships")
     print(f"  written to {MODEL_DIR.relative_to(CHARLEY_DEV)}")
+    missing = missing_columns(files)
+    if missing:
+        print("\nMeasures reference columns the published gold schema does not have yet:\n  "
+              + "\n  ".join(missing) + "\nLet the nightly build add them, then deploy.")
+        if args.apply:
+            return 1
 
     if not args.apply:
         print("\nDRY RUN - written to disk only. Re-run with --apply to deploy.")

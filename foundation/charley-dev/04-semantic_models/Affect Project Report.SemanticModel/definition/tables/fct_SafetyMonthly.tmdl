@@ -46,6 +46,28 @@ table fct_SafetyMonthly
 		summarizeBy: none
 		sourceColumn: HasNoManpowerLog
 
+	column FirstLogDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: FirstLogDate
+		formatString: yyyy-mm-dd
+
+	column LastLogDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: LastLogDate
+		formatString: yyyy-mm-dd
+
+	column WeekdaysLogged
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: WeekdaysLogged
+
+	column DailyLogsMissed
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: DailyLogsMissed
+
 	partition fct_SafetyMonthly = entity
 		mode: directLake
 		source

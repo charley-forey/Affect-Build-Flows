@@ -3,6 +3,7 @@
   "pageOrder": [
     "psportfolio",
     "pshealth",
+    "psschedule",
     "pschangeorders",
     "psquality"
   ],

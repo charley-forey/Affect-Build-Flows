@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deploy_report as dr  # noqa: E402
+import scorecard  # noqa: E402
 
 CHARLEY_DEV = Path(__file__).resolve().parents[1]
 
@@ -32,12 +33,61 @@ textbox, card, visual = dr.textbox, dr.card, dr.visual
 measure, column = dr.measure, dr.column
 MUTED = dr.MUTED
 
+# Text measures shown on cards, at their longest, so the card is sized for the worst case.
+dr.CARD_TEXT_SAMPLES.update({
+    "Input Check": "Schedule ended - site still active",
+    "Performance Rating": "Exceeds Expectations",
+})
+
 COMING_SOON = (
     "Coming soon - not scored until the data can be verified: profitability (needs agreed "
-    "margin bands), daily reports (Procore daily logs being parsed), client satisfaction, "
+    "margin bands), client satisfaction (the Microsoft Forms survey), statutory "
+    "sign-offs and NCRs (Compliance), "
     "meeting agendas sent 24 hours ahead, 3-week look-ahead updates, and subcontractor "
     "insurance compliance from the carrier's verification report."
 )
+
+
+def _text(value: str) -> dict:
+    return {"expr": {"Literal": {"Value": f"'{value}'"}}}
+
+
+def button(page: str, key: str, text: str, x, y, w, h, action: str,
+           target: str | None = None) -> dict:
+    """A button that navigates: 'Back', or 'Drillthrough' to a section page.
+
+    A drill-through button carries the project the page is already filtered to, so Project
+    Health -> Schedule & Data Entry keeps the job without a slicer. Right-click drill-through
+    on the Portfolio table reaches every section page too, so a button is a shortcut, never
+    the only way in.
+    """
+    link = {"show": dr._ON, "type": _text(action)}
+    if target:
+        link["drillthroughSection"] = _text(target)
+    return {
+        "$schema": f"{dr.SCHEMA}/visualContainer/1.0.0/schema.json",
+        "name": dr.oid(page, key),
+        "position": {"x": x, "y": y, "z": 0, "width": w, "height": h},
+        "visual": {
+            "visualType": "actionButton",
+            "objects": {
+                "icon": [{"properties": {"show": dr._OFF}}],
+                "text": [{"properties": {"show": dr._ON}},
+                         {"properties": {"text": _text(text), "fontSize": dr._num(10)},
+                          "selector": {"id": "default"}}],
+            },
+            "visualContainerObjects": {
+                "visualLink": [{"properties": link}],
+                "general": [{"properties": {"altText": dr.lit(
+                    "Button. Opens the details behind this section for this project." if target
+                    else "Button. Returns to the previous page.")}}],
+            },
+        },
+    }
+
+
+def back(page: str) -> dict:
+    return button(page, "back", "< Back", 1140, 16, 120, 32, "Back")
 
 
 def pillar_slicer(page: str) -> dict:
@@ -57,43 +107,38 @@ def pillar_slicer(page: str) -> dict:
 
 
 def page_portfolio() -> tuple[str, list[dict]]:
-    """Every project, stack-ranked. The page leadership opens first."""
+    """Every project on one table, the page leadership opens first - and the top of the
+    hierarchy: right-click a project to open its Project Health page or any section."""
     p = "psportfolio"
     rank = dr.exclude_unmatched(dr.no_totals(dr.sort_desc(
-        visual(p, "ranking", "tableEx", 20, 108, 600, 548,
+        visual(p, "ranking", "tableEx", 20, 108, 1240, 400,
                {"Values": [measure("Project Rank"),
                            column("dim_Project", "ProjectName"),
                            measure("Pillar Score"),
+                           *[measure(f"{x} Score") for x in scorecard.PILLARS],
                            measure("Scorecard Coverage %"),
-                           measure("Categories Below Target"),
-                           measure("Needs Attention")]},
-               title="Projects ranked by health score (0-1, highest first)",
+                           measure("Performance Rating"),
+                           measure("Needs Attention"),
+                           measure("Input Check")]},
+               title="All projects - ranked score, each pillar (0-1), bonus rating and data-entry check",
                alt="Table. Every project ranked by its weighted health score for the selected "
-                   "pillar, with the share of the score that is measured, how many categories "
-                   "are below target, and a Needs attention flag. Right-click a project to "
-                   "drill through to its records."),
+                   "pillar, with one column per pillar, the share of the score that is measured, "
+                   "the bonus-policy rating, a Needs attention flag, and any data-entry problem. "
+                   "Right-click a project to drill through to its health page or a section."),
         measure("Pillar Score"))))
     return p, [
         textbox(p, "title", "Portfolio Scorecard", 20, 16, 480, 44),
         pillar_slicer(p),
         textbox(p, "note",
-                "Pick a pillar to re-rank by that part of the score only. Needs attention means "
-                "two or more categories below target, whatever the rank. Blank means not "
-                "measured, never zero. Right-click a project to see its records.",
+                "Right-click a project and choose Drill through to open it. Pick a pillar to "
+                "re-rank by that part only. Blank means not measured, never zero. Rating "
+                "cut-offs are proposed until the scorecard workshop confirms them.",
                 20, 56, 1240, 44, size=10, color=MUTED),
         rank,
-        card(p, "k_reporting", "Projects Reporting", 640, 108, 300, 84),
-        card(p, "k_risk", "Projects At Risk", 960, 108, 300, 84,
+        card(p, "k_reporting", "Projects Reporting", 20, 520, 300, 84),
+        card(p, "k_risk", "Projects At Risk", 332, 520, 300, 84,
              title="Projects at risk (score below 0.60)"),
-        # What is pulling each project down: same SWITCH as the rank, one cell per category.
-        dr.exclude_unmatched(dr.no_totals(visual(p, "heatmap", "pivotTable", 640, 204, 620, 312,
-               {"Rows": [column("dim_Project", "ProjectName")],
-                "Columns": [column("dim_ScorecardWeight", "CategoryName")],
-                "Values": [measure("Category Score")]},
-               title="Score by category (0-3, blank = not measured)",
-               alt="Matrix. One row per project, one column per scorecard category, showing "
-                   "each category score out of 3. Blank cells are not measured."))),
-        textbox(p, "coming", COMING_SOON, 640, 528, 620, 128, size=10, color=MUTED),
+        textbox(p, "coming", COMING_SOON, 644, 520, 616, 136, size=10, color=MUTED),
     ]
 
 
@@ -110,7 +155,8 @@ def tile(p: str, key: str, heading: str, col: int, row: int,
          cards: list[tuple[str, str]], body=None) -> list[dict]:
     """A section tile: heading, up to two cards a row, then `body(x, y, w, h)` below."""
     x, y = COLS[col], ROWS[row]
-    out = [textbox(p, f"{key}_h", heading, x, y, TILE_W, 32, size=13)]
+    # Short of the full width: the right 104px holds the tile's Details button.
+    out = [textbox(p, f"{key}_h", heading, x, y, TILE_W - 104, 32, size=13)]
     cy = y + 34
     for i in range(0, len(cards), 2):
         for j, (name, title) in enumerate(cards[i:i + 2]):
@@ -149,24 +195,30 @@ def page_project() -> tuple[str, list[dict]]:
         title="Open items, oldest first"), column("fct_QualityItem", "DaysOpen")),
         "fct_QualityItem", "IsOpen")
     challenges = lambda x, y, w, h: visual(  # noqa: E731
-        p, "challenges", "tableEx", x, y + 40, w, h - 40,
+        p, "challenges", "tableEx", x, y, w, h,
         {"Values": [column("man_Risks", "Description"),
                     column("man_Risks", "Mitigation")]},
         title="Biggest challenges on site - from the team")
 
+    def go(key: str, col: int, row: int, target: str) -> dict:
+        return button(p, f"{key}_go", "Details >", COLS[col] + TILE_W - 100, ROWS[row], 100, 28,
+                      "Drillthrough", target)
+
     return p, [
         textbox(p, "title", "Project Health", 20, 16, 480, 44),
+        back(p),
         textbox(p, "note",
-                "Pick one project in the Project slicer; with none picked, every figure blends "
-                "the whole portfolio. Right-click the project in a table to drill through to "
-                "its change orders or open quality items.",
+                "One project, opened from the Portfolio. Details opens the records behind a "
+                "section. The rating is the bonus-policy tier; safety or quality below target "
+                "caps it at Needs Improvement.",
                 20, 56, 1240, 44, size=10, color=MUTED),
         *tile(p, "score", "Health score", 0, 0,
               [("Project Scorecard (Measured Only)", "Health score (0-1)"),
-               ("Scorecard Coverage %", "Share measured")], audit),
+               ("Performance Rating", "Bonus rating")], audit),
         *tile(p, "schedule", "Schedule", 1, 0,
-              [("Completion Variance Days", "Finish vs baseline, days"),
+              [("Scheduled Finish", "Scheduled finish"),
                ("Milestones Overdue %", "Milestones overdue")], milestones),
+        go("schedule", 1, 0, "psschedule"),
         *tile(p, "financial", "Financial", 2, 0,
               [("AR Outstanding", "AR outstanding"),
                ("Avg Days To Payment", "Avg days to payment"),
@@ -174,16 +226,49 @@ def page_project() -> tuple[str, list[dict]]:
                ("COs Over 30 Days", "Open over 30 days"),
                ("Avg CO Days Open", "Avg CO days open"),
                ("Cash Position %", "Cash position")]),
+        go("financial", 2, 0, "pschangeorders"),
         *tile(p, "safety", "Safety", 0, 1,
               [("Recordable Incidents", "Recordable incidents"),
                ("Hours Worked", "Hours worked")], safety),
         *tile(p, "quality", "Quality", 1, 1,
               [("Open Observations", "Open observations"),
                ("Open Punch Items", "Open punch items")], quality),
-        *tile(p, "challenge", "Challenges & reporting", 2, 1, [], challenges),
-        textbox(p, "challenge_note",
-                "The one manual input. Daily reports: coming soon.",
-                COLS[2], ROWS[1] + 34, TILE_W, 36, size=10, color=MUTED),
+        go("quality", 1, 1, "psquality"),
+        *tile(p, "challenge", "Data entry & challenges", 2, 1,
+              [("Input Check", "Data-entry check"),
+               ("Days Since Daily Log", "Days since daily log")], challenges),
+        go("inputs", 2, 1, "psschedule"),
+    ]
+
+
+def page_schedule() -> tuple[str, list[dict]]:
+    """Drill-through: is the schedule still true, and is the site filing its daily logs?"""
+    p = "psschedule"
+    return p, [
+        textbox(p, "title", "Schedule & Data Entry", 20, 16, 600, 44),
+        back(p),
+        textbox(p, "note",
+                "A schedule that has run out while the site is still logging or closing punch "
+                "items scores 0 on Schedule Performance until it is updated. Daily reports "
+                "missed = weekdays with no Procore daily log between the month's first and last log.",
+                20, 56, 1240, 44, size=10, color=MUTED),
+        card(p, "k_finish", "Scheduled Finish", 20, 108, 240, 84, title="Scheduled finish"),
+        card(p, "k_last", "Last Daily Log", 272, 108, 240, 84, title="Last daily log"),
+        card(p, "k_since", "Days Since Daily Log", 524, 108, 240, 84, title="Days since daily log"),
+        card(p, "k_missed", "Daily Reports Missed", 776, 108, 240, 84, title="Daily reports missed"),
+        card(p, "k_check", "Input Check", 1028, 108, 232, 84, title="Data-entry check"),
+        dr.sort_desc(visual(p, "list", "tableEx", 20, 204, 760, 452,
+               {"Values": [column("fct_Milestone", "MilestoneName"),
+                           column("fct_Milestone", "CurrentStart"),
+                           column("fct_Milestone", "CurrentFinish"),
+                           column("fct_Milestone", "PercentComplete"),
+                           column("fct_Milestone", "IsOverdue")]},
+               title="Critical-path milestones from Outbuild - latest finish first"),
+            column("fct_Milestone", "CurrentFinish")),
+        visual(p, "missed", "columnChart", 800, 204, 460, 452,
+               {"Category": [column("dim_Date", "MonthYear")],
+                "Y": [measure("Daily Reports Missed")]},
+               title="Daily reports missed by month"),
     ]
 
 
@@ -192,6 +277,7 @@ def page_change_orders() -> tuple[str, list[dict]]:
     p = "pschangeorders"
     return p, [
         textbox(p, "title", "Change Orders", 20, 16, 600, 44),
+        back(p),
         textbox(p, "note",
                 "Pending change orders for the project you drilled from, oldest first. The "
                 "average can hide one sitting out at 90 days; this list cannot.",
@@ -216,6 +302,7 @@ def page_quality() -> tuple[str, list[dict]]:
     p = "psquality"
     return p, [
         textbox(p, "title", "Open Quality Items", 20, 16, 600, 44),
+        back(p),
         textbox(p, "note",
                 "Open Procore observations and punch items for the project you drilled from, "
                 "oldest first. Past due means open beyond its due date.",
@@ -239,11 +326,14 @@ def page_quality() -> tuple[str, list[dict]]:
 
 dr.PAGES = [
     ("Portfolio Scorecard", page_portfolio, False),
-    ("Project Health", page_project, False),
+    ("Project Health", page_project, True),
+    ("Schedule & Data Entry", page_schedule, True),
     ("Change Orders", page_change_orders, True),
     ("Open Quality Items", page_quality, True),
 ]
 dr.DRILLTHROUGH = {
+    "pshealth": ("dim_Project", "ProjectName"),
+    "psschedule": ("dim_Project", "ProjectName"),
     "pschangeorders": ("dim_Project", "ProjectName"),
     "psquality": ("dim_Project", "ProjectName"),
 }

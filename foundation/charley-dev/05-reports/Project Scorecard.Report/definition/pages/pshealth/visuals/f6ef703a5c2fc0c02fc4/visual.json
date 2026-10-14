@@ -7,7 +7,7 @@
     "z": 0,
     "width": 1240,
     "height": 44,
-    "tabOrder": 11
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "textbox",
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Pick one project in the Project slicer; with none picked, every figure blends the whole portfolio. Right-click the project in a table to drill through to its change orders or open quality items.",
+                    "value": "One project, opened from the Portfolio. Details opens the records behind a section. The rating is the bonus-policy tier; safety or quality below target caps it at Needs Improvement.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Pick one project in the Project slicer; with none picked, every figure blends the whole portfolio. Right-click the project in a table to drill through to its change orders or open quality items.'"
+                  "Value": "'One project, opened from the Portfolio. Details opens the records behind a section. The rating is the bonus-policy tier; safety or quality below target caps it at Needs Improvement.'"
                 }
               }
             }

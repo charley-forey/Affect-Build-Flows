@@ -7,7 +7,7 @@
     "z": 0,
     "width": 194,
     "height": 76,
-    "tabOrder": 16
+    "tabOrder": 19
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Scorecard Coverage %"
+                  "Property": "Performance Rating"
                 }
               },
-              "queryRef": "_Measures.Scorecard Coverage %",
-              "nativeQueryRef": "Scorecard Coverage %"
+              "queryRef": "_Measures.Performance Rating",
+              "nativeQueryRef": "Performance Rating"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Share measured. Shows Scorecard Coverage % for the current selection.'"
+                  "Value": "'Card. Bonus rating. Shows Performance Rating for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Share measured'"
+                  "Value": "'Bonus rating'"
                 }
               }
             },
@@ -101,7 +101,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "20D"
+                  "Value": "11D"
                 }
               }
             }
@@ -127,7 +127,7 @@
             "show": {
               "expr": {
                 "Literal": {
-                  "Value": "false"
+                  "Value": "true"
                 }
               }
             }

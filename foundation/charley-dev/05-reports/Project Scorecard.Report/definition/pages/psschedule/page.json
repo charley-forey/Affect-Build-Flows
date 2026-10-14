@@ -1,0 +1,48 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "psschedule",
+  "displayName": "Schedule & Data Entry",
+  "displayOption": "FitToPage",
+  "height": 720,
+  "width": 1280,
+  "visibility": "HiddenInViewMode",
+  "pageBinding": {
+    "name": "psschedule_binding",
+    "type": "Drillthrough",
+    "parameters": [
+      {
+        "name": "ProjectName",
+        "boundFilter": "psschedule_drill",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_Project"
+              }
+            },
+            "Property": "ProjectName"
+          }
+        }
+      }
+    ]
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "psschedule_drill",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_Project"
+              }
+            },
+            "Property": "ProjectName"
+          }
+        },
+        "type": "Categorical",
+        "howCreated": "Drillthrough"
+      }
+    ]
+  }
+}

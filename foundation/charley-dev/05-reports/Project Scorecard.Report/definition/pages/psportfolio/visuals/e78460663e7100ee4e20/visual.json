@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Pick a pillar to re-rank by that part of the score only. Needs attention means two or more categories below target, whatever the rank. Blank means not measured, never zero. Right-click a project to see its records.",
+                    "value": "Right-click a project and choose Drill through to open it. Pick a pillar to re-rank by that part only. Blank means not measured, never zero. Rating cut-offs are proposed until the scorecard workshop confirms them.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Pick a pillar to re-rank by that part of the score only. Needs attention means two or more categories below target, whatever the rank. Blank means not measured, never zero. Right-click a project to see its records.'"
+                  "Value": "'Right-click a project and choose Drill through to open it. Pick a pillar to re-rank by that part only. Blank means not measured, never zero. Rating cut-offs are proposed until the scorecard workshop confirms them.'"
                 }
               }
             }

@@ -4,5 +4,45 @@
   "displayName": "Project Health",
   "displayOption": "FitToPage",
   "height": 720,
-  "width": 1280
+  "width": 1280,
+  "visibility": "HiddenInViewMode",
+  "pageBinding": {
+    "name": "pshealth_binding",
+    "type": "Drillthrough",
+    "parameters": [
+      {
+        "name": "ProjectName",
+        "boundFilter": "pshealth_drill",
+        "fieldExpr": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_Project"
+              }
+            },
+            "Property": "ProjectName"
+          }
+        }
+      }
+    ]
+  },
+  "filterConfig": {
+    "filters": [
+      {
+        "name": "pshealth_drill",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_Project"
+              }
+            },
+            "Property": "ProjectName"
+          }
+        },
+        "type": "Categorical",
+        "howCreated": "Drillthrough"
+      }
+    ]
+  }
 }

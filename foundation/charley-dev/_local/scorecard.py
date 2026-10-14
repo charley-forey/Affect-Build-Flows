@@ -93,6 +93,31 @@ CATEGORY_MEASURES = [
 # A project below target on this many categories is flagged, whatever its weighted rank.
 ATTENTION_CATEGORIES = 2
 
+# Pillars shown as side-by-side columns on the Portfolio table. Names match
+# dim_ScorecardWeight[Pillar]; a pillar the workshop adds gets a line here.
+PILLARS = ["Financial", "Schedule", "Safety & Quality", "Reporting"]
+
+# Data-entry checks (Cal Egan, 2026-10-13: "ensuring the data is actually inputted").
+# A project whose schedule says it should be on site but has no daily log for this many
+# calendar days is flagged.
+DAILY_LOG_GRACE_DAYS = 7
+
+# Performance Bonus & Incentive Policy (FY2026): the project score feeds the rating tier,
+# and the tier sets the multiplier. The policy names the tiers and multipliers but not the
+# score cut-offs, so these minimums are PROPOSED - 0.60 is the existing at-risk line.
+# ponytail: constants until the workshop confirms them; then a seed table like the bands.
+RATING_TIERS = [  # (minimum score, rating, multiplier %)
+    (0.90, "Outstanding", 150),
+    (0.75, "Exceeds Expectations", 115),
+    (0.60, "Meets Expectations", 100),
+    (0.40, "Needs Improvement", 50),
+    (0.00, "Unacceptable", 0),
+]
+# Policy: "A project will be rated as Needs Improvement if either Safety or Quality is
+# subpar." Subpar = below target (under 3) on Safety Incidents or Observations.
+GATE_CATEGORIES = ("Score - Safety Incidents", "Score - Observations")
+GATE_RATING = "Needs Improvement"
+
 _SWITCH = "\n".join(
     f"            {key}, [{name}],"
     for key, name in CATEGORY_MEASURES
@@ -173,9 +198,64 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Daily Reports Missed",
-            "SUM ( man_DailyLogCompliance[LogsMissedSameDay] )",
+            # FROM PROCORE now, not the hand-typed man_DailyLogCompliance list (still empty).
+            # Weekdays with no daily log between the month's first and last log - see
+            # 26_fct_safetymonthly.sql. BLANK for a month with no logs at all: unmeasured.
+            "SUM ( fct_SafetyMonthly[DailyLogsMissed] )",
             '"#,0"',
-            "SCORECARD CALC!E28 - Procore /daily_log_headers derives this",
+            "SCORECARD CALC!E28 - now Procore daily logs (manpower entries), not typed",
+        ),
+        (
+            "Last Daily Log",
+            # Whatever the month slicer says: "when did this site last file a log" is a
+            # question about today.
+            "CALCULATE ( MAX ( fct_SafetyMonthly[LastLogDate] ), REMOVEFILTERS ( dim_Date ) )",
+            '"yyyy-mm-dd"',
+            "no workbook equivalent - data-entry check",
+        ),
+        (
+            "Days Since Daily Log",
+            "VAR L = [Last Daily Log]\n"
+            "RETURN IF ( NOT ISBLANK ( L ), DATEDIFF ( L, TODAY (), DAY ) )",
+            '"#,0"',
+            "no workbook equivalent - data-entry check",
+        ),
+        (
+            "Scheduled Finish",
+            # The last critical-path finish in Outbuild: when the schedule says the job ends.
+            "CALCULATE ( MAX ( fct_Milestone[CurrentFinish] ), REMOVEFILTERS ( dim_Date ) )",
+            '"yyyy-mm-dd"',
+            "SCHEDULE!Table5 terminator row - from Outbuild",
+        ),
+        (
+            "Schedule Ended Site Active",
+            # Cal Egan, 2026-10-13: the schedule "runs out to completion but daily logs and
+            # punchlist items are still being completed". The schedule has stopped being
+            # true, so it must not keep scoring 3/3 on milestones it marked done.
+            "VAR F = [Scheduled Finish]\n"
+            "RETURN IF ( NOT ISBLANK ( F ) && F < TODAY (),\n"
+            "    [Last Daily Log] > F\n"
+            "        || CALCULATE ( [Open Punch Items], REMOVEFILTERS ( dim_Date ) ) > 0 )",
+            None,
+            "no workbook equivalent - the 2026-10-13 schedule-overrun rule",
+        ),
+        (
+            "Input Check",
+            # Text, never colour alone. BLANK when nothing is wrong, so a table of projects
+            # reads as a to-do list.
+            "VAR F = [Scheduled Finish]\n"
+            "VAR D = [Days Since Daily Log]\n"
+            "RETURN\n"
+            "SWITCH (\n"
+            "    TRUE (),\n"
+            '    [Schedule Ended Site Active], "Schedule ended - site still active",\n'
+            f"    NOT ISBLANK ( F ) && F >= TODAY () && ISBLANK ( D ), \"No daily logs in Procore\",\n"
+            f"    NOT ISBLANK ( F ) && F >= TODAY () && D > {DAILY_LOG_GRACE_DAYS}, "
+            '"No daily log for " & D & " days",\n'
+            f"    ISBLANK ( F ) && NOT ISBLANK ( D ) && D <= 30, \"No schedule in Outbuild\"\n"
+            ")",
+            None,
+            "no workbook equivalent - is the data actually being entered",
         ),
         (
             "Completion Variance Days",
@@ -237,10 +317,13 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Score - Schedule Performance",
-            numeric_band(SCHEDULE, "Milestones Overdue %"),
+            # Zero when the schedule has run out but the site is still working: every
+            # milestone reads complete, so the band alone would award 3/3 (2026-10-13 rule).
+            "IF ( [Schedule Ended Site Active], 0,\n"
+            + numeric_band(SCHEDULE, "Milestones Overdue %") + " )",
             '"0"',
             "SCORECARD CALC!E19 - FIX: bands are fractions, so this stops always "
-            "awarding 3/3 (defect #1a)",
+            "awarding 3/3 (defect #1a); 0 when the schedule ended but the site is active",
         ),
         (
             "Score - Completion Variance",
@@ -430,5 +513,49 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             f'IF ( [Categories Below Target] >= {ATTENTION_CATEGORIES}, "Needs attention" )',
             None,
             "derived - flags projects below target on several categories",
+        ),
+
+        # -- one column per pillar, for the all-projects comparison table ----------
+        # CALCULATE replaces any pillar slicer, so each column always means its pillar.
+        *[(f"{p} Score",
+           f'CALCULATE ( [Pillar Score], dim_ScorecardWeight[Pillar] = "{p}" )',
+           '"0.00"',
+           f"derived - [Pillar Score] for the {p} pillar")
+          for p in PILLARS],
+
+        # -- the bonus policy: score -> rating tier -> multiplier ------------------
+        (
+            "Safety Quality Gate",
+            # TRUE when Safety or Quality is below target. BLANK, not FALSE, when neither
+            # is measured: an unmeasured project has not passed the gate.
+            "VAR A = [" + GATE_CATEGORIES[0] + "]\n"
+            "VAR B = [" + GATE_CATEGORIES[1] + "]\n"
+            "RETURN IF ( NOT ISBLANK ( A ) || NOT ISBLANK ( B ),\n"
+            "    ( NOT ISBLANK ( A ) && A < 3 ) || ( NOT ISBLANK ( B ) && B < 3 ) )",
+            None,
+            "Bonus policy p.2 - Needs Improvement if either Safety or Quality is subpar",
+        ),
+        (
+            "Bonus Multiplier %",
+            "VAR S = [Project Scorecard (Measured Only)]\n"
+            "VAR M =\n"
+            "    SWITCH ( TRUE (),\n"
+            + "".join(f"        S >= {lo}, {mult},\n" for lo, _, mult in RATING_TIERS[:-1])
+            + f"        {RATING_TIERS[-1][2]} )\n"
+            f"VAR Cap = {next(m for _, r, m in RATING_TIERS if r == GATE_RATING)}\n"
+            "RETURN IF ( NOT ISBLANK ( S ),\n"
+            "    DIVIDE ( IF ( [Safety Quality Gate], MIN ( M, Cap ), M ), 100 ) )",
+            '"0%"',
+            "Bonus policy p.1 - performance score tier multiplier (cut-offs proposed)",
+        ),
+        (
+            "Performance Rating",
+            "VAR M = [Bonus Multiplier %] * 100\n"
+            "RETURN IF ( NOT ISBLANK ( M ),\n"
+            "    SWITCH ( TRUE (),\n"
+            + "".join(f'        M >= {mult - 0.5}, "{rating}",\n' for _, rating, mult in RATING_TIERS[:-1])
+            + f'        "{RATING_TIERS[-1][1]}" ) )',
+            None,
+            "Bonus policy p.1 - Outstanding / Exceeds / Meets / Needs Improvement / Unacceptable",
         ),
     ]

@@ -20,7 +20,24 @@ WITH hours AS (
         make_date(year(log_date), month(log_date), 1) AS month_start,
         SUM(total_hours)   AS hours_worked,
         SUM(total_workers) AS worker_days,
-        COUNT(*)           AS days_logged
+        COUNT(*)           AS days_logged,
+        -- Daily-log discipline, from the same rows: a Procore manpower entry only exists
+        -- inside a filed daily log, so a weekday with none is a day with no daily report.
+        -- Counted between the month's first and last log only, so a project that starts or
+        -- finishes mid-month is not charged for days it was not on site. A log that stops
+        -- altogether is caught by [Days Since Daily Log] instead.
+        -- Weekday arithmetic is anchored on Monday 2014-12-29 because Spark and DuckDB
+        -- number dayofweek() differently; (n % 7) < 5 is Monday-Friday in both.
+        -- ponytail: public holidays count as weekdays; add a holiday seed if Affect wants them excused.
+        MIN(log_date)      AS first_log,
+        MAX(log_date)      AS last_log,
+        SUM(CASE WHEN datediff(log_date, DATE '2014-12-29') % 7 < 5 THEN 1 ELSE 0 END) AS weekdays_logged,
+        (5 * CAST(FLOOR(datediff(MAX(log_date), DATE '2014-12-29') / 7) AS INT)
+           + LEAST(datediff(MAX(log_date), DATE '2014-12-29') % 7, 4))
+        - (5 * CAST(FLOOR(datediff(MIN(log_date), DATE '2014-12-29') / 7) AS INT)
+           + LEAST(datediff(MIN(log_date), DATE '2014-12-29') % 7, 4))
+        + CASE WHEN datediff(MIN(log_date), DATE '2014-12-29') % 7 < 5 THEN 1 ELSE 0 END
+                           AS weekdays_span
     FROM sv_manpower_daily
     WHERE project_id IS NOT NULL
       AND log_date IS NOT NULL
@@ -60,7 +77,12 @@ SELECT
     END                                      AS TRIR,
     -- Hours with no logged days means the join produced a month from the incident side
     -- only. Visible rather than silently zeroed.
-    (h.project_id IS NULL)                   AS HasNoManpowerLog
+    (h.project_id IS NULL)                   AS HasNoManpowerLog,
+    h.first_log                              AS FirstLogDate,
+    h.last_log                               AS LastLogDate,
+    h.weekdays_logged                        AS WeekdaysLogged,
+    -- NULL on an incident-only month: no log at all is "not measured", not "0 missed".
+    CAST(h.weekdays_span - h.weekdays_logged AS INT) AS DailyLogsMissed
 FROM hours h
 FULL OUTER JOIN incidents i
   ON i.project_id = h.project_id AND i.month_start = h.month_start;

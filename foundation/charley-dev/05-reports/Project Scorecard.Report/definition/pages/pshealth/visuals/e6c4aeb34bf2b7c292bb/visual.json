@@ -7,7 +7,7 @@
     "z": 0,
     "width": 194,
     "height": 76,
-    "tabOrder": 17
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Completion Variance Days"
+                  "Property": "Scheduled Finish"
                 }
               },
-              "queryRef": "_Measures.Completion Variance Days",
-              "nativeQueryRef": "Completion Variance Days"
+              "queryRef": "_Measures.Scheduled Finish",
+              "nativeQueryRef": "Scheduled Finish"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Finish vs baseline, days. Shows Completion Variance Days for the current selection.'"
+                  "Value": "'Card. Scheduled finish. Shows Scheduled Finish for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Finish vs baseline, days'"
+                  "Value": "'Scheduled finish'"
                 }
               }
             },

@@ -1,33 +1,33 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "4db315d37a7bf3bb4ea9",
+  "name": "89125fde956d3e04d4ab",
   "position": {
-    "x": 1020,
-    "y": 4,
+    "x": 1028,
+    "y": 108,
     "z": 0,
-    "width": 240,
-    "height": 54,
-    "tabOrder": 2
+    "width": 232,
+    "height": 84,
+    "tabOrder": 17
   },
   "visual": {
-    "visualType": "slicer",
+    "visualType": "card",
     "query": {
       "queryState": {
         "Values": {
           "projections": [
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "dim_Date"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "MonthYear"
+                  "Property": "Input Check"
                 }
               },
-              "queryRef": "dim_Date.MonthYear",
-              "nativeQueryRef": "MonthYear"
+              "queryRef": "_Measures.Input Check",
+              "nativeQueryRef": "Input Check"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Slicer. Filters the report by MonthYear.'"
+                  "Value": "'Card. Data-entry check. Shows Input Check for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Month'"
+                  "Value": "'Data-entry check'"
                 }
               }
             },
@@ -94,32 +94,40 @@
         }
       ]
     },
-    "syncGroup": {
-      "groupName": "month",
-      "fieldChanges": false,
-      "filterChanges": true
-    },
     "objects": {
-      "data": [
+      "labels": [
         {
           "properties": {
-            "mode": {
+            "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "'Dropdown'"
+                  "Value": "11D"
                 }
               }
             }
           }
         }
       ],
-      "header": [
+      "categoryLabels": [
         {
           "properties": {
             "show": {
               "expr": {
                 "Literal": {
                   "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "wordWrap": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }

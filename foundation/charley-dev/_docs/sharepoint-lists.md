@@ -93,6 +93,31 @@ than duplicated — but the correction is invisible, so it is better not to make
 
 ---
 
+## Who owns what (agreed with Affect 2026-10-13)
+
+Cal Egan confirmed: the manual input comes from each project's **Project Manager and
+Superintendents**, safety incidents are recorded **in Procore**, and the client satisfaction
+survey is a **Microsoft Forms** survey run by Megan. So most of these lists stop being needed:
+
+| List | Status | Who enters it | Source of truth instead |
+|---|---|---|---|
+| `CD Risks` ("biggest challenges on site") | **Keep - the one manual input** | Superintendent writes, PM reviews by month end | - |
+| `CD Milestones` | Keep until Outbuild baselines are read | PM | Outbuild baselines |
+| `CD Flags` (profitability) | Keep until margin bands are agreed | PM | Computed from GP vs estimate |
+| `CD Safety Monthly` | **Retire** | - | Procore incidents + manpower logs (live) |
+| `CD Daily Log Compliance` | **Retire** | - | Procore daily logs (live from the 2026-10-13 build) |
+| `CD Quality Monthly` | **Retire** | - | Procore observations + punch items (live) |
+| `CD Survey` | **Retire** | Megan (in Forms) | Forms responses, imported |
+| `CD Wins`, `CD Priority Items` | Optional, not scored | PM | - |
+| `CD Projects` | Keep | List admin | - |
+| The eight `CD QC *` lists | Keep | Q-Team + PM | - |
+
+**List admin** (columns, permissions, the `CD_Manual_Ingest` dataflow and its service
+account) is one named person - Charley until the new IT provider takes it over. Retired lists
+are not deleted: the pipeline still reads them, empty, so nothing breaks.
+
+---
+
 ## 1. `CD Wins`
 
 > **Not used by the Project Scorecard report (2026-10-09).** The call dropped wins and focus

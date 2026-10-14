@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "ed96c9a5ea480118689e",
+  "name": "f578b13e516690eca2b8",
   "position": {
-    "x": 860,
-    "y": 422,
+    "x": 20,
+    "y": 60,
     "z": 0,
-    "width": 400,
-    "height": 36,
-    "tabOrder": 34
+    "width": 1240,
+    "height": 44,
+    "tabOrder": 12
   },
   "visual": {
     "visualType": "textbox",
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "The one manual input. Daily reports: coming soon.",
+                    "value": "A schedule that has run out while the site is still logging or closing punch items scores 0 on Schedule Performance until it is updated. Daily reports missed = weekdays with no Procore daily log between the month's first and last log.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'The one manual input. Daily reports: coming soon.'"
+                  "Value": "'A schedule that has run out while the site is still logging or closing punch items scores 0 on Schedule Performance until it is updated. Daily reports missed = weekdays with no Procore daily log between the month''s first and last log.'"
                 }
               }
             }

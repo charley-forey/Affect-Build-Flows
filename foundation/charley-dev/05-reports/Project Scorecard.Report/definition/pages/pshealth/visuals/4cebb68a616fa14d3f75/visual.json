@@ -5,9 +5,9 @@
     "x": 860,
     "y": 388,
     "z": 0,
-    "width": 400,
+    "width": 296,
     "height": 32,
-    "tabOrder": 29
+    "tabOrder": 33
   },
   "visual": {
     "visualType": "textbox",
@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Challenges & reporting",
+                    "value": "Data entry & challenges",
                     "textStyle": {
                       "fontSize": "13pt",
                       "color": "#252423",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Challenges & reporting'"
+                  "Value": "'Data entry & challenges'"
                 }
               }
             }
