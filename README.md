@@ -69,11 +69,41 @@ not supply.
   - Browser: Portfolio → drill-through → Project Health → Details → Schedule & Data Entry → Back.
   - Projects under 50% coverage show "Not enough data" instead of ranking first.
   - Open: Cal's 13 decisions (Sage-only jobs, Office job, CRS insurance, cut-offs).
+- **2026-10-15 full re-check.** Nightly runs 10-10 to 10-15 all completed (~2h each).
+  - `run_tests.py`: 28/28. `validate_model`: 18/18, 0 differences. `reconcile_live`: no FAIL;
+    AR conserved at $27,792,578.43 (160 invoices); checks 4, 7 and 10 warn.
+  - **Fixed in source (deploy pending, measure-only, no publish needed):**
+    - *Score - Daily Reports* scored a lifetime total against a monthly band, so on the
+      Portfolio's default "All months" every long-running job scored 0. It now scores the
+      average missed per measured month; a single month is unchanged (checked live).
+    - *Project Rank* ranked every row 1 if the table also showed the project number, and
+      split ties on floating-point noise. Now ranks over `ALLSELECTED(dim_Project)` on the
+      rounded score; the live Portfolio order is unchanged (checked live with `DEFINE MEASURE`).
+- **2026-10-16 scorecard correction pass (in source, deploy pending).** Offline suite 28/28.
+  - **Numbers:**
+    - Milestones come from Outbuild's current schedule only (391 critical → 266, overdue 27% → 12%).
+    - Completion Variance is scored from Outbuild baselines.
+    - Daily Reports are holiday-aware and count the whole logging window.
+    - Safety Incidents cover the last 12 months.
+    - Observation and AR averages include open or unpaid items at their age.
+    - Cash Position is cumulative.
+    - "No overdue milestones" scores 3 instead of blank.
+  - **Report:**
+    - Portfolio shows Active projects (a daily log within 60 days), with Main Issue, the gate cap, project number and status.
+    - Plain labels throughout.
+    - New [reader guide](foundation/charley-dev/_docs/scorecard-reader-guide.md).
+    - Outbuild links: City Harvest and 45 Renwick, via `seed/outbuild_project_map.csv`.
+  - **Evidence:** the predicted post-deploy Portfolio is in `_docs/predicted-portfolio-2026-10-16.json`.
+  - **Deploy:**
+    1. Seeds, silver, gold and DQ upload (silver runs Spark).
+    2. Next morning, after the nightly build: models, reports, then publish.
 - **Still open:**
   - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
     about 1 of about 942 nightly requests, because Procore is called once per project or
     contract.
-  - Unmatched AR: 42 invoices, 12 jobs, $2,074,705.45. Insurance: 105/105 certificates expired.
+  - Unmatched AR: 38 invoices, 10 jobs, $1,485,715.75 ($816,455.42 of it the Office job).
+    Insurance: 105/105 Procore certificates expired (CRS import proposed).
+  - Sage AP job cost vs Procore spent: 12 of 17 projects outside tolerance.
 - **SharePoint.** Both sites and all 18 lists are ready; `CD Projects` updated (26-056 added).
   `CD_Manual_Ingest` is signed in to both sites (reporting site and `AFFECTBUILD1`).
   Not yet in the nightly pipeline. Now that Key Vault is restored, it can be added.

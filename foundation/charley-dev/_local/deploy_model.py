@@ -167,8 +167,8 @@ RETURN SWITCH ( TRUE (),
     Hrs < 0, "Unknown - check timestamp is in the future",
     Hrs > 72, "STALE - no checked run in over 72 hours",
     Hrs > 30, "Late - no checked run in over 30 hours",
-    Warnings > 0, "Gold checked with warnings; source completeness unverified",
-    "Gold checks passed; source completeness unverified" )'''
+    Warnings > 0, "Data checks passed with warnings; source totals not verified",
+    "Data checks passed; source totals not verified" )'''
 
 # ---- Month-end snapshots ---------------------------------------------------
 #
@@ -573,8 +573,11 @@ MEASURES = [
      "VAR N = COUNTROWS ( fct_Milestone )\n"
      "RETURN IF ( ISBLANK ( N ) && NOT ISBLANK ( CALCULATE ( COUNTROWS ( fct_Milestone ), REMOVEFILTERS ( dim_Date ) ) ), 0, N )",
      '"#,0"', "SCHEDULE!Table5"),
+    # 0, not BLANK, when the project has milestones and none is overdue: BLANK made the
+    # best case read as "not measured" in Schedule Performance (found 2026-10-16).
     ("Overdue Milestones",
-     "CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )",
+     "VAR N = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )\n"
+     "RETURN IF ( ISBLANK ( N ) && NOT ISBLANK ( [Critical Milestones] ), 0, N )",
      '"#,0"', "derived"),
     # Named for what it counts. Higher is WORSE; "Schedule Performance %" read the other way.
     ("Milestones Overdue %",
@@ -692,11 +695,13 @@ MEASURES = [
      'CALCULATE ( DISTINCTCOUNTNOBLANK ( fct_FinancialPeriod[ProjectKey] ), fct_FinancialPeriod[ProjectKey] <> "UNMATCHED" )', '"#,0"',
      "portfolio scope - projects with financial-period rows in the current filters"),
     ("Projects At Risk",
-     # Below 0.60 on the measured-only score, so a project is not flagged merely for being
-     # under-instrumented - that is what [Scorecard Coverage %] is for.
+     # Rated Needs Improvement or Unacceptable on the bonus scale: below 0.60, or capped
+     # there by the Safety & Quality gate. "Not enough data" (under the coverage gate) is
+     # not at risk - that is what [Scorecard Coverage %] is for. Active projects only, to
+    # match the Portfolio table's default filter.
      "COUNTROWS ( FILTER ( dim_Project, dim_Project[ProjectKey] <> \"UNMATCHED\" "
-     "&& NOT ISBLANK ( [Project Scorecard (Measured Only)] ) "
-     "&& [Project Scorecard (Measured Only)] < 0.6 ) )",
+     "&& [Project Status] = \"Active\" && [Performance Rating] IN { "
+     + ", ".join(f'"{r}"' for r in scorecard.AT_RISK_RATINGS) + " } ) )",
      '"#,0"', "no workbook equivalent - one workbook per project cannot rank them"),
 
     # ---- Schedule geometry --------------------------------------------------
@@ -705,9 +710,9 @@ MEASURES = [
     # milestone's start, then a visible bar for its duration. Both are day counts from the
     # earliest start in the current filter, so the axis reads as a timeline.
     #
-    # NOTE: fct_Milestone carries CurrentStart/CurrentFinish only. There is no baseline and
-    # no actual, so this shows the schedule AS IT STANDS - it cannot show drift against a
-    # baseline. That needs baseline dates Outbuild is not supplying today.
+    # NOTE: this draws CurrentStart/CurrentFinish, the schedule AS IT STANDS. fct_Milestone
+    # also carries Outbuild's BaselineFinish (since 2026-10-16), used by Completion
+    # Variance; drawing drift against the baseline here is not built yet.
     ("Milestone Offset Days",
      "VAR StartDate = SELECTEDVALUE ( fct_Milestone[CurrentStart] )\n"
      "VAR FinishDate = SELECTEDVALUE ( fct_Milestone[CurrentFinish] )\n"
@@ -826,13 +831,20 @@ def introspect(lakehouse_id: str | None = None) -> dict[str, list[tuple[str, str
 
 # Month labels sort by their number, not alphabetically ("Apr 2024, Aug 2024, Dec 2024").
 # Without this the S-curve zig-zags and the month slicer lists 250 months out of order.
-SORT_BY = {("dim_Date", "MonthYear"): "MonthYearSort", ("dim_Date", "MonthName"): "Month"}
+SORT_BY = {("dim_Date", "MonthYear"): "MonthYearSort", ("dim_Date", "MonthName"): "Month",
+           # Scorecard categories in the workbook's order, not A-Z.
+           ("dim_ScorecardWeight", "CategoryName"): "SortOrder"}
 
 # Numeric columns that must never be added up in a totals row: keys, ordinals, day counts,
 # fractions and band thresholds. Default Sum put "Total 18,402" days under registers and
 # added milestone percentages together.
 NO_SUM = re.compile(r"(Key|Tier|Sort|Year|Quarter|Month|Day|Offset|Number|PercentComplete|Weight|Score|MinValue|MaxValue)$|Days")
 PERCENT_COLUMNS = re.compile(r"^(PercentComplete|Weight)$")
+# Per-column display formats. Band thresholds mix days, counts and fractions, so a plain
+# number up to two decimals; data-gap amounts are money.
+COLUMN_FORMATS = {("dq_DataGap", "Amount"): '"$#,0"',
+                  ("dim_ScorecardBand", "MinValue"): '"#,0.##"',
+                  ("dim_ScorecardBand", "MaxValue"): '"#,0.##"'}
 
 
 def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
@@ -856,6 +868,8 @@ def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
             lines.append('\t\tformatString: 0.##')
         elif dtype in ("double", "decimal") and PERCENT_COLUMNS.match(col):
             lines.append('\t\tformatString: 0%')
+        elif (name, col) in COLUMN_FORMATS:
+            lines.append(f"\t\tformatString: {COLUMN_FORMATS[(name, col)]}")
         if SORT_BY.get((name, col)) in present:
             lines.append(f"\t\tsortByColumn: {SORT_BY[(name, col)]}")
         lines.append("")

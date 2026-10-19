@@ -72,7 +72,10 @@ def test_report() -> None:
         if pid in drill:
             assert syncs == {None}, f"{pid}: drill-through page must not carry slicers"
         else:
-            assert {"project", "month"} <= syncs, f"{pid}: missing a synced slicer"
+            # A page may opt out of the project slicer explicitly (the Scorecard Portfolio:
+            # its table is the project list, and a picked project ranks 1).
+            need = {"month"} if pid in getattr(dr, "NO_PROJECT_SLICER", ()) else {"project", "month"}
+            assert need <= syncs, f"{pid}: missing a synced slicer"
 
         # 4. Everything fits on the canvas. A visual running off the bottom is invisible in
         #    a PDF export and silently clipped in the service - it does not error, it just
@@ -318,14 +321,15 @@ def test_schedule_grain():
     timeline = next(v["visual"] for v in items if v["name"] == dr.oid("schedule", "gantt"))
     assert timeline["visualType"] == "barChart"
     categories = timeline["query"]["queryState"]["Category"]["projections"]
-    assert [p["field"]["Column"]["Property"] for p in categories] == ["ProjectKey", "ActivityKey", "MilestoneName"]
+    assert [p["field"]["Column"]["Property"] for p in categories] == ["ProjectName", "MilestoneName", "CurrentStart"]
     assert all(p["active"] for p in categories)
     offset = timeline["objects"]["dataPoint"][0]
     assert offset["selector"]["metadata"] == timeline["query"]["queryState"]["Y"]["projections"][0]["queryRef"]
     assert offset["properties"]["fillTransparency"]["expr"]["Literal"]["Value"] == "100D"
     table = next(v["visual"] for v in items if v["name"] == dr.oid("schedule", "milestones"))
     columns = {p["field"]["Column"]["Property"] for p in table["query"]["queryState"]["Values"]["projections"]}
-    assert {"ProjectKey", "ActivityKey", "CurrentStart", "CurrentFinish", "HasDateInversion"} <= columns
+    assert {"ProjectName", "CurrentStart", "CurrentFinish"} <= columns
+    assert not {"ProjectKey", "ActivityKey", "HasDateInversion"} & columns, "raw ids/flags on a reader table"
     backlog = next(v for v in items if v["name"] == dr.oid("schedule", "backlog_month_end"))
     assert "latest capture in month" in json.dumps(backlog)
     assert "may precede month end" in json.dumps(backlog)
@@ -466,6 +470,8 @@ def test_qc_disclosures():
     assert ("fct_ProcoreInspection", "InspectionDate", "dim_Date", "Date") in dm.RELATIONSHIPS
     assert ("fct_ProcoreInspectionItem", "InspectionLinkKey", "fct_ProcoreInspection", "InspectionLinkKey") in dm.RELATIONSHIPS
     assert "not a failed check" in json.dumps(qc.page_native_inspection_items())
+    for _, items in (qc.page_native_inspections(), qc.page_native_inspection_items()):
+        assert '"ProjectKey"' not in json.dumps(items) and '"ProjectName"' in json.dumps(items)
     completion = dm.table_tmdl("fct_ProcoreInspection", [("SourcePercentComplete", "double")])
     assert "summarizeBy: none" in completion and "formatString: 0.##\n" in completion
     assert "unit and scale require confirmation" in completion
@@ -492,12 +498,97 @@ def test_observation_close_duration():
         {"ItemType": "PunchItem", "IsOpen": False, "DaysOpen": 90},
         {"ItemType": "Observation", "IsOpen": False, "DaysOpen": None},
     ]
+    # Every observation: closed at days to close, open at age to date (the band is "avg days open").
     expected = vm.monthly_expected()["Avg Observation Days To Close"]
-    assert expected(vm.Recompute({"fct_QualityItem": rows}, []), vm.PORTFOLIO) == 6
-    assert expected(vm.Recompute({"fct_QualityItem": rows[2:4]}, []), vm.PORTFOLIO) is None
+    assert expected(vm.Recompute({"fct_QualityItem": rows}, []), vm.PORTFOLIO) == 112 / 3
+    assert expected(vm.Recompute({"fct_QualityItem": rows[2:4]}, []), vm.PORTFOLIO) == 100
+    assert expected(vm.Recompute({"fct_QualityItem": rows[3:4]}, []), vm.PORTFOLIO) is None
     expression = {m[0]: m[1] for m in dm.MEASURES}["Avg Observation Days To Close"]
     assert 'fct_QualityItem[ItemType] = "Observation"' in expression
-    assert "NOT fct_QualityItem[IsOpen]" in expression
+    assert "IsOpen" not in expression
+
+
+def test_scorecard_drivers():
+    """2026-10-16 review fixes, in the independent expectations the live check compares against."""
+    import deploy_model as dm
+    import scorecard
+    import validate_model as vm
+    E = vm.monthly_expected()
+    exprs = {m[0]: m[1] for m in dm.MEASURES}
+    months = [f"{y}-{m:02d}-01T00:00:00" for y in (2025, 2026) for m in range(1, 13)]
+    now = "2026-10-16T09:00:00"
+    base = dict({t: [] for t in vm.RAW_COLUMNS}, dim_Project=[{"ProjectKey": "a"}],
+                dim_Date=[{"Date": m, "MonthStart": m} for m in months])
+
+    # 1. Incidents over the 12 months ending at the selection (today under "All months").
+    safety = dict(base, fct_SafetyMonthly=[
+        {"ProjectKey": "a", "MonthStart": "2025-03-01T00:00:00", "RecordableIncidents": 1, "HoursWorked": 100.0},
+        {"ProjectKey": "a", "MonthStart": "2026-09-01T00:00:00", "RecordableIncidents": 0, "HoursWorked": 100.0}])
+    c = vm.Recompute(safety, dm.RELATIONSHIPS)
+    c.now = now
+    inc = E["Recordable Incidents"]
+    assert inc(c, vm.Scope("a", None, None)) == 0, "a 2025-03 incident is outside Nov 2025 - Oct 2026"
+    assert inc(c, vm.Scope("a", "2025-12-01T00:00:00", None)) == 1
+    assert inc(c, vm.Scope("a", "2026-03-01T00:00:00", None)) is None, "Apr 2025 - Mar 2026: nothing logged"
+    assert "TODAY ()" in exprs["Recordable Incidents"] and "EDATE" in exprs["Recordable Incidents"]
+
+    # 3. Unpaid invoices count at their age; zero-balance, receipt-less ones are skipped.
+    inv = lambda days, balance, sent="2026-09-16T00:00:00": {
+        "ProjectKey": "a", "MonthStart": "2026-09-01T00:00:00", "DaysToPayment": days, "Balance": balance,
+        "SentDate": sent, "AmountPaid": 0.0}
+    c = vm.Recompute(dict(base, fct_Invoice=[inv(10, 0.0), inv(None, 500.0), inv(None, 0.0)]), dm.RELATIONSHIPS)
+    c.now = now
+    assert E["Avg Days To Payment"](c, vm.PORTFOLIO) == 20  # (10 + 30) / 2
+    assert "TODAY ()" in exprs["Avg Days To Payment"]
+
+    # 4. Cash: cumulative to the period end over the whole cost to complete (snapshot month only).
+    cash = dict(base, fct_BudgetLine=[{"ProjectKey": "a", "MonthStart": "2026-10-01T00:00:00", "CostToComplete": 100.0}],
+                fct_Invoice=[{**inv(None, 20.0), "MonthStart": "2026-01-01T00:00:00", "AmountPaid": 30.0},
+                             {**inv(None, 0.0), "MonthStart": "2026-06-01T00:00:00", "AmountPaid": 50.0}])
+    c = vm.Recompute(cash, dm.RELATIONSHIPS)
+    assert E["Cash Position %"](c, vm.Scope("a", "2026-03-01T00:00:00", None)) == 0.5, "Jan invoice only"
+    assert E["Cash Position %"](c, vm.Scope("a", None, None)) == 1.0
+    assert "[Cost To Complete]" in exprs["Cash Position %"] and "fct_BudgetLine" not in exprs["Cash Position %"]
+
+    # 5/6. At risk = an Active project rated Needs Improvement or Unacceptable; tiers on the
+    # score rounded to 0.00.
+    assert scorecard.AT_RISK_RATINGS == ("Needs Improvement", "Unacceptable")
+    assert all(f'"{r}"' in exprs["Projects At Risk"] for r in scorecard.AT_RISK_RATINGS)
+    assert '[Project Status] = "Active"' in exprs["Projects At Risk"]
+    assert "ROUND ( R, 2 )" in exprs["Bonus Multiplier %"]
+    weights = [{"CategoryKey": k, "Weight": 0.6 if k == 9 else 0.05, "Pillar": "x"} for k in range(1, 10)]
+    bands = [{"CategoryKey": 9, "Score": sc, "MinValue": lo, "MaxValue": hi, "MatchValue": None, "BandLabel": None}
+             for sc, lo, hi in ((3, None, 2.0), (2, 2.0, 5.0), (0, 5.0, None))]
+    log = lambda missed: [{"ProjectKey": "a", "MonthStart": months[0], "DailyLogsMissed": missed,
+                           "RecordableIncidents": None, "HoursWorked": None,
+                           "LastLogDate": "2026-10-15T00:00:00"}]  # Active: only Active counts at risk
+    a = vm.Scope("a", None, None)
+    # Only Daily Reports measured (60% coverage), scoring 0: Unacceptable, so at risk.
+    c = vm.Recompute(dict(base, dim_ScorecardWeight=weights, dim_ScorecardBand=bands, fct_SafetyMonthly=log(9)),
+                     dm.RELATIONSHIPS)
+    c.now = now
+    assert E["Performance Rating"](c, a) == "Unacceptable" and E["Projects At Risk"](c, vm.PORTFOLIO) == 1
+    # Under the coverage gate: "Not enough data", never at risk.
+    thin = [dict(w, Weight=0.1 if w["CategoryKey"] == 9 else w["Weight"]) for w in weights]
+    c = vm.Recompute(dict(base, dim_ScorecardWeight=thin, dim_ScorecardBand=bands, fct_SafetyMonthly=log(9)),
+                     dm.RELATIONSHIPS)
+    c.now = now
+    assert E["Performance Rating"](c, a) == "Not enough data" and E["Projects At Risk"](c, vm.PORTFOLIO) is None
+    # Rounding: E is read at call time, so the score can be pinned.
+    c = vm.Recompute(dict(base, dim_ScorecardWeight=weights, dim_ScorecardBand=bands, fct_SafetyMonthly=log(0)),
+                     dm.RELATIONSHIPS)
+    c.now = now
+    real = E["Project Scorecard (Measured Only)"]
+    try:
+        for score, rating in ((0.8995, "Outstanding"), (0.8949, "Exceeds Expectations"), (0.5951, "Meets Expectations")):
+            E["Project Scorecard (Measured Only)"] = lambda c, s, v=score: v
+            assert E["Performance Rating"](c, a) == rating, (score, E["Performance Rating"](c, a))
+    finally:
+        E["Project Scorecard (Measured Only)"] = real
+
+    # 7. AR band labels state the real edge at 61 days.
+    band_sql = (Path(dm.__file__).parent.parent / "02-transformation/sql/gold/06_dim_scorecardband.sql").read_text()
+    assert "'45 to under 61 days'" in band_sql and "'>= 61 days'" in band_sql
 
 
 def test_load_contract() -> None:
@@ -553,6 +644,7 @@ if __name__ == "__main__":
     test_load_contract()
     test_export_screening()
     test_observation_close_duration()
+    test_scorecard_drivers()
     if "--qc" in sys.argv:
         import deploy_model_qc
         import deploy_report_qc

@@ -23,11 +23,12 @@
                       "Entity": "fct_QualityItem"
                     }
                   },
-                  "Property": "ItemType"
+                  "Property": "ItemTypeLabel"
                 }
               },
-              "queryRef": "fct_QualityItem.ItemType",
-              "nativeQueryRef": "ItemType"
+              "queryRef": "fct_QualityItem.ItemTypeLabel",
+              "nativeQueryRef": "ItemTypeLabel",
+              "displayName": "Item type"
             }
           ]
         },
@@ -59,7 +60,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Open items by type. Shows Open Quality Items by ItemType.'"
+                  "Value": "'Column chart. Open items by type. Shows Open Quality Items by ItemTypeLabel.'"
                 }
               }
             }

@@ -23,12 +23,12 @@
                       "Entity": "fct_QualityItem"
                     }
                   },
-                  "Property": "ItemType"
+                  "Property": "ItemTypeLabel"
                 }
               },
-              "queryRef": "fct_QualityItem.ItemType",
-              "nativeQueryRef": "ItemType",
-              "displayName": "Item Type"
+              "queryRef": "fct_QualityItem.ItemTypeLabel",
+              "nativeQueryRef": "ItemTypeLabel",
+              "displayName": "Item type"
             },
             {
               "field": {
@@ -150,7 +150,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Open quality items - oldest first. Shows ItemType, ItemNumber, Title, Trade, AssignedTo, DueDate, DaysOpen for the current selection.'"
+                  "Value": "'Table. Open quality items - oldest first. Shows ItemTypeLabel, ItemNumber, Title, Trade, AssignedTo, DueDate, DaysOpen for the current selection.'"
                 }
               }
             }
@@ -263,7 +263,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_QualityItem.ItemType"
+            "metadata": "fct_QualityItem.ItemTypeLabel"
           }
         },
         {

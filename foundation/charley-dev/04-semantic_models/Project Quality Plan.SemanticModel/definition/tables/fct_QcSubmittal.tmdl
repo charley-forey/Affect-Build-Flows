@@ -35,6 +35,11 @@ table fct_QcSubmittal
 		summarizeBy: none
 		sourceColumn: StatusCode
 
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
 	column SubmittalTypeCode
 		dataType: string
 		summarizeBy: none

@@ -19,6 +19,8 @@ CREATE OR REPLACE TABLE fct_QualityItem AS
 SELECT
     project_id                          AS ProjectKey,
     'Observation'                       AS ItemType,
+    -- Reader-facing twin of ItemType for axes and tables; measures keep filtering ItemType.
+    'Observation'                       AS ItemTypeLabel,
     observation_id                      AS ItemKey,
     observation_number                  AS ItemNumber,
     title                               AS Title,
@@ -70,6 +72,7 @@ UNION ALL
 SELECT
     project_id                          AS ProjectKey,
     'PunchItem'                         AS ItemType,
+    'Punch item'                        AS ItemTypeLabel,
     punch_item_id                       AS ItemKey,
     punch_item_number                   AS ItemNumber,
     title                               AS Title,

@@ -34,6 +34,7 @@ table dq_DataGap
 		dataType: double
 		summarizeBy: sum
 		sourceColumn: Amount
+		formatString: "$#,0"
 
 	column Detail
 		dataType: string

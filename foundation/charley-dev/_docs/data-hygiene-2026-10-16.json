@@ -1,0 +1,839 @@
+{
+ "captured_at": "2026-10-16",
+ "as_of_date": "2026-10-16",
+ "method": "read-only delta-rs + duckdb over live OneLake gold/silver/bronze; ages = as_of - CreatedDate; blank trade = TradeLabel 'Unassigned trade'; daily log = max(fct_SafetyMonthly.LastLogDate)",
+ "excluded": [
+  "seed_ProjectExclusion (3 live)",
+  "562949955488665 Lillipvt 25-013 duplicate (seed row added, not yet deployed; 0 fact rows)",
+  "UNMATCHED"
+ ],
+ "projects": [
+  {
+   "num": "23-006",
+   "pname": "SYMRISE - 15th & 16th Flr",
+   "co90_n": 6,
+   "co90_oldest": 898,
+   "co90_amt": 22100.0,
+   "co_pending_all": 6,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 8,
+   "punch_oldest": 736,
+   "punch_total": 273,
+   "punch_blank_trade": 60,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 80,
+   "ncr_unmapped": 0,
+   "last_log": null,
+   "fact_rows": 1860,
+   "days_since_log": null,
+   "no_log_60d": true
+  },
+  {
+   "num": "24-011",
+   "pname": "11 ESSEX ST",
+   "co90_n": 4,
+   "co90_oldest": 596,
+   "co90_amt": 251.0,
+   "co_pending_all": 4,
+   "obs30_n": 30,
+   "obs_oldest": 427,
+   "punch30_n": 13,
+   "punch_oldest": 441,
+   "punch_total": 617,
+   "punch_blank_trade": 175,
+   "ncr_total": 360,
+   "ncr_blank_trade": 75,
+   "punch_unmapped": 146,
+   "ncr_unmapped": 136,
+   "last_log": "2026-08-27",
+   "fact_rows": 3957,
+   "days_since_log": 50,
+   "no_log_60d": false
+  },
+  {
+   "num": "25-012",
+   "pname": "PCNA 711 11TH AVE",
+   "co90_n": 1,
+   "co90_oldest": 263,
+   "co90_amt": 0.0,
+   "co_pending_all": 1,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": "2026-05-15",
+   "fact_rows": 118,
+   "days_since_log": 154,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-013",
+   "pname": "Lillipvt 45 Renwick St",
+   "co90_n": 1,
+   "co90_oldest": 393,
+   "co90_amt": 24000.0,
+   "co_pending_all": 1,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": null,
+   "fact_rows": 266,
+   "days_since_log": null,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-014",
+   "pname": "Embankment + Revetment Apartments 270 & 310 10th Street NJ",
+   "co90_n": 3,
+   "co90_oldest": 394,
+   "co90_amt": 3113.0,
+   "co_pending_all": 3,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 63,
+   "punch_blank_trade": 62,
+   "ncr_total": 154,
+   "ncr_blank_trade": 68,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 11,
+   "last_log": "2026-02-17",
+   "fact_rows": 873,
+   "days_since_log": 241,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-015",
+   "pname": "VOCO HOTEL TSQ",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 34,
+   "ncr_blank_trade": 2,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 3,
+   "last_log": "2026-01-13",
+   "fact_rows": 143,
+   "days_since_log": 276,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-016",
+   "pname": "1100 Fulton Street",
+   "co90_n": 1,
+   "co90_oldest": 386,
+   "co90_amt": 0.0,
+   "co_pending_all": 1,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 51,
+   "punch_blank_trade": 50,
+   "ncr_total": 37,
+   "ncr_blank_trade": 12,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 2,
+   "last_log": "2025-11-08",
+   "fact_rows": 459,
+   "days_since_log": 342,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-017",
+   "pname": "64 MET OVAL PSC + 1410 MET STOREROOM",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 35,
+   "obs_oldest": 298,
+   "punch30_n": 76,
+   "punch_oldest": 80,
+   "punch_total": 119,
+   "punch_blank_trade": 4,
+   "ncr_total": 97,
+   "ncr_blank_trade": 36,
+   "punch_unmapped": 22,
+   "ncr_unmapped": 34,
+   "last_log": "2026-10-15",
+   "fact_rows": 2124,
+   "days_since_log": 1,
+   "no_log_60d": false
+  },
+  {
+   "num": "25-018",
+   "pname": "337A & 337B West Broadway Rehabilitaion Work",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": "2025-12-24",
+   "fact_rows": 57,
+   "days_since_log": 296,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-020",
+   "pname": "549 Munroe Av",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": null,
+   "fact_rows": 3,
+   "days_since_log": null,
+   "no_log_60d": true
+  },
+  {
+   "num": "25-021",
+   "pname": "360 Lexington 8th & 20th Floor",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 428,
+   "punch_blank_trade": 63,
+   "ncr_total": 116,
+   "ncr_blank_trade": 20,
+   "punch_unmapped": 61,
+   "ncr_unmapped": 31,
+   "last_log": "2026-10-15",
+   "fact_rows": 2230,
+   "days_since_log": 1,
+   "no_log_60d": false
+  },
+  {
+   "num": "25-034",
+   "pname": "City Harvest",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": null,
+   "fact_rows": 41,
+   "days_since_log": null,
+   "no_log_60d": true
+  },
+  {
+   "num": "26-022",
+   "pname": "EMBANKMENT PHASE II",
+   "co90_n": 1,
+   "co90_oldest": 94,
+   "co90_amt": 0.0,
+   "co_pending_all": 1,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 25,
+   "punch_blank_trade": 25,
+   "ncr_total": 55,
+   "ncr_blank_trade": 5,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 4,
+   "last_log": "2026-06-03",
+   "fact_rows": 315,
+   "days_since_log": 135,
+   "no_log_60d": true
+  },
+  {
+   "num": "26-023",
+   "pname": "Boys & Girls Club",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": null,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 0,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": null,
+   "fact_rows": 8,
+   "days_since_log": null,
+   "no_log_60d": true
+  },
+  {
+   "num": "26-025",
+   "pname": "SaunaLounge 45 South 3 Street, Brooklyn, NY",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 2,
+   "obs30_n": 4,
+   "obs_oldest": 110,
+   "punch30_n": 4,
+   "punch_oldest": 99,
+   "punch_total": 4,
+   "punch_blank_trade": 4,
+   "ncr_total": 12,
+   "ncr_blank_trade": 4,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 8,
+   "last_log": "2026-10-15",
+   "fact_rows": 814,
+   "days_since_log": 1,
+   "no_log_60d": false
+  },
+  {
+   "num": "26-026",
+   "pname": "Embankment Phase III",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 1,
+   "obs30_n": 0,
+   "obs_oldest": 7,
+   "punch30_n": 1,
+   "punch_oldest": 36,
+   "punch_total": 50,
+   "punch_blank_trade": 44,
+   "ncr_total": 116,
+   "ncr_blank_trade": 14,
+   "punch_unmapped": 1,
+   "ncr_unmapped": 8,
+   "last_log": "2026-10-15",
+   "fact_rows": 614,
+   "days_since_log": 1,
+   "no_log_60d": false
+  },
+  {
+   "num": "26-056",
+   "pname": "360 Lexington 15th Floor Fitout",
+   "co90_n": 0,
+   "co90_oldest": null,
+   "co90_amt": 0.0,
+   "co_pending_all": 0,
+   "obs30_n": 0,
+   "obs_oldest": 1,
+   "punch30_n": 0,
+   "punch_oldest": null,
+   "punch_total": 0,
+   "punch_blank_trade": 0,
+   "ncr_total": 1,
+   "ncr_blank_trade": 0,
+   "punch_unmapped": 0,
+   "ncr_unmapped": 0,
+   "last_log": "2026-10-15",
+   "fact_rows": 570,
+   "days_since_log": 1,
+   "no_log_60d": false
+  }
+ ],
+ "outbuild_projects": [
+  {
+   "outbuild_id": 50172,
+   "name": "RENUION BATHS",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    114462
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 50005,
+   "name": "Alice & Olivia",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    114054
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 50017,
+   "name": "Parkchester",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    114085
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 48797,
+   "name": "Test (person-named)",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    111203
+   ],
+   "classification": "likely-test"
+  },
+  {
+   "outbuild_id": 49398,
+   "name": "Estimating Demo",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    112706
+   ],
+   "classification": "likely-test"
+  },
+  {
+   "outbuild_id": 49419,
+   "name": "TBD",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    112753
+   ],
+   "classification": "likely-test"
+  },
+  {
+   "outbuild_id": 48195,
+   "name": "City Harvest v2",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 2,
+   "current_schedule_ids": [
+    109659
+   ],
+   "classification": "likely-duplicate (of 25-034)"
+  },
+  {
+   "outbuild_id": 47914,
+   "name": "25-034 City Harvest New",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    108958
+   ],
+   "classification": "mapped via seed (pending deploy) to Procore 25-034"
+  },
+  {
+   "outbuild_id": 47291,
+   "name": "360 Lexington 15th Floor Fitout",
+   "procore_id": "562949955455437",
+   "stage": "started",
+   "schedule_count": 3,
+   "current_schedule_ids": [
+    109217
+   ],
+   "classification": "linked"
+  },
+  {
+   "outbuild_id": 47267,
+   "name": "City Harvest - Global",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    107388
+   ],
+   "classification": "likely-duplicate (of 25-034)"
+  },
+  {
+   "outbuild_id": 47039,
+   "name": "360Lex - 15th & 17th Fl.",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    106824
+   ],
+   "classification": "likely-duplicate of linked 26-056 (or Sage job 27 sprinkler loop)"
+  },
+  {
+   "outbuild_id": 46059,
+   "name": "The Morgan",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    104499
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 45412,
+   "name": "SUND Brooklyn Bathhouse",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    103042
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 45393,
+   "name": "45 Renwick St",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    102998
+   ],
+   "classification": "likely-duplicate/unlinked: matches Procore 25-013 Lillipvt 45 Renwick"
+  },
+  {
+   "outbuild_id": 45355,
+   "name": "360 Lex -  Basement Remediation",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    102900
+   ],
+   "classification": "unlinked-real (Sage job 25 Ground Floor Remediation?)"
+  },
+  {
+   "outbuild_id": 44971,
+   "name": "Gramercy Park Hotel",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    102019
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 43250,
+   "name": "City Harvest",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    98246
+   ],
+   "classification": "likely-duplicate (of 25-034)"
+  },
+  {
+   "outbuild_id": 43721,
+   "name": "Evergreen Cemetery",
+   "procore_id": null,
+   "stage": "archived",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    99274
+   ],
+   "classification": "unlinked-real"
+  },
+  {
+   "outbuild_id": 42540,
+   "name": "Embankment Phase III",
+   "procore_id": "562949955375634",
+   "stage": "started",
+   "schedule_count": 2,
+   "current_schedule_ids": [
+    102698
+   ],
+   "classification": "linked"
+  },
+  {
+   "outbuild_id": 39780,
+   "name": "Sauna Lounge",
+   "procore_id": "562949955365267",
+   "stage": "started",
+   "schedule_count": 6,
+   "current_schedule_ids": [
+    103755
+   ],
+   "classification": "linked"
+  },
+  {
+   "outbuild_id": 43183,
+   "name": "E25-034 CITY HARVEST 150 52ND ST",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    98088
+   ],
+   "classification": "likely-duplicate (of 25-034)"
+  },
+  {
+   "outbuild_id": 32828,
+   "name": "360Lex",
+   "procore_id": "562949955225798",
+   "stage": "started",
+   "schedule_count": 3,
+   "current_schedule_ids": [
+    76258
+   ],
+   "classification": "linked"
+  },
+  {
+   "outbuild_id": 32321,
+   "name": "Sandbox",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 3,
+   "current_schedule_ids": [
+    75196
+   ],
+   "classification": "likely-test"
+  },
+  {
+   "outbuild_id": 34755,
+   "name": "PCNA - 711 11th Avenue",
+   "procore_id": "562949954971827",
+   "stage": "archived",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    80354
+   ],
+   "classification": "linked"
+  },
+  {
+   "outbuild_id": 32572,
+   "name": "Affect Test",
+   "procore_id": null,
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    75765
+   ],
+   "classification": "likely-test"
+  },
+  {
+   "outbuild_id": 37687,
+   "name": "Training Project",
+   "procore_id": "562949953807489",
+   "stage": "started",
+   "schedule_count": 1,
+   "current_schedule_ids": [
+    86562
+   ],
+   "classification": "likely-test (linked to excluded Procore Sandbox Test Project)"
+  }
+ ],
+ "sage_ar_unmatched": [
+  {
+   "sage_job": "2",
+   "job_name": "Office",
+   "invoices": 15,
+   "amount": 816455.42,
+   "balance": 610575.42
+  },
+  {
+   "sage_job": "4",
+   "job_name": "59 Maiden Lane",
+   "invoices": 5,
+   "amount": 365603.9,
+   "balance": 1107.46
+  },
+  {
+   "sage_job": "8",
+   "job_name": "Wildflower",
+   "invoices": 1,
+   "amount": 89990.85,
+   "balance": 0.0
+  },
+  {
+   "sage_job": "24",
+   "job_name": "11 Essex Day Two",
+   "invoices": 1,
+   "amount": 52993.63,
+   "balance": 52993.63
+  },
+  {
+   "sage_job": "25",
+   "job_name": "Ground Floor Remediation (Basement)",
+   "invoices": 2,
+   "amount": 47858.9,
+   "balance": 23929.45
+  },
+  {
+   "sage_job": "29",
+   "job_name": "Profoods 10101 Foster Avenue",
+   "invoices": 3,
+   "amount": 45075.12,
+   "balance": 45075.12
+  },
+  {
+   "sage_job": "26",
+   "job_name": "Ground Floor Demising Wall",
+   "invoices": 3,
+   "amount": 23462.02,
+   "balance": 11731.01
+  },
+  {
+   "sage_job": "23",
+   "job_name": "260 Madison",
+   "invoices": 4,
+   "amount": 21958.67,
+   "balance": 16402.44
+  },
+  {
+   "sage_job": "7",
+   "job_name": "247 E 117th",
+   "invoices": 3,
+   "amount": 21781.24,
+   "balance": 0.0
+  },
+  {
+   "sage_job": "21",
+   "job_name": "1638 Park Ave",
+   "invoices": 1,
+   "amount": 536.0,
+   "balance": 536.0
+  }
+ ],
+ "sage_ap_unmatched": [
+  {
+   "sage_job": null,
+   "job_name": null,
+   "is_job_cost": false,
+   "lines": 363,
+   "amount": 4312860.72
+  },
+  {
+   "sage_job": "13",
+   "job_name": "Sleepy Hollow",
+   "is_job_cost": true,
+   "lines": 22,
+   "amount": 178159.92
+  },
+  {
+   "sage_job": "2",
+   "job_name": "Office",
+   "is_job_cost": false,
+   "lines": 8,
+   "amount": 38474.27
+  },
+  {
+   "sage_job": "4",
+   "job_name": "59 Maiden Lane",
+   "is_job_cost": true,
+   "lines": 4,
+   "amount": 32791.0
+  },
+  {
+   "sage_job": "14",
+   "job_name": "Embankment & Revetment Apartments",
+   "is_job_cost": true,
+   "lines": 2,
+   "amount": 30500.0
+  },
+  {
+   "sage_job": "2",
+   "job_name": "Office",
+   "is_job_cost": true,
+   "lines": 7,
+   "amount": 20320.12
+  },
+  {
+   "sage_job": "30",
+   "job_name": "360 Lexington 15th floor fitout",
+   "is_job_cost": true,
+   "lines": 1,
+   "amount": 12825.0
+  },
+  {
+   "sage_job": "25",
+   "job_name": "Ground Floor Remediation (Basement)",
+   "is_job_cost": true,
+   "lines": 1,
+   "amount": 9450.0
+  },
+  {
+   "sage_job": "23",
+   "job_name": "260 Madison",
+   "is_job_cost": true,
+   "lines": 1,
+   "amount": 4232.0
+  }
+ ],
+ "crosswalk_suspects": [
+  {
+   "procore": "26-056",
+   "mapped_sage_job": "27 (360 Lex 15th&17th Temporary Sprinkler Loop)",
+   "unmapped_sage_job": "30 (360 Lexington 15th floor fitout)"
+  },
+  {
+   "procore": "25-014",
+   "mapped_sage_job": "6 (Embankment)",
+   "unmapped_sage_job": "14 (Embankment & Revetment Apartments)"
+  }
+ ],
+ "projects_no_fact_data": [],
+ "projects_thin_fact_data": {
+  "25-020 549 Munroe Av": {
+   "fct_ApInvoice": 3
+  },
+  "26-023 Boys & Girls Club": {
+   "fct_Invoice": 6,
+   "fct_ApInvoice": 2
+  },
+  "25-034 City Harvest": {
+   "fct_ChangeOrder": 1,
+   "fct_Invoice": 2,
+   "fct_BudgetLine": 37,
+   "fct_Billing": 1
+  }
+ }
+}

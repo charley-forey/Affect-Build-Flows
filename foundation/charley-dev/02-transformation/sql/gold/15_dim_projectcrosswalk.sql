@@ -38,7 +38,10 @@ sage AS (
 outbuild AS (
     SELECT procore_project_id,
            CASE WHEN COUNT(DISTINCT outbuild_project_id) = 1 THEN MAX(outbuild_project_id) END AS outbuild_project_id,
-           COUNT(DISTINCT outbuild_project_id) AS outbuild_match_count
+           COUNT(DISTINCT outbuild_project_id) AS outbuild_match_count,
+           -- EMBEDDED_PROCORE_ID, or MANUAL_MAP when seed/outbuild_project_map.csv made the
+           -- link (2026-10-16). MAX: a single link has exactly one method.
+           MAX(link_method) AS link_method
     FROM sv_outbuild_projects
     WHERE procore_project_id IS NOT NULL
     GROUP BY procore_project_id
@@ -69,7 +72,7 @@ SELECT
          WHEN s.sage_project_id IS NOT NULL THEN 'CROSSWALK_TABLE' ELSE 'UNMATCHED' END
                                                    AS SageMatchMethod,
     CASE WHEN o.outbuild_match_count > 1 THEN 'MULTIPLE_LINKS'
-         WHEN o.outbuild_project_id IS NOT NULL THEN 'EMBEDDED_PROCORE_ID' ELSE 'UNMATCHED' END
+         WHEN o.outbuild_project_id IS NOT NULL THEN o.link_method ELSE 'UNMATCHED' END
                                                    AS OutbuildMatchMethod,
 
     -- A project mapping to more than one id on the far side is a data problem, not a

@@ -30,6 +30,16 @@ table fct_ChangeOrder
 		summarizeBy: none
 		sourceColumn: StatusLabel
 
+	column StatusDisplay
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusDisplay
+
+	column ChangeOrderTitle
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ChangeOrderTitle
+
 	column Amount
 		dataType: double
 		summarizeBy: sum

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "048f800459faa8eb1d11",
   "position": {
-    "x": 860,
+    "x": 872,
     "y": 422,
     "z": 0,
-    "width": 194,
+    "width": 188,
     "height": 76,
-    "tabOrder": 40
+    "tabOrder": 39
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Input Check"
+                  "Property": "Input Check Status"
                 }
               },
-              "queryRef": "_Measures.Input Check",
-              "nativeQueryRef": "Input Check"
+              "queryRef": "_Measures.Input Check Status",
+              "nativeQueryRef": "Input Check Status"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Data-entry check. Shows Input Check for the current selection.'"
+                  "Value": "'Card. Data-entry check. Shows Input Check Status for the current selection.'"
                 }
               }
             }

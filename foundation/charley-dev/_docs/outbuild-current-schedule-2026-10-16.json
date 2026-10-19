@@ -1,0 +1,166 @@
+{
+  "as_of": "2026-10-16",
+  "method": "Live bronze cd_bronze_outbuild_projects/activities (read-only, delta-rs) run through the committed 25_outbuild_silver.sql, sv_outbuild_* views, seed and 24_fct_milestone.sql in DuckDB. BEFORE = previous logic (native procore_id, every schedule); overdue = end_date < today and progress < 1. live_gold_before = the published gold fct_Milestone (overdue flag as of its last build). Test projects (seed_ProjectExclusion) removed.",
+  "portfolio": {
+    "live_gold_before": {
+      "critical": 391,
+      "overdue": 107,
+      "overdue_pct": 0.274
+    },
+    "before": {
+      "critical": 391,
+      "overdue": 107,
+      "overdue_pct": 0.274
+    },
+    "after": {
+      "critical": 266,
+      "overdue": 31,
+      "overdue_pct": 0.117
+    }
+  },
+  "projects": [
+    {
+      "procore_project_id": "562949954971827",
+      "project_number": "25-012",
+      "project_name": "PCNA 711 11TH AVE",
+      "live_gold_before": {
+        "critical": 10,
+        "overdue": 10
+      },
+      "before": {
+        "critical": 10,
+        "overdue": 10,
+        "overdue_pct": 1.0,
+        "forecast_finish": "2026-06-08"
+      },
+      "after": {
+        "critical": 10,
+        "overdue": 10,
+        "overdue_pct": 1.0,
+        "forecast_finish": "2026-06-08",
+        "baseline_finish": "2026-05-25",
+        "completion_variance_days": 14
+      }
+    },
+    {
+      "procore_project_id": "562949955225798",
+      "project_number": "25-021",
+      "project_name": "360 Lexington 8th & 20th Floor",
+      "live_gold_before": {
+        "critical": 48,
+        "overdue": 31
+      },
+      "before": {
+        "critical": 48,
+        "overdue": 31,
+        "overdue_pct": 0.646,
+        "forecast_finish": "2027-01-06"
+      },
+      "after": {
+        "critical": 8,
+        "overdue": 8,
+        "overdue_pct": 1.0,
+        "forecast_finish": "2026-06-24",
+        "baseline_finish": "2026-06-05",
+        "completion_variance_days": 19
+      }
+    },
+    {
+      "procore_project_id": "562949955423662",
+      "project_number": "25-034",
+      "project_name": "City Harvest",
+      "live_gold_before": {
+        "critical": null,
+        "overdue": null
+      },
+      "before": {
+        "critical": null,
+        "overdue": null,
+        "overdue_pct": null,
+        "forecast_finish": null
+      },
+      "after": {
+        "critical": 148,
+        "overdue": 3,
+        "overdue_pct": 0.02,
+        "forecast_finish": "2027-07-12",
+        "baseline_finish": null,
+        "completion_variance_days": null
+      }
+    },
+    {
+      "procore_project_id": "562949955365267",
+      "project_number": "26-025",
+      "project_name": "SaunaLounge 45 South 3 Street, Brooklyn, NY",
+      "live_gold_before": {
+        "critical": 259,
+        "overdue": 32
+      },
+      "before": {
+        "critical": 259,
+        "overdue": 32,
+        "overdue_pct": 0.124,
+        "forecast_finish": "2027-02-18"
+      },
+      "after": {
+        "critical": 71,
+        "overdue": 3,
+        "overdue_pct": 0.042,
+        "forecast_finish": "2027-02-18",
+        "baseline_finish": "2027-01-21",
+        "completion_variance_days": 28
+      }
+    },
+    {
+      "procore_project_id": "562949955375634",
+      "project_number": "26-026",
+      "project_name": "Embankment Phase III",
+      "live_gold_before": {
+        "critical": 31,
+        "overdue": 31
+      },
+      "before": {
+        "critical": 31,
+        "overdue": 31,
+        "overdue_pct": 1.0,
+        "forecast_finish": "2026-09-14"
+      },
+      "after": {
+        "critical": 7,
+        "overdue": 7,
+        "overdue_pct": 1.0,
+        "forecast_finish": "2026-09-14",
+        "baseline_finish": "2026-09-08",
+        "completion_variance_days": 6
+      }
+    },
+    {
+      "procore_project_id": "562949955455437",
+      "project_number": "26-056",
+      "project_name": "360 Lexington 15th Floor Fitout",
+      "live_gold_before": {
+        "critical": 43,
+        "overdue": 3
+      },
+      "before": {
+        "critical": 43,
+        "overdue": 3,
+        "overdue_pct": 0.07,
+        "forecast_finish": "2027-01-19"
+      },
+      "after": {
+        "critical": 22,
+        "overdue": 0,
+        "overdue_pct": 0.0,
+        "forecast_finish": "2027-01-19",
+        "baseline_finish": "2027-01-19",
+        "completion_variance_days": 0
+      }
+    }
+  ],
+  "notes": [
+    "City Harvest (25-034) appears only after the manual map (Outbuild 47914). Its current schedule 108958 has 575 activities and 0 baselines, so Completion Variance stays BLANK (not 0) for it.",
+    "Portfolio after-fix excluding City Harvest: 118 critical, 28 overdue.",
+    "Embankment Phase III and PCNA forecast finishes are already past; the Schedule Ended Site Active rule still applies on the current schedule."
+  ]
+}

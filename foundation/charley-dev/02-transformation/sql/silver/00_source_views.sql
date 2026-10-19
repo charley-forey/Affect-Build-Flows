@@ -73,7 +73,9 @@ SELECT
     CAST(`Date Created`    AS DATE)   AS created_date,
     CAST(`CO Value $`      AS DOUBLE) AS amount,
     CAST(number            AS STRING) AS co_number,
-    CAST(status            AS STRING) AS status
+    CAST(status            AS STRING) AS status,
+    -- The legacy warehouse table carries no title; only the CD source does.
+    CAST(NULL              AS STRING) AS title
 FROM delta.`{SILVER_ABFSS}/procore_prime_change_orders`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_prime_contracts AS
@@ -152,7 +154,19 @@ SELECT
     CAST(duration             AS DOUBLE)  AS duration,
     CAST(is_critical          AS BOOLEAN) AS is_critical,
     CAST(activity_type        AS STRING)  AS activity_type,
-    CAST(Status               AS STRING)  AS status
+    CAST(Status               AS STRING)  AS status,
+    -- The existing warehouse's table carries no schedule identity and no baselines, so
+    -- these are NULL. gold fct_Milestone keeps only is_current_schedule = TRUE (2026-10-16:
+    -- live projects carry up to six schedules, one current), so this source builds NO
+    -- milestones rather than counting superseded schedules. --source cd is the real path.
+    CAST(NULL AS DATE)    AS baseline_start_date,
+    CAST(NULL AS DATE)    AS baseline_end_date,
+    CAST(`Outbuild Project ID` AS STRING) AS outbuild_project_id,
+    CAST(NULL AS STRING)  AS schedule_id,
+    CAST(NULL AS STRING)  AS schedule_name,
+    CAST(NULL AS BOOLEAN) AS is_current_schedule,
+    CAST(NULL AS STRING)  AS project_stage,
+    CAST(NULL AS STRING)  AS archive_reason
 FROM delta.`{SILVER_ABFSS}/Outbuild_activities`;
 
 -- sv_rfis: EMPTY BY CONSTRUCTION under this source. There is no RFI table anywhere in the
@@ -203,7 +217,8 @@ FROM delta.`{SILVER_ABFSS}/dim_projects_procoreXsage`;
 CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_projects AS
 SELECT DISTINCT
     CAST(`Outbuild Project ID` AS STRING) AS outbuild_project_id,
-    CAST(`Procore Project ID`  AS STRING) AS procore_project_id
+    CAST(`Procore Project ID`  AS STRING) AS procore_project_id,
+    CASE WHEN `Procore Project ID` IS NOT NULL THEN 'EMBEDDED_PROCORE_ID' END AS link_method
 FROM delta.`{SILVER_ABFSS}/Outbuild_activities`
 WHERE `Outbuild Project ID` IS NOT NULL;
 

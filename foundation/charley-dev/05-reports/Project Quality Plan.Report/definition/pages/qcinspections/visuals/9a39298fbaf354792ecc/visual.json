@@ -20,15 +20,15 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_ProcoreInspection"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "ProjectKey"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "fct_ProcoreInspection.ProjectKey",
-              "nativeQueryRef": "ProjectKey",
-              "displayName": "Project Key"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project"
             },
             {
               "field": {
@@ -192,7 +192,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Native inspection register \u2014 source counts. Shows ProjectKey, InspectionKey, InspectionName, SourceTemplateName, InspectionDate, DueDate, SourceStatus, SourceItemCount, ConformingItemCount, DeficientItemCount, NotInspectedItemCount for the current selection.'"
+                  "Value": "'Table. Native inspection register \u2014 source counts. Shows ProjectName, InspectionKey, InspectionName, SourceTemplateName, InspectionDate, DueDate, SourceStatus, SourceItemCount, ConformingItemCount, DeficientItemCount, NotInspectedItemCount for the current selection.'"
                 }
               }
             }
@@ -305,7 +305,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_ProcoreInspection.ProjectKey"
+            "metadata": "dim_Project.ProjectName"
           }
         },
         {

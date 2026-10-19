@@ -38,12 +38,27 @@
                       "Entity": "fct_ChangeOrder"
                     }
                   },
-                  "Property": "StatusLabel"
+                  "Property": "ChangeOrderTitle"
                 }
               },
-              "queryRef": "fct_ChangeOrder.StatusLabel",
-              "nativeQueryRef": "StatusLabel",
-              "displayName": "Status Label"
+              "queryRef": "fct_ChangeOrder.ChangeOrderTitle",
+              "nativeQueryRef": "ChangeOrderTitle",
+              "displayName": "Title"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_ChangeOrder"
+                    }
+                  },
+                  "Property": "StatusDisplay"
+                }
+              },
+              "queryRef": "fct_ChangeOrder.StatusDisplay",
+              "nativeQueryRef": "StatusDisplay",
+              "displayName": "Status"
             },
             {
               "field": {
@@ -119,7 +134,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Pending change orders - oldest first. Shows ChangeOrderNumber, StatusLabel, CreatedDate, DaysOpen, Change Order Amount for the current selection.'"
+                  "Value": "'Table. Pending change orders - oldest first. Shows ChangeOrderNumber, ChangeOrderTitle, StatusDisplay, CreatedDate, DaysOpen, Change Order Amount for the current selection.'"
                 }
               }
             }
@@ -226,7 +241,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "197D"
+                  "Value": "172D"
                 }
               }
             }
@@ -240,13 +255,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "427D"
+                  "Value": "353D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "fct_ChangeOrder.StatusLabel"
+            "metadata": "fct_ChangeOrder.ChangeOrderTitle"
           }
         },
         {
@@ -254,7 +269,21 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "197D"
+                  "Value": "172D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ChangeOrder.StatusDisplay"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "172D"
                 }
               }
             }
@@ -268,7 +297,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "197D"
+                  "Value": "172D"
                 }
               }
             }
@@ -282,7 +311,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "197D"
+                  "Value": "172D"
                 }
               }
             }

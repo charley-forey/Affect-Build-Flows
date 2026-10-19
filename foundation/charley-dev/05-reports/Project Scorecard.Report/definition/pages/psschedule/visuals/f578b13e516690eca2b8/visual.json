@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "A schedule that has run out while the site is still logging or closing punch items scores 0 on Schedule Performance until it is updated. Daily reports missed = weekdays with no Procore daily log between the month's first and last log.",
+                    "value": "A schedule that has run out while the site is still logging or closing punch items scores 0 on Schedule Performance until it is updated. Daily reports missed = weekdays (public holidays excused) with no Procore daily log, from the first log to the last.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'A schedule that has run out while the site is still logging or closing punch items scores 0 on Schedule Performance until it is updated. Daily reports missed = weekdays with no Procore daily log between the month''s first and last log.'"
+                  "Value": "'A schedule that has run out while the site is still logging or closing punch items scores 0 on Schedule Performance until it is updated. Daily reports missed = weekdays (public holidays excused) with no Procore daily log, from the first log to the last.'"
                 }
               }
             }

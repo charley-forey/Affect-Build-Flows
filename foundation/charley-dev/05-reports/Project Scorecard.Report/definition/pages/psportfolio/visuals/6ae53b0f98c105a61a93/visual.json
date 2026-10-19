@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "6ae53b0f98c105a61a93",
   "position": {
-    "x": 332,
-    "y": 520,
+    "x": 20,
+    "y": 572,
     "z": 0,
-    "width": 300,
+    "width": 220,
     "height": 84,
-    "tabOrder": 14
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Projects at risk (score below 0.60). Shows Projects At Risk for the current selection.'"
+                  "Value": "'Card. Active, rated below Meets. Shows Projects At Risk for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Projects at risk (score below 0.60)'"
+                  "Value": "'Active, rated below Meets'"
                 }
               }
             },

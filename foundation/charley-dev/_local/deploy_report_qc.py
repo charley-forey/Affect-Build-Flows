@@ -103,7 +103,7 @@ def page_ncr() -> tuple[str, list[dict]]:
         dr.sort_desc(visual(p, "list", "tableEx", 600, ROW2, 584, FULL_BOTTOM - ROW2,
                {"Values": [column("fct_QcNcr", "NcrNumber"),
                            column("fct_QcNcr", "Title"),
-                           column("fct_QcNcr", "StatusCode"),
+                           dict(column("fct_QcNcr", "StatusLabel"), displayName="Status"),
                            column("fct_QcNcr", "DaysOpen")]},
                title="Observation register - longest open first"), column("fct_QcNcr", "DaysOpen")),
     ]
@@ -130,7 +130,7 @@ def page_punch() -> tuple[str, list[dict]]:
         dr.sort_desc(visual(p, "list", "tableEx", 600, ROW2, 584, FULL_BOTTOM - ROW2,
                {"Values": [column("fct_QcPunch", "PunchNumber"),
                            column("fct_QcPunch", "Title"),
-                           column("fct_QcPunch", "StatusCode"),
+                           dict(column("fct_QcPunch", "StatusLabel"), displayName="Status"),
                            column("fct_QcPunch", "DaysOpen")]},
                title="Punch register - longest open first"), column("fct_QcPunch", "DaysOpen")),
     ]
@@ -154,7 +154,7 @@ def page_submittals() -> tuple[str, list[dict]]:
         visual(p, "list", "tableEx", 306, ROW2, 878, FULL_BOTTOM - ROW2,
                {"Values": [column("fct_QcSubmittal", "SubmittalNumber"),
                            column("fct_QcSubmittal", "Subject"),
-                           column("fct_QcSubmittal", "StatusCode"),
+                           dict(column("fct_QcSubmittal", "StatusLabel"), displayName="Status"),
                            column("fct_QcSubmittal", "TurnaroundDays")]},
                title="Submittal register"),
     ]
@@ -171,8 +171,9 @@ def page_native_inspections() -> tuple[str, list[dict]]:
                 20, 56, 1160, 44, size=10, color=MUTED),
         card(p, "total", "Native Inspections", 20, ROW1, 270, 100),
         visual(p, "register", "tableEx", 20, ROW2, 1164, FULL_BOTTOM - ROW2,
-               {"Values": [column("fct_ProcoreInspection", c) for c in
-                           ("ProjectKey", "InspectionKey", "InspectionName", "SourceTemplateName",
+               {"Values": [dict(column("dim_Project", "ProjectName"), displayName="Project")]
+                          + [column("fct_ProcoreInspection", c) for c in
+                           ("InspectionKey", "InspectionName", "SourceTemplateName",
                             "InspectionDate", "DueDate", "SourceStatus", "SourceItemCount",
                             "ConformingItemCount", "DeficientItemCount", "NotInspectedItemCount")]},
                title="Native inspection register — source counts"),
@@ -190,8 +191,10 @@ def page_native_inspection_items() -> tuple[str, list[dict]]:
                 20, 56, 1160, 44, size=10, color=MUTED),
         card(p, "total", "Native Inspection Items", 20, ROW1, 270, 100),
         visual(p, "items", "tableEx", 20, ROW2, 1164, FULL_BOTTOM - ROW2,
-               {"Values": [column("fct_ProcoreInspectionItem", c) for c in
-                           ("ProjectKey", "InspectionKey", "ItemKey", "ItemName",
+               # Project via the parent inspection: item -> inspection -> dim_Project.
+               {"Values": [dict(column("dim_Project", "ProjectName"), displayName="Project")]
+                          + [column("fct_ProcoreInspectionItem", c) for c in
+                           ("InspectionKey", "ItemKey", "ItemName",
                             "ResponseCategory", "ResponseType", "SourceStatus", "SourceResponse")]},
                title="Inspection item responses — unchanged source labels"),
     ]

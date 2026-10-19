@@ -55,6 +55,9 @@ SELECT
     n.priority                          AS Priority,
     n.source_status                     AS SourceStatus,
     n.status_code                       AS StatusCode,
+    -- The workbook label for the code ("Awaiting A/E", not AWAITING_A_E). (Domain, Code)
+    -- is dim_QcStatus's key, so this cannot fan out; a model relationship cannot use it.
+    qs.Label                            AS StatusLabel,
     n.item_class_code                   AS ItemClassCode,
     n.created_date                      AS CreatedDate,
     n.due_date                          AS DueDate,
@@ -75,6 +78,8 @@ SELECT
     CASE WHEN n.closed_date IS NULL AND n.due_date IS NOT NULL AND n.due_date < CURRENT_DATE
          THEN TRUE ELSE FALSE END       AS IsPastDue
 FROM sv_qc_ncr n
+LEFT JOIN dim_QcStatus qs
+       ON qs.Domain = 'NCRLOG_5' AND qs.Code = n.status_code
 LEFT JOIN qc_seed_Trade t
        ON t.TradeKey = UPPER(REPLACE(TRIM(COALESCE(n.trade, '')), ' ', '_'))
 -- Joined on the RAW label, not the normalised key: an alias exists precisely
@@ -108,6 +113,9 @@ SELECT
     p.priority                          AS Priority,
     p.source_status                     AS SourceStatus,
     p.status_code                       AS StatusCode,
+    -- The workbook label for the code ("Awaiting A/E", not AWAITING_A_E). (Domain, Code)
+    -- is dim_QcStatus's key, so this cannot fan out; a model relationship cannot use it.
+    qs.Label                            AS StatusLabel,
     p.item_class_code                   AS ItemClassCode,
     p.created_date                      AS CreatedDate,
     p.due_date                          AS DueDate,
@@ -125,6 +133,8 @@ SELECT
     CASE WHEN p.closed_date IS NULL AND p.due_date IS NOT NULL AND p.due_date < CURRENT_DATE
          THEN TRUE ELSE FALSE END       AS IsPastDue
 FROM sv_qc_punch p
+LEFT JOIN dim_QcStatus qs
+       ON qs.Domain = 'PUNCHRCLLOG_5' AND qs.Code = p.status_code
 LEFT JOIN qc_seed_Trade t
        ON t.TradeKey = UPPER(REPLACE(TRIM(COALESCE(p.trade, '')), ' ', '_'))
 -- Joined on the RAW label, not the normalised key: an alias exists precisely
@@ -149,6 +159,7 @@ SELECT
     cost_code_id                        AS CostCodeKey,
     source_status                       AS SourceStatus,
     status_code                         AS StatusCode,
+    qs.Label                            AS StatusLabel,
     submittal_type_code                 AS SubmittalTypeCode,
     CASE WHEN submittal_type_code = 'MOCK_UP' THEN TRUE ELSE FALSE END AS IsMockup,
     created_date                        AS CreatedDate,
@@ -177,6 +188,8 @@ FROM (
            COALESCE(UPPER(TRIM(COALESCE(status_category, source_status))) = 'DRAFT', FALSE) AS is_draft
     FROM sv_qc_submittal
 ) s
+LEFT JOIN dim_QcStatus qs
+       ON qs.Domain = 'SUBMITTALSMOCKUPS_6' AND qs.Code = s.status_code
 WHERE project_id IS NOT NULL;
 
 -- Native inspections retain their own identity; no equivalence to manual templates is assumed.

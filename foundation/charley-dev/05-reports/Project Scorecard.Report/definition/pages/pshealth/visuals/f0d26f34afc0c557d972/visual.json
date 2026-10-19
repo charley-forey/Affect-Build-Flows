@@ -5,7 +5,7 @@
     "x": 20,
     "y": 142,
     "z": 0,
-    "width": 194,
+    "width": 214,
     "height": 76,
     "tabOrder": 19
   },
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Project Scorecard (Measured Only)"
+                  "Property": "Health Score"
                 }
               },
-              "queryRef": "_Measures.Project Scorecard (Measured Only)",
-              "nativeQueryRef": "Project Scorecard (Measured Only)"
+              "queryRef": "_Measures.Health Score",
+              "nativeQueryRef": "Health Score"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Health score (0-1). Shows Project Scorecard (Measured Only) for the current selection.'"
+                  "Value": "'Card. Health score (0-1). Shows Health Score for the current selection.'"
                 }
               }
             }

@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "89a182839165bdf51594",
   "position": {
-    "x": 440,
+    "x": 472,
     "y": 222,
     "z": 0,
-    "width": 400,
+    "width": 388,
     "height": 158,
-    "tabOrder": 26
+    "tabOrder": 27
   },
   "visual": {
     "visualType": "tableEx",
@@ -47,18 +47,18 @@
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_Milestone"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "IsOverdue"
+                  "Property": "Milestone Overdue"
                 }
               },
-              "queryRef": "fct_Milestone.IsOverdue",
-              "nativeQueryRef": "IsOverdue",
-              "displayName": "Is Overdue"
+              "queryRef": "_Measures.Milestone Overdue",
+              "nativeQueryRef": "Milestone Overdue",
+              "displayName": "Overdue"
             }
           ]
         }
@@ -72,7 +72,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Critical milestones. Shows MilestoneName, CurrentFinish, IsOverdue for the current selection.'"
+                  "Value": "'Table. Critical milestones. Shows MilestoneName, CurrentFinish, Milestone Overdue for the current selection.'"
                 }
               }
             }
@@ -179,7 +179,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "160D"
+                  "Value": "152D"
                 }
               }
             }
@@ -193,7 +193,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "108D"
+                  "Value": "105D"
                 }
               }
             }
@@ -207,13 +207,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "108D"
+                  "Value": "105D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "fct_Milestone.IsOverdue"
+            "metadata": "_Measures.Milestone Overdue"
           }
         }
       ]

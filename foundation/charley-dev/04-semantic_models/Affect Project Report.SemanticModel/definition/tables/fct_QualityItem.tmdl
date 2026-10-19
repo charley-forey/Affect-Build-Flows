@@ -10,6 +10,11 @@ table fct_QualityItem
 		summarizeBy: none
 		sourceColumn: ItemType
 
+	column ItemTypeLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ItemTypeLabel
+
 	column ItemKey
 		dataType: string
 		summarizeBy: none

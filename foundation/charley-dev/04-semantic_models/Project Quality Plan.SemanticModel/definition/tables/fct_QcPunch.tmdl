@@ -65,6 +65,11 @@ table fct_QcPunch
 		summarizeBy: none
 		sourceColumn: StatusCode
 
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
 	column ItemClassCode
 		dataType: string
 		summarizeBy: none

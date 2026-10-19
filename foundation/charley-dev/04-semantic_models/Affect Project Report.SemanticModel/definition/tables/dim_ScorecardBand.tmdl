@@ -14,11 +14,13 @@ table dim_ScorecardBand
 		dataType: double
 		summarizeBy: none
 		sourceColumn: MinValue
+		formatString: "#,0.##"
 
 	column MaxValue
 		dataType: double
 		summarizeBy: none
 		sourceColumn: MaxValue
+		formatString: "#,0.##"
 
 	column MatchValue
 		dataType: string

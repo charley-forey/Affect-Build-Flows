@@ -3,9 +3,9 @@
   "name": "f359272a299d01a1fa81",
   "position": {
     "x": 20,
-    "y": 520,
+    "y": 480,
     "z": 0,
-    "width": 300,
+    "width": 220,
     "height": 84,
     "tabOrder": 13
   },
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Projects Reporting. Shows Projects Reporting for the current selection.'"
+                  "Value": "'Card. Projects with financial data. Shows Projects Reporting for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Projects Reporting'"
+                  "Value": "'Projects with financial data'"
                 }
               }
             },

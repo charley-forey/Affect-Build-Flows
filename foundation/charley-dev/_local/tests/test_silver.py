@@ -132,10 +132,15 @@ BRONZE = {
     # live shape (only 3 of 15 carry a procore_id). Schedules are a nested JSON array, and
     # the activity's ONLY route to a project is through them.
     "cd_bronze_outbuild_projects": [
+        # OB1 also carries a superseded draft schedule (9003), as live projects do.
         bronze_row("OB1", {"id": 4001, "name": "Tower A", "procore_id": "7",
+                           "stage": "archived", "archive_reason": "finished",
                            "schedules": [{"id": 9001, "name": "Main Schedule",
-                                          "is_current_schedule": True}]}),
+                                          "is_current_schedule": True},
+                                         {"id": 9003, "name": "SU01 draft",
+                                          "is_current_schedule": False}]}),
         bronze_row("OB2", {"id": 4002, "name": "Unintegrated Site", "procore_id": None,
+                           "stage": "started", "archive_reason": None,
                            "schedules": [{"id": 9002, "name": "Main Schedule",
                                           "is_current_schedule": True}]}),
     ],
@@ -162,6 +167,12 @@ BRONZE = {
                           "start_date": "2025-05-01T08:00:00.000",
                           "end_date": "2025-06-30T17:00:00.000",
                           "progress": 25, "duration": 5, "is_critical": True,
+                          "activity_type": "task"}),
+        # On OB1's superseded draft: lands in silver, labelled not-current.
+        bronze_row("A4", {"id": 14974, "name": "Draft only", "schedule_id": 9003,
+                          "start_date": "2025-05-01T08:00:00.000",
+                          "end_date": "2027-01-01T17:00:00.000",
+                          "progress": 0, "duration": 90, "is_critical": True,
                           "activity_type": "task"}),
     ],
     "cd_bronze_procore_observations": [
@@ -1224,7 +1235,7 @@ def test_outbuild_parser(con) -> None:
     """25_outbuild_silver.sql - the parser fct_Milestone reads, and its two traps."""
     # Nothing is dropped. Three activities in, three out - including the one whose project
     # has no Procore integration.
-    assert one(con, "SELECT COUNT(*) FROM cd_silver_outbuild_activities") == 3
+    assert one(con, "SELECT COUNT(*) FROM cd_silver_outbuild_activities") == 4
     check("every Outbuild activity survives silver, attributed or not")
 
     # THE TRAP. Outbuild sends progress as 0-100; gold documents its contract as a 0-1
@@ -1266,6 +1277,31 @@ def test_outbuild_parser(con) -> None:
     assert one(con, "SELECT baseline_duration FROM cd_silver_outbuild_activities "
                     "WHERE activity_id='14971'") == 50.0
     check("names are trimmed and baseline dates are landed for later variance work")
+
+    # Schedule identity and project stage come off the project record (2026-10-16).
+    assert con.execute("SELECT activity_id, schedule_name, is_current_schedule, project_stage, "
+                       "archive_reason FROM cd_silver_outbuild_activities ORDER BY 1").fetchall() == [
+        ("14971", "Main Schedule", True, "archived", "finished"),
+        ("14972", "Main Schedule", True, "archived", "finished"),
+        ("14973", "Main Schedule", True, "started", None),
+        ("14974", "SU01 draft", False, "archived", "finished")]
+    check("every activity carries its schedule's name and is_current_schedule, and the project stage")
+
+    # The manual Outbuild -> Procore map, applied by the sv_* views (test_column_contract
+    # built them over the real seed). Native procore_id always wins; the map only fills NULLs.
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO seed_OutbuildProjectMap VALUES "
+                    "('4002', '8', 'Unintegrated Site', 'test'), ('4001', '999', 'Tower A', 'test')")
+        assert con.execute("SELECT activity_id, project_id FROM sv_outbuild_activities "
+                           "ORDER BY 1").fetchall() == [
+            ("14971", "7"), ("14972", "7"), ("14973", "8"), ("14974", "7")]
+        assert con.execute("SELECT outbuild_project_id, procore_project_id, link_method "
+                           "FROM sv_outbuild_projects ORDER BY 1").fetchall() == [
+            ("4001", "7", "EMBEDDED_PROCORE_ID"), ("4002", "8", "MANUAL_MAP")]
+    finally:
+        con.execute("ROLLBACK")
+    check("the manual Outbuild map fills a NULL procore_id and never overrides a native one")
 
 
 def test_sage_parser(con) -> None:

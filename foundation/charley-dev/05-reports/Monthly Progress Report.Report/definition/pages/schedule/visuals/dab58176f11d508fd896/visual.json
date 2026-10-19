@@ -20,29 +20,14 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_Milestone"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "ProjectKey"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "fct_Milestone.ProjectKey",
-              "nativeQueryRef": "ProjectKey",
-              "active": true
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_Milestone"
-                    }
-                  },
-                  "Property": "ActivityKey"
-                }
-              },
-              "queryRef": "fct_Milestone.ActivityKey",
-              "nativeQueryRef": "ActivityKey",
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName",
               "active": true
             },
             {
@@ -58,6 +43,21 @@
               },
               "queryRef": "fct_Milestone.MilestoneName",
               "nativeQueryRef": "MilestoneName",
+              "active": true
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fct_Milestone"
+                    }
+                  },
+                  "Property": "CurrentStart"
+                }
+              },
+              "queryRef": "fct_Milestone.CurrentStart",
+              "nativeQueryRef": "CurrentStart",
               "active": true
             }
           ]

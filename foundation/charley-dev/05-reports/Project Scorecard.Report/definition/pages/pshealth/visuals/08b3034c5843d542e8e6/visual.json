@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "6e3aa7d9d7542ad44270",
+  "name": "08b3034c5843d542e8e6",
   "position": {
-    "x": 20,
-    "y": 422,
+    "x": 672,
+    "y": 502,
     "z": 0,
-    "width": 194,
+    "width": 188,
     "height": 76,
-    "tabOrder": 36
+    "tabOrder": 42
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Recordable Incidents"
+                  "Property": "Open Punch Items"
                 }
               },
-              "queryRef": "_Measures.Recordable Incidents",
-              "nativeQueryRef": "Recordable Incidents"
+              "queryRef": "_Measures.Open Punch Items",
+              "nativeQueryRef": "Open Punch Items"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Recordable incidents. Shows Recordable Incidents for the current selection.'"
+                  "Value": "'Card. Open punch items. Shows Open Punch Items for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Recordable incidents'"
+                  "Value": "'Open punch items'"
                 }
               }
             },

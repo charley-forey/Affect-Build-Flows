@@ -9,6 +9,7 @@ table dim_ScorecardWeight
 		dataType: string
 		summarizeBy: none
 		sourceColumn: CategoryName
+		sortByColumn: SortOrder
 
 	column Weight
 		dataType: double

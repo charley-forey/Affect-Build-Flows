@@ -74,7 +74,7 @@ SELECT prime_contract_id, project_id, contract_value, retainage_pct,
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_prime_contracts`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_prime_change_orders AS
-SELECT project_id, change_order_id, contract_id, created_date, amount, co_number, status
+SELECT project_id, change_order_id, contract_id, created_date, amount, co_number, status, title
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_prime_change_orders`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_budgets AS
@@ -188,10 +188,23 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_rfis`;
 --
 -- Gold reads sv_outbuild_activities unconditionally, so a missing view is a hard failure
 -- rather than an empty fact. That is deliberate and unchanged.
+--
+-- 2026-10-16: project_id is Outbuild's own procore_id FIRST, then the reviewed manual map
+-- (seed/outbuild_project_map.csv -> seed_OutbuildProjectMap) for Outbuild projects with no
+-- integration. One row today: Outbuild 47914 "25-034 City Harvest New" -> Procore 25-034
+-- City Harvest. The schedule identity (is_current_schedule, schedule_name), the project's
+-- stage/archive_reason and the baselines are exposed so gold can keep the CURRENT schedule
+-- only and compute finish variance.
 CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_activities AS
-SELECT project_id, activity_id, activity_name, start_date, end_date,
-       progress, duration, is_critical, activity_type, status
-FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`;
+SELECT COALESCE(a.project_id, m.ProcoreProjectId) AS project_id,
+       a.activity_id, a.activity_name, a.start_date, a.end_date,
+       a.progress, a.duration, a.is_critical, a.activity_type, a.status,
+       a.baseline_start_date, a.baseline_end_date,
+       a.outbuild_project_id, a.schedule_id, a.schedule_name, a.is_current_schedule,
+       a.project_stage, a.archive_reason
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities` a
+LEFT JOIN seed_OutbuildProjectMap m
+       ON a.project_id IS NULL AND m.OutbuildProjectId = a.outbuild_project_id;
 
 
 -- ---------------------------------------------------------------------------
@@ -226,13 +239,18 @@ LEFT JOIN delta.`{CD_SILVER_ABFSS}/cd_silver_projects` p
 WHERE x.Relationship = 'primary';
 
 -- Outbuild carries its OWN Procore project id, so it joins to the hub directly rather than
--- needing a third mapping. One row per Outbuild project.
+-- needing a third mapping. One row per Outbuild project. Where it carries none, the manual
+-- map applies exactly as in sv_outbuild_activities, and link_method says which was used.
 CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_projects AS
 SELECT DISTINCT
-    outbuild_project_id,
-    project_id AS procore_project_id
-FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities`
-WHERE outbuild_project_id IS NOT NULL;
+    a.outbuild_project_id,
+    COALESCE(a.project_id, m.ProcoreProjectId) AS procore_project_id,
+    CASE WHEN a.project_id IS NOT NULL THEN 'EMBEDDED_PROCORE_ID'
+         WHEN m.ProcoreProjectId IS NOT NULL THEN 'MANUAL_MAP' END AS link_method
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities` a
+LEFT JOIN seed_OutbuildProjectMap m
+       ON a.project_id IS NULL AND m.OutbuildProjectId = a.outbuild_project_id
+WHERE a.outbuild_project_id IS NOT NULL;
 
 -- Sage's own vendor master, for names on the Sage side of the vendor crosswalk.
 -- REPOINTED 2026-09-13 off Dim_Sage_Vendors onto our own actpay (26_sage_silver.sql).

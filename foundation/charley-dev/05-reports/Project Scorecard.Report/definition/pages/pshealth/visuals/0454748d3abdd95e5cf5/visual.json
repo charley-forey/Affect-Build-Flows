@@ -3,11 +3,11 @@
   "name": "0454748d3abdd95e5cf5",
   "position": {
     "x": 20,
-    "y": 222,
+    "y": 302,
     "z": 0,
-    "width": 400,
-    "height": 158,
-    "tabOrder": 25
+    "width": 440,
+    "height": 358,
+    "tabOrder": 30
   },
   "visual": {
     "visualType": "tableEx",
@@ -42,7 +42,38 @@
                 }
               },
               "queryRef": "_Measures.Category Score",
-              "nativeQueryRef": "Category Score"
+              "nativeQueryRef": "Category Score",
+              "displayName": "Score (0-3)"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_ScorecardWeight"
+                    }
+                  },
+                  "Property": "Weight"
+                }
+              },
+              "queryRef": "dim_ScorecardWeight.Weight",
+              "nativeQueryRef": "Weight",
+              "displayName": "Weight"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Category Weighted"
+                }
+              },
+              "queryRef": "_Measures.Category Weighted",
+              "nativeQueryRef": "Category Weighted",
+              "displayName": "Adds to score"
             },
             {
               "field": {
@@ -56,7 +87,8 @@
                 }
               },
               "queryRef": "_Measures.Category Band",
-              "nativeQueryRef": "Category Band"
+              "nativeQueryRef": "Category Band",
+              "displayName": "Band"
             }
           ]
         }
@@ -70,7 +102,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. How the score is built. Shows CategoryName, Category Score, Category Band for the current selection.'"
+                  "Value": "'Table. How the score is built - in scorecard order. Shows CategoryName, Category Score, Weight, Category Weighted, Category Band for the current selection.'"
                 }
               }
             }
@@ -90,7 +122,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'How the score is built'"
+                  "Value": "'How the score is built - in scorecard order'"
                 }
               }
             },
@@ -177,7 +209,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "160D"
+                  "Value": "84D"
                 }
               }
             }
@@ -191,7 +223,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "108D"
+                  "Value": "82D"
                 }
               }
             }
@@ -205,7 +237,35 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "108D"
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_ScorecardWeight.Weight"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Category Weighted"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
                 }
               }
             }

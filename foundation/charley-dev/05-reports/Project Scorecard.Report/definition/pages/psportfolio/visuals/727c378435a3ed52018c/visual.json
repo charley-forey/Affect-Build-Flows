@@ -6,7 +6,7 @@
     "y": 108,
     "z": 0,
     "width": 1240,
-    "height": 400,
+    "height": 360,
     "tabOrder": 12
   },
   "visual": {
@@ -37,6 +37,21 @@
                       "Entity": "dim_Project"
                     }
                   },
+                  "Property": "ProjectNumber"
+                }
+              },
+              "queryRef": "dim_Project.ProjectNumber",
+              "nativeQueryRef": "ProjectNumber",
+              "displayName": "Number"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_Project"
+                    }
+                  },
                   "Property": "ProjectName"
                 }
               },
@@ -56,7 +71,8 @@
                 }
               },
               "queryRef": "_Measures.Pillar Score",
-              "nativeQueryRef": "Pillar Score"
+              "nativeQueryRef": "Pillar Score",
+              "displayName": "Ranked score"
             },
             {
               "field": {
@@ -126,7 +142,8 @@
                 }
               },
               "queryRef": "_Measures.Scorecard Coverage %",
-              "nativeQueryRef": "Scorecard Coverage %"
+              "nativeQueryRef": "Scorecard Coverage %",
+              "displayName": "Coverage"
             },
             {
               "field": {
@@ -136,11 +153,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Performance Rating"
+                  "Property": "Bonus Rating"
                 }
               },
-              "queryRef": "_Measures.Performance Rating",
-              "nativeQueryRef": "Performance Rating"
+              "queryRef": "_Measures.Bonus Rating",
+              "nativeQueryRef": "Bonus Rating",
+              "displayName": "Bonus rating"
             },
             {
               "field": {
@@ -150,11 +168,12 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Needs Attention"
+                  "Property": "Main Issue"
                 }
               },
-              "queryRef": "_Measures.Needs Attention",
-              "nativeQueryRef": "Needs Attention"
+              "queryRef": "_Measures.Main Issue",
+              "nativeQueryRef": "Main Issue",
+              "displayName": "Main issue"
             },
             {
               "field": {
@@ -168,7 +187,23 @@
                 }
               },
               "queryRef": "_Measures.Input Check",
-              "nativeQueryRef": "Input Check"
+              "nativeQueryRef": "Input Check",
+              "displayName": "Data-entry check"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Project Status"
+                }
+              },
+              "queryRef": "_Measures.Project Status",
+              "nativeQueryRef": "Project Status",
+              "displayName": "Status"
             }
           ]
         }
@@ -200,7 +235,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Every project ranked by its weighted health score for the selected pillar, with one column per pillar, the share of the score that is measured, the bonus-policy rating, a Needs attention flag, and any data-entry problem. Right-click a project to drill through to its health page or a section.'"
+                  "Value": "'Table. Every active project ranked by its weighted health score for the selected pillar, with one column per pillar, the share of the score that is measured, the bonus-policy rating and any Safety & Quality cap, the lowest-scoring category and how many more are below target, any data-entry problem and the project status. Filtered to Active projects; clear the Project Status filter in the Filters pane to include inactive ones. Right-click a project to drill through to its health page or a section.'"
                 }
               }
             }
@@ -220,7 +255,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'All projects - ranked score, each pillar (0-1), bonus rating and data-entry check'"
+                  "Value": "'Active projects - ranked score, each pillar (0-1), bonus rating, main issue and data-entry check'"
                 }
               }
             },
@@ -307,7 +342,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -321,7 +356,21 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "151D"
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Project.ProjectNumber"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "126D"
                 }
               }
             }
@@ -335,7 +384,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -349,7 +398,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -363,7 +412,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -377,7 +426,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -391,7 +440,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -405,7 +454,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "82D"
                 }
               }
             }
@@ -419,13 +468,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "116D"
+                  "Value": "115D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Performance Rating"
+            "metadata": "_Measures.Bonus Rating"
           }
         },
         {
@@ -433,13 +482,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "115D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "_Measures.Needs Attention"
+            "metadata": "_Measures.Main Issue"
           }
         },
         {
@@ -447,13 +496,27 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "105D"
+                  "Value": "119D"
                 }
               }
             }
           },
           "selector": {
             "metadata": "_Measures.Input Check"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "82D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Project Status"
           }
         }
       ],
@@ -523,6 +586,108 @@
                           }
                         ]
                       ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      },
+      {
+        "name": "c3de207e2619e3d06b86",
+        "field": {
+          "Column": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "dim_Project"
+              }
+            },
+            "Property": "ProjectName"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "p",
+              "Entity": "dim_Project",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Not": {
+                  "Expression": {
+                    "Comparison": {
+                      "ComparisonKind": 0,
+                      "Left": {
+                        "Column": {
+                          "Expression": {
+                            "SourceRef": {
+                              "Source": "p"
+                            }
+                          },
+                          "Property": "ProjectName"
+                        }
+                      },
+                      "Right": {
+                        "Literal": {
+                          "Value": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "howCreated": "User"
+      },
+      {
+        "name": "6143e1fc7398078cf54c",
+        "field": {
+          "Measure": {
+            "Expression": {
+              "SourceRef": {
+                "Entity": "_Measures"
+              }
+            },
+            "Property": "Project Status"
+          }
+        },
+        "type": "Advanced",
+        "filter": {
+          "Version": 2,
+          "From": [
+            {
+              "Name": "m",
+              "Entity": "_Measures",
+              "Type": 0
+            }
+          ],
+          "Where": [
+            {
+              "Condition": {
+                "Comparison": {
+                  "ComparisonKind": 0,
+                  "Left": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Source": "m"
+                        }
+                      },
+                      "Property": "Project Status"
+                    }
+                  },
+                  "Right": {
+                    "Literal": {
+                      "Value": "'Active'"
                     }
                   }
                 }

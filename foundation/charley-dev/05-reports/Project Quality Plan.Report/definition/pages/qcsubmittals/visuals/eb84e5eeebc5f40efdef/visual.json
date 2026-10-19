@@ -53,12 +53,12 @@
                       "Entity": "fct_QcSubmittal"
                     }
                   },
-                  "Property": "StatusCode"
+                  "Property": "StatusLabel"
                 }
               },
-              "queryRef": "fct_QcSubmittal.StatusCode",
-              "nativeQueryRef": "StatusCode",
-              "displayName": "Status Code"
+              "queryRef": "fct_QcSubmittal.StatusLabel",
+              "nativeQueryRef": "StatusLabel",
+              "displayName": "Status"
             },
             {
               "field": {
@@ -87,7 +87,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Submittal register. Shows SubmittalNumber, Subject, StatusCode, TurnaroundDays for the current selection.'"
+                  "Value": "'Table. Submittal register. Shows SubmittalNumber, Subject, StatusLabel, TurnaroundDays for the current selection.'"
                 }
               }
             }
@@ -228,7 +228,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_QcSubmittal.StatusCode"
+            "metadata": "fct_QcSubmittal.StatusLabel"
           }
         },
         {

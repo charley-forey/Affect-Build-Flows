@@ -127,6 +127,7 @@ def check_milestone_geometry(dataset_id, tok):
 # ---------------------------------------------------------------------------------------
 from collections import namedtuple  # noqa: E402
 from datetime import datetime, timedelta  # noqa: E402
+from decimal import ROUND_HALF_UP, Decimal  # noqa: E402
 
 Scope = namedtuple("Scope", "project month category")
 PORTFOLIO = Scope(None, None, None)
@@ -134,13 +135,14 @@ PORTFOLIO = Scope(None, None, None)
 RAW_COLUMNS = {
     "_Measures": ["_built_at"], "dim_Date": ["Date", "MonthStart"],
     "dim_Project": ["ProjectKey", "IsInCrosswalk"], "dim_CostCode": ["IsInSource"],
-    "dim_ScorecardWeight": ["CategoryKey", "Weight", "Pillar"],
+    "dim_ScorecardWeight": ["CategoryKey", "Weight", "Pillar", "CategoryName", "SortOrder"],
     "dim_ScorecardBand": ["CategoryKey", "MinValue", "MaxValue", "MatchValue", "Score", "BandLabel"],
     "fct_BudgetLine": ["BudgetAmount", "ForecastAmount", "CommittedAmount", "SpentToDate", "CostToComplete"],
     "fct_ChangeOrder": ["Amount", "IsPending", "StatusLabel"],
-    "fct_Invoice": ["Amount", "AmountPaid", "Balance", "HasUnmatchedProject", "DaysToPayment", "PaidDate"],
+    "fct_Invoice": ["Amount", "AmountPaid", "Balance", "HasUnmatchedProject", "DaysToPayment", "PaidDate",
+                    "SentDate"],
     "fct_RfiSubmittal": ["IsOpen", "IsPastDue", "ItemType", "DaysOpen"],
-    "fct_Milestone": ["IsOverdue", "PercentComplete", "CurrentFinish", "HasDateInversion"],
+    "fct_Milestone": ["IsOverdue", "PercentComplete", "CurrentFinish", "HasDateInversion", "BaselineFinish"],
     "fct_FinancialPeriod": ["OriginalContract", "CurrentContract", "PendingChangeOrders", "AgeOfOldestUnapprovedCO"],
     "fct_QualityItem": ["ItemType", "IsOpen", "IsPastDue", "DaysPastDue", "DaysOpen"],
     "fct_SafetyMonthly": ["RecordableIncidents", "HoursWorked", "LastLogDate", "DailyLogsMissed"],
@@ -193,6 +195,14 @@ def _sum(rows, column):
 def _avg(rows, column):
     values = [r[column] for r in rows if r[column] is not None]
     return sum(values) / len(values) if values else None
+
+
+def _group_sums(rows, key, column):
+    """SUM(column) per key value, None where every row is None - CALCULATE(SUM()) per VALUES(key)."""
+    groups = {}
+    for r in rows:
+        groups.setdefault(r[key], []).append(r)
+    return [_sum(g, column) for g in groups.values()]
 
 
 def _max(rows, column, key=None):
@@ -304,8 +314,8 @@ class Recompute:
         if hours > 30:
             return "Late - no checked run in over 30 hours"
         if (_sum(latest, "Failing") or 0) > 0:
-            return "Gold checked with warnings; source completeness unverified"
-        return "Gold checks passed; source completeness unverified"
+            return "Data checks passed with warnings; source totals not verified"
+        return "Data checks passed; source totals not verified"
 
 
 def _shared_expected():
@@ -379,7 +389,7 @@ def monthly_expected():
                 6: 0 if E["Schedule Ended Site Active"](c, s) else band(c, 6, E["Milestones Overdue %"](c, s)),
                 7: band(c, 7, E["Completion Variance Days"](c, s)),
                 8: band(c, 8, E["Avg Observation Days To Close"](c, s)),
-                9: band(c, 9, E["Daily Reports Missed"](c, s))}
+                9: band(c, 9, E["Daily Reports Missed Per Month"](c, s))}
 
     def scorecard(c, s, weighted=True):
         weights = c.data["dim_ScorecardWeight"]  # ALL(dim_ScorecardWeight)
@@ -443,7 +453,7 @@ def monthly_expected():
             return "No daily logs in Procore"
         if finish is not None and finish >= today(c) and d > scorecard_module.DAILY_LOG_GRACE_DAYS:
             return f"No daily log for {d} days"
-        if finish is None and d is not None and d <= 30:
+        if finish is None and d is not None and d <= scorecard_module.NO_SCHEDULE_LOG_DAYS:
             return "No schedule in Outbuild"
         return None
 
@@ -457,6 +467,8 @@ def monthly_expected():
         score = E["Project Scorecard (Measured Only)"](c, s)
         if score is None or (scorecard(c, s, weighted=False) or 0) < scorecard_module.MIN_COVERAGE:
             return None
+        # DAX ROUND ( S, 2 ): half away from zero on the stored double, as displayed.
+        score = float(Decimal(score).quantize(Decimal("0.01"), ROUND_HALF_UP))
         tiers = scorecard_module.RATING_TIERS
         m = next((mult for low, _, mult in tiers[:-1] if score >= low), tiers[-1][2])
         if safety_quality_gate(c, s):
@@ -470,13 +482,42 @@ def monthly_expected():
         tiers = scorecard_module.RATING_TIERS
         return next((r for _, r, mult in tiers[:-1] if m * 100 >= mult - 0.5), tiers[-1][1])
 
+    def rating_cap(c, s):
+        """The gate named, only when it lowered the rating (score alone reached the tier above)."""
+        a, b = (E[n](c, s) for n in scorecard_module.GATE_CATEGORIES)
+        low = [name for v, name in zip((a, b), scorecard_module._GATE_NAMES) if v is not None and v < 3]
+        score = E["Project Scorecard (Measured Only)"](c, s)
+        if bonus_multiplier(c, s) is None or not low or float(Decimal(score).quantize(
+                Decimal("0.01"), ROUND_HALF_UP)) < scorecard_module._GATE_ABOVE:
+            return None
+        return "Capped by " + " and ".join(low)
+
+    def main_issue(c, s):
+        found = scores(c, s)
+        low = [w for w in c.data["dim_ScorecardWeight"]  # ALL(dim_ScorecardWeight)
+               if found.get(w["CategoryKey"]) is not None and found[w["CategoryKey"]] < 3]
+        if not low:
+            return None
+        w = min(low, key=lambda w: (found[w["CategoryKey"]], -w["Weight"], w["SortOrder"]))
+        more = f" +{len(low) - 1} more" if len(low) > 1 else ""
+        return f"{w['CategoryName']} {found[w['CategoryKey']]:g}/3{more}"
+
+    def project_status(c, s):
+        if s.project in (None, "UNMATCHED"):
+            return None
+        d = days_since_daily_log(c, s)
+        if d is None:
+            return "No daily logs"
+        return "Active" if d <= scorecard_module.INACTIVE_AFTER_DAYS else "Inactive"
+
     def projects_at_risk(c, s):
         count = 0
         for p in c.rows("dim_Project", s):
             if p["ProjectKey"] in (None, "UNMATCHED"):
                 continue
-            value = E["Project Scorecard (Measured Only)"](c, s._replace(project=p["ProjectKey"]))
-            count += value is not None and value < 0.6
+            ps = s._replace(project=p["ProjectKey"])
+            count += (project_status(c, ps) == "Active"
+                      and performance_rating(c, ps) in scorecard_module.AT_RISK_RATINGS)
         return count or None
 
     def vendors_without_insurance(c, s):
@@ -484,8 +525,12 @@ def monthly_expected():
         return len({r["VendorKey"] for r in c.rows("bridge_ProjectVendor", s)} - insured)
 
     def completion_variance(c, s):
+        # Manual baseline first, else Outbuild's last critical baseline finish; both dates are
+        # whole-project (REMOVEFILTERS dim_Date), forecast = [Scheduled Finish].
         baseline = _max(c.rows("man_Milestones", s), "BaselineFinish", key=_ts)
-        forecast = _max(c.rows("fct_Milestone", s), "CurrentFinish", key=_ts)
+        if baseline is None:
+            baseline = _max(c.rows("fct_Milestone", s._replace(month=None)), "BaselineFinish", key=_ts)
+        forecast = E["Scheduled Finish"](c, s)
         return None if baseline is None or forecast is None else (_ts(forecast).date() - _ts(baseline).date()).days
 
     def budget_status(c, s):
@@ -546,9 +591,36 @@ def monthly_expected():
         return _div(billed, E["Current Contract"](c, s))
 
     def recordable_incidents(c, s):
-        rows = c.rows("fct_SafetyMonthly", s)
+        """12 months ending at the last selected date, capped at today (dim_Date runs to 2035)."""
+        dates = [_ts(r["Date"]) for r in c.rows("dim_Date", s) if r["Date"]]
+        if not dates:
+            return None
+        end = max(dates)
+        if c.now is not None:
+            end = min(end, _ts(c.now).replace(hour=0, minute=0, second=0, microsecond=0))
+        y, m = divmod(end.year * 12 + end.month - 1 - 11, 12)
+        start = datetime(y, m + 1, 1)
+        valid = {r["Date"] for r in c.data["dim_Date"] if r["Date"] and start <= _ts(r["Date"]) <= end}
+        rows = [r for r in c.rows("fct_SafetyMonthly", s._replace(month=None)) if r["MonthStart"] in valid]
         incidents, hours = _sum(rows, "RecordableIncidents"), _sum(rows, "HoursWorked")
         return _zero(incidents) if (hours or 0) > 0 or (incidents or 0) > 0 else None
+
+    def avg_days_to_payment(c, s):
+        """Paid invoices at DaysToPayment; still-owed ones (Balance > 0) at their age today."""
+        days = [r["DaysToPayment"] if r["DaysToPayment"] is not None
+                else (today(c) - _ts(r["SentDate"]).date()).days
+                for r in c.rows("fct_Invoice", s)
+                if r["DaysToPayment"] is not None or ((r["Balance"] or 0) > 0 and r["SentDate"] is not None)]
+        return sum(days) / len(days) if days else None
+
+    def cash_position(c, s):
+        """Paid + owed on invoices sent up to the end of the period, over the whole cost to complete."""
+        dates = [_ts(r["Date"]) for r in c.rows("dim_Date", s) if r["Date"]]
+        if not dates:
+            return None
+        valid = {r["Date"] for r in c.data["dim_Date"] if r["Date"] and _ts(r["Date"]) <= max(dates)}
+        rows = [r for r in c.rows("fct_Invoice", s._replace(month=None)) if r["MonthStart"] in valid]
+        return _div(_add(_sum(rows, "AmountPaid"), _sum(rows, "Balance")), E["Cost To Complete"](c, s))
     E.update({
         "Original Contract": lambda c, s: c.latest("fct_FinancialPeriod", "OriginalContract", s),
         "Current Contract": lambda c, s: c.latest("fct_FinancialPeriod", "CurrentContract", s),
@@ -617,7 +689,8 @@ def monthly_expected():
         "Avg Days Open": lambda c, s: _avg(R(c, "fct_RfiSubmittal", s, lambda r: r["IsOpen"] is True), "DaysOpen"),
         "Draft Submittals": lambda c, s: _count(R(c, "fct_RfiSubmittal", s, lambda r: r["IsDraft"] is True and _eq(r["ItemType"], "Submittal"))),
         "Critical Milestones": critical_milestones,
-        "Overdue Milestones": lambda c, s: _count(R(c, "fct_Milestone", s, true("IsOverdue"))),
+        "Overdue Milestones": lambda c, s: (lambda n: 0 if n is None and critical_milestones(c, s) is not None else n)(
+            _count(R(c, "fct_Milestone", s, true("IsOverdue")))),
         "Milestones Overdue %": lambda c, s: _div(E["Overdue Milestones"](c, s), E["Critical Milestones"](c, s)),
         "Avg Milestone Progress": lambda c, s: _avg(c.rows("fct_Milestone", s), "PercentComplete"),
         "Punchlist Items": lambda c, s: len(R(c, "fct_QualityItem", s, lambda r: _eq(r["ItemType"], "PunchItem"))),
@@ -645,16 +718,17 @@ def monthly_expected():
         "Projects Reporting": lambda c, s: len({r["ProjectKey"] for r in c.rows("fct_FinancialPeriod", s)
                                                 if r["ProjectKey"] not in (None, "UNMATCHED")}) or None,
         "Projects At Risk": projects_at_risk,
-        "Avg Days To Payment": lambda c, s: _avg(c.rows("fct_Invoice", s), "DaysToPayment"),
-        "Cash Position %": lambda c, s: _div(_add(E["Total Paid"](c, s), E["AR Outstanding"](c, s)),
-                                              _sum(c.rows("fct_BudgetLine", s), "CostToComplete")),
+        "Avg Days To Payment": avg_days_to_payment,
+        "Cash Position %": cash_position,
         "Profitability Code": lambda c, s: selected(c.rows("man_Flags", s), "ProfitabilityCode"),
         "Recordable Incidents": recordable_incidents,
         "Hours Worked": lambda c, s: (h if (h := _sum(c.rows("fct_SafetyMonthly", s), "HoursWorked")) and h > 0 else None),
         "Observations": lambda c, s: len(R(c, "fct_QualityItem", s, lambda r: _eq(r["ItemType"], "Observation"))),
         "Avg Observation Days To Close": lambda c, s: _avg(R(c, "fct_QualityItem", s,
-            lambda r: not r["IsOpen"] and _eq(r["ItemType"], "Observation")), "DaysOpen"),
+            lambda r: _eq(r["ItemType"], "Observation")), "DaysOpen"),
         "Daily Reports Missed": lambda c, s: _sum(c.rows("fct_SafetyMonthly", s), "DailyLogsMissed"),
+        "Daily Reports Missed Per Month": lambda c, s: _avg(
+            [{"m": v} for v in _group_sums(c.rows("fct_SafetyMonthly", s), "MonthStart", "DailyLogsMissed")], "m"),
         "Last Daily Log": lambda c, s: _max(c.rows("fct_SafetyMonthly", s._replace(month=None)), "LastLogDate", key=_ts),
         "Days Since Daily Log": days_since_daily_log,
         "Scheduled Finish": lambda c, s: _max(c.rows("fct_Milestone", s._replace(month=None)), "CurrentFinish", key=_ts),
@@ -664,7 +738,7 @@ def monthly_expected():
         "Client Satisfaction": lambda c, s: _div(_sum(c.rows("man_Survey", s), "Score"),
                                                  _count(c.rows("man_Survey", s)) and 5 * len(c.rows("man_Survey", s))),
         "Project Scorecard": scorecard,
-        "Scorecard Coverage %": lambda c, s: scorecard(c, s, weighted=False),
+        "Scorecard Coverage %": lambda c, s: scorecard(c, s, weighted=False) or None,
         "Project Scorecard (Measured Only)": lambda c, s: _div(scorecard(c, s), scorecard(c, s, weighted=False)),
         "Category Score": category_score,
         "Category Weighted": lambda c, s: (scorecard(c, s) if selected_category(c, s) is None
@@ -676,7 +750,23 @@ def monthly_expected():
         "Safety Quality Gate": safety_quality_gate,
         "Bonus Multiplier %": bonus_multiplier,
         "Performance Rating": performance_rating,
-        "Categories Below Target": lambda c, s: sum(v is not None and v < 3 for v in scores(c, s).values()),
+        "Rating Cap": rating_cap,
+        "Bonus Rating": lambda c, s: (performance_rating(c, s) if (cap := rating_cap(c, s)) is None
+                                      else f"{performance_rating(c, s)} ({cap[0].lower()}{cap[1:]})"),
+        "Main Issue": main_issue,
+        "Project Status": project_status,
+        "Health Score": lambda c, s: pillar_score(c, s._replace(category=None)),
+        "Score Table Pillars": lambda c, s: (
+            "All categories" if len(c.rows("dim_ScorecardWeight", s)) >= len(c.data["dim_ScorecardWeight"])
+            else ", ".join(sorted({w["Pillar"] for w in c.rows("dim_ScorecardWeight", s)})) + " only"),
+        "Input Check Status": lambda c, s: input_check(c, s) or "No issues",
+        "Milestone Overdue": lambda c, s: "Overdue" if R(c, "fct_Milestone", s, true("IsOverdue")) else "",
+        "Item Type Label": lambda c, s: (lambda t: "Punch item" if t == "PunchItem" else t)(
+            selected(c.rows("fct_QualityItem", s), "ItemType")),
+        "CO Status": lambda c, s: (lambda t: None if t is None else t[0].upper() + t[1:].replace("_", " ").lower())(
+            selected(c.rows("fct_ChangeOrder", s), "StatusLabel")),
+        "Categories Below Target": lambda c, s: (sum(v is not None and v < 3 for v in scores(c, s).values())
+                                                 if scorecard(c, s, weighted=False) else None),
         "Needs Attention": lambda c, s: ("Needs attention" if E["Categories Below Target"](c, s)
                                          >= scorecard_module.ATTENTION_CATEGORIES else None),
         "Outstanding CO Count": lambda c, s: len(R(c, "fct_ChangeOrder", s, true("IsPending"))),

@@ -83,12 +83,12 @@
                       "Entity": "bridge_ProjectVendor"
                     }
                   },
-                  "Property": "IsPrequalified"
+                  "Property": "PrequalifiedLabel"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.IsPrequalified",
-              "nativeQueryRef": "IsPrequalified",
-              "displayName": "Is Prequalified"
+              "queryRef": "bridge_ProjectVendor.PrequalifiedLabel",
+              "nativeQueryRef": "PrequalifiedLabel",
+              "displayName": "Prequalified"
             },
             {
               "field": {
@@ -98,12 +98,12 @@
                       "Entity": "bridge_ProjectVendor"
                     }
                   },
-                  "Property": "SyncedToErp"
+                  "Property": "SyncedToErpLabel"
                 }
               },
-              "queryRef": "bridge_ProjectVendor.SyncedToErp",
-              "nativeQueryRef": "SyncedToErp",
-              "displayName": "Synced To Erp"
+              "queryRef": "bridge_ProjectVendor.SyncedToErpLabel",
+              "nativeQueryRef": "SyncedToErpLabel",
+              "displayName": "Synced To ERP"
             }
           ]
         }
@@ -117,7 +117,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Vendor list - prequalification and ERP sync. Shows VendorName, TradeName, City, LicenseNumber, IsPrequalified, SyncedToErp for the current selection.'"
+                  "Value": "'Table. Vendor list - prequalification and ERP sync. Shows VendorName, TradeName, City, LicenseNumber, PrequalifiedLabel, SyncedToErpLabel for the current selection.'"
                 }
               }
             }
@@ -286,7 +286,7 @@
             }
           },
           "selector": {
-            "metadata": "bridge_ProjectVendor.IsPrequalified"
+            "metadata": "bridge_ProjectVendor.PrequalifiedLabel"
           }
         },
         {
@@ -300,7 +300,7 @@
             }
           },
           "selector": {
-            "metadata": "bridge_ProjectVendor.SyncedToErp"
+            "metadata": "bridge_ProjectVendor.SyncedToErpLabel"
           }
         }
       ]

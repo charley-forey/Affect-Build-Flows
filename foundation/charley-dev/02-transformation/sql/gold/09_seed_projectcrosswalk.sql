@@ -34,7 +34,7 @@ FROM (VALUES
 
 -- seed_ProjectExclusion: Procore projects kept out of every report (test projects).
 -- deploy_gold.py filters every project-keyed sv_* view through it before gold builds.
--- seed_ProjectExclusion: 3 row(s) from seed/project_exclusion.csv
+-- seed_ProjectExclusion: 4 row(s) from seed/project_exclusion.csv
 CREATE OR REPLACE TABLE seed_ProjectExclusion AS
 SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
        CAST(c2 AS STRING) AS ProjectName,
@@ -42,5 +42,19 @@ SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
 FROM (VALUES
     ('562949953807489', 'Sandbox Test Project', 'Procore test project (number 1234); excluded 2026-10-05'),
     ('562949955173068', 'TEST - ABM SUBORDINATE', 'Procore test project (number 1234); excluded 2026-10-05'),
-    ('562949953807474', 'Standard Project Template', 'Procore project template (no number); excluded 2026-10-07')
+    ('562949953807474', 'Standard Project Template', 'Procore project template (no number); excluded 2026-10-07'),
+    ('562949955488665', 'Lillipvt 25-013', 'Duplicate Procore project for 25-013 (no Sage job; no data); excluded 2026-10-16')
 ) AS t(c1, c2, c3);
+
+-- seed_OutbuildProjectMap: Outbuild projects with no procore_id, mapped by hand.
+-- sv_outbuild_activities uses it only when Outbuild's own procore_id is NULL.
+-- seed_OutbuildProjectMap: 2 row(s) from seed/outbuild_project_map.csv
+CREATE OR REPLACE TABLE seed_OutbuildProjectMap AS
+SELECT CAST(c1 AS STRING) AS OutbuildProjectId,
+       CAST(c2 AS STRING) AS ProcoreProjectId,
+       CAST(c3 AS STRING) AS OutbuildProjectName,
+       CAST(c4 AS STRING) AS Source
+FROM (VALUES
+    ('47914', '562949955423662', '25-034 City Harvest New', 'assumed_2026-10-16: carries job number 25-034; older copies 43250/47267/48195/43183 left unmapped'),
+    ('45393', '562949954973684', '45 Renwick St', 'assumed_2026-10-16: address matches Procore 25-013 "Lillipvt 45 Renwick St"; Outbuild has no procore_id')
+) AS t(c1, c2, c3, c4);

@@ -429,8 +429,8 @@ def test_silver_input_failure_blocks():
 def test_audit_validation_scope():
     import audit_solution as audit
     for status, expected in (
-        ("Gold checks passed; source completeness unverified", True),
-        ("Gold checked with warnings; source completeness unverified", True),
+        ("Data checks passed; source totals not verified", True),
+        ("Data checks passed with warnings; source totals not verified", True),
         ("Unvalidated - data built after last check", False),
         (None, False),
     ):

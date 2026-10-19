@@ -166,7 +166,7 @@ SLICER_TITLE = 10
 # than for whatever the data happened to say on the day it was checked. Pipeline Status
 # is asserted against the DAX in the tests so this cannot drift from the model.
 CARD_TEXT_SAMPLES = {
-    "Pipeline Status": "Gold checked with warnings; source completeness unverified",
+    "Pipeline Status": "Data checks passed with warnings; source totals not verified",
     "Snapshot History Note": "History starts 2026-01-31; earlier months are unavailable, not zero",
     "DQ Registers Awaiting Input": "8/8 registers empty in current filters; completeness unverified",
     "Last Checked Run": "2026-09-14 04:00",
@@ -662,7 +662,7 @@ def page_financial() -> tuple[str, list[dict]]:
                {"Rows": [column("dim_CostCode", "Division"),
                          column("dim_CostCode", "CostCode"),
                          column("fct_BudgetLine", "Category"),
-                         column("fct_BudgetLine", "ProjectKey"),
+                         dict(column("dim_Project", "ProjectName"), displayName="Project"),
                          column("fct_BudgetLine", "BudgetLineID")],
                 "Values": [measure("Budget"), measure("Spent To Date"),
                            measure("Budget Remaining"), measure("Budget Remaining %"),
@@ -670,9 +670,9 @@ def page_financial() -> tuple[str, list[dict]]:
                            measure("Forecast Variance"), measure("Forecast Status")]},
                title="Budget by cost code (last snapshot) - expand for category and source line",
                alt="Matrix. Budget remaining is budget less spend to date and Budget Status describes that spend "
-                   "comparison; Forecast Variance is budget less forecast and Forecast Status bands it the same way. Expand through division, cost code, category, project ID and source budget line ID."),
+                   "comparison; Forecast Variance is budget less forecast and Forecast Status bands it the same way. Expand through division, cost code, category, project and source budget line ID."),
         visual(p, "co_by_status", "clusteredColumnChart", 820, 210, 440, 210,
-               {"Category": [column("fct_ChangeOrder", "StatusLabel")],
+               {"Category": [dict(column("fct_ChangeOrder", "StatusDisplay"), displayName="Status")],
                 "Y": [measure("Change Order Amount")]},
                title="Change orders by status"),
         # THE S-CURVE. Cumulative billing against the contract line is the chart a GC reads
@@ -713,8 +713,14 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
         # gold, because Outbuild is not supplying them. A baseline-vs-current timeline is
         # the version Affect actually wants, and it needs that data first.
         visual(p, "gantt", "barChart", 20, 210, 740, 290,
-               {"Category": [dict(column("fct_Milestone", c), active=True)
-                             for c in ("ProjectKey", "ActivityKey", "MilestoneName")],
+               # Project name, not the Procore id; start date, not Outbuild's activity
+               # UUID, separates same-named milestones. Two activities sharing project,
+               # name AND start collapse to one category and the measures blank it (rare;
+               # the Data Quality page's Outbuild counts are unaffected).
+               {"Category": [dict(column(t, c), active=True)
+                             for t, c in (("dim_Project", "ProjectName"),
+                                          ("fct_Milestone", "MilestoneName"),
+                                          ("fct_Milestone", "CurrentStart"))],
                 "Y": [measure("Milestone Offset Days"),
                       measure("Milestone Duration Days")]},
                title="Current schedule - elapsed days from earliest valid start",
@@ -723,18 +729,19 @@ def page_schedule_quality() -> tuple[str, list[dict]]:
                    "valid milestone start currently shown. Missing or inverted dates are "
                    "omitted from the bars and retained in the table. Baseline variance is unavailable."),
         no_totals(visual(p, "milestones", "tableEx", 20, 508, 740, 150,
-               {"Values": [column("fct_Milestone", "ProjectKey"),
-                           column("fct_Milestone", "ActivityKey"),
+               # Reader table: no ids, no booleans. Inverted dates are counted on the
+               # Data Quality page (DQ Milestones With Inverted Dates).
+               {"Values": [dict(column("dim_Project", "ProjectName"), displayName="Project"),
                            column("fct_Milestone", "MilestoneName"),
                            column("fct_Milestone", "CurrentStart"),
                            column("fct_Milestone", "CurrentFinish"),
-                           column("fct_Milestone", "PercentComplete"),
-                           column("fct_Milestone", "StatusLabel"),
-                           column("fct_Milestone", "HasDateInversion")]},
+                           # StatusLabel left out: Outbuild has no activity status, so
+                           # silver lands it NULL and it rendered as an empty column.
+                           column("fct_Milestone", "PercentComplete")]},
                title="Critical path milestones (Outbuild)")),
         # The workbook's one native chart, rebuilt - and now drillable to the items.
         visual(p, "submittals_by_status", "barChart", 780, 210, 480, 250,
-               {"Category": [column("fct_RfiSubmittal", "StatusLabel")],
+               {"Category": [dict(column("fct_RfiSubmittal", "StatusDisplay"), displayName="Status")],
                 "Y": [measure("Open Submittals")]},
                title="Open submittals by status (as of today)"),
         # SAVED HISTORY, not current state regrouped. A backlog chart built from today's
@@ -1042,10 +1049,12 @@ def page_project_detail() -> tuple[str, list[dict]]:
 
         visual(p, "pd_co", "tableEx", 660, 228, 600, 232,
                {"Values": [column("fct_ChangeOrder", "ChangeOrderNumber"),
-                           # StatusLabel, not Status. The column has never been called
-                           # Status in gold, so this visual has been broken since it was
-                           # written - see test_report_refs below, which now catches it.
-                           column("fct_ChangeOrder", "StatusLabel"),
+                           # Numbers repeat across a project's contracts; the title is what
+                           # tells two "002"s apart.
+                           dict(column("fct_ChangeOrder", "ChangeOrderTitle"), displayName="Title"),
+                           # StatusDisplay: Procore's "pending" as "Pending". Gold has no
+                           # Status column - test_report_refs catches a reference to one.
+                           dict(column("fct_ChangeOrder", "StatusDisplay"), displayName="Status"),
                            # Amount for every CO. Approved-only left pending rows blank, and a
                            # table drops all-blank rows, so pending COs vanished.
                            measure("Change Order Amount"),
@@ -1056,14 +1065,15 @@ def page_project_detail() -> tuple[str, list[dict]]:
                {"Values": [column("fct_RfiSubmittal", "ItemType"),
                            column("fct_RfiSubmittal", "ItemNumber"),
                            column("fct_RfiSubmittal", "Subject"),
-                           column("fct_RfiSubmittal", "StatusLabel")]},
+                           dict(column("fct_RfiSubmittal", "StatusDisplay"), displayName="Status")]},
                title="RFIs and submittals"),
 
         visual(p, "pd_milestones", "tableEx", 660, 474, 600, 182,
                {"Values": [column("fct_Milestone", "MilestoneName"),
                            column("fct_Milestone", "CurrentStart"),
                            column("fct_Milestone", "CurrentFinish"),
-                           column("fct_Milestone", "IsOverdue")]},
+                           # "Overdue" or empty, not True/False (same measure as the Scorecard).
+                           dict(measure("Milestone Overdue"), displayName="Overdue")]},
                title="Milestones"),
     ]
 
@@ -1111,7 +1121,7 @@ def page_safety_quality() -> tuple[str, list[dict]]:
         card(p, "sq_avgclose", "Avg Observation Days To Close", 552, 262, 250, 100),
 
         visual(p, "sq_by_type", "columnChart", 20, 382, 520, 274,
-               {"Category": [column("fct_QualityItem", "ItemType")],
+               {"Category": [dict(column("fct_QualityItem", "ItemTypeLabel"), displayName="Item type")],
                 "Y": [measure("Open Quality Items")]},
                title="Open items by type"),
 
@@ -1260,8 +1270,8 @@ def page_costs_vendors() -> tuple[str, list[dict]]:
                            column("bridge_ProjectVendor", "TradeName"),
                            column("bridge_ProjectVendor", "City"),
                            column("bridge_ProjectVendor", "LicenseNumber"),
-                           column("bridge_ProjectVendor", "IsPrequalified"),
-                           column("bridge_ProjectVendor", "SyncedToErp")]},
+                           dict(column("bridge_ProjectVendor", "PrequalifiedLabel"), displayName="Prequalified"),
+                           dict(column("bridge_ProjectVendor", "SyncedToErpLabel"), displayName="Synced To ERP")]},
                title="Vendor list - prequalification and ERP sync"),
 
         # Sage AP against Procore, per project. Ends on the footer line (FOOTER_Y 662).

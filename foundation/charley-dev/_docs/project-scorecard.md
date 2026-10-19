@@ -20,9 +20,9 @@ Only the Portfolio is in the page tabs. Every other page is a drill-through page
 
 | Page | What it shows |
 |---|---|
-| **Portfolio Scorecard** | **All projects on one table**, one row each: rank, ranked score, one column per pillar (Financial, Schedule, Safety & Quality, Reporting), share measured, bonus rating, *Needs attention*, and the data-entry check. A **Rank by pillar** slicer re-ranks in place. Also shows the number of projects reporting and at risk, and the "coming soon" list. |
-| Project Health | One project. Tiles: health score and bonus rating (with how the score is built), schedule, financial, safety, quality, and data entry & challenges. |
-| Schedule & Data Entry | Scheduled finish, last daily log, days since the last log, daily reports missed, the data-entry check, critical-path milestones, and missed daily reports by month. |
+| **Portfolio Scorecard** | **Every active project on one table**, one row each: rank, project number and name, ranked score, one column per pillar (Financial, Schedule, Safety & Quality, Reporting), coverage (share measured), bonus rating with any Safety & Quality cap spelled out ("Needs Improvement (capped by observations)"), *Main issue* (the lowest-scoring category, e.g. "Observations 0/3 +1 more"), the data-entry check and Status. A **Rank by pillar** slicer re-ranks in place; there is no project slicer (picking one project ranked it 1). **Inactive projects** are listed in their own table below (no daily log in 60+ days, likely closed) and drill through the same way; clearing the *Project Status* filter in the Filters pane puts them back in the main table. Also shows projects with financial data, projects at risk, and the "coming soon" list. |
+| Project Health | One project. The health score tile runs the full height: health score (coverage-gated, all categories whatever pillar the Portfolio had), bonus rating, coverage, which categories are listed, and all nine categories in scorecard order with score, weight, contribution and band. Then schedule, financial, safety & quality, and data entry & challenges. |
+| Schedule & Data Entry | Scheduled finish, last daily log, days since the last log, daily reports missed per month (the scored number), the data-entry check, critical-path milestones, and missed daily reports by month. |
 | Change Orders | Pending change orders, oldest first. |
 | Open Quality Items | Open observations and punch items, oldest first. |
 
@@ -39,13 +39,15 @@ This answers Cal's 2026-10-13 question. A score is only as good as its inputs, s
 | No daily logs in Procore | The schedule says the job is live, but there are no logs at all | Flag only |
 | No schedule in Outbuild | Daily logs filed in the last 30 days, but there is no schedule | Flag only |
 
-**Daily Reports is now scored from Procore**, instead of the hand-typed list (which is still empty). A Procore manpower entry only exists inside a filed daily log. So a weekday with no entry, between the month's first and last log, counts as a daily report missed. A site that stops logging altogether is caught by the "No daily log" check instead.
+**Daily Reports is now scored from Procore**, instead of the hand-typed list (which is still empty). A Procore manpower entry only exists inside a filed daily log. So an expected day with no entry counts as a daily report missed. Expected days are weekdays, less public holidays, across the project's **logging window**: its first log to its last. A month inside the window with no log at all counts every expected day (before 2026-10-16 only the gaps between each month's own first and last log counted, so a site that went quiet for three weeks across a month end counted nothing). The score uses the **average per month** over the selected months, against the per-month band. A site that stops logging altogether is caught by the "No daily log" check instead.
 
 Limits, stated:
-- Public holidays count as weekdays.
+- **Public holidays (assumption, pending Affect's calendar):** New Year's Day, Memorial Day, Independence Day, Labor Day, Thanksgiving, the day after, and Christmas, observed dates, 2023-2027, in `seed/public_holiday.csv`. Empty the CSV and re-run `make_qc_seeds.py` to count them as weekdays again.
 - "Missed" means not filed at all, not "filed late". Same-day filing needs the daily-log timestamps, which the 30-day `/daily_logs` extract does not give us yet.
 
-The thresholds (7 days, 30 days) live in `_local/scorecard.py`.
+The thresholds (7 days, 30 days, and 60 days for Inactive) live in `_local/scorecard.py`.
+
+**Project status (assumption, pending Affect).** A project is *Active* with a Procore daily log in the last 60 days, otherwise *Inactive* (likely closed; on 2026-10-16 that is 25-015, 25-016, 25-014, 26-022 and 25-012). It is the `[Project Status]` measure, not a column, so it needs no gold rebuild. The duplicate Procore project "Lillipvt 25-013" (no Sage job, no data) is excluded in `seed/project_exclusion.csv`.
 
 ## Checked against the Performance Bonus & Incentive Policy
 
@@ -68,7 +70,7 @@ The policy's project bucket is 25% of each bonus. A project is rated on a five-t
 | Policy metric | Scorecard today | Gap |
 |---|---|---|
 | Safety & Quality | Safety Incidents (Procore), Observations (Procore), plus the gate | none |
-| Schedule: critical missed starts vs adjusted baseline; recovery plans | Schedule Performance (overdue critical milestones, Outbuild), Completion Variance | Baseline dates. Completion Variance stays blank until Outbuild baselines are read. Recovery plans are not tracked. |
+| Schedule: critical missed starts vs adjusted baseline; recovery plans | Schedule Performance (overdue critical milestones, Outbuild), Completion Variance (forecast vs baseline completion, Outbuild) | Recovery plans are not tracked. |
 | Reporting / OAC: monthly reports on time, OAC agenda 24h ahead, minutes in 24h | Daily Reports (Procore) | Meeting agendas and minutes need the Procore meetings endpoint |
 | Financial: cash vs baseline cash plan, GP vs estimate, AR requisitions on time | AR days to payment, Cash Position, Change Orders, Profitability | Baseline cash plan: the WIP projection workbook (an S-curve by duration) is the template. GP needs margin bands. |
 | Compliance: statutory sign-offs first time, zero NCRs | none | Procore NCRs are already in gold (`fct_QcNcr`). Needs a weight and a pillar. |
@@ -78,9 +80,9 @@ Adding Compliance and Client/Vendor as scored pillars is a workshop decision: we
 
 ## How the ranking works
 
-- **`Pillar Score`** is `Project Scorecard (Measured Only)` computed over the categories left after the pillar slicer. With no pillar selected, the two are the same number.
+- **`Pillar Score`** is `Project Scorecard (Measured Only)` computed over the categories left after the pillar slicer, **and only once 50% of the weight is measured** (the coverage gate). With no pillar selected and coverage of 50% or more, the two are the same number; below 50% `Pillar Score` is blank and the rating reads *Not enough data*.
 - **The pillar columns** each fix their pillar, so they do not move with the slicer.
-- **`Project Rank`** is a dense rank of that score. A project with nothing measured gets no rank, rather than ranking last.
+- **`Project Rank`** is a dense rank of that score. A project under 50% coverage gets no rank, rather than ranking last.
 - **`Needs Attention`** fires when 2 or more categories score below 3, whatever the rank.
 - **Each category's pillar** is in `sql/gold/05_dim_scorecardweight.sql`, next to its weight.
 
@@ -131,7 +133,7 @@ Every layer has a check, and they run in this order:
 ## Rollout (respect the F2 budget: one Spark-heavy run a day)
 
 1. Run `python _local/run_tests.py`. All suites are offline.
-2. Run `python _local/deploy_gold.py --apply --no-run` to upload the gold SQL (`fct_SafetyMonthly` daily-log columns) without starting Spark. Let the **nightly pipeline** rebuild it.
+2. Run `python _local/deploy_seeds.py --apply --no-run` (the exclusion row and `seed_PublicHoliday`) and `python _local/deploy_gold.py --apply --no-run` to upload the gold SQL (`fct_SafetyMonthly` daily-log columns) without starting Spark. Let the **nightly pipeline** rebuild it.
 3. The next morning, check that `gold_schema.json` lists `fct_SafetyMonthly.DailyLogsMissed`. Then:
    ```
    python deploy_model.py --apply
@@ -141,7 +143,7 @@ Every layer has a check, and they run in this order:
    Then **publish at once**: `python deploy_publish.py --apply --run`. Automatic update is off, so new columns stay
    unloaded until the model is reframed, and every measure that depends on them (24 on 2026-10-14, including
    Project Scorecard on the Monthly Progress Report) errors in the meantime.
-4. Run `validate_model.py` and `reconcile_live.py`. Then confirm in DAX that, with no pillar filter, `Pillar Score` equals `Project Scorecard (Measured Only)` for every project.
+4. Run `validate_model.py` and `reconcile_live.py`. Then confirm in DAX that, with no pillar filter, `Pillar Score` equals `Project Scorecard (Measured Only)` for every project at 50% coverage or more, and is blank below it.
 5. Do a browser check:
    - On the Portfolio, right-click a project and open Project Health.
    - Each Details button opens its section.
@@ -154,11 +156,18 @@ Every layer has a check, and they run in this order:
 - Viewers need access to the report, through the workspace or a Power BI app audience. The capacity is below F64, so **every viewer needs a Power BI Pro licence.** Flag this to the new IT provider before rollout.
 - Data entry stays on each project team site: the `CD Risks` list, shown as "Biggest challenges on site". The hub page links to it.
 
+## Schedule: current schedule only, and Completion Variance (2026-10-16)
+
+An Outbuild project carries several schedules (drafts, copies, superseded versions); exactly one is current. `fct_Milestone` used to keep the critical activities of all of them, so Schedule Performance and the data-entry check were computed over schedules nobody works to. It now keeps the **current schedule only**. Live on 2026-10-16 the portfolio's critical milestones fell from 391 (107 overdue, 27.4%) to 266 (31 overdue, 11.7%). That 266 includes City Harvest's 148, newly linked below. Per project: [`outbuild-current-schedule-2026-10-16.json`](outbuild-current-schedule-2026-10-16.json).
+
+**Completion Variance is now scored.** It is forecast completion (the last critical-path finish on the current schedule, the same date as *Scheduled Finish*) minus baseline completion (a hand-typed `man_Milestones` baseline if one exists, otherwise the last critical-path baseline finish in Outbuild). It ignores the month slicer. Bands: 0 days or ahead = 3, 1-14 days = 2, 15 or more = 0. A schedule with no baselines (City Harvest today) stays blank, not 0.
+
+**Outbuild projects with no Procore link** can be mapped by hand in `seed/outbuild_project_map.csv`. Outbuild's own `procore_id` always wins. There is one row, an assumption to confirm: Outbuild 47914 "25-034 City Harvest New" is Procore 25-034 City Harvest. It is the copy that carries the job number. The older copies (43250, 47267, 48195, 43183) stay unmapped. Silver also now carries each Outbuild project's `project_stage` and `archive_reason`; PCNA is `archived` / `finished`.
+
 ## Not scored yet, and what unblocks each
 
 | Metric | Unblocked by |
 |---|---|
-| Completion variance | Gold reading the Outbuild baselines already parsed in `silver/25_outbuild_silver.sql`, instead of `man_Milestones` |
 | Profitability | Affect's gross-margin bands (in range / out of range) |
 | Client satisfaction | Importing Megan's Forms survey responses |
 | Compliance (sign-offs, NCRs) | A weight and pillar for it; NCR data is already in gold |

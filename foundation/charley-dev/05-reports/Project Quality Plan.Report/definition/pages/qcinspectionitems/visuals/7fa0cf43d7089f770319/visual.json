@@ -20,15 +20,15 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_ProcoreInspectionItem"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "ProjectKey"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "fct_ProcoreInspectionItem.ProjectKey",
-              "nativeQueryRef": "ProjectKey",
-              "displayName": "Project Key"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project"
             },
             {
               "field": {
@@ -147,7 +147,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Inspection item responses \u2014 unchanged source labels. Shows ProjectKey, InspectionKey, ItemKey, ItemName, ResponseCategory, ResponseType, SourceStatus, SourceResponse for the current selection.'"
+                  "Value": "'Table. Inspection item responses \u2014 unchanged source labels. Shows ProjectName, InspectionKey, ItemKey, ItemName, ResponseCategory, ResponseType, SourceStatus, SourceResponse for the current selection.'"
                 }
               }
             }
@@ -260,7 +260,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_ProcoreInspectionItem.ProjectKey"
+            "metadata": "dim_Project.ProjectName"
           }
         },
         {

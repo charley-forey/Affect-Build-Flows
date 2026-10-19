@@ -2,8 +2,8 @@
 
 analysis/excel-tracker/README.md:174 calls this "the most valuable thing here and it is
 partly broken ... Rebuilding it correctly in DAX is the highest-leverage single piece of
-the build". It is a genuine, agreed, weighted definition of project health - and three of
-its nine categories currently measure nothing.
+the build". It is a genuine, agreed, weighted definition of project health - and some of
+its nine categories still measure nothing (see [Scorecard Coverage %]).
 
 THE DESIGN RULE: no threshold is written in DAX. Every score is a LOOKUP against
 dim_ScorecardBand, and every weight a lookup against dim_ScorecardWeight. Affect retunes
@@ -101,6 +101,11 @@ PILLARS = ["Financial", "Schedule", "Safety & Quality", "Reporting"]
 # A project whose schedule says it should be on site but has no daily log for this many
 # calendar days is flagged.
 DAILY_LOG_GRACE_DAYS = 7
+# Daily logs in this many days with no schedule in Outbuild = "No schedule in Outbuild".
+NO_SCHEDULE_LOG_DAYS = 30
+# ASSUMPTION (2026-10-16, pending Affect): a project with no Procore daily log in this many
+# days is "Inactive" - likely closed. The Portfolio shows Active projects by default.
+INACTIVE_AFTER_DAYS = 60
 
 # Performance Bonus & Incentive Policy (FY2026): the project score feeds the rating tier,
 # and the tier sets the multiplier. The policy names the tiers and multipliers but not the
@@ -117,6 +122,11 @@ RATING_TIERS = [  # (minimum score, rating, multiplier %)
 # subpar." Subpar = below target (under 3) on Safety Incidents or Observations.
 GATE_CATEGORIES = ("Score - Safety Incidents", "Score - Observations")
 GATE_RATING = "Needs Improvement"
+# [Projects At Risk] counts these: below the 0.60 line, or capped there by the gate.
+AT_RISK_RATINGS = tuple(r for lo, r, _ in RATING_TIERS if lo < 0.60)
+_GATE_NAMES = tuple(n.removeprefix("Score - ") for n in GATE_CATEGORIES)
+# The gate lowers a rating only when the score alone reaches the tier above the cap.
+_GATE_ABOVE = next(lo for (lo, _, _), (_, r, _) in zip(RATING_TIERS, RATING_TIERS[1:]) if r == GATE_RATING)
 
 # A project is scored, ranked and rated only once this share of the weight is measured.
 # Found live 2026-10-14: City Harvest, measured on one category (12%), ranked first as
@@ -136,10 +146,18 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         (
             "Avg Days To Payment",
             # Sent to PAID, per fct_Invoice[DaysToPayment]: PaidDate is the day Sage
-            # receipts (acrpmt) first fully covered the invoice. AVERAGE skips blanks, so
-            # only fully-paid invoices count, and it is BLANK when none are in context -
-            # the category then scores BLANK. Due date is never substituted for paid date.
-            "AVERAGE ( fct_Invoice[DaysToPayment] )",
+            # receipts (acrpmt) first fully covered the invoice. An invoice still owed
+            # (Balance > 0, not fully paid) counts at its age to date, so a job whose
+            # invoices go unpaid cannot outscore one that is paid slowly. A zero-balance
+            # invoice with no receipts (opening balance) has no known paid date and is
+            # skipped. BLANK when nothing is in context. Due date is never substituted.
+            "AVERAGEX (\n"
+            "    FILTER ( fct_Invoice, NOT ISBLANK ( fct_Invoice[DaysToPayment] )\n"
+            "        || ( fct_Invoice[Balance] > 0 && NOT ISBLANK ( fct_Invoice[SentDate] ) ) ),\n"
+            "    IF ( ISBLANK ( fct_Invoice[DaysToPayment] ),\n"
+            "        DATEDIFF ( fct_Invoice[SentDate], TODAY (), DAY ),\n"
+            "        fct_Invoice[DaysToPayment] )\n"
+            ")",
             '"#,0.0"',
             "FINANCIALS!F56 - now from Sage AR receipts (acrpmt)",
         ),
@@ -147,9 +165,14 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "Cash Position %",
             # FINANCIALS!C8 is a DROPDOWN in the workbook, but the note in G8 spells out
             # the arithmetic. Computing it removes one of the three subjective inputs.
-            # The fact, not [Cost To Complete]: that card ignores the month slicer, and a
-            # month's invoices over the whole remaining cost would score every job at risk.
-            "DIVIDE ( [Total Paid] + [AR Outstanding], SUM ( fct_BudgetLine[CostToComplete] ) )",
+            # Billed to the END of the selected period (paid + still owed on every invoice
+            # sent up to then) over the current cost to complete. [Cost To Complete] ignores
+            # the month slicer: fct_BudgetLine is one snapshot dated the load month, so a
+            # month filter on it blanked the category for every past month.
+            "VAR EndDate = MAX ( dim_Date[Date] )\n"
+            "RETURN DIVIDE (\n"
+            "    CALCULATE ( [Total Paid] + [AR Outstanding], REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate ),\n"
+            "    [Cost To Complete] )",
             '"0.0%"',
             "FINANCIALS!C8 - a human judgement the workbook could already have computed",
         ),
@@ -161,10 +184,17 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Recordable Incidents",
-            # BLANK, NEVER ZERO: a project or month with no hours logged and no incident
-            # recorded is unmeasured, not incident-free. Zero only once hours exist.
-            "VAR I = SUM ( fct_SafetyMonthly[RecordableIncidents] )\n"
-            "VAR H = SUM ( fct_SafetyMonthly[HoursWorked] )\n"
+            # In the LAST 12 MONTHS ending at the selected month (today, under "All months":
+            # dim_Date runs to 2035). Summed over the whole selection, one incident years
+            # ago failed the Safety & Quality gate forever.
+            # BLANK, NEVER ZERO: a window with no hours logged and no incident recorded is
+            # unmeasured, not incident-free. Zero only once hours exist.
+            "VAR EndDate = MIN ( MAX ( dim_Date[Date] ), TODAY () )\n"
+            "VAR StartDate = EDATE ( DATE ( YEAR ( EndDate ), MONTH ( EndDate ), 1 ), -11 )\n"
+            "VAR I = CALCULATE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), REMOVEFILTERS ( dim_Date ),\n"
+            "    dim_Date[Date] >= StartDate, dim_Date[Date] <= EndDate )\n"
+            "VAR H = CALCULATE ( SUM ( fct_SafetyMonthly[HoursWorked] ), REMOVEFILTERS ( dim_Date ),\n"
+            "    dim_Date[Date] >= StartDate, dim_Date[Date] <= EndDate )\n"
             "RETURN IF ( H > 0 || I > 0, COALESCE ( I, 0 ) )",
             '"#,0"',
             "SAFETY!E - Procore /incidents, in the registry but not yet ingested",
@@ -192,11 +222,12 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Avg Observation Days To Close",
-            # Averaged over CLOSED items only, hence "to close" - not the age of open items. Mixing open and closed would blend "how long
-            # has this been outstanding" with "how long did that take to close" - two
-            # different questions with one misleading answer.
-            "AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] "
-            '&& fct_QualityItem[ItemType] = "Observation" ), '
+            # The workbook band is "avg days open": EVERY observation, closed ones at their
+            # days to close and open ones at their age to date (fct_QualityItem[DaysOpen],
+            # as of the gold build). Closed-only let ten items open 90 days plus one closed
+            # in 2 days score 3/3. Name kept because the reports bind to it.
+            "AVERAGEX ( FILTER ( fct_QualityItem, "
+            'fct_QualityItem[ItemType] = "Observation" ), '
             "fct_QualityItem[DaysOpen] )",
             '"#,0.0"',
             "QUALITY!D39 - typed by hand today",
@@ -209,6 +240,17 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "SUM ( fct_SafetyMonthly[DailyLogsMissed] )",
             '"#,0"',
             "SCORECARD CALC!E28 - now Procore daily logs (manpower entries), not typed",
+        ),
+        (
+            "Daily Reports Missed Per Month",
+            # The band (< 2 / 2-4 / >= 5) is per MONTH. With several months selected (the
+            # Portfolio defaults to "All months") the sum above is a lifetime total, which
+            # zeroed every long-running job. Average the months that were measured instead;
+            # one selected month gives the same number as the sum.
+            "AVERAGEX ( VALUES ( fct_SafetyMonthly[MonthStart] ), "
+            "CALCULATE ( SUM ( fct_SafetyMonthly[DailyLogsMissed] ) ) )",
+            '"#,0.0"',
+            "SCORECARD CALC!E28 - monthly band, averaged over the selected months",
         ),
         (
             "Last Daily Log",
@@ -257,27 +299,36 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             f"    NOT ISBLANK ( F ) && F >= TODAY () && ISBLANK ( D ), \"No daily logs in Procore\",\n"
             f"    NOT ISBLANK ( F ) && F >= TODAY () && D > {DAILY_LOG_GRACE_DAYS}, "
             '"No daily log for " & D & " days",\n'
-            f"    ISBLANK ( F ) && NOT ISBLANK ( D ) && D <= 30, \"No schedule in Outbuild\"\n"
+            f"    ISBLANK ( F ) && NOT ISBLANK ( D ) && D <= {NO_SCHEDULE_LOG_DAYS}, \"No schedule in Outbuild\"\n"
             ")",
             None,
             "no workbook equivalent - is the data actually being entered",
         ),
         (
             "Completion Variance Days",
-            # Current forecast finish vs BASELINE finish. Baseline lives in man_Milestones
-            # because Outbuild may not hold baselines at all - unconfirmed. Without it this
-            # is BLANK rather than a confident zero from comparing current against current.
+            # Forecast completion vs BASELINE completion, on the project's CURRENT Outbuild
+            # schedule. Completion = the last critical-path finish, i.e. the workbook's
+            # "Contractual Substantial Completion" terminator row, the same definition as
+            # [Scheduled Finish]. Baseline = a hand-typed man_Milestones baseline when one
+            # exists, else the last critical-path BASELINE finish from Outbuild (baselines
+            # are maintained there - checked live 2026-10-16). BLANK without a baseline,
+            # never a confident zero from comparing current against current.
+            # REMOVEFILTERS ( dim_Date ): completion is a whole-project fact. Under a month
+            # slicer the old version compared a mid-project milestone with the baseline.
             # NOT `VAR Current` - "Current" is reserved in DAX and the measure fails to
             # parse. Analysis Services then replaces it with SYNTAXERROR, which breaks the
             # ENTIRE model script: every query, including ones touching none of this,
             # returns "Failed to resolve name 'SYNTAXERROR'". One bad measure takes down
             # all 52.
-            "VAR Baseline = MAX ( man_Milestones[BaselineFinish] )\n"
-            "VAR Forecast = MAX ( fct_Milestone[CurrentFinish] )\n"
+            "VAR Manual = MAX ( man_Milestones[BaselineFinish] )\n"
+            "VAR Baseline = IF ( NOT ISBLANK ( Manual ), Manual,\n"
+            "    CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) ) )\n"
+            "VAR Forecast = [Scheduled Finish]\n"
             "RETURN IF ( ISBLANK ( Baseline ) || ISBLANK ( Forecast ), BLANK (), "
             "DATEDIFF ( Baseline, Forecast, DAY ) )",
             '"#,0"',
-            "DASHBOARD!M16 - which returned the TEXT \"0 days\" (defect #1b)",
+            "DASHBOARD!M16 - which returned the TEXT \"0 days\" (defect #1b); now the Outbuild "
+            "baseline, or man_Milestones when typed",
         ),
         (
             "Client Satisfaction",
@@ -345,7 +396,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Score - Daily Reports",
-            numeric_band(DAILY, "Daily Reports Missed"),
+            numeric_band(DAILY, "Daily Reports Missed Per Month"),
             '"0"',
             "SCORECARD CALC!E28",
         ),
@@ -357,7 +408,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             # Divided by 3 because 3 is the maximum category score - this is the
             # workbook's own ((E*F)/3) normalisation to a 0-1 index.
             # BLANK when nothing is measured: 0.00 on an uninstrumented project reads as a
-            # failing one. [Scorecard Coverage %] sits beside it on every page that shows it.
+            # failing one. Show [Scorecard Coverage %] wherever this is shown.
             "IF ( [Scorecard Coverage %] > 0,\n"
             "DIVIDE (\n"
             "    SUMX (\n"
@@ -381,6 +432,9 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             # its weight was measuring nothing - and because a missing category scored 0
             # rather than blank, that was invisible. This makes it visible: what share of
             # the agreed weight is actually being measured right now.
+            # BLANK, not 0%, when nothing is measured: the Direct Lake blank project (AP and
+            # data-gap rows with no project) showed as a "0.0%" row on the Portfolio.
+            "VAR C =\n"
             "SUMX (\n"
             "    ALL ( dim_ScorecardWeight ),\n"
             "    VAR S =\n"
@@ -390,7 +444,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "            BLANK ()\n"
             "        )\n"
             "    RETURN IF ( ISBLANK ( S ), 0, dim_ScorecardWeight[Weight] )\n"
-            ")",
+            ")\n"
+            "RETURN IF ( C > 0, C )",
             '"0.0%"',
             "no equivalent - the workbook could not tell you this",
         ),
@@ -489,8 +544,12 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "Project Rank",
             # Dense, highest score first; BLANK for a project with nothing measured, so an
             # uninstrumented job is not ranked last as if it were failing.
-            "IF ( ISBLANK ( [Pillar Score] ), BLANK (),\n"
-            "RANKX ( ALLSELECTED ( dim_Project[ProjectName] ), [Pillar Score], , DESC, DENSE ) )",
+            # ALLSELECTED ( dim_Project ), not one column: a table that also shows the
+            # project number would otherwise rank every row 1. ROUND: equal scores reached
+            # by different sums differ in the last bits, and DENSE would split the tie.
+            "VAR S = ROUND ( [Pillar Score], 6 )\n"
+            "RETURN IF ( ISBLANK ( S ), BLANK (),\n"
+            "RANKX ( ALLSELECTED ( dim_Project ), ROUND ( [Pillar Score], 6 ), S, DESC, DENSE ) )",
             '"#,0"',
             "no workbook equivalent - one workbook per project cannot rank them",
         ),
@@ -498,6 +557,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "Categories Below Target",
             # Measured categories scoring under 3, across all nine whatever the pillar
             # slicer says: "mediocre on three things" is a whole-project signal.
+            # BLANK when nothing is measured, so it cannot make an empty row appear.
+            "IF ( [Scorecard Coverage %] > 0,\n"
             "SUMX (\n"
             "    ALL ( dim_ScorecardWeight ),\n"
             "    VAR S =\n"
@@ -507,7 +568,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             "            BLANK ()\n"
             "        )\n"
             "    RETURN IF ( NOT ISBLANK ( S ) && S < 3, 1, 0 )\n"
-            ")",
+            ") )",
             '"#,0"',
             "derived - the 2026-10-09 'mediocre on several metrics' signal",
         ),
@@ -543,7 +604,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ),
         (
             "Bonus Multiplier %",
-            "VAR S = [Project Scorecard (Measured Only)]\n"
+            # Tiered on the score ROUNDED as displayed ("0.00"): 0.8995 shows 0.90, so it
+            # rates Outstanding, not Exceeds.
+            "VAR R = [Project Scorecard (Measured Only)]\n"
+            "VAR S = IF ( NOT ISBLANK ( R ), ROUND ( R, 2 ) )\n"
             "VAR M =\n"
             "    SWITCH ( TRUE (),\n"
             + "".join(f"        S >= {lo}, {mult},\n" for lo, _, mult in RATING_TIERS[:-1])
@@ -566,5 +630,123 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             + f'        "{RATING_TIERS[-1][1]}" ) )',
             None,
             "Bonus policy p.1 - Outstanding / Exceeds / Meets / Needs Improvement / Unacceptable",
+        ),
+        (
+            "Rating Cap",
+            # Makes the Safety & Quality gate visible: it caps 9 of 10 rated projects
+            # (2026-10-16), which a bare "Needs Improvement" does not say. Text only when
+            # the gate actually LOWERED the rating, i.e. the score alone reached the tier
+            # above the cap.
+            "VAR A = [" + GATE_CATEGORIES[0] + "]\n"
+            "VAR B = [" + GATE_CATEGORIES[1] + "]\n"
+            "VAR LowA = NOT ISBLANK ( A ) && A < 3\n"
+            "VAR LowB = NOT ISBLANK ( B ) && B < 3\n"
+            "RETURN IF ( NOT ISBLANK ( [Bonus Multiplier %] )\n"
+            f"    && ROUND ( [Project Scorecard (Measured Only)], 2 ) >= {_GATE_ABOVE} && ( LowA || LowB ),\n"
+            f'    "Capped by " & IF ( LowA, "{_GATE_NAMES[0]}" ) & IF ( LowA && LowB, " and " )'
+            f' & IF ( LowB, "{_GATE_NAMES[1]}" ) )',
+            None,
+            "Bonus policy p.2 - which below-target category capped the rating",
+        ),
+        (
+            "Bonus Rating",
+            # The rating with the cap spelled out, for the Portfolio table.
+            "VAR R = [Performance Rating]\n"
+            "VAR C = [Rating Cap]\n"
+            'RETURN IF ( ISBLANK ( C ), R, R & " (" & LOWER ( LEFT ( C, 1 ) ) & MID ( C, 2, 100 ) & ")" )',
+            None,
+            "derived - [Performance Rating] plus the Safety & Quality cap, when it applied",
+        ),
+        (
+            "Main Issue",
+            # The lowest-scoring measured category, all nine whatever the pillar slicer says.
+            # Ties go to the heavier weight (it costs the score most), then sheet order.
+            # BLANK when every measured category is on target.
+            "VAR T =\n"
+            "    FILTER (\n"
+            "        ADDCOLUMNS (\n"
+            "            ALL ( dim_ScorecardWeight ),\n"
+            '            "@S",\n'
+            "            SWITCH (\n"
+            "                dim_ScorecardWeight[CategoryKey],\n"
+            f"{_SWITCH}\n"
+            "                BLANK ()\n"
+            "            )\n"
+            "        ),\n"
+            "        NOT ISBLANK ( [@S] ) && [@S] < 3\n"
+            "    )\n"
+            "VAR Lo = MINX ( T, [@S] )\n"
+            "VAR W = TOPN ( 1, FILTER ( T, [@S] = Lo ), dim_ScorecardWeight[Weight], DESC,\n"
+            "    dim_ScorecardWeight[SortOrder], ASC )\n"
+            "VAR N = COUNTROWS ( T )\n"
+            'RETURN IF ( NOT ISBLANK ( Lo ), MAXX ( W, dim_ScorecardWeight[CategoryName] ) & " " & Lo & "/3"\n'
+            '    & IF ( N > 1, " +" & ( N - 1 ) & " more" ) )',
+            None,
+            "derived - the category costing the project most, e.g. \"Observations 0/3 +1 more\"",
+        ),
+        (
+            "Project Status",
+            # ASSUMPTION pending Affect: Inactive = no Procore daily log in the last
+            # INACTIVE_AFTER_DAYS days - likely closed. "No daily logs" = none ever: not
+            # started, pre-construction or not logging; also off the default Portfolio. Ignores the month
+            # slicer, like [Last Daily Log]. BLANK for no single project and for the blank /
+            # UNMATCHED members, so it never adds an empty row to a table.
+            "VAR K = SELECTEDVALUE ( dim_Project[ProjectKey] )\n"
+            "VAR D = [Days Since Daily Log]\n"
+            'RETURN IF ( NOT ISBLANK ( K ) && K <> "UNMATCHED",\n'
+            f'    IF ( ISBLANK ( D ), "No daily logs", IF ( D <= {INACTIVE_AFTER_DAYS}, "Active", "Inactive" ) ) )',
+            None,
+            f"no workbook equivalent - Active = a Procore daily log in the last {INACTIVE_AFTER_DAYS} days",
+        ),
+        (
+            "Health Score",
+            # Project Health's headline: [Pillar Score] (so gated on coverage exactly as the
+            # Portfolio is) over ALL categories. A pillar picked on the Portfolio travels
+            # with the drill-through and must not narrow the project's overall score.
+            "CALCULATE ( [Pillar Score], REMOVEFILTERS ( dim_ScorecardWeight ) )",
+            '"0.00"',
+            "derived - the overall score, coverage-gated, whatever pillar is selected",
+        ),
+        (
+            "Score Table Pillars",
+            # Says when the drill-through brought a pillar filter that trims the
+            # "How the score is built" table.
+            "IF ( COUNTROWS ( dim_ScorecardWeight ) < COUNTROWS ( ALL ( dim_ScorecardWeight ) ),\n"
+            "    CONCATENATEX ( VALUES ( dim_ScorecardWeight[Pillar] ), dim_ScorecardWeight[Pillar], \", \",\n"
+            '        dim_ScorecardWeight[Pillar], ASC ) & " only",\n'
+            '    "All categories" )',
+            None,
+            "derived - which categories the score table lists",
+        ),
+        (
+            "Input Check Status",
+            # For a card: "(Blank)" read as broken. Tables keep [Input Check], blank = fine.
+            'COALESCE ( [Input Check], "No issues" )',
+            None,
+            "derived - [Input Check], or No issues",
+        ),
+        # -- display labels for record tables (no source data renamed) -------------
+        (
+            "Milestone Overdue",
+            # "Overdue" or "", never True/False. "" not BLANK, so on-time rows still show.
+            'IF ( CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE () ) > 0, "Overdue", "" )',
+            None,
+            "display label for fct_Milestone[IsOverdue]",
+        ),
+        (
+            "Item Type Label",
+            'VAR T = SELECTEDVALUE ( fct_QualityItem[ItemType] )\n'
+            'RETURN IF ( T = "PunchItem", "Punch item", T )',
+            None,
+            "display label for fct_QualityItem[ItemType]",
+        ),
+        (
+            "CO Status",
+            # Procore's status text is lower case with underscores ("pending").
+            "VAR T = SELECTEDVALUE ( fct_ChangeOrder[StatusLabel] )\n"
+            "RETURN IF ( NOT ISBLANK ( T ),\n"
+            '    UPPER ( LEFT ( T, 1 ) ) & LOWER ( SUBSTITUTE ( MID ( T, 2, 200 ), "_", " " ) ) )',
+            None,
+            "display label for fct_ChangeOrder[StatusLabel]",
         ),
     ]

@@ -132,7 +132,15 @@ LEFT JOIN ar       a  ON a.ProjectKey  IS NOT DISTINCT FROM p.ProjectKey
 LEFT JOIN budget   b  ON b.ProjectKey  IS NOT DISTINCT FROM p.ProjectKey
 LEFT JOIN contract c  ON c.ProjectKey  IS NOT DISTINCT FROM p.ProjectKey
 LEFT JOIN pending  pe ON pe.ProjectKey IS NOT DISTINCT FROM p.ProjectKey
-LEFT JOIN approved ap ON ap.ProjectKey IS NOT DISTINCT FROM p.ProjectKey;
+LEFT JOIN approved ap ON ap.ProjectKey IS NOT DISTINCT FROM p.ProjectKey
+-- Test projects (seed/project_exclusion.csv), the same predicate as the sv_* source views
+-- (seedrunner.EXCLUSION_WHERE). Gold facts already pass through those views; this repeats
+-- it so a capture can never save a test project even if a fact stops reading sv_*. A NULL
+-- ProjectKey is kept, as there. Rows captured BEFORE a project was excluded stay in the
+-- history: deleting saved history is not reversible, and an excluded key reads as the
+-- (Blank) project in the model, never as a named one.
+WHERE p.ProjectKey IS NULL
+   OR p.ProjectKey NOT IN (SELECT ProcoreProjectId FROM seed_ProjectExclusion);
 
 -- The rows this run would write. Validated BEFORE anything is deleted.
 CREATE OR REPLACE TEMP VIEW v_DailySnapshotStage AS

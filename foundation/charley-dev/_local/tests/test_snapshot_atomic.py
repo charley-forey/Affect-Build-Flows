@@ -46,6 +46,33 @@ def test_snapshot_atomic():
         con.close()
 
 
+def test_snapshot_excludes_test_projects():
+    """The live capture drops seed_ProjectExclusion keys and keeps a NULL (unmatched) key."""
+    stage, _ = deploy_dq.snapshot_phases()
+    con = duckdb.connect()
+    try:
+        for ddl in ("seed_ProjectExclusion (ProcoreProjectId VARCHAR)",
+                    "dim_Project (ProjectKey VARCHAR)",
+                    "fct_RfiSubmittal (ProjectKey VARCHAR, ItemType VARCHAR, IsOpen BOOLEAN, IsPastDue BOOLEAN)",
+                    "fct_QualityItem (ProjectKey VARCHAR, ItemType VARCHAR, IsOpen BOOLEAN)",
+                    "fct_Invoice (ProjectKey VARCHAR, Balance DOUBLE, Amount DOUBLE)",
+                    "fct_BudgetLine (ProjectKey VARCHAR, BudgetAmount DOUBLE, SpentToDate DOUBLE, CommittedAmount DOUBLE)",
+                    "fct_FinancialPeriod (ProjectKey VARCHAR, MonthStart DATE, CurrentContract DOUBLE, PendingChangeOrders DOUBLE)",
+                    "fct_ChangeOrder (ProjectKey VARCHAR, IsPending BOOLEAN, StatusLabel VARCHAR, Amount DOUBLE)"):
+            con.execute(f"CREATE TABLE {ddl}")
+        con.execute("INSERT INTO seed_ProjectExclusion VALUES ('test')")
+        con.execute("INSERT INTO dim_Project VALUES ('real'), ('test')")
+        con.execute("INSERT INTO fct_RfiSubmittal VALUES ('real','RFI',TRUE,FALSE), ('test','RFI',TRUE,FALSE), "
+                    "(NULL,'RFI',TRUE,FALSE)")
+        live = next(s for s in stage if "v_DailySnapshotLive AS" in s)
+        con.execute(live.replace("CREATE OR REPLACE TEMP VIEW", "CREATE OR REPLACE VIEW"))
+        rows = con.execute("SELECT ProjectKey, OpenRfis FROM v_DailySnapshotLive ORDER BY ProjectKey NULLS LAST").fetchall()
+        assert rows == [("real", 1), (None, 1)], rows
+    finally:
+        con.close()
+
+
 if __name__ == "__main__":
     test_snapshot_atomic()
+    test_snapshot_excludes_test_projects()
     print("atomic snapshot SQL checks passed (DuckDB; Fabric execution remains separate)")

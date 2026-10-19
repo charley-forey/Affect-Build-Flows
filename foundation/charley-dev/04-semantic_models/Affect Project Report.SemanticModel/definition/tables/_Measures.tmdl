@@ -178,8 +178,8 @@ table _Measures
 			Hrs < 0, "Unknown - check timestamp is in the future",
 			Hrs > 72, "STALE - no checked run in over 72 hours",
 			Hrs > 30, "Late - no checked run in over 30 hours",
-			Warnings > 0, "Gold checked with warnings; source completeness unverified",
-			"Gold checks passed; source completeness unverified" )
+			Warnings > 0, "Data checks passed with warnings; source totals not verified",
+			"Data checks passed; source totals not verified" )
 		displayFolder: 14 Pipeline liveness
 
 	/// Replaces derived
@@ -383,7 +383,9 @@ table _Measures
 		displayFolder: 07 Schedule
 
 	/// Replaces derived
-	measure 'Overdue Milestones' = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )
+	measure 'Overdue Milestones' =
+			VAR N = CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE )
+			RETURN IF ( ISBLANK ( N ) && NOT ISBLANK ( [Critical Milestones] ), 0, N )
 		formatString: "#,0"
 		displayFolder: 07 Schedule
 
@@ -513,7 +515,7 @@ table _Measures
 		displayFolder: 13 Portfolio
 
 	/// Replaces no workbook equivalent - one workbook per project cannot rank them
-	measure 'Projects At Risk' = COUNTROWS ( FILTER ( dim_Project, dim_Project[ProjectKey] <> "UNMATCHED" && NOT ISBLANK ( [Project Scorecard (Measured Only)] ) && [Project Scorecard (Measured Only)] < 0.6 ) )
+	measure 'Projects At Risk' = COUNTROWS ( FILTER ( dim_Project, dim_Project[ProjectKey] <> "UNMATCHED" && [Project Status] = "Active" && [Performance Rating] IN { "Needs Improvement", "Unacceptable" } ) )
 		formatString: "#,0"
 		displayFolder: 13 Portfolio
 
@@ -663,12 +665,23 @@ table _Measures
 		displayFolder: 16 Month-end snapshots
 
 	/// Replaces FINANCIALS!F56 - now from Sage AR receipts (acrpmt)
-	measure 'Avg Days To Payment' = AVERAGE ( fct_Invoice[DaysToPayment] )
+	measure 'Avg Days To Payment' =
+			AVERAGEX (
+			FILTER ( fct_Invoice, NOT ISBLANK ( fct_Invoice[DaysToPayment] )
+			|| ( fct_Invoice[Balance] > 0 && NOT ISBLANK ( fct_Invoice[SentDate] ) ) ),
+			IF ( ISBLANK ( fct_Invoice[DaysToPayment] ),
+			DATEDIFF ( fct_Invoice[SentDate], TODAY (), DAY ),
+			fct_Invoice[DaysToPayment] )
+			)
 		formatString: "#,0.0"
 		displayFolder: 11 Scorecard drivers
 
 	/// Replaces FINANCIALS!C8 - a human judgement the workbook could already have computed
-	measure 'Cash Position %' = DIVIDE ( [Total Paid] + [AR Outstanding], SUM ( fct_BudgetLine[CostToComplete] ) )
+	measure 'Cash Position %' =
+			VAR EndDate = MAX ( dim_Date[Date] )
+			RETURN DIVIDE (
+			CALCULATE ( [Total Paid] + [AR Outstanding], REMOVEFILTERS ( dim_Date ), dim_Date[Date] <= EndDate ),
+			[Cost To Complete] )
 		formatString: "0.0%"
 		displayFolder: 11 Scorecard drivers
 
@@ -678,8 +691,12 @@ table _Measures
 
 	/// Replaces SAFETY!E - Procore /incidents, in the registry but not yet ingested
 	measure 'Recordable Incidents' =
-			VAR I = SUM ( fct_SafetyMonthly[RecordableIncidents] )
-			VAR H = SUM ( fct_SafetyMonthly[HoursWorked] )
+			VAR EndDate = MIN ( MAX ( dim_Date[Date] ), TODAY () )
+			VAR StartDate = EDATE ( DATE ( YEAR ( EndDate ), MONTH ( EndDate ), 1 ), -11 )
+			VAR I = CALCULATE ( SUM ( fct_SafetyMonthly[RecordableIncidents] ), REMOVEFILTERS ( dim_Date ),
+			dim_Date[Date] >= StartDate, dim_Date[Date] <= EndDate )
+			VAR H = CALCULATE ( SUM ( fct_SafetyMonthly[HoursWorked] ), REMOVEFILTERS ( dim_Date ),
+			dim_Date[Date] >= StartDate, dim_Date[Date] <= EndDate )
 			RETURN IF ( H > 0 || I > 0, COALESCE ( I, 0 ) )
 		formatString: "#,0"
 		displayFolder: 11 Scorecard drivers
@@ -697,13 +714,18 @@ table _Measures
 		displayFolder: 11 Scorecard drivers
 
 	/// Replaces QUALITY!D39 - typed by hand today
-	measure 'Avg Observation Days To Close' = AVERAGEX ( FILTER ( fct_QualityItem, NOT fct_QualityItem[IsOpen] && fct_QualityItem[ItemType] = "Observation" ), fct_QualityItem[DaysOpen] )
+	measure 'Avg Observation Days To Close' = AVERAGEX ( FILTER ( fct_QualityItem, fct_QualityItem[ItemType] = "Observation" ), fct_QualityItem[DaysOpen] )
 		formatString: "#,0.0"
 		displayFolder: 11 Scorecard drivers
 
 	/// Replaces SCORECARD CALC!E28 - now Procore daily logs (manpower entries), not typed
 	measure 'Daily Reports Missed' = SUM ( fct_SafetyMonthly[DailyLogsMissed] )
 		formatString: "#,0"
+		displayFolder: 11 Scorecard drivers
+
+	/// Replaces SCORECARD CALC!E28 - monthly band, averaged over the selected months
+	measure 'Daily Reports Missed Per Month' = AVERAGEX ( VALUES ( fct_SafetyMonthly[MonthStart] ), CALCULATE ( SUM ( fct_SafetyMonthly[DailyLogsMissed] ) ) )
+		formatString: "#,0.0"
 		displayFolder: 11 Scorecard drivers
 
 	/// Replaces no workbook equivalent - data-entry check
@@ -745,10 +767,12 @@ table _Measures
 			)
 		displayFolder: 11 Scorecard drivers
 
-	/// Replaces DASHBOARD!M16 - which returned the TEXT "0 days" (defect #1b)
+	/// Replaces DASHBOARD!M16 - which returned the TEXT "0 days" (defect #1b); now the Outbuild baseline, or man_Milestones when typed
 	measure 'Completion Variance Days' =
-			VAR Baseline = MAX ( man_Milestones[BaselineFinish] )
-			VAR Forecast = MAX ( fct_Milestone[CurrentFinish] )
+			VAR Manual = MAX ( man_Milestones[BaselineFinish] )
+			VAR Baseline = IF ( NOT ISBLANK ( Manual ), Manual,
+			CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) ) )
+			VAR Forecast = [Scheduled Finish]
 			RETURN IF ( ISBLANK ( Baseline ) || ISBLANK ( Forecast ), BLANK (), DATEDIFF ( Baseline, Forecast, DAY ) )
 		formatString: "#,0"
 		displayFolder: 11 Scorecard drivers
@@ -920,7 +944,7 @@ table _Measures
 
 	/// Replaces SCORECARD CALC!E28
 	measure 'Score - Daily Reports' =
-			VAR V = [Daily Reports Missed]
+			VAR V = [Daily Reports Missed Per Month]
 			RETURN
 			IF (
 			ISBLANK ( V ),
@@ -967,6 +991,7 @@ table _Measures
 
 	/// Replaces no equivalent - the workbook could not tell you this
 	measure 'Scorecard Coverage %' =
+			VAR C =
 			SUMX (
 			ALL ( dim_ScorecardWeight ),
 			VAR S =
@@ -985,6 +1010,7 @@ table _Measures
 			)
 			RETURN IF ( ISBLANK ( S ), 0, dim_ScorecardWeight[Weight] )
 			)
+			RETURN IF ( C > 0, C )
 		formatString: "0.0%"
 		displayFolder: 12 Scorecard
 
@@ -1068,13 +1094,15 @@ table _Measures
 
 	/// Replaces no workbook equivalent - one workbook per project cannot rank them
 	measure 'Project Rank' =
-			IF ( ISBLANK ( [Pillar Score] ), BLANK (),
-			RANKX ( ALLSELECTED ( dim_Project[ProjectName] ), [Pillar Score], , DESC, DENSE ) )
+			VAR S = ROUND ( [Pillar Score], 6 )
+			RETURN IF ( ISBLANK ( S ), BLANK (),
+			RANKX ( ALLSELECTED ( dim_Project ), ROUND ( [Pillar Score], 6 ), S, DESC, DENSE ) )
 		formatString: "#,0"
 		displayFolder: 12 Scorecard
 
 	/// Replaces derived - the 2026-10-09 'mediocre on several metrics' signal
 	measure 'Categories Below Target' =
+			IF ( [Scorecard Coverage %] > 0,
 			SUMX (
 			ALL ( dim_ScorecardWeight ),
 			VAR S =
@@ -1092,7 +1120,7 @@ table _Measures
 			BLANK ()
 			)
 			RETURN IF ( NOT ISBLANK ( S ) && S < 3, 1, 0 )
-			)
+			) )
 		formatString: "#,0"
 		displayFolder: 12 Scorecard
 
@@ -1130,7 +1158,8 @@ table _Measures
 
 	/// Replaces Bonus policy p.1 - performance score tier multiplier (cut-offs proposed)
 	measure 'Bonus Multiplier %' =
-			VAR S = [Project Scorecard (Measured Only)]
+			VAR R = [Project Scorecard (Measured Only)]
+			VAR S = IF ( NOT ISBLANK ( R ), ROUND ( R, 2 ) )
 			VAR M =
 			SWITCH ( TRUE (),
 			S >= 0.9, 150,
@@ -1155,6 +1184,97 @@ table _Measures
 			M >= 99.5, "Meets Expectations",
 			M >= 49.5, "Needs Improvement",
 			"Unacceptable" ) )
+		displayFolder: 12 Scorecard
+
+	/// Replaces Bonus policy p.2 - which below-target category capped the rating
+	measure 'Rating Cap' =
+			VAR A = [Score - Safety Incidents]
+			VAR B = [Score - Observations]
+			VAR LowA = NOT ISBLANK ( A ) && A < 3
+			VAR LowB = NOT ISBLANK ( B ) && B < 3
+			RETURN IF ( NOT ISBLANK ( [Bonus Multiplier %] )
+			&& ROUND ( [Project Scorecard (Measured Only)], 2 ) >= 0.6 && ( LowA || LowB ),
+			"Capped by " & IF ( LowA, "Safety Incidents" ) & IF ( LowA && LowB, " and " ) & IF ( LowB, "Observations" ) )
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - [Performance Rating] plus the Safety & Quality cap, when it applied
+	measure 'Bonus Rating' =
+			VAR R = [Performance Rating]
+			VAR C = [Rating Cap]
+			RETURN IF ( ISBLANK ( C ), R, R & " (" & LOWER ( LEFT ( C, 1 ) ) & MID ( C, 2, 100 ) & ")" )
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - the category costing the project most, e.g. "Observations 0/3 +1 more"
+	measure 'Main Issue' =
+			VAR T =
+			FILTER (
+			ADDCOLUMNS (
+			ALL ( dim_ScorecardWeight ),
+			"@S",
+			SWITCH (
+			dim_ScorecardWeight[CategoryKey],
+			1, [Score - Accounts Receivable],
+			2, [Score - Profitability],
+			3, [Score - Cash Position],
+			4, [Score - Change Orders],
+			5, [Score - Safety Incidents],
+			6, [Score - Schedule Performance],
+			7, [Score - Completion Variance],
+			8, [Score - Observations],
+			9, [Score - Daily Reports],
+			BLANK ()
+			)
+			),
+			NOT ISBLANK ( [@S] ) && [@S] < 3
+			)
+			VAR Lo = MINX ( T, [@S] )
+			VAR W = TOPN ( 1, FILTER ( T, [@S] = Lo ), dim_ScorecardWeight[Weight], DESC,
+			dim_ScorecardWeight[SortOrder], ASC )
+			VAR N = COUNTROWS ( T )
+			RETURN IF ( NOT ISBLANK ( Lo ), MAXX ( W, dim_ScorecardWeight[CategoryName] ) & " " & Lo & "/3"
+			& IF ( N > 1, " +" & ( N - 1 ) & " more" ) )
+		displayFolder: 12 Scorecard
+
+	/// Replaces no workbook equivalent - Active = a Procore daily log in the last 60 days
+	measure 'Project Status' =
+			VAR K = SELECTEDVALUE ( dim_Project[ProjectKey] )
+			VAR D = [Days Since Daily Log]
+			RETURN IF ( NOT ISBLANK ( K ) && K <> "UNMATCHED",
+			IF ( ISBLANK ( D ), "No daily logs", IF ( D <= 60, "Active", "Inactive" ) ) )
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - the overall score, coverage-gated, whatever pillar is selected
+	measure 'Health Score' = CALCULATE ( [Pillar Score], REMOVEFILTERS ( dim_ScorecardWeight ) )
+		formatString: "0.00"
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - which categories the score table lists
+	measure 'Score Table Pillars' =
+			IF ( COUNTROWS ( dim_ScorecardWeight ) < COUNTROWS ( ALL ( dim_ScorecardWeight ) ),
+			CONCATENATEX ( VALUES ( dim_ScorecardWeight[Pillar] ), dim_ScorecardWeight[Pillar], ", ",
+			dim_ScorecardWeight[Pillar], ASC ) & " only",
+			"All categories" )
+		displayFolder: 12 Scorecard
+
+	/// Replaces derived - [Input Check], or No issues
+	measure 'Input Check Status' = COALESCE ( [Input Check], "No issues" )
+		displayFolder: 12 Scorecard
+
+	/// Replaces display label for fct_Milestone[IsOverdue]
+	measure 'Milestone Overdue' = IF ( CALCULATE ( COUNTROWS ( fct_Milestone ), fct_Milestone[IsOverdue] = TRUE () ) > 0, "Overdue", "" )
+		displayFolder: 12 Scorecard
+
+	/// Replaces display label for fct_QualityItem[ItemType]
+	measure 'Item Type Label' =
+			VAR T = SELECTEDVALUE ( fct_QualityItem[ItemType] )
+			RETURN IF ( T = "PunchItem", "Punch item", T )
+		displayFolder: 12 Scorecard
+
+	/// Replaces display label for fct_ChangeOrder[StatusLabel]
+	measure 'CO Status' =
+			VAR T = SELECTEDVALUE ( fct_ChangeOrder[StatusLabel] )
+			RETURN IF ( NOT ISBLANK ( T ),
+			UPPER ( LEFT ( T, 1 ) ) & LOWER ( SUBSTITUTE ( MID ( T, 2, 200 ), "_", " " ) ) )
 		displayFolder: 12 Scorecard
 
 	column _placeholder

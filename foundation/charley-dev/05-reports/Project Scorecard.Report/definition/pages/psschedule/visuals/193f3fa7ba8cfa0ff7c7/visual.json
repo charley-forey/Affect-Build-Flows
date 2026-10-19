@@ -77,18 +77,18 @@
             },
             {
               "field": {
-                "Column": {
+                "Measure": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_Milestone"
+                      "Entity": "_Measures"
                     }
                   },
-                  "Property": "IsOverdue"
+                  "Property": "Milestone Overdue"
                 }
               },
-              "queryRef": "fct_Milestone.IsOverdue",
-              "nativeQueryRef": "IsOverdue",
-              "displayName": "Is Overdue"
+              "queryRef": "_Measures.Milestone Overdue",
+              "nativeQueryRef": "Milestone Overdue",
+              "displayName": "Overdue"
             }
           ]
         }
@@ -120,7 +120,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Critical-path milestones from Outbuild - latest finish first. Shows MilestoneName, CurrentStart, CurrentFinish, PercentComplete, IsOverdue for the current selection.'"
+                  "Value": "'Table. Critical-path milestones from Outbuild - latest finish first. Shows MilestoneName, CurrentStart, CurrentFinish, PercentComplete, Milestone Overdue for the current selection.'"
                 }
               }
             }
@@ -289,7 +289,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_Milestone.IsOverdue"
+            "metadata": "_Measures.Milestone Overdue"
           }
         }
       ]

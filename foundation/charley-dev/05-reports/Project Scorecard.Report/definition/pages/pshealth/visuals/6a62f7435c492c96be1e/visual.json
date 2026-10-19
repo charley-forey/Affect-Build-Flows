@@ -1,13 +1,13 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "8d24184925f1e9da273a",
+  "name": "6a62f7435c492c96be1e",
   "position": {
-    "x": 226,
-    "y": 422,
+    "x": 472,
+    "y": 502,
     "z": 0,
-    "width": 194,
+    "width": 188,
     "height": 76,
-    "tabOrder": 37
+    "tabOrder": 41
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Hours Worked"
+                  "Property": "Open Observations"
                 }
               },
-              "queryRef": "_Measures.Hours Worked",
-              "nativeQueryRef": "Hours Worked"
+              "queryRef": "_Measures.Open Observations",
+              "nativeQueryRef": "Open Observations"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Hours worked. Shows Hours Worked for the current selection.'"
+                  "Value": "'Card. Open observations. Shows Open Observations for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Hours worked'"
+                  "Value": "'Open observations'"
                 }
               }
             },

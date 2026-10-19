@@ -28,6 +28,12 @@ SELECT
     item_number                       AS ItemNumber,
     TRIM(subject)                     AS Subject,
     TRIM(status_label)                AS StatusLabel,
+    -- Reader-facing status: Procore's lower/upper-case codes ("pending", "AWAITING_A_E")
+    -- become Title Case with spaces; mixed-case text is already readable and kept as is.
+    -- StatusLabel stays raw because measures compare against it.
+    CASE WHEN TRIM(status_label) = LOWER(TRIM(status_label)) OR TRIM(status_label) = UPPER(TRIM(status_label))
+         THEN initcap(REPLACE(TRIM(status_label), '_', ' '))
+         ELSE REPLACE(TRIM(status_label), '_', ' ') END AS StatusDisplay,
     COALESCE(cost_code_id, 'UNASSIGNED') AS CostCodeKey,
     created_date                      AS CreatedDate,
     due_date                          AS DueDate,
@@ -79,6 +85,12 @@ SELECT
     item_number                       AS ItemNumber,
     TRIM(subject)                     AS Subject,
     TRIM(status_label)                AS StatusLabel,
+    -- Reader-facing status: Procore's lower/upper-case codes ("pending", "AWAITING_A_E")
+    -- become Title Case with spaces; mixed-case text is already readable and kept as is.
+    -- StatusLabel stays raw because measures compare against it.
+    CASE WHEN TRIM(status_label) = LOWER(TRIM(status_label)) OR TRIM(status_label) = UPPER(TRIM(status_label))
+         THEN initcap(REPLACE(TRIM(status_label), '_', ' '))
+         ELSE REPLACE(TRIM(status_label), '_', ' ') END AS StatusDisplay,
     COALESCE(cost_code_id, 'UNASSIGNED') AS CostCodeKey,
     created_date                      AS CreatedDate,
     due_date                          AS DueDate,

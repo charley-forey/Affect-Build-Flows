@@ -69,6 +69,24 @@ table fct_Milestone
 		summarizeBy: none
 		sourceColumn: HasDateInversion
 
+	column BaselineStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BaselineStart
+		formatString: yyyy-mm-dd
+
+	column BaselineFinish
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BaselineFinish
+		formatString: yyyy-mm-dd
+
+	column FinishVarianceDays
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: FinishVarianceDays
+		formatString: #,0
+
 	partition fct_Milestone = entity
 		mode: directLake
 		source

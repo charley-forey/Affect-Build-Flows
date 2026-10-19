@@ -20,6 +20,15 @@ SELECT
     co_number                        AS ChangeOrderNumber,
     'Prime'                          AS ChangeOrderType,
     TRIM(status)                     AS StatusLabel,
+    -- Reader-facing status: Procore's lower/upper-case codes ("pending", "AWAITING_A_E")
+    -- become Title Case with spaces; mixed-case text is already readable and kept as is.
+    -- StatusLabel stays raw because measures compare against it.
+    CASE WHEN TRIM(status) = LOWER(TRIM(status)) OR TRIM(status) = UPPER(TRIM(status))
+         THEN initcap(REPLACE(TRIM(status), '_', ' '))
+         ELSE REPLACE(TRIM(status), '_', ' ') END AS StatusDisplay,
+    -- Procore's CO title: the only thing that tells two COs with the same number apart
+    -- (numbers repeat across a project's contracts). Free text.
+    title                            AS ChangeOrderTitle,
     amount                           AS Amount,
     created_date                     AS CreatedDate,
     -- MonthStart is only set when the date falls inside dim_Date. The first run against

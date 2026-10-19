@@ -1,0 +1,643 @@
+{
+ "captured_at": "2026-10-16T15:17Z",
+ "kind": "predicted Project Scorecard Portfolio after undeployed 2026-10-16 changes",
+ "method": "live gold via the live model for unchanged tables; fct_Milestone and fct_SafetyMonthly rebuilt in DuckDB from live bronze (cd_bronze_outbuild_*, v88) and silver (cd_silver_manpower_daily/incidents, v65) with the working-tree SQL; Lillipvt duplicate 562949955488665 excluded; measures from validate_model.monthly_expected() at Portfolio scope (all months, no pillar); rank = dense over Active projects with a Pillar Score",
+ "checks": {
+  "weights_sum": 1.0,
+  "scores_in_0_1": true,
+  "ratings_match_cutoffs_and_gate": true,
+  "ranks_dense_active_only": true
+ },
+ "projects_at_risk_after": 10,
+ "projects": [
+  {
+   "project_number": "26-056",
+   "project_name": "360 Lexington 15th Floor Fitout",
+   "before": {
+    "pillar_score": 0.6545,
+    "performance_rating": "Meets Expectations",
+    "rank_recomputed_all_projects": 4,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.55
+   },
+   "after": {
+    "project_status": "Active",
+    "pillar_score": 0.8051,
+    "financial": 0.5,
+    "schedule": 1.0,
+    "safety_quality": 1.0,
+    "reporting": 0.6667,
+    "coverage": 0.65,
+    "bonus_rating": "Exceeds Expectations",
+    "rating_cap": null,
+    "main_issue": "Cash Position 0/3 +1 more",
+    "input_check": null,
+    "rank_active": 1,
+    "days_since_daily_log": 1
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": 0,
+    "Change Orders": null,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": 3,
+    "Observations": 3,
+    "Daily Reports": 2
+   }
+  },
+  {
+   "project_number": "26-025",
+   "project_name": "SaunaLounge 45 South 3 Street, Brooklyn, NY",
+   "before": {
+    "pillar_score": 0.5753,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 7,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.73
+   },
+   "after": {
+    "project_status": "Active",
+    "pillar_score": 0.6629,
+    "financial": 0.875,
+    "schedule": 0.5,
+    "safety_quality": 0.5833,
+    "reporting": 0.6667,
+    "coverage": 0.88,
+    "bonus_rating": "Needs Improvement (capped by Observations)",
+    "rating_cap": "Capped by Observations",
+    "main_issue": "Completion Variance 0/3 +3 more",
+    "input_check": null,
+    "rank_active": 2,
+    "days_since_daily_log": 1
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": 2,
+    "Change Orders": 3,
+    "Safety Incidents": 3,
+    "Schedule Performance": 3,
+    "Completion Variance": 0,
+    "Observations": 0,
+    "Daily Reports": 2
+   }
+  },
+  {
+   "project_number": "26-026",
+   "project_name": "Embankment Phase III",
+   "before": {
+    "pillar_score": 0.6301,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 5,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.73
+   },
+   "after": {
+    "project_status": "Active",
+    "pillar_score": 0.6136,
+    "financial": 0.875,
+    "schedule": 0.3333,
+    "safety_quality": 0.5833,
+    "reporting": 1.0,
+    "coverage": 0.88,
+    "bonus_rating": "Needs Improvement (capped by Observations)",
+    "rating_cap": "Capped by Observations",
+    "main_issue": "Schedule Performance 0/3 +3 more",
+    "input_check": "Schedule ended - site still active",
+    "rank_active": 3,
+    "days_since_daily_log": 1
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 2,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 3,
+    "Safety Incidents": 3,
+    "Schedule Performance": 0,
+    "Completion Variance": 2,
+    "Observations": 0,
+    "Daily Reports": 3
+   }
+  },
+  {
+   "project_number": "25-017",
+   "project_name": "64 MET OVAL PSC + 1410 MET STOREROOM",
+   "before": {
+    "pillar_score": 0.68,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 2,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.5
+   },
+   "after": {
+    "project_status": "Active",
+    "pillar_score": 0.56,
+    "financial": 0.5,
+    "schedule": null,
+    "safety_quality": 0.5833,
+    "reporting": 1.0,
+    "coverage": 0.5,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Accounts Receivable 0/3 +1 more",
+    "input_check": "No schedule in Outbuild",
+    "rank_active": 4,
+    "days_since_daily_log": 1
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": null,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": 0,
+    "Daily Reports": 3
+   }
+  },
+  {
+   "project_number": "25-021",
+   "project_name": "360 Lexington 8th & 20th Floor",
+   "before": {
+    "pillar_score": 0.5846,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 6,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.65
+   },
+   "after": {
+    "project_status": "Active",
+    "pillar_score": 0.4917,
+    "financial": 1.0,
+    "schedule": 0.0,
+    "safety_quality": 0.5833,
+    "reporting": 0.6667,
+    "coverage": 0.8,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Schedule Performance 0/3 +3 more",
+    "input_check": "Schedule ended - site still active",
+    "rank_active": 5,
+    "days_since_daily_log": 1
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": null,
+    "Safety Incidents": 3,
+    "Schedule Performance": 0,
+    "Completion Variance": 0,
+    "Observations": 0,
+    "Daily Reports": 2
+   }
+  },
+  {
+   "project_number": "24-011",
+   "project_name": "11 ESSEX ST",
+   "before": {
+    "pillar_score": 0.6552,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 3,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.58
+   },
+   "after": {
+    "project_status": "Active",
+    "pillar_score": 0.4828,
+    "financial": 0.375,
+    "schedule": null,
+    "safety_quality": 0.5833,
+    "reporting": 1.0,
+    "coverage": 0.58,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Accounts Receivable 0/3 +2 more",
+    "input_check": null,
+    "rank_active": 6,
+    "days_since_daily_log": 50
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": 0,
+    "Daily Reports": 3
+   }
+  },
+  {
+   "project_number": "23-006",
+   "project_name": "SYMRISE - 15th & 16th Flr",
+   "before": {
+    "pillar_score": null,
+    "performance_rating": "Not enough data",
+    "rank_recomputed_all_projects": null,
+    "rank_live_measure_in_visual_shape": null,
+    "coverage": 0.32
+   },
+   "after": {
+    "project_status": "No daily logs",
+    "pillar_score": null,
+    "financial": null,
+    "schedule": null,
+    "safety_quality": null,
+    "reporting": null,
+    "coverage": 0.32,
+    "bonus_rating": "Not enough data",
+    "rating_cap": null,
+    "main_issue": "Change Orders 0/3",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": null
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": null,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": null,
+    "Daily Reports": null
+   }
+  },
+  {
+   "project_number": "25-012",
+   "project_name": "PCNA 711 11TH AVE",
+   "before": {
+    "pillar_score": 0.5714,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 8,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.63
+   },
+   "after": {
+    "project_status": "Inactive",
+    "pillar_score": 0.4872,
+    "financial": 0.375,
+    "schedule": 0.3333,
+    "safety_quality": 1.0,
+    "reporting": 1.0,
+    "coverage": 0.78,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Schedule Performance 0/3 +3 more",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": 154
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": 3,
+    "Schedule Performance": 0,
+    "Completion Variance": 2,
+    "Observations": null,
+    "Daily Reports": 3
+   }
+  },
+  {
+   "project_number": "25-013",
+   "project_name": "Lillipvt 45 Renwick St",
+   "before": {
+    "pillar_score": null,
+    "performance_rating": "Not enough data",
+    "rank_recomputed_all_projects": null,
+    "rank_live_measure_in_visual_shape": null,
+    "coverage": 0.32
+   },
+   "after": {
+    "project_status": "No daily logs",
+    "pillar_score": null,
+    "financial": null,
+    "schedule": null,
+    "safety_quality": null,
+    "reporting": null,
+    "coverage": 0.47,
+    "bonus_rating": "Not enough data",
+    "rating_cap": null,
+    "main_issue": "Schedule Performance 0/3 +1 more",
+    "input_check": "No daily logs in Procore",
+    "rank_active": null,
+    "days_since_daily_log": null
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": null,
+    "Schedule Performance": 0,
+    "Completion Variance": null,
+    "Observations": null,
+    "Daily Reports": null
+   }
+  },
+  {
+   "project_number": "25-014",
+   "project_name": "Embankment + Revetment Apartments 270 & 310 10th Street NJ",
+   "before": {
+    "pillar_score": 0.7701,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 1,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.58
+   },
+   "after": {
+    "project_status": "Inactive",
+    "pillar_score": 0.5862,
+    "financial": 0.375,
+    "schedule": null,
+    "safety_quality": 0.8611,
+    "reporting": 0.6667,
+    "coverage": 0.58,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Accounts Receivable 0/3 +3 more",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": 241
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": 2,
+    "Daily Reports": 2
+   }
+  },
+  {
+   "project_number": "25-015",
+   "project_name": "VOCO HOTEL TSQ",
+   "before": {
+    "pillar_score": 0.52,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 9,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.5
+   },
+   "after": {
+    "project_status": "Inactive",
+    "pillar_score": 0.5467,
+    "financial": 0.5,
+    "schedule": null,
+    "safety_quality": 0.5833,
+    "reporting": 0.6667,
+    "coverage": 0.5,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Accounts Receivable 0/3 +2 more",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": 276
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": null,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": 0,
+    "Daily Reports": 2
+   }
+  },
+  {
+   "project_number": "25-016",
+   "project_name": "1100 Fulton Street",
+   "before": {
+    "pillar_score": 0.6552,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 3,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.58
+   },
+   "after": {
+    "project_status": "Inactive",
+    "pillar_score": 0.4483,
+    "financial": 0.375,
+    "schedule": null,
+    "safety_quality": 0.5833,
+    "reporting": 0.0,
+    "coverage": 0.58,
+    "bonus_rating": "Needs Improvement",
+    "rating_cap": null,
+    "main_issue": "Accounts Receivable 0/3 +3 more",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": 342
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": 0,
+    "Daily Reports": 0
+   }
+  },
+  {
+   "project_number": "25-018",
+   "project_name": "337A & 337B West Broadway Rehabilitaion Work",
+   "before": {
+    "pillar_score": null,
+    "performance_rating": "Not enough data",
+    "rank_recomputed_all_projects": null,
+    "rank_live_measure_in_visual_shape": null,
+    "coverage": 0.4
+   },
+   "after": {
+    "project_status": "Inactive",
+    "pillar_score": null,
+    "financial": null,
+    "schedule": null,
+    "safety_quality": null,
+    "reporting": null,
+    "coverage": 0.4,
+    "bonus_rating": "Not enough data",
+    "rating_cap": null,
+    "main_issue": "Cash Position 0/3 +2 more",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": 296
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 2,
+    "Profitability": null,
+    "Cash Position": 0,
+    "Change Orders": null,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": null,
+    "Daily Reports": 0
+   }
+  },
+  {
+   "project_number": "25-020",
+   "project_name": "549 Munroe Av",
+   "before": {
+    "pillar_score": null,
+    "performance_rating": null,
+    "rank_recomputed_all_projects": null,
+    "rank_live_measure_in_visual_shape": null,
+    "coverage": 0.0
+   },
+   "after": {
+    "project_status": "No daily logs",
+    "pillar_score": null,
+    "financial": null,
+    "schedule": null,
+    "safety_quality": null,
+    "reporting": null,
+    "coverage": null,
+    "bonus_rating": null,
+    "rating_cap": null,
+    "main_issue": null,
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": null
+   },
+   "after_category_scores": {
+    "Accounts Receivable": null,
+    "Profitability": null,
+    "Cash Position": null,
+    "Change Orders": null,
+    "Safety Incidents": null,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": null,
+    "Daily Reports": null
+   }
+  },
+  {
+   "project_number": "25-034",
+   "project_name": "City Harvest",
+   "before": {
+    "pillar_score": null,
+    "performance_rating": "Not enough data",
+    "rank_recomputed_all_projects": null,
+    "rank_live_measure_in_visual_shape": null,
+    "coverage": 0.12
+   },
+   "after": {
+    "project_status": "No daily logs",
+    "pillar_score": null,
+    "financial": null,
+    "schedule": null,
+    "safety_quality": null,
+    "reporting": null,
+    "coverage": 0.27,
+    "bonus_rating": "Not enough data",
+    "rating_cap": null,
+    "main_issue": null,
+    "input_check": "No daily logs in Procore",
+    "rank_active": null,
+    "days_since_daily_log": null
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": null,
+    "Change Orders": null,
+    "Safety Incidents": null,
+    "Schedule Performance": 3,
+    "Completion Variance": null,
+    "Observations": null,
+    "Daily Reports": null
+   }
+  },
+  {
+   "project_number": "26-022",
+   "project_name": "EMBANKMENT PHASE II",
+   "before": {
+    "pillar_score": 0.6552,
+    "performance_rating": "Needs Improvement",
+    "rank_recomputed_all_projects": 3,
+    "rank_live_measure_in_visual_shape": 1,
+    "coverage": 0.58
+   },
+   "after": {
+    "project_status": "Inactive",
+    "pillar_score": 0.6897,
+    "financial": 0.75,
+    "schedule": null,
+    "safety_quality": 0.5833,
+    "reporting": 1.0,
+    "coverage": 0.58,
+    "bonus_rating": "Needs Improvement (capped by Observations)",
+    "rating_cap": "Capped by Observations",
+    "main_issue": "Observations 0/3 +1 more",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": 135
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 3,
+    "Profitability": null,
+    "Cash Position": 3,
+    "Change Orders": 0,
+    "Safety Incidents": 3,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": 0,
+    "Daily Reports": 3
+   }
+  },
+  {
+   "project_number": "26-023",
+   "project_name": "Boys & Girls Club",
+   "before": {
+    "pillar_score": null,
+    "performance_rating": "Not enough data",
+    "rank_recomputed_all_projects": null,
+    "rank_live_measure_in_visual_shape": null,
+    "coverage": 0.12
+   },
+   "after": {
+    "project_status": "No daily logs",
+    "pillar_score": null,
+    "financial": null,
+    "schedule": null,
+    "safety_quality": null,
+    "reporting": null,
+    "coverage": 0.12,
+    "bonus_rating": "Not enough data",
+    "rating_cap": null,
+    "main_issue": "Accounts Receivable 0/3",
+    "input_check": null,
+    "rank_active": null,
+    "days_since_daily_log": null
+   },
+   "after_category_scores": {
+    "Accounts Receivable": 0,
+    "Profitability": null,
+    "Cash Position": null,
+    "Change Orders": null,
+    "Safety Incidents": null,
+    "Schedule Performance": null,
+    "Completion Variance": null,
+    "Observations": null,
+    "Daily Reports": null
+   }
+  }
+ ]
+}

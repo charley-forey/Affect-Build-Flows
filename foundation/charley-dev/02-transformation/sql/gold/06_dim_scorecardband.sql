@@ -44,10 +44,12 @@
 CREATE OR REPLACE TABLE dim_ScorecardBand AS
 SELECT t.*, w.CategoryName
 FROM (VALUES
-    -- 1 Accounts Receivable - FIX: driver becomes avg days to payment, not aging balance
+    -- 1 Accounts Receivable - FIX: driver becomes avg days to payment, not aging balance.
+    -- The driver is an AVERAGE (60.5 is possible), so the labels state the real edge at 61
+    -- rather than "45-60" / "> 60", which left 60.5 scoring 2 under a "> 60" label.
     (1, 3, CAST(NULL AS DOUBLE), CAST(45.0 AS DOUBLE), CAST(NULL AS STRING), '< 45 days'),
-    (1, 2, CAST(45.0 AS DOUBLE), CAST(61.0 AS DOUBLE), CAST(NULL AS STRING), '45-60 days'),
-    (1, 0, CAST(61.0 AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '> 60 days'),
+    (1, 2, CAST(45.0 AS DOUBLE), CAST(61.0 AS DOUBLE), CAST(NULL AS STRING), '45 to under 61 days'),
+    (1, 0, CAST(61.0 AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '>= 61 days'),
 
     -- 2 Profitability - text match, a human judgement the workbook stores as a dropdown
     (2, 3, CAST(NULL AS DOUBLE), CAST(NULL AS DOUBLE), 'Within Range',                 'Within Range'),
@@ -68,10 +70,11 @@ FROM (VALUES
     (4, 2, CAST(46.0 AS DOUBLE), CAST(61.0 AS DOUBLE), CAST(NULL AS STRING), '46-60 days'),
     (4, 0, CAST(61.0 AS DOUBLE), CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '> 60 days'),
 
-    -- 5 Safety Incidents - recordable incidents in the period
-    (5, 3, CAST(0.0 AS DOUBLE),  CAST(1.0 AS DOUBLE),  CAST(NULL AS STRING), '0'),
-    (5, 2, CAST(1.0 AS DOUBLE),  CAST(2.0 AS DOUBLE),  CAST(NULL AS STRING), '1'),
-    (5, 0, CAST(2.0 AS DOUBLE),  CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '>= 2'),
+    -- 5 Safety Incidents - recordable incidents in the last 12 months, ending at the
+    -- selected month (scorecard.py [Recordable Incidents])
+    (5, 3, CAST(0.0 AS DOUBLE),  CAST(1.0 AS DOUBLE),  CAST(NULL AS STRING), '0 in the last 12 months'),
+    (5, 2, CAST(1.0 AS DOUBLE),  CAST(2.0 AS DOUBLE),  CAST(NULL AS STRING), '1 in the last 12 months'),
+    (5, 0, CAST(2.0 AS DOUBLE),  CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '>= 2 in the last 12 months'),
 
     -- 6 Schedule Performance - FIX: FRACTION not integer. This is defect #1a.
     -- The driver is [Critical Missed Starts %], which returns 0.4 for 40%. The workbook
@@ -98,7 +101,7 @@ FROM (VALUES
     -- NEW FINDING: same gap shape as Observations - "< 2", "3-4", ">= 5" leaves 2
     -- unscored. Closed at 2 and 5.
     (9, 3, CAST(NULL AS DOUBLE), CAST(2.0 AS DOUBLE),  CAST(NULL AS STRING), '< 2'),
-    (9, 2, CAST(2.0 AS DOUBLE),  CAST(5.0 AS DOUBLE),  CAST(NULL AS STRING), '2-4'),
+    (9, 2, CAST(2.0 AS DOUBLE),  CAST(5.0 AS DOUBLE),  CAST(NULL AS STRING), '2 to under 5'),
     (9, 0, CAST(5.0 AS DOUBLE),  CAST(NULL AS DOUBLE), CAST(NULL AS STRING), '>= 5')
 ) AS t(CategoryKey, Score, MinValue, MaxValue, MatchValue, BandLabel)
 LEFT JOIN dim_ScorecardWeight w ON w.CategoryKey = t.CategoryKey;

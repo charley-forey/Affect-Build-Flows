@@ -20,30 +20,15 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_Milestone"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "ProjectKey"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "fct_Milestone.ProjectKey",
-              "nativeQueryRef": "ProjectKey",
-              "displayName": "Project Key"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_Milestone"
-                    }
-                  },
-                  "Property": "ActivityKey"
-                }
-              },
-              "queryRef": "fct_Milestone.ActivityKey",
-              "nativeQueryRef": "ActivityKey",
-              "displayName": "Activity Key"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project"
             },
             {
               "field": {
@@ -104,36 +89,6 @@
               "queryRef": "fct_Milestone.PercentComplete",
               "nativeQueryRef": "PercentComplete",
               "displayName": "Percent Complete"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_Milestone"
-                    }
-                  },
-                  "Property": "StatusLabel"
-                }
-              },
-              "queryRef": "fct_Milestone.StatusLabel",
-              "nativeQueryRef": "StatusLabel",
-              "displayName": "Status Label"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_Milestone"
-                    }
-                  },
-                  "Property": "HasDateInversion"
-                }
-              },
-              "queryRef": "fct_Milestone.HasDateInversion",
-              "nativeQueryRef": "HasDateInversion",
-              "displayName": "Has Date Inversion"
             }
           ]
         }
@@ -147,7 +102,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Critical path milestones (Outbuild). Shows ProjectKey, ActivityKey, MilestoneName, CurrentStart, CurrentFinish, PercentComplete, StatusLabel, HasDateInversion for the current selection.'"
+                  "Value": "'Table. Critical path milestones (Outbuild). Shows ProjectName, MilestoneName, CurrentStart, CurrentFinish, PercentComplete for the current selection.'"
                 }
               }
             }
@@ -254,13 +209,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "87D"
+                  "Value": "125D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "fct_Milestone.ProjectKey"
+            "metadata": "dim_Project.ProjectName"
           }
         },
         {
@@ -268,21 +223,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "87D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fct_Milestone.ActivityKey"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "97D"
+                  "Value": "213D"
                 }
               }
             }
@@ -296,7 +237,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "87D"
+                  "Value": "125D"
                 }
               }
             }
@@ -310,7 +251,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "87D"
+                  "Value": "125D"
                 }
               }
             }
@@ -324,41 +265,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "87D"
+                  "Value": "125D"
                 }
               }
             }
           },
           "selector": {
             "metadata": "fct_Milestone.PercentComplete"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "97D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fct_Milestone.StatusLabel"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "87D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fct_Milestone.HasDateInversion"
           }
         }
       ],

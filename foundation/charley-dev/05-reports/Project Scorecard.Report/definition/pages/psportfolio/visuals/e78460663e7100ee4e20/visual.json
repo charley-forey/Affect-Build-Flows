@@ -19,7 +19,7 @@
               {
                 "textRuns": [
                   {
-                    "value": "Right-click a project and choose Drill through to open it. Pick a pillar to re-rank by that part only. Blank means not measured, never zero. Rating cut-offs are proposed until the scorecard workshop confirms them.",
+                    "value": "Right-click a project and choose Drill through to open it. Pick a pillar to re-rank by that part only. Blank means not measured. Active projects only: inactive ones are listed below, or clear Project Status in the Filters pane. Rating cut-offs are proposed.",
                     "textStyle": {
                       "fontSize": "10pt",
                       "color": "#605E5C",
@@ -40,7 +40,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Right-click a project and choose Drill through to open it. Pick a pillar to re-rank by that part only. Blank means not measured, never zero. Rating cut-offs are proposed until the scorecard workshop confirms them.'"
+                  "Value": "'Right-click a project and choose Drill through to open it. Pick a pillar to re-rank by that part only. Blank means not measured. Active projects only: inactive ones are listed below, or clear Project Status in the Filters pane. Rating cut-offs are proposed.'"
                 }
               }
             }

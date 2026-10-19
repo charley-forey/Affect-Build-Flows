@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Daily Reports Missed"
+                  "Property": "Daily Reports Missed Per Month"
                 }
               },
-              "queryRef": "_Measures.Daily Reports Missed",
-              "nativeQueryRef": "Daily Reports Missed"
+              "queryRef": "_Measures.Daily Reports Missed Per Month",
+              "nativeQueryRef": "Daily Reports Missed Per Month"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Daily reports missed. Shows Daily Reports Missed for the current selection.'"
+                  "Value": "'Card. Reports missed per month. Shows Daily Reports Missed Per Month for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Daily reports missed'"
+                  "Value": "'Reports missed per month'"
                 }
               }
             },

@@ -65,15 +65,15 @@
                 "Column": {
                   "Expression": {
                     "SourceRef": {
-                      "Entity": "fct_BudgetLine"
+                      "Entity": "dim_Project"
                     }
                   },
-                  "Property": "ProjectKey"
+                  "Property": "ProjectName"
                 }
               },
-              "queryRef": "fct_BudgetLine.ProjectKey",
-              "nativeQueryRef": "ProjectKey",
-              "displayName": "Project Key"
+              "queryRef": "dim_Project.ProjectName",
+              "nativeQueryRef": "ProjectName",
+              "displayName": "Project"
             },
             {
               "field": {
@@ -218,7 +218,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Matrix. Budget remaining is budget less spend to date and Budget Status describes that spend comparison; Forecast Variance is budget less forecast and Forecast Status bands it the same way. Expand through division, cost code, category, project ID and source budget line ID.'"
+                  "Value": "'Matrix. Budget remaining is budget less spend to date and Budget Status describes that spend comparison; Forecast Variance is budget less forecast and Forecast Status bands it the same way. Expand through division, cost code, category, project and source budget line ID.'"
                 }
               }
             }
@@ -393,7 +393,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_BudgetLine.ProjectKey"
+            "metadata": "dim_Project.ProjectName"
           }
         },
         {

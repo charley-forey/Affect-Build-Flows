@@ -1,37 +1,19 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
-  "name": "8f5079cfec385edcb6b4",
+  "name": "05f21f80f7f294b0c7fc",
   "position": {
-    "x": 20,
-    "y": 502,
+    "x": 246,
+    "y": 222,
     "z": 0,
-    "width": 400,
-    "height": 158,
-    "tabOrder": 42
+    "width": 214,
+    "height": 76,
+    "tabOrder": 26
   },
   "visual": {
-    "visualType": "columnChart",
+    "visualType": "card",
     "query": {
       "queryState": {
-        "Category": {
-          "projections": [
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "dim_Date"
-                    }
-                  },
-                  "Property": "MonthYear"
-                }
-              },
-              "queryRef": "dim_Date.MonthYear",
-              "nativeQueryRef": "MonthYear"
-            }
-          ]
-        },
-        "Y": {
+        "Values": {
           "projections": [
             {
               "field": {
@@ -41,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Recordable Incidents"
+                  "Property": "Score Table Pillars"
                 }
               },
-              "queryRef": "_Measures.Recordable Incidents",
-              "nativeQueryRef": "Recordable Incidents"
+              "queryRef": "_Measures.Score Table Pillars",
+              "nativeQueryRef": "Score Table Pillars"
             }
           ]
         }
@@ -59,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Column chart. Recordable incidents by month. Shows Recordable Incidents by MonthYear.'"
+                  "Value": "'Card. Categories listed. Shows Score Table Pillars for the current selection.'"
                 }
               }
             }
@@ -79,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Recordable incidents by month'"
+                  "Value": "'Categories listed'"
                 }
               }
             },
@@ -97,11 +79,52 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "12D"
+                  "Value": "10D"
                 }
               }
             },
             "titleWrap": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "11D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryLabels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "wordWrap": [
+        {
+          "properties": {
+            "show": {
               "expr": {
                 "Literal": {
                   "Value": "true"

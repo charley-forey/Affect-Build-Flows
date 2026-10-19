@@ -430,6 +430,12 @@ def test_procore_facts(con) -> None:
                     "WHERE SubmittalKey='SB3'") == "Under Review"
     check("an unmapped Procore status is visible as NULL beside its source text")
 
+    # Readers see the workbook label, not the code; the label comes from the code's own domain.
+    for table in ("fct_QcNcr", "fct_QcPunch", "fct_QcSubmittal"):
+        assert one(con, f"SELECT COUNT(*) FROM {table} WHERE (StatusCode IS NULL) <> (StatusLabel IS NULL)") == 0, table
+    assert one(con, "SELECT StatusLabel FROM fct_QcSubmittal WHERE SubmittalKey='SB1'") == "Open"
+    check("QC facts carry dim_QcStatus[Label] beside every mapped StatusCode")
+
     # A mockup is a submittal Procore has no field for, so it is derived - once, here.
     assert one(con, "SELECT IsMockup FROM fct_QcSubmittal WHERE SubmittalKey='SB2'") is True
     assert one(con, "SELECT IsMockup FROM fct_QcSubmittal WHERE SubmittalKey='SB1'") is False

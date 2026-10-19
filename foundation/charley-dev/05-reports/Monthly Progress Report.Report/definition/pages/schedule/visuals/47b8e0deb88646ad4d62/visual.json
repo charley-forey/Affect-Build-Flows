@@ -23,11 +23,12 @@
                       "Entity": "fct_RfiSubmittal"
                     }
                   },
-                  "Property": "StatusLabel"
+                  "Property": "StatusDisplay"
                 }
               },
-              "queryRef": "fct_RfiSubmittal.StatusLabel",
-              "nativeQueryRef": "StatusLabel"
+              "queryRef": "fct_RfiSubmittal.StatusDisplay",
+              "nativeQueryRef": "StatusDisplay",
+              "displayName": "Status"
             }
           ]
         },
@@ -59,7 +60,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Stacked bar chart. Open submittals by status (as of today). Shows Open Submittals by StatusLabel.'"
+                  "Value": "'Stacked bar chart. Open submittals by status (as of today). Shows Open Submittals by StatusDisplay.'"
                 }
               }
             }

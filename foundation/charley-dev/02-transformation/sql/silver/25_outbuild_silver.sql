@@ -62,6 +62,28 @@
 -- Whether they are MAINTAINED is still a question for Affect - a baseline copied from the
 -- current schedule at import is not a baseline - so nothing is computed from them yet.
 -- Landing them means that decision is a gold change, not another extract.
+--
+-- ANSWERED 2026-10-16, from the live tables: baselines ARE maintained. On the current
+-- schedules most activities carry a baseline that differs from the current dates
+-- (Embankment Phase III 137 of 137 baselined, 132 finishes moved; PCNA 49/49, 42 moved;
+-- 360Lex 220 of 266). gold fct_Milestone now reads them (Completion Variance).
+--
+-- ---------------------------------------------------------------------------
+-- A PROJECT HAS SEVERAL SCHEDULES; EXACTLY ONE IS CURRENT (added 2026-10-16)
+-- ---------------------------------------------------------------------------
+--
+-- Each entry of the project's `schedules` array carries `is_current_schedule` and `name`.
+-- The others are drafts, copies and superseded versions: Sauna Lounge has 6 (current
+-- 103755 "Contract Schedule"; SU01/SU02/SU03/RECOVERY drafts), 360Lex has 3 (current 76258
+-- "8th & 20th Floor"; "Main Schedule - Copy" and "15th & 17th Floor" not current). Silver
+-- keeps every schedule's activities and labels them; gold decides to read only the
+-- current one. `project_stage` / `archive_reason` come off the project record too
+-- (PCNA and Evergreen Cemetery are 'archived').
+--
+-- The project id here is still Outbuild's own `procore_id`, NULL when there is no Procore
+-- integration. The reviewed manual map (seed/outbuild_project_map.csv) is applied on top
+-- of it in sv_outbuild_activities (01_source_views_cd.sql), where the seeds are readable -
+-- silver records what Outbuild says, the source view adds what a person decided.
 
 CREATE OR REPLACE TABLE cd_silver_outbuild_activities AS
 WITH schedule_rows AS (
@@ -81,12 +103,17 @@ WITH schedule_rows AS (
         explode(from_json(get_json_object(payload, '$.schedules'), 'array<string>')) AS sched,
         get_json_object(payload, '$.procore_id')              AS procore_project_id,
         get_json_object(payload, '$.id')                      AS outbuild_project_id,
-        TRIM(get_json_object(payload, '$.name'))              AS outbuild_project_name
+        TRIM(get_json_object(payload, '$.name'))              AS outbuild_project_name,
+        TRIM(get_json_object(payload, '$.stage'))             AS project_stage,
+        TRIM(get_json_object(payload, '$.archive_reason'))    AS archive_reason
     FROM cd_bronze_outbuild_projects
 ),
 schedule_map AS (
     SELECT get_json_object(sched, '$.id') AS schedule_id,
-           procore_project_id, outbuild_project_id, outbuild_project_name
+           TRIM(get_json_object(sched, '$.name'))                    AS schedule_name,
+           CAST(get_json_object(sched, '$.is_current_schedule') AS BOOLEAN) AS is_current_schedule,
+           procore_project_id, outbuild_project_id, outbuild_project_name,
+           project_stage, archive_reason
     FROM schedule_rows
 )
 SELECT
@@ -107,7 +134,7 @@ SELECT
     -- produced a silently all-NULL column.
     TRIM(get_json_object(a.payload, '$.activity_type'))               AS activity_type,
     CAST(NULL AS STRING)                                              AS status,
-    -- Baselines, landed but not yet consumed. See the header.
+    -- Baselines: maintained in Outbuild (checked 2026-10-16), read by fct_Milestone.
     CAST(get_json_object(a.payload, '$.baseline_start_date') AS DATE)   AS baseline_start_date,
     CAST(get_json_object(a.payload, '$.baseline_end_date')   AS DATE)   AS baseline_end_date,
     CAST(get_json_object(a.payload, '$.baseline_duration')   AS DOUBLE) AS baseline_duration,
@@ -115,6 +142,12 @@ SELECT
     CAST(m.outbuild_project_id                            AS STRING)  AS outbuild_project_id,
     m.outbuild_project_name                                           AS outbuild_project_name,
     CAST(get_json_object(a.payload, '$.schedule_id')      AS STRING)  AS schedule_id,
+    -- Which of the project's schedules this activity is on, and whether it is the current
+    -- one. NULL only when the schedule is not in /projects (then project_id is NULL too).
+    m.schedule_name                                                   AS schedule_name,
+    m.is_current_schedule                                             AS is_current_schedule,
+    m.project_stage                                                   AS project_stage,
+    m.archive_reason                                                  AS archive_reason,
     a._ingested_at, a._batch_id
 FROM cd_bronze_outbuild_activities a
 -- LEFT, not INNER: an activity whose schedule is not in /projects is a real gap and should

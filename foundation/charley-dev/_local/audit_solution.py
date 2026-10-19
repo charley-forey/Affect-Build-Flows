@@ -89,6 +89,8 @@ def live_check(model, fabric_token, pbi_token):
             "[ActualOpenSubmittals]" in row and "[DisplayedOpenSubmittals]" in row
             and row["[ActualOpenSubmittals]"] == row["[DisplayedOpenSubmittals]"])
     evidence["gold_checks_recent"] = evidence["queries"].get("candidate_pipeline_status", [{}])[0].get("[Status]") in (
+        "Data checks passed; source totals not verified", "Data checks passed with warnings; source totals not verified",
+        # Wording before 2026-10-16, still live until the model is redeployed.
         "Gold checks passed; source completeness unverified", "Gold checked with warnings; source completeness unverified")
     return evidence
 

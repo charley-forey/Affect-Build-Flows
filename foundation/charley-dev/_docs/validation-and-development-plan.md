@@ -686,7 +686,7 @@ The latest extraction poll still reports `InProgress` and the current raw-captur
 
 ## Validation status states its actual scope
 
-The shared status expression used by both reports now says **Gold checked with warnings; source completeness unverified** or **Gold checks passed; source completeness unverified** for the corresponding recent validation outcomes. A completed gold quality run must not be read as evidence of a complete upstream extraction. Blocking, missing, newer-than-check and stale-data states retain their existing precedence.
+The shared status expression used by both reports now says **Data checks passed with warnings; source totals not verified** or **Data checks passed; source totals not verified** for the corresponding recent validation outcomes. A completed gold quality run must not be read as evidence of a complete upstream extraction. Blocking, missing, newer-than-check and stale-data states retain their existing precedence.
 
 Read-only evaluation of the revised expression in both candidate models returned the qualified warning status expected from their recorded checks. `validation-scope-status-evidence.json` preserves both queries and results. Both report binding/layout suites passed, covering 19 pages and 276 visuals, and declared lineage was regenerated. This is a local wording correction, not a model deployment or proof of browser text rendering.
 

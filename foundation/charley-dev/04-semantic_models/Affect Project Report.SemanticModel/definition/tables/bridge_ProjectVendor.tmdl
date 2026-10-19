@@ -70,6 +70,16 @@ table bridge_ProjectVendor
 		summarizeBy: none
 		sourceColumn: SyncedToErp
 
+	column PrequalifiedLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PrequalifiedLabel
+
+	column SyncedToErpLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SyncedToErpLabel
+
 	column IsMissingFromErp
 		dataType: boolean
 		summarizeBy: none

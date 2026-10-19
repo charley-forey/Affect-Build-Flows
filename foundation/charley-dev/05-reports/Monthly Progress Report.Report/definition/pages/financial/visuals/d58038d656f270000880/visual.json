@@ -23,11 +23,12 @@
                       "Entity": "fct_ChangeOrder"
                     }
                   },
-                  "Property": "StatusLabel"
+                  "Property": "StatusDisplay"
                 }
               },
-              "queryRef": "fct_ChangeOrder.StatusLabel",
-              "nativeQueryRef": "StatusLabel"
+              "queryRef": "fct_ChangeOrder.StatusDisplay",
+              "nativeQueryRef": "StatusDisplay",
+              "displayName": "Status"
             }
           ]
         },
@@ -59,7 +60,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Clustered column chart. Change orders by status. Shows Change Order Amount by StatusLabel.'"
+                  "Value": "'Clustered column chart. Change orders by status. Shows Change Order Amount by StatusDisplay.'"
                 }
               }
             }

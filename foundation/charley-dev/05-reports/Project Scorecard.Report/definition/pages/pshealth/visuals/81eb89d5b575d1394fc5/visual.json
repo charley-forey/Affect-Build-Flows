@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "81eb89d5b575d1394fc5",
   "position": {
-    "x": 440,
+    "x": 472,
     "y": 422,
     "z": 0,
-    "width": 194,
+    "width": 188,
     "height": 76,
-    "tabOrder": 38
+    "tabOrder": 37
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Open Observations"
+                  "Property": "Recordable Incidents"
                 }
               },
-              "queryRef": "_Measures.Open Observations",
-              "nativeQueryRef": "Open Observations"
+              "queryRef": "_Measures.Recordable Incidents",
+              "nativeQueryRef": "Recordable Incidents"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Open observations. Shows Open Observations for the current selection.'"
+                  "Value": "'Card. Recordable incidents. Shows Recordable Incidents for the current selection.'"
                 }
               }
             }
@@ -61,7 +61,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Open observations'"
+                  "Value": "'Recordable incidents'"
                 }
               }
             },

@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Input Check"
+                  "Property": "Input Check Status"
                 }
               },
-              "queryRef": "_Measures.Input Check",
-              "nativeQueryRef": "Input Check"
+              "queryRef": "_Measures.Input Check Status",
+              "nativeQueryRef": "Input Check Status"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Data-entry check. Shows Input Check for the current selection.'"
+                  "Value": "'Card. Data-entry check. Shows Input Check Status for the current selection.'"
                 }
               }
             }

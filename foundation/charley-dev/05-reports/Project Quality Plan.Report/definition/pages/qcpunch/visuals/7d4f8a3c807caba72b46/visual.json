@@ -53,12 +53,12 @@
                       "Entity": "fct_QcPunch"
                     }
                   },
-                  "Property": "StatusCode"
+                  "Property": "StatusLabel"
                 }
               },
-              "queryRef": "fct_QcPunch.StatusCode",
-              "nativeQueryRef": "StatusCode",
-              "displayName": "Status Code"
+              "queryRef": "fct_QcPunch.StatusLabel",
+              "nativeQueryRef": "StatusLabel",
+              "displayName": "Status"
             },
             {
               "field": {
@@ -105,7 +105,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Punch register - longest open first. Shows PunchNumber, Title, StatusCode, DaysOpen for the current selection.'"
+                  "Value": "'Table. Punch register - longest open first. Shows PunchNumber, Title, StatusLabel, DaysOpen for the current selection.'"
                 }
               }
             }
@@ -246,7 +246,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_QcPunch.StatusCode"
+            "metadata": "fct_QcPunch.StatusLabel"
           }
         },
         {

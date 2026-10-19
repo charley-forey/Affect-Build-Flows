@@ -166,11 +166,24 @@ def test_fct_changeorder(con) -> None:
     check("pending CO total is recoverable from rows (14,708.46)")
 
     rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
-        ('P1','CO9','C1', DATE '2025-05-02', 0.0, '9', 'Void')
-        ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
+        ('P1','CO9','C1', DATE '2025-05-02', 0.0, '9', 'Void', NULL)
+        ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status, title)""",
         "21_fct_changeorder.sql", "SELECT IsPending FROM fct_ChangeOrder WHERE ChangeOrderKey='CO9'")
     assert rows == [(False,)], rows
     check("a void change order is not pending")
+
+    # Procore sends lower-case codes; readers see Title Case. Two pending COs can share a
+    # number (one per contract), so the title is what tells them apart.
+    rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
+        ('P1','CO7','C1', DATE '2025-05-02', 1.0, '002', 'pending', 'Title A'),
+        ('P1','CO8','C2', DATE '2025-05-02', 1.0, '002', 'no_charge', 'Title B'),
+        ('P1','CO9','C2', DATE '2025-05-02', 1.0, '003', 'Revise and Resubmit', NULL)
+        ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status, title)""",
+        "21_fct_changeorder.sql",
+        "SELECT ChangeOrderNumber, StatusDisplay, ChangeOrderTitle FROM fct_ChangeOrder ORDER BY ChangeOrderKey")
+    assert rows == [("002", "Pending", "Title A"), ("002", "No Charge", "Title B"),
+                    ("003", "Revise and Resubmit", None)], rows
+    check("fct_ChangeOrder[StatusDisplay] is Title Case; ChangeOrderTitle separates same-number COs")
 
 
 def test_fct_invoice(con) -> None:
@@ -237,6 +250,10 @@ def test_fct_rfisubmittal(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='Submittal'") == 5
     assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE ItemType='RFI'") == 2
     check("fct_RfiSubmittal unions submittals AND RFIs, split by ItemType")
+    assert one(con, "SELECT COUNT(*) FROM fct_RfiSubmittal WHERE StatusDisplay IS DISTINCT FROM "
+                    "REPLACE(StatusLabel, '_', ' ') AND StatusLabel <> UPPER(StatusLabel) "
+                    "AND StatusLabel <> LOWER(StatusLabel)") == 0
+    check("fct_RfiSubmittal[StatusDisplay] keeps already-readable status text")
 
     # ItemKey is only unique WITHIN an arm - Procore numbers RFIs and submittals
     # independently, so the model keys on the pair.
@@ -283,6 +300,19 @@ def test_fct_milestone(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_Milestone") == 2
     assert one(con, "SELECT COUNT(*) FROM fct_Milestone WHERE ActivityKey='A2'") == 0
     check("fct_Milestone keeps only critical-path activities")
+
+    # Outbuild projects carry several schedules; only the current one counts. A4 is a
+    # critical activity on a superseded draft whose late finish would otherwise become the
+    # project's Scheduled Finish.
+    assert one(con, "SELECT COUNT(*) FROM fct_Milestone WHERE ActivityKey='A4'") == 0
+    assert str(one(con, "SELECT MAX(CurrentFinish) FROM fct_Milestone WHERE ProjectKey='P1'")) == "2025-06-30"
+    check("fct_Milestone drops activities on non-current Outbuild schedules")
+
+    # Finish variance against Outbuild's own baseline: +10 days late, NULL when unbaselined.
+    assert one(con, "SELECT FinishVarianceDays FROM fct_Milestone WHERE ActivityKey='A1'") == 10
+    assert str(one(con, "SELECT BaselineFinish FROM fct_Milestone WHERE ActivityKey='A1'")) == "2025-06-20"
+    assert one(con, "SELECT FinishVarianceDays FROM fct_Milestone WHERE ActivityKey='A3'") is None
+    check("fct_Milestone[FinishVarianceDays] = current - baseline finish, NULL without a baseline")
 
     # Excel defect #6 caught at load time rather than shipped into a rollup.
     assert one(con, "SELECT HasDateInversion FROM fct_Milestone WHERE ActivityKey='A3'") is True
@@ -422,6 +452,7 @@ def test_crosswalks(con) -> None:
     # once name-similarity fallbacks exist. Today everything is an exact key join.
     assert one(con, "SELECT SageMatchMethod FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'")         == "CROSSWALK_TABLE"
     assert one(con, "SELECT OutbuildMatchMethod FROM dim_ProjectCrosswalk WHERE ProjectKey='P2'")         == "UNMATCHED"
+    assert one(con, "SELECT OutbuildMatchMethod FROM dim_ProjectCrosswalk WHERE ProjectKey='P1'") == "EMBEDDED_PROCORE_ID"
     check("every match records HOW it was made, not just that it was")
 
     # A vendor with no Sage id is normal (invited to bid, never paid) and must not be
@@ -512,6 +543,9 @@ def test_fct_qualityitem(con) -> None:
     assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='Observation'") == 2
     assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='PunchItem'") == 2
     check("fct_QualityItem unions observations and punch items, split by ItemType")
+    assert q(con, "SELECT DISTINCT ItemType, ItemTypeLabel FROM fct_QualityItem ORDER BY 1") == [
+        ("Observation", "Observation"), ("PunchItem", "Punch item")]
+    check("fct_QualityItem[ItemTypeLabel] reads 'Punch item', not PunchItem")
 
     # Open is derived from ClosedDate, not from status text - Procore's status vocabulary
     # is configurable per company, so a rule keyed to the word "closed" breaks on a rename.
@@ -569,6 +603,41 @@ def test_fct_safetymonthly(con) -> None:
     # project that simply logged nothing.
     assert one(con, "SELECT TRIR FROM fct_SafetyMonthly WHERE ProjectKey='P2'") is None
     check("TRIR is NULL when there are no hours, never a misleading zero")
+
+    # DailyLogsMissed: expected days (weekdays, public holidays excused) across the
+    # project's logging window - first log ever to last log - with no log, by month. Months
+    # in the window with no log at all get a row. Fuzzed against Python over random
+    # multi-month windows, so the weekday anchor, the holiday join and the gap months are
+    # all checked. Dates stay in the past: the window is capped at today.
+    import random
+    from collections import Counter
+    from datetime import timedelta
+    holidays = {d for (d,) in q(con, "SELECT HolidayDate FROM seed_PublicHoliday")}
+    assert date(2026, 11, 27) in holidays and date(2026, 7, 3) in holidays
+    rng = random.Random(20261016)
+    cases, expected = [], {}
+    for i in range(300):
+        lo = date(2023, 1, 1) + timedelta(rng.randrange(1000))
+        hi = lo + timedelta(rng.randrange(120))
+        window = [lo + timedelta(k) for k in range((hi - lo).days + 1)]
+        logged = {lo, hi} | set(rng.sample(window, rng.randint(0, len(window) // rng.choice((1, 3, 30)))))
+        month = lambda d: d.replace(day=1)
+        got_rows = Counter(month(d) for d in window if d.weekday() < 5 and d not in holidays
+                           and d not in logged)
+        for m in {month(d) for d in window}:
+            if m in got_rows or m in {month(d) for d in logged} or any(
+                    month(d) == m and d.weekday() < 5 and d not in holidays for d in window):
+                expected[(f"F{i}", m)] = got_rows.get(m, 0)
+        cases += [f"('F{i}', DATE '{d}', 8.0, 1.0)" for d in sorted(logged)]
+    got = {(k, m): v for k, m, v in rebuild_with(
+        con,
+        "CREATE OR REPLACE VIEW sv_manpower_daily AS SELECT * FROM (VALUES " + ", ".join(cases)
+        + ") AS t(project_id, log_date, total_hours, total_workers)",
+        "26_fct_safetymonthly.sql",
+        "SELECT ProjectKey, MonthStart, DailyLogsMissed FROM fct_SafetyMonthly WHERE ProjectKey LIKE 'F%'")}
+    assert got == expected, [(k, got.get(k), v) for k, v in expected.items() if got.get(k) != v][:5] or         sorted(set(got) - set(expected))[:5]
+    check("DailyLogsMissed matches Python over 300 random logging windows: holidays excused, "
+          "gap months counted")
 
 
 def test_fct_billing(con) -> None:
@@ -670,6 +739,9 @@ def test_bridge_projectvendor(con) -> None:
     # that nothing today would surface.
     assert one(con, "SELECT COUNT(*) FROM bridge_ProjectVendor WHERE IsMissingFromErp") == 1
     check("vendors missing from the ERP are visible rather than assumed clean")
+    assert q(con, "SELECT DISTINCT IsPrequalified, PrequalifiedLabel, SyncedToErp, SyncedToErpLabel "
+                  "FROM bridge_ProjectVendor ORDER BY 1") == [(False, "No", False, "No"), (True, "Yes", True, "Yes")]
+    check("bridge_ProjectVendor shows Yes/No, not True/False")
 
 
 def test_bridge_vendorcostcode(con) -> None:

@@ -1,0 +1,3 @@
+outbuild_project_id,procore_project_id,outbuild_project_name,source
+47914,562949955423662,25-034 City Harvest New,assumed_2026-10-16: carries job number 25-034; older copies 43250/47267/48195/43183 left unmapped
+45393,562949954973684,45 Renwick St,assumed_2026-10-16: address matches Procore 25-013 "Lillipvt 45 Renwick St"; Outbuild has no procore_id

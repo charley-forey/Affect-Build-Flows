@@ -83,6 +83,11 @@ MACROS = (
     # Revenue_AllTime carried one and gold reads it, so it is derived from the invoice date
     # at the monthly grain the workbook reports at. ONLY 'yyyy-MM' is translated; any other
     # pattern would silently come back wrong, so assert on the output if one is ever added.
+    # Spark's initcap(s): lower-case everything, upper-case the first letter of each
+    # space-separated word. DuckDB has no builtin; same semantics on single-space text,
+    # which is all the StatusDisplay columns feed it (21/23 gold files).
+    "CREATE OR REPLACE MACRO initcap(s) AS array_to_string(list_transform("
+    "string_split(lower(s), ' '), w -> upper(left(w, 1)) || substr(w, 2)), ' ')",
     "CREATE OR REPLACE MACRO date_format(d, f) AS strftime(CAST(d AS DATE), '%Y-%m')",
     # NO trunc() MACRO, deliberately. Spark spells month-flooring trunc(date, 'MM') and the
     # obvious bridge is a 2-arg macro - but unlike datediff, DuckDB does NOT overload it by
@@ -163,18 +168,18 @@ SOURCE_FIXTURES = (
     # stores as the formula "=65000+3158.46+11550+4620" typed into a value cell - the
     # components exist nowhere else once someone edits it. Here each is a row.
     """CREATE OR REPLACE VIEW sv_prime_change_orders AS SELECT * FROM (VALUES
-        ('P1','CO1','C1', DATE '2025-05-02', 316960.48, '1', 'Approved'),
-        ('P1','CO2','C1', DATE '2025-05-10',   3158.46, '2', 'Pending'),
-        ('P1','CO3','C1', DATE '2025-05-20',  11550.0,  '3', 'Draft'),
+        ('P1','CO1','C1', DATE '2025-05-02', 316960.48, '1', 'Approved', 'Fixture title Approved'),
+        ('P1','CO2','C1', DATE '2025-05-10',   3158.46, '2', 'Pending', 'Fixture title Pending'),
+        ('P1','CO3','C1', DATE '2025-05-20',  11550.0,  '3', 'Draft', 'Fixture title Draft'),
         -- A SECOND MONTH, deliberately. Every CO used to sit in May, which made per-month
         -- and cumulative roll-ups identical and let a $4.85M understatement pass the gate
         -- (see 30_fct_financialperiod.sql). June's row must carry May's approved CO too.
-        ('P1','CO4','C1', DATE '2025-06-11', 100000.0,  '4', 'Approved'),
+        ('P1','CO4','C1', DATE '2025-06-11', 100000.0,  '4', 'Approved', 'Fixture title Approved'),
         -- A void CO, deliberately with money on it: dead, so neither pending nor contract
         -- growth. Without it the DQ conservation rule's IsPending expression never met a void
         -- and passed offline while the live candidate (3 real void COs) blocked.
-        ('P1','CO5','C1', DATE '2025-06-15',  25000.0,  '5', 'Void')
-    ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status)""",
+        ('P1','CO5','C1', DATE '2025-06-15',  25000.0,  '5', 'Void', 'Fixture title Void')
+    ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status, title)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES
         ('INV1', '901', 'AIA 1', 'S100', DATE '2025-05-05', DATE '2025-06-04', 'App 1', 500000.0, 500000.0,      0.0, '5'),
@@ -224,9 +229,9 @@ SOURCE_FIXTURES = (
     ) AS t(procore_project_id, sage_project_id, project_name)""",
 
     """CREATE OR REPLACE VIEW sv_outbuild_projects AS SELECT * FROM (VALUES
-        ('OB1', 'P1'),
-        ('OB9', NULL)
-    ) AS t(outbuild_project_id, procore_project_id)""",
+        ('OB1', 'P1', 'EMBEDDED_PROCORE_ID'),
+        ('OB9', NULL, NULL)
+    ) AS t(outbuild_project_id, procore_project_id, link_method)""",
 
     """CREATE OR REPLACE VIEW sv_sage_vendors AS SELECT * FROM (VALUES
         ('SV1', 'ACME CONCRETE LLC')
@@ -412,12 +417,22 @@ SOURCE_FIXTURES = (
         ('P2','I3','Orphan month','OPEN', TRUE, DATE '2025-05-20')
     ) AS t(project_id, incident_id, title, status_label, is_recordable, event_date)""",
 
+    # A1 finishes 10 days after its baseline; A3 has no baseline (variance NULL, not 0).
+    # A4 is critical but on a SUPERSEDED schedule (S2): gold must drop it, or its late
+    # finish would become the project's Scheduled Finish (2026-10-16 live defect).
     """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
-        ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress'),
-        ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress'),
-        ('P1','A3','Inverted dates',      DATE '2025-07-01', DATE '2025-06-01', 0.0, 10.0, TRUE,  'Task','Not Started')
+        ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress',
+         DATE '2025-05-01', DATE '2025-06-20', 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR)),
+        ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress',
+         DATE '2025-05-01', DATE '2025-06-30', 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR)),
+        ('P1','A3','Inverted dates',      DATE '2025-07-01', DATE '2025-06-01', 0.0, 10.0, TRUE,  'Task','Not Started',
+         CAST(NULL AS DATE), CAST(NULL AS DATE), 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR)),
+        ('P1','A4','Old draft finish',    DATE '2025-05-01', DATE '2027-01-01', 0.0, 90.0, TRUE,  'Task','Not Started',
+         DATE '2025-05-01', DATE '2026-01-01', 'OB1', 'S2', 'SU01 draft',        FALSE, 'started', CAST(NULL AS VARCHAR))
     ) AS t(project_id, activity_id, activity_name, start_date, end_date,
-           progress, duration, is_critical, activity_type, status)""",
+           progress, duration, is_critical, activity_type, status,
+           baseline_start_date, baseline_end_date, outbuild_project_id, schedule_id,
+           schedule_name, is_current_schedule, project_stage, archive_reason)""",
 
     # ----------------------------------------------------------------------
     # MANUAL INPUT. One row each, and that is the point: before these existed the gold

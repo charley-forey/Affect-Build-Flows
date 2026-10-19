@@ -34,6 +34,9 @@ SELECT
     -- gap: the cost exists in one system and not the other, and nothing today would show
     -- it. Surfaced rather than assumed clean.
     synced_to_erp                    AS SyncedToErp,
+    -- Yes/No twins for report tables; NULL stays blank (unknown, not No).
+    CASE is_prequalified WHEN TRUE THEN 'Yes' WHEN FALSE THEN 'No' END AS PrequalifiedLabel,
+    CASE synced_to_erp   WHEN TRUE THEN 'Yes' WHEN FALSE THEN 'No' END AS SyncedToErpLabel,
     (COALESCE(synced_to_erp, FALSE) = FALSE) AS IsMissingFromErp
 FROM sv_project_vendors
 WHERE project_id IS NOT NULL

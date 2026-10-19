@@ -130,9 +130,9 @@ CREATE OR REPLACE TABLE man_QualityMonthly (
 );
 
 -- SCHEDULE!Table5 columns D:G. Contract dates come off the signed contract and exist in
--- neither Procore nor Outbuild. Baseline dates exist in Outbuild only if baselines are
--- maintained there, which is unconfirmed - so both stay manual and join to fct_Milestone
--- on ActivityKey. Without these, completion variance cannot be computed at all.
+-- neither Procore nor Outbuild, so they stay manual and join to fct_Milestone on
+-- ActivityKey. Baselines: Outbuild maintains them (checked live 2026-10-16) and
+-- fct_Milestone carries them; a baseline typed here overrides Outbuild's.
 CREATE OR REPLACE TABLE man_Milestones (
     ProjectKey    STRING,
     ActivityKey   STRING,

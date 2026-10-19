@@ -30,6 +30,11 @@ table fct_RfiSubmittal
 		summarizeBy: none
 		sourceColumn: StatusLabel
 
+	column StatusDisplay
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusDisplay
+
 	column CostCodeKey
 		dataType: string
 		summarizeBy: none

@@ -53,12 +53,12 @@
                       "Entity": "fct_QcNcr"
                     }
                   },
-                  "Property": "StatusCode"
+                  "Property": "StatusLabel"
                 }
               },
-              "queryRef": "fct_QcNcr.StatusCode",
-              "nativeQueryRef": "StatusCode",
-              "displayName": "Status Code"
+              "queryRef": "fct_QcNcr.StatusLabel",
+              "nativeQueryRef": "StatusLabel",
+              "displayName": "Status"
             },
             {
               "field": {
@@ -105,7 +105,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Observation register - longest open first. Shows NcrNumber, Title, StatusCode, DaysOpen for the current selection.'"
+                  "Value": "'Table. Observation register - longest open first. Shows NcrNumber, Title, StatusLabel, DaysOpen for the current selection.'"
                 }
               }
             }
@@ -246,7 +246,7 @@
             }
           },
           "selector": {
-            "metadata": "fct_QcNcr.StatusCode"
+            "metadata": "fct_QcNcr.StatusLabel"
           }
         },
         {

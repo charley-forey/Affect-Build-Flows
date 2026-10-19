@@ -68,12 +68,12 @@
                       "Entity": "fct_RfiSubmittal"
                     }
                   },
-                  "Property": "StatusLabel"
+                  "Property": "StatusDisplay"
                 }
               },
-              "queryRef": "fct_RfiSubmittal.StatusLabel",
-              "nativeQueryRef": "StatusLabel",
-              "displayName": "Status Label"
+              "queryRef": "fct_RfiSubmittal.StatusDisplay",
+              "nativeQueryRef": "StatusDisplay",
+              "displayName": "Status"
             }
           ]
         }
@@ -87,7 +87,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. RFIs and submittals. Shows ItemType, ItemNumber, Subject, StatusLabel for the current selection.'"
+                  "Value": "'Table. RFIs and submittals. Shows ItemType, ItemNumber, Subject, StatusDisplay for the current selection.'"
                 }
               }
             }
@@ -194,7 +194,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "115D"
+                  "Value": "126D"
                 }
               }
             }
@@ -208,7 +208,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "115D"
+                  "Value": "126D"
                 }
               }
             }
@@ -222,7 +222,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "182D"
+                  "Value": "216D"
                 }
               }
             }
@@ -236,13 +236,13 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "182D"
+                  "Value": "126D"
                 }
               }
             }
           },
           "selector": {
-            "metadata": "fct_RfiSubmittal.StatusLabel"
+            "metadata": "fct_RfiSubmittal.StatusDisplay"
           }
         }
       ]
