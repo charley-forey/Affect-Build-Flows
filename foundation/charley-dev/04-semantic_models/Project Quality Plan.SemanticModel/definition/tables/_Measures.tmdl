@@ -39,8 +39,8 @@ table _Measures
 			Hrs < 0, "Unknown - check timestamp is in the future",
 			Hrs > 72, "STALE - no checked run in over 72 hours",
 			Hrs > 30, "Late - no checked run in over 30 hours",
-			Warnings > 0, "Gold checked with warnings; source completeness unverified",
-			"Gold checks passed; source completeness unverified" )
+			Warnings > 0, "Data checks passed with warnings; source totals not verified",
+			"Data checks passed; source totals not verified" )
 		displayFolder: 00 Report context
 
 	/// Replaces nothing - the workbook is one project per file
