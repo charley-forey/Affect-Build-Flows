@@ -97,6 +97,15 @@ not supply.
   - **Deploy:**
     1. Seeds, silver, gold and DQ upload (silver runs Spark).
     2. Next morning, after the nightly build: models, reports, then publish.
+- **2026-10-19 correction pass live.** Seeds, silver, gold and DQ uploaded with `--no-run`; the
+  nightly applied them (completed 08:07 UTC). Models, the three reports and publish followed.
+  - `validate_model`: 18/18, 164 measures, 0 differences. `reconcile_live`: no FAIL; AR conserved
+    at $27,792,578.43 (160 invoices); checks 4, 7 and 10 warn.
+  - Portfolio (Active filter): 360 Lex 15th 0.84 Exceeds; SaunaLounge 0.66, 64 Met Oval 0.56,
+    Embankment III 0.52, 360 Lex 8th & 20th 0.49, 11 Essex 0.48 Needs Improvement. Five of six match
+    the 10-16 prediction; Embankment III's AR average aged past 61 days over the weekend.
+  - **Found:** six unpaid Sage invoices ($1.22M) match a paid one on the same project and amount
+    (11 Essex AIA #9/#09, VOCO, 1100 Fulton, Embankment III x2). Raised with Affect, not removed.
 - **Still open:**
   - **Incremental Procore extraction (branch `procore-incremental`) not adopted.** It saves
     about 1 of about 942 nightly requests, because Procore is called once per project or
