@@ -40,3 +40,6 @@ metric_key,min_value,max_value,score_at_min,score_at_max,band_label,source
 401,0,5,0.00,0.80,"Below 5: 16% less for each one short",Scorecard.xlsx
 401,5,10,0.80,1.00,"5 or more: 80% plus 4% for each additional",Scorecard.xlsx
 401,10,,1.00,1.00,"10 or more",Scorecard.xlsx
+208,,1,1.00,1.00,"No weekday missed",PROPOSED - Oct 21 call; not in Scorecard.xlsx
+208,1,3,0.75,0.75,"1-2 weekdays missed",PROPOSED - Oct 21 call; not in Scorecard.xlsx
+208,3,,0.00,0.00,"3 or more weekdays missed",PROPOSED - Oct 21 call; not in Scorecard.xlsx

@@ -81,6 +81,10 @@ SCENARIO = [
         UNION ALL SELECT 'X', 'RFI', TRUE, TRUE, DATE '2026-10-01', 30 FROM range(11)
         UNION ALL SELECT 'X', 'RFI', TRUE, FALSE, NULL, 10
         UNION ALL SELECT 'X', 'RFI', TRUE, FALSE, NULL, 3""",
+    # Daily logs Mon, Tue and Thu of the week: 2 weekdays missed (Wed, Fri).
+    """CREATE OR REPLACE VIEW sv_manpower_daily AS SELECT * FROM (VALUES
+        ('X', DATE '2026-10-19', 8.0, 1.0), ('X', DATE '2026-10-20', 8.0, 1.0), ('X', DATE '2026-10-22', 8.0, 1.0)
+    ) AS t(project_id, log_date, total_hours, total_workers)""",
 ]
 
 # Expected scores, by hand from Scorecard.xlsx column H and dashboard_band.csv.
@@ -112,6 +116,9 @@ def test_scoring(con) -> None:
         wrong = {k: (got.get(k), v) for k, v in EXPECTED.items() if not close(got.get(k), v)}
         assert not wrong, wrong
         check("every live measure scores as Scorecard.xlsx says (linear cash, completion and inspection bands)")
+        assert q(con, "SELECT Driver, Applies, Score FROM fct_MetricScore "
+                      "WHERE ProjectKey = 'X' AND WeeksAgo = 0 AND MetricKey = 208") == [(2.0, False, None)]
+        check("daily logs (proposed): weekdays with no log are read, and kept out of the grade")
 
         sched = sum(EXPECTED[k] for k in (201, 202, 203, 204, 205, 206, 207)) / 7
         budget = (EXPECTED[101] + EXPECTED[102] + EXPECTED[103]) / 3

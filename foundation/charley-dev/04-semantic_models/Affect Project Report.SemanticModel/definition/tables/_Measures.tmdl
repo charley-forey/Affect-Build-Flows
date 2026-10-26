@@ -1698,7 +1698,8 @@ table _Measures
 			206, V & " overdue",
 			207, V & " outstanding",
 			301, V & " performed (target 5)",
-			401, V & " performed (target 5)" ) )
+			401, V & " performed (target 5)",
+			208, V & " weekday(s) with no daily log" ) )
 		displayFolder: 23 Dashboard - scorecard
 
 	/// Replaces derived - the Scorecard.xlsx band the reading fell in
@@ -1715,6 +1716,7 @@ table _Measures
 			VAR Stg = SELECTEDVALUE ( dim_DashMetric[Stages] )
 			VAR Ph = [Project Phase]
 			RETURN SWITCH ( TRUE (),
+			St = "Proposed", "Proposed - not in the grade until Affect agrees it",
 			St <> "Live", "Coming soon",
 			NOT ISBLANK ( [Metric Score] ), [Metric Band],
 			Stg <> "All" && ( ISBLANK ( Ph ) || NOT CONTAINSSTRING ( Stg, Ph ) ),

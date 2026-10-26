@@ -383,7 +383,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          f"    {SUBMITTALS}, V & \" overdue\",\n"
          f"    {RFIS}, V & \" outstanding\",\n"
          f"    {SAFETY_INSP}, V & \" performed (target 5)\",\n"
-         f"    {QUALITY_INSP}, V & \" performed (target 5)\" ) )",
+         f"    {QUALITY_INSP}, V & \" performed (target 5)\",\n"
+         "    208, V & \" weekday(s) with no daily log\" ) )",
          None, "derived - the driver, in words"),
         ("Metric Band", row_metric("BandLabel"), None, "derived - the Scorecard.xlsx band the reading fell in"),
         ("Metric State",
@@ -392,6 +393,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR Stg = SELECTEDVALUE ( dim_DashMetric[Stages] )\n"
          "VAR Ph = [Project Phase]\n"
          "RETURN SWITCH ( TRUE (),\n"
+         "    St = \"Proposed\", \"Proposed - not in the grade until Affect agrees it\",\n"
          "    St <> \"Live\", \"Coming soon\",\n"
          "    NOT ISBLANK ( [Metric Score] ), [Metric Band],\n"
          "    Stg <> \"All\" && ( ISBLANK ( Ph ) || NOT CONTAINSSTRING ( Stg, Ph ) ),\n"

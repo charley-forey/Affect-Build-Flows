@@ -228,7 +228,7 @@ EXPECTED_ROWS = {
     # 7 a year, 2023-2027, plus New Year's Day 2028 observed on 2027-12-31.
     "seed_PublicHoliday": 36,
     # The Weekly Dashboard scorecard. Bump deliberately when Affect retunes it.
-    "dim_DashPillar": 5, "dim_DashMetric": 17, "dim_DashBand": 41, "dim_DashSetting": 13,
+    "dim_DashPillar": 5, "dim_DashMetric": 18, "dim_DashBand": 44, "dim_DashSetting": 13,
     "seed_InspectionCategory": 18, "seed_MeetingCategory": 14,
 }
 

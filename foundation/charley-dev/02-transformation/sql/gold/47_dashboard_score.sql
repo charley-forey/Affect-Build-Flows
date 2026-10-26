@@ -78,6 +78,19 @@ completion AS (
            ON mm.ProjectKey = m.ProjectKey
     GROUP BY m.ProjectKey
 ),
+-- Daily logs (proposed, status 'Proposed' in dim_DashMetric, so read but not scored): weekdays
+-- in the week, public holidays excepted, with no Procore daily log. This week stops at
+-- yesterday - today's log may not be filed yet. Same weekday anchor as fct_SafetyMonthly.
+daily AS (
+    SELECT pw.ProjectKey, pw.WeeksAgo, SUM(CASE WHEN l.log_date IS NULL THEN 1 ELSE 0 END) AS missed
+    FROM pw
+    JOIN dim_Date d ON d.Date >= pw.WeekStart AND d.Date <= least(pw.WeekEnd, date_add(pw.AsOfDate, -1))
+    LEFT JOIN seed_PublicHoliday ph ON ph.HolidayDate = d.Date
+    LEFT JOIN (SELECT DISTINCT project_id, log_date FROM sv_manpower_daily WHERE project_id IS NOT NULL) l
+           ON l.project_id = pw.ProjectKey AND l.log_date = d.Date
+    WHERE datediff(d.Date, DATE '2014-12-29') % 7 < 5 AND ph.HolidayDate IS NULL
+    GROUP BY pw.ProjectKey, pw.WeeksAgo
+),
 items AS (
     SELECT ProjectKey,
            SUM(CASE WHEN ItemType = 'Submittal' THEN 1 ELSE 0 END) AS submittals,
@@ -106,16 +119,18 @@ drivers AS (
         WHEN 205 THEN CASE WHEN c.baseline_days > 0 THEN CAST(c.cv_days AS DOUBLE) / c.baseline_days END
         WHEN 206 THEN CASE WHEN it.submittals > 0 THEN CAST(it.submittals_overdue AS DOUBLE) END
         WHEN 207 THEN CASE WHEN it.rfis > 0 THEN CAST(it.rfis_out AS DOUBLE) END
+        WHEN 208 THEN CAST(dl.missed AS DOUBLE)
         WHEN 301 THEN CAST(COALESCE(si.n, 0) AS DOUBLE)
         WHEN 401 THEN CAST(COALESCE(qi.n, 0) AS DOUBLE)
         END AS Driver
     FROM pw
-    CROSS JOIN (VALUES (101), (102), (103), (201), (202), (203), (204), (205), (206), (207), (301), (401)) AS m(MetricKey)
+    CROSS JOIN (VALUES (101), (102), (103), (201), (202), (203), (204), (205), (206), (207), (208), (301), (401)) AS m(MetricKey)
     CROSS JOIN settings st
     LEFT JOIN schedule s ON s.ProjectKey = pw.ProjectKey
     LEFT JOIN lookahead l ON l.ProjectKey = pw.ProjectKey
     LEFT JOIN completion c ON c.ProjectKey = pw.ProjectKey
     LEFT JOIN items it ON it.ProjectKey = pw.ProjectKey
+    LEFT JOIN daily dl ON dl.ProjectKey = pw.ProjectKey AND dl.WeeksAgo = pw.WeeksAgo
     LEFT JOIN meeting_weeks oac ON oac.ProjectKey = pw.ProjectKey AND oac.WeeksAgo = pw.WeeksAgo AND oac.MeetingType = 'OAC'
     LEFT JOIN meeting_weeks tp ON tp.ProjectKey = pw.ProjectKey AND tp.WeeksAgo = pw.WeeksAgo AND tp.MeetingType = 'Trade Partner'
     LEFT JOIN inspections si ON si.ProjectKey = pw.ProjectKey AND si.WeeksAgo = pw.WeeksAgo AND si.Category = 'Safety'

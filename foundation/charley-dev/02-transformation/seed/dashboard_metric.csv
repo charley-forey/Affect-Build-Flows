@@ -15,4 +15,5 @@ metric_key,pillar_key,pillar,metric,standard,stages,period,status,sort_order
 401,4,Quality,Quality Inspections,Quality inspections performed in the reporting week (5 is the minimum),Construction,Reporting week,Live,1
 402,4,Quality,Quality Observations,Coming soon,Construction,,Coming soon,2
 403,4,Quality,Punchlist,Coming soon,Construction,,Coming soon,3
+208,1,Schedule,Daily Logs,"A Procore daily log every weekday, public holidays excepted (Oct 21 call; not in Scorecard.xlsx v1)",Construction,Reporting week,Proposed,8
 501,5,Risk,Insurance,Coming soon: subcontractor insurance against commitments,All,,Coming soon,1

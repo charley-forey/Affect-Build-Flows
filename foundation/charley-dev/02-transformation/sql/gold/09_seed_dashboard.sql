@@ -23,7 +23,7 @@ FROM (VALUES
     ('5', 'Risk', '0.00', '5', 'Risk', 'Scorecard.xlsx: insurance coming soon; no weight until it is measured')
 ) AS t(c1, c2, c3, c4, c5, c6);
 
--- dim_DashMetric: 17 row(s) from seed/dashboard_metric.csv
+-- dim_DashMetric: 18 row(s) from seed/dashboard_metric.csv
 CREATE OR REPLACE TABLE dim_DashMetric AS
 SELECT CAST(c1 AS INT) AS MetricKey,
        CAST(c2 AS INT) AS PillarKey,
@@ -51,10 +51,11 @@ FROM (VALUES
     ('401', '4', 'Quality', 'Quality Inspections', 'Quality inspections performed in the reporting week (5 is the minimum)', 'Construction', 'Reporting week', 'Live', '1'),
     ('402', '4', 'Quality', 'Quality Observations', 'Coming soon', 'Construction', NULL, 'Coming soon', '2'),
     ('403', '4', 'Quality', 'Punchlist', 'Coming soon', 'Construction', NULL, 'Coming soon', '3'),
+    ('208', '1', 'Schedule', 'Daily Logs', 'A Procore daily log every weekday, public holidays excepted (Oct 21 call; not in Scorecard.xlsx v1)', 'Construction', 'Reporting week', 'Proposed', '8'),
     ('501', '5', 'Risk', 'Insurance', 'Coming soon: subcontractor insurance against commitments', 'All', NULL, 'Coming soon', '1')
 ) AS t(c1, c2, c3, c4, c5, c6, c7, c8, c9);
 
--- dim_DashBand: 41 row(s) from seed/dashboard_band.csv
+-- dim_DashBand: 44 row(s) from seed/dashboard_band.csv
 CREATE OR REPLACE TABLE dim_DashBand AS
 SELECT CAST(c1 AS INT) AS MetricKey,
        CAST(c2 AS DOUBLE) AS MinValue,
@@ -104,7 +105,10 @@ FROM (VALUES
     ('301', '10', NULL, '1.00', '1.00', '10 or more', 'Scorecard.xlsx'),
     ('401', '0', '5', '0.00', '0.80', 'Below 5: 16% less for each one short', 'Scorecard.xlsx'),
     ('401', '5', '10', '0.80', '1.00', '5 or more: 80% plus 4% for each additional', 'Scorecard.xlsx'),
-    ('401', '10', NULL, '1.00', '1.00', '10 or more', 'Scorecard.xlsx')
+    ('401', '10', NULL, '1.00', '1.00', '10 or more', 'Scorecard.xlsx'),
+    ('208', NULL, '1', '1.00', '1.00', 'No weekday missed', 'PROPOSED - Oct 21 call; not in Scorecard.xlsx'),
+    ('208', '1', '3', '0.75', '0.75', '1-2 weekdays missed', 'PROPOSED - Oct 21 call; not in Scorecard.xlsx'),
+    ('208', '3', NULL, '0.00', '0.00', '3 or more weekdays missed', 'PROPOSED - Oct 21 call; not in Scorecard.xlsx')
 ) AS t(c1, c2, c3, c4, c5, c6, c7);
 
 -- dim_DashSetting: 13 row(s) from seed/dashboard_setting.csv

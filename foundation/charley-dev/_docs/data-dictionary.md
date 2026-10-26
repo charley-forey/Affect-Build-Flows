@@ -896,7 +896,7 @@ flowchart LR
 ### dim_DashBand
 
 - **Subject area:** Shared and platform tables
-- **Purpose:** dim_DashBand: 41 row(s) from seed/dashboard_band.csv
+- **Purpose:** dim_DashBand: 44 row(s) from seed/dashboard_band.csv
 - **Grain:** Not stated in the SQL comments.
 - **Primary key:** No DQ unique rule.
 - **Produced by:** `02-transformation/sql/gold/09_seed_dashboard.sql`
@@ -917,7 +917,7 @@ flowchart LR
 ### dim_DashMetric
 
 - **Subject area:** Shared and platform tables
-- **Purpose:** dim_DashMetric: 17 row(s) from seed/dashboard_metric.csv
+- **Purpose:** dim_DashMetric: 18 row(s) from seed/dashboard_metric.csv
 - **Grain:** Not stated in the SQL comments.
 - **Primary key:** No DQ unique rule.
 - **Produced by:** `02-transformation/sql/gold/09_seed_dashboard.sql`
@@ -1832,7 +1832,7 @@ flowchart LR
 - **Grain:** one row per project x report week x Scorecard.xlsx measure: the reading (driver)
 - **Primary key:** No DQ unique rule.
 - **Produced by:** `02-transformation/sql/gold/47_dashboard_score.sql`
-- **Upstream:** gold: `dim_DashBand`, `dim_DashMetric`, `dim_DashSetting`, `dim_ReportWeek`, `fct_Inspection`, `fct_LookaheadTask`, `fct_Meeting`, `fct_Milestone`, `fct_ProjectPosition`, `fct_RfiSubmittal`, `fct_ScheduleActivity`, `man_Milestones`
+- **Upstream:** gold: `dim_DashBand`, `dim_DashMetric`, `dim_DashSetting`, `dim_Date`, `dim_ReportWeek`, `fct_Inspection`, `fct_LookaheadTask`, `fct_Meeting`, `fct_Milestone`, `fct_ProjectPosition`, `fct_RfiSubmittal`, `fct_ScheduleActivity`, `man_Milestones`, `seed_PublicHoliday`; source views: `sv_manpower_daily`; silver: `cd_silver_manpower_daily`; bronze: `cd_bronze_procore_manpower_logs`
 - **Semantic models:** Affect Project Report
 - **Relationships:** fct_MetricScore[ProjectKey] -> dim_Project[ProjectKey]
 - **Measures referencing it (Affect Project Report):** Executive Focus, Metric Band, Metric Driver, Metric Score, Metric Score - 3-Week Look-Ahead, Metric Score - Aging Balance, Metric Score - Cash Position, Metric Score - Completion Variance, Metric Score - Monthly Schedule Update, Metric Score - OAC Meeting, Metric Score - Profitability, Metric Score - Quality Inspections, Metric Score - RFIs, Metric Score - Safety Inspections, Metric Score - Submittals, Metric Score - Trade Partner Meeting, Metric Weight In Grade
