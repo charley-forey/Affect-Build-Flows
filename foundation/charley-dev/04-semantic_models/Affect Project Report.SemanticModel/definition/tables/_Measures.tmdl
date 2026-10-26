@@ -1973,14 +1973,16 @@ table _Measures
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces Oct 21 call: the one accountable name
-	measure 'Project Executive' = CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleCode] = "PX" ), fct_ProjectTeam[MemberName], ", ", fct_ProjectTeam[MemberName], ASC )
+	measure 'Project Executive' = CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleCode] = "PX" ), VAR Cut = SEARCH ( " (", fct_ProjectTeam[MemberName], 1, 0 ) RETURN IF ( Cut > 0, LEFT ( fct_ProjectTeam[MemberName], Cut - 1 ), fct_ProjectTeam[MemberName] ), ", ", fct_ProjectTeam[MemberName], ASC )
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces deck slide 2 TEAM, in full
 	measure 'Project Team' =
 			VAR T = CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleOrder] <= 4 ),
-			fct_ProjectTeam[RoleCode] & " " & fct_ProjectTeam[MemberName], "   ", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC )
-			RETURN IF ( [Is Dashboard Project], COALESCE ( T, "No PM / Super roles set in Procore" ) )
+			fct_ProjectTeam[RoleCode] & " " & ( VAR Cut = SEARCH ( " (", fct_ProjectTeam[MemberName], 1, 0 ) RETURN IF ( Cut > 0, LEFT ( fct_ProjectTeam[MemberName], Cut - 1 ), fct_ProjectTeam[MemberName] ) ), "   ", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC )
+			VAR X = [Project Executive]
+			VAR A = IF ( NOT ISBLANK ( X ), "PX " & X & IF ( NOT ISBLANK ( T ), "   " ) ) & T
+			RETURN IF ( [Is Dashboard Project], IF ( A = "", "No PX / PM / Super roles set in Procore", A ) )
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces deck slide 3 CURRENT CONTRACT sub-line

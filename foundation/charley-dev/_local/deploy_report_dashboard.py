@@ -440,6 +440,9 @@ def page_portfolio() -> tuple[str, list[dict]]:
                         "Grade Cell": ("Grade Colour", "Grade Ink")})
     rs.widen(grid, {"ProjectName": 4, "Phase Label": 2, "Schedule Cell": 3, "Budget Cell": 3, "Safety Cell": 2,
                     "Quality Cell": 2, "Team Initials": 1})
+    # Stack-ranked, worst grade first (Oct 21 call); unscored projects sort last.
+    grid["visual"]["query"]["sortDefinition"] = {"sort": [{"field": measure("Priority Score")["field"],
+                                                           "direction": "Descending"}], "isDefaultSort": True}
     out.append(flagged(grid, "Active Flag"))
     out += [panel(p, "off_bg", 36, 660, 1288, 172),
             text(p, "off_h", "NOT ON THE ACTIVE LIST", 56, 668, 560, 24, size=10, color=NAVY),

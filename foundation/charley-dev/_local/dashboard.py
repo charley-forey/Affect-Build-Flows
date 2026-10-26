@@ -493,12 +493,15 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "RETURN IF ( [Is Dashboard Project], COALESCE ( CONCATENATEX ( I, [@i], \" \" & UNICHAR ( 183 ) & \" \", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC ), UNICHAR ( 8212 ) ) )",
          None, "deck slide 2 TEAM - initials of PM, APM, Super, Asst Super from Procore"),
         ("Project Executive",
-         'CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleCode] = "PX" ), fct_ProjectTeam[MemberName], ", ", fct_ProjectTeam[MemberName], ASC )',
+         'CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleCode] = "PX" ), VAR Cut = SEARCH ( " (", fct_ProjectTeam[MemberName], 1, 0 ) RETURN IF ( Cut > 0, LEFT ( fct_ProjectTeam[MemberName], Cut - 1 ), fct_ProjectTeam[MemberName] ), ", ", fct_ProjectTeam[MemberName], ASC )',
          None, "Oct 21 call: the one accountable name"),
         ("Project Team",
          "VAR T = CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleOrder] <= 4 ),\n"
-         "    fct_ProjectTeam[RoleCode] & \" \" & fct_ProjectTeam[MemberName], \"   \", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC )\n"
-         "RETURN IF ( [Is Dashboard Project], COALESCE ( T, \"No PM / Super roles set in Procore\" ) )",
+         "    fct_ProjectTeam[RoleCode] & \" \" & ( VAR Cut = SEARCH ( \" (\", fct_ProjectTeam[MemberName], 1, 0 ) RETURN IF ( Cut > 0, LEFT ( fct_ProjectTeam[MemberName], Cut - 1 ), fct_ProjectTeam[MemberName] ) ), \"   \", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC )\n"
+         # The project executive first - "only one throat to choke" (Oct 21 call).
+         "VAR X = [Project Executive]\n"
+         "VAR A = IF ( NOT ISBLANK ( X ), \"PX \" & X & IF ( NOT ISBLANK ( T ), \"   \" ) ) & T\n"
+         "RETURN IF ( [Is Dashboard Project], IF ( A = \"\", \"No PX / PM / Super roles set in Procore\", A ) )",
          None, "deck slide 2 TEAM, in full"),
     ]
     out += [

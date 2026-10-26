@@ -383,8 +383,10 @@ def expected(E: dict) -> dict:
         return " · ".join(initials(n) for _, n in rows) or "—"
 
     D["Team Initials"] = team
-    D["Project Executive"] = lambda c, s: ", ".join(sorted(
-        r["MemberName"] for r in c.rows("fct_ProjectTeam", s) if _eq(r["RoleCode"], "PX"))) or None
+    # Ordered by the full Procore name, shown without its " (Company)" suffix.
+    D["Project Executive"] = lambda c, s: ", ".join(
+        n.split(" (")[0] for n in sorted(r["MemberName"] for r in c.rows("fct_ProjectTeam", s)
+                                          if _eq(r["RoleCode"], "PX"))) or None
 
     def work_progress(c, s):
         rows = [r for r in c.rows("fct_ScheduleActivity", s) if not r["IsSummary"] and (r["DurationDays"] or 0) > 0]
