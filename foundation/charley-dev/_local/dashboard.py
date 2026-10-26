@@ -724,8 +724,9 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ("Portfolio Cash Position", over_active("[Cash Position]"), '"$#,0"',
          "deck slide 1 CASH POSITION - Chris's formula, active projects"),
         ("Cash Subline",
-         "VAR I = " + over_active("[Cash Collected]") + "\n"
-         "VAR O = " + over_active("[Cash Paid Out]") + "\n"
+         # Both halves over the same projects - the ones with a cash position - as the tile sums.
+         "VAR I = " + over_active("IF ( NOT ISBLANK ( [Cash Position] ), [Cash Collected] )") + "\n"
+         "VAR O = " + over_active("IF ( NOT ISBLANK ( [Cash Position] ), [Cash Paid Out] )") + "\n"
          'RETURN IF ( O > 0, FORMAT ( DIVIDE ( I, O ), "0%" ) & " collected vs paid" )',
          None, "deck slide 1 CASH POSITION sub-line"),
         ("Portfolio Safety Score",
@@ -733,7 +734,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "RETURN AVERAGEX ( FILTER ( T, NOT ISBLANK ( [@s] ) ), [@s] )",
          '"0%"', "deck slide 1 SAFETY tile - 'Calc based on # of inspections' callout"),
         ("Safety Subline",
-         "VAR N = " + over_active("[Safety Inspections (Week)]") + "\n"
+         # Inspections at Construction sites only, the same sites the count below names.
+         "VAR N = " + over_active("IF ( [Project Phase] = \"Construction\", [Safety Inspections (Week)] )") + "\n"
          "VAR P = COUNTROWS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" && [Project Phase] = \"Construction\" ) )\n"
          'RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"',
          None, "deck slide 1 SAFETY sub-line"),

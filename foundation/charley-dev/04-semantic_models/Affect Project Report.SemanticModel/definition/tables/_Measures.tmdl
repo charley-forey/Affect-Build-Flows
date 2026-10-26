@@ -2311,9 +2311,9 @@ table _Measures
 	/// Replaces deck slide 1 CASH POSITION sub-line
 	measure 'Cash Subline' =
 			VAR I = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
-			[Cash Collected] )
+			IF ( NOT ISBLANK ( [Cash Position] ), [Cash Collected] ) )
 			VAR O = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
-			[Cash Paid Out] )
+			IF ( NOT ISBLANK ( [Cash Position] ), [Cash Paid Out] ) )
 			RETURN IF ( O > 0, FORMAT ( DIVIDE ( I, O ), "0%" ) & " collected vs paid" )
 		displayFolder: 25 Dashboard - executive
 
@@ -2327,7 +2327,7 @@ table _Measures
 	/// Replaces deck slide 1 SAFETY sub-line
 	measure 'Safety Subline' =
 			VAR N = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
-			[Safety Inspections (Week)] )
+			IF ( [Project Phase] = "Construction", [Safety Inspections (Week)] ) )
 			VAR P = COUNTROWS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" && [Project Phase] = "Construction" ) )
 			RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"
 		displayFolder: 25 Dashboard - executive
