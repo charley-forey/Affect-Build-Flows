@@ -113,6 +113,51 @@ SharePoint list on the existing CD_Manual_Ingest path.
   fct_MetricScore, fct_ProjectScore. Seeds: dim_DashPillar, dim_DashMetric,
   dim_DashBand, dim_DashSetting, seed_InspectionCategory, seed_MeetingCategory.
 
+## Review pass, 2026-10-25 / 26
+
+An independent code review and a requirements trace (every call request, deck element and
+Scorecard.xlsx row against the code) were run. Fixed, each with a pinned test in
+`tests/test_dashboard_gold.py`:
+
+- A project with no forecast cost scored 100% profitability; it is now unmeasured.
+- A template meeting could make a dead project Active; only held OAC / trade partner meetings
+  count as activity.
+- Minutes were marked late the morning after the meeting; the day after is the allowance.
+- AR age bands: exactly 30 days now reads "1-30 days" (whole-day edges).
+- "This week" counted the unfinished week as a missed meeting.
+- The weakest pillar is the one losing the grade most points (weight x shortfall), not the
+  lowest score - a 0% quality pillar costs 5 points, a 40% schedule pillar 30.
+- Coverage is rounded before the 50% gate; Executive Focus lists exactly three measures.
+
+Added: open AR on Sage jobs with no Procore project is stated on the Executive page
+(`Data Notice`); the crosswalk-candidate check now also proposes a same-name second Sage job
+for a mapped project; Portfolio is stack-ranked worst grade first; the project executive
+leads the team line; Project Overview shows billing against work progress; daily logs are
+read as a **proposed** measure (shown on Grade Detail, not in the grade).
+
+## Open questions for Affect
+
+1. **Gross margin definition** - revised budget less forecast cost, CM fee excluded, gives
+   1-8% on active jobs against the 12.5% target. Which costs does Affect's gross profit count?
+2. **Profitability bands** - proposed, not in Scorecard.xlsx.
+3. **Grade cut-offs** - On track 90 (the deck shows 100), Monitor 75, at risk 45 and below.
+4. **Sage jobs with no Procore project** - $1.0M of open AR, notably job 30 "360 Lexington
+   15th floor fitout" beside the mapped job 27. Map it to the Procore project? Should
+   Sage-only jobs appear financial-only (the call), and which are overhead (job 2 "Office")?
+5. **Active** - we use Procore activity in 60 days, not yet 100% paid. Confirm.
+6. **Daily logs in the grade** - the call wants them; v1 does not include them. Proposed
+   bands: 0 missed 100%, 1-2 75%, 3+ 0%, under Schedule.
+7. **Bi-weekly trade partner series** score as a miss every other week under the weekly rule.
+8. **Agenda timing** - Procore's meeting list keeps only the last send, so a minuted meeting's
+   agenda time is not verifiable. Upgrade: per-meeting change history (one request each).
+9. **Reporting week** - default is last full week (read at Monday stand-ups, Tuesday exec).
+   The call said "defaults to current": confirm.
+10. **Data entry** - revenue plan, pipeline (5 numbers), executive watchlist and pinned
+    priority projects, field productivity criteria: SharePoint lists, as agreed.
+11. **Refresh cadence** - financials weekly (Sunday night), Procore project data daily.
+12. **Week-over-week history** - balances and progress are as of each build; a nightly score
+    snapshot would let a reader roll back weeks honestly. Recommended next.
+
 ## Verification
 
 - Offline: `run_tests.py` (silver fixtures for the new sources, gold over fixtures, the report's
@@ -121,3 +166,10 @@ SharePoint list on the existing CD_Manual_Ingest path.
   raw model rows (`validate_dashboard.py`) and compares it with the deployed DAX at portfolio,
   project and month grain. Presentation measures (colours, cell text, row flags) are listed, not
   silently skipped. 2026-10-25: 91 of 91 dashboard measures match, after the move to gold scoring.
+- Scoring rules: `test_dashboard_gold.py` replaces every input of `47_dashboard_score.sql` with
+  one synthetic week and checks each score against the value worked out by hand from
+  Scorecard.xlsx, plus the grade, coverage gate, weakest pillar and Cash Position identities.
+- Spark dialect: the dashboard SQL also passes analysis on a local Spark 3.5 (Fabric's runtime)
+  over empty tables shaped like the fixture build - DuckDB alone can accept SQL Spark rejects.
+- This validator re-implements our reading of the rules, so it proves the numbers are
+  consistent with that reading; whether the reading is right is the open questions above.
