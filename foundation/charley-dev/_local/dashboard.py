@@ -470,8 +470,9 @@ def measures() -> list[tuple[str, str, str | None, str]]:
     cells = {
         "Schedule": "VAR D = [Completion Variance Days]\n"
                     "VAR H = IF ( NOT ISBLANK ( D ), FORMAT ( -D, \"+0;-0;0\" ) & \" days\" )",
-        "Budget": "VAR M = [Margin vs Target]\n"
-                  "VAR H = IF ( NOT ISBLANK ( M ), FORMAT ( [Projected Gross Margin %], \"0.0%\" ) & \" GM\" )",
+        # deck slide 2 "Budget: variance (%)": budget less forecast cost, + = under budget.
+        "Budget": "VAR V = [Forecast Variance %]\n"
+                  "VAR H = IF ( NOT ISBLANK ( V ), FORMAT ( V, \"+0%;-0%;0%\" ) )",
         "Safety": "VAR H = IF ( [Project Phase] = \"Construction\", [Safety Inspections (Week)] & \" insp\" )",
         "Quality": "VAR H = IF ( [Project Phase] = \"Construction\", [Quality Inspections (Week)] & \" insp\" )",
     }
