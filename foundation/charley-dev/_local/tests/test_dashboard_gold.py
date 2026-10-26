@@ -171,9 +171,43 @@ def test_meetings(con) -> None:
     check("a second meeting on the same date counts once; a template series is Other, never OAC")
 
 
+def test_review_fixes(con) -> None:
+    """Defects found in the 2026-10-25 review, each pinned so it cannot come back."""
+    con.execute("BEGIN")
+    try:
+        # A held template meeting on a dead project, and OAC meetings 1 and 3 days ago with no minutes.
+        con.execute("""CREATE OR REPLACE VIEW sv_meetings AS SELECT * FROM (VALUES
+            ('P2', 'T1', 'Kick Start Agenda Template', 'Template', CURRENT_DATE - 1, 'minutes', TRUE,
+             CAST(NULL AS VARCHAR), CAST(NULL AS DATE), TIMESTAMP '2025-05-01 12:00:00', 1),
+            ('P1', 'Y1', 'Tower OAC Meeting', 'Tower OAC Meeting', CURRENT_DATE - 1, 'minutes', TRUE,
+             CAST(NULL AS VARCHAR), CAST(NULL AS DATE), TIMESTAMP '2025-05-01 12:00:00', 1),
+            ('P1', 'Y3', 'Tower OAC Meeting', 'Tower OAC Meeting', CURRENT_DATE - 3, 'minutes', TRUE,
+             CAST(NULL AS VARCHAR), CAST(NULL AS DATE), TIMESTAMP '2025-05-01 12:00:00', 1)
+        ) AS t(project_id, meeting_id, series_title, title, meeting_date, meeting_mode, occurred,
+               last_distributed_event, distributed_date, created_at, position)""")
+        for sql in seedrunner.split_statements((GOLD / "46_dashboard_facts.sql").read_text(encoding="utf-8")):
+            con.execute(sql)
+        status = dict(q(con, "SELECT MeetingKey, MinutesStatus FROM fct_Meeting WHERE ProjectKey = 'P1'"))
+        assert status == {"Y1": "Not yet due", "Y3": "Not sent"}, status
+        check("minutes are not late until the day after the meeting has passed")
+        assert q(con, "SELECT LastActivityDate, DashboardStatus FROM fct_ProjectPosition WHERE ProjectKey = 'P2'") == \
+            [(None, "Inactive")]
+        check("a template meeting does not make a dead project Active")
+
+        # Revenue with no forecast cost: margin unmeasured, never 100%.
+        con.execute("UPDATE fct_ProjectPosition SET ProjectedRevenue = 1000, ProjectedCost = NULL WHERE ProjectKey = 'P1'")
+        for sql in seedrunner.split_statements((GOLD / "47_dashboard_score.sql").read_text(encoding="utf-8")):
+            con.execute(sql)
+        assert q(con, "SELECT DISTINCT Driver, Score FROM fct_MetricScore WHERE ProjectKey = 'P1' AND MetricKey = 102") == \
+            [(None, None)]
+        check("a project with no forecast cost has no margin score (it used to score 100%)")
+    finally:
+        con.execute("ROLLBACK")
+
+
 def main() -> int:
     con = build()
-    for fn in (test_position, test_meetings, test_scoring):
+    for fn in (test_position, test_meetings, test_review_fixes, test_scoring):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

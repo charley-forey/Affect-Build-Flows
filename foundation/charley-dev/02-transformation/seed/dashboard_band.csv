@@ -7,10 +7,10 @@ metric_key,min_value,max_value,score_at_min,score_at_max,band_label,source
 102,-0.05,-0.025,0.50,0.50,"2.5-5 points below target",PROPOSED - not in Scorecard.xlsx
 102,-0.10,-0.05,0.25,0.25,"5-10 points below target",PROPOSED - not in Scorecard.xlsx
 102,,-0.10,0.00,0.00,"More than 10 points below target",PROPOSED - not in Scorecard.xlsx
-103,,30,1.00,1.00,"1-30 days",Scorecard.xlsx
-103,30,60,0.75,0.75,"30-60 days",Scorecard.xlsx
-103,60,90,0.50,0.50,">60-90 days",Scorecard.xlsx
-103,90,,0.00,0.00,">90 days",Scorecard.xlsx
+103,,31,1.00,1.00,"1-30 days",Scorecard.xlsx
+103,31,61,0.75,0.75,"30-60 days",Scorecard.xlsx
+103,61,91,0.50,0.50,">60-90 days",Scorecard.xlsx
+103,91,,0.00,0.00,">90 days",Scorecard.xlsx
 201,,1,1.00,1.00,"Misses 0",Scorecard.xlsx
 201,1,2,0.75,0.75,"Misses 1",Scorecard.xlsx
 201,2,,0.00,0.00,"Misses 2 or more",Scorecard.xlsx

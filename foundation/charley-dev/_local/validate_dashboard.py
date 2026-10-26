@@ -132,7 +132,8 @@ def expected(E: dict) -> dict:
         a = as_of(c)
         found = [
             max((_d(r["LastLogDate"]) for r in c.rows("fct_SafetyMonthly", nomonth(s)) if r["LastLogDate"]), default=None),
-            max((_d(r["MeetingDate"]) for r in c.rows("fct_Meeting", s) if r["MeetingDate"] and _d(r["MeetingDate"]) <= a), default=None),
+            max((_d(r["MeetingDate"]) for r in c.rows("fct_Meeting", s) if r["MeetingDate"] and _d(r["MeetingDate"]) <= a
+                 and r["HasOccurred"] is True and r["MeetingType"] in ("OAC", "Trade Partner")), default=None),
             max((_d(r["InspectionDate"]) for r in c.rows("fct_Inspection", s)
                  if r["InspectionDate"] and _d(r["InspectionDate"]) <= a), default=None),
             max((_d(r["CreatedDate"]) for r in c.rows("fct_RfiSubmittal", nomonth(s)) if r["CreatedDate"]), default=None),
@@ -202,8 +203,8 @@ def expected(E: dict) -> dict:
         if not _eq(division(c).get(r["CostCodeKey"]), "50"))
 
     def gm(c, s):
-        rev = D["Projected Revenue"](c, s)
-        return _div(rev - (D["Projected Cost"](c, s) or 0), rev) if (rev or 0) > 0 else None
+        rev, cost = D["Projected Revenue"](c, s), D["Projected Cost"](c, s)
+        return _div(rev - cost, rev) if (rev or 0) > 0 and cost is not None else None
 
     D["Projected Gross Margin %"] = gm
     D["Gross Margin Target"] = lambda c, s: setting(c, "gross_margin_target")
@@ -332,13 +333,13 @@ def expected(E: dict) -> dict:
     def coverage(c, s):
         den = sum(weight(c, k) for k, _ in dashboard.PILLARS if pillar(c, s, k) is not None)
         total = sum(weight(c, k) for k, _ in dashboard.PILLARS)
-        return den / total if den > 0 else None
+        return round(den / total, 6) if den > 0 else None
 
     def grade(c, s):
         found = {k: pillar(c, s, k) for k, _ in dashboard.PILLARS}
         den = sum(weight(c, k) for k, v in found.items() if v is not None)
         total = sum(weight(c, k) for k, _ in dashboard.PILLARS)
-        if den <= 0 or den / total < setting(c, "min_coverage"):
+        if den <= 0 or round(den / total, 6) < setting(c, "min_coverage"):
             return None
         return 100 * sum(v * weight(c, k) for k, v in found.items() if v is not None) / den
 
@@ -361,7 +362,8 @@ def expected(E: dict) -> dict:
 
     def weakest(c, s):
         # Points lost to the grade: weight x (1 - pillar); ties to the lower pillar key.
-        found = [(-weight(c, k) * (1 - p), k, n) for k, n in dashboard.PILLARS if (p := pillar(c, s, k)) is not None]
+        found = [(-weight(c, k) * (1 - p), k, n) for k, n in dashboard.PILLARS
+                 if (p := pillar(c, s, k)) is not None and p < 1]
         return min(found)[2] if found else None
 
     D["Weakest Pillar"] = weakest
@@ -449,7 +451,7 @@ def expected(E: dict) -> dict:
         return _sum(fn(c, ps) for ps in active(c, s))
 
     def portfolio_gm(c, s):
-        r = over(c, s, D["Projected Revenue"])
+        r = over(c, s, lambda c, ps: D["Projected Revenue"](c, ps) if D["Projected Cost"](c, ps) is not None else None)
         return _div(r - (over(c, s, D["Projected Cost"]) or 0), r) if (r or 0) > 0 else None
 
     D["Portfolio Gross Margin %"] = portfolio_gm
@@ -486,7 +488,7 @@ RAW_COLUMNS = {
     "dim_DashSetting": ["SettingKey", "Value"],
     "dim_ReportWeek": ["WeeksAgo", "WeekEnd", "AsOfDate"],
     "fct_Inspection": ["Category", "IsPerformed", "InspectionDate", "InspectionKey"],
-    "fct_Meeting": ["MeetingType", "IsCompliant", "MeetingDate"],
+    "fct_Meeting": ["MeetingType", "IsCompliant", "MeetingDate", "HasOccurred"],
     "fct_ProjectTeam": ["RoleOrder", "RoleCode", "MemberName"],
     "fct_ScheduleActivity": ["IsSummary", "IsCritical", "IsComplete", "DurationDays", "PercentComplete",
                              "UpdatedAt", "StartDate", "FinishDate", "FinishVarianceDays", "ActivityKey"],

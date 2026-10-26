@@ -101,7 +101,8 @@ ranked AS (
                               ORDER BY t.created_at, t.meeting_id) AS date_rank,
            CASE WHEN t.last_distributed_event = 'minutes'
                     THEN t.distributed_date <= date_add(t.meeting_date, 1)
-                WHEN t.meeting_date < CURRENT_DATE THEN FALSE END AS minutes_on_time,
+                -- Due by the end of the day after: not late until that day has passed.
+                WHEN date_add(t.meeting_date, 1) < CURRENT_DATE THEN FALSE END AS minutes_on_time,
            CASE WHEN t.last_distributed_event = 'agenda'
                     THEN t.distributed_date <= date_add(t.meeting_date, -1)
                 WHEN t.last_distributed_event IS NULL AND t.meeting_date < CURRENT_DATE
@@ -341,7 +342,9 @@ activity AS (
     -- City Harvest, which logs nothing but holds weekly OAC meetings.
     SELECT ProjectKey, MAX(d) AS last_activity FROM (
         SELECT ProjectKey, LastLogDate AS d FROM fct_SafetyMonthly
-        UNION ALL SELECT ProjectKey, MeetingDate FROM fct_Meeting WHERE MeetingDate <= CURRENT_DATE
+        -- Held OAC / trade partner meetings only: a template or test series is not a working job.
+        UNION ALL SELECT ProjectKey, MeetingDate FROM fct_Meeting
+                  WHERE MeetingDate <= CURRENT_DATE AND HasOccurred AND MeetingType IN ('OAC', 'Trade Partner')
         UNION ALL SELECT ProjectKey, InspectionDate FROM fct_Inspection WHERE InspectionDate <= CURRENT_DATE
         UNION ALL SELECT ProjectKey, CreatedDate FROM fct_RfiSubmittal
         UNION ALL SELECT ProjectKey, CreatedDate FROM fct_QualityItem

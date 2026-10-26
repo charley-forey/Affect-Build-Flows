@@ -3,10 +3,10 @@
   "name": "a64741917c2deeb3ebd9",
   "position": {
     "x": 903,
-    "y": 672,
+    "y": 668,
     "z": 2000,
     "width": 402,
-    "height": 150,
+    "height": 90,
     "tabOrder": 95
   },
   "visual": {
@@ -23,7 +23,7 @@
                     "value": "Awaiting data entry: leadership's three focus items for the month (the decision, and the project or issue behind it). A SharePoint list will feed this panel, alongside the projects leadership wants always shown under Priority Projects.",
                     "textStyle": {
                       "fontFamily": "Arial",
-                      "fontSize": "9pt",
+                      "fontSize": "8.5pt",
                       "color": "#657589",
                       "fontWeight": "normal"
                     }

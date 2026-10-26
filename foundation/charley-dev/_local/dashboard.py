@@ -126,7 +126,12 @@ def meetings_missed(kind: str) -> str:
         "    RETURN NOT ISEMPTY ( FILTER ( fct_Meeting,\n"
         f"        fct_Meeting[MeetingType] = \"{kind}\" && fct_Meeting[IsCompliant]\n"
         "            && fct_Meeting[MeetingDate] >= Lo && fct_Meeting[MeetingDate] <= Hi ) ) ) )\n"
-        "RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) )"
+        # This week is still running: it counts once a meeting is held, never as a miss.
+        "VAR HeldNow = NOT ISEMPTY ( FILTER ( fct_Meeting,\n"
+        f"        fct_Meeting[MeetingType] = \"{kind}\" && fct_Meeting[IsCompliant]\n"
+        "            && fct_Meeting[MeetingDate] >= E - 6 && fct_Meeting[MeetingDate] <= E ) )\n"
+        "VAR Open = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )\n"
+        "RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Open )"
     )
 
 
@@ -276,7 +281,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ("Projected Cost", "SUM ( fct_ProjectPosition[ProjectedCost] )", '"$#,0"',
          "Procore forecast final cost, CM fee excluded"),
         ("Projected Gross Margin %",
-         "VAR R = [Projected Revenue]\nRETURN IF ( R > 0, DIVIDE ( R - [Projected Cost], R ) )",
+         # No forecast cost = no margin (R - BLANK would read as 100%).
+         "VAR R = [Projected Revenue]\nVAR C = [Projected Cost]\nRETURN IF ( R > 0 && NOT ISBLANK ( C ), DIVIDE ( R - C, R ) )",
          '"0.0%"', "Scorecard.xlsx Profitability (Gross) - DEFINITION TO CONFIRM with Affect"),
         ("Gross Margin Target", setting("gross_margin_target"), '"0.0%"',
          "Oct 21 call: 12.5%, 13% from the end of Q1 - dim_DashSetting"),
@@ -399,7 +405,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR N = CALCULATE ( COUNTROWS ( fct_MetricScore ), fct_MetricScore[PillarKey] = P,\n"
          "    fct_MetricScore[WeeksAgo] = W, NOT ISBLANK ( fct_MetricScore[Score] ) )\n"
          "VAR Wt = CALCULATE ( MAX ( dim_DashPillar[Weight] ), REMOVEFILTERS ( dim_DashPillar ), dim_DashPillar[PillarKey] = P )\n"
-         "RETURN IF ( NOT ISBLANK ( [Metric Score] ) && N > 0, DIVIDE ( DIVIDE ( Wt, N ), [Grade Coverage %] ) )",
+         "RETURN IF ( NOT ISBLANK ( [Metric Score] ) && NOT ISBLANK ( [Grade] ) && N > 0, DIVIDE ( DIVIDE ( Wt, N ), [Grade Coverage %] ) )",
          '"0.0%"', "derived - share of the grade this measure carries"),
         ("Is Top Risk",
          f"VAR S = [Metric Score]\nRETURN IF ( NOT ISBLANK ( S ) && S < {setting('risk_metric_below')}, \"Yes\" )",
@@ -420,7 +426,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR W = [Report Weeks Ago]\n"
          "VAR T = ADDCOLUMNS ( ALL ( dim_DashMetric ), \"@S\", VAR K = dim_DashMetric[MetricKey]\n"
          "    RETURN CALCULATE ( MAX ( fct_MetricScore[Score] ), fct_MetricScore[MetricKey] = K, fct_MetricScore[WeeksAgo] = W ) )\n"
-         f"VAR R = TOPN ( 3, FILTER ( T, NOT ISBLANK ( [@S] ) && [@S] < {setting('risk_metric_below')} ), [@S], ASC, dim_DashMetric[SortOrder], ASC )\n"
+         f"VAR R = TOPN ( 3, FILTER ( T, NOT ISBLANK ( [@S] ) && [@S] < {setting('risk_metric_below')} ), [@S], ASC, dim_DashMetric[MetricKey], ASC )\n"
          "RETURN IF ( [Is Dashboard Project], \"EXECUTIVE FOCUS:  \" & IF ( ISEMPTY ( R ), \"Every measured standard is on target\",\n"
          "    CONCATENATEX ( R, dim_DashMetric[Metric], \"  \" & UNICHAR ( 8226 ) & \"  \", [@S], ASC ) ) )",
          None, "deck slide 3 EXECUTIVE FOCUS - the three weakest measures"),
@@ -672,7 +678,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ("Attention Subline",
          '[Projects Needing Attention] & " require attention"', None, "deck slide 1 ACTIVE PROJECTS sub-line"),
         ("Portfolio Gross Margin %",
-         "VAR R = " + over_active("[Projected Revenue]") + "\n"
+         # Revenue only from projects that have a forecast, so a job with none adds no margin.
+         "VAR R = " + over_active("IF ( NOT ISBLANK ( [Projected Cost] ), [Projected Revenue] )") + "\n"
          "VAR C = " + over_active("[Projected Cost]") + "\n"
          "RETURN IF ( R > 0, DIVIDE ( R - C, R ) )",
          '"0.0%"', "deck slide 1 GROSS MARGIN - projected, active projects"),

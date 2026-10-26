@@ -1426,7 +1426,8 @@ table _Measures
 	/// Replaces Scorecard.xlsx Profitability (Gross) - DEFINITION TO CONFIRM with Affect
 	measure 'Projected Gross Margin %' =
 			VAR R = [Projected Revenue]
-			RETURN IF ( R > 0, DIVIDE ( R - [Projected Cost], R ) )
+			VAR C = [Projected Cost]
+			RETURN IF ( R > 0 && NOT ISBLANK ( C ), DIVIDE ( R - C, R ) )
 		formatString: "0.0%"
 		displayFolder: 21 Dashboard - budget drivers
 
@@ -1469,7 +1470,11 @@ table _Measures
 			RETURN NOT ISEMPTY ( FILTER ( fct_Meeting,
 			fct_Meeting[MeetingType] = "OAC" && fct_Meeting[IsCompliant]
 			&& fct_Meeting[MeetingDate] >= Lo && fct_Meeting[MeetingDate] <= Hi ) ) ) )
-			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) )
+			VAR HeldNow = NOT ISEMPTY ( FILTER ( fct_Meeting,
+			fct_Meeting[MeetingType] = "OAC" && fct_Meeting[IsCompliant]
+			&& fct_Meeting[MeetingDate] >= E - 6 && fct_Meeting[MeetingDate] <= E ) )
+			VAR Open = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )
+			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Open )
 		formatString: "0"
 		displayFolder: 22 Dashboard - schedule & site drivers
 
@@ -1483,7 +1488,11 @@ table _Measures
 			RETURN NOT ISEMPTY ( FILTER ( fct_Meeting,
 			fct_Meeting[MeetingType] = "Trade Partner" && fct_Meeting[IsCompliant]
 			&& fct_Meeting[MeetingDate] >= Lo && fct_Meeting[MeetingDate] <= Hi ) ) ) )
-			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) )
+			VAR HeldNow = NOT ISEMPTY ( FILTER ( fct_Meeting,
+			fct_Meeting[MeetingType] = "Trade Partner" && fct_Meeting[IsCompliant]
+			&& fct_Meeting[MeetingDate] >= E - 6 && fct_Meeting[MeetingDate] <= E ) )
+			VAR Open = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )
+			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Open )
 		formatString: "0"
 		displayFolder: 22 Dashboard - schedule & site drivers
 
@@ -1720,7 +1729,7 @@ table _Measures
 			VAR N = CALCULATE ( COUNTROWS ( fct_MetricScore ), fct_MetricScore[PillarKey] = P,
 			fct_MetricScore[WeeksAgo] = W, NOT ISBLANK ( fct_MetricScore[Score] ) )
 			VAR Wt = CALCULATE ( MAX ( dim_DashPillar[Weight] ), REMOVEFILTERS ( dim_DashPillar ), dim_DashPillar[PillarKey] = P )
-			RETURN IF ( NOT ISBLANK ( [Metric Score] ) && N > 0, DIVIDE ( DIVIDE ( Wt, N ), [Grade Coverage %] ) )
+			RETURN IF ( NOT ISBLANK ( [Metric Score] ) && NOT ISBLANK ( [Grade] ) && N > 0, DIVIDE ( DIVIDE ( Wt, N ), [Grade Coverage %] ) )
 		formatString: "0.0%"
 		displayFolder: 23 Dashboard - scorecard
 
@@ -1758,7 +1767,7 @@ table _Measures
 			VAR W = [Report Weeks Ago]
 			VAR T = ADDCOLUMNS ( ALL ( dim_DashMetric ), "@S", VAR K = dim_DashMetric[MetricKey]
 			RETURN CALCULATE ( MAX ( fct_MetricScore[Score] ), fct_MetricScore[MetricKey] = K, fct_MetricScore[WeeksAgo] = W ) )
-			VAR R = TOPN ( 3, FILTER ( T, NOT ISBLANK ( [@S] ) && [@S] < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "risk_metric_below" ) ), [@S], ASC, dim_DashMetric[SortOrder], ASC )
+			VAR R = TOPN ( 3, FILTER ( T, NOT ISBLANK ( [@S] ) && [@S] < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "risk_metric_below" ) ), [@S], ASC, dim_DashMetric[MetricKey], ASC )
 			RETURN IF ( [Is Dashboard Project], "EXECUTIVE FOCUS:  " & IF ( ISEMPTY ( R ), "Every measured standard is on target",
 			CONCATENATEX ( R, dim_DashMetric[Metric], "  " & UNICHAR ( 8226 ) & "  ", [@S], ASC ) ) )
 		displayFolder: 23 Dashboard - scorecard
@@ -2045,8 +2054,22 @@ table _Measures
 			[Grade Status] & "  " & UNICHAR ( 183 ) & "  " & [Measures Below Target] & " below target" )
 		displayFolder: 24 Dashboard - project page
 
-	/// Replaces deck slide 3 BILLED TO DATE sub-line
-	measure 'Billed Subline' = FORMAT ( [Billed % Of Contract], "0.0%" ) & " of contract"
+	/// Replaces derived - billed % less Outbuild work progress %, in points
+	measure 'Billing Ahead Of Work Pts' =
+			VAR B = [Billed % Of Contract]
+			VAR P = [Work Progress %]
+			RETURN IF ( NOT ISBLANK ( B ) && NOT ISBLANK ( P ), ( B - P ) * 100 )
+		formatString: "+0;-0;0"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 BILLED TO DATE sub-line, with the billing-vs-progress gap
+	measure 'Billed Subline' =
+			VAR G = [Billing Ahead Of Work Pts]
+			RETURN FORMAT ( [Billed % Of Contract], "0.0%" ) & " of contract" & SWITCH ( TRUE (),
+			ISBLANK ( G ), "",
+			G >= 1, "  " & UNICHAR ( 8226 ) & "  billed " & FORMAT ( G, "0" ) & " pts ahead of work",
+			G <= -1, "  " & UNICHAR ( 8226 ) & "  work " & FORMAT ( -G, "0" ) & " pts ahead of billing",
+			"  " & UNICHAR ( 8226 ) & "  in line with work" )
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces deck slide 3 PAID TO DATE - Sage receipts
@@ -2224,7 +2247,7 @@ table _Measures
 	/// Replaces deck slide 1 GROSS MARGIN - projected, active projects
 	measure 'Portfolio Gross Margin %' =
 			VAR R = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
-			[Projected Revenue] )
+			IF ( NOT ISBLANK ( [Projected Cost] ), [Projected Revenue] ) )
 			VAR C = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
 			[Projected Cost] )
 			RETURN IF ( R > 0, DIVIDE ( R - C, R ) )
@@ -2368,6 +2391,28 @@ table _Measures
 
 	/// Replaces deck header sub-line
 	measure 'Week Header' = "CONSTRUCTION OPERATIONS  |  " & UPPER ( [Report Week Label] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - open Sage AR on jobs with no Procore project (dq_DataGap 'Unmatched AR invoice')
+	measure 'Unattributed Open AR' = CALCULATE ( SUM ( fct_Invoice[Balance] ), fct_Invoice[HasUnmatchedProject] = TRUE (), REMOVEFILTERS () )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - Sage jobs carrying that AR
+	measure 'Unattributed AR Jobs' = CALCULATE ( DISTINCTCOUNT ( fct_Invoice[SageJobNumber] ), fct_Invoice[HasUnmatchedProject] = TRUE (),    fct_Invoice[Balance] > 0, REMOVEFILTERS () )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - the crosswalk gap, in words
+	measure 'Data Notice' =
+			VAR T = VAR X = [Unattributed Open AR]
+			RETURN IF ( ISBLANK ( X ), BLANK (), SWITCH ( TRUE (),
+			ABS ( X ) >= 1000000, FORMAT ( X / 1000000, "$#,0.0" ) & "M",
+			ABS ( X ) >= 1000, FORMAT ( X / 1000, "$#,0" ) & "K",
+			FORMAT ( X, "$#,0" ) ) )
+			RETURN IF ( [Unattributed Open AR] > 0, "DATA TO RESOLVE:  " & T & " of open AR is on " & [Unattributed AR Jobs]
+			& " Sage jobs with no Procore project, so no project here carries it. Map them in the crosswalk.",
+			"Every open AR invoice is matched to a project" )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces deck header - when the numbers were true

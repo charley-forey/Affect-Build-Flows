@@ -33,7 +33,9 @@ pos AS (
     SELECT p.*,
            CASE WHEN CashPaidOut > 0 THEN CashCollected / CashPaidOut
                 WHEN CashCollected IS NOT NULL AND CashPaidOut IS NOT NULL AND CashCollected >= 0 THEN 1 END AS cash_ratio,
-           CASE WHEN ProjectedRevenue > 0 THEN (ProjectedRevenue - COALESCE(ProjectedCost, 0)) / ProjectedRevenue END AS gm,
+           -- No forecast cost means no projected margin, not a 100% one.
+           CASE WHEN ProjectedRevenue > 0 AND ProjectedCost IS NOT NULL
+                THEN (ProjectedRevenue - ProjectedCost) / ProjectedRevenue END AS gm,
            CASE WHEN ArOwedBalance > 0 THEN ArOwedBalanceDays / ArOwedBalance
                 WHEN InvoiceCount > 0 THEN 0 END AS ar_age
     FROM fct_ProjectPosition p
@@ -44,7 +46,8 @@ pw AS (
 ),
 -- Meetings: weeks of the four ending with the report week that held a compliant meeting.
 meeting_weeks AS (
-    SELECT pw.ProjectKey, pw.WeeksAgo, m.MeetingType, COUNT(DISTINCT k.k) AS held
+    SELECT pw.ProjectKey, pw.WeeksAgo, m.MeetingType, COUNT(DISTINCT k.k) AS held,
+           MAX(CASE WHEN k.k = 0 THEN 1 ELSE 0 END) AS held_now
     FROM pw
     CROSS JOIN (VALUES (0), (1), (2), (3)) AS k(k)
     JOIN fct_Meeting m
@@ -91,8 +94,11 @@ drivers AS (
         WHEN 101 THEN pw.cash_ratio
         WHEN 102 THEN pw.gm - st.gm_target
         WHEN 103 THEN pw.ar_age
-        WHEN 201 THEN CAST(4 - COALESCE(oac.held, 0) AS DOUBLE)
-        WHEN 202 THEN CAST(4 - COALESCE(tp.held, 0) AS DOUBLE)
+        -- This week is still running: it counts once a meeting is held, never as a miss.
+        WHEN 201 THEN CAST(4 - COALESCE(oac.held, 0)
+                           - CASE WHEN pw.WeeksAgo = 0 AND COALESCE(oac.held_now, 0) = 0 THEN 1 ELSE 0 END AS DOUBLE)
+        WHEN 202 THEN CAST(4 - COALESCE(tp.held, 0)
+                           - CASE WHEN pw.WeeksAgo = 0 AND COALESCE(tp.held_now, 0) = 0 THEN 1 ELSE 0 END AS DOUBLE)
         WHEN 203 THEN CASE WHEN s.ProjectKey IS NOT NULL AND pw.WeeksAgo <= 1
                            THEN CAST(COALESCE(datediff(pw.AsOfDate, CAST(l.last_worked AS DATE)), 999) AS DOUBLE) END
         WHEN 204 THEN CASE WHEN s.last_edit IS NOT NULL AND pw.WeeksAgo <= 1
@@ -176,13 +182,14 @@ weakest AS (
                ROW_NUMBER() OVER (PARTITION BY p.ProjectKey, p.WeeksAgo
                                   ORDER BY w.Weight * (1 - p.PillarScore) DESC, p.PillarKey) AS rn
         FROM pillars p JOIN dim_DashPillar w ON w.PillarKey = p.PillarKey
-        WHERE p.PillarKey IN (1, 2, 3, 4)) x WHERE rn = 1
+        WHERE p.PillarKey IN (1, 2, 3, 4) AND p.PillarScore < 1) x WHERE rn = 1
 )
 SELECT r.ProjectKey, r.WeeksAgo, r.SchedulePillar, r.BudgetPillar, r.SafetyPillar, r.QualityPillar,
-       CASE WHEN r.measured_weight > 0 THEN r.measured_weight / t.total_weight END AS GradeCoverage,
-       CASE WHEN r.measured_weight > 0 AND r.measured_weight / t.total_weight >= st.min_coverage
+       -- ROUND: 0.30 + 0.15 + 0.05 is 0.49999999999999994 in floating point.
+       CASE WHEN r.measured_weight > 0 THEN ROUND(r.measured_weight / t.total_weight, 6) END AS GradeCoverage,
+       CASE WHEN r.measured_weight > 0 AND ROUND(r.measured_weight / t.total_weight, 6) >= st.min_coverage
             THEN 100 * r.weighted / r.measured_weight END AS Grade,
-       CASE WHEN r.measured_weight > 0 AND r.measured_weight / t.total_weight >= st.min_coverage
+       CASE WHEN r.measured_weight > 0 AND ROUND(r.measured_weight / t.total_weight, 6) >= st.min_coverage
             THEN CAST(r.below AS INT) END AS MeasuresBelowTarget,
        dp.Pillar AS WeakestPillar
 FROM rolled r
