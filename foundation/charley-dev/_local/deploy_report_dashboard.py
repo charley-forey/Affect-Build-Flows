@@ -467,9 +467,18 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 pills={"Grade Cell": ("Grade Colour", "Grade Ink")})
     rs.widen(off, {"ProjectName": 3, "Status Note": 3, "Phase Label": 1})
     out.append(flagged(off, "Not Active Flag"))
-    out += footer(p, "GRADE  90+ On track  •  75-89 Monitor  •  under 75 Needs attention  •  — No data     "
-                     "Cells: reading · pillar score (colour)     Weights: Schedule 50  Budget 30  Safety 15  Quality 5   "
-                     "Worst grade first")
+    # Grade legend with the pill colours, as the deck's slide 2 strip; the band captions are
+    # the same setting-driven measures as the tiles, so legend, tiles and pills agree.
+    out.append(text(p, "lg_h", "GRADE", 36, 852, 48, 22, size=7.5, color=NAVY))
+    for i, (key, colour, cap) in enumerate([("ok", dash.GREEN, "On Track Caption"), ("watch", AMBER, "Monitor Caption"),
+                                           ("bad", RED, "Attention Caption"), ("none", dash.MIST, None)]):
+        lx = 88 + i * 150
+        out.append(z(text(p, f"lg_{key}_sw", " ", lx, 857, 12, 12, fill=colour, radius=2), 1000))
+        out.append(kpi_value(p, f"lg_{key}", cap, lx + 16, 850, 130, 24, size=7.5, color=SLATE) if cap
+                   else text(p, f"lg_{key}", "No data", lx + 16, 852, 130, 22, size=7.5, color=SLATE, bold=False))
+    out.append(text(p, "footer", "Cells: reading · pillar score (colour)   •   Weights: Schedule 50  Budget 30  "
+                    "Safety 15  Quality 5   •   Worst grade first", 692, 852, 632, 22, size=7.5, color=SLATE,
+                    bold=False))
     return p, out
 
 

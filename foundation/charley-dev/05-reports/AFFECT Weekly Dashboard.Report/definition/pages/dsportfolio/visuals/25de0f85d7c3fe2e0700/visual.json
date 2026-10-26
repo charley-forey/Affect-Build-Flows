@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "25de0f85d7c3fe2e0700",
   "position": {
-    "x": 36,
+    "x": 692,
     "y": 852,
     "z": 2000,
-    "width": 1288,
+    "width": 632,
     "height": 22,
-    "tabOrder": 25
+    "tabOrder": 30
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "GRADE  90+ On track  \u2022  75-89 Monitor  \u2022  under 75 Needs attention  \u2022  \u2014 No data     Cells: reading \u00b7 pillar score (colour)     Weights: Schedule 50  Budget 30  Safety 15  Quality 5   Worst grade first",
+                    "value": "Cells: reading \u00b7 pillar score (colour)   \u2022   Weights: Schedule 50  Budget 30  Safety 15  Quality 5   \u2022   Worst grade first",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'GRADE  90+ On track  \u2022  75-89 Monitor  \u2022  under 75 Needs attention  \u2022  \u2014 No data     Cells: reading \u00b7 pillar score (colour)     Weights: Schedule 50  Budget 30  Safety 15  Quality 5   Worst grade first'"
+                  "Value": "'Cells: reading \u00b7 pillar score (colour)   \u2022   Weights: Schedule 50  Budget 30  Safety 15  Quality 5   \u2022   Worst grade first'"
                 }
               }
             }
