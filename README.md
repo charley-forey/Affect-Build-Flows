@@ -15,6 +15,17 @@ Procore meetings and project roles are now ingested; Outbuild look-ahead tasks r
 Definitions, data sources and the decisions Affect owes are in
 [weekly-dashboard.md](foundation/charley-dev/_docs/weekly-dashboard.md).
 
+**Review pass, October 26.**
+- **Reviews:** an independent code review, a requirements trace (call, deck and workbook against
+  the code) and an accessibility audit were run.
+- **Fixes:** margin scoring when there's no forecast, template meetings counting as activity,
+  late-minutes timing, AR band edges, the current week counting as a missed meeting, the
+  weakest-pillar rule (now points lost), contrast, fit-to-page and reading order. Each fix has
+  a test in `tests/test_dashboard_gold.py`.
+- **Additions:** the dashboard now states unattributed Sage AR; Portfolio is stack-ranked;
+  daily logs are a proposed measure, not graded; budget variance appears in the Budget pill.
+- **Checks:** gold SQL is also checked on a local Spark 3.5.
+
 ## Current state — October 5, 2026
 
 - **Nightly pipeline running again.** The `AffectKeyVault` subscription is enabled and its
