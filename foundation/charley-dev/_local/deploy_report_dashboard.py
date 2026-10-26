@@ -116,10 +116,11 @@ def panel(p: str, key: str, x, y, w, h, fill: str = CARD_BG, radius: int = 12) -
 
 
 def kpi_value(p: str, key: str, name: str, x, y, w, h, size: int = 20, color: str = NAVY,
-              precision: int | None = None, units: int | None = None, align: str = "left") -> dict:
+              precision: int | None = None, units: int | None = None, align: str = "left",
+              alt: str | None = None) -> dict:
     """A bare value: no title, no category label, deck navy, on the panel behind it."""
     v = dr.visual(p, key, "card", x, y, w, h, {"Values": [measure(name)]},
-                  alt=f"Card. {name}.")
+                  alt=alt or f"Card. {name}.")
     v["visual"]["visualContainerObjects"].pop("title", None)
     labels = {"fontSize": _num(size), "color": _color(color), "fontFamily": lit("Arial")}
     if precision is not None:
@@ -148,10 +149,13 @@ def tile(p: str, key: str, label: str, value: str, sub: str | None, x, y, w, h, 
         out.append(text(p, f"{key}_pending", pending, x + 16, y + 36, w - 24, h - 44, size=9,
                         color=SLATE, bold=False))
         return out
+    # Alt text names the tile, not just the measure (audit): "Card. Revenue Ytd: the value (...)."
+    name = label.title()
     out.append(kpi_value(p, f"{key}_val", value, x + 10, y + 32, w - 18, 40, size=size,
-                         precision=precision, units=units))
+                         precision=precision, units=units, alt=f"Card. {name}: the value ({value})."))
     if sub:
-        out.append(kpi_value(p, f"{key}_sub", sub, x + 10, y + h - 30, w - 18, 26, size=8, color=sub_color))
+        out.append(kpi_value(p, f"{key}_sub", sub, x + 10, y + h - 30, w - 18, 26, size=8, color=sub_color,
+                             alt=f"Card. {name}: the line under the value ({sub})."))
     return out
 
 
@@ -710,6 +714,49 @@ PAGES = [
 DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Project", "ProjectName")}
 
 
+def retab(files: dict[str, str]) -> None:
+    """Keyboard / screen-reader order: rows top to bottom, left to right within a row, so a
+    label comes before the value card sitting a few px above it; decorations last (audit
+    2026-10-26: values were read before labels, and blank boxes were tab stops)."""
+    by_page: dict[str, list[tuple[str, dict]]] = {}
+    for rel in [r for r in files if r.endswith("/visual.json") and "/pages/" in r]:
+        by_page.setdefault(rel.split("/pages/")[1].split("/")[0], []).append((rel, json.loads(files[rel])))
+    for items in by_page.values():
+        def is_decor(v):
+            alt = v["visual"]["visualContainerObjects"]["general"][0]["properties"]["altText"]["expr"]["Literal"]["Value"]
+            return alt == "'Decoration'"
+        def rows_of(group):  # a new row starts more than 12 px below the current row's top
+            rows, top = [], None
+            for it in sorted(group, key=lambda it: it[1]["position"]["y"]):
+                y = it[1]["position"]["y"]
+                if top is None or y > top + 12:
+                    rows.append([])
+                    top = y
+                rows[-1].append(it)
+            return [it for row in rows for it in sorted(row, key=lambda it: it[1]["position"]["x"])]
+
+        # Each visual belongs to the smallest panel (a large decoration) around its centre, so a
+        # tile reads label, value, sub-line before the next tile; panels go in row order.
+        p_ = lambda v: v["position"]  # noqa: E731
+        panels = [v for _, v in items if is_decor(v) and p_(v)["width"] * p_(v)["height"] > 4000]
+        groups: dict[str, list] = {}
+        for it in (it for it in items if not is_decor(it[1])):
+            pos = p_(it[1])
+            cx, cy = pos["x"] + pos["width"] / 2, pos["y"] + pos["height"] / 2
+            around = [q for q in panels if p_(q)["x"] <= cx <= p_(q)["x"] + p_(q)["width"]
+                      and p_(q)["y"] <= cy <= p_(q)["y"] + p_(q)["height"]]
+            key = min(around, key=lambda q: p_(q)["width"] * p_(q)["height"])["name"] if around else it[1]["name"]
+            groups.setdefault(key, []).append(it)
+        heads = [(min(g, key=lambda it: (p_(it[1])["y"], p_(it[1])["x"])), g) for g in groups.values()]
+        ordered = [it for _, g in sorted(heads, key=lambda hg: (p_(hg[0][1])["y"] // 40, p_(hg[0][1])["x"]))
+                   for it in rows_of(g)]
+        ordered += [it for it in items if is_decor(it[1])]
+        for n, (rel, v) in enumerate(ordered):
+            v["position"]["tabOrder"] = n
+            files[rel] = json.dumps(v, indent=2)
+            (REPORT_DIR / rel).write_text(files[rel], encoding="utf-8", newline="")
+
+
 def build(model_id: str) -> dict[str, str]:
     """deploy_report.build with this report's pages, then the deck's page size and colour."""
     dr.REPORT_NAME, dr.REPORT_DIR, dr.PAGES, dr.DRILLTHROUGH = REPORT_NAME, REPORT_DIR, PAGES, DRILLTHROUGH
@@ -726,6 +773,7 @@ def build(model_id: str) -> dict[str, str]:
             page.pop("visibility", None)
         files[rel] = json.dumps(page, indent=2)
         (REPORT_DIR / rel).write_text(files[rel], encoding="utf-8", newline="")
+    retab(files)
     files["definition/bookmarks/bookmarks.json"] = json.dumps(
         {"$schema": f"{dr.SCHEMA}/bookmarksMetadata/1.0.0/schema.json", "items": []}, indent=2)
     (REPORT_DIR / "definition/bookmarks/bookmarks.json").write_text(files["definition/bookmarks/bookmarks.json"],
