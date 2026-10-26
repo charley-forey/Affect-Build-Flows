@@ -67,6 +67,15 @@ def main() -> int:
             assert m in measures, f"{pid}: unknown measure {m}"
     CHECKS.append("alt text, unique tab order, canvas bounds and no foreground collisions on every page")
 
+    # A VAR named after a DAX/MDX keyword deploys fine and fails at query time ("The syntax
+    # for 'Open' is incorrect", seen live 2026-10-26) - nothing offline parses DAX.
+    keywords = {"OPEN", "CLOSE", "ORDER", "BY", "START", "AT", "DEFINE", "EVALUATE", "MEASURE", "COLUMN",
+                "TABLE", "VAR", "RETURN", "TRUE", "FALSE", "NOT", "IN", "AND", "OR", "ASC", "DESC", "SELECT",
+                "FROM", "WHERE", "CASE", "WHEN", "THEN", "ELSE", "END", "IF", "CURRENTCUBE", "MEMBER", "SET"}
+    named = {v for m in dm.MEASURES for v in re.findall(r"\bVAR\s+(\w+)", m[1]) if v.upper() in keywords}
+    assert not named, f"DAX variables named after keywords: {sorted(named)}"
+    CHECKS.append("no DAX variable is named after a keyword")
+
     exec_refs = json.dumps(pages["dsexec"])
     assert "Data As Of Header" in exec_refs, "executive page does not say when the data was built"
     assert "Portfolio Header" in json.dumps(pages["dsportfolio"]), "portfolio page has no header line"
