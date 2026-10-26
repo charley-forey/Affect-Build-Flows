@@ -680,6 +680,13 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          count_active(f"NOT ISBLANK ( [@g] ) && [@g] < {setting('grade_monitor_from')}"), '"#,0"',
          "deck slide 2 NEEDS ATTENTION / slide 1 'require attention'"),
         ("Projects Unscored", count_active("ISBLANK ( [@g] )"), '"#,0"', "deck slide 2 UNSCORED"),
+        # Tile captions read the same settings as the pill colours, so they cannot drift.
+        ("On Track Caption", '"Grade " & FORMAT ( ' + setting("grade_on_track_from") + ', "0" ) & " and over"', None,
+         "deck slide 2 ON TRACK caption"),
+        ("Monitor Caption", '"Grade " & FORMAT ( ' + setting("grade_monitor_from") + ', "0" ) & "-" & FORMAT ( '
+         + setting("grade_on_track_from") + ' - 1, "0" )', None, "deck slide 2 MONITOR caption"),
+        ("Attention Caption", '"Grade under " & FORMAT ( ' + setting("grade_monitor_from") + ', "0" )', None,
+         "deck slide 2 NEEDS ATTENTION caption"),
         ("Projects At Risk (Grade)",
          count_active(f"NOT ISBLANK ( [@g] ) && [@g] <= {setting('grade_at_risk_max')}"), '"#,0"',
          "deck slide 1 PROJECTS AT RISK - grade 45 and below (Oct 21 call)"),

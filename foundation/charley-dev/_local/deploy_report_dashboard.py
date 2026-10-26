@@ -220,7 +220,8 @@ def bar(p: str, key: str, name: str, x, y, w, h, color: str) -> list[dict]:
     c = boxed(v, fill=None)["visual"]["visualContainerObjects"]
     c["title"] = [{"properties": {"show": _OFF}}]
     c["padding"] = [{"properties": {"top": _num(0), "bottom": _num(0), "left": _num(0), "right": _num(0)}}]
-    return [z(text(p, f"{key}_track", " ", x, y + 3, w, h - 6, fill=PALE, radius=3), 1000), z(v, 3000)]
+    # Track #D3DCE5, not PALE: PALE is 1.18:1 on the white card, so the 100% end vanished (audit).
+    return [z(text(p, f"{key}_track", " ", x, y + 3, w, h - 6, fill="#D3DCE5", radius=3), 1000), z(v, 3000)]
 
 
 def styled_table(v: dict, pills: dict[str, tuple[str, str]] | None = None, header_fill: str = NAVY) -> dict:
@@ -403,9 +404,9 @@ def page_portfolio() -> tuple[str, list[dict]]:
     p = "dsportfolio"
     out = [*header(p, "PROJECT PORTFOLIO  |  STATUS", "Week Header", "Portfolio Header")]
     tiles = [("PROJECTS", "Active Projects", "In portfolio", TEAL),
-             ("ON TRACK", "Projects On Track", "Grade 90 and over", GREEN),
-             ("NEEDS ATTENTION", "Projects Needing Attention", "Grade under 75", RED),
-             ("MONITOR", "Projects Monitor", "Grade 75-89", AMBER),
+             ("ON TRACK", "Projects On Track", "=On Track Caption", GREEN),
+             ("NEEDS ATTENTION", "Projects Needing Attention", "=Attention Caption", RED),
+             ("MONITOR", "Projects Monitor", "=Monitor Caption", AMBER),
              ("UNSCORED", "Projects Unscored", "Awaiting data", SLATE)]
     for i, (lbl, m, sub, color) in enumerate(tiles):
         x = 36 + i * 262
@@ -413,7 +414,9 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 z(text(p, f"k{i}_bar", " ", x, 100, 6, 84, fill=color), 1),
                 text(p, f"k{i}_l", lbl, x + 18, 108, 210, 20, size=9),
                 kpi_value(p, f"k{i}_v", m, x + 12, 128, 90, 50, size=24, color=NAVY),
-                text(p, f"k{i}_s", sub, x + 104, 148, 136, 20, size=8, color=SLATE, bold=False)]
+                # "=Name" is a caption measure (reads the grade settings); anything else is fixed text.
+                kpi_value(p, f"k{i}_s", sub[1:], x + 104, 146, 136, 24, size=8, color=SLATE) if sub.startswith("=")
+                else text(p, f"k{i}_s", sub, x + 104, 148, 136, 20, size=8, color=SLATE, bold=False)]
     out += [panel(p, "tbl_bg", 36, 198, 1288, 370),
             text(p, "tbl_h", "ACTIVE PROJECTS  •  PERFORMANCE & ACCOUNTABILITY", 56, 208, 760, 28, size=13, color=NAVY),
             text(p, "tbl_note", "Right-click a project and choose Drill through to open it or its grade detail",
