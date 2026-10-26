@@ -98,11 +98,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Grade Status"
+                  "Property": "Priority Status"
                 }
               },
-              "queryRef": "_Measures.Grade Status",
-              "nativeQueryRef": "Grade Status",
+              "queryRef": "_Measures.Priority Status",
+              "nativeQueryRef": "Priority Status",
               "displayName": "Status"
             }
           ]
@@ -470,7 +470,7 @@
             }
           },
           "selector": {
-            "metadata": "_Measures.Grade Status"
+            "metadata": "_Measures.Priority Status"
           }
         }
       ],

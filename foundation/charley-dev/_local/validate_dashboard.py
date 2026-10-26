@@ -28,7 +28,7 @@ PRESENTATION = {
     "On Budget Text", "At Risk Breakdown", "Status Note", "Active Flag", "Executive Focus",
     "Project Team", "Not Active Flag", "Project Title", "Week Header",
     "Data As Of Header", "Portfolio Header", "Metric Colour", "Metric Ink", "Meeting In Window Flag",
-    "Meeting Met Standard", "Data Notice", "Work Progress Shown", "Tracking Finish Shown", "Forecast Finish Shown",
+    "Meeting Met Standard", "Data Notice", "Priority Status", "Work Progress Shown", "Tracking Finish Shown", "Forecast Finish Shown",
     # dim_DashMetric row measures: BLANK outside a row; their inputs are the checked
     # "Metric Score - <name>" measures.
     "Metric Score", "Metric Driver", "Metric Reading", "Metric Band", "Metric State",

@@ -444,6 +444,14 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ("Grade Coverage %", project_score("GradeCoverage"), '"0%"', "derived - share of the pillar weight that is measured"),
         ("Grade", project_score("Grade"), '"0"',
          "deck slide 2 GRADE - schedule 50, budget 30, safety 15, quality 5 (Oct 21 call); fct_ProjectScore"),
+        ("Priority Status",
+         # deck slide 1 STATUS reads "Schedule risk" / "Margin watch" / "On track": the cause,
+         # not the band - the pillar losing the grade most points.
+         "VAR S = [Grade Status]\n"
+         "VAR P = [Weakest Pillar]\n"
+         "RETURN SWITCH ( TRUE (), ISBLANK ( S ), BLANK (), S = \"On track\" || ISBLANK ( P ), S,\n"
+         "    P = \"Budget\", \"Margin / cash watch\", P & \" risk\" )",
+         None, "deck slide 1 priority STATUS - the weakest pillar, in the deck's words"),
         ("Grade Status",
          "VAR G = [Grade]\n"
          "RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (), ISBLANK ( G ), \"Unscored\",\n"

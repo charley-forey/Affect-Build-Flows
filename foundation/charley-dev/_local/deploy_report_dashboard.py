@@ -370,7 +370,7 @@ def page_executive() -> tuple[str, list[dict]]:
                  rs.shown_as(measure("Billed % Of Contract"), "% Complete (billed)"),
                  rs.shown_as(measure("Projected Gross Margin %"), "Margin"),
                  rs.shown_as(measure("Grade Cell"), "Grade"),
-                 rs.shown_as(measure("Grade Status"), "Status")],
+                 rs.shown_as(measure("Priority Status"), "Status")],
                 alt="Table. The three active projects with the lowest grades: contract, share billed, projected "
                     "margin, grade and status. Right-click a project to open it.",
                 pills={"Grade Cell": ("Grade Colour", "Grade Ink")})

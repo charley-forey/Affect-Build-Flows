@@ -1822,6 +1822,14 @@ table _Measures
 		formatString: "0"
 		displayFolder: 23 Dashboard - scorecard
 
+	/// Replaces deck slide 1 priority STATUS - the weakest pillar, in the deck's words
+	measure 'Priority Status' =
+			VAR S = [Grade Status]
+			VAR P = [Weakest Pillar]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), BLANK (), S = "On track" || ISBLANK ( P ), S,
+			P = "Budget", "Margin / cash watch", P & " risk" )
+		displayFolder: 23 Dashboard - scorecard
+
 	/// Replaces deck slide 2: On track / Monitor / Needs attention / Unscored
 	measure 'Grade Status' =
 			VAR G = [Grade]
