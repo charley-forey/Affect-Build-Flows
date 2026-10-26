@@ -113,6 +113,31 @@ SharePoint list on the existing CD_Manual_Ingest path.
   fct_MetricScore, fct_ProjectScore. Seeds: dim_DashPillar, dim_DashMetric,
   dim_DashBand, dim_DashSetting, seed_InspectionCategory, seed_MeetingCategory.
 
+## Where every number comes from
+
+Source system → gold table the dashboard reads → what it feeds. Gold tables are rebuilt
+nightly (02:00 ET); the model is reframed only after the data-quality gate passes.
+
+| Source | Gold table | Feeds |
+|---|---|---|
+| Procore owner pay apps (prime contracts) | `fct_Billing` → `fct_ProjectPosition` | Billings to date, retainage receivable, billed %, phase, backlog |
+| Procore requisitions | `fct_Billing` → `fct_ProjectPosition` | Retainage payable (sub retainage) |
+| Procore budget (forecast, job-to-date cost) | `fct_BudgetLine` → `fct_ProjectPosition` | Costs incurred, projected cost and margin (CM fee, division 50, excluded), budget variance, on budget |
+| Procore change orders / financial periods | `fct_FinancialPeriod`, `fct_ChangeOrder` | Original and current contract, pending change orders, change orders approved |
+| Procore commitments | `fct_BudgetLine` | Subcontractor coverage, risk bought out |
+| Sage AR invoices | `fct_Invoice` → `fct_ProjectPosition` | Unpaid receivables, paid to date, AR ageing, AR over 60 days, revenue YTD, unattributed AR |
+| Sage AP invoices and lines | `fct_ApInvoice` → `fct_ProjectPosition` | Unpaid payables (job-cost lines, prorated by open balance) |
+| Procore meetings (new 2026-10-25) | `fct_Meeting` | OAC and trade partner meeting scores, Grade Detail meeting list, activity |
+| Procore inspections | `fct_Inspection` | Safety and quality inspection scores and lists, activity |
+| Procore RFIs and submittals | `fct_RfiSubmittal` | Overdue submittals, outstanding RFIs, activity |
+| Procore daily logs (manpower) | `fct_SafetyMonthly`, read daily by the score | Activity; daily logs (proposed measure) |
+| Procore project directory roles (new) | `fct_ProjectTeam` | Team initials, project executive, team line |
+| Outbuild activities (current schedule) | `fct_ScheduleActivity`, `fct_Milestone` | Work progress, completion variance, tracking / forecast finish, near-term milestones, critical path, behind-baseline list, wins, schedule update |
+| Outbuild look-ahead tasks (new) | `fct_LookaheadTask` | 3-week look-ahead measure |
+| Seeds (`dashboard_*.csv`) | `dim_DashPillar`, `dim_DashMetric`, `dim_DashBand`, `dim_DashSetting` | Weights, measures, bands, targets, cut-offs |
+| All of the above | `fct_MetricScore`, `fct_ProjectScore` (`47_dashboard_score.sql`) | Every score, pillar, grade, below-target count and weakest pillar, per project and week |
+| Calendar | `dim_ReportWeek` | Week picker (Monday-Sunday, 52 weeks back), "This week" / "Last week" labels |
+
 ## Review pass, 2026-10-25 / 26
 
 An independent code review and a requirements trace (every call request, deck element and
