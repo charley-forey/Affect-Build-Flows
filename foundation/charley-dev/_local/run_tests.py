@@ -41,6 +41,8 @@ SUITES = [
     ("generated notebooks and quality gate failures", TESTS / "test_validation.py"),
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("Project Scorecard report accessibility and bindings", TESTS / "test_report.py", "--scorecard"),
+    ("Weekly Dashboard gold: scoring rules, cash position, meetings", TESTS / "test_dashboard_gold.py"),
+    ("Weekly Dashboard report layout, accessibility and bindings", TESTS / "test_report_dashboard.py"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
     ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),
     ("snapshot Delta file replay", TESTS / "test_snapshot_files.py"),

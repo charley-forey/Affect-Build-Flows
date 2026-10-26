@@ -908,11 +908,11 @@ def test_dq_datagap(con) -> None:
 
     # Candidates are proposals: exact normalised name only, unmapped on both sides, and
     # nothing in the crosswalk reads them back.
-    assert q(con, "SELECT ProcoreProjectId, SageJobNumber, MatchRule FROM dq_CrosswalkCandidate") == [
-        ("P2", "S200", "EXACT_NAME_SHORT_NAME")]
+    assert q(con, "SELECT ProcoreProjectId, SageJobNumber, MatchRule FROM dq_CrosswalkCandidate ORDER BY 1") == [
+        ("P1", "S101", "EXACT_NAME_SECOND_SAGE_JOB"), ("P2", "S200", "EXACT_NAME_SHORT_NAME")]
     views = (CHARLEY_DEV / "02-transformation/sql/silver/01_source_views_cd.sql").read_text(encoding="utf-8")
     assert "dq_CrosswalkCandidate" not in views.split("CREATE OR REPLACE TEMPORARY VIEW sv_project_crosswalk")[1].split(";")[0]
-    check("dq_CrosswalkCandidate proposes the exact-name match and is never auto-applied")
+    check("dq_CrosswalkCandidate proposes exact-name matches, and a mapped project's same-name second Sage job, never auto-applied")
 
     # Every ProjectKey resolves, so the model relationship never shows a blank member. The
     # manual reject for P9 keeps its raw id in Detail instead.

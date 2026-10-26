@@ -1,0 +1,42 @@
+table dim_ReportWeek
+
+	column WeeksAgo
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: WeeksAgo
+
+	column WeekStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: WeekStart
+		formatString: yyyy-mm-dd
+
+	column WeekEnd
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: WeekEnd
+		formatString: yyyy-mm-dd
+
+	column WeekLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: WeekLabel
+		sortByColumn: WeeksAgo
+
+	column WeekSort
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: WeekSort
+
+	column AsOfDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: AsOfDate
+		formatString: yyyy-mm-dd
+
+	partition dim_ReportWeek = entity
+		mode: directLake
+		source
+			entityName: dim_reportweek
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

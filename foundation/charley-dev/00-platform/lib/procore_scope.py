@@ -246,7 +246,19 @@ def declared_unavailable(endpoint: Endpoint, project_id: Any) -> str | None:
 
 
 def normalize_records(endpoint: Endpoint, record: dict[str, Any], path: str = "") -> list[dict[str, Any]]:
-    """Checklist responses group inspection instances under templates; retain that context."""
+    """Checklist responses group inspection instances under templates; retain that context.
+
+    /meetings does the same: each record is a meeting SERIES ({group_title, meetings: [...]})
+    with no id of its own, so merging it on `id` would collapse every series into one row.
+    Flattened to one row per meeting, the series title kept in _source_group - it is how the
+    dashboard tells an OAC meeting from a trade partner meeting.
+    """
+    if endpoint.name == "meetings" and "meetings" in record:
+        meetings = record["meetings"]
+        if not isinstance(meetings, list) or any(not isinstance(m, dict) or not m.get("id") for m in meetings):
+            raise ValueError("meeting group contains invalid meeting records")
+        context = {key: value for key, value in record.items() if key != "meetings"}
+        return [dict(meeting, _source_group=context) for meeting in meetings]
     if endpoint.name == "checklist_list_items":
         requested = parse_qs(urlsplit(path).query).get("filters[list_id][]", [])
         if len(requested) != 1 or str(record.get("list_id")) != requested[0]:
@@ -448,6 +460,14 @@ def _selftest() -> None:
         ]),
         "duplicate bronze_table",
     )
+
+    # Meetings: one row per meeting, series title retained; an empty series yields none.
+    mtg = _ep("meetings", "/rest/v1.0/meetings", SCOPE_PROJECT)
+    flat = normalize_records(mtg, {"group_title": "OAC", "meetings": [{"id": 1}, {"id": 2}]})
+    assert [m["id"] for m in flat] == [1, 2] and flat[0]["_source_group"] == {"group_title": "OAC"}
+    assert normalize_records(mtg, {"group_title": "Empty", "meetings": []}) == []
+    expect_error(lambda: normalize_records(mtg, {"group_title": "x", "meetings": [{"title": "no id"}]}),
+                 "invalid meeting records")
 
     print("procore_scope: all checks passed")
 

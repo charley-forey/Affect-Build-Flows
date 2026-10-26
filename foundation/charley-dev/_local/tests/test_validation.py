@@ -780,7 +780,8 @@ def test_outbuild_extract():
                     (Path(__file__).resolve().parents[2] / "02-transformation" / "sql").rglob("*.sql"))
     read = set(re.findall(r"\bcd_bronze_outbuild_[a-z_]+", sql))
     assert {e["bronze_table"] for e in endpoints if e.get("consumed")} == read == {
-        "cd_bronze_outbuild_projects", "cd_bronze_outbuild_activities"}, read
+        "cd_bronze_outbuild_projects", "cd_bronze_outbuild_activities",
+        "cd_bronze_outbuild_tasks"}, read  # tasks: the Weekly Dashboard look-ahead (2026-10-25)
     assert any(remote == "Files/lib/extract_outbuild_local.py" and local.exists()
                for local, remote in deploy_outbuild.UPLOADS)
     source = "\n".join("".join(c["source"]) for c in make_notebooks.EXTRACT_OUTBUILD)
@@ -808,14 +809,15 @@ def test_outbuild_extract():
         assert urlopen.call_count == calls and sum(sleeps) <= 14, (calls, sleeps)
 
     reg = {e["name"]: e for e in endpoints}
-    chosen = [reg[n] for n in ("projects", "activities", "tasks", "roadblock_tasks",
+    chosen = [reg[n] for n in ("projects", "activities", "tasks", "tags", "roadblock_tasks",
                                "schedule_impact_requests")]
     data = {"projects": [{"id": 5}], "activities": [{"id": 7, "projectId": 5}],
-            "tasks": [{"id": 8}],
+            "tasks": [{"id": 8}], "tags": [{"id": 9}],
             "roadblock_tasks": [{"roadblock_id": 1, "task_id": 2, "project_id": 5},
                                 {"roadblock_id": 1, "task_id": 3, "project_id": 5}]}
-    for broken, status in ((None, "complete"), ("tasks", "complete_with_warnings"),
-                           ("activities", "failed")):
+    # tags is unconsumed (a warning); tasks is consumed since 2026-10-25, so it blocks.
+    for broken, status in ((None, "complete"), ("tags", "complete_with_warnings"),
+                           ("activities", "failed"), ("tasks", "failed")):
         written = {}
         def pull(ep, tok):
             if ep["name"] == broken:
@@ -838,8 +840,8 @@ def test_outbuild_extract():
                 raise AssertionError("replay overwrote the batch manifest")
         by = {a["endpoint"]: a for a in manifest["endpoints"]}
         assert manifest["status"] == status and manifest["failure_policy"] == ob.FAILURE_POLICY
-        assert manifest["blocking_failures"] == (["activities"] if broken == "activities" else [])
-        assert manifest["warnings"] == (["tasks"] if broken == "tasks" else [])
+        assert manifest["blocking_failures"] == ([broken] if broken in ("activities", "tasks") else [])
+        assert manifest["warnings"] == (["tags"] if broken == "tags" else [])
         assert by["schedule_impact_requests"]["status"] == "skipped"
         if broken:
             assert by[broken]["status"] == "failed" and "504" in by[broken]["error"]
@@ -1281,7 +1283,7 @@ def test_independent_measure_comparison():
 def test_measure_expectations_cover_generator():
     import subprocess
     code = ("{imp}import deploy_model as dm, validate_model as vm;"
-            "missing={{m[0] for m in dm.MEASURES}}-set(vm.{fn}())-vm.FIXTURE_ONLY; assert not missing, missing;"
+            "missing={{m[0] for m in dm.MEASURES}}-set(vm.{fn}())-vm.FIXTURE_ONLY-vm.PRESENTATION_ONLY; assert not missing, missing;"
             "import re; used={{t for m in dm.MEASURES for t in re.findall(r'\\b(?:dim|fct|bridge|man|meta|dq|qc_seed)_\\w+', m[1])}};"
             "cols=used-set(vm.RAW_COLUMNS); assert not cols, cols")
     for imp, fn in (("", "monthly_expected"), ("import deploy_model_qc;", "qc_expected")):

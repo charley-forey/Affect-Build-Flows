@@ -201,10 +201,32 @@ SELECT COALESCE(a.project_id, m.ProcoreProjectId) AS project_id,
        a.progress, a.duration, a.is_critical, a.activity_type, a.status,
        a.baseline_start_date, a.baseline_end_date,
        a.outbuild_project_id, a.schedule_id, a.schedule_name, a.is_current_schedule,
-       a.project_stage, a.archive_reason
+       a.project_stage, a.archive_reason,
+       -- 2026-10-25, the Weekly Dashboard: when the activity was created and last edited.
+       a.created_at, a.updated_at
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_activities` a
 LEFT JOIN seed_OutbuildProjectMap m
        ON a.project_id IS NULL AND m.OutbuildProjectId = a.outbuild_project_id;
+
+-- Look-ahead tasks (2026-10-25). No project column of their own: gold attributes each to a
+-- project through its parent activity in sv_outbuild_activities, which already carries the
+-- current-schedule flag and the manual map. Unkeyed, so the test-project exclusion reaches
+-- these through that same join rather than here.
+CREATE OR REPLACE TEMPORARY VIEW sv_outbuild_tasks AS
+SELECT task_id, activity_id, task_name, start_date, end_date, progress, status,
+       is_weekly_commitment, created_at, updated_at
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_outbuild_tasks`;
+
+-- Procore meetings and the project directory's roles (2026-10-25, the Weekly Dashboard).
+-- Project-keyed, so the test-project exclusion applies to both.
+CREATE OR REPLACE TEMPORARY VIEW sv_meetings AS
+SELECT project_id, meeting_id, series_title, title, meeting_date, meeting_mode, occurred,
+       last_distributed_event, distributed_date, created_at, position
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_meetings`;
+
+CREATE OR REPLACE TEMPORARY VIEW sv_project_roles AS
+SELECT project_id, role_assignment_id, role_name, member_name, is_active
+FROM delta.`{CD_SILVER_ABFSS}/cd_silver_project_roles`;
 
 
 -- ---------------------------------------------------------------------------

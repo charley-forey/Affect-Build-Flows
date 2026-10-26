@@ -1,0 +1,15 @@
+priority,pattern,category,note
+1,template,Other,"[PROJECT NAME] ... Template series are templates, not meetings"
+2,test agenda,Other,Test Agenda and Minutes
+3,test test,Other,TEST TEST
+4,kickoff,Other,"kickoffs are one-off, not the weekly meeting"
+5,kick off,Other,
+6,kick-off,Other,
+7,oac,OAC,
+8,owner & client,OAC,
+9,trade partner,Trade Partner,
+10,subcontractor weekly,Trade Partner,
+11,subcontractor bi-weekly,Trade Partner,
+12,subcontractor biweekly,Trade Partner,
+13,trade coordination,Trade Partner,
+14,foreman meeting,Trade Partner,

@@ -148,6 +148,12 @@ SELECT
     m.is_current_schedule                                             AS is_current_schedule,
     m.project_stage                                                   AS project_stage,
     m.archive_reason                                                  AS archive_reason,
+    -- When a person last changed the activity (2026-10-25, for the Weekly Dashboard's
+    -- "monthly schedule update" check). Live edits fall in business hours (12:00-21:00 UTC),
+    -- unlike the project's schedules[].updated_at, which an Outbuild job rewrites at 02:10
+    -- UTC every night and so cannot say whether anyone touched the schedule.
+    CAST(get_json_object(a.payload, '$.created_at')       AS TIMESTAMP) AS created_at,
+    CAST(get_json_object(a.payload, '$.updated_at')       AS TIMESTAMP) AS updated_at,
     a._ingested_at, a._batch_id
 FROM cd_bronze_outbuild_activities a
 -- LEFT, not INNER: an activity whose schedule is not in /projects is a real gap and should
@@ -186,3 +192,38 @@ SELECT 'outbuild_schedule_map',
        payload, _batch_id
 FROM cd_bronze_outbuild_projects
 WHERE get_json_object(payload, '$.schedules[0]') IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- Look-ahead tasks - the 3-week look-ahead the superintendent plans under each activity
+-- ---------------------------------------------------------------------------
+--
+-- Added 2026-10-25 for the Weekly Dashboard's "3WLA going out once per week" check
+-- (Scorecard.xlsx, Field Ops). A task carries no project or schedule of its own: the route
+-- is parent_activity_id -> cd_silver_outbuild_activities -> schedule -> project, joined in
+-- gold so the current-schedule rule lives in one place.
+--
+-- Progress is 0-100 on the wire (checked live: Done = 100, Waiting 0-100), normalised to the
+-- same 0-1 fraction as activities. updated_at is a person's edit (business hours, like the
+-- activities); it is the ONLY record of the look-ahead being worked - Outbuild keeps no
+-- history, so a past week's update cannot be recovered once a later one overwrites it.
+CREATE OR REPLACE TABLE cd_silver_outbuild_tasks AS
+SELECT
+    CAST(get_json_object(payload, '$.id')                 AS STRING)  AS task_id,
+    CAST(get_json_object(payload, '$.parent_activity_id') AS STRING)  AS activity_id,
+    TRIM(get_json_object(payload, '$.name'))                          AS task_name,
+    CAST(get_json_object(payload, '$.start_date')         AS DATE)    AS start_date,
+    CAST(get_json_object(payload, '$.end_date')           AS DATE)    AS end_date,
+    CAST(get_json_object(payload, '$.progress')    AS DOUBLE) / 100.0 AS progress,
+    TRIM(get_json_object(payload, '$.status'))                        AS status,
+    CAST(get_json_object(payload, '$.weekly_commitment')  AS BOOLEAN) AS is_weekly_commitment,
+    CAST(get_json_object(payload, '$.created_at')         AS TIMESTAMP) AS created_at,
+    CAST(get_json_object(payload, '$.updated_at')         AS TIMESTAMP) AS updated_at,
+    _ingested_at, _batch_id
+FROM cd_bronze_outbuild_tasks
+WHERE get_json_object(payload, '$.id') IS NOT NULL;
+
+DELETE FROM cd_dq_rejects WHERE target_table = 'cd_silver_outbuild_tasks';
+INSERT INTO cd_dq_rejects
+SELECT 'cd_silver_outbuild_tasks', 'missing id', payload, _batch_id
+FROM cd_bronze_outbuild_tasks
+WHERE get_json_object(payload, '$.id') IS NULL;

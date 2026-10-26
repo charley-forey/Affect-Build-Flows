@@ -44,10 +44,13 @@ endpoints:
     key: id
     consumed: true
 
+  # The 3-week look-ahead, read by silver since 2026-10-25 (cd_silver_outbuild_tasks) for
+  # the Weekly Dashboard's "3WLA going out once per week" check.
   - name: tasks
     path: /tasks
     bronze_table: cd_bronze_outbuild_tasks
     key: id
+    consumed: true
 
   # Weekly commitments - the lookahead plan. Feeds "critical missed starts", which the
   # workbook computes by hand.

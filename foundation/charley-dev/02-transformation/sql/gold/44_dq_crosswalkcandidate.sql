@@ -12,12 +12,21 @@
 --
 -- CD-ONLY (reads sv_sage_jobs): listed in deploy_gold.GOLD_CD_ONLY.
 
+-- SECOND JOBS (2026-10-25). A Procore project that is already mapped can still have an
+-- unmapped Sage job of the same name - Affect opens a new Sage job for a later phase or
+-- change scope (seen live 2026-10-25: a second same-name job with open AR beside the
+-- mapped one). Those are proposed too, under their own rule: the crosswalk holds
+-- one Sage job per project, so accepting one is a design change, not just a seed row.
+
 CREATE OR REPLACE TABLE dq_CrosswalkCandidate AS
 WITH p AS (
-    SELECT project_id, project_name, UPPER(TRIM(project_name)) AS n
-    FROM sv_projects
-    WHERE project_id NOT IN (SELECT procore_project_id FROM sv_project_crosswalk
-                             WHERE procore_project_id IS NOT NULL)
+    -- A join, not IN (subquery) in the SELECT list: Spark allows predicate subqueries only
+    -- in filters.
+    SELECT sp.project_id, sp.project_name, UPPER(TRIM(sp.project_name)) AS n,
+           xw.procore_project_id IS NOT NULL AS is_mapped
+    FROM sv_projects sp
+    LEFT JOIN (SELECT DISTINCT procore_project_id FROM sv_project_crosswalk
+               WHERE procore_project_id IS NOT NULL) xw ON xw.procore_project_id = sp.project_id
 ),
 j AS (
     SELECT sage_project_id, job_name, job_short_name
@@ -30,7 +39,8 @@ SELECT
     p.project_name                                 AS ProjectName,
     j.sage_project_id                              AS SageJobNumber,
     j.job_name                                     AS SageJobName,
-    CASE WHEN p.n = UPPER(TRIM(j.job_name)) THEN 'EXACT_NAME_JOB_NAME'
+    CASE WHEN p.is_mapped THEN 'EXACT_NAME_SECOND_SAGE_JOB'
+         WHEN p.n = UPPER(TRIM(j.job_name)) THEN 'EXACT_NAME_JOB_NAME'
          ELSE 'EXACT_NAME_SHORT_NAME' END          AS MatchRule,
     -- More than one candidate for either side means the name alone cannot decide.
     COUNT(*) OVER (PARTITION BY p.project_id) > 1

@@ -1,0 +1,114 @@
+table fct_ProjectPosition
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column CurrentContract
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CurrentContract
+
+	column OriginalContract
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: OriginalContract
+
+	column BilledToDateGross
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BilledToDateGross
+
+	column RetainageReceivable
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: RetainageReceivable
+
+	column UnpaidReceivables
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: UnpaidReceivables
+
+	column PaidToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PaidToDate
+
+	column CostsIncurred
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CostsIncurred
+
+	column UnpaidPayables
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: UnpaidPayables
+
+	column RetainagePayable
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: RetainagePayable
+
+	column ProjectedRevenue
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ProjectedRevenue
+
+	column ProjectedCost
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ProjectedCost
+
+	column ArOwedBalance
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ArOwedBalance
+
+	column ArOwedBalanceDays
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ArOwedBalanceDays
+
+	column InvoiceCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: InvoiceCount
+
+	column LastActivityDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: LastActivityDate
+		formatString: yyyy-mm-dd
+
+	column CashCollected
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CashCollected
+
+	column CashPaidOut
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CashPaidOut
+
+	column BilledPct
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BilledPct
+
+	column Phase
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Phase
+
+	column DashboardStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: DashboardStatus
+
+	partition fct_ProjectPosition = entity
+		mode: directLake
+		source
+			entityName: fct_projectposition
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -47,3 +47,16 @@ ref table dq_DataGap
 ref table dq_CrosswalkCandidate
 ref table meta_PipelineRun
 ref table fct_DailySnapshot
+ref table dim_DashPillar
+ref table dim_DashMetric
+ref table dim_DashBand
+ref table dim_DashSetting
+ref table dim_ReportWeek
+ref table fct_Inspection
+ref table fct_Meeting
+ref table fct_ProjectTeam
+ref table fct_ScheduleActivity
+ref table fct_LookaheadTask
+ref table fct_ProjectPosition
+ref table fct_MetricScore
+ref table fct_ProjectScore

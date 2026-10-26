@@ -1,0 +1,58 @@
+table fct_ProjectScore
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column WeeksAgo
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: WeeksAgo
+
+	column SchedulePillar
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: SchedulePillar
+
+	column BudgetPillar
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BudgetPillar
+
+	column SafetyPillar
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: SafetyPillar
+
+	column QualityPillar
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: QualityPillar
+
+	column GradeCoverage
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: GradeCoverage
+
+	column Grade
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Grade
+
+	column MeasuresBelowTarget
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: MeasuresBelowTarget
+
+	column WeakestPillar
+		dataType: string
+		summarizeBy: none
+		sourceColumn: WeakestPillar
+
+	partition fct_ProjectScore = entity
+		mode: directLake
+		source
+			entityName: fct_projectscore
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

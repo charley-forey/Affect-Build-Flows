@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import deploy as dp  # noqa: E402
 import scorecard  # noqa: E402
+import dashboard  # noqa: E402
 import deploy_seeds as ds  # noqa: E402
 from seedrunner import build  # noqa: E402
 
@@ -77,6 +78,12 @@ MODEL_TABLES = [
     # Saved point-in-time KPIs, one row-set per passing nightly run. The only honest source
     # for "as of month X": every other fact is current state.
     "fct_DailySnapshot",
+    # The Weekly Dashboard (2026-10-21 call): its scorecard config, its reporting weeks, and
+    # the records behind the v1 measures. Config and weeks are disconnected, like the
+    # scorecard tables - measures read them explicitly (dashboard.py).
+    "dim_DashPillar", "dim_DashMetric", "dim_DashBand", "dim_DashSetting", "dim_ReportWeek",
+    "fct_Inspection", "fct_Meeting", "fct_ProjectTeam", "fct_ScheduleActivity", "fct_LookaheadTask",
+    "fct_ProjectPosition", "fct_MetricScore", "fct_ProjectScore",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -144,6 +151,16 @@ RELATIONSHIPS = [
     # by NewCostCode / NewDivisionCode with no fan-out and no second path to the facts.
     # Only UNASSIGNED has no crosswalk row; it reads as (Blank) under the new division.
     ("dim_CostCode", "CostCodeKey", "dim_CostCodeCrosswalk", "CostCodeKey"),
+    # Weekly Dashboard facts: project only. Their dates are compared against the selected
+    # report week inside the measures, never through dim_Date.
+    ("fct_Inspection", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_Meeting", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_ProjectTeam", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_ScheduleActivity", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_LookaheadTask", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_ProjectPosition", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_MetricScore", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_ProjectScore", "ProjectKey", "dim_Project", "ProjectKey"),
 ]
 
 # Inactive: reachable only through USERELATIONSHIP in a measure. fct_Invoice already reaches
@@ -745,7 +762,7 @@ MEASURES = [
     # and "January 2015 - December 2035" on a printed page implied data out to 2035.
     ("Report Month Label", REPORT_MONTH_LABEL_DAX,
      None, "DASHBOARD!AU4 - the month anchor, now driven by the slicer"),
-] + SNAPSHOT_MEASURES + scorecard.measures()
+] + SNAPSHOT_MEASURES + scorecard.measures() + dashboard.measures()
 
 
 # Field-list folders. Forward-filled: a measure inherits the folder of the last section
@@ -775,6 +792,13 @@ FOLDER_STARTS = [
     ("Score - Accounts Receivable", "12 Scorecard"),
     ("Last Refresh", "00 Report context"),
     ("Open Submittals (Month End)", "16 Month-end snapshots"),
+    # The Weekly Dashboard (dashboard.py), in its own section order.
+    ("Report Week End", "20 Dashboard - week & status"),
+    ("Cash - Billings To Date", "21 Dashboard - budget drivers"),
+    ("OAC Weeks Missed", "22 Dashboard - schedule & site drivers"),
+    ("Metric Score - Cash Position", "23 Dashboard - scorecard"),
+    ("Team Initials", "24 Dashboard - project page"),
+    ("Revenue YTD", "25 Dashboard - executive"),
 ]
 
 
@@ -831,7 +855,8 @@ def introspect(lakehouse_id: str | None = None) -> dict[str, list[tuple[str, str
 
 # Month labels sort by their number, not alphabetically ("Apr 2024, Aug 2024, Dec 2024").
 # Without this the S-curve zig-zags and the month slicer lists 250 months out of order.
-SORT_BY = {("dim_Date", "MonthYear"): "MonthYearSort", ("dim_Date", "MonthName"): "Month",
+SORT_BY = {("dim_ReportWeek", "WeekLabel"): "WeeksAgo",  # newest week first in the slicer
+           ("dim_Date", "MonthYear"): "MonthYearSort", ("dim_Date", "MonthName"): "Month",
            # Scorecard categories in the workbook's order, not A-Z.
            ("dim_ScorecardWeight", "CategoryName"): "SortOrder"}
 

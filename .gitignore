@@ -53,3 +53,11 @@ foundation/charley-dev/_docs/budget-grain-evidence.json
 foundation/charley-dev/_docs/candidate-monthly-dax-evidence.json
 foundation/charley-dev/_docs/candidate-qc-dax-evidence.json
 foundation/charley-dev/_docs/procore-repair-spark-jobs.json
+
+# Client source material: kept local, never in this public repo (2026-10-25)
+/COST CODE_WBS MASTER.xlsx
+/Sage Cost Codes*.PDF
+meeting-notes/Dashboard_Info/
+meeting-notes/Dashboard_Info.zip
+meeting-notes/Oct 21 at 07-57.txt
+foundation/charley-dev/_local/independent.json

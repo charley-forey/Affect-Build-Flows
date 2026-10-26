@@ -95,6 +95,8 @@ built = []
         "seed_ProjectCrosswalk": 17, "seed_ProjectExclusion": 4, "seed_OutbuildProjectMap": 2,
         "seed_CostCodeNew": 291, "seed_CostCodeMap": 318, "seed_CostCodeLegacyMap": 156,
         "seed_PublicHoliday": 36,
+        "dim_DashPillar": 5, "dim_DashMetric": 17, "dim_DashBand": 41, "dim_DashSetting": 13,
+        "seed_InspectionCategory": 18, "seed_MeetingCategory": 14,
     }
     cells.append(
         cell(
@@ -117,6 +119,12 @@ total = spark.sql(
 print(f"\\n  scorecard weights sum to {{total}}")
 if float(total) != 1.0:
     bad.append(f"scorecard weights sum to {{total}}, not 1.00")
+# Same guard for the Weekly Dashboard's pillar weights (schedule 50, budget 30, safety 15,
+# quality 5): a mistyped CSV weight would silently rescale every grade.
+dash = spark.sql("SELECT ROUND(SUM(Weight), 6) AS w FROM dim_DashPillar").collect()[0]["w"]
+print(f"  dashboard pillar weights sum to {{dash}}")
+if float(dash) != 1.0:
+    bad.append(f"dashboard pillar weights sum to {{dash}}, not 1.00")
 
 # Persist the outcome before raising. The Fabric jobs API reports only "statement
 # execution failures" with no detail, so without this a failed check is indistinguishable

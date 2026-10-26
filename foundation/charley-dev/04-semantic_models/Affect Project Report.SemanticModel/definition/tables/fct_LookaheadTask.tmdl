@@ -1,0 +1,68 @@
+table fct_LookaheadTask
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column TaskKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TaskKey
+
+	column ActivityKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityKey
+
+	column TaskName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: TaskName
+
+	column StartDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: StartDate
+		formatString: yyyy-mm-dd
+
+	column FinishDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: FinishDate
+		formatString: yyyy-mm-dd
+
+	column PercentComplete
+		dataType: double
+		summarizeBy: none
+		sourceColumn: PercentComplete
+		formatString: 0%
+
+	column StatusLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusLabel
+
+	column IsWeeklyCommitment
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsWeeklyCommitment
+
+	column CreatedAt
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CreatedAt
+		formatString: yyyy-mm-dd
+
+	column UpdatedAt
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: UpdatedAt
+		formatString: yyyy-mm-dd
+
+	partition fct_LookaheadTask = entity
+		mode: directLake
+		source
+			entityName: fct_lookaheadtask
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

@@ -206,6 +206,38 @@ relationship rel_51_dim_CostCode_dim_CostCodeCrosswalk_CostCodeKey
 	fromColumn: dim_CostCode.CostCodeKey
 	toColumn: dim_CostCodeCrosswalk.CostCodeKey
 
+relationship rel_52_fct_Inspection_dim_Project_ProjectKey
+	fromColumn: fct_Inspection.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_53_fct_Meeting_dim_Project_ProjectKey
+	fromColumn: fct_Meeting.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_54_fct_ProjectTeam_dim_Project_ProjectKey
+	fromColumn: fct_ProjectTeam.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_55_fct_ScheduleActivity_dim_Project_ProjectKey
+	fromColumn: fct_ScheduleActivity.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_56_fct_LookaheadTask_dim_Project_ProjectKey
+	fromColumn: fct_LookaheadTask.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_57_fct_ProjectPosition_dim_Project_ProjectKey
+	fromColumn: fct_ProjectPosition.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_58_fct_MetricScore_dim_Project_ProjectKey
+	fromColumn: fct_MetricScore.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_59_fct_ProjectScore_dim_Project_ProjectKey
+	fromColumn: fct_ProjectScore.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
 relationship rel_inactive_fct_Invoice_dim_Date_PaidDate
 	isActive: false
 	fromColumn: fct_Invoice.PaidDate

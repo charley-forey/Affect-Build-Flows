@@ -442,3 +442,29 @@ endpoints:
 
   # schedule REMOVED 2026-09-13: it is schedule integration metadata, not tasks; 403/404
   # on one project nightly, and nothing reads it (milestones come from Outbuild).
+
+  # ==========================================================================
+  # Weekly Dashboard (2026-10-21 call) - meeting discipline and the project team.
+  # Both verified live 2026-10-25: 200 on every active project (probe notebook, GET only).
+  # Not in combined cheatsheet; paths from resources/procore/combined_OAS.json.
+  # ==========================================================================
+
+  # OAC and trade partner meetings: "agenda sent at least 24 hours in advance and minutes
+  # sent out within 24 hours after" (Scorecard.xlsx, Field Ops). The response is one record
+  # per meeting SERIES ({group_title, meetings: [...]}); procore_scope.normalize_records
+  # flattens it to one row per meeting with the series title in _source_group.
+  # Full reload: the list documents no updated_at filter, and a whole project's meetings is
+  # one or two pages.
+  - name: meetings
+    path: /rest/v1.0/meetings?project_id={project_id}
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_meetings               # combined_OAS.json /rest/v1.0/meetings
+
+  # The project team (PM, APM, Superintendent, Assistant Superintendent) for the Portfolio
+  # page's TEAM column - "Initials of: PM, APM, Super, Asst Super from Procore".
+  - name: project_roles
+    path: /rest/v1.0/project_roles?project_id={project_id}
+    scope: project
+    api_version: "1.0"
+    bronze_table: cd_bronze_procore_project_roles          # combined_OAS.json /rest/v1.0/project_roles

@@ -175,6 +175,28 @@ BRONZE = {
                           "progress": 0, "duration": 90, "is_critical": True,
                           "activity_type": "task"}),
     ],
+    # Look-ahead tasks (2026-10-25): progress 0-100 on the wire like activities; the
+    # weekly_commitment flag arrives as the STRING 'False'.
+    "cd_bronze_outbuild_tasks": [
+        bronze_row("T1", {"id": 6619474, "name": " Nanawall Training ", "parent_activity_id": 14971,
+                          "start_date": "2027-02-16T07:00:00.000", "end_date": "2027-02-16T15:00:00.000",
+                          "progress": 50, "status": "Waiting", "weekly_commitment": "False",
+                          "created_at": "2026-05-29T21:05:33.402Z", "updated_at": "2026-10-23T19:39:52.459Z"}),
+    ],
+    # Meetings arrive already flattened by procore_scope (one row per meeting, series in
+    # _source_group). distributed_at carries the SENDER'S offset: 8:30pm Eastern on the 3rd
+    # is the 4th in UTC, and the local date must stay the 3rd.
+    "cd_bronze_procore_meetings": [
+        bronze_row("MT1", {"id": 562949955888639, "title": "11 Essex OAC Meeting", "meeting_date": "2026-06-04",
+                           "mode": "minutes", "occurred": True, "last_distributed_event": "minutes",
+                           "distributed_at": "2026-06-03T20:30:00-04:00", "created_at": "2026-06-03T20:55:27Z",
+                           "position": 73, "meeting_topics_count": 14,
+                           "_source_group": {"group_title": "11 Essex OAC Meeting"}}, project_id="7"),
+    ],
+    "cd_bronze_procore_project_roles": [
+        bronze_row("PR1", {"id": 91, "role": "Project Manager", "name": " Alex Example ", "is_active": True,
+                           "user_id": 5, "contact_id": None, "project_id": 7}, project_id="7"),
+    ],
     "cd_bronze_procore_observations": [
         bronze_row("O1", {"id": "O1", "number": "1", "name": "  Missing guardrail  ",
                           "type": {"name": "Safety"}, "category": {"name": "Fall"},
@@ -1304,6 +1326,27 @@ def test_outbuild_parser(con) -> None:
     check("the manual Outbuild map fills a NULL procore_id and never overrides a native one")
 
 
+def test_dashboard_sources(con) -> None:
+    """28_meetings_team_silver.sql and the look-ahead tasks (Weekly Dashboard, 2026-10-25)."""
+    assert con.execute("SELECT task_id, activity_id, task_name, progress, is_weekly_commitment "
+                       "FROM cd_silver_outbuild_tasks").fetchall() == [
+        ("6619474", "14971", "Nanawall Training", 0.5, False)]
+    check("look-ahead tasks land with their parent activity, progress as a 0-1 fraction")
+
+    assert con.execute("SELECT project_id, meeting_id, series_title, meeting_date, meeting_mode, occurred, "
+                       "last_distributed_event, distributed_date FROM cd_silver_meetings").fetchall() == [
+        ("7", "562949955888639", "11 Essex OAC Meeting", date(2026, 6, 4), "minutes", True,
+         "minutes", date(2026, 6, 3))]
+    check("a meeting keeps its series title, and the distribution date is the sender's local date")
+
+    assert con.execute("SELECT project_id, role_name, member_name, is_active "
+                       "FROM cd_silver_project_roles").fetchall() == [("7", "Project Manager", "Alex Example", True)]
+    check("project roles land trimmed, one row per person per role")
+
+    assert one(con, "SELECT updated_at FROM cd_silver_outbuild_activities WHERE activity_id = '14971'") is None
+    check("an activity with no updated_at on the wire lands NULL, never a guessed timestamp")
+
+
 def test_sage_parser(con) -> None:
     """The Sage transforms, pinned on the facts that were expensive to learn."""
     # THE JOIN KEY. Every fixture line carries invrec = 999, which matches no header. If a
@@ -1454,7 +1497,7 @@ def main() -> int:
     con = build()
     for fn in (test_parsing, test_sentinel_dates, test_rejects, test_submittal_dates, test_rfis,
                test_column_contract, test_billing_and_costs, test_fieldops, test_vendor_costcode_and_insurance, test_commitments,
-               test_manual_parsers, test_qc_procore_parser, test_outbuild_parser,
+               test_manual_parsers, test_qc_procore_parser, test_outbuild_parser, test_dashboard_sources,
                test_sage_parser, test_sage_reconciliation, test_manual_reject_conservation,
                test_new_reject_arms):
         fn(con)

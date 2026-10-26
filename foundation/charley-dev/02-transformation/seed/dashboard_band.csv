@@ -1,0 +1,42 @@
+metric_key,min_value,max_value,score_at_min,score_at_max,band_label,source
+101,1.0,,1.00,1.00,">= 100%",Scorecard.xlsx
+101,0.9,1.0,0.70,0.80,"90-100%: cash position % less 20 points",Scorecard.xlsx
+101,,0.9,0.00,0.00,"< 90%",Scorecard.xlsx
+102,0,,1.00,1.00,"At or above target",PROPOSED - not in Scorecard.xlsx
+102,-0.025,0,0.75,0.75,"Up to 2.5 points below target",PROPOSED - not in Scorecard.xlsx
+102,-0.05,-0.025,0.50,0.50,"2.5-5 points below target",PROPOSED - not in Scorecard.xlsx
+102,-0.10,-0.05,0.25,0.25,"5-10 points below target",PROPOSED - not in Scorecard.xlsx
+102,,-0.10,0.00,0.00,"More than 10 points below target",PROPOSED - not in Scorecard.xlsx
+103,,30,1.00,1.00,"1-30 days",Scorecard.xlsx
+103,30,60,0.75,0.75,"30-60 days",Scorecard.xlsx
+103,60,90,0.50,0.50,">60-90 days",Scorecard.xlsx
+103,90,,0.00,0.00,">90 days",Scorecard.xlsx
+201,,1,1.00,1.00,"Misses 0",Scorecard.xlsx
+201,1,2,0.75,0.75,"Misses 1",Scorecard.xlsx
+201,2,,0.00,0.00,"Misses 2 or more",Scorecard.xlsx
+202,,1,1.00,1.00,"Misses 0",Scorecard.xlsx
+202,1,2,0.75,0.75,"Misses 1",Scorecard.xlsx
+202,2,,0.00,0.00,"Misses 2 or more",Scorecard.xlsx
+203,,8,1.00,1.00,"Updated in the last 7 days",Scorecard.xlsx (pass/fail)
+203,8,,0.00,0.00,"Not updated in the last 7 days",Scorecard.xlsx (pass/fail)
+204,,32,1.00,1.00,"Updated in the last month",Scorecard.xlsx (pass/fail)
+204,32,,0.00,0.00,"Not updated in the last month",Scorecard.xlsx (pass/fail)
+205,,0,1.00,1.00,"On or ahead of baseline",Scorecard.xlsx
+205,0,1,1.00,0.00,"100% less the variance %",Scorecard.xlsx
+205,1,,0.00,0.00,"Late by the baseline duration or more",Scorecard.xlsx
+206,,1,1.00,1.00,"0 overdue",Scorecard.xlsx
+206,1,3,0.80,0.80,"1-2 overdue",Scorecard.xlsx
+206,3,6,0.60,0.60,"3-5 overdue",Scorecard.xlsx
+206,6,11,0.25,0.25,"6-10 overdue",Scorecard.xlsx
+206,11,,0.00,0.00,">10 overdue",Scorecard.xlsx
+207,,1,1.00,1.00,"0 outstanding",Scorecard.xlsx
+207,1,4,0.80,0.80,"1-3 outstanding",Scorecard.xlsx
+207,4,6,0.60,0.60,"4-5 outstanding",Scorecard.xlsx
+207,6,11,0.25,0.25,"6-10 outstanding",Scorecard.xlsx
+207,11,,0.00,0.00,">10 outstanding",Scorecard.xlsx
+301,0,5,0.00,0.80,"Below 5: 16% less for each one short",Scorecard.xlsx
+301,5,10,0.80,1.00,"5 or more: 80% plus 4% for each additional",Scorecard.xlsx
+301,10,,1.00,1.00,"10 or more",Scorecard.xlsx
+401,0,5,0.00,0.80,"Below 5: 16% less for each one short",Scorecard.xlsx
+401,5,10,0.80,1.00,"5 or more: 80% plus 4% for each additional",Scorecard.xlsx
+401,10,,1.00,1.00,"10 or more",Scorecard.xlsx

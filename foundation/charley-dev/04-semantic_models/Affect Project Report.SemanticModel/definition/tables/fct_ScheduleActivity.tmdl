@@ -1,0 +1,100 @@
+table fct_ScheduleActivity
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column ActivityKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityKey
+
+	column ActivityName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityName
+
+	column ActivityType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ActivityType
+
+	column IsSummary
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsSummary
+
+	column IsMilestone
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsMilestone
+
+	column StartDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: StartDate
+		formatString: yyyy-mm-dd
+
+	column FinishDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: FinishDate
+		formatString: yyyy-mm-dd
+
+	column BaselineStart
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BaselineStart
+		formatString: yyyy-mm-dd
+
+	column BaselineFinish
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: BaselineFinish
+		formatString: yyyy-mm-dd
+
+	column PercentComplete
+		dataType: double
+		summarizeBy: none
+		sourceColumn: PercentComplete
+		formatString: 0%
+
+	column DurationDays
+		dataType: double
+		summarizeBy: none
+		sourceColumn: DurationDays
+
+	column IsCritical
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsCritical
+
+	column IsComplete
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsComplete
+
+	column FinishVarianceDays
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: FinishVarianceDays
+
+	column CreatedAt
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: CreatedAt
+		formatString: yyyy-mm-dd
+
+	column UpdatedAt
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: UpdatedAt
+		formatString: yyyy-mm-dd
+
+	partition fct_ScheduleActivity = entity
+		mode: directLake
+		source
+			entityName: fct_scheduleactivity
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

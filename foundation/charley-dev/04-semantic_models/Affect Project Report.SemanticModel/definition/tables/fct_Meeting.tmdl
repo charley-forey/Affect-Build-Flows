@@ -1,0 +1,90 @@
+table fct_Meeting
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column MeetingKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MeetingKey
+
+	column SeriesTitle
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SeriesTitle
+
+	column Title
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Title
+
+	column MeetingType
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MeetingType
+
+	column MeetingDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: MeetingDate
+		formatString: yyyy-mm-dd
+
+	column MeetingMode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MeetingMode
+
+	column HasOccurred
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: HasOccurred
+
+	column LastDistributedEvent
+		dataType: string
+		summarizeBy: none
+		sourceColumn: LastDistributedEvent
+
+	column DistributedDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: DistributedDate
+		formatString: yyyy-mm-dd
+
+	column IsDuplicateDate
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsDuplicateDate
+
+	column MinutesOnTime
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: MinutesOnTime
+
+	column AgendaOnTime
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: AgendaOnTime
+
+	column IsCompliant
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsCompliant
+
+	column AgendaStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: AgendaStatus
+
+	column MinutesStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MinutesStatus
+
+	partition fct_Meeting = entity
+		mode: directLake
+		source
+			entityName: fct_meeting
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

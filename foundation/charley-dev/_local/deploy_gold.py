@@ -88,7 +88,8 @@ statements = split_statements
 # The gold SQL stays byte-identical across both sources. Only the SELECTION differs, which
 # is what --source has always been for.
 GOLD_CD_ONLY = ("13_dim_job.sql", "33_fct_qc.sql", "34_fct_apinvoice.sql","40_man_tables.sql",
-                "41_man_qc_tables.sql", "44_dq_crosswalkcandidate.sql", "45_dq_datagap.sql")
+                "41_man_qc_tables.sql", "44_dq_crosswalkcandidate.sql", "45_dq_datagap.sql",
+                "46_dashboard_facts.sql", "47_dashboard_score.sql")
 
 
 def gold_files(source: str = "cd") -> list[Path]:
@@ -303,14 +304,19 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           # zero gaps is the goal, not a failed build.
           "dq_DataGap",
           # Proposed Procore<->Sage pairs; empty once every name match is reviewed.
-          "dq_CrosswalkCandidate"]
+          "dq_CrosswalkCandidate",
+          # The Weekly Dashboard (46_dashboard_facts.sql). fct_LookaheadTask is exempt from
+          # the empty guard: a portfolio that plans no look-ahead in Outbuild is real.
+          "fct_Inspection", "fct_Meeting", "fct_ProjectTeam", "fct_ScheduleActivity",
+          "fct_LookaheadTask", "dim_ReportWeek", "fct_ProjectPosition",
+          "fct_MetricScore", "fct_ProjectScore"]
 
 counts, bad = {}, []
 for t in tables + manual_tables:
     n = spark.sql(f"SELECT COUNT(*) AS n FROM {t}").collect()[0]["n"]
     counts[t] = n
     print(f"  {t:<24} {n:>7} rows")
-    if t in tables and n == 0 and t not in ("dq_DataGap", "dq_CrosswalkCandidate"):
+    if t in tables and n == 0 and t not in ("dq_DataGap", "dq_CrosswalkCandidate", "fct_LookaheadTask"):
         bad.append(f"{t} is EMPTY")
     if t in loaded and n != loaded[t]:
         bad.append(f"{t}: materialisation changed row count from {loaded[t]} to {n}")
@@ -373,7 +379,9 @@ for t in tables + ["dim_Date", "dim_Trade", "dim_Status", "dim_Owner",
                    # so they are readable here - but they are not in `tables`, because the
                    # seed runner already asserts their row counts.
                    "qc_seed_Trade", "qc_seed_TradeAlias", "qc_seed_ChecklistItem",
-                   "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus"] + manual_tables:
+                   "qc_seed_Gate", "qc_seed_DohItem", "dim_QcStatus",
+                   # Weekly Dashboard scorecard seeds, read by the model.
+                   "dim_DashPillar", "dim_DashMetric", "dim_DashBand", "dim_DashSetting"] + manual_tables:
     schema[t] = [(f.name, f.dataType.simpleString()) for f in spark.table(t).schema.fields]
 
 # GATE-WRITTEN TABLES. The DQ gate writes these after this notebook - so on a brand-new

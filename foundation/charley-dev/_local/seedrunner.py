@@ -241,8 +241,10 @@ SOURCE_FIXTURES = (
     # P2's name in different case and padding - the one exact-name candidate. S999 carries
     # AR (INV3) and AP with no mapping, so it must surface as a job-level gap in BOTH
     # directions. AP3 has no job at all. S100 is mapped, so neither its AP nor its name may appear.
+    # S101 is an unmapped second job named like P1, which is mapped - a second-job candidate.
     """CREATE OR REPLACE VIEW sv_sage_jobs AS SELECT * FROM (VALUES
         ('S100', 'Tower A', 'TWRA', '501', 'Brooklyn', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
+        ('S101', 'TOWER A', 'TWRA2', '501', 'Brooklyn', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
         ('S200', 'Depot B warehouse', ' depot b ', '502', 'Queens', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0),
         ('S999', 'Office', 'OFFICE', '1', 'Brooklyn', 'NY', 4, NULL, NULL, NULL, 0.0, 0.0)
     ) AS t(sage_project_id, job_name, job_short_name, client_id, city, state,
@@ -422,17 +424,54 @@ SOURCE_FIXTURES = (
     # finish would become the project's Scheduled Finish (2026-10-16 live defect).
     """CREATE OR REPLACE VIEW sv_outbuild_activities AS SELECT * FROM (VALUES
         ('P1','A1','Foundation complete', DATE '2025-05-01', DATE '2025-06-30', 0.5, 60.0, TRUE,  'Task','In Progress',
-         DATE '2025-05-01', DATE '2025-06-20', 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR)),
+         DATE '2025-05-01', DATE '2025-06-20', 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR),
+         TIMESTAMP '2025-04-01 14:00:00', TIMESTAMP '2025-06-02 15:30:00'),
         ('P1','A2','Non-critical task',   DATE '2025-05-01', DATE '2025-06-30', 0.2, 60.0, FALSE, 'Task','In Progress',
-         DATE '2025-05-01', DATE '2025-06-30', 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR)),
+         DATE '2025-05-01', DATE '2025-06-30', 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR),
+         TIMESTAMP '2025-04-01 14:00:00', TIMESTAMP '2025-04-01 14:00:00'),
         ('P1','A3','Inverted dates',      DATE '2025-07-01', DATE '2025-06-01', 0.0, 10.0, TRUE,  'Task','Not Started',
-         CAST(NULL AS DATE), CAST(NULL AS DATE), 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR)),
+         CAST(NULL AS DATE), CAST(NULL AS DATE), 'OB1', 'S1', 'Contract Schedule', TRUE,  'started', CAST(NULL AS VARCHAR),
+         TIMESTAMP '2025-04-01 14:00:00', TIMESTAMP '2025-04-01 14:00:00'),
         ('P1','A4','Old draft finish',    DATE '2025-05-01', DATE '2027-01-01', 0.0, 90.0, TRUE,  'Task','Not Started',
-         DATE '2025-05-01', DATE '2026-01-01', 'OB1', 'S2', 'SU01 draft',        FALSE, 'started', CAST(NULL AS VARCHAR))
+         DATE '2025-05-01', DATE '2026-01-01', 'OB1', 'S2', 'SU01 draft',        FALSE, 'started', CAST(NULL AS VARCHAR),
+         TIMESTAMP '2025-03-01 14:00:00', TIMESTAMP '2025-03-01 14:00:00')
     ) AS t(project_id, activity_id, activity_name, start_date, end_date,
            progress, duration, is_critical, activity_type, status,
            baseline_start_date, baseline_end_date, outbuild_project_id, schedule_id,
-           schedule_name, is_current_schedule, project_stage, archive_reason)""",
+           schedule_name, is_current_schedule, project_stage, archive_reason,
+           created_at, updated_at)""",
+
+    # WEEKLY DASHBOARD (2026-10-25). Look-ahead tasks hang off A1 (current schedule) and A4
+    # (the superseded draft, which gold must drop). Meetings: an OAC with minutes on time but
+    # its agenda overwritten (unverifiable), a copied follow-up on the SAME date (duplicate),
+    # a trade partner meeting whose agenda went out on the day (late), and a template series.
+    """CREATE OR REPLACE VIEW sv_outbuild_tasks AS SELECT * FROM (VALUES
+        ('T1', 'A1', 'Pour slab',  DATE '2025-06-02', DATE '2025-06-03', 0.0, 'Waiting', FALSE,
+         TIMESTAMP '2025-05-20 14:00:00', TIMESTAMP '2025-05-28 16:00:00'),
+        ('T2', 'A4', 'Draft task', DATE '2025-06-02', DATE '2025-06-03', 0.0, 'Waiting', FALSE,
+         TIMESTAMP '2025-05-20 14:00:00', TIMESTAMP '2025-05-20 14:00:00')
+    ) AS t(task_id, activity_id, task_name, start_date, end_date, progress, status,
+           is_weekly_commitment, created_at, updated_at)""",
+
+    """CREATE OR REPLACE VIEW sv_meetings AS SELECT * FROM (VALUES
+        ('P1', 'M1', 'Tower OAC Meeting', 'Tower OAC Meeting', DATE '2025-05-06', 'minutes', TRUE,
+         'minutes', DATE '2025-05-07', TIMESTAMP '2025-05-05 15:00:00', 1),
+        ('P1', 'M2', 'Tower OAC Meeting', 'Tower OAC Meeting', DATE '2025-05-06', 'minutes', TRUE,
+         'minutes', DATE '2025-05-07', TIMESTAMP '2025-05-20 15:00:00', 2),
+        ('P1', 'M3', 'Weekly Trade Partner Meeting', 'Weekly Trade Partner Meeting', DATE '2025-05-08',
+         'minutes', TRUE, 'agenda', DATE '2025-05-08', TIMESTAMP '2025-05-07 12:00:00', 1),
+        ('P1', 'M4', '[PROJECT NAME] Kick Start Agenda Template', 'Template', DATE '2025-05-09',
+         'agenda', FALSE, CAST(NULL AS VARCHAR), CAST(NULL AS DATE), TIMESTAMP '2025-05-01 12:00:00', 1)
+    ) AS t(project_id, meeting_id, series_title, title, meeting_date, meeting_mode, occurred,
+           last_distributed_event, distributed_date, created_at, position)""",
+
+    """CREATE OR REPLACE VIEW sv_project_roles AS SELECT * FROM (VALUES
+        ('P1', 'R1', 'Project Manager', 'Alex Example', TRUE),
+        ('P1', 'R2', 'Superintendent', 'Sam Q Sample', TRUE),
+        ('P1', 'R3', 'Architect', 'Not On Team', TRUE),
+        ('P1', 'R4', 'Project Executive', 'Former Exec', FALSE)
+    ) AS t(project_id, role_assignment_id, role_name, member_name, is_active)""",
+
 
     # ----------------------------------------------------------------------
     # MANUAL INPUT. One row each, and that is the point: before these existed the gold

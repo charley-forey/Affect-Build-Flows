@@ -1,0 +1,48 @@
+table fct_MetricScore
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column WeeksAgo
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: WeeksAgo
+
+	column MetricKey
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: MetricKey
+
+	column PillarKey
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: PillarKey
+
+	column Driver
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Driver
+
+	column Applies
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: Applies
+
+	column Score
+		dataType: double
+		summarizeBy: none
+		sourceColumn: Score
+
+	column BandLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BandLabel
+
+	partition fct_MetricScore = entity
+		mode: directLake
+		source
+			entityName: fct_metricscore
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

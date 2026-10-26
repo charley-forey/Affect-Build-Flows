@@ -1,0 +1,38 @@
+table fct_ProjectTeam
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column RoleAssignmentKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RoleAssignmentKey
+
+	column RoleName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RoleName
+
+	column RoleCode
+		dataType: string
+		summarizeBy: none
+		sourceColumn: RoleCode
+
+	column RoleOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: RoleOrder
+
+	column MemberName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: MemberName
+
+	partition fct_ProjectTeam = entity
+		mode: directLake
+		source
+			entityName: fct_projectteam
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

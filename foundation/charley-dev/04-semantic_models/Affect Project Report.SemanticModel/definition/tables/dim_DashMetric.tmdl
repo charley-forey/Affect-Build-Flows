@@ -1,0 +1,53 @@
+table dim_DashMetric
+
+	column MetricKey
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: MetricKey
+
+	column PillarKey
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: PillarKey
+
+	column Pillar
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Pillar
+
+	column Metric
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Metric
+
+	column Standard
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Standard
+
+	column Stages
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Stages
+
+	column Period
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Period
+
+	column Status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Status
+
+	column SortOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: SortOrder
+
+	partition dim_DashMetric = entity
+		mode: directLake
+		source
+			entityName: dim_dashmetric
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

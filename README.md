@@ -6,6 +6,15 @@ It brings Procore, Sage and Outbuild data through bronze, silver and gold layers
 Power BI models and reports. Manual registers provide information that source systems do
 not supply.
 
+## AFFECT Weekly Dashboard — October 25, 2026
+
+New report **AFFECT Weekly Dashboard** (Build workspace) from the Oct 21 session: the deck's
+Executive Dashboard, Project Portfolio | Status and Project Overview pages, plus a Grade Detail
+drill-through, scored on the v1 Scorecard.xlsx (schedule 50, budget 30, safety 15, quality 5).
+Procore meetings and project roles are now ingested; Outbuild look-ahead tasks reach silver.
+Definitions, data sources and the decisions Affect owes are in
+[weekly-dashboard.md](foundation/charley-dev/_docs/weekly-dashboard.md).
+
 ## Current state — October 5, 2026
 
 - **Nightly pipeline running again.** The `AffectKeyVault` subscription is enabled and its

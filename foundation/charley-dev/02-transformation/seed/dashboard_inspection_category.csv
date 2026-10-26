@@ -1,0 +1,19 @@
+priority,pattern,category,note
+1,safety,Safety,
+2,hseq,Safety,Risk & HSEQ Inspection
+3,ladder,Safety,
+4,excavation,Safety,
+5,trench,Safety,
+6,equipment pre-operation,Safety,
+7,swppp,Safety,stormwater
+8,scaffold,Safety,
+9,fall protection,Safety,
+10,fire watch,Safety,
+20,pre-pour,Quality,
+21,mock-up,Quality,
+22,benchmark,Quality,first-in-place QA
+23,delivery inspection,Quality,
+24,final inspection,Quality,elevator / FDNY finals
+25,special inspection,Quality,
+26,quality,Quality,
+27,qa/qc,Quality,

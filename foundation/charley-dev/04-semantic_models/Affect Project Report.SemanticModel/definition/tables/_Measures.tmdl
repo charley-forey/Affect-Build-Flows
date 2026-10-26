@@ -1277,6 +1277,1142 @@ table _Measures
 			UPPER ( LEFT ( T, 1 ) ) & LOWER ( SUBSTITUTE ( MID ( T, 2, 200 ), "_", " " ) ) )
 		displayFolder: 12 Scorecard
 
+	/// Replaces deck slide 3 - the time-window selection box, defaulting to current
+	measure 'Report Week End' =
+			VAR Picked = IF ( HASONEVALUE ( dim_ReportWeek[WeekEnd] ), VALUES ( dim_ReportWeek[WeekEnd] ) )
+			RETURN IF ( ISBLANK ( Picked ),
+			CALCULATE ( MAX ( dim_ReportWeek[WeekEnd] ), REMOVEFILTERS ( dim_ReportWeek ), dim_ReportWeek[WeeksAgo] = 1 ),
+			Picked )
+		formatString: "yyyy-mm-dd"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces the gold build date; today's balances are as of this day
+	measure 'Data As Of' = CALCULATE ( MAX ( dim_ReportWeek[AsOfDate] ), REMOVEFILTERS ( dim_ReportWeek ) )
+		formatString: "yyyy-mm-dd"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces derived
+	measure 'Report Window End' = MIN ( [Report Week End], [Data As Of] )
+		formatString: "yyyy-mm-dd"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces derived
+	measure 'Report Weeks Ago' = IF ( HASONEVALUE ( dim_ReportWeek[WeeksAgo] ), VALUES ( dim_ReportWeek[WeeksAgo] ), 1 )
+		formatString: "0"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces deck header - the week the page reports
+	measure 'Report Week Label' =
+			VAR E = [Report Week End]
+			VAR S = E - 6
+			VAR W = [Report Weeks Ago]
+			RETURN SWITCH ( W, 0, "This week", 1, "Last week", "Week" ) & "  "
+			& FORMAT ( S, "mmm d" ) & " - " & FORMAT ( E, "mmm d, yyyy" )
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces derived - one real project in context
+	measure 'Is Dashboard Project' =
+			VAR K = SELECTEDVALUE ( dim_Project[ProjectKey] )
+			RETURN NOT ISBLANK ( K ) && K <> "UNMATCHED"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces the current contract as of the build - the latest month with a value
+	measure 'Position Contract' = SUM ( fct_ProjectPosition[CurrentContract] )
+		formatString: "$#,0"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces deck slide 3 BILLED TO DATE - Procore owner pay apps (gross), else Sage AR
+	measure 'Billed To Date (Gross)' = SUM ( fct_ProjectPosition[BilledToDateGross] )
+		formatString: "$#,0"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces deck slide 3 BILLING PROGRESS; slide 2 'Determine phase based on Billed %'
+	measure 'Billed % Of Contract' = DIVIDE ( [Billed To Date (Gross)], [Position Contract] )
+		formatString: "0.0%"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces deck slide 2: <10% Precon, 10-95% Construction, >95% Closeout
+	measure 'Project Phase' =
+			VAR B = [Billed % Of Contract]
+			RETURN IF ( NOT ISBLANK ( B ), SWITCH ( TRUE (), B < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "phase_precon_below" ), "Precon",
+			B > CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "phase_closeout_from" ), "Closeout", "Construction" ) )
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces deck slide 2 CURRENT PHASE
+	measure 'Phase Label' = COALESCE ( [Project Phase], "Not supplied" )
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces derived - latest daily log, meeting, inspection, RFI/submittal or observation
+	measure 'Last Project Activity' = MAX ( fct_ProjectPosition[LastActivityDate] )
+		formatString: "yyyy-mm-dd"
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces Oct 21 call: archived once 100% paid; Active = recent Procore activity (proposed 60 days)
+	measure 'Dashboard Status' =
+			VAR K = SELECTEDVALUE ( dim_Project[ProjectKey] )
+			RETURN IF ( NOT ISBLANK ( K ) && K <> "UNMATCHED", SELECTEDVALUE ( fct_ProjectPosition[DashboardStatus] ) )
+		displayFolder: 20 Dashboard - week & status
+
+	/// Replaces Cash Position formula: Billings to Date
+	measure 'Cash - Billings To Date' = [Billed To Date (Gross)]
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula: Retainage Receivable (Procore owner pay apps)
+	measure 'Cash - Retainage Receivable' = SUM ( fct_ProjectPosition[RetainageReceivable] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula: Unpaid Receivables (billed, not collected - Sage AR)
+	measure 'Cash - Unpaid Receivables' = SUM ( fct_ProjectPosition[UnpaidReceivables] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula: Costs Incurred (Procore job-to-date cost)
+	measure 'Cash - Costs Incurred' = SUM ( fct_ProjectPosition[CostsIncurred] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula: Unpaid Payables (Sage AP job cost)
+	measure 'Cash - Unpaid Payables' = SUM ( fct_ProjectPosition[UnpaidPayables] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula: Retainage Payable to Subs (Procore requisitions)
+	measure 'Cash - Retainage Payable' = SUM ( fct_ProjectPosition[RetainagePayable] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula, inflow half
+	measure 'Cash Collected' =
+			VAR B = [Cash - Billings To Date]
+			RETURN IF ( NOT ISBLANK ( B ), B - [Cash - Retainage Receivable] - [Cash - Unpaid Receivables] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position formula, outflow half
+	measure 'Cash Paid Out' =
+			VAR C = [Cash - Costs Incurred]
+			RETURN IF ( NOT ISBLANK ( C ), C - [Cash - Unpaid Payables] - [Cash - Retainage Payable] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Cash Position = Billings - Retainage Receivable - Unpaid Receivables - (Costs Incurred - Unpaid Payables - Retainage Payable) - Chris, 2026-10-22
+	measure 'Cash Position' =
+			VAR I = [Cash Collected]
+			VAR O = [Cash Paid Out]
+			RETURN IF ( NOT ISBLANK ( I ) && NOT ISBLANK ( O ), I - O )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Scorecard.xlsx Cash Position % - collected over paid
+	measure 'Cash Collected / Paid' =
+			VAR I = [Cash Collected]
+			VAR O = [Cash Paid Out]
+			RETURN IF ( O > 0, DIVIDE ( I, O ), IF ( NOT ISBLANK ( I ) && NOT ISBLANK ( O ) && I >= 0, 1 ) )
+		formatString: "0%"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Procore revised budget, which carries the CM fee and so equals contract revenue
+	measure 'Projected Revenue' = SUM ( fct_ProjectPosition[ProjectedRevenue] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Procore forecast final cost, CM fee excluded
+	measure 'Projected Cost' = SUM ( fct_ProjectPosition[ProjectedCost] )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Scorecard.xlsx Profitability (Gross) - DEFINITION TO CONFIRM with Affect
+	measure 'Projected Gross Margin %' =
+			VAR R = [Projected Revenue]
+			RETURN IF ( R > 0, DIVIDE ( R - [Projected Cost], R ) )
+		formatString: "0.0%"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Oct 21 call: 12.5%, 13% from the end of Q1 - dim_DashSetting
+	measure 'Gross Margin Target' = CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "gross_margin_target" )
+		formatString: "0.0%"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces derived - points above (+) or below (-) target
+	measure 'Margin vs Target' =
+			VAR M = [Projected Gross Margin %]
+			RETURN IF ( NOT ISBLANK ( M ), M - [Gross Margin Target] )
+		formatString: "+0.0%;-0.0%;0.0%"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Scorecard.xlsx Aging Balance - days, balance-weighted
+	measure 'AR Weighted Age Days' =
+			VAR Bal = SUM ( fct_ProjectPosition[ArOwedBalance] )
+			RETURN IF ( Bal > 0, DIVIDE ( SUM ( fct_ProjectPosition[ArOwedBalanceDays] ), Bal ),
+			IF ( SUM ( fct_ProjectPosition[InvoiceCount] ) > 0, 0 ) )
+		formatString: "#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces deck slide 1 AR > 60 DAYS - every invoice, matched to a project or not
+	measure 'AR Over 60 Days' =
+			VAR AsOf = [Data As Of]
+			RETURN COALESCE ( SUMX ( FILTER ( CALCULATETABLE ( fct_Invoice, REMOVEFILTERS ( dim_Date ) ),
+			fct_Invoice[Balance] > 0 && DATEDIFF ( fct_Invoice[SentDate], AsOf, DAY ) > CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "ar_aged_days" ) ),
+			fct_Invoice[Balance] ), 0 )
+		formatString: "$#,0"
+		displayFolder: 21 Dashboard - budget drivers
+
+	/// Replaces Scorecard.xlsx OAC Meeting - misses, rolling 4 weeks
+	measure 'OAC Weeks Missed' =
+			VAR E = [Report Week End]
+			VAR Weeks = SELECTCOLUMNS ( GENERATESERIES ( 0, 3, 1 ), "@k", [Value] )
+			VAR Held = COUNTROWS ( FILTER ( Weeks,
+			VAR Hi = E - 7 * [@k]
+			VAR Lo = Hi - 6
+			RETURN NOT ISEMPTY ( FILTER ( fct_Meeting,
+			fct_Meeting[MeetingType] = "OAC" && fct_Meeting[IsCompliant]
+			&& fct_Meeting[MeetingDate] >= Lo && fct_Meeting[MeetingDate] <= Hi ) ) ) )
+			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) )
+		formatString: "0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Trade Partner Meeting - misses, rolling 4 weeks
+	measure 'Trade Partner Weeks Missed' =
+			VAR E = [Report Week End]
+			VAR Weeks = SELECTCOLUMNS ( GENERATESERIES ( 0, 3, 1 ), "@k", [Value] )
+			VAR Held = COUNTROWS ( FILTER ( Weeks,
+			VAR Hi = E - 7 * [@k]
+			VAR Lo = Hi - 6
+			RETURN NOT ISEMPTY ( FILTER ( fct_Meeting,
+			fct_Meeting[MeetingType] = "Trade Partner" && fct_Meeting[IsCompliant]
+			&& fct_Meeting[MeetingDate] >= Lo && fct_Meeting[MeetingDate] <= Hi ) ) ) )
+			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) )
+		formatString: "0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx 3WLA going out once per week - days since the Outbuild look-ahead was worked
+	measure 'Days Since Look-Ahead Update' =
+			VAR Linked = NOT ISEMPTY ( fct_ScheduleActivity )
+			VAR L = MAXX ( { MAX ( fct_LookaheadTask[UpdatedAt] ), MAX ( fct_LookaheadTask[CreatedAt] ) }, [Value] )
+			RETURN IF ( [Is Dashboard Project] && Linked && [Report Weeks Ago] <= 1,
+			IF ( ISBLANK ( L ), 999, DATEDIFF ( L, [Data As Of], DAY ) ) )
+		formatString: "0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Monthly schedule update - days since an activity was last edited
+	measure 'Days Since Schedule Update' =
+			VAR L = MAX ( fct_ScheduleActivity[UpdatedAt] )
+			RETURN IF ( [Is Dashboard Project] && NOT ISBLANK ( L ) && [Report Weeks Ago] <= 1,
+			DATEDIFF ( L, [Data As Of], DAY ) )
+		formatString: "0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces derived - first baseline start to last baseline finish on the critical path
+	measure 'Baseline Duration Days' =
+			CALCULATE ( VAR S = MIN ( fct_Milestone[BaselineStart] ) VAR F = MAX ( fct_Milestone[BaselineFinish] )
+			RETURN IF ( NOT ISBLANK ( S ) && F > S, DATEDIFF ( S, F, DAY ) ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "#,0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Completion variance - days late over the baseline duration
+	measure 'Completion Variance %' = DIVIDE ( [Completion Variance Days], [Baseline Duration Days] )
+		formatString: "0.0%"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Submittals - overdue count, today
+	measure 'Submittals Overdue' =
+			VAR Any = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), REMOVEFILTERS ( dim_Date ), fct_RfiSubmittal[ItemType] = "Submittal" )
+			RETURN IF ( [Is Dashboard Project] && Any > 0,
+			COALESCE ( CALCULATE ( [Open Submittals Past Due], REMOVEFILTERS ( dim_Date ) ), 0 ) )
+		formatString: "#,0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx RFIs - outstanding count, today
+	measure 'RFIs Outstanding' =
+			VAR Any = CALCULATE ( COUNTROWS ( fct_RfiSubmittal ), REMOVEFILTERS ( dim_Date ), fct_RfiSubmittal[ItemType] = "RFI" )
+			RETURN IF ( [Is Dashboard Project] && Any > 0, COALESCE ( COUNTROWS (
+			FILTER ( CALCULATETABLE ( fct_RfiSubmittal, REMOVEFILTERS ( dim_Date ) ),
+			fct_RfiSubmittal[ItemType] = "RFI" && fct_RfiSubmittal[IsOpen]
+			&& ( fct_RfiSubmittal[IsPastDue] || ( ISBLANK ( fct_RfiSubmittal[DueDate] ) && fct_RfiSubmittal[DaysOpen] > 7 ) ) ) ), 0 ) )
+		formatString: "#,0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Safety Inspections - performed in the report week
+	measure 'Safety Inspections (Week)' =
+			VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN IF ( [Is Dashboard Project], COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
+			fct_Inspection[Category] = "Safety", fct_Inspection[IsPerformed] = TRUE (),
+			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) )
+		formatString: "#,0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Quality Inspections - performed in the report week
+	measure 'Quality Inspections (Week)' =
+			VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN IF ( [Is Dashboard Project], COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
+			fct_Inspection[Category] = "Quality", fct_Inspection[IsPerformed] = TRUE (),
+			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) )
+		formatString: "#,0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces data check - templates no seed_InspectionCategory pattern matches
+	measure 'Unclassified Inspections' = COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ), fct_Inspection[Category] = "Unclassified" ), 0 )
+		formatString: "#,0"
+		displayFolder: 22 Dashboard - schedule & site drivers
+
+	/// Replaces Scorecard.xlsx Cash Position - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Cash Position' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 101, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Profitability - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Profitability' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 102, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Aging Balance - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Aging Balance' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 103, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx OAC Meeting - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - OAC Meeting' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 201, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Trade Partner Meeting - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Trade Partner Meeting' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 202, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx 3-Week Look-Ahead - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - 3-Week Look-Ahead' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 203, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Monthly Schedule Update - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Monthly Schedule Update' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 204, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Completion Variance - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Completion Variance' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 205, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Submittals - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Submittals' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 206, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx RFIs - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - RFIs' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 207, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Safety Inspections - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Safety Inspections' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 301, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Quality Inspections - fct_MetricScore (dim_DashBand)
+	measure 'Metric Score - Quality Inspections' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = 401, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - the score of the dim_DashMetric row in context
+	measure 'Metric Score' =
+			VAR K = SELECTEDVALUE ( dim_DashMetric[MetricKey] )
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project] && NOT ISBLANK ( K ), CALCULATE ( MAX ( fct_MetricScore[Score] ),
+			fct_MetricScore[MetricKey] = K, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - the number the row's band scores
+	measure 'Metric Driver' =
+			VAR K = SELECTEDVALUE ( dim_DashMetric[MetricKey] )
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project] && NOT ISBLANK ( K ), CALCULATE ( MAX ( fct_MetricScore[Driver] ),
+			fct_MetricScore[MetricKey] = K, fct_MetricScore[WeeksAgo] = W ) )
+		formatString: "0.00"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - the driver, in words
+	measure 'Metric Reading' =
+			VAR K = SELECTEDVALUE ( dim_DashMetric[MetricKey] )
+			VAR V = [Metric Driver]
+			RETURN IF ( NOT ISBLANK ( V ), SWITCH ( K,
+			101, FORMAT ( V, "0%" ) & " collected vs paid (" & VAR X = [Cash Position] RETURN IF ( ISBLANK ( X ), BLANK (), SWITCH ( TRUE (),     ABS ( X ) >= 1000000, FORMAT ( X / 1000000, "$#,0.0" ) & "M",     ABS ( X ) >= 1000, FORMAT ( X / 1000, "$#,0" ) & "K",     FORMAT ( X, "$#,0" ) ) ) & ")",
+			102, FORMAT ( [Projected Gross Margin %], "0.0%" ) & " projected margin, " & FORMAT ( V * 100, "+0.0;-0.0;0.0" ) & " pts vs target",
+			103, FORMAT ( V, "0" ) & " days average age of unpaid AR",
+			201, ( 4 - V ) & " of 4 weeks met the standard",
+			202, ( 4 - V ) & " of 4 weeks met the standard",
+			203, IF ( V >= 999, "No look-ahead tasks in Outbuild", "Last worked " & V & " days ago" ),
+			204, "Last edited " & V & " days ago",
+			205, FORMAT ( [Completion Variance Days], "0;-0;0" ) & " days vs baseline (" & FORMAT ( V, "0%" ) & " of duration)",
+			206, V & " overdue",
+			207, V & " outstanding",
+			301, V & " performed (target 5)",
+			401, V & " performed (target 5)" ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - the Scorecard.xlsx band the reading fell in
+	measure 'Metric Band' =
+			VAR K = SELECTEDVALUE ( dim_DashMetric[MetricKey] )
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project] && NOT ISBLANK ( K ), CALCULATE ( MAX ( fct_MetricScore[BandLabel] ),
+			fct_MetricScore[MetricKey] = K, fct_MetricScore[WeeksAgo] = W ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - band, or why the measure is not scored
+	measure 'Metric State' =
+			VAR St = SELECTEDVALUE ( dim_DashMetric[Status] )
+			VAR Stg = SELECTEDVALUE ( dim_DashMetric[Stages] )
+			VAR Ph = [Project Phase]
+			RETURN SWITCH ( TRUE (),
+			St <> "Live", "Coming soon",
+			NOT ISBLANK ( [Metric Score] ), [Metric Band],
+			Stg <> "All" && ( ISBLANK ( Ph ) || NOT CONTAINSSTRING ( Stg, Ph ) ),
+			"Not scored at " & COALESCE ( Ph, "unknown" ) & " phase",
+			"Not measured - no data" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - share of the grade this measure carries
+	measure 'Metric Weight In Grade' =
+			VAR P = SELECTEDVALUE ( dim_DashMetric[PillarKey] )
+			VAR W = [Report Weeks Ago]
+			VAR N = CALCULATE ( COUNTROWS ( fct_MetricScore ), fct_MetricScore[PillarKey] = P,
+			fct_MetricScore[WeeksAgo] = W, NOT ISBLANK ( fct_MetricScore[Score] ) )
+			VAR Wt = CALCULATE ( MAX ( dim_DashPillar[Weight] ), REMOVEFILTERS ( dim_DashPillar ), dim_DashPillar[PillarKey] = P )
+			RETURN IF ( NOT ISBLANK ( [Metric Score] ) && N > 0, DIVIDE ( DIVIDE ( Wt, N ), [Grade Coverage %] ) )
+		formatString: "0.0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Oct 21 call: a measure below 80% is a top risk
+	measure 'Is Top Risk' =
+			VAR S = [Metric Score]
+			RETURN IF ( NOT ISBLANK ( S ) && S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "risk_metric_below" ), "Yes" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - HIGH below 50% (proposed), MED below 80%
+	measure 'Risk Severity' =
+			VAR S = [Metric Score]
+			RETURN IF ( NOT ISBLANK ( S ) && S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "risk_metric_below" ),
+			IF ( S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "risk_high_below" ), "HIGH", "MED" ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 3 pill fills
+	measure 'Risk Severity Colour' = IF ( [Risk Severity] = "HIGH", "#F6DADA", IF ( [Risk Severity] = "MED", "#FFF0CF" ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 3 pill text
+	measure 'Risk Severity Ink' = IF ( [Risk Severity] = "HIGH", "#BF534E", IF ( [Risk Severity] = "MED", "#986319" ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Oct 21 call: the grade, and how many things the project failed
+	measure 'Measures Below Target' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[MeasuresBelowTarget] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 3 EXECUTIVE FOCUS - the three weakest measures
+	measure 'Executive Focus' =
+			VAR W = [Report Weeks Ago]
+			VAR T = ADDCOLUMNS ( ALL ( dim_DashMetric ), "@S", VAR K = dim_DashMetric[MetricKey]
+			RETURN CALCULATE ( MAX ( fct_MetricScore[Score] ), fct_MetricScore[MetricKey] = K, fct_MetricScore[WeeksAgo] = W ) )
+			VAR R = TOPN ( 3, FILTER ( T, NOT ISBLANK ( [@S] ) && [@S] < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "risk_metric_below" ) ), [@S], ASC, dim_DashMetric[SortOrder], ASC )
+			RETURN IF ( [Is Dashboard Project], "EXECUTIVE FOCUS:  " & IF ( ISEMPTY ( R ), "Every measured standard is on target",
+			CONCATENATEX ( R, dim_DashMetric[Metric], "  " & UNICHAR ( 8226 ) & "  ", [@S], ASC ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Schedule - equal-weighted average of its measured metrics (fct_ProjectScore)
+	measure 'Schedule Pillar' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[SchedulePillar] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Budget - equal-weighted average of its measured metrics (fct_ProjectScore)
+	measure 'Budget Pillar' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[BudgetPillar] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Safety - equal-weighted average of its measured metrics (fct_ProjectScore)
+	measure 'Safety Pillar' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[SafetyPillar] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Scorecard.xlsx Quality - equal-weighted average of its measured metrics (fct_ProjectScore)
+	measure 'Quality Pillar' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[QualityPillar] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - share of the pillar weight that is measured
+	measure 'Grade Coverage %' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[GradeCoverage] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0%"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 GRADE - schedule 50, budget 30, safety 15, quality 5 (Oct 21 call); fct_ProjectScore
+	measure 'Grade' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[Grade] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		formatString: "0"
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2: On track / Monitor / Needs attention / Unscored
+	measure 'Grade Status' =
+			VAR G = [Grade]
+			RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (), ISBLANK ( G ), "Unscored",
+			G >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ), "On track",
+			G >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ), "Monitor", "Needs attention" ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 grade pill
+	measure 'Grade Colour' =
+			VAR S = [Grade]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 100, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 100, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 grade pill text
+	measure 'Grade Ink' =
+			VAR S = [Grade]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 100 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 100 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 GRADE cell
+	measure 'Grade Cell' =
+			VAR G = [Grade]
+			RETURN IF ( [Is Dashboard Project], IF ( ISBLANK ( G ), UNICHAR ( 8212 ), FORMAT ( G, "0" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces derived - the pillar costing the grade most
+	measure 'Weakest Pillar' =
+			VAR W = [Report Weeks Ago]
+			RETURN IF ( [Is Dashboard Project], CALCULATE ( MAX ( fct_ProjectScore[WeakestPillar] ),
+			fct_ProjectScore[WeeksAgo] = W ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 SCHEDULE cell - headline reading and pillar score
+	measure 'Schedule Cell' =
+			VAR D = [Completion Variance Days]
+			VAR H = IF ( NOT ISBLANK ( D ), FORMAT ( -D, "+0;-0;0" ) & " days" )
+			VAR S = [Schedule Pillar]
+			RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (),
+			ISBLANK ( S ), COALESCE ( H, UNICHAR ( 8212 ) ),
+			ISBLANK ( H ), FORMAT ( S, "0%" ),
+			H & "  " & UNICHAR ( 183 ) & "  " & FORMAT ( S, "0%" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 SCHEDULE pill
+	measure 'Schedule Colour' =
+			VAR S = [Schedule Pillar]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 SCHEDULE pill text
+	measure 'Schedule Ink' =
+			VAR S = [Schedule Pillar]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 BUDGET cell - headline reading and pillar score
+	measure 'Budget Cell' =
+			VAR M = [Margin vs Target]
+			VAR H = IF ( NOT ISBLANK ( M ), FORMAT ( [Projected Gross Margin %], "0.0%" ) & " GM" )
+			VAR S = [Budget Pillar]
+			RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (),
+			ISBLANK ( S ), COALESCE ( H, UNICHAR ( 8212 ) ),
+			ISBLANK ( H ), FORMAT ( S, "0%" ),
+			H & "  " & UNICHAR ( 183 ) & "  " & FORMAT ( S, "0%" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 BUDGET pill
+	measure 'Budget Colour' =
+			VAR S = [Budget Pillar]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 BUDGET pill text
+	measure 'Budget Ink' =
+			VAR S = [Budget Pillar]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 SAFETY cell - headline reading and pillar score
+	measure 'Safety Cell' =
+			VAR H = IF ( [Project Phase] = "Construction", [Safety Inspections (Week)] & " insp" )
+			VAR S = [Safety Pillar]
+			RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (),
+			ISBLANK ( S ), COALESCE ( H, UNICHAR ( 8212 ) ),
+			ISBLANK ( H ), FORMAT ( S, "0%" ),
+			H & "  " & UNICHAR ( 183 ) & "  " & FORMAT ( S, "0%" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 SAFETY pill
+	measure 'Safety Colour' =
+			VAR S = [Safety Pillar]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 SAFETY pill text
+	measure 'Safety Ink' =
+			VAR S = [Safety Pillar]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 QUALITY cell - headline reading and pillar score
+	measure 'Quality Cell' =
+			VAR H = IF ( [Project Phase] = "Construction", [Quality Inspections (Week)] & " insp" )
+			VAR S = [Quality Pillar]
+			RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (),
+			ISBLANK ( S ), COALESCE ( H, UNICHAR ( 8212 ) ),
+			ISBLANK ( H ), FORMAT ( S, "0%" ),
+			H & "  " & UNICHAR ( 183 ) & "  " & FORMAT ( S, "0%" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 QUALITY pill
+	measure 'Quality Colour' =
+			VAR S = [Quality Pillar]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 QUALITY pill text
+	measure 'Quality Ink' =
+			VAR S = [Quality Pillar]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces deck slide 2 TEAM - initials of PM, APM, Super, Asst Super from Procore
+	measure 'Team Initials' =
+			VAR T = SUMMARIZE ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleOrder] <= 4 ),
+			fct_ProjectTeam[RoleOrder], fct_ProjectTeam[MemberName] )
+			VAR I = ADDCOLUMNS ( T, "@i",
+			VAR Raw = fct_ProjectTeam[MemberName]
+			VAR Cut = SEARCH ( " (", Raw, 1, 0 )
+			VAR N = TRIM ( IF ( Cut > 0, LEFT ( Raw, Cut - 1 ), Raw ) )
+			VAR Sp = LEN ( N ) - LEN ( SUBSTITUTE ( N, " ", "" ) )
+			VAR LastWord = IF ( Sp = 0, "", MID ( N, FIND ( "~", SUBSTITUTE ( N, " ", "~", Sp ) ) + 1, 1 ) )
+			RETURN UPPER ( LEFT ( N, 1 ) & LastWord ) )
+			RETURN IF ( [Is Dashboard Project], COALESCE ( CONCATENATEX ( I, [@i], " " & UNICHAR ( 183 ) & " ", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC ), UNICHAR ( 8212 ) ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces Oct 21 call: the one accountable name
+	measure 'Project Executive' = CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleCode] = "PX" ), fct_ProjectTeam[MemberName], ", ", fct_ProjectTeam[MemberName], ASC )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 2 TEAM, in full
+	measure 'Project Team' =
+			VAR T = CONCATENATEX ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleOrder] <= 4 ),
+			fct_ProjectTeam[RoleCode] & " " & fct_ProjectTeam[MemberName], "   ", fct_ProjectTeam[RoleOrder], ASC, fct_ProjectTeam[MemberName], ASC )
+			RETURN IF ( [Is Dashboard Project], COALESCE ( T, "No PM / Super roles set in Procore" ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 CURRENT CONTRACT sub-line
+	measure 'Contract Change Text' =
+			VAR D = [Current Contract] - [Original Contract]
+			VAR A = ABS ( D )
+			VAR T = SWITCH ( TRUE (), A >= 1000000, FORMAT ( A / 1000000, "$#,0.0" ) & "M",
+			A >= 1000, FORMAT ( A / 1000, "$#,0" ) & "K", FORMAT ( A, "$#,0" ) )
+			RETURN IF ( NOT ISBLANK ( [Original Contract] ), IF ( D >= 0, "+", "-" ) & T & " vs original" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 PROJECT COMPLETE - Outbuild, duration-weighted
+	measure 'Work Progress %' =
+			VAR T = FILTER ( fct_ScheduleActivity, NOT fct_ScheduleActivity[IsSummary] && fct_ScheduleActivity[DurationDays] > 0 )
+			RETURN DIVIDE ( SUMX ( T, fct_ScheduleActivity[DurationDays] * COALESCE ( fct_ScheduleActivity[PercentComplete], 0 ) ),
+			SUMX ( T, fct_ScheduleActivity[DurationDays] ) )
+		formatString: "0%"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 TRACKING FINISH - the baseline finish
+	measure 'Tracking Finish' = CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "mmm d, yyyy"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 ACTUAL FINISH FORECAST - the current critical-path finish
+	measure 'Forecast Finish' = [Scheduled Finish]
+		formatString: "mmm d, yyyy"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces card text for Work Progress %
+	measure 'Work Progress Shown' = IF ( [Is Dashboard Project], VAR V = [Work Progress %] RETURN IF ( ISBLANK ( V ), "No schedule", FORMAT ( V, "0%" ) ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces card text for Tracking Finish
+	measure 'Tracking Finish Shown' = IF ( [Is Dashboard Project], VAR V = [Tracking Finish] RETURN IF ( ISBLANK ( V ), "No baseline", FORMAT ( V, "mmm d, yyyy" ) ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces card text for Forecast Finish
+	measure 'Forecast Finish Shown' = IF ( [Is Dashboard Project], VAR V = [Forecast Finish] RETURN IF ( ISBLANK ( V ), "No forecast", FORMAT ( V, "mmm d, yyyy" ) ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 SCHEDULE tile
+	measure 'Schedule Headline' =
+			VAR D = [Completion Variance Days]
+			RETURN SWITCH ( TRUE (), ISBLANK ( D ), "No baseline",
+			D = 0, "On baseline", ABS ( D ) & IF ( ABS ( D ) = 1, " DAY", " DAYS" ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 SCHEDULE sub-line
+	measure 'Schedule Subline' =
+			VAR D = [Completion Variance Days]
+			RETURN SWITCH ( TRUE (), ISBLANK ( D ), "Outbuild baseline needed", D > 0, "Past tracking finish",
+			D < 0, "Ahead of tracking finish", "Forecast = tracking finish" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 tile accent
+	measure 'Schedule Tile Colour' =
+			VAR D = [Completion Variance Days]
+			RETURN SWITCH ( TRUE (), ISBLANK ( D ), "#DDE4EB", D <= 0, "#278367", D <= 7, "#E5A13B", "#BF534E" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 PROJECT SCORECARD tile
+	measure 'Grade Text' =
+			VAR G = [Grade]
+			RETURN IF ( ISBLANK ( G ), "Unscored", FORMAT ( G / 100, "0%" ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 PROJECT SCORECARD sub-line
+	measure 'Grade Subline' =
+			IF ( ISBLANK ( [Grade] ), "Under " & FORMAT ( CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "min_coverage" ), "0%" ) & " of the weight measured",
+			[Grade Status] & "  " & UNICHAR ( 183 ) & "  " & [Measures Below Target] & " below target" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 BILLED TO DATE sub-line
+	measure 'Billed Subline' = FORMAT ( [Billed % Of Contract], "0.0%" ) & " of contract"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 PAID TO DATE - Sage receipts
+	measure 'Paid To Date' = SUM ( fct_ProjectPosition[PaidToDate] )
+		formatString: "$#,0"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 REMAINING CONTRACT BALANCE
+	measure 'Remaining Contract Balance' =
+			VAR C = [Position Contract]
+			RETURN IF ( NOT ISBLANK ( C ), C - [Billed To Date (Gross)] )
+		formatString: "$#,0"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 cash / forecasting exceptions
+	measure 'Financial Exceptions' =
+			VAR CP = [Cash Position]
+			VAR Aged = CALCULATE ( [AR Over 60 Days], fct_Invoice[HasUnmatchedProject] <> TRUE () )
+			VAR FV = [Forecast Variance]
+			VAR L = FILTER ( {
+			( 1, IF ( CP < 0, "Cash negative: " & FORMAT ( CP, "$#,0" ) ) ),
+			( 2, IF ( Aged > 0, FORMAT ( Aged, "$#,0" ) & " of AR over 60 days" ) ),
+			( 3, IF ( FV < 0, "Forecast over budget by " & FORMAT ( -FV, "$#,0" ) ) ),
+			( 4, IF ( [Margin vs Target] < 0, "Projected margin below target" ) ) }, NOT ISBLANK ( [Value2] ) )
+			RETURN IF ( [Is Dashboard Project], IF ( ISEMPTY ( L ), "No cash or forecasting exceptions",
+			CONCATENATEX ( L, [Value2], "  " & UNICHAR ( 8226 ) & "  ", [Value1], ASC ) ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces derived - divisions 01-44 of the new cost-code master
+	measure 'Subcontract Budget' =
+			CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ),
+			FILTER ( ALL ( dim_CostCodeCrosswalk[NewDivisionCode] ), COALESCE ( dim_CostCodeCrosswalk[NewDivisionCode], "00" ) < "45" ) )
+		formatString: "$#,0"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces derived
+	measure 'Subcontract Committed' =
+			CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ),
+			FILTER ( ALL ( dim_CostCodeCrosswalk[NewDivisionCode] ), COALESCE ( dim_CostCodeCrosswalk[NewDivisionCode], "00" ) < "45" ) )
+		formatString: "$#,0"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 1 SUBCONTRACTOR COVERAGE / slide 3 RISK BOUGHT OUT - committed over buyable budget
+	measure 'Subcontractor Coverage %' = DIVIDE ( [Subcontract Committed], [Subcontract Budget] )
+		formatString: "0%"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 NEAR-TERM MILESTONES [Next 3 Weeks]
+	measure 'Near Term Flag' =
+			VAR A = [Data As Of]
+			VAR Z = A + CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "lookahead_days" )
+			VAR S = SELECTEDVALUE ( fct_ScheduleActivity[StartDate] )
+			VAR F = SELECTEDVALUE ( fct_ScheduleActivity[FinishDate] )
+			RETURN IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] )
+			&& NOT SELECTEDVALUE ( fct_ScheduleActivity[IsSummary] ) && NOT SELECTEDVALUE ( fct_ScheduleActivity[IsComplete] )
+			&& ( ( S >= A && S <= Z ) || ( F >= A && F <= Z ) ), "Yes" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 CRITICAL PATH [Next 3 Weeks]
+	measure 'Critical Near Term Flag' = IF ( [Near Term Flag] = "Yes" && SELECTEDVALUE ( fct_ScheduleActivity[IsCritical] ), "Yes" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 milestone sub-line
+	measure 'Activity Next Step' =
+			VAR A = [Data As Of]
+			VAR S = SELECTEDVALUE ( fct_ScheduleActivity[StartDate] )
+			VAR F = SELECTEDVALUE ( fct_ScheduleActivity[FinishDate] )
+			RETURN IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] ),
+			IF ( S > A, "Starts " & FORMAT ( S, "mmm d" ), "Finish " & FORMAT ( F, "mmm d" ) )
+			& IF ( SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) > 0,
+			"  " & UNICHAR ( 183 ) & "  " & SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) & " days behind baseline" ) )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 schedule pressure / critical path
+	measure 'Behind Schedule Flag' =
+			IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] ) && NOT SELECTEDVALUE ( fct_ScheduleActivity[IsSummary] )
+			&& NOT SELECTEDVALUE ( fct_ScheduleActivity[IsComplete] ) && SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) > 0, "Yes" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces derived
+	measure 'Days Behind Baseline' = MAX ( fct_ScheduleActivity[FinishVarianceDays] )
+		formatString: "0"
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 RECENT WINS - completed in the report week
+	measure 'Recent Win Flag' =
+			VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			VAR F = SELECTEDVALUE ( fct_ScheduleActivity[FinishDate] )
+			RETURN IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] ) && SELECTEDVALUE ( fct_ScheduleActivity[IsComplete] )
+			&& NOT SELECTEDVALUE ( fct_ScheduleActivity[IsSummary] ) && F >= S && F <= E, "Yes" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 3 SAFETY / QUALITY lists - performed in the report week
+	measure 'Inspection In Week Flag' =
+			VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			VAR D = SELECTEDVALUE ( fct_Inspection[InspectionDate] )
+			RETURN IF ( HASONEVALUE ( fct_Inspection[InspectionKey] ) && SELECTEDVALUE ( fct_Inspection[IsPerformed] )
+			&& D >= S && D <= E, "Yes" )
+		displayFolder: 24 Dashboard - project page
+
+	/// Replaces deck slide 1 REVENUE YTD - Sage AR invoiced this calendar year, every job
+	measure 'Revenue YTD' =
+			VAR A = [Data As Of]
+			RETURN CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),
+			fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= A )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 REVENUE - ACTUAL, by month
+	measure 'Revenue Last 6 Months' =
+			VAR A = [Data As Of]
+			VAR M = MAX ( dim_Date[Date] )
+			RETURN IF ( M > EOMONTH ( A, -6 ) && MIN ( dim_Date[Date] ) <= A,
+			CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ) ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 ACTIVE PROJECTS
+	measure 'Active Projects' =
+			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			TRUE () ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 ON TRACK
+	measure 'Projects On Track' =
+			COALESCE ( COUNTROWS ( FILTER ( ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] ),
+			[@g] >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 MONITOR
+	measure 'Projects Monitor' =
+			COALESCE ( COUNTROWS ( FILTER ( ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] ),
+			[@g] >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) && [@g] < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 NEEDS ATTENTION / slide 1 'require attention'
+	measure 'Projects Needing Attention' =
+			COALESCE ( COUNTROWS ( FILTER ( ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] ),
+			NOT ISBLANK ( [@g] ) && [@g] < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 UNSCORED
+	measure 'Projects Unscored' =
+			COALESCE ( COUNTROWS ( FILTER ( ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] ),
+			ISBLANK ( [@g] ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 PROJECTS AT RISK - grade 45 and below (Oct 21 call)
+	measure 'Projects At Risk (Grade)' =
+			COALESCE ( COUNTROWS ( FILTER ( ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] ),
+			NOT ISBLANK ( [@g] ) && [@g] <= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_at_risk_max" ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 'Schedule (2) - Margin (1)' - weakest pillar of each at-risk project
+	measure 'At Risk Breakdown' =
+			VAR G = ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] )
+			VAR T = ADDCOLUMNS ( FILTER ( G, NOT ISBLANK ( [@g] ) && [@g] <= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_at_risk_max" ) ), "@p", [Weakest Pillar] )
+			VAR N = GROUPBY ( T, [@p], "@n", COUNTX ( CURRENTGROUP (), 1 ) )
+			RETURN IF ( ISEMPTY ( T ), "None at or below grade " & CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_at_risk_max" ),
+			CONCATENATEX ( N, [@p] & " (" & [@n] & ")", "  " & UNICHAR ( 8226 ) & "  ", [@n], DESC, [@p], ASC ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 ACTIVE PROJECTS sub-line
+	measure 'Attention Subline' = [Projects Needing Attention] & " require attention"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 GROSS MARGIN - projected, active projects
+	measure 'Portfolio Gross Margin %' =
+			VAR R = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Projected Revenue] )
+			VAR C = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Projected Cost] )
+			RETURN IF ( R > 0, DIVIDE ( R - C, R ) )
+		formatString: "0.0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 GROSS MARGIN sub-line
+	measure 'Gross Margin Subline' =
+			VAR D = [Portfolio Gross Margin %] - [Gross Margin Target]
+			RETURN FORMAT ( D * 100, "+0.0;-0.0;0.0" ) & " pts vs " & FORMAT ( [Gross Margin Target], "0.0%" ) & " target"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 BACKLOG - contract not yet billed, active projects
+	measure 'Backlog' =
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			MAX ( 0, [Position Contract] - [Billed To Date (Gross)] ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 BACKLOG sub-line - at the last 3 months' billing rate
+	measure 'Backlog Subline' =
+			VAR A = [Data As Of]
+			VAR S = EOMONTH ( A, -4 ) + 1
+			VAR E = EOMONTH ( A, -1 )
+			VAR Rate = DIVIDE ( CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),
+			fct_Invoice[SentDate] >= S, fct_Invoice[SentDate] <= E ), 3 )
+			RETURN IF ( Rate > 0, FORMAT ( DIVIDE ( [Backlog], Rate ), "0.0" ) & " months cover" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 CASH POSITION - Chris's formula, active projects
+	measure 'Portfolio Cash Position' =
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Cash Position] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 CASH POSITION sub-line
+	measure 'Cash Subline' =
+			VAR I = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Cash Collected] )
+			VAR O = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Cash Paid Out] )
+			RETURN IF ( O > 0, FORMAT ( DIVIDE ( I, O ), "0%" ) & " collected vs paid" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 SAFETY tile - 'Calc based on # of inspections' callout
+	measure 'Portfolio Safety Score' =
+			VAR T = ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@s", [Safety Pillar] )
+			RETURN AVERAGEX ( FILTER ( T, NOT ISBLANK ( [@s] ) ), [@s] )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 SAFETY sub-line
+	measure 'Safety Subline' =
+			VAR N = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Safety Inspections (Week)] )
+			VAR P = COUNTROWS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" && [Project Phase] = "Construction" ) )
+			RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 ON SCHEDULE - forecast finish on or before baseline
+	measure 'Projects On Schedule' =
+			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			NOT ISBLANK ( [Completion Variance Days] ) && [Completion Variance Days] <= 0 ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived
+	measure 'Projects With Baseline' =
+			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			NOT ISBLANK ( [Completion Variance Days] ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived
+	measure 'On Schedule Ratio' = DIVIDE ( [Projects On Schedule], [Projects With Baseline] )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 '19 / 24'
+	measure 'On Schedule Text' = [Projects On Schedule] & " / " & [Projects With Baseline]
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 ON BUDGET - forecast final cost within budget
+	measure 'Projects On Budget' =
+			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			NOT ISBLANK ( [Forecast Variance] ) && [Forecast Variance] >= 0 ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived
+	measure 'Projects With Budget' =
+			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			NOT ISBLANK ( [Forecast Variance] ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived
+	measure 'On Budget Ratio' = DIVIDE ( [Projects On Budget], [Projects With Budget] )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 '20 / 24'
+	measure 'On Budget Text' = [Projects On Budget] & " / " & [Projects With Budget]
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 SUBCONTRACTOR COVERAGE
+	measure 'Portfolio Subcontractor Coverage' =
+			DIVIDE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Subcontract Committed] ), SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Subcontract Budget] ) )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 CHANGE ORDERS APPROVED - approved value over approved + pending
+	measure 'Change Orders Approved %' =
+			VAR Ap = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			CALCULATE ( [Approved Change Orders], REMOVEFILTERS ( dim_Date ) ) )
+			VAR Pe = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Pending Change Orders] )
+			RETURN DIVIDE ( Ap, Ap + Pe )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - visual filter for active projects
+	measure 'Active Flag' = IF ( [Dashboard Status] = "Active", "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - visual filter for the inactive / archived list
+	measure 'Not Active Flag' = IF ( [Is Dashboard Project] && [Dashboard Status] <> "Active", "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 PRIORITY PROJECTS - lowest grade first
+	measure 'Priority Score' = IF ( [Dashboard Status] = "Active", VAR G = [Grade] RETURN IF ( NOT ISBLANK ( G ), 100 - G ) )
+		formatString: "0.0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 3 header
+	measure 'Project Title' = IF ( HASONEVALUE ( dim_Project[ProjectName] ), UPPER ( VALUES ( dim_Project[ProjectName] ) ), "SELECT A PROJECT" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck header sub-line
+	measure 'Week Header' = "CONSTRUCTION OPERATIONS  |  " & UPPER ( [Report Week Label] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck header - when the numbers were true
+	measure 'Data As Of Header' = "DATA AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Pipeline Status]
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 header
+	measure 'Portfolio Header' = [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( [Report Week Label] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces grade detail - score pill
+	measure 'Metric Colour' =
+			VAR S = [Metric Score]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces grade detail - score pill text
+	measure 'Metric Ink' =
+			VAR S = [Metric Score]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces grade detail - the meetings the rolling four weeks scored
+	measure 'Meeting In Window Flag' =
+			VAR E = [Report Week End]
+			VAR D = SELECTEDVALUE ( fct_Meeting[MeetingDate] )
+			RETURN IF ( HASONEVALUE ( fct_Meeting[MeetingKey] ) && SELECTEDVALUE ( fct_Meeting[MeetingType] ) IN { "OAC", "Trade Partner" }
+			&& D >= E - 27 && D <= E, "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces grade detail - did this meeting count
+	measure 'Meeting Met Standard' =
+			IF ( HASONEVALUE ( fct_Meeting[MeetingKey] ), IF ( SELECTEDVALUE ( fct_Meeting[IsCompliant] ), "Yes",
+			IF ( SELECTEDVALUE ( fct_Meeting[IsDuplicateDate] ), "Duplicate of an earlier meeting", "No" ) ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - why a project is off the active list
+	measure 'Status Note' =
+			VAR S = [Dashboard Status]
+			RETURN IF ( S <> "Active", S & IF ( S = "Inactive", " - no Procore activity in " & CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "active_within_days" ) & " days" ) )
+		displayFolder: 25 Dashboard - executive
+
 	column _placeholder
 		isHidden
 		dataType: string

@@ -1,0 +1,6 @@
+pillar_key,pillar,weight,sort_order,scorecard_department,source
+1,Schedule,0.50,1,Field Ops,"Oct 21 call: schedule 50%, budget 30%, safety 15%, quality 5% initially"
+2,Budget,0.30,2,Financial,"Oct 21 call: schedule 50%, budget 30%, safety 15%, quality 5% initially"
+3,Safety,0.15,3,Safety,"Oct 21 call: schedule 50%, budget 30%, safety 15%, quality 5% initially"
+4,Quality,0.05,4,Quality,"Oct 21 call: schedule 50%, budget 30%, safety 15%, quality 5% initially"
+5,Risk,0.00,5,Risk,"Scorecard.xlsx: insurance coming soon; no weight until it is measured"

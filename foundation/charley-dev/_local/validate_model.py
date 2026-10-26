@@ -171,6 +171,14 @@ RAW_COLUMNS = {
     "man_QcSpecialInspection": [], "man_QcCommissioning": ["StatusCode"], "man_QcInspectorSignIn": [],
     "man_QcChecklistResult": ["ResultCode"], "man_QcDohResult": ["StatusCode"],
 }
+# The Weekly Dashboard's tables and the extra columns its measures read (validate_dashboard).
+import validate_dashboard  # noqa: E402
+
+RAW_COLUMNS.update(validate_dashboard.RAW_COLUMNS)
+for _table, _cols in validate_dashboard.EXTRA_COLUMNS.items():
+    RAW_COLUMNS[_table] = [*RAW_COLUMNS[_table], *(c for c in _cols if c not in RAW_COLUMNS[_table])]
+# Formatting and row-level flags over checked measures - listed, never silently unchecked.
+PRESENTATION_ONLY = validate_dashboard.PRESENTATION
 OWN_FILTER = {"dim_Project": ("ProjectKey", "project"), "dim_Date": ("MonthStart", "month"),
               "dim_ScorecardWeight": ("CategoryKey", "category")}
 # Checked by a synthetic fixture instead (check_milestone_geometry): they need ALLSELECTED.
@@ -795,6 +803,7 @@ def monthly_expected():
     E["Snapshot History Note"] = lambda c, s: (
         "No month-end history captured yet" if (first := history_start(c, s)) is None
         else f"History starts {_ts(first):%Y-%m-%d}; earlier months are unavailable, not zero")
+    E.update(validate_dashboard.expected(E))
     for number, name in enumerate(("Accounts Receivable", "Profitability", "Cash Position", "Change Orders",
                                    "Safety Incidents", "Schedule Performance", "Completion Variance",
                                    "Observations", "Daily Reports"), 1):
@@ -935,8 +944,10 @@ def check_independent_measures(dataset_id, tok, kind):
     if kind != "qc":
         grains.append(("category", "dim_ScorecardWeight[CategoryKey]", "category"))
     observations, skipped_blank_project = [], 0
-    for start in range(0, len(names), 20):
-        chunk = names[start:start + 20]
+    # Five per query: the dashboard's scorecard measures (2026-10-25) put twenty past F2's
+    # per-query memory limit at portfolio grain.
+    for start in range(0, len(names), 5):
+        chunk = names[start:start + 5]
         fields = '"__now",NOW(),"__utcnow",UTCNOW(),' + ",".join(f'"m{i}",[{m}]' for i, m in enumerate(chunk))
         for grain, column, field in grains:
             query = f"EVALUATE ROW({fields})" if column is None else f"EVALUATE ADDCOLUMNS(VALUES({column}),{fields})"
@@ -954,7 +965,8 @@ def check_independent_measures(dataset_id, tok, kind):
         not_deployed=sorted(set(definitions) - deployed),
         tables_not_deployed=sorted(set(dm.MODEL_TABLES) - present),
         deployed_not_generated=sorted(deployed - set(definitions)),
-        without_independent_check=sorted(set(definitions) - set(expected) - FIXTURE_ONLY),
+        without_independent_check=sorted(set(definitions) - set(expected) - FIXTURE_ONLY - PRESENTATION_ONLY),
+        presentation_only=sorted(PRESENTATION_ONLY & set(definitions)),
         fixture_only=sorted(FIXTURE_ONLY & set(definitions)),
         blank_member_rows_skipped=skipped_blank_project,
         raw_row_counts={t: len(v) for t, v in data.items()},
@@ -1181,8 +1193,12 @@ def main() -> int:
     #    rather than as a blank tile in front of leadership.
     from deploy_model import MEASURES
     measures = [m[0] for m in MEASURES]
-    expr = ", ".join(f'"{m}", [{m}]' for m in measures)
-    result = dax(model["id"], tok, f"EVALUATE ROW({expr})")[0]
+    # In chunks: one ROW over all 318 measures exceeds F2's per-query memory limit
+    # (2026-10-25), which fails the check without saying which measure is wrong.
+    result = {}
+    for start in range(0, len(measures), 5):
+        expr = ", ".join(f'"{m}", [{m}]' for m in measures[start:start + 5])
+        result.update(dax(model["id"], tok, f"EVALUATE ROW({expr})")[0])
     print()
     for m in measures:
         print(f"  [{m}] = {result.get(f'[{m}]')}")

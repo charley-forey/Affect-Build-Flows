@@ -1,0 +1,18 @@
+metric_key,pillar_key,pillar,metric,standard,stages,period,status,sort_order
+101,2,Budget,Cash Position,"Collected / paid, from Chris's formula: billings to date - retainage receivable - unpaid receivables, over costs incurred - unpaid payables - retainage payable",All,To date,Live,1
+102,2,Budget,Profitability (Gross),Projected gross margin (revised budget less forecast cost excluding the CM fee) against the gross margin target,All,At completion,Live,2
+103,2,Budget,Aging Balance,"Average age of unpaid receivables, weighted by balance",All,As of today,Live,3
+201,1,Schedule,OAC Meeting,Held each week with the agenda sent at least 24 hours in advance and minutes sent within 24 hours after,Precon;Construction,Rolling 4 weeks,Live,1
+202,1,Schedule,Trade Partner Meeting,Held each week with the agenda sent at least 24 hours in advance and minutes sent within 24 hours after,Precon;Construction,Rolling 4 weeks,Live,2
+203,1,Schedule,3-Week Look-Ahead,The Outbuild look-ahead updated at least once a week,Precon;Construction,Current,Live,3
+204,1,Schedule,Monthly Schedule Update,The Outbuild schedule updated at least once a month,Precon;Construction,Current,Live,4
+205,1,Schedule,Completion Variance,"Forecast finish against the baseline finish, as a share of the baseline duration",All,Current,Live,5
+206,1,Schedule,Submittals,Open submittals past their due date,All,As of today,Live,6
+207,1,Schedule,RFIs,Open RFIs past their due date,All,As of today,Live,7
+301,3,Safety,Safety Inspections,Safety inspections performed in the reporting week (5 is the minimum),Construction,Reporting week,Live,1
+302,3,Safety,Safety Observations,Coming soon,Construction,,Coming soon,2
+303,3,Safety,Forms,Coming soon,Construction,,Coming soon,3
+401,4,Quality,Quality Inspections,Quality inspections performed in the reporting week (5 is the minimum),Construction,Reporting week,Live,1
+402,4,Quality,Quality Observations,Coming soon,Construction,,Coming soon,2
+403,4,Quality,Punchlist,Coming soon,Construction,,Coming soon,3
+501,5,Risk,Insurance,Coming soon: subcontractor insurance against commitments,All,,Coming soon,1

@@ -1,0 +1,43 @@
+table dim_DashBand
+
+	column MetricKey
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: MetricKey
+
+	column MinValue
+		dataType: double
+		summarizeBy: none
+		sourceColumn: MinValue
+
+	column MaxValue
+		dataType: double
+		summarizeBy: none
+		sourceColumn: MaxValue
+
+	column ScoreAtMin
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ScoreAtMin
+
+	column ScoreAtMax
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ScoreAtMax
+
+	column BandLabel
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BandLabel
+
+	column Source
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Source
+
+	partition dim_DashBand = entity
+		mode: directLake
+		source
+			entityName: dim_dashband
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'
