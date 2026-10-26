@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 228,
     "height": 40,
-    "tabOrder": 36
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Grade Text.'"
+                  "Value": "'Card. Project Scorecard: the value (Grade Text).'"
                 }
               }
             }

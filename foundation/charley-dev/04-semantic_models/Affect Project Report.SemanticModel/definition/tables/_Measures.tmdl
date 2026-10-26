@@ -1753,7 +1753,7 @@ table _Measures
 		displayFolder: 23 Dashboard - scorecard
 
 	/// Replaces deck slide 3 pill text
-	measure 'Risk Severity Ink' = IF ( [Risk Severity] = "HIGH", "#9C3B37", IF ( [Risk Severity] = "MED", "#986319" ) )
+	measure 'Risk Severity Ink' = IF ( [Risk Severity] = "HIGH", "#9C3B37", IF ( [Risk Severity] = "MED", "#7A4F12" ) )
 		displayFolder: 23 Dashboard - scorecard
 
 	/// Replaces Oct 21 call: the grade, and how many things the project failed
@@ -1894,8 +1894,8 @@ table _Measures
 
 	/// Replaces deck slide 2 BUDGET cell - headline reading and pillar score
 	measure 'Budget Cell' =
-			VAR M = [Margin vs Target]
-			VAR H = IF ( NOT ISBLANK ( M ), FORMAT ( [Projected Gross Margin %], "0.0%" ) & " GM" )
+			VAR V = [Forecast Variance %]
+			VAR H = IF ( NOT ISBLANK ( V ), FORMAT ( V, "+0%;-0%;0%" ) )
 			VAR S = [Budget Pillar]
 			RETURN IF ( [Is Dashboard Project], SWITCH ( TRUE (),
 			ISBLANK ( S ), COALESCE ( H, UNICHAR ( 8212 ) ),
@@ -2079,8 +2079,8 @@ table _Measures
 			VAR G = [Billing Ahead Of Work Pts]
 			RETURN FORMAT ( [Billed % Of Contract], "0.0%" ) & " of contract" & SWITCH ( TRUE (),
 			ISBLANK ( G ), "",
-			G >= 1, "  " & UNICHAR ( 8226 ) & "  billed " & FORMAT ( G, "0" ) & " pts ahead of work",
-			G <= -1, "  " & UNICHAR ( 8226 ) & "  work " & FORMAT ( -G, "0" ) & " pts ahead of billing",
+			G >= 1, "  " & UNICHAR ( 8226 ) & "  " & FORMAT ( G, "0" ) & " pts ahead of work",
+			G <= -1, "  " & UNICHAR ( 8226 ) & "  " & FORMAT ( -G, "0" ) & " pts behind work",
 			"  " & UNICHAR ( 8226 ) & "  in line with work" )
 		displayFolder: 24 Dashboard - project page
 
@@ -2234,6 +2234,18 @@ table _Measures
 			COALESCE ( COUNTROWS ( FILTER ( ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@g", [Grade] ),
 			ISBLANK ( [@g] ) ) ), 0 )
 		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 ON TRACK caption
+	measure 'On Track Caption' = "Grade " & FORMAT ( CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ), "0" ) & " and over"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 MONITOR caption
+	measure 'Monitor Caption' = "Grade " & FORMAT ( CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ), "0" ) & "-" & FORMAT ( CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) - 1, "0" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 2 NEEDS ATTENTION caption
+	measure 'Attention Caption' = "Grade under " & FORMAT ( CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ), "0" )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces deck slide 1 PROJECTS AT RISK - grade 45 and below (Oct 21 call)

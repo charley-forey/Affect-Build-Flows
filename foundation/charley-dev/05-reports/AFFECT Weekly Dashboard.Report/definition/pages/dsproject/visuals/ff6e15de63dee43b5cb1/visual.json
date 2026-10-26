@@ -7,7 +7,7 @@
     "z": 2000,
     "width": 1288,
     "height": 22,
-    "tabOrder": 100
+    "tabOrder": 65
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "Financials as of the last refresh; inspections, meetings and wins for the reporting week  \u2022  Milestones and critical path: Outbuild current schedule  \u2022  Top risks: Scorecard.xlsx measures below 80% (HIGH below 50%)  \u2022  Grade detail: the button, top right",
+                    "value": "Financials as of the last refresh; inspections, meetings and wins for the week  \u2022  Milestones: Outbuild current schedule  \u2022  Top risks: measures below 80% (HIGH below 50%)",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Financials as of the last refresh; inspections, meetings and wins for the reporting week  \u2022  Milestones and critical path: Outbuild current schedule  \u2022  Top risks: Scorecard.xlsx measures below 80% (HIGH below 50%)  \u2022  Grade detail: the button, top right'"
+                  "Value": "'Financials as of the last refresh; inspections, meetings and wins for the week  \u2022  Milestones: Outbuild current schedule  \u2022  Top risks: measures below 80% (HIGH below 50%)'"
                 }
               }
             }

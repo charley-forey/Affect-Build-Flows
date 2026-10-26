@@ -3,11 +3,11 @@
   "name": "be5d707c2d609644ea32",
   "position": {
     "x": 631,
-    "y": 518,
+    "y": 520,
     "z": 2000,
     "width": 318,
-    "height": 28,
-    "tabOrder": 87
+    "height": 26,
+    "tabOrder": 60
   },
   "visual": {
     "visualType": "textbox",
@@ -23,7 +23,7 @@
                     "value": "NEAR-TERM MILESTONES  [NEXT 3 WEEKS]",
                     "textStyle": {
                       "fontFamily": "Arial",
-                      "fontSize": "11pt",
+                      "fontSize": "10pt",
                       "color": "#16283F",
                       "fontWeight": "bold"
                     }

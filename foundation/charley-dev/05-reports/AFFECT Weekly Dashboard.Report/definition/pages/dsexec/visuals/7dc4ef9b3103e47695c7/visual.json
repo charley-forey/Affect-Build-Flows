@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 26,
-    "tabOrder": 39
+    "tabOrder": 9
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Gross Margin Subline.'"
+                  "Value": "'Card. Gross Margin: the line under the value (Gross Margin Subline).'"
                 }
               }
             }

@@ -4,37 +4,36 @@
   "position": {
     "x": 664,
     "y": 146,
-    "z": 2000,
+    "z": 3000,
     "width": 136,
-    "height": 22,
-    "tabOrder": 37
+    "height": 24,
+    "tabOrder": 12
   },
   "visual": {
-    "visualType": "textbox",
-    "objects": {
-      "general": [
-        {
-          "properties": {
-            "paragraphs": [
-              {
-                "horizontalTextAlignment": "left",
-                "textRuns": [
-                  {
-                    "value": "Grade under 75",
-                    "textStyle": {
-                      "fontFamily": "Arial",
-                      "fontSize": "8pt",
-                      "color": "#5A6A7E",
-                      "fontWeight": "normal"
+    "visualType": "card",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
                     }
-                  }
-                ]
-              }
-            ]
-          }
+                  },
+                  "Property": "Attention Caption"
+                }
+              },
+              "queryRef": "_Measures.Attention Caption",
+              "nativeQueryRef": "Attention Caption"
+            }
+          ]
         }
-      ]
+      }
     },
+    "drillFilterOtherVisuals": true,
     "visualContainerObjects": {
       "general": [
         {
@@ -42,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Grade under 75'"
+                  "Value": "'Card. Attention Caption.'"
                 }
               }
             }
@@ -125,28 +124,100 @@
             "top": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "4D"
                 }
               }
             },
             "bottom": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "4D"
                 }
               }
             },
             "left": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "6D"
                 }
               }
             },
             "right": {
               "expr": {
                 "Literal": {
-                  "Value": "0D"
+                  "Value": "6D"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "fontSize": {
+              "expr": {
+                "Literal": {
+                  "Value": "8D"
+                }
+              }
+            },
+            "color": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Literal": {
+                      "Value": "'#5A6A7E'"
+                    }
+                  }
+                }
+              }
+            },
+            "fontFamily": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Arial'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "categoryLabels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "wordWrap": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }

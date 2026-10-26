@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 40,
-    "tabOrder": 35
+    "tabOrder": 11
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Backlog.'"
+                  "Value": "'Card. Backlog: the value (Backlog).'"
                 }
               }
             }

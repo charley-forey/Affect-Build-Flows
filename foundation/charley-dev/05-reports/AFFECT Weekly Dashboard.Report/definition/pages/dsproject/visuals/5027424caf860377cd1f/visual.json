@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 228,
     "height": 26,
-    "tabOrder": 39
+    "tabOrder": 16
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Schedule Subline.'"
+                  "Value": "'Card. Schedule: the line under the value (Schedule Subline).'"
                 }
               }
             }

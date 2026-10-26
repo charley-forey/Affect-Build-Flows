@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 386,
     "height": 56,
-    "tabOrder": 97
+    "tabOrder": 59
   },
   "visual": {
     "visualType": "card",
@@ -182,7 +182,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#986319'"
+                      "Value": "'#7A4F12'"
                     }
                   }
                 }

@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 40,
-    "tabOrder": 38
+    "tabOrder": 20
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Portfolio Safety Score.'"
+                  "Value": "'Card. Safety  \u2022  Inspections: the value (Portfolio Safety Score).'"
                 }
               }
             }

@@ -7,7 +7,7 @@
     "z": 2000,
     "width": 1288,
     "height": 22,
-    "tabOrder": 67
+    "tabOrder": 40
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "Scores 0-100%: Scorecard.xlsx bands (dim_DashBand)  \u2022  Each pillar = equal-weighted average of its measured measures  \u2022  Grade = pillars weighted 50 / 30 / 15 / 5 over the weight measured  \u2022  Agenda 'not verifiable': Procore keeps only the last send once minutes go out",
+                    "value": "Scores: Scorecard.xlsx bands  \u2022  Pillar = average of its measured items  \u2022  Grade = pillars weighted 50 / 30 / 15 / 5  \u2022  Agenda 'not verifiable': Procore keeps only the last send",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Scores 0-100%: Scorecard.xlsx bands (dim_DashBand)  \u2022  Each pillar = equal-weighted average of its measured measures  \u2022  Grade = pillars weighted 50 / 30 / 15 / 5 over the weight measured  \u2022  Agenda ''not verifiable'': Procore keeps only the last send once minutes go out'"
+                  "Value": "'Scores: Scorecard.xlsx bands  \u2022  Pillar = average of its measured items  \u2022  Grade = pillars weighted 50 / 30 / 15 / 5  \u2022  Agenda ''not verifiable'': Procore keeps only the last send'"
                 }
               }
             }

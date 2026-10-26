@@ -7,7 +7,7 @@
     "z": 2000,
     "width": 1288,
     "height": 22,
-    "tabOrder": 98
+    "tabOrder": 60
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "Executive review  \u2022  Active projects only (Procore activity in the last 60 days, not yet 100% paid)  \u2022  Margin: Procore budget forecast, CM fee excluded  \u2022  Cash position: billings - retainage receivable - unpaid AR - (costs - unpaid AP - retainage payable)  \u2022  Safety: inspections performed in the week, 5 = 80%",
+                    "value": "Active projects: Procore activity in 60 days, not 100% paid  \u2022  Margin: Procore forecast, CM fee excluded  \u2022  Cash: billings - retainage - unpaid AR - (cost - unpaid AP - sub retainage)  \u2022  Safety: inspections in the week, 5 = 80%",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Executive review  \u2022  Active projects only (Procore activity in the last 60 days, not yet 100% paid)  \u2022  Margin: Procore budget forecast, CM fee excluded  \u2022  Cash position: billings - retainage receivable - unpaid AR - (costs - unpaid AP - retainage payable)  \u2022  Safety: inspections performed in the week, 5 = 80%'"
+                  "Value": "'Active projects: Procore activity in 60 days, not 100% paid  \u2022  Margin: Procore forecast, CM fee excluded  \u2022  Cash: billings - retainage - unpaid AR - (cost - unpaid AP - sub retainage)  \u2022  Safety: inspections in the week, 5 = 80%'"
                 }
               }
             }

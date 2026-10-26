@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 40,
-    "tabOrder": 37
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Portfolio Cash Position.'"
+                  "Value": "'Card. Cash Position: the value (Portfolio Cash Position).'"
                 }
               }
             }

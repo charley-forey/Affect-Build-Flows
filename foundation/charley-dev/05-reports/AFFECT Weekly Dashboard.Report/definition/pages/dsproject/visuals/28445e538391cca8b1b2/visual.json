@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 228,
     "height": 26,
-    "tabOrder": 41
+    "tabOrder": 22
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Billed Subline.'"
+                  "Value": "'Card. Billed To Date: the line under the value (Billed Subline).'"
                 }
               }
             }

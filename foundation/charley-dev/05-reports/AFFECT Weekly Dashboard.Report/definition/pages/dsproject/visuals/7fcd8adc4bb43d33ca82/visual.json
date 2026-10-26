@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 228,
     "height": 40,
-    "tabOrder": 33
+    "tabOrder": 9
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Current Contract.'"
+                  "Value": "'Card. Current Contract: the value (Current Contract).'"
                 }
               }
             }

@@ -7,7 +7,7 @@
     "z": 2000,
     "width": 1288,
     "height": 22,
-    "tabOrder": 48
+    "tabOrder": 25
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "GRADE   90+ On track   \u2022   75-89 Monitor   \u2022   under 75 Needs attention   \u2022   \u2014 No data      Cells: headline reading  \u00b7  pillar score (the colour)      Schedule: days ahead (+) / behind (-) baseline   Budget: projected gross margin   Safety / Quality: inspections performed in the week      Weights: Schedule 50  Budget 30  Safety 15  Quality 5",
+                    "value": "GRADE  90+ On track  \u2022  75-89 Monitor  \u2022  under 75 Needs attention  \u2022  \u2014 No data     Cells: reading \u00b7 pillar score (colour)     Weights: Schedule 50  Budget 30  Safety 15  Quality 5   Worst grade first",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'GRADE   90+ On track   \u2022   75-89 Monitor   \u2022   under 75 Needs attention   \u2022   \u2014 No data      Cells: headline reading  \u00b7  pillar score (the colour)      Schedule: days ahead (+) / behind (-) baseline   Budget: projected gross margin   Safety / Quality: inspections performed in the week      Weights: Schedule 50  Budget 30  Safety 15  Quality 5'"
+                  "Value": "'GRADE  90+ On track  \u2022  75-89 Monitor  \u2022  under 75 Needs attention  \u2022  \u2014 No data     Cells: reading \u00b7 pillar score (colour)     Weights: Schedule 50  Budget 30  Safety 15  Quality 5   Worst grade first'"
                 }
               }
             }

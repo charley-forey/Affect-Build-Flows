@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 26,
-    "tabOrder": 42
+    "tabOrder": 18
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Cash Subline.'"
+                  "Value": "'Card. Cash Position: the line under the value (Cash Subline).'"
                 }
               }
             }

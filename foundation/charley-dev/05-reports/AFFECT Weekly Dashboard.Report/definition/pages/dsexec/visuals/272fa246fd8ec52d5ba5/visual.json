@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 40,
-    "tabOrder": 36
+    "tabOrder": 14
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Active Projects.'"
+                  "Value": "'Card. Active Projects: the value (Active Projects).'"
                 }
               }
             }
