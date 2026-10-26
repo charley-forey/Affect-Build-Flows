@@ -422,7 +422,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          f'IF ( [Risk Severity] = "HIGH", "#F6DADA", IF ( [Risk Severity] = "MED", "#FFF0CF" ) )',
          None, "deck slide 3 pill fills"),
         ("Risk Severity Ink",
-         f'IF ( [Risk Severity] = "HIGH", "#9C3B37", IF ( [Risk Severity] = "MED", "#986319" ) )',
+         f'IF ( [Risk Severity] = "HIGH", "#9C3B37", IF ( [Risk Severity] = "MED", "#7A4F12" ) )',
          None, "deck slide 3 pill text"),
         ("Measures Below Target", project_score("MeasuresBelowTarget"), '"0"',
          "Oct 21 call: the grade, and how many things the project failed"),
@@ -578,8 +578,8 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR G = [Billing Ahead Of Work Pts]\n"
          'RETURN FORMAT ( [Billed % Of Contract], "0.0%" ) & " of contract" & SWITCH ( TRUE (),\n'
          '    ISBLANK ( G ), "",\n'
-         '    G >= 1, "  " & UNICHAR ( 8226 ) & "  billed " & FORMAT ( G, "0" ) & " pts ahead of work",\n'
-         '    G <= -1, "  " & UNICHAR ( 8226 ) & "  work " & FORMAT ( -G, "0" ) & " pts ahead of billing",\n'
+         '    G >= 1, "  " & UNICHAR ( 8226 ) & "  " & FORMAT ( G, "0" ) & " pts ahead of work",\n'
+         '    G <= -1, "  " & UNICHAR ( 8226 ) & "  " & FORMAT ( -G, "0" ) & " pts behind work",\n'
          '    "  " & UNICHAR ( 8226 ) & "  in line with work" )', None,
          "deck slide 3 BILLED TO DATE sub-line, with the billing-vs-progress gap"),
         ("Paid To Date",

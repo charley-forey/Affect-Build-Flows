@@ -391,11 +391,10 @@ def page_executive() -> tuple[str, list[dict]]:
                  "projects leadership wants always shown under Priority Projects.",
                  wx + 18, wy + 42, ww - 36, 90, size=8.5, color=SLATE, bold=False, fill="#F6F8FA", radius=8),
             z(text(p, "wl_dq_bg", " ", wx + 18, wy + 140, ww - 36, 64, fill="#FFF0CF", radius=8), 1000),
-            kpi_value(p, "wl_dq", "Data Notice", wx + 26, wy + 144, ww - 52, 56, size=8, color="#986319")]
-    out += footer(p, "Executive review  •  Active projects only (Procore activity in the last 60 days, not yet "
-                     "100% paid)  •  Margin: Procore budget forecast, CM fee excluded  •  Cash position: "
-                     "billings - retainage receivable - unpaid AR - (costs - unpaid AP - retainage payable)  •  "
-                     "Safety: inspections performed in the week, 5 = 80%")
+            kpi_value(p, "wl_dq", "Data Notice", wx + 26, wy + 144, ww - 52, 56, size=8, color="#7A4F12")]
+    out += footer(p, "Active projects: Procore activity in 60 days, not 100% paid  •  Margin: Procore forecast, CM fee "
+                     "excluded  •  Cash: billings - retainage - unpaid AR - (cost - unpaid AP - sub retainage)  •  "
+                     "Safety: inspections in the week, 5 = 80%")
     return p, out
 
 
@@ -461,10 +460,9 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 pills={"Grade Cell": ("Grade Colour", "Grade Ink")})
     rs.widen(off, {"ProjectName": 3, "Status Note": 3, "Phase Label": 1})
     out.append(flagged(off, "Not Active Flag"))
-    out += footer(p, "GRADE   90+ On track   •   75-89 Monitor   •   under 75 Needs attention   •   "
-                     "— No data      Cells: headline reading  ·  pillar score (the colour)      Schedule: days "
-                     "ahead (+) / behind (-) baseline   Budget: projected gross margin   Safety / Quality: inspections "
-                     "performed in the week      Weights: Schedule 50  Budget 30  Safety 15  Quality 5")
+    out += footer(p, "GRADE  90+ On track  •  75-89 Monitor  •  under 75 Needs attention  •  — No data     "
+                     "Cells: reading · pillar score (colour)     Weights: Schedule 50  Budget 30  Safety 15  Quality 5   "
+                     "Worst grade first")
     return p, out
 
 
@@ -473,8 +471,8 @@ def page_project() -> tuple[str, list[dict]]:
     p = "dsproject"
     out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
            z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
-           text(p, "title", "PROJECT OVERVIEW  |", 36, 4, 300, 43, size=20, color="#FFFFFF"),
-           kpi_value(p, "hdr_proj", "Project Title", 340, 8, 500, 38, size=20, color="#FFFFFF"),
+           text(p, "title", "PROJECT OVERVIEW  |", 36, 4, 318, 43, size=20, color="#FFFFFF"),
+           kpi_value(p, "hdr_proj", "Project Title", 358, 8, 482, 38, size=20, color="#FFFFFF"),
            kpi_value(p, "hdr_sub", "Week Header", 30, 50, 600, 26, size=9, color="#C7D7E7"),
            kpi_value(p, "hdr_team", "Project Team", 640, 52, 450, 26, size=8, color="#C7D7E7"),
            week_slicer(p, 1100, 8, 236, 44)]
@@ -532,7 +530,7 @@ def page_project() -> tuple[str, list[dict]]:
                                   ("BILLED TO DATE", "Billed To Date (Gross)"), ("PAID TO DATE", "Paid To Date"),
                                   ("REMAINING CONTRACT BALANCE", "Remaining Contract Balance")]):
         ry = r2 + 48 + i * 40
-        out += [text(p, f"pf_{i}_l", lbl, fx + 20, ry + 6, 200, 20, size=9),
+        out += [text(p, f"pf_{i}_l", lbl, fx + 20, ry + 6, 208, 20, size=9),
                 kpi_value(p, f"pf_{i}_v", m, fx + 230, ry, 150, 30, size=12, color=NAVY, precision=0, units=1)]
 
     hx, hw = 921, 402
@@ -552,7 +550,7 @@ def page_project() -> tuple[str, list[dict]]:
             kpi_value(p, "hf_pv", "Cash Position", hx + hw - 150, r2 + 168, 134, 30, size=14, color=NAVY,
                       precision=2, units=1000000),
             z(text(p, "hf_ex_bg", " ", hx + 20, r2 + 210, hw - 40, 74, fill="#FFF0CF", radius=8), 1000),
-            kpi_value(p, "hf_ex", "Financial Exceptions", hx + 28, r2 + 214, hw - 56, 66, size=9, color="#986319")]
+            kpi_value(p, "hf_ex", "Financial Exceptions", hx + 28, r2 + 214, hw - 56, 66, size=9, color="#7A4F12")]
 
     # Row 3 (deck 6.2-10.0 in): top risks, near-term milestones + critical path, safety/quality/wins
     r3, h3 = 512, 276
@@ -578,7 +576,7 @@ def page_project() -> tuple[str, list[dict]]:
     mx, mw = 611, 352
     out += [panel(p, "ms_bg", mx, r3, mw, h3),
             z(text(p, "ms_bar", " ", mx, r3, 6, h3, fill=GREEN), 1),
-            text(p, "ms_h", "NEAR-TERM MILESTONES  [NEXT 3 WEEKS]", mx + 20, r3 + 10, mw - 34, 24, size=11, color=NAVY)]
+            text(p, "ms_h", "NEAR-TERM MILESTONES  [NEXT 3 WEEKS]", mx + 20, r3 + 10, mw - 34, 24, size=10, color=NAVY)]
     near = table(p, "ms_near", mx + 14, r3 + 36, mw - 28, 106,
                  [rs.shown_as(column("fct_ScheduleActivity", "ActivityName"), "Activity"),
                   rs.shown_as(measure("Activity Next Step"), "Next")],
@@ -619,9 +617,8 @@ def page_project() -> tuple[str, list[dict]]:
 
     out += [z(text(p, "focus_bg", " ", 37, 798, 1286, 40, fill="#E7EDF2", radius=8), 1000),
             kpi_value(p, "focus", "Executive Focus", 52, 802, 1260, 32, size=10, color=NAVY)]
-    out += footer(p, "Financials as of the last refresh; inspections, meetings and wins for the reporting week  "
-                     "•  Milestones and critical path: Outbuild current schedule  •  Top risks: Scorecard.xlsx "
-                     "measures below 80% (HIGH below 50%)  •  Grade detail: the button, top right")
+    out += footer(p, "Financials as of the last refresh; inspections, meetings and wins for the week  •  Milestones: "
+                     "Outbuild current schedule  •  Top risks: measures below 80% (HIGH below 50%)")
     return p, out
 
 
@@ -696,9 +693,8 @@ def page_grade() -> tuple[str, list[dict]]:
     dr.sort_desc(meets, column("fct_Meeting", "MeetingDate"))
     rs.widen(meets, {"SeriesTitle": 3, "AgendaStatus": 2, "MinutesStatus": 2})
     out.append(flagged(meets, "Meeting In Window Flag"))
-    out += footer(p, "Scores 0-100%: Scorecard.xlsx bands (dim_DashBand)  •  Each pillar = equal-weighted average of "
-                     "its measured measures  •  Grade = pillars weighted 50 / 30 / 15 / 5 over the weight measured  "
-                     "•  Agenda 'not verifiable': Procore keeps only the last send once minutes go out")
+    out += footer(p, "Scores: Scorecard.xlsx bands  •  Pillar = average of its measured items  •  Grade = pillars "
+                     "weighted 50 / 30 / 15 / 5  •  Agenda 'not verifiable': Procore keeps only the last send")
     return p, out
 
 
