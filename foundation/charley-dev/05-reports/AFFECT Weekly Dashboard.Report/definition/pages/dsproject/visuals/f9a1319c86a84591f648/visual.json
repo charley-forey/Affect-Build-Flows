@@ -3,10 +3,10 @@
   "name": "f9a1319c86a84591f648",
   "position": {
     "x": 611,
-    "y": 536,
+    "y": 512,
     "z": 1,
     "width": 6,
-    "height": 252,
+    "height": 276,
     "tabOrder": 84
   },
   "visual": {
@@ -24,7 +24,7 @@
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "9pt",
-                      "color": "#657589",
+                      "color": "#5A6A7E",
                       "fontWeight": "bold"
                     }
                   }

@@ -3,7 +3,7 @@
   "name": "2047a458f0ac2bc8ea49",
   "position": {
     "x": 307,
-    "y": 308,
+    "y": 284,
     "z": 3000,
     "width": 180,
     "height": 30,
@@ -182,7 +182,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#E5A13B'"
+                      "Value": "'#9A6212'"
                     }
                   }
                 }

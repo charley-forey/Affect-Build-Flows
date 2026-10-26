@@ -24,7 +24,7 @@
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "9pt",
-                      "color": "#657589",
+                      "color": "#5A6A7E",
                       "fontWeight": "bold"
                     }
                   }
@@ -64,7 +64,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#657589'"
+                      "Value": "'#5A6A7E'"
                     }
                   }
                 }
@@ -95,7 +95,7 @@
                 "color": {
                   "expr": {
                     "Literal": {
-                      "Value": "'#657589'"
+                      "Value": "'#5A6A7E'"
                     }
                   }
                 }

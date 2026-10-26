@@ -35,7 +35,9 @@ PILLARS = [(1, "Schedule"), (2, "Budget"), (3, "Safety"), (4, "Quality")]
 # Deck palette (slide XML), and text that reads on it. White on the deck's amber is 2:1,
 # so amber pills carry navy text - colour is never the only channel either way.
 NAVY, TEAL, GREEN, AMBER, RED, SLATE, MIST = ("#16283F", "#087F83", "#278367", "#E5A13B",
-                                              "#BF534E", "#657589", "#DDE4EB")
+                                              "#BF534E", "#5A6A7E", "#DDE4EB")
+# Amber as TEXT: the fill amber is 2.2:1 on white; this one is 5.1:1 (WCAG AA, 2026-10-26 audit).
+AMBER_TEXT = "#9A6212"
 
 
 def setting(key: str) -> str:
@@ -130,8 +132,8 @@ def meetings_missed(kind: str) -> str:
         "VAR HeldNow = NOT ISEMPTY ( FILTER ( fct_Meeting,\n"
         f"        fct_Meeting[MeetingType] = \"{kind}\" && fct_Meeting[IsCompliant]\n"
         "            && fct_Meeting[MeetingDate] >= E - 6 && fct_Meeting[MeetingDate] <= E ) )\n"
-        "VAR Open = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )\n"
-        "RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Open )"
+        "VAR Unfinished = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )\n"
+        "RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Unfinished )"
     )
 
 
@@ -420,7 +422,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          f'IF ( [Risk Severity] = "HIGH", "#F6DADA", IF ( [Risk Severity] = "MED", "#FFF0CF" ) )',
          None, "deck slide 3 pill fills"),
         ("Risk Severity Ink",
-         f'IF ( [Risk Severity] = "HIGH", "{RED}", IF ( [Risk Severity] = "MED", "#986319" ) )',
+         f'IF ( [Risk Severity] = "HIGH", "#9C3B37", IF ( [Risk Severity] = "MED", "#986319" ) )',
          None, "deck slide 3 pill text"),
         ("Measures Below Target", project_score("MeasuresBelowTarget"), '"0"',
          "Oct 21 call: the grade, and how many things the project failed"),

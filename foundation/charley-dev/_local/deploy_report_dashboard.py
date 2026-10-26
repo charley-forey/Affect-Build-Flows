@@ -40,6 +40,7 @@ W, H = 1360, 880
 PX = 80  # per deck inch
 
 NAVY, TEAL, GREEN, AMBER, RED, SLATE = dash.NAVY, dash.TEAL, dash.GREEN, dash.AMBER, dash.RED, dash.SLATE
+AMBER_TEXT = dash.AMBER_TEXT
 PAGE_BG, CARD_BG, LINE, PALE = "#EEF1F5", "#FFFFFF", "#DDE4EB", "#E7EDF2"
 measure, column, lit, oid, _ON, _OFF, _num = dr.measure, dr.column, dr.lit, dr.oid, dr._ON, dr._OFF, dr._num
 
@@ -280,11 +281,11 @@ def page_executive() -> tuple[str, list[dict]]:
     out.append(text(p, "k_rev_note", "Sage AR invoiced, net of retainage  -  plan not set yet", xs[0] + 16,
                     y0 + th - 28, tw - 24, 24, size=7, color=SLATE, bold=False))
     out += tile(p, "k_gm", "GROSS MARGIN", "Portfolio Gross Margin %", "Gross Margin Subline", xs[1], y0, tw, th,
-                accent=GREEN, precision=1, sub_color=AMBER)
+                accent=GREEN, precision=1, sub_color=AMBER_TEXT)
     out += tile(p, "k_backlog", "BACKLOG", "Backlog", "Backlog Subline", xs[2], y0, tw, th, accent=TEAL,
                 precision=1, units=1000000, sub_color=GREEN)
     out += tile(p, "k_active", "ACTIVE PROJECTS", "Active Projects", "Attention Subline", xs[3], y0, tw, th,
-                accent=AMBER, sub_color=AMBER)
+                accent=AMBER, sub_color=AMBER_TEXT)
     out += tile(p, "k_cash", "CASH POSITION", "Portfolio Cash Position", "Cash Subline", xs[4], y0, tw, th,
                 accent=GREEN, precision=1, units=1000000)
     out += tile(p, "k_safety", "SAFETY  •  INSPECTIONS", "Portfolio Safety Score", "Safety Subline",
@@ -315,7 +316,7 @@ def page_executive() -> tuple[str, list[dict]]:
             text(p, "fin_ebitda_v", "Needs Sage general ledger (overheads) - not yet ingested", fx + 18, fy + 342,
                  220, 34, size=8, color=SLATE, bold=False),
             text(p, "fin_ar", "AR > 60 DAYS", fx + 270, fy + 318, 110, 22, size=9),
-            kpi_value(p, "fin_ar_v", "AR Over 60 Days", fx + 262, fy + 342, 200, 34, size=18, color=AMBER,
+            kpi_value(p, "fin_ar_v", "AR Over 60 Days", fx + 262, fy + 342, 200, 34, size=18, color=AMBER_TEXT,
                       precision=1, units=1000000)]
 
     # Project execution (deck 6.79-12.06 in)
@@ -414,11 +415,11 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 text(p, f"k{i}_l", lbl, x + 18, 108, 210, 20, size=9),
                 kpi_value(p, f"k{i}_v", m, x + 12, 128, 90, 50, size=24, color=NAVY),
                 text(p, f"k{i}_s", sub, x + 104, 148, 136, 20, size=8, color=SLATE, bold=False)]
-    out += [panel(p, "tbl_bg", 36, 198, 1288, 450),
+    out += [panel(p, "tbl_bg", 36, 198, 1288, 370),
             text(p, "tbl_h", "ACTIVE PROJECTS  •  PERFORMANCE & ACCOUNTABILITY", 56, 208, 760, 28, size=13, color=NAVY),
             text(p, "tbl_note", "Right-click a project and choose Drill through to open it or its grade detail",
                  820, 212, 484, 20, size=8, color=SLATE, bold=False, align="right")]
-    grid = table(p, "portfolio", 48, 240, 1264, 396,
+    grid = table(p, "portfolio", 48, 240, 1264, 316,
                  [rs.shown_as(column("dim_Project", "ProjectName"), "Project"),
                   rs.shown_as(measure("Phase Label"), "Current phase"),
                   rs.shown_as(measure("Safety Cell"), "Safety"),
@@ -444,11 +445,11 @@ def page_portfolio() -> tuple[str, list[dict]]:
     grid["visual"]["query"]["sortDefinition"] = {"sort": [{"field": measure("Priority Score")["field"],
                                                            "direction": "Descending"}], "isDefaultSort": True}
     out.append(flagged(grid, "Active Flag"))
-    out += [panel(p, "off_bg", 36, 660, 1288, 172),
-            text(p, "off_h", "NOT ON THE ACTIVE LIST", 56, 668, 560, 24, size=10, color=NAVY),
+    out += [panel(p, "off_bg", 36, 580, 1288, 266),
+            text(p, "off_h", "NOT ON THE ACTIVE LIST", 56, 588, 560, 24, size=10, color=NAVY),
             text(p, "off_note", "Inactive = no Procore activity in 60 days; Archived = 100% paid. Still graded, not counted.",
-                 640, 670, 664, 20, size=8, color=SLATE, bold=False, align="right")]
-    off = table(p, "inactive", 48, 694, 1264, 132,
+                 640, 590, 664, 20, size=8, color=SLATE, bold=False, align="right")]
+    off = table(p, "inactive", 48, 614, 1264, 226,
                 [rs.shown_as(column("dim_Project", "ProjectName"), "Project"),
                  rs.shown_as(measure("Status Note"), "Status"),
                  rs.shown_as(measure("Last Project Activity"), "Last Procore activity"),
@@ -485,11 +486,12 @@ def page_project() -> tuple[str, list[dict]]:
                                  "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
                                  "header": [{"properties": {"show": _OFF}}]}
     out.append(boxed(pick, fill=CARD_BG, radius=6))
-    out.append(button(p, "go_grade", "Grade detail >", 1226, 92, 110, 24, "Drillthrough", "dsgrade"))
-    out.append(button(p, "back", "< Back", 1140, 92, 80, 24, "Back"))
+    # In the header band (audit 2026-10-26): the 24px they took above the tiles goes to row 3.
+    out.append(button(p, "go_grade", "Grade detail >", 1226, 56, 110, 22, "Drillthrough", "dsgrade"))
+    out.append(button(p, "back", "< Back", 1140, 56, 80, 22, "Back"))
 
     # KPI row (deck 1.34-2.0 in)
-    xs, tw, y0, th = [37, 306, 575, 844, 1113], 246, 120, 104
+    xs, tw, y0, th = [37, 306, 575, 844, 1113], 246, 96, 104
     out += tile(p, "k_contract", "CURRENT CONTRACT", "Current Contract", "Contract Change Text", xs[0], y0, tw, th,
                 accent=TEAL, precision=2, units=1000000, sub_color=SLATE)
     out += tile(p, "k_complete", "PROJECT COMPLETE", "Work Progress Shown", None, xs[1], y0, tw, th, accent=AMBER)
@@ -503,7 +505,7 @@ def page_project() -> tuple[str, list[dict]]:
                 accent=GREEN, precision=2, units=1000000, sub_color=SLATE)
 
     # Row 2 (deck 2.61-4.95 in): schedule & delivery, project financials, delivery & financial health
-    r2, h2 = 234, 290
+    r2, h2 = 210, 290
     sx, sw = 37, 466
     out += [panel(p, "sd_bg", sx, r2, sw, h2),
             z(text(p, "sd_bar", " ", sx, r2, 6, h2, fill=TEAL), 1),
@@ -511,7 +513,7 @@ def page_project() -> tuple[str, list[dict]]:
             text(p, "sd_tl", "TRACKING FINISH (BASELINE)", sx + 20, r2 + 46, 240, 20, size=9),
             kpi_value(p, "sd_tv", "Tracking Finish Shown", sx + 270, r2 + 40, 180, 30, size=13, color=NAVY),
             text(p, "sd_fl", "FORECAST FINISH", sx + 20, r2 + 80, 240, 20, size=9),
-            kpi_value(p, "sd_fv", "Forecast Finish Shown", sx + 270, r2 + 74, 180, 30, size=13, color=AMBER)]
+            kpi_value(p, "sd_fv", "Forecast Finish Shown", sx + 270, r2 + 74, 180, 30, size=13, color=AMBER_TEXT)]
     behind = table(p, "sd_behind", sx + 14, r2 + 112, sw - 28, h2 - 122,
                    [rs.shown_as(column("fct_ScheduleActivity", "ActivityName"), "Behind baseline - schedule pressure"),
                     rs.shown_as(measure("Days Behind Baseline"), "Days behind"),
@@ -553,7 +555,7 @@ def page_project() -> tuple[str, list[dict]]:
             kpi_value(p, "hf_ex", "Financial Exceptions", hx + 28, r2 + 214, hw - 56, 66, size=9, color="#986319")]
 
     # Row 3 (deck 6.2-10.0 in): top risks, near-term milestones + critical path, safety/quality/wins
-    r3, h3 = 536, 252
+    r3, h3 = 512, 276
     tx, tw3 = 37, 560
     out += [panel(p, "tr_bg", tx, r3, tw3, h3),
             z(text(p, "tr_bar", " ", tx, r3, 6, h3, fill=RED), 1),
@@ -577,14 +579,14 @@ def page_project() -> tuple[str, list[dict]]:
     out += [panel(p, "ms_bg", mx, r3, mw, h3),
             z(text(p, "ms_bar", " ", mx, r3, 6, h3, fill=GREEN), 1),
             text(p, "ms_h", "NEAR-TERM MILESTONES  [NEXT 3 WEEKS]", mx + 20, r3 + 10, mw - 34, 24, size=11, color=NAVY)]
-    near = table(p, "ms_near", mx + 14, r3 + 36, mw - 28, 94,
+    near = table(p, "ms_near", mx + 14, r3 + 36, mw - 28, 106,
                  [rs.shown_as(column("fct_ScheduleActivity", "ActivityName"), "Activity"),
                   rs.shown_as(measure("Activity Next Step"), "Next")],
                  alt="Table. Outbuild activities starting or finishing in the next three weeks.")
     rs.widen(near, {"ActivityName": 3, "Activity Next Step": 2})
     out.append(flagged(near, "Near Term Flag"))
-    out.append(text(p, "ms_cp", "CRITICAL PATH  [NEXT 3 WEEKS]", mx + 20, r3 + 138, mw - 34, 20, size=10, color=NAVY))
-    crit = table(p, "ms_crit", mx + 14, r3 + 158, mw - 28, 86,
+    out.append(text(p, "ms_cp", "CRITICAL PATH  [NEXT 3 WEEKS]", mx + 20, r3 + 150, mw - 34, 20, size=10, color=NAVY))
+    crit = table(p, "ms_crit", mx + 14, r3 + 170, mw - 28, 98,
                  [rs.shown_as(column("fct_ScheduleActivity", "ActivityName"), "Activity"),
                   rs.shown_as(measure("Activity Next Step"), "Next")],
                  alt="Table. Critical-path Outbuild activities starting or finishing in the next three weeks.")
@@ -596,8 +598,8 @@ def page_project() -> tuple[str, list[dict]]:
             z(text(p, "sq_bar", " ", qx, r3, 6, h3, fill=TEAL), 1),
             text(p, "sq_h", "SAFETY, QUALITY & WINS", qx + 20, r3 + 10, qw - 34, 24, size=11, color=NAVY)]
     for i, (lbl, cat) in enumerate([("SAFETY", "Safety"), ("QUALITY", "Quality")]):
-        ly = r3 + 36 + i * 72
-        t = table(p, f"sq_{cat.lower()}", qx + 14, ly, qw - 28, 66,
+        ly = r3 + 36 + i * 80
+        t = table(p, f"sq_{cat.lower()}", qx + 14, ly, qw - 28, 74,
                   [rs.shown_as(column("fct_Inspection", "InspectionName"), f"{lbl} inspections this week"),
                    rs.shown_as(column("fct_Inspection", "InspectionDate"), "Date")],
                   alt=f"Table. {cat} inspections performed in the reporting week.")
@@ -610,7 +612,7 @@ def page_project() -> tuple[str, list[dict]]:
             "howCreated": "User"})
         rs.widen(t, {"InspectionName": 4})
         out.append(flagged(t, "Inspection In Week Flag"))
-    wins = table(p, "sq_wins", qx + 14, r3 + 180, qw - 28, 64,
+    wins = table(p, "sq_wins", qx + 14, r3 + 196, qw - 28, 72,
                  [rs.shown_as(column("fct_ScheduleActivity", "ActivityName"), "Recent wins - completed this week")],
                  alt="Table. Outbuild activities completed in the reporting week.")
     out.append(flagged(wins, "Recent Win Flag"))
@@ -716,7 +718,8 @@ def build(model_id: str) -> dict[str, str]:
     files = dr.build(model_id)
     for rel in [r for r in files if r.endswith("/page.json") and "/pages/" in r]:
         page = json.loads(files[rel])
-        page.update(width=W, height=H, displayOption="FitToWidth")
+        # FitToPage: on a 16:9 room screen FitToWidth pushed ~160px below the fold (audit).
+        page.update(width=W, height=H, displayOption="FitToPage")
         page["objects"] = {"background": [{"properties": {"color": _color(PAGE_BG), "transparency": _num(0)}}],
                            "outspace": [{"properties": {"color": _color(PAGE_BG), "transparency": _num(0)}}]}
         # A drill-through page that is also opened directly keeps its own project picker.

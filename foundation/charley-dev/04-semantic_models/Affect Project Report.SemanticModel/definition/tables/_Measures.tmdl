@@ -1473,8 +1473,8 @@ table _Measures
 			VAR HeldNow = NOT ISEMPTY ( FILTER ( fct_Meeting,
 			fct_Meeting[MeetingType] = "OAC" && fct_Meeting[IsCompliant]
 			&& fct_Meeting[MeetingDate] >= E - 6 && fct_Meeting[MeetingDate] <= E ) )
-			VAR Open = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )
-			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Open )
+			VAR Unfinished = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )
+			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Unfinished )
 		formatString: "0"
 		displayFolder: 22 Dashboard - schedule & site drivers
 
@@ -1491,8 +1491,8 @@ table _Measures
 			VAR HeldNow = NOT ISEMPTY ( FILTER ( fct_Meeting,
 			fct_Meeting[MeetingType] = "Trade Partner" && fct_Meeting[IsCompliant]
 			&& fct_Meeting[MeetingDate] >= E - 6 && fct_Meeting[MeetingDate] <= E ) )
-			VAR Open = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )
-			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Open )
+			VAR Unfinished = IF ( [Report Weeks Ago] = 0 && NOT HeldNow, 1, 0 )
+			RETURN IF ( [Is Dashboard Project], 4 - COALESCE ( Held, 0 ) - Unfinished )
 		formatString: "0"
 		displayFolder: 22 Dashboard - schedule & site drivers
 
@@ -1753,7 +1753,7 @@ table _Measures
 		displayFolder: 23 Dashboard - scorecard
 
 	/// Replaces deck slide 3 pill text
-	measure 'Risk Severity Ink' = IF ( [Risk Severity] = "HIGH", "#BF534E", IF ( [Risk Severity] = "MED", "#986319" ) )
+	measure 'Risk Severity Ink' = IF ( [Risk Severity] = "HIGH", "#9C3B37", IF ( [Risk Severity] = "MED", "#986319" ) )
 		displayFolder: 23 Dashboard - scorecard
 
 	/// Replaces Oct 21 call: the grade, and how many things the project failed

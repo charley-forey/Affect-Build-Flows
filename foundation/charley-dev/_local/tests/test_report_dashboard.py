@@ -68,8 +68,8 @@ def main() -> int:
     CHECKS.append("alt text, unique tab order, canvas bounds and no foreground collisions on every page")
 
     exec_refs = json.dumps(pages["dsexec"])
-    assert "Data As Of Header" in exec_refs and "Data As Of Header" in json.dumps(pages["dsportfolio"]) is False \
-        or "Portfolio Header" in json.dumps(pages["dsportfolio"])
+    assert "Data As Of Header" in exec_refs, "executive page does not say when the data was built"
+    assert "Portfolio Header" in json.dumps(pages["dsportfolio"]), "portfolio page has no header line"
     CHECKS.append("headers state the week and, on the executive page, when the data was built")
 
     # Bindings and load contract, with the generic suite's own checks pointed at this report.

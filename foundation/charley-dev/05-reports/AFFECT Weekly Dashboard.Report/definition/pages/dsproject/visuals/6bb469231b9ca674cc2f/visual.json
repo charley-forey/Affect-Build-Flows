@@ -7,7 +7,7 @@
     "z": 1,
     "width": 1360,
     "height": 3,
-    "tabOrder": 15
+    "tabOrder": 17
   },
   "visual": {
     "visualType": "textbox",
@@ -24,7 +24,7 @@
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "9pt",
-                      "color": "#657589",
+                      "color": "#5A6A7E",
                       "fontWeight": "bold"
                     }
                   }

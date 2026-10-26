@@ -3,7 +3,7 @@
   "name": "f07a6bb7e70aa464f9b7",
   "position": {
     "x": 517,
-    "y": 234,
+    "y": 210,
     "z": 1,
     "width": 6,
     "height": 290,
@@ -24,7 +24,7 @@
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "9pt",
-                      "color": "#657589",
+                      "color": "#5A6A7E",
                       "fontWeight": "bold"
                     }
                   }
