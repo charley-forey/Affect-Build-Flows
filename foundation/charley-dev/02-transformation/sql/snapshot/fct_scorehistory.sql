@@ -9,6 +9,8 @@
 -- WHO RUNS IT. cd_40_dq_checks, in its own cell after the daily snapshot - so only after the
 -- gate passed. A failure is recorded and alerted; it never blocks publishing.
 --
+-- Grain: one row per project per saved week (WeekStart, ProjectKey).
+--
 -- ONE ROW-SET PER WEEK. Every night replaces the rows of last week ({WEEK_START}, the Monday
 -- of dim_ReportWeek WeeksAgo = 1). The value kept is the last one captured before the week
 -- rolled over: what the dashboard showed as "Last week" on its final day.
