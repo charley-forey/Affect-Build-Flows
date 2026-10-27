@@ -268,6 +268,57 @@ if os.path.exists(f"{DIAG}/heartbeat_run.json"):
         json.dump(_heartbeat, fh, indent=2)
 '''
         ),
+        cell(
+            '''
+# WEEKLY GRADE HISTORY - last week's fct_ProjectScore saved to fct_ScoreHistory, so a
+# week-on-week change reads grades as the dashboard showed them, not rescored from today.
+# Same contract as the daily snapshot: after the gate, staged, swapped in one MERGE, checked,
+# and a failure is recorded and alerted without blocking publication.
+SCORE_STAGE, SCORE_SWAP = ''' + json.dumps(score_history_phases(), indent=1) + '''
+score = {"run_id": batch_id, "status": "failed"}
+try:
+    _row = spark.sql("SELECT WeekStart FROM dim_ReportWeek WHERE WeeksAgo = 1").first()
+    if _row is None:
+        raise RuntimeError("dim_ReportWeek has no WeeksAgo = 1 row; nothing written")
+    week_start = str(_row[0])
+    score["week_start"] = week_start
+    _fill = lambda s: s.replace("{WEEK_START}", week_start).replace("{RUN_ID}", batch_id)
+    for _sql in SCORE_STAGE:
+        spark.sql(_fill(_sql))
+    _dupes = spark.sql("SELECT ProjectKey FROM v_ScoreHistoryStage GROUP BY ProjectKey HAVING COUNT(*) > 1").count()
+    if _dupes:
+        raise RuntimeError(f"{_dupes} project(s) staged twice; nothing written")
+    for _sql in SCORE_SWAP:
+        spark.sql(_fill(_sql))
+    _cols = ("ProjectKey, SchedulePillar, BudgetPillar, SafetyPillar, QualityPillar, "
+             "GradeCoverage, Grade, MeasuresBelowTarget, WeakestPillar")
+    _week = f"FROM fct_ScoreHistory WHERE WeekStart = DATE '{week_start}'"
+    _diff = spark.sql(f"(SELECT {_cols} FROM v_ScoreHistoryStage EXCEPT SELECT {_cols} {_week}) "
+                      f"UNION ALL (SELECT {_cols} {_week} EXCEPT SELECT {_cols} FROM v_ScoreHistoryStage)").count()
+    if _diff:
+        spark.sql(f"DELETE FROM fct_ScoreHistory WHERE RunId = '{batch_id}'")
+        raise RuntimeError(f"written grades differ from staged on {_diff} row(s); this run's rows removed")
+    dq.publish_schema(spark, DIAG, "fct_ScoreHistory")
+    score["rows"] = spark.sql(f"SELECT 1 {_week}").count()
+    score["status"] = "ok"
+    print(f"grade history saved for week of {week_start}: {score['rows']} project(s)")
+except Exception as exc:
+    score["error"] = f"{type(exc).__name__}: {exc}"
+    print(f"GRADE HISTORY FAILED - gold still publishes: {score['error']}")
+    score["alert_sent"] = bool(fc.notify(
+        f"GRADE HISTORY FAILED - {batch_id}",
+        "The DQ gate passed and gold will publish, but last week's grades were not saved.\\n\\n" + score["error"],
+        failing=1))
+with open(f"{DIAG}/score_history_run.json", "w", encoding="utf-8") as fh:
+    json.dump(score, fh, indent=1)
+if os.path.exists(f"{DIAG}/heartbeat_run.json"):
+    with open(f"{DIAG}/heartbeat_run.json", encoding="utf-8") as fh:
+        _heartbeat = json.load(fh)
+    _heartbeat["score_history_status"] = score["status"]
+    with open(f"{DIAG}/heartbeat_run.json", "w", encoding="utf-8") as fh:
+        json.dump(_heartbeat, fh, indent=2)
+'''
+        ),
     ]
     return notebook(cells)
 
@@ -283,6 +334,15 @@ def snapshot_statements() -> list[str]:
 def snapshot_phases() -> tuple[list[str], list[str]]:
     """(stage, swap): the statements before and after the file's SWAP marker."""
     stage, swap = SNAPSHOT_SQL.read_text(encoding="utf-8").split("-- ==== SWAP ====")
+    return dg.statements(stage), dg.statements(swap)
+
+
+SCORE_HISTORY_SQL = SNAPSHOT_SQL.with_name("fct_scorehistory.sql")
+
+
+def score_history_phases() -> tuple[list[str], list[str]]:
+    """(stage, swap) of the fct_ScoreHistory capture."""
+    stage, swap = SCORE_HISTORY_SQL.read_text(encoding="utf-8").split("-- ==== SWAP ====")
     return dg.statements(stage), dg.statements(swap)
 
 

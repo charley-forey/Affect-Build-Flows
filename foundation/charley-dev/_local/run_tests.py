@@ -42,6 +42,7 @@ SUITES = [
     ("PQP report accessibility and bindings", TESTS / "test_report.py", "--qc"),
     ("Project Scorecard report accessibility and bindings", TESTS / "test_report.py", "--scorecard"),
     ("Weekly Dashboard gold: scoring rules, cash position, meetings", TESTS / "test_dashboard_gold.py"),
+    ("Weekly grade history: capture, same-week replace, failure isolation", TESTS / "test_score_history.py"),
     ("Weekly Dashboard report layout, accessibility and bindings", TESTS / "test_report_dashboard.py"),
     ("sharepoint intake lists", TESTS / "test_sharepoint.py"),
     ("live reconciliation comparisons", TESTS / "test_reconcile_live.py"),

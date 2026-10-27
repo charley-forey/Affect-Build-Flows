@@ -30,6 +30,14 @@ and Tuesday's executive meeting). Labels are relative - *This week*, *Last week*
 2026-10-05* - so the default survives each night's rebuild. Weekly measures (inspections, meetings,
 wins) use the week picked; balances (contract, AR, cost, cash) are as of the last refresh.
 
+**Saved grades (`fct_ScoreHistory`, from 2026-10-27).** Older weeks in `fct_ProjectScore` are
+rescored each night from today's facts, and the Outbuild look-ahead and schedule update exist only
+for the latest two weeks, so a week-on-week change read from it is partly an artefact. After the
+DQ gate passes, `cd_40_dq_checks` saves last week's grades and pillars
+(`sql/snapshot/fct_scorehistory.sql`); each night replaces that week until it rolls over, so the
+kept value is what the dashboard last showed as *Last week*. A "vs prior week" measure joins the
+model once two weeks are saved. Tested by `tests/test_score_history.py`.
+
 ## The v1 score
 
 Four pillars, weighted as agreed on the call (50 / 30 / 15 / 5), each the equal-weighted average
