@@ -195,13 +195,6 @@
                 }
               }
             },
-            "labelPrecision": {
-              "expr": {
-                "Literal": {
-                  "Value": "0D"
-                }
-              }
-            },
             "labelDisplayUnits": {
               "expr": {
                 "Literal": {

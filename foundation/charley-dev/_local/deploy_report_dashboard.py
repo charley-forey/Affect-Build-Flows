@@ -349,7 +349,7 @@ def strip(p: str, cards: list[tuple[str, str, str | None]], y: int = 96, h: int 
         out += [panel(p, f"s{i}_bg", x, y, w, h, radius=8),
                 z(text(p, f"s{i}_bar", " ", x, y, 6, h, fill=TEAL), 1),
                 text(p, f"s{i}_l", label_, x + 16, y + 8, w - 24, 20, size=8.5),
-                kpi_value(p, f"s{i}_v", m, x + 10, y + 29, w - 18, 28, size=15, units=1, precision=0,
+                kpi_value(p, f"s{i}_v", m, x + 10, y + 29, w - 18, 28, size=15, units=1,
                           alt=f"Card. {label_.title()}: the value ({m}).")]
         if note:
             out.append(text(p, f"s{i}_n", note, x + 16, y + h - 22, w - 24, 18, size=7, color=SLATE, bold=False))
@@ -555,7 +555,7 @@ def page_cash() -> tuple[str, list[dict]]:
                      wide={"ProjectName": 3}, flag="Cash Row Flag"))
     out.append(proof(p, "ap", 36, 518, W - 72, 324,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("dim_Vendor", "VendorName"), "Vendor"),
-                      sa(c_("fct_ApInvoice", "InvoiceID"), "Sage rec"), sa(c_("fct_ApInvoice", "InvoiceKey"), "Key"),
+                      sa(c_("fct_ApInvoice", "InvoiceID"), "Sage rec"),
                       sa(c_("fct_ApInvoice", "InvoiceNumber"), "AP invoice"), sa(c_("fct_ApInvoice", "InvoiceDate"), "Date"),
                       sa(m_("AP Age Days"), "Days"), sa(m_("AP Line Amount"), "Job cost"), sa(m_("AP Line Open"), "Still to pay")],
                      "Table. Sage AP job-cost invoices still unpaid on the active projects: vendor, date, age and amount "
@@ -582,7 +582,7 @@ def page_schedule_detail() -> tuple[str, list[dict]]:
                       sa(m_("Completion Variance %"), "% of duration"), sa(m_("On Schedule Row"), "On schedule")],
                      "Table. Every active project's baseline and forecast finish from Outbuild, days early or late, and "
                      "whether it counts as on schedule.", title="FINISH VS BASELINE  -  Outbuild current schedule",
-                     wide={"ProjectName": 3, "Phase Source": 4, "On Schedule Row": 2}, flag="Active Flag"))
+                     wide={"ProjectName": 3, "Phase Source": 4, "On Schedule Row": 2}, flag="Active Flag", totals=False))
     out.append(proof(p, "parts", 36, 498, W - 72, 344,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Schedule Pillar"), "Schedule pillar"),
                       *[sa(m_(dash.score_name(n)), n) for k, n, _ in dash.METRICS if 200 < k < 300]],
@@ -605,7 +605,7 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                   "for each one short, 4% more for each extra. Collected beside it, NOT in the grade yet: inspection pass rate "
                   "(items passed / passed + failed), observations raised and closed, punch. 'Data score (proposed)' averages "
                   "pass rate and close rate - a placeholder to agree, as the call asked.")
-    out.append(proof(p, "safety", 36, 236, 648, 170,
+    out.append(proof(p, "safety", 36, 236, 648, 214,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Safety Inspections (Week)"), "Closed (week)"),
                       sa(m_(dash.score_name("Safety Inspections")), "Score"), sa(m_("Safety Pass Rate (4 Weeks)"), "Pass rate 4 wk"),
                       sa(m_("Open Safety Observations"), "Open obs."), sa(m_("Safety Observations (Week)"), "Raised (week)"),
@@ -613,8 +613,8 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                       sa(m_("Safety Data Score (Proposed)"), "Data score (proposed)")],
                      "Table. Safety by active project: inspections closed in the week and their score, the pass rate, "
                      "safety observations open and raised, and the proposed data score.",
-                     title="SAFETY  -  scored, and collected", wide={"ProjectName": 3}, flag="Active Flag"))
-    out.append(proof(p, "quality", 696, 236, 628, 170,
+                     title="SAFETY  -  scored, and collected", wide={"ProjectName": 6}, flag="Active Flag"))
+    out.append(proof(p, "quality", 696, 236, 628, 214,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Quality Inspections (Week)"), "Closed (week)"),
                       sa(m_(dash.score_name("Quality Inspections")), "Score"), sa(m_("Quality Pass Rate (4 Weeks)"), "Pass rate 4 wk"),
                       sa(m_("Open Quality Observations"), "Open items"), sa(m_("Open Punch Items"), "Open punch"),
@@ -622,8 +622,8 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                       sa(m_("Quality Data Score (Proposed)"), "Data score (proposed)")],
                      "Table. Quality by active project: inspections closed in the week and their score, pass rate, open "
                      "corrective actions and punch, and the proposed data score.",
-                     title="QUALITY  -  scored, and collected", wide={"ProjectName": 3}, flag="Active Flag"))
-    out.append(proof(p, "insp", 36, 418, W - 72, 210,
+                     title="QUALITY  -  scored, and collected", wide={"ProjectName": 6}, flag="Active Flag"))
+    out.append(proof(p, "insp", 36, 462, W - 72, 180,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_Inspection", "Category"), "Pillar"),
                       sa(c_("fct_Inspection", "InspectionKey"), "Procore id"),
                       sa(c_("fct_Inspection", "InspectionName"), "Inspection"), sa(c_("fct_Inspection", "TemplateName"), "Template"),
@@ -634,10 +634,9 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                      "and its passed and failed items.", title="INSPECTIONS DATED IN THE WEEK  -  counted or not, and why",
                      wide={"ProjectName": 2, "InspectionName": 3, "TemplateName": 3, "Inspection Counted": 3},
                      flag="Inspection In Week Active Flag"))
-    out.append(proof(p, "obs", 36, 640, W - 72, 202,
+    out.append(proof(p, "obs", 36, 654, W - 72, 188,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_DashObservation", "Category"), "Pillar"),
-                      sa(c_("fct_DashObservation", "ItemType"), "Type"), sa(c_("fct_DashObservation", "ItemNumber"), "#"),
-                      sa(c_("fct_DashObservation", "ObservationKey"), "Key"), sa(c_("fct_DashObservation", "ProcoreCategory"), "Procore category"),
+                      sa(c_("fct_DashObservation", "ItemType"), "Type"), sa(c_("fct_DashObservation", "ItemNumber"), "#"), sa(c_("fct_DashObservation", "ProcoreCategory"), "Procore category"),
                       sa(c_("fct_DashObservation", "Title"), "Title"), sa(c_("fct_DashObservation", "StatusLabel"), "Status"),
                       sa(c_("fct_DashObservation", "CreatedDate"), "Raised"), sa(c_("fct_DashObservation", "DueDate"), "Due")],
                      "Table. Procore observations and punch items on the active projects raised in the week or still open.",
@@ -726,7 +725,7 @@ def page_health() -> tuple[str, list[dict]]:
                             sa(m_("Job Open AR"), "Open AR"), sa(m_("Revenue YTD"), "Revenue YTD")],
                            "Table. Sage jobs with AR but no Procore project in the crosswalk: open AR and revenue this year.",
                            title="SAGE JOBS WITH NO PROCORE PROJECT  -  in Revenue YTD, on no project page",
-                           sort=(m_("Job Open AR"), "Descending"), wide={"SageJobName": 4}),
+                           sort=(m_("Job Open AR"), "Descending"), wide={"SageJobName": 4}, flag="Unmatched Job Flag"),
                      "fct_Invoice", "HasUnmatchedProject", "true"))
     return p, out
 

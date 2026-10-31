@@ -337,11 +337,11 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          None, "detail - how the line counts in margin and in coverage (new cost-code master divisions)"),
 
         # ---- contracts, backlog, change orders -------------------------------------------
-        ("Status Reason", "SELECTEDVALUE ( fct_ProjectPosition[StatusReason] )", None,
+        ("Status Reason", "IF ( [Is Dashboard Project], SELECTEDVALUE ( fct_ProjectPosition[StatusReason] ) )", None,
          "detail - why the project is active or not"),
-        ("Phase Source", "SELECTEDVALUE ( fct_ProjectPosition[PhaseSource] )", None,
+        ("Phase Source", "IF ( [Is Dashboard Project], SELECTEDVALUE ( fct_ProjectPosition[PhaseSource] ) )", None,
          "detail - Oct 30 call: the Outbuild milestone (or billed %) the phase is read from"),
-        ("Billing Source", "SELECTEDVALUE ( fct_ProjectPosition[BillingSource] )", None,
+        ("Billing Source", "IF ( [Is Dashboard Project], SELECTEDVALUE ( fct_ProjectPosition[BillingSource] ) )", None,
          "detail - Procore pay apps (gross) or Sage invoices (net)"),
         ("Project Backlog",
          "SUMX ( VALUES ( dim_Project[ProjectKey] ), MAX ( 0, [Position Contract] - [Billed To Date (Gross)] ) )",
@@ -458,6 +458,9 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         ("Open AR Job Flag", row_flag("fct_Invoice[SageJobNumber]",
                                "NOT ISEMPTY ( FILTER ( fct_Invoice, ABS ( fct_Invoice[Balance] ) > 0.005 ) )"), None,
          "detail row filter - Sage jobs with open AR"),
+        ("Unmatched Job Flag",
+         row_flag("fct_Invoice[SageJobNumber]", "( ABS ( [Job Open AR] ) > 0.005 || ABS ( [Revenue YTD] ) > 0.005 )"),
+         None, "detail row filter - unmatched Sage jobs with open AR or revenue this year"),
         ("Active Contract Value", over_active("[Position Contract]"), '"$#,0"', "current contract, active projects"),
         ("Active Pending COs", over_active("[CO Pending Amount]"), '"$#,0"', "pending prime change orders, active projects"),
         ("Active Unpaid Payables", over_active("[Cash - Unpaid Payables]"), '"$#,0"', "Sage AP still to pay, active projects"),
@@ -539,7 +542,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          # out once in fct_ProjectPosition, the same column 47_dashboard_score.sql gates on.
          "SELECTEDVALUE ( fct_ProjectPosition[Phase] )",
          None, "Oct 30 call: Outbuild construction-start / substantial-completion milestones, else billed % (deck slide 2)"),
-        ("Phase Label", 'COALESCE ( [Project Phase], "Not supplied" )', None,
+        ("Phase Label", 'IF ( [Is Dashboard Project], COALESCE ( [Project Phase], "Not supplied" ) )', None,
          "deck slide 2 CURRENT PHASE"),
         ("Last Project Activity",
          # The latest sign of a working project in any Procore tool - a daily log alone

@@ -57,6 +57,35 @@ TIES = [
      f'CALCULATE ( COUNTROWS ( fct_DashCheck ), fct_DashCheck[Result] = "Warn", {ACTIVE} )'),
     ("Open safety observations = per-project total", "[Active Open Safety Observations]",
      f"CALCULATE ( [Open Safety Observations], {ACTIVE} ) + 0"),
+    # Every other number on the Executive page, against the rows of its detail table.
+    ("Active projects = contracts table rows", "[Active Projects]", f"COUNTROWS ( {ACTIVE} )"),
+    ("On schedule (count) = schedule table rows reading Yes", "[Projects On Schedule]",
+     f'COUNTROWS ( FILTER ( {ACTIVE}, [On Schedule Row] = "Yes" ) )'),
+    ("On schedule (with a baseline) = schedule table rows with a baseline", "[Projects With Baseline]",
+     f'COUNTROWS ( FILTER ( {ACTIVE}, [On Schedule Row] <> "No baseline" ) )'),
+    ("On budget (count) = margin table rows reading Yes", "[Projects On Budget]",
+     f'COUNTROWS ( FILTER ( {ACTIVE}, [On Budget Row] = "Yes" ) )'),
+    ("On budget (with a forecast) = margin table rows with a forecast", "[Projects With Budget]",
+     f'COUNTROWS ( FILTER ( {ACTIVE}, [On Budget Row] <> "No forecast" ) )'),
+    ("Revenue chart months = month table rows", "SUMX ( VALUES ( dim_Date[MonthYear] ), [Revenue Last 6 Months] )",
+     "SUMX ( FILTER ( VALUES ( dim_Date[MonthYear] ), NOT ISBLANK ( [Revenue Last 6 Months] ) ), [Revenue In Month] )"),
+    ("Data notice AR = Data Health unmatched-jobs total", "[Unattributed Open AR]",
+     "CALCULATE ( [Job Open AR], fct_Invoice[HasUnmatchedProject] = TRUE () )"),
+    ("Safety inspections counted (sub-line) = inspection list, closed, Construction sites",
+     f'SUMX ( {ACTIVE}, IF ( [Project Phase] = "Construction", [Safety Inspections (Week)] ) ) + 0',
+     f'SUMX ( FILTER ( {ACTIVE}, [Project Phase] = "Construction" ), '
+     f'CALCULATE ( COUNTROWS ( FILTER ( VALUES ( fct_Inspection[InspectionKey] ), '
+     f'[Inspection In Week Any Flag] = "Yes" && CALCULATE ( SELECTEDVALUE ( fct_Inspection[IsPerformed] ) ) '
+     f'&& CALCULATE ( SELECTEDVALUE ( fct_Inspection[Category] ) ) = "Safety" ) ) ) ) + 0'),
+    ("Inspections not closed (strip) = inspection list rows not counted", "[Active Inspections Not Closed]",
+     f'SUMX ( {ACTIVE}, CALCULATE ( COUNTROWS ( FILTER ( VALUES ( fct_Inspection[InspectionKey] ), '
+     f'[Inspection In Week Any Flag] = "Yes" && NOT CALCULATE ( SELECTEDVALUE ( fct_Inspection[IsPerformed] ) ) ) ) ) ) + 0'),
+    ("Cash collected vs paid (sub-line) = cash table totals",
+     f"DIVIDE ( SUMX ( FILTER ( {ACTIVE}, NOT ISBLANK ( [Cash Position] ) ), [Cash Collected] ), "
+     f"SUMX ( FILTER ( {ACTIVE}, NOT ISBLANK ( [Cash Position] ) ), [Cash Paid Out] ) )",
+     f'CALCULATE ( DIVIDE ( [Cash Collected], [Cash Paid Out] ), FILTER ( {ACTIVE}, [Cash Row Flag] = "Yes" ) )'),
+    ("Projects at risk = project grades at or under the cut-off", "[Projects At Risk (Grade)]",
+     f'COUNTROWS ( FILTER ( ADDCOLUMNS ( {ACTIVE}, "@g", [Grade] ), NOT ISBLANK ( [@g] ) && [@g] <= 45 ) )'),
 ]
 
 

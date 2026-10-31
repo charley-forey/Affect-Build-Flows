@@ -1336,7 +1336,7 @@ table _Measures
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces deck slide 2 CURRENT PHASE
-	measure 'Phase Label' = COALESCE ( [Project Phase], "Not supplied" )
+	measure 'Phase Label' = IF ( [Is Dashboard Project], COALESCE ( [Project Phase], "Not supplied" ) )
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces derived - latest daily log, meeting, inspection, RFI/submittal or observation
@@ -2686,15 +2686,15 @@ table _Measures
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail - why the project is active or not
-	measure 'Status Reason' = SELECTEDVALUE ( fct_ProjectPosition[StatusReason] )
+	measure 'Status Reason' = IF ( [Is Dashboard Project], SELECTEDVALUE ( fct_ProjectPosition[StatusReason] ) )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail - Oct 30 call: the Outbuild milestone (or billed %) the phase is read from
-	measure 'Phase Source' = SELECTEDVALUE ( fct_ProjectPosition[PhaseSource] )
+	measure 'Phase Source' = IF ( [Is Dashboard Project], SELECTEDVALUE ( fct_ProjectPosition[PhaseSource] ) )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail - Procore pay apps (gross) or Sage invoices (net)
-	measure 'Billing Source' = SELECTEDVALUE ( fct_ProjectPosition[BillingSource] )
+	measure 'Billing Source' = IF ( [Is Dashboard Project], SELECTEDVALUE ( fct_ProjectPosition[BillingSource] ) )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail - BACKLOG per project: current contract less billed to date
@@ -2990,6 +2990,10 @@ table _Measures
 
 	/// Replaces detail row filter - Sage jobs with open AR
 	measure 'Open AR Job Flag' = IF ( HASONEVALUE ( fct_Invoice[SageJobNumber] ) && NOT ISEMPTY ( FILTER ( fct_Invoice, ABS ( fct_Invoice[Balance] ) > 0.005 ) ), "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - unmatched Sage jobs with open AR or revenue this year
+	measure 'Unmatched Job Flag' = IF ( HASONEVALUE ( fct_Invoice[SageJobNumber] ) && ( ABS ( [Job Open AR] ) > 0.005 || ABS ( [Revenue YTD] ) > 0.005 ), "Yes" )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces current contract, active projects

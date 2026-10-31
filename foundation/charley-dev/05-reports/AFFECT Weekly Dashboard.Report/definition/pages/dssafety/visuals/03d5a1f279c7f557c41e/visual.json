@@ -3,10 +3,10 @@
   "name": "03d5a1f279c7f557c41e",
   "position": {
     "x": 36,
-    "y": 640,
+    "y": 654,
     "z": 3000,
     "width": 1288,
-    "height": 202,
+    "height": 188,
     "tabOrder": 22
   },
   "visual": {
@@ -74,21 +74,6 @@
               "queryRef": "fct_DashObservation.ItemNumber",
               "nativeQueryRef": "ItemNumber",
               "displayName": "#"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_DashObservation"
-                    }
-                  },
-                  "Property": "ObservationKey"
-                }
-              },
-              "queryRef": "fct_DashObservation.ObservationKey",
-              "nativeQueryRef": "ObservationKey",
-              "displayName": "Key"
             },
             {
               "field": {
@@ -453,7 +438,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "193D"
+                  "Value": "213D"
                 }
               }
             }
@@ -509,21 +494,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "82D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fct_DashObservation.ObservationKey"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "193D"
+                  "Value": "213D"
                 }
               }
             }
@@ -537,7 +508,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "304D"
+                  "Value": "345D"
                 }
               }
             }

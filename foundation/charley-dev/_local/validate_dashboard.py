@@ -48,7 +48,7 @@ PRESENTATION = {
     "Invoice In YTD Flag", "Open AR Flag", "Invoice Treatment", "Invoice Age Days", "Invoice Age Band",
     "Open AR Job Flag", "Line Treatment", "Open AP Flag", "AP Age Days", "Open AP Active Flag",
     "Inspection In Week Any Flag", "Inspection In Week Active Flag", "Inspection Counted",
-    "Observation In View Flag", "Observation Active Flag", "Check Result", "Cash Row Flag",
+    "Observation In View Flag", "Observation Active Flag", "Check Result", "Cash Row Flag", "Unmatched Job Flag",
     *{f"{p} {suffix}" for _, p in dashboard.PILLARS for suffix in ("Cell", "Colour", "Ink")},
 }
 

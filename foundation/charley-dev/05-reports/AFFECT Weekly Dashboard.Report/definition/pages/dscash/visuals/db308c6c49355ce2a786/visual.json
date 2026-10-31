@@ -68,21 +68,6 @@
                       "Entity": "fct_ApInvoice"
                     }
                   },
-                  "Property": "InvoiceKey"
-                }
-              },
-              "queryRef": "fct_ApInvoice.InvoiceKey",
-              "nativeQueryRef": "InvoiceKey",
-              "displayName": "Key"
-            },
-            {
-              "field": {
-                "Column": {
-                  "Expression": {
-                    "SourceRef": {
-                      "Entity": "fct_ApInvoice"
-                    }
-                  },
                   "Property": "InvoiceNumber"
                 }
               },
@@ -438,7 +423,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "177D"
+                  "Value": "192D"
                 }
               }
             }
@@ -452,7 +437,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "225D"
+                  "Value": "247D"
                 }
               }
             }
@@ -473,20 +458,6 @@
           },
           "selector": {
             "metadata": "fct_ApInvoice.InvoiceID"
-          }
-        },
-        {
-          "properties": {
-            "value": {
-              "expr": {
-                "Literal": {
-                  "Value": "82D"
-                }
-              }
-            }
-          },
-          "selector": {
-            "metadata": "fct_ApInvoice.InvoiceKey"
           }
         },
         {
@@ -522,7 +493,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "177D"
+                  "Value": "192D"
                 }
               }
             }
@@ -536,7 +507,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "177D"
+                  "Value": "192D"
                 }
               }
             }
@@ -550,7 +521,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "177D"
+                  "Value": "192D"
                 }
               }
             }
