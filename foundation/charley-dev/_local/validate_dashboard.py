@@ -14,7 +14,9 @@ only exists inside a visual (checked in the browser).
 
 from __future__ import annotations
 
+import csv
 from datetime import date, datetime, timedelta
+from pathlib import Path
 
 import dashboard
 
@@ -36,8 +38,25 @@ PRESENTATION = {
     # Schedule-activity and inspection row flags.
     "Near Term Flag", "Critical Near Term Flag", "Activity Next Step", "Behind Schedule Flag",
     "Days Behind Baseline", "Recent Win Flag", "Inspection In Week Flag",
+    # Drill-down text over checked measures (Oct 30 call).
+    "Close Status Text", "Revenue YTD Subline", "In Margin Tile", "On Budget Row", "On Schedule Row",
+    "Open AR Shown", "Health Header", "Detail Header", "Check Colour", "Check Ink",
+    # Outbuild milestone wording: the seed_PhaseMilestone patterns are not in the model.
+    "Phase Source",
+    # Drill-down row readings and filters: BLANK without one invoice, AP invoice, cost code,
+    # inspection, observation or check row in context.
+    "Invoice In YTD Flag", "Open AR Flag", "Invoice Treatment", "Invoice Age Days", "Invoice Age Band",
+    "Open AR Job Flag", "Line Treatment", "Open AP Flag", "AP Age Days", "Open AP Active Flag",
+    "Inspection In Week Any Flag", "Inspection In Week Active Flag", "Inspection Counted",
+    "Observation In View Flag", "Observation Active Flag", "Check Result", "Cash Row Flag",
     *{f"{p} {suffix}" for _, p in dashboard.PILLARS for suffix in ("Cell", "Colour", "Ink")},
 }
+
+
+# seed_PhaseMilestone (priority, pattern, marks): config, not in the model.
+with open(Path(__file__).resolve().parent.parent / "02-transformation" / "seed" / "dashboard_phase_milestone.csv",
+          encoding="utf-8") as _f:
+    PHASE_MILESTONES = sorted((int(r["priority"]), r["pattern"].lower(), r["marks"]) for r in csv.DictReader(_f))
 
 
 def _ts(text):
@@ -63,6 +82,11 @@ def _sum(values):
 
 def _div(n, d):
     return None if n is None or not d else n / d
+
+
+def _one(values):
+    values = set(values)
+    return next(iter(values)) if len(values) == 1 else None
 
 
 def _eomonth(d: date, months: int) -> date:
@@ -99,6 +123,12 @@ def expected(E: dict) -> dict:
 
     nomonth = lambda s: s._replace(month=None)  # noqa: E731 - REMOVEFILTERS ( dim_Date )
 
+    def by_project(fn):
+        # dashboard.by_project: one project in context reads its own value (BLANK for
+        # UNMATCHED); several - a totals row - the sum over the active projects.
+        return lambda c, s: ((fn(c, s) if is_project(s) else None) if s.project is not None
+                             else _sum(fn(c, ps) for ps in active(c, s)))
+
     # ---- week, project, phase ------------------------------------------------------
     # Dates come back from the model as ISO datetimes; compare in that shape.
     D["Report Week End"] = lambda c, s: _iso(week_end(c))
@@ -119,14 +149,34 @@ def expected(E: dict) -> dict:
     D["Billed % Of Contract"] = lambda c, s: _div(D["Billed To Date (Gross)"](c, s), D["Position Contract"](c, s))
 
     def phase(c, s):
+        # Oct 30 call: Outbuild milestones first. Each is classed by the best-priority
+        # seed_PhaseMilestone pattern its name contains (the seed is not in the model: read
+        # from the repo). Substantial completion reached = Closeout; of the best-named start
+        # milestones, any reached = Construction, none = Precon. Else billed % of contract,
+        # never Closeout while a substantial completion is still ahead.
+        a, found = as_of(c), []
+        for r in c.rows("fct_ScheduleActivity", s):
+            name = (r["ActivityName"] or "").lower()
+            hits = [p for p in PHASE_MILESTONES if p[1] in name]
+            if r["IsMilestone"] is True and r["FinishDate"] and hits:
+                prio, _, marks = min(hits)
+                found.append((marks, prio, (r["PercentComplete"] or 0) >= 1 or _d(r["FinishDate"]) <= a))
+        if any(m == "Closeout" and reached for m, _, reached in found):
+            return "Closeout"
+        starts = [(p, reached) for m, p, reached in found if m == "Construction"]
+        if starts:
+            best = min(p for p, _ in starts)
+            return "Construction" if any(reached for p, reached in starts if p == best) else "Precon"
         b = D["Billed % Of Contract"](c, s)
         if b is None:
             return None
         if b < setting(c, "phase_precon_below"):
             return "Precon"
-        return "Closeout" if b > setting(c, "phase_closeout_from") else "Construction"
+        ahead = any(m == "Closeout" and not reached for m, _, reached in found)
+        return "Closeout" if b > setting(c, "phase_closeout_from") and not ahead else "Construction"
 
-    D["Project Phase"] = phase
+    # SELECTEDVALUE ( fct_ProjectPosition[Phase] ): one row per real project.
+    D["Project Phase"] = lambda c, s: _one(phase(c, s._replace(project=k)) for k in projects(c, s) if k != "UNMATCHED")
 
     def last_activity(c, s):
         a = as_of(c)
@@ -144,18 +194,41 @@ def expected(E: dict) -> dict:
 
     D["Last Project Activity"] = lambda c, s: _iso(last_activity(c, s))
 
-    def status(c, s):
-        if not is_project(s):
-            return None
+    def standing(c, s):
+        # (status, reason), worded as fct_ProjectPosition words them. The rollout list
+        # (seed_DashProject) is not in the model: IsRolloutProject is that list's membership,
+        # read as an input like a seed, never a derived value.
         paid = _div(D["Cash Collected"](c, s), D["Position Contract"](c, s))
         if paid is not None and paid >= setting(c, "archive_paid_from"):
-            return "Archived"
+            return "Archived", "100% paid"
+        if (setting(c, "rollout_only") or 0) == 1:
+            if any(r["IsRolloutProject"] is True for r in c.rows("fct_ProjectPosition", nomonth(s))):
+                return "Active", "In the Nov 19 rollout (Oct 30 call)"
+            return "Archived", "Not in the Nov 19 rollout (Oct 30 call)"
         last = last_activity(c, s)
         if last is not None and (as_of(c) - last).days <= setting(c, "active_within_days"):
-            return "Active"
-        return "Inactive"
+            return "Active", "Procore activity in the last 60 days"
+        return "Inactive", "No Procore activity in the last 60 days"
+
+    def status(c, s):
+        return standing(c, s)[0] if is_project(s) else None
+
+    def real(c, s):
+        # The projects fct_ProjectPosition / fct_DashCheck hold a row for.
+        return [s._replace(project=k) for k in projects(c, s) if k != "UNMATCHED"]
 
     D["Dashboard Status"] = status
+    # SELECTEDVALUE: the one reason (source) every project in context shares, else BLANK.
+    D["Status Reason"] = lambda c, s: _one(standing(c, ps)[1] for ps in real(c, s))
+
+    def billing_source(c, s):
+        p = E["Owner Billed To Date"](c, nomonth(s))
+        if p is not None and p != 0:
+            return "Procore owner pay apps (gross of retainage)"
+        ar = _sum(r["Amount"] for r in c.rows("fct_Invoice", nomonth(s)) if r["HasUnmatchedProject"] is not True)
+        return None if ar is None else "Sage AR invoices (no Procore pay app)"
+
+    D["Billing Source"] = lambda c, s: _one(billing_source(c, ps) for ps in real(c, s))
 
     # ---- cash position ---------------------------------------------------------------
     D["Cash - Billings To Date"] = lambda c, s: D["Billed To Date (Gross)"](c, s)
@@ -182,8 +255,12 @@ def expected(E: dict) -> dict:
         return None if x is None else x - D["Cash - Unpaid Payables"](c, s) - D["Cash - Retainage Payable"](c, s)
 
     D["Cash Collected"], D["Cash Paid Out"] = collected, paid_out
-    D["Cash Position"] = lambda c, s: (None if (i := collected(c, s)) is None or (o := paid_out(c, s)) is None
-                                       else i - o)
+    def position(c, s):
+        return None if (i := collected(c, s)) is None or (o := paid_out(c, s)) is None else i - o
+
+    # Several projects (a totals row): the sum of those that have both halves.
+    D["Cash Position"] = lambda c, s: (position(c, s) if s.project is not None else
+                                       _sum(position(c, s._replace(project=k)) for k in projects(c, s)))
 
     def ratio(c, s):
         i, o = collected(c, s), paid_out(c, s)
@@ -203,7 +280,10 @@ def expected(E: dict) -> dict:
         if not _eq(division(c).get(r["CostCodeKey"]), "50"))
 
     def gm(c, s):
-        rev, cost = D["Projected Revenue"](c, s), D["Projected Cost"](c, s)
+        # Over several projects, revenue only from those with a forecast (the tile's formula).
+        rev = _sum(D["Projected Revenue"](c, ps) for ps in (s._replace(project=k) for k in projects(c, s))
+                   if D["Projected Cost"](c, ps) is not None)
+        cost = D["Projected Cost"](c, s)
         return _div(rev - cost, rev) if (rev or 0) > 0 and cost is not None else None
 
     D["Projected Gross Margin %"] = gm
@@ -275,13 +355,11 @@ def expected(E: dict) -> dict:
 
     def inspections(category):
         def value(c, s):
-            if not is_project(s):
-                return None
             e, start = window_end(c), week_end(c) - timedelta(days=6)
             return sum(1 for r in c.rows("fct_Inspection", s)
                        if _eq(r["Category"], category) and r["IsPerformed"] is True and r["InspectionDate"]
                        and start <= _d(r["InspectionDate"]) <= e)
-        return value
+        return by_project(value)
 
     D["Safety Inspections (Week)"] = inspections("Safety")
     D["Quality Inspections (Week)"] = inspections("Quality")
@@ -415,13 +493,15 @@ def expected(E: dict) -> dict:
     D["Subcontractor Coverage %"] = lambda c, s: _div(D["Subcontract Committed"](c, s), D["Subcontract Budget"](c, s))
 
     # ---- executive page ---------------------------------------------------------------
-    def revenue_ytd(c, s):
-        a = as_of(c)
-        return _sum(r["Amount"] for r in c.data["fct_Invoice"]
-                    if r["SentDate"] and date(a.year, 1, 1) <= _d(r["SentDate"]) <= a)
+    # Oct 30 call: to the end of the week picked (today for this week). Voids are 0 in Amount.
+    def revenue_ytd(c, s, column="Amount", end=None):
+        a = window_end(c)
+        end = a if end is None else end
+        return _sum(r[column] for r in c.data["fct_Invoice"]
+                    if r["SentDate"] and date(a.year, 1, 1) <= _d(r["SentDate"]) <= end)
 
     def revenue_6(c, s):
-        a = as_of(c)
+        a = window_end(c)
         dates = [_d(r["Date"]) for r in c.rows("dim_Date", s) if r["Date"]]
         if not dates or not (max(dates) > _eomonth(a, -6) and min(dates) <= a):
             return None
@@ -473,13 +553,261 @@ def expected(E: dict) -> dict:
     D["Portfolio Subcontractor Coverage"] = lambda c, s: _div(over(c, s, D["Subcontract Committed"]),
                                                                over(c, s, D["Subcontract Budget"]))
 
+    # Both halves straight from the change-order log (Oct 30 call). A void CO is neither:
+    # IsPending is FALSE for it, and approved leaves its status out.
+    D["CO Approved Amount"] = lambda c, s: _sum(
+        r["Amount"] for r in c.rows("fct_ChangeOrder", nomonth(s))
+        if r["IsPending"] is not True and not _eq(r["StatusLabel"], "void"))
+    D["CO Pending Amount"] = lambda c, s: _sum(
+        r["Amount"] for r in c.rows("fct_ChangeOrder", nomonth(s)) if r["IsPending"] is True)
+
     def co_approved(c, s):
-        ap = over(c, s, lambda c, ps: E["Approved Change Orders"](c, nomonth(ps)))
-        pe = over(c, s, E["Pending Change Orders"])
+        ap = over(c, s, D["CO Approved Amount"])
+        pe = over(c, s, D["CO Pending Amount"])
         return _div(ap, (ap or 0) + (pe or 0))
 
     D["Change Orders Approved %"] = co_approved
     D["Priority Score"] = lambda c, s: (None if status(c, s) != "Active" or (g := grade(c, s)) is None else 100 - g)
+
+    # ---- drill-downs (Oct 30 call): the rows behind each tile, and their totals --------------
+    def books(c):
+        v = setting(c, "sage_closed_through")
+        return None if v is None or v <= 0 else date(int(v // 10000), int(v % 10000 // 100), int(v % 100))
+
+    D["Books Closed Through"] = lambda c, s: _iso(books(c))
+    # MIN ( A, BLANK ) is 0 in DAX: no month close recorded reads BLANK, not the full year.
+    D["Revenue YTD Closed"] = lambda c, s: (
+        None if books(c) is None else revenue_ytd(c, s, end=min(window_end(c), books(c))))
+    D["Revenue YTD Voided"] = lambda c, s: revenue_ytd(c, s, "VoidedAmount")
+
+    # The month table: HASONEVALUE ( MonthYear ) is one MonthStart in context; the totals row
+    # (no single month) is the year to date, so the table ties to the tile.
+    def month_dates(c, s):
+        dates = [_d(r["Date"]) for r in c.rows("dim_Date", s) if r["Date"]]
+        one = len({r["MonthStart"] for r in c.rows("dim_Date", s)}) == 1
+        return one, dates
+
+    def in_month(column):
+        def value(c, s):
+            a = window_end(c)
+            one, dates = month_dates(c, s)
+            if not one:
+                return revenue_ytd(c, s, column)
+            if not dates or max(dates).year != a.year or min(dates) > a:
+                return None
+            return _sum(r[column] for r in c.rows("fct_Invoice", s._replace(project=None))
+                        if r["SentDate"] and _d(r["SentDate"]) <= a)
+        return value
+
+    D["Revenue In Month"], D["Voided In Month"] = in_month("Amount"), in_month("VoidedAmount")
+
+    def invoices_in_month(c, s):
+        a = window_end(c)
+        one, dates = month_dates(c, s)
+        if one and (not dates or max(dates).year != a.year or min(dates) > a):
+            return None
+        lo = min(dates) if one else date(a.year, 1, 1)
+        hi = max(dates) if one and max(dates) < a else a
+        return sum(1 for r in c.data["fct_Invoice"]
+                   if r["SentDate"] and lo <= _d(r["SentDate"]) <= hi and r["IsVoid"] is not True) or None
+
+    D["Invoices In Month"] = invoices_in_month
+
+    def close_state(c, s):
+        if invoices_in_month(c, s) is None and D["Voided In Month"](c, s) is None:
+            return None
+        _, dates = month_dates(c, s)
+        closed = books(c)
+        return "Closed in Sage" if closed is not None and _eomonth(max(dates), 0) <= closed else "Provisional - not closed"
+
+    D["Month Close State"] = close_state
+
+    # Invoice rows: plain sums in context (voids are 0 in Amount / Balance, kept in VoidedAmount).
+    for _name, _col in (("Invoice Amount", "Amount"), ("Invoice Voided", "VoidedAmount"), ("Invoice Paid", "AmountPaid"),
+                        ("Invoice Balance", "Balance"), ("Job Open AR", "Balance")):
+        D[_name] = lambda c, s, col=_col: _sum(r[col] for r in c.rows("fct_Invoice", s))
+    D["Voided AR Left Out"] = lambda c, s: _sum(r["VoidedAmount"] for r in c.data["fct_Invoice"])
+
+    # Margin and budget lines.
+    D["Projected Fee"] = lambda c, s: None if s.project == "UNMATCHED" else _sum(
+        r["ForecastAmount"] for r in c.rows("fct_BudgetLine", nomonth(s)) if _eq(division(c).get(r["CostCodeKey"]), "50"))
+    D["Projected Margin $"] = lambda c, s: _sum(
+        (D["Projected Revenue"](c, ps) or 0) - k for ps in (s._replace(project=p) for p in projects(c, s))
+        if (k := D["Projected Cost"](c, ps)) is not None)
+    for _name, _col in (("Line Budget", "BudgetAmount"), ("Line Forecast", "ForecastAmount"),
+                        ("Line Committed", "CommittedAmount"), ("Line Spent", "SpentToDate")):
+        D[_name] = lambda c, s, col=_col: _sum(r[col] for r in c.rows("fct_BudgetLine", nomonth(s)))
+    # Without one cost code in context (every grain here) it is the coverage card's own ratio.
+    D["Line Coverage %"] = lambda c, s: D["Subcontractor Coverage %"](c, s)
+
+    # Contracts and pay apps (the page filters to the latest owner pay app; the measure sums).
+    D["Project Backlog"] = lambda c, s: _sum(
+        max(0, (D["Position Contract"](c, ps) or 0) - (D["Billed To Date (Gross)"](c, ps) or 0))
+        for ps in (s._replace(project=k) for k in projects(c, s)))
+    for _name, _col in (("Pay App Contract Sum", "ContractSumToDate"), ("Pay App Original Sum", "OriginalContractSum"),
+                        ("Pay App CO Change", "NetChangeByChangeOrders"), ("Pay App Completed", "CompletedToDate"),
+                        ("Pay App Retainage", "RetainageHeld"), ("Pay App Balance To Finish", "BalanceToFinish")):
+        D[_name] = lambda c, s, col=_col: _sum(r[col] for r in c.rows("fct_Billing", nomonth(s)))
+
+    # Sage AP job-cost lines, voids out. A line's share of its invoice's paid / unpaid header.
+    def share(r, column):
+        if not r["InvoiceTotal"] or r["LineTotal"] is None or r[column] is None:
+            return None
+        return r["LineTotal"] * r[column] / r["InvoiceTotal"]
+
+    def ap_lines(c, s):
+        return [r for r in c.rows("fct_ApInvoice", nomonth(s)) if r["IsJobCost"] is True and r["IsVoid"] is not True]
+
+    D["AP Line Amount"] = lambda c, s: _sum(r["LineTotal"] for r in ap_lines(c, s))
+    D["AP Line Open"] = lambda c, s: _sum(share(r, "InvoiceBalance") for r in ap_lines(c, s))
+
+    # Subcontractor payments: fct_SubPayment rebuilt from its sources - the latest approved
+    # Procore requisitions, and Sage AP for the vendor on the job.
+    def subs(c, s):
+        out = {}
+        for r in c.rows("fct_Billing", nomonth(s)):
+            if _eq(r["BillingType"], "Subcontractor") and r["IsLatestApprovedPeriod"] is True and r["ProjectKey"] is not None:
+                out.setdefault((r["ProjectKey"], r["VendorKey"]), ([], []))[0].append(r)
+        for r in ap_lines(c, s):
+            if r["ProjectKey"] is not None:
+                out.setdefault((r["ProjectKey"], r["VendorKey"]), ([], []))[1].append(r)
+        return list(out.values())
+
+    def sub_sum(side, fn):
+        return lambda c, s: _sum(fn(r) for g in subs(c, s) for r in g[side])
+
+    D["Sub Committed"] = sub_sum(0, lambda r: r["ContractSumToDate"])
+    D["Sub Requisitioned"] = sub_sum(0, lambda r: r["CompletedToDate"])
+    D["Sub Retainage Held"] = sub_sum(0, lambda r: r["RetainageHeld"])
+    D["Sub AP Invoiced"] = sub_sum(1, lambda r: r["LineTotal"])
+    D["Sub Paid"] = sub_sum(1, lambda r: share(r, "AmountPaid"))
+    D["Sub AP Open"] = sub_sum(1, lambda r: share(r, "InvoiceBalance"))
+
+    def left_to_pay(c, s):
+        # Per project and vendor: committed less AP paid, where there is a requisition.
+        found = [(k, _sum(share(r, "AmountPaid") for r in ap)) for req, ap in subs(c, s)
+                 if req and (k := _sum(r["ContractSumToDate"] for r in req)) is not None]
+        return _sum(k - (p or 0) for k, p in found)
+
+    D["Sub Left To Pay"] = left_to_pay
+    D["Sub Oldest Open Days"] = lambda c, s: max(
+        ((as_of(c) - _d(r["InvoiceDate"])).days for g in subs(c, s) for r in g[1]
+         if (r["InvoiceBalance"] or 0) > 0 and r["InvoiceDate"]), default=None)
+
+    # Inspections: performed = closed; pass rate is conforming over conforming + deficient.
+    def pass_rate(rows):
+        p, f = _sum(r["PassItemCount"] for r in rows), _sum(r["DeficientItemCount"] for r in rows)
+        return _div(p, (p or 0) + (f or 0))
+
+    D["Inspection Pass Rate"] = lambda c, s: pass_rate(c.rows("fct_Inspection", s))
+    D["Inspection Pass Items"] = lambda c, s: _sum(r["PassItemCount"] for r in c.rows("fct_Inspection", s))
+    D["Inspection Fail Items"] = lambda c, s: _sum(r["DeficientItemCount"] for r in c.rows("fct_Inspection", s))
+
+    def in_week(c, d):
+        return d is not None and week_end(c) - timedelta(days=6) <= _d(d) <= window_end(c)
+
+    D["Inspections Not Closed (Week)"] = by_project(lambda c, s: sum(
+        1 for r in c.rows("fct_Inspection", s) if r["IsPerformed"] is not True and in_week(c, r["InspectionDate"])))
+
+    def pass_rate_4w(category):
+        def value(c, s):
+            e = window_end(c)
+            return pass_rate([r for r in c.rows("fct_Inspection", s)
+                              if _eq(r["Category"], category) and r["IsPerformed"] is True and r["InspectionDate"]
+                              and e - timedelta(days=28) < _d(r["InspectionDate"]) <= e])
+        return value
+
+    D["Safety Pass Rate (4 Weeks)"], D["Quality Pass Rate (4 Weeks)"] = pass_rate_4w("Safety"), pass_rate_4w("Quality")
+
+    # Observations and punch (fct_DashObservation: Category is the seed classification, an input).
+    def observations(c, s, category):
+        return [r for r in c.rows("fct_DashObservation", s) if _eq(r["Category"], category)]
+
+    D["Open Safety Observations"] = by_project(
+        lambda c, s: sum(1 for r in observations(c, s, "Safety") if r["IsOpen"] is True))
+    D["Safety Observations (Week)"] = by_project(
+        lambda c, s: sum(1 for r in observations(c, s, "Safety") if in_week(c, r["CreatedDate"])))
+    D["Open Quality Observations"] = by_project(lambda c, s: sum(
+        1 for r in observations(c, s, "Quality") if _eq(r["ItemType"], "Observation") and r["IsOpen"] is True))
+
+    def close_rate(category):
+        def value(c, s):
+            e = window_end(c)
+            raised = [r for r in observations(c, s, category)
+                      if r["CreatedDate"] and e - timedelta(days=90) < _d(r["CreatedDate"]) <= e]
+            # COUNTROWS of no closed rows is BLANK, and DIVIDE ( BLANK, n ) is BLANK, not 0.
+            return _div(sum(1 for r in raised if r["IsOpen"] is not True) or None, len(raised))
+        return value
+
+    D["Safety Observation Close Rate"], D["Quality Item Close Rate"] = close_rate("Safety"), close_rate("Quality")
+
+    def mean_of(*names):
+        def value(c, s):
+            found = [v for n in names if (v := D[n](c, s)) is not None]
+            return sum(found) / len(found) if found else None
+        return value
+
+    D["Safety Data Score (Proposed)"] = mean_of("Safety Pass Rate (4 Weeks)", "Safety Observation Close Rate")
+    D["Quality Data Score (Proposed)"] = mean_of("Quality Pass Rate (4 Weeks)", "Quality Item Close Rate")
+
+    # Data Health: fct_DashCheck rebuilt, (Result, Amount) for each of one project's nine checks.
+    def checks(c, ps):
+        a, ps = as_of(c), nomonth(ps)
+        invoices = [r for r in c.rows("fct_Invoice", ps) if r["HasUnmatchedProject"] is not True]
+        out = []
+        # 1 Sage invoiced vs Procore earned less retainage, within the tie-out tolerance.
+        p = _sum(r["EarnedLessRetainageToDate"] for r in c.rows("fct_Billing", ps)
+                 if r["IsLatestPeriod"] is True and _eq(r["BillingType"], "Owner"))
+        sg = _sum(r["Amount"] for r in invoices)
+        tol = setting(c, "tieout_tolerance")
+        tol = 0.01 if tol is None else tol
+        out.append(("Info", None) if p is None or sg is None else
+                   ("Pass" if abs(sg - p) <= tol * max(abs(p), 1) else "Warn", sg - p))
+        # 2 voided invoices: shown, not a warning.
+        voids = sum(1 for r in invoices if r["IsVoid"] is True)
+        out.append(("Info" if voids else "Pass", _sum(r["VoidedAmount"] for r in invoices) or 0))
+        # 3 live invoices with the same Sage job, amount and month as another: the extra copies.
+        seen = {}
+        for r in c.rows("fct_Invoice", ps):
+            if r["IsVoid"] is not True and r["Amount"]:
+                seen.setdefault((r["SageJobNumber"], r["MonthStart"], r["Amount"]), []).append(r["Amount"])
+        extra = [v for copies in seen.values() for v in copies[1:]]
+        out.append(("Warn" if extra else "Pass", _sum(extra)))
+        # 4 AR over 90 days.
+        old = [r for r in c.rows("fct_Invoice", ps)
+               if (r["Balance"] or 0) > 0 and r["SentDate"] and (a - _d(r["SentDate"])).days > 90]
+        out.append(("Warn" if old else "Pass", _sum(r["Balance"] for r in old)))
+        # 5 look-ahead worked in the last 7 days (Info when the project has no Outbuild schedule).
+        acts = c.rows("fct_ScheduleActivity", ps)
+        stamps = [_ts(r[k]) for r in c.rows("fct_LookaheadTask", ps) for k in ("UpdatedAt", "CreatedAt") if r[k]]
+        days = (a - max(stamps).date()).days if stamps else None
+        out.append(("Info", None) if not acts else ("Warn", None) if days is None else
+                   ("Warn" if days > 7 else "Pass", float(days)))
+        # 6 activities past their finish and not marked complete; 7 inspections over a week old, not closed.
+        stale = sum(1 for r in acts if r["IsSummary"] is False and r["IsComplete"] is False
+                    and r["FinishDate"] and _d(r["FinishDate"]) < a)
+        out.append(("Warn" if stale else "Pass", float(stale)))
+        open_insp = sum(1 for r in c.rows("fct_Inspection", ps) if r["IsPerformed"] is False
+                        and r["InspectionDate"] and _d(r["InspectionDate"]) < a - timedelta(days=7))
+        out.append(("Warn" if open_insp else "Pass", float(open_insp)))
+        # 8 PM and Superintendent in the Procore directory; 9 a budget forecast.
+        roles = {r["RoleCode"] for r in c.rows("fct_ProjectTeam", ps)}
+        out.append(("Pass" if {"PM", "Super"} <= roles else "Warn", None))
+        cost = D["Projected Cost"](c, ps)
+        out.append(("Warn" if cost is None else "Pass", cost))
+        return out
+
+    D["Check Amount"] = lambda c, s: _sum(v for ps in real(c, s) for _, v in checks(c, ps))
+    D["Checks Warning"] = lambda c, s: sum(sum(1 for k, _ in checks(c, ps) if k == "Warn") for ps in active(c, s))
+    D["Projects With Warnings"] = lambda c, s: count(c, s, lambda c, ps: any(k == "Warn" for k, _ in checks(c, ps)))
+    D["Checks Passed"] = lambda c, s: sum(sum(1 for k, _ in checks(c, ps) if k == "Pass") for ps in active(c, s))
+
+    # Active-project totals the detail pages tie to.
+    D["Active Contract Value"] = lambda c, s: over(c, s, D["Position Contract"])
+    D["Active Pending COs"] = lambda c, s: over(c, s, D["CO Pending Amount"])
+    D["Active Unpaid Payables"] = lambda c, s: over(c, s, D["Cash - Unpaid Payables"])
+    D["Active Inspections Not Closed"] = lambda c, s: over(c, s, D["Inspections Not Closed (Week)"]) or 0
+    D["Active Open Safety Observations"] = lambda c, s: over(c, s, D["Open Safety Observations"]) or 0
     return D
 
 
@@ -489,19 +817,25 @@ RAW_COLUMNS = {
     "dim_DashBand": ["MetricKey", "MinValue", "MaxValue", "ScoreAtMin", "ScoreAtMax", "BandLabel"],
     "dim_DashSetting": ["SettingKey", "Value"],
     "dim_ReportWeek": ["WeeksAgo", "WeekEnd", "AsOfDate"],
-    "fct_Inspection": ["Category", "IsPerformed", "InspectionDate", "InspectionKey"],
+    "fct_Inspection": ["Category", "IsPerformed", "InspectionDate", "InspectionKey", "PassItemCount",
+                       "DeficientItemCount"],
+    # Category is the seed_ObservationCategory classification - an input, like fct_Inspection's.
+    "fct_DashObservation": ["Category", "ItemType", "IsOpen", "CreatedDate"],
     "fct_Meeting": ["MeetingType", "IsCompliant", "MeetingDate", "HasOccurred"],
     "fct_ProjectTeam": ["RoleOrder", "RoleCode", "MemberName"],
-    "fct_ScheduleActivity": ["IsSummary", "IsCritical", "IsComplete", "DurationDays", "PercentComplete",
+    "fct_ScheduleActivity": ["ActivityName", "IsMilestone", "IsSummary", "IsCritical", "IsComplete", "DurationDays", "PercentComplete",
                              "UpdatedAt", "StartDate", "FinishDate", "FinishVarianceDays", "ActivityKey"],
     "fct_LookaheadTask": ["UpdatedAt", "CreatedAt"],
     # Read by the measures; every value is recomputed from the raw facts above, never from it.
-    "fct_ProjectPosition": [], "fct_MetricScore": [], "fct_ProjectScore": [],
+    # IsRolloutProject is the one exception: seed_DashProject membership, an input (see standing).
+    "fct_ProjectPosition": ["IsRolloutProject"], "fct_MetricScore": [], "fct_ProjectScore": [],
+    "fct_SubPayment": [], "fct_DashCheck": [],
 }
 # Columns the dashboard reads on tables validate_model already loads.
 EXTRA_COLUMNS = {
-    "fct_ApInvoice": ["InvoiceBalance", "InvoiceTotal", "IsVoid"],
-    "fct_Invoice": ["SageJobNumber"],
+    "fct_ApInvoice": ["InvoiceBalance", "InvoiceTotal", "IsVoid", "AmountPaid", "InvoiceDate", "VendorKey"],
+    "fct_Invoice": ["SageJobNumber", "IsVoid", "VoidedAmount"],
+    "fct_Billing": ["OriginalContractSum", "NetChangeByChangeOrders", "EarnedLessRetainageToDate", "VendorKey"],
     "fct_Milestone": ["BaselineStart"],
     "fct_RfiSubmittal": ["DueDate", "CreatedDate"],
     "fct_QualityItem": ["CreatedDate"],
