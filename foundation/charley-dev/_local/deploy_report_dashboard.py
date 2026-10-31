@@ -605,7 +605,7 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                   "for each one short, 4% more for each extra. Collected beside it, NOT in the grade yet: inspection pass rate "
                   "(items passed / passed + failed), observations raised and closed, punch. 'Data score (proposed)' averages "
                   "pass rate and close rate - a placeholder to agree, as the call asked.")
-    out.append(proof(p, "safety", 36, 236, 648, 214,
+    out.append(proof(p, "safety", 36, 236, W - 72, 150,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Safety Inspections (Week)"), "Closed (week)"),
                       sa(m_(dash.score_name("Safety Inspections")), "Score"), sa(m_("Safety Pass Rate (4 Weeks)"), "Pass rate 4 wk"),
                       sa(m_("Open Safety Observations"), "Open obs."), sa(m_("Safety Observations (Week)"), "Raised (week)"),
@@ -613,8 +613,8 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                       sa(m_("Safety Data Score (Proposed)"), "Data score (proposed)")],
                      "Table. Safety by active project: inspections closed in the week and their score, the pass rate, "
                      "safety observations open and raised, and the proposed data score.",
-                     title="SAFETY  -  scored, and collected", wide={"ProjectName": 6}, flag="Active Flag"))
-    out.append(proof(p, "quality", 696, 236, 628, 214,
+                     title="SAFETY  -  scored, and collected", wide={"ProjectName": 4}, flag="Active Flag"))
+    out.append(proof(p, "quality", 36, 394, W - 72, 150,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Quality Inspections (Week)"), "Closed (week)"),
                       sa(m_(dash.score_name("Quality Inspections")), "Score"), sa(m_("Quality Pass Rate (4 Weeks)"), "Pass rate 4 wk"),
                       sa(m_("Open Quality Observations"), "Open items"), sa(m_("Open Punch Items"), "Open punch"),
@@ -622,8 +622,8 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                       sa(m_("Quality Data Score (Proposed)"), "Data score (proposed)")],
                      "Table. Quality by active project: inspections closed in the week and their score, pass rate, open "
                      "corrective actions and punch, and the proposed data score.",
-                     title="QUALITY  -  scored, and collected", wide={"ProjectName": 6}, flag="Active Flag"))
-    out.append(proof(p, "insp", 36, 462, W - 72, 180,
+                     title="QUALITY  -  scored, and collected", wide={"ProjectName": 4}, flag="Active Flag"))
+    out.append(proof(p, "insp", 36, 552, W - 72, 142,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_Inspection", "Category"), "Pillar"),
                       sa(c_("fct_Inspection", "InspectionKey"), "Procore id"),
                       sa(c_("fct_Inspection", "InspectionName"), "Inspection"), sa(c_("fct_Inspection", "TemplateName"), "Template"),
@@ -634,7 +634,7 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                      "and its passed and failed items.", title="INSPECTIONS DATED IN THE WEEK  -  counted or not, and why",
                      wide={"ProjectName": 2, "InspectionName": 3, "TemplateName": 3, "Inspection Counted": 3},
                      flag="Inspection In Week Active Flag"))
-    out.append(proof(p, "obs", 36, 654, W - 72, 188,
+    out.append(proof(p, "obs", 36, 702, W - 72, 140,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_DashObservation", "Category"), "Pillar"),
                       sa(c_("fct_DashObservation", "ItemType"), "Type"), sa(c_("fct_DashObservation", "ItemNumber"), "#"), sa(c_("fct_DashObservation", "ProcoreCategory"), "Procore category"),
                       sa(c_("fct_DashObservation", "Title"), "Title"), sa(c_("fct_DashObservation", "StatusLabel"), "Status"),
