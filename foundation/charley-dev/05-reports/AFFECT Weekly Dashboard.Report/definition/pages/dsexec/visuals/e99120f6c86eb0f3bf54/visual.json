@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 186,
     "height": 26,
-    "tabOrder": 21
+    "tabOrder": 27
   },
   "visual": {
     "visualType": "card",
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Safety  \u2022  Inspections: the line under the value (Safety Subline).'"
+                  "Value": "'Card. Safety: the line under the value (Safety Subline).'"
                 }
               }
             }

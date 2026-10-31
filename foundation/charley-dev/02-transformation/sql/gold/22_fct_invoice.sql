@@ -91,12 +91,13 @@ SELECT
                        WHEN 4 THEN 'Paid' WHEN 5 THEN 'Void' END AS SageStatus,
     -- Receipts, from sv_ar_payments. PaymentsReceived is NULL when there are none, so an
     -- invoice with no receipt rows is distinguishable from one whose receipts net to 0.
-    pm.payments_received                AS PaymentsReceived,
-    pm.first_payment_date               AS FirstPaymentDate,
-    pm.last_payment_date                AS LastPaymentDate,
-    pm.paid_date                        AS PaidDate,
+    -- A void is not a paid invoice: its receipts (if any) are not its payment history.
+    CASE WHEN i.status_code = 5 THEN NULL ELSE pm.payments_received END  AS PaymentsReceived,
+    CASE WHEN i.status_code = 5 THEN NULL ELSE pm.first_payment_date END AS FirstPaymentDate,
+    CASE WHEN i.status_code = 5 THEN NULL ELSE pm.last_payment_date END  AS LastPaymentDate,
+    CASE WHEN i.status_code = 5 THEN NULL ELSE pm.paid_date END          AS PaidDate,
     -- The workbook's DELTA column: sent to PAID. Drives [Avg Days To Payment].
-    CASE WHEN i.invoice_date IS NULL OR pm.paid_date IS NULL THEN NULL
+    CASE WHEN i.invoice_date IS NULL OR pm.paid_date IS NULL OR i.status_code = 5 THEN NULL
          ELSE datediff(pm.paid_date, i.invoice_date) END AS DaysToPayment,
     -- Days from invoice to due date. Terms, NOT payment: never a stand-in for DaysToPayment.
     CASE WHEN i.invoice_date IS NULL OR i.due_date IS NULL THEN NULL

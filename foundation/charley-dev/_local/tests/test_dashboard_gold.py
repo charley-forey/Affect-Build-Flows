@@ -259,6 +259,23 @@ def test_oct30(con) -> None:
         _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
         assert q(con, "SELECT Phase FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [("Closeout",)]
         check("phase: substantial completion reached is Closeout")
+        # Phase 1 started, phase 2's start still ahead: Construction, not back to Precon.
+        con.execute("""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
+            ('P1', 'A1', 'Phase 1 Work Start', TRUE, CURRENT_DATE - 30, 1.0),
+            ('P1', 'A2', 'Phase 2 Work Start', TRUE, CURRENT_DATE + 60, 0.0)
+        ) AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, FinishDate, PercentComplete)""")
+        _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
+        row = q(con, "SELECT Phase, PhaseSource FROM fct_ProjectPosition WHERE ProjectKey = 'P1'")[0]
+        assert row[0] == "Construction" and "Phase 1" in row[1], row
+        check("phase: any work-start milestone reached is Construction, a later phase's start notwithstanding")
+        # No start milestone, billed over 95%, but substantial completion still ahead: not Closeout.
+        con.execute("""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
+            ('P1', 'A3', 'Substantial Completion', TRUE, CURRENT_DATE + 30, 0.0)
+        ) AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, FinishDate, PercentComplete)""")
+        con.execute("UPDATE fct_FinancialPeriod SET CurrentContract = 1 WHERE ProjectKey = 'P1'")
+        _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
+        assert q(con, "SELECT Phase FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [("Construction",)]
+        check("phase: a substantial completion still ahead on the schedule rules out Closeout by billed %")
     finally:
         con.execute("ROLLBACK")
 

@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 150,
     "height": 30,
-    "tabOrder": 35
+    "tabOrder": 36
   },
   "visual": {
     "visualType": "card",
@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Pending Change Orders"
+                  "Property": "CO Pending Amount"
                 }
               },
-              "queryRef": "_Measures.Pending Change Orders",
-              "nativeQueryRef": "Pending Change Orders"
+              "queryRef": "_Measures.CO Pending Amount",
+              "nativeQueryRef": "CO Pending Amount"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Pending Change Orders.'"
+                  "Value": "'Card. CO Pending Amount.'"
                 }
               }
             }

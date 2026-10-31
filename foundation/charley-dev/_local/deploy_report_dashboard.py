@@ -300,12 +300,12 @@ def where(v: dict, table: str, col: str, value: str) -> dict:
 
 def proof(p: str, key: str, x, y, w, h, fields: list, alt: str, title: str | None = None,
           pills: dict | None = None, sort: tuple[dict, str] | None = None, wide: dict | None = None,
-          flag: str | None = None) -> dict:
+          flag: str | None = None, totals: bool = True) -> dict:
     """The rows behind a number, WITH the totals row - the total is what ties to the tile.
     Export data on the visual's menu gives the same rows to Excel."""
     v = dr.visual(p, key, "tableEx", x, y, w, h, {"Values": fields}, title=title, alt=alt, title_size=10)
     v = z(styled_table(v, pills), 3000)
-    v["visual"]["objects"]["total"] = [{"properties": {"totals": _ON, "fontColor": _color(NAVY),
+    v["visual"]["objects"]["total"] = [{"properties": {"totals": _ON if totals else _OFF, "fontColor": _color(NAVY),
                                                        "backColor": _color("#E7EDF2")}}]
     if sort:
         v["visual"]["query"]["sortDefinition"] = {"sort": [{"field": sort[0]["field"], "direction": sort[1]}],
@@ -405,11 +405,11 @@ def page_revenue() -> tuple[str, list[dict]]:
     out.append(months)
     out.append(proof(p, "jobs", 568, 576, 756, 266,
                      [sa(c_("fct_Invoice", "SageJobNumber"), "Job"), sa(c_("fct_Invoice", "SageJobName"), "Sage job"),
-                      sa(c_("dim_Project", "ProjectName"), "Procore project"), sa(m_("Revenue YTD"), "Revenue YTD"),
+                      sa(m_("Revenue YTD"), "Revenue YTD"),
                       sa(m_("Revenue YTD Closed"), "Closed months"), sa(m_("Revenue YTD Voided"), "Voided")],
                      "Table. Revenue YTD by Sage job, with the closed-months figure and voids.",
                      title="BY SAGE JOB  -  including jobs with no Procore project",
-                     sort=(m_("Revenue YTD"), "Descending"), wide={"SageJobName": 3, "ProjectName": 3}))
+                     sort=(m_("Revenue YTD"), "Descending"), wide={"SageJobName": 4}))
     return p, out
 
 
@@ -540,7 +540,8 @@ def page_cash() -> tuple[str, list[dict]]:
                      ("UNPAID PAYABLES", "Active Unpaid Payables", "Sage AP still to pay, voids excluded")])
     out += how(p, "Cash position (Chris, Oct 22) = billings to date - retainage receivable - unpaid receivables, less (costs "
                   "incurred - unpaid payables - retainage payable). Billings: Procore owner pay apps (gross). Retainage: Procore "
-                  "pay apps and requisitions. Unpaid AR and AP: Sage, voids excluded. Costs incurred: Procore job-to-date cost.")
+                  "pay apps and requisitions. Unpaid AR and AP: Sage, voids excluded. Costs incurred: Procore job-to-date cost. A "
+                  "project with no Procore budget has no cash position and is left out (Data Health: budget forecast).")
     out.append(proof(p, "projects", 36, 236, W - 72, 270,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Cash - Billings To Date"), "Billings to date"),
                       sa(m_("Cash - Retainage Receivable"), "- Retainage rec."), sa(m_("Cash - Unpaid Receivables"), "- Unpaid AR"),
@@ -549,10 +550,11 @@ def page_cash() -> tuple[str, list[dict]]:
                       sa(m_("Cash Paid Out"), "= Paid out"), sa(m_("Cash Position"), "Cash position"),
                       sa(m_("Cash Collected / Paid"), "Collected / paid")],
                      "Table. Chris's cash position formula for every active project, step by step. The Cash position total "
-                     "is the tile.", title="BY PROJECT  -  every step of the formula", wide={"ProjectName": 3},
-                     flag="Active Flag"))
+                     "is the tile.", title="BY PROJECT  -  every step of the formula (projects with both halves)",
+                     wide={"ProjectName": 3}, flag="Cash Row Flag"))
     out.append(proof(p, "ap", 36, 518, W - 72, 324,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("dim_Vendor", "VendorName"), "Vendor"),
+                      sa(c_("fct_ApInvoice", "InvoiceID"), "Sage rec"), sa(c_("fct_ApInvoice", "InvoiceKey"), "Key"),
                       sa(c_("fct_ApInvoice", "InvoiceNumber"), "AP invoice"), sa(c_("fct_ApInvoice", "InvoiceDate"), "Date"),
                       sa(m_("AP Age Days"), "Days"), sa(m_("AP Line Amount"), "Job cost"), sa(m_("AP Line Open"), "Still to pay")],
                      "Table. Sage AP job-cost invoices still unpaid on the active projects: vendor, date, age and amount "
@@ -622,6 +624,7 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                      title="QUALITY  -  scored, and collected", wide={"ProjectName": 3}, flag="Active Flag"))
     out.append(proof(p, "insp", 36, 418, W - 72, 210,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_Inspection", "Category"), "Pillar"),
+                      sa(c_("fct_Inspection", "InspectionKey"), "Procore id"),
                       sa(c_("fct_Inspection", "InspectionName"), "Inspection"), sa(c_("fct_Inspection", "TemplateName"), "Template"),
                       sa(c_("fct_Inspection", "InspectionDate"), "Date"), sa(c_("fct_Inspection", "StatusLabel"), "Status"),
                       sa(m_("Inspection Counted"), "Counted?"), sa(m_("Inspection Pass Items"), "Passed"),
@@ -632,7 +635,8 @@ def page_safety_detail() -> tuple[str, list[dict]]:
                      flag="Inspection In Week Active Flag"))
     out.append(proof(p, "obs", 36, 640, W - 72, 202,
                      [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_DashObservation", "Category"), "Pillar"),
-                      sa(c_("fct_DashObservation", "ItemType"), "Type"), sa(c_("fct_DashObservation", "ProcoreCategory"), "Procore category"),
+                      sa(c_("fct_DashObservation", "ItemType"), "Type"), sa(c_("fct_DashObservation", "ItemNumber"), "#"),
+                      sa(c_("fct_DashObservation", "ObservationKey"), "Key"), sa(c_("fct_DashObservation", "ProcoreCategory"), "Procore category"),
                       sa(c_("fct_DashObservation", "Title"), "Title"), sa(c_("fct_DashObservation", "StatusLabel"), "Status"),
                       sa(c_("fct_DashObservation", "CreatedDate"), "Raised"), sa(c_("fct_DashObservation", "DueDate"), "Due")],
                      "Table. Procore observations and punch items on the active projects raised in the week or still open.",
@@ -661,7 +665,7 @@ def page_payments() -> tuple[str, list[dict]]:
                                  "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
                                  "header": [{"properties": {"show": _OFF}}]}
     out.append(boxed(pick, fill=CARD_BG, radius=6))
-    out += strip(p, [("CONTRACT", "Position Contract", None), ("BILLED (GROSS)", "Billed To Date (Gross)", None),
+    out += strip(p, [("CONTRACT", "Position Contract", None), ("BILLED (GROSS)", "Billed To Date (Gross)", "Procore pay apps, before retainage"),
                      ("RECEIVED", "Paid To Date", "Sage receipts"), ("OWED TO AFFECT", "Cash - Unpaid Receivables", "Sage AR"),
                      ("LEFT TO BILL", "Remaining Contract Balance", None), ("OWED TO SUBS", "Sub AP Open", "Sage AP")])
     out += how(p, "Owner side: Procore prime contracts and their latest pay app; Sage invoices for what was received and is "
@@ -677,7 +681,7 @@ def page_payments() -> tuple[str, list[dict]]:
                       sa(m_("Invoice Amount"), "Invoiced"), sa(m_("Invoice Paid"), "Received"),
                       sa(m_("Invoice Balance"), "Owed"), sa(m_("Invoice Age Days"), "Days")],
                      "Table. The project's Sage AR invoices: invoiced, received and still owed, voids at zero.",
-                     title="OWNER INVOICES (SAGE)", sort=(c_("fct_Invoice", "SentDate"), "Descending")))
+                     title="OWNER INVOICES (SAGE, NET OF RETAINAGE)", sort=(c_("fct_Invoice", "SentDate"), "Descending")))
     out.append(proof(p, "subs", 36, 478, W - 72, 364,
                      [sa(c_("fct_SubPayment", "SubName"), "Subcontractor"), sa(c_("fct_SubPayment", "ContractName"), "Commitment"),
                       sa(m_("Sub Committed"), "Committed"), sa(m_("Sub Requisitioned"), "Billed to date"),
@@ -715,7 +719,7 @@ def page_health() -> tuple[str, list[dict]]:
                      "the number behind it and who fixes it.",
                      title="INPUT CHECKS  -  every active project, every build",
                      pills={"Check Result": ("Check Colour", "Check Ink")},
-                     wide={"ProjectName": 2, "CheckName": 2, "Detail": 5, "Action": 4}, flag="Active Flag"))
+                     wide={"ProjectName": 2, "CheckName": 2, "Detail": 5, "Action": 4}, flag="Active Flag", totals=False))
     out.append(where(proof(p, "unmatched", 36, 668, W - 72, 174,
                            [sa(c_("fct_Invoice", "SageJobNumber"), "Sage job"), sa(c_("fct_Invoice", "SageJobName"), "Job name"),
                             sa(m_("Job Open AR"), "Open AR"), sa(m_("Revenue YTD"), "Revenue YTD")],
@@ -917,7 +921,7 @@ def page_portfolio() -> tuple[str, list[dict]]:
     out.append(flagged(grid, "Active Flag"))
     out += [panel(p, "off_bg", 36, 580, 1288, 266),
             text(p, "off_h", "NOT ON THE ACTIVE LIST", 56, 588, 560, 24, size=10, color=NAVY),
-            text(p, "off_note", "Inactive = no Procore activity in 60 days; Archived = 100% paid. Still graded, not counted.",
+            text(p, "off_note", "Archived = 100% paid, or not in the Nov 19 rollout (Oct 30 call). Still graded, not counted.",
                  640, 590, 664, 20, size=8, color=SLATE, bold=False, align="right")]
     off = table(p, "inactive", 48, 614, 1264, 226,
                 [rs.shown_as(column("dim_Project", "ProjectName"), "Project"),

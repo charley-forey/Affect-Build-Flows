@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "right",
                 "textRuns": [
                   {
-                    "value": "Inactive = no Procore activity in 60 days; Archived = 100% paid. Still graded, not counted.",
+                    "value": "Archived = 100% paid, or not in the Nov 19 rollout (Oct 30 call). Still graded, not counted.",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "8pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Inactive = no Procore activity in 60 days; Archived = 100% paid. Still graded, not counted.'"
+                  "Value": "'Archived = 100% paid, or not in the Nov 19 rollout (Oct 30 call). Still graded, not counted.'"
                 }
               }
             }

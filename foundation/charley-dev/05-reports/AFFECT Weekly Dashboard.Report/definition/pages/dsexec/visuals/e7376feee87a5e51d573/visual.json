@@ -5,9 +5,9 @@
     "x": 55,
     "y": 546,
     "z": 2000,
-    "width": 80,
+    "width": 110,
     "height": 24,
-    "tabOrder": 25
+    "tabOrder": 33
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "EBITDA",
+                    "value": "NET INCOME",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "9pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'EBITDA'"
+                  "Value": "'NET INCOME'"
                 }
               }
             }

@@ -43,6 +43,8 @@ WITH job AS (
     FROM seed_ProjectCrosswalk a
     JOIN dim_Project p ON p.ProjectKey = a.ProcoreProjectId
     WHERE a.Relationship = 'additional'
+      -- A job is primary for one project or additional to one, never both: no double lines.
+      AND a.SageJobNumber NOT IN (SELECT sage_project_id FROM sv_project_crosswalk WHERE sage_project_id IS NOT NULL)
     GROUP BY a.SageJobNumber
 ),
 vendor AS (

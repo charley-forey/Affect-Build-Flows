@@ -6,8 +6,8 @@
     "y": 304,
     "z": 3000,
     "width": 468,
-    "height": 220,
-    "tabOrder": 24
+    "height": 198,
+    "tabOrder": 31
   },
   "visual": {
     "visualType": "clusteredColumnChart",

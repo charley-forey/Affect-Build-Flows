@@ -7,7 +7,7 @@
     "z": 2000,
     "width": 1288,
     "height": 22,
-    "tabOrder": 60
+    "tabOrder": 74
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "Active projects: Procore activity in 60 days, not 100% paid  \u2022  Margin: Procore forecast, CM fee excluded  \u2022  Cash: billings - retainage - unpaid AR - (cost - unpaid AP - sub retainage)  \u2022  Safety: inspections in the week, 5 = 80%",
+                    "value": "Active: the Nov 19 rollout projects  \u2022  Revenue: Sage invoiced to the week picked, voids excluded  \u2022  Margin: Procore forecast, CM fee excluded  \u2022  Safety: inspections closed in the week, 5 = 80%  \u2022  Data > opens the rows behind each number",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Active projects: Procore activity in 60 days, not 100% paid  \u2022  Margin: Procore forecast, CM fee excluded  \u2022  Cash: billings - retainage - unpaid AR - (cost - unpaid AP - sub retainage)  \u2022  Safety: inspections in the week, 5 = 80%'"
+                  "Value": "'Active: the Nov 19 rollout projects  \u2022  Revenue: Sage invoiced to the week picked, voids excluded  \u2022  Margin: Procore forecast, CM fee excluded  \u2022  Safety: inspections closed in the week, 5 = 80%  \u2022  Data > opens the rows behind each number'"
                 }
               }
             }

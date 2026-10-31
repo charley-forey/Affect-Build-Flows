@@ -238,6 +238,18 @@ relationship rel_59_fct_ProjectScore_dim_Project_ProjectKey
 	fromColumn: fct_ProjectScore.ProjectKey
 	toColumn: dim_Project.ProjectKey
 
+relationship rel_60_fct_DashObservation_dim_Project_ProjectKey
+	fromColumn: fct_DashObservation.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_61_fct_SubPayment_dim_Project_ProjectKey
+	fromColumn: fct_SubPayment.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
+relationship rel_62_fct_DashCheck_dim_Project_ProjectKey
+	fromColumn: fct_DashCheck.ProjectKey
+	toColumn: dim_Project.ProjectKey
+
 relationship rel_inactive_fct_Invoice_dim_Date_PaidDate
 	isActive: false
 	fromColumn: fct_Invoice.PaidDate

@@ -7,7 +7,7 @@
     "z": 2000,
     "width": 220,
     "height": 34,
-    "tabOrder": 27
+    "tabOrder": 36
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "Needs Sage general ledger (overheads) - not yet ingested",
+                    "value": "Needs the Sage general ledger (overheads) - not yet ingested",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "8pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Needs Sage general ledger (overheads) - not yet ingested'"
+                  "Value": "'Needs the Sage general ledger (overheads) - not yet ingested'"
                 }
               }
             }

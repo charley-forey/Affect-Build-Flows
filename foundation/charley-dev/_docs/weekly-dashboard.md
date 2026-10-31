@@ -13,6 +13,9 @@ drill-through behind a grade:
 | Project Portfolio \| Status | slide 2 | Every active project: phase, Safety / Quality / Schedule / Budget, team, grade |
 | Project Overview | slide 3 | One project: contract, schedule, financials, top risks, next three weeks, wins |
 | Grade Detail (drill-through) | slide 2 callout | Every Scorecard.xlsx measure: reading, band, score, share of the grade |
+| Detail \| Revenue, Receivables, Margin & Budget, Contracts & COs, Cash Position, Schedule, Safety & Quality | Oct 30 call | The rows behind each Executive number, with totals that tie to the tile |
+| Project Payments | Oct 30 call | One project: owner billed, received and owed; each subcontractor committed, billed, paid, still to pay |
+| Data Health | Oct 30 call | Nine input checks on every active project: is the source kept up? |
 
 One report rather than three files, so a project on the Portfolio page drills straight into
 its Overview and Grade Detail (the call's "select that project and see what goes to that
@@ -28,7 +31,8 @@ Code: `_local/dashboard.py` (measures), `_local/deploy_report_dashboard.py` (rep
 A week slicer on every page: Monday to Sunday, **Last week** by default (read at Monday's stand-ups
 and Tuesday's executive meeting). Labels are relative - *This week*, *Last week*, *Week of
 2026-10-05* - so the default survives each night's rebuild. Weekly measures (inspections, meetings,
-wins) use the week picked; balances (contract, AR, cost, cash) are as of the last refresh.
+wins) use the week picked, and so does Revenue YTD (Jan 1 to the end of that week, from Oct 30);
+balances (contract, AR, cost, cash) are as of the last refresh.
 
 **Saved grades (`fct_ScoreHistory`, from 2026-10-27).** Older weeks in `fct_ProjectScore` are
 rescored each night from today's facts, and the Outbuild look-ahead and schedule update exist only
@@ -60,8 +64,12 @@ project with under half the weight measured is **Unscored**, not failing.
 | Quality | Quality inspections | as above | as above |
 
 Stage gating follows the workbook: meetings, the look-ahead and schedule updates score in Precon and
-Construction; inspections in Construction; the rest at every phase. **Phase** is billed % of
-contract: under 10% Precon, 10-95% Construction, over 95% Closeout (deck slide 2).
+Construction; inspections in Construction; the rest at every phase. **Phase** (Oct 30 call) is read
+from Outbuild milestones where the schedule names them (`seed/dashboard_phase_milestone.csv`):
+a substantial-completion milestone reached = Closeout; a construction-start milestone ("work start",
+"construction start", then "notice to proceed") reached = Construction, not yet reached = Precon.
+With no such milestone it falls back to billed % of contract: under 10% Precon, 10-95%
+Construction, over 95% Closeout (deck slide 2). `fct_ProjectPosition.PhaseSource` says which, in words.
 
 Coming soon, listed on Grade Detail, never scored: safety observations, forms, quality observations,
 punchlist, insurance (Risk).
@@ -90,26 +98,33 @@ returns in about 2 seconds with the same grades.
   profit counts more (general conditions, insurance). **Needs Affect's definition.**
 - **Safety vs quality inspections**: Procore's inspection type is blank on every inspection, so
   the template name decides (`seed/dashboard_inspection_category.csv`). An inspection counts once
-  performed - closed, or at least one item answered - not when it is merely scheduled.
+  its Procore status is **Closed** (Oct 30 call). One started but not closed reads "Not counted -
+  started, not closed" on the drill-down (`fct_Inspection.CountedReason`).
 - **Meetings**: the series title decides OAC / trade partner (`dashboard_meeting_category.csv`).
   Minutes on time = distributed in Procore on the meeting day or the next. Agenda on time =
   distributed by the day before. Procore's meeting list keeps only the **last** send, so once the
   minutes go out the agenda's time is no longer visible; those agendas read "not verifiable" and
   are not counted against the project. Upgrade: Procore's per-meeting change history records every
   send (verified 2026-10-25), at one request per meeting.
-- **Active**: any Procore activity (daily log, meeting, inspection, RFI, submittal, observation) in
-  the last 60 days, and not archived. **Archived** = 100% paid (collected / contract >= 99.5%),
-  the call's trigger. Inactive and archived jobs are listed under the Portfolio table, not counted.
+- **Active** (Oct 30 call): the five projects kept live for the Nov 19 rollout, listed in
+  `seed/dashboard_project.csv`, while `rollout_only` = 1 in `dashboard_setting.csv`. Every other
+  project is Archived. **Archived** also = 100% paid (collected / contract >= 99.5%), the Oct 21
+  trigger. With `rollout_only` = 0 the old rule returns: any Procore activity (daily log, meeting,
+  inspection, RFI, submittal, observation) in the last 60 days. `fct_ProjectPosition.StatusReason`
+  says why. Inactive and archived jobs are listed under the Portfolio table, not counted.
 - **Team**: Procore Directory roles Project Manager, Assistant Project Manager, Superintendent,
   Assistant Superintendent, in that order; the company suffix Procore adds is dropped. Many jobs
   have only some of the four assigned - the column shows what Procore holds.
 
 ## What waits for data entry (the deck's TBD callouts)
 
-Shown on the page as waiting, never with sample numbers: revenue and margin **plan**, EBITDA (needs
-the Sage general ledger), the **commercial pipeline** and bid hit rate (CRM being replaced),
-**executive decisions / watchlist**, and field productivity (calculation criteria). Each is a small
-SharePoint list on the existing CD_Manual_Ingest path.
+Shown on the page as waiting, never with sample numbers: revenue and margin **plan**, the
+**commercial pipeline** and bid hit rate (CRM being replaced), and **executive decisions /
+watchlist**. Each is a small SharePoint list on the existing CD_Manual_Ingest path.
+
+Waiting for data, not entry: **net income** (was EBITDA; needs the Sage general ledger) and
+**field productivity** (criteria agreed Oct 30, read from Outbuild, not built). See the Oct 30
+section below.
 
 ## Data added for this report
 
@@ -120,6 +135,9 @@ SharePoint list on the existing CD_Manual_Ingest path.
   fct_ScheduleActivity, fct_LookaheadTask, dim_ReportWeek, fct_ProjectPosition; `47_dashboard_score.sql`:
   fct_MetricScore, fct_ProjectScore. Seeds: dim_DashPillar, dim_DashMetric,
   dim_DashBand, dim_DashSetting, seed_InspectionCategory, seed_MeetingCategory.
+- Oct 30: Sage AR status and job name read by silver (`status_code`, `job_name`); gold
+  fct_DashObservation, fct_SubPayment, fct_DashCheck; seeds seed_DashProject,
+  seed_ObservationCategory, seed_PhaseMilestone.
 
 ## Where every number comes from
 
@@ -129,12 +147,13 @@ nightly (02:00 ET); the model is reframed only after the data-quality gate passe
 | Source | Gold table | Feeds |
 |---|---|---|
 | Procore owner pay apps (prime contracts) | `fct_Billing` → `fct_ProjectPosition` | Billings to date, retainage receivable, billed %, phase, backlog |
-| Procore requisitions | `fct_Billing` → `fct_ProjectPosition` | Retainage payable (sub retainage) |
+| Procore requisitions | `fct_Billing` → `fct_ProjectPosition`, `fct_SubPayment` | Retainage payable (sub retainage); Project Payments sub side |
 | Procore budget (forecast, job-to-date cost) | `fct_BudgetLine` → `fct_ProjectPosition` | Costs incurred, projected cost and margin (CM fee, division 50, excluded), budget variance, on budget |
 | Procore change orders / financial periods | `fct_FinancialPeriod`, `fct_ChangeOrder` | Original and current contract, pending change orders, change orders approved |
 | Procore commitments | `fct_BudgetLine` | Subcontractor coverage, risk bought out |
-| Sage AR invoices | `fct_Invoice` → `fct_ProjectPosition` | Unpaid receivables, paid to date, AR ageing, AR over 60 days, revenue YTD, unattributed AR |
-| Sage AP invoices and lines | `fct_ApInvoice` → `fct_ProjectPosition` | Unpaid payables (job-cost lines, prorated by open balance) |
+| Sage AR invoices (voids at $0) | `fct_Invoice` → `fct_ProjectPosition` | Unpaid receivables, paid to date, AR ageing, AR over 60 days, revenue YTD, unattributed AR |
+| Sage AP invoices and lines (voids excluded) | `fct_ApInvoice` → `fct_ProjectPosition`, `fct_SubPayment` | Unpaid payables (job-cost lines, prorated by open balance); Project Payments |
+| Procore observations and punch | `fct_QualityItem` → `fct_DashObservation` | Safety and quality data collected beside the score (not in the grade) |
 | Procore meetings (new 2026-10-25) | `fct_Meeting` | OAC and trade partner meeting scores, Grade Detail meeting list, activity |
 | Procore inspections | `fct_Inspection` | Safety and quality inspection scores and lists, activity |
 | Procore RFIs and submittals | `fct_RfiSubmittal` | Overdue submittals, outstanding RFIs, activity |
@@ -144,6 +163,7 @@ nightly (02:00 ET); the model is reframed only after the data-quality gate passe
 | Outbuild look-ahead tasks (new) | `fct_LookaheadTask` | 3-week look-ahead measure |
 | Seeds (`dashboard_*.csv`) | `dim_DashPillar`, `dim_DashMetric`, `dim_DashBand`, `dim_DashSetting` | Weights, measures, bands, targets, cut-offs |
 | All of the above | `fct_MetricScore`, `fct_ProjectScore` (`47_dashboard_score.sql`) | Every score, pillar, grade, below-target count and weakest pillar, per project and week |
+| All of the above | `fct_DashCheck` (`46_dashboard_facts.sql`) | Data Health: nine input checks per project |
 | Calendar | `dim_ReportWeek` | Week picker (Monday-Sunday, 52 weeks back), "This week" / "Last week" labels |
 
 ## Review pass, 2026-10-25 / 26
@@ -168,28 +188,156 @@ for a mapped project; Portfolio is stack-ranked worst grade first; the project e
 leads the team line; Project Overview shows billing against work progress; daily logs are
 read as a **proposed** measure (shown on Grade Detail, not in the grade).
 
+## Oct 30 call: the work behind every number
+
+Affect reviewed the first build. They accepted the layout but did not yet trust the numbers.
+Cal: "our biggest concern is, we throw something out there that is incorrect". They asked for a
+drill-down behind every number, "like a general ledger", with totals and an Excel output, so
+finance can tie each figure to its own reports. Commit `5b4e74d`. What changed, and why:
+
+| Change | Said on the call | What the code does now |
+|---|---|---|
+| **Sage voids left out** | Revenue to the end of September read $17.7M against Affect's ~$15.8M billed. The AR "didn't seem correct" - maybe "old AR that hasn't been pulled off" | Sage 100 Contractor keeps a voided invoice (status 5) with its full amount as a balance. 55 AR voids ($5.46M) and 77 AP voids ($1.68M) were being counted. `22_fct_invoice.sql` zeroes AR voids (the row stays, with `VoidedAmount`); every AP reader drops `IsVoid` (`34_fct_apinvoice.sql`) |
+| Revenue, Jan 1 - Sep 30 | "Up to the end of September ... like 15.8" | **$16,394,810** (was $17.73M). Months: Jul $1.99M, Aug $1.11M, Sep $1.49M. Cal compared Jul-Sep with Rebecca's spreadsheet and found them close. About $0.6M of gap remains (open question 3) |
+| Open AR | "The AR as well ... didn't seem correct" | Open AR **$2.31M**; AR > 60 days **$300K**, voids excluded |
+| Second Sage jobs | "There could also be some AR that is not assigned to a project" | Sage job 30 "360 Lexington 15th floor fitout" attached to 360 Lexington 15th as an **additional** job (its $242.6K open AR was unattributed); job 29 "Profoods 10101 Foster Avenue" mapped to Pro Foods. Both **PROPOSED** in `seed/project_crosswalk.csv` - confirm |
+| Rollout list | Keep live for 11/19 only "360 15th floor, SaunaLounge, City Harvest, Pro Foods and 45 Renwick" | Only those five are Active (`seed/dashboard_project.csv`, `rollout_only` = 1); every other project is Archived from the dashboard |
+| Phase from Outbuild | City Harvest is 20% billed (a mobilization deposit) but not started. "If the construction milestone date hasn't started, it's precon ... substantial completion, closeout" | Phase from Outbuild milestones; billed % only when the schedule names none (`seed/dashboard_phase_milestone.csv`) |
+| Inspections count once closed | An inspection "just created ... wasn't fully filled out" showed up as done. "Not really done until it's distributed or the status is closed" | `fct_Inspection.IsPerformed` = status Closed. Started ones are listed as "Not counted - started, not closed" |
+| Safety and quality "double barrel" | Keep the inspection count as the score; beside it, "capture all these safety data points" and set up a placeholder grading | Pass rate (the call's example: 60 passed, 27 failed), observations and punch are collected (`fct_DashObservation`, `seed/dashboard_observation_category.csv`). Proposed data scores are shown on Detail \| Safety & Quality, **not in the grade** |
+| Revenue YTD follows the week picked | Moving the week to the end of September, "the numbers didn't change" | Revenue YTD = Sage invoiced from Jan 1 to the end of the week picked. Balances (AR, cost, cash) stay as of the last refresh, because Sage holds no history of them |
+| Sage month close | "If month close, show data; if not, show previous with a warning". Close goal: the 10th-15th of the next month | Setting `sage_closed_through` (now 2026-09-30) in `dashboard_setting.csv`. The Executive page shows "Sage books closed through ..." and, past that date, "later months provisional (no WIP adjustment yet)". Detail \| Revenue shows the closed-months figure beside the YTD one. **Update the setting when a month closes** |
+| EBITDA relabelled **Net income** | "We don't put depreciation ... it'd be like net income basically" | Label changed. Still empty: it needs the Sage general ledger, which is not yet ingested |
+| Change-order tile | Pending change orders of "some 190 ... not sure where that was pulled from" | Both halves now read the Procore prime change-order log (`fct_ChangeOrder`: `CO Approved Amount`, `CO Pending Amount`). The pending half used to come from the financial-period balance, which could not be tied to rows |
+| Project Payments | "Have we been paid, has this subcontractor been paid": asked all the time, and 30 minutes to answer | New page: owner contract, billed, received and owed; for each sub, committed, billed, retainage, Sage AP paid, still to pay and the age of the oldest unpaid invoice (`fct_SubPayment`) |
+| Data Health | "Less validation of the data, more validation of the input": Sage and Procore tie-out, a look-ahead not kept up | Nine checks per project, each build (`fct_DashCheck`, below) |
+
+These figures are billings, not recognised revenue. Cal: "while we may have billed 15.8 million,
+if we over-bill 200 thousand, we can only recognize 15.6". The WIP adjustment is in the general
+ledger, which is not ingested.
+
+## Where each number is proved
+
+Each Executive tile has a **Data >** link. The revenue panel has **Revenue data >** and the
+watchlist has **Data health >**. The link opens a detail page whose top strip repeats the
+dashboard figure, and the table total below equals that figure.
+
+| Executive number | Detail page | Table whose total ties to it | Source rows |
+|---|---|---|---|
+| REVENUE YTD | Detail \| Revenue | Sage AR invoices in Revenue YTD, column *Counted* | Sage AR invoices dated Jan 1 to the week end, every job, voids at $0 (`fct_Invoice`) |
+| Revenue by month (chart) | Detail \| Revenue | By month, *Invoiced (counted)* | Sage AR invoices by invoice month (`fct_Invoice`) |
+| Closed-months revenue, close warning | Detail \| Revenue | Strip *Closed months only*; by month, *Sage close* | `sage_closed_through` in `dashboard_setting.csv` |
+| AR > 60 DAYS | Detail \| Receivables | Open Sage AR invoices, *Owed* on the 61-90 and over-90 rows; by Sage job, *Over 60 days* | Sage AR invoices with a balance, dated over 60 days before the data date |
+| Open AR, AR on no Procore project | Detail \| Receivables | Open Sage AR invoices, *Owed* | Sage AR balances, every job (`fct_Invoice`) |
+| GROSS MARGIN | Detail \| Margin & Budget | By project, *Revised budget* and *Forecast cost ex fee* | Procore budget lines, CM fee (division 50) left out (`fct_BudgetLine` → `fct_ProjectPosition`) |
+| ON BUDGET | Detail \| Margin & Budget | By project, *On budget* | Procore forecast final cost vs revised budget |
+| SUBCONTRACTOR COVERAGE | Detail \| Margin & Budget | Budget lines, *Committed* over *Budget* (divisions 01-44) | Procore budget and commitments (`fct_BudgetLine`) |
+| BACKLOG | Detail \| Contracts & COs | By project, *Backlog* | Procore prime contracts and the latest owner pay app; Sage invoices where there is no pay app (`fct_ProjectPosition`, `fct_Billing`) |
+| ACTIVE PROJECTS | Detail \| Contracts & COs | By project: row count, *Why active* | `seed/dashboard_project.csv` |
+| CHANGE ORDERS APPROVED | Detail \| Contracts & COs | Prime change orders, *Approved* and *Pending* | Procore prime change orders (`fct_ChangeOrder`) |
+| CASH POSITION | Detail \| Cash Position | By project, *Cash position*; unpaid payables, *Still to pay* | Procore pay apps, requisitions and job-to-date cost; Sage AR and AP, voids excluded |
+| SAFETY | Detail \| Safety & Quality | Safety by project, *Closed (week)* and *Score*; inspections dated in the week, *Counted?* | Procore inspections closed in the week (`fct_Inspection`) |
+| ON SCHEDULE | Detail \| Schedule | Finish vs baseline, *On schedule* | Outbuild current schedule, forecast vs baseline finish (`fct_ScheduleActivity`) |
+| PROJECTS AT RISK | Detail \| Schedule (strip), Project Portfolio \| Status | Grades 45 and below; Grade Detail shows every measure | `fct_ProjectScore` |
+| Priority projects | Project Portfolio \| Status → Grade Detail | Grade Detail, share of the grade | `fct_MetricScore` |
+| Data notice, warnings | Data Health | Input checks; Sage jobs with no Procore project | `fct_DashCheck`, `fct_Invoice` |
+| Project financials (one project) | Project Payments | Owner invoices; subcontractors | `fct_Invoice`, `fct_Billing`, `fct_SubPayment` |
+
+Page names are the display names in `PAGES` (`_local/deploy_report_dashboard.py`).
+
+## How to check a number against your own reports
+
+1. On the Executive page, click **Data >** on the tile.
+2. The strip at the top shows the same figure as the tile. The table below adds up to it.
+3. To work in Excel, hover over the table, click **...** at its top right, then **Export
+   data**. Pick *Summarized data* and the file downloads.
+4. Compare it with the Sage report for the same dates:
+   - Revenue YTD or a month: the AR invoice list for the period, voids excluded.
+   - Open AR and AR > 60 days: the AR aging as of the "balances as of" date in the page header.
+   - Unpaid payables, or what a sub is owed: the AP aging for the job.
+   - Contract, billed to date, retainage: the latest owner pay app in Procore.
+5. Match the rows one by one on the *Sage rec* or invoice number. The *Treatment* column says
+   how each row was counted.
+
+What a mismatch usually means:
+
+| You see | Usually means |
+|---|---|
+| An invoice on the dashboard that your report leaves out | It was voided or reversed, but the void was not posted in Sage |
+| A job missing from a project | The invoice is on a Sage job that is not mapped to a Procore project. It still counts in Revenue YTD; see *Sage jobs with no Procore project* on Data Health |
+| Last month differs from the interim financials | Sage has not closed the month yet, or the financials include the WIP (over / under billing) adjustment. The dashboard shows billings only |
+| Contract, budget, schedule or inspection figures look wrong | Someone has not kept a Procore or Outbuild entry up to date. Check Data Health for that project |
+
+If none of these explains it, send us the exported rows and the Sage report. Then the
+difference is in our calculation, and we fix it.
+
+## Data Health checks
+
+`fct_DashCheck` (`46_dashboard_facts.sql`) holds one row per project and check, rebuilt each
+night. The result is Pass, Warn, or Info (nothing to compare). The page shows active projects.
+
+| # | Check | Warns when | Who fixes it |
+|---|---|---|---|
+| 1 | Sage vs Procore billing | Sage invoiced to date differs from Procore earned less retainage by more than 1% (`tieout_tolerance`) | Finance: post or void the difference |
+| 2 | Voided Sage invoices | Never warns. Info: how many voids were left out of revenue and AR, and their total | Nobody. Shown so totals tie to Sage reports that exclude voids |
+| 3 | Possible duplicate invoices | Two live invoices on one job for the same amount | Finance: void the copy in Sage if it is a re-issue |
+| 4 | AR over 90 days | An open invoice is older than 90 days | Finance: collect, or write off / void |
+| 5 | 3-week look-ahead updated | No Outbuild look-ahead work in the last 7 days | Field: update the look-ahead every week |
+| 6 | Schedule progress kept up | Activities are past their finish date and not marked 100% | Field: mark progress in Outbuild, or re-forecast |
+| 7 | Inspections closed | Inspections dated over a week ago are still not closed (and so not counted) | Field: finish and close them in Procore |
+| 8 | Team roles in Procore | No Project Manager or no Superintendent in the Procore directory | PM: set the roles |
+| 9 | Budget forecast in Procore | No forecast to complete, so margin and on-budget cannot be read | PM / QS: keep the forecast current |
+
+A warning means the dashboard number is only as good as that entry. As Cal put it, the data is
+not wrong because the report is wrong; it is wrong because the entry was not made.
+
 ## Open questions for Affect
 
-1. **Gross margin definition** - revised budget less forecast cost, CM fee excluded, gives
-   1-8% on active jobs against the 12.5% target. Which costs does Affect's gross profit count?
-2. **Profitability bands** - proposed, not in Scorecard.xlsx.
-3. **Grade cut-offs** - On track 90 (the deck shows 100), Monitor 75, at risk 45 and below.
-4. **Sage jobs with no Procore project** - $1.0M of open AR, notably job 30 "360 Lexington
-   15th floor fitout" beside the mapped job 27. Map it to the Procore project? Should
-   Sage-only jobs appear financial-only (the call), and which are overhead (job 2 "Office")?
-5. **Active** - we use Procore activity in 60 days, not yet 100% paid. Confirm.
-6. **Daily logs in the grade** - the call wants them; v1 does not include them. Proposed
-   bands: 0 missed 100%, 1-2 75%, 3+ 0%, under Schedule.
-7. **Bi-weekly trade partner series** score as a miss every other week under the weekly rule.
-8. **Agenda timing** - Procore's meeting list keeps only the last send, so a minuted meeting's
-   agenda time is not verifiable. Upgrade: per-meeting change history (one request each).
-9. **Reporting week** - default is last full week (read at Monday stand-ups, Tuesday exec).
-   The call said "defaults to current": confirm.
-10. **Data entry** - revenue plan, pipeline (5 numbers), executive watchlist and pinned
-    priority projects, field productivity criteria: SharePoint lists, as agreed.
-11. **Refresh cadence** - financials weekly (Sunday night), Procore project data daily.
-12. **Week-over-week history** - balances and progress are as of each build; a nightly score
-    snapshot would let a reader roll back weeks honestly. Recommended next.
+Answered by the Oct 30 call and `5b4e74d`:
+- **Active**: the five rollout projects.
+- **Phase**: Outbuild milestones.
+- **When an inspection counts**: once closed.
+- **Refresh cadence**: weekly is fine; Procore twice a week.
+- **Week-over-week history**: `fct_ScoreHistory`, saved since Oct 27.
+- **Field productivity criteria**: agreed (question 8).
+
+1. **Sage job 30 and job 29**: job 30 is attached to 360 Lexington 15th as an additional job,
+   and job 29 to Pro Foods. Both are proposed. Confirm.
+2. **Sage jobs 24, 25, 26** (11 Essex Day Two, 360 Lex ground floor remediation, 360 Lex
+   demising wall): which Procore project does each belong to, or are they Sage-only? Which jobs
+   are overhead (job 2 "Office")?
+3. **The remaining gap**: Jan 1 - Sep 30 reads $16.39M against Affect's ~$15.8M, about $0.6M.
+   Exporting Detail \| Revenue and comparing it with the Sage invoice list should show which
+   invoices make up the gap.
+4. **Gross margin definition**: revised budget less forecast cost, CM fee excluded, gives 1-8%
+   on active jobs. Affect's interim financials show ~12.5% through September. Cal described the
+   goal as 12-15%, total committed over contract value. Which costs does Affect's gross profit
+   count? The interim financials would settle it.
+5. **Profitability bands**: proposed, not in Scorecard.xlsx.
+6. **Grade cut-offs**: On track 90 (the deck shows 100), Monitor 75, at risk 45 and below.
+7. **Scoring safety and quality data**: the proposed data scores average the 4-week inspection
+   pass rate and the 90-day observation close rate, equally weighted. This is a placeholder, as
+   agreed on the call. Still open: weights, critical fails, near misses, incidents, safety wins.
+8. **Field productivity**: agreed on the call: the rolling 3-week look-ahead is the plan,
+   compared each week with what was actually put in place, rolled up as the job goes. Not built
+   yet; the tile says "Next".
+9. **Risk register**: Affect used the Procore correspondence tool as a risk register and wants
+   the top risks from it. Not ingested yet.
+10. **Schedule delay attribution**: a delay the owner caused (compensated) should read
+    differently from one Affect caused. Outbuild fragnets may show which is which. Not built.
+11. **Data health by email**: a weekly email of the checks (Power Automate). Not built.
+12. **Daily logs in the grade**: the call wants them; v1 does not include them. Proposed
+    bands: 0 missed 100%, 1-2 75%, 3+ 0%, under Schedule.
+13. **Bi-weekly trade partner series** score as a miss every other week under the weekly rule.
+14. **Agenda timing**: Procore's meeting list keeps only the last send, so a minuted meeting's
+    agenda time is not verifiable. Upgrade: per-meeting change history (one request each).
+15. **Reporting week**: the default is the last full week. The call kept the week picker
+    weekly; for looking back by month there are the month tables on Detail \| Revenue. The
+    Oct 21 call said "defaults to current": confirm.
+16. **Data entry**: revenue plan, pipeline (5 numbers), executive watchlist and pinned priority
+    projects: SharePoint lists, as agreed.
+17. **Month close**: `sage_closed_through` is set by hand. Who updates it when a month closes,
+    or can we read the Sage close date?
 
 ## Verification
 

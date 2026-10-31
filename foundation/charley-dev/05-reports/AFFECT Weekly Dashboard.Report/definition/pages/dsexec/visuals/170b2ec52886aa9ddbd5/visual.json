@@ -5,9 +5,9 @@
     "x": 1135,
     "y": 108,
     "z": 2000,
-    "width": 180,
+    "width": 128,
     "height": 24,
-    "tabOrder": 19
+    "tabOrder": 24
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "SAFETY  \u2022  INSPECTIONS",
+                    "value": "SAFETY",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "9pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'SAFETY  \u2022  INSPECTIONS'"
+                  "Value": "'SAFETY'"
                 }
               }
             }

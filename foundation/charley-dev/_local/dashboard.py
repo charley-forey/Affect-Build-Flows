@@ -137,13 +137,20 @@ def meetings_missed(kind: str) -> str:
     )
 
 
+def by_project(expr: str) -> str:
+    """One project in context: the expression. Several - a detail table's totals row - the sum
+    over the active ones, so the total ties to the strip above it instead of reading BLANK."""
+    return (f"IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( {expr} ) ),\n"
+            f"    SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" ), ( {expr} ) ) )")
+
+
 def inspections(category: str) -> str:
-    return (
+    return by_project(
         "VAR E = [Report Window End]\n"
         "VAR S = [Report Week End] - 6\n"
-        "RETURN IF ( [Is Dashboard Project], COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),\n"
+        "RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),\n"
         f"    fct_Inspection[Category] = \"{category}\", fct_Inspection[IsPerformed] = TRUE (),\n"
-        "    fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) )"
+        "    fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 )"
     )
 
 
@@ -270,8 +277,8 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          "VAR A = [Report Window End]\nVAR D = SELECTEDVALUE ( fct_Invoice[SentDate] )\n"
          "RETURN " + row_flag(inv, "D >= DATE ( YEAR ( A ), 1, 1 ) && D <= A"),
          None, "detail row filter - the invoices Revenue YTD adds up (voids listed, at zero)"),
-        ("Open AR Flag", row_flag(inv, "SUM ( fct_Invoice[Balance] ) > 0.005"), None,
-         "detail row filter - invoices with a balance still owed"),
+        ("Open AR Flag", row_flag(inv, "ABS ( SUM ( fct_Invoice[Balance] ) ) > 0.005"), None,
+         "detail row filter - invoices with a balance still owed, credits included, as Open AR sums them"),
         ("Invoice Treatment",
          "IF ( HASONEVALUE ( " + inv + " ), SWITCH ( TRUE (),\n"
          "    SELECTEDVALUE ( fct_Invoice[IsVoid] ), \"Left out - void in Sage\",\n"
@@ -284,7 +291,7 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         ("Invoice Balance", "SUM ( fct_Invoice[Balance] )", '"$#,0"', "detail - Sage balance still owed"),
         ("Invoice Age Days",
          "VAR D = SELECTEDVALUE ( fct_Invoice[SentDate] )\n"
-         "RETURN IF ( HASONEVALUE ( " + inv + " ) && SUM ( fct_Invoice[Balance] ) > 0.005, DATEDIFF ( D, [Data As Of], DAY ) )",
+         "RETURN IF ( HASONEVALUE ( " + inv + " ) && ABS ( SUM ( fct_Invoice[Balance] ) ) > 0.005, DATEDIFF ( D, [Data As Of], DAY ) )",
          '"#,0"', "detail - days since the invoice date, for what is still owed"),
         ("Invoice Age Band",
          "VAR N = [Invoice Age Days]\n"
@@ -296,8 +303,9 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         ("Projected Fee", "SUM ( fct_ProjectPosition[ProjectedFee] )", '"$#,0"',
          "Procore forecast on the CM fee division (50) - margin, so left out of cost"),
         ("Projected Margin $",
-         "VAR C = [Projected Cost]\nRETURN IF ( NOT ISBLANK ( C ), [Projected Revenue] - C )", '"$#,0"',
-         "derived - revised budget less forecast cost (fee excluded)"),
+         # Per project, summed: a project with no forecast adds nothing (the tile's rule).
+         "SUMX ( VALUES ( dim_Project[ProjectKey] ), VAR C = [Projected Cost] RETURN IF ( NOT ISBLANK ( C ), [Projected Revenue] - C ) )",
+         '"$#,0"', "derived - revised budget less forecast cost (fee excluded)"),
         ("In Margin Tile",
          'IF ( [Is Dashboard Project], IF ( [Dashboard Status] <> "Active", "No - not active",\n'
          '    IF ( ISBLANK ( [Projected Cost] ), "No - no forecast in Procore", "Yes" ) ) )',
@@ -314,11 +322,15 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          "detail - subcontracts and purchase orders committed"),
         ("Line Spent", "CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
          "detail - job-to-date cost"),
-        ("Line Coverage %", "DIVIDE ( [Line Committed], [Line Budget] )", '"0%"',
-         "detail - committed over budget on the line, dollar-weighted"),
+        ("Line Coverage %",
+         # Buyable lines (divisions 01-44) only; the totals row is the coverage card's own ratio.
+         "VAR D = COALESCE ( SELECTEDVALUE ( dim_CostCodeCrosswalk[NewDivisionCode] ), \"00\" )\n"
+         "RETURN IF ( HASONEVALUE ( dim_CostCode[CostCode] ), IF ( D < \"45\", DIVIDE ( [Line Committed], [Line Budget] ) ),\n"
+         "    DIVIDE ( [Subcontract Committed], [Subcontract Budget] ) )",
+         '"0%"', "detail - committed over budget on buyable lines, dollar-weighted"),
         ("Line Treatment",
          "VAR D = COALESCE ( SELECTEDVALUE ( dim_CostCodeCrosswalk[NewDivisionCode] ), \"00\" )\n"
-         "RETURN IF ( HASONEVALUE ( dim_CostCode[CostCode] ), SWITCH ( TRUE (),\n"
+         "RETURN IF ( HASONEVALUE ( dim_CostCode[CostCode] ) && ( NOT ISBLANK ( [Line Budget] ) || NOT ISBLANK ( [Line Forecast] ) ), SWITCH ( TRUE (),\n"
          "    D = \"50\", \"CM fee - margin, not cost\",\n"
          "    D >= \"45\", \"Cost - not bought out (GCs, insurance, contingency, tax)\",\n"
          "    \"Cost - trade work, in subcontractor coverage\" ) )",
@@ -338,8 +350,8 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> \"void\" )",
          '"$#,0"', "Procore prime change orders approved"),
         ("CO Pending Amount",
-         "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), fct_ChangeOrder[IsPending] )",
-         '"$#,0"', "Procore prime change orders not yet approved (void excluded)"),
+         "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), fct_ChangeOrder[IsPending] = TRUE () )",
+         '"$#,0"', "Procore prime change orders pending or in draft (void excluded)"),
         ("Pay App Contract Sum", "CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
          "detail - prime contract sum to date on the latest owner pay app"),
         ("Pay App Original Sum", "CALCULATE ( SUM ( fct_Billing[OriginalContractSum] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"', "detail"),
@@ -357,7 +369,7 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          "CALCULATE ( SUMX ( fct_ApInvoice, IF ( fct_ApInvoice[InvoiceTotal] <> 0, fct_ApInvoice[LineTotal] * fct_ApInvoice[InvoiceBalance] / fct_ApInvoice[InvoiceTotal] ) ),\n"
          "    REMOVEFILTERS ( dim_Date ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE () )",
          '"$#,0"', "detail - the line's share of its invoice's unpaid balance (Unpaid Payables, line by line)"),
-        ("Open AP Flag", row_flag("fct_ApInvoice[InvoiceKey]", "[AP Line Open] > 0.005"), None,
+        ("Open AP Flag", row_flag("fct_ApInvoice[InvoiceKey]", "ABS ( [AP Line Open] ) > 0.005"), None,
          "detail row filter - AP still unpaid"),
         ("AP Age Days",
          "IF ( HASONEVALUE ( fct_ApInvoice[InvoiceKey] ), DATEDIFF ( MIN ( fct_ApInvoice[InvoiceDate] ), [Data As Of], DAY ) )",
@@ -380,21 +392,21 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         ("Inspection Pass Items", "SUM ( fct_Inspection[PassItemCount] )", '"#,0"', "detail"),
         ("Inspection Fail Items", "SUM ( fct_Inspection[DeficientItemCount] )", '"#,0"', "detail"),
         ("Inspections Not Closed (Week)",
-         week + "RETURN IF ( [Is Dashboard Project], " + count("fct_Inspection", "fct_Inspection[IsPerformed] = FALSE ()",
-                                                               "fct_Inspection[InspectionDate] >= S", "fct_Inspection[InspectionDate] <= E") + " )",
+         by_project(week + "RETURN " + count("fct_Inspection", "fct_Inspection[IsPerformed] = FALSE ()",
+                                             "fct_Inspection[InspectionDate] >= S", "fct_Inspection[InspectionDate] <= E")),
          '"#,0"', "Oct 30 call: created or started in the week but not closed - not counted"),
         ("Safety Pass Rate (4 Weeks)", pass_rate("Safety"), '"0%"', "PROPOSED data point - closed safety inspections, 4 weeks"),
         ("Quality Pass Rate (4 Weeks)", pass_rate("Quality"), '"0%"', "PROPOSED data point - closed quality inspections, 4 weeks"),
         ("Open Safety Observations",
-         "IF ( [Is Dashboard Project], " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Safety"', "fct_DashObservation[IsOpen] = TRUE ()") + " )",
+         by_project(count("fct_DashObservation", 'fct_DashObservation[Category] = "Safety"', "fct_DashObservation[IsOpen] = TRUE ()")),
          '"#,0"', "Procore observations classed Safety, still open"),
         ("Safety Observations (Week)",
-         week + "RETURN IF ( [Is Dashboard Project], " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Safety"',
-                                                               "fct_DashObservation[CreatedDate] >= S", "fct_DashObservation[CreatedDate] <= E") + " )",
+         by_project(week + "RETURN " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Safety"',
+                                             "fct_DashObservation[CreatedDate] >= S", "fct_DashObservation[CreatedDate] <= E")),
          '"#,0"', "Procore safety observations raised in the week"),
         ("Open Quality Observations",
-         "IF ( [Is Dashboard Project], " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Quality"',
-                                                 'fct_DashObservation[ItemType] = "Observation"', "fct_DashObservation[IsOpen] = TRUE ()") + " )",
+         by_project(count("fct_DashObservation", 'fct_DashObservation[Category] = "Quality"',
+                           'fct_DashObservation[ItemType] = "Observation"', "fct_DashObservation[IsOpen] = TRUE ()")),
          '"#,0"', "Procore corrective actions, NCRs, deficiencies, still open"),
         ("Safety Observation Close Rate", close_rate('fct_DashObservation[Category] = "Safety"'), '"0%"',
          "PROPOSED data point - safety observations raised in 90 days that are closed"),
@@ -443,7 +455,8 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         # ---- active-project totals and row filters the detail pages tie to --------------------
         ("Voided AR Left Out", "CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS () )", '"$#,0"',
          "Sage voided invoices, all time - Sage still carries each as a balance"),
-        ("Open AR Job Flag", row_flag("fct_Invoice[SageJobNumber]", "SUM ( fct_Invoice[Balance] ) > 0.005"), None,
+        ("Open AR Job Flag", row_flag("fct_Invoice[SageJobNumber]",
+                               "NOT ISEMPTY ( FILTER ( fct_Invoice, ABS ( fct_Invoice[Balance] ) > 0.005 ) )"), None,
          "detail row filter - Sage jobs with open AR"),
         ("Active Contract Value", over_active("[Position Contract]"), '"$#,0"', "current contract, active projects"),
         ("Active Pending COs", over_active("[CO Pending Amount]"), '"$#,0"', "pending prime change orders, active projects"),
@@ -452,6 +465,10 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          "inspections dated in the week and not closed, active projects"),
         ("Active Open Safety Observations", "COALESCE ( " + over_active("[Open Safety Observations]") + ", 0 )", '"#,0"',
          "open safety observations, active projects"),
+        ("Cash Row Flag",
+         # The projects the CASH POSITION tile adds: active, with both halves of the formula.
+         'IF ( [Dashboard Status] = "Active" && NOT ISBLANK ( [Cash Position] ), "Yes" )', None,
+         "detail row filter - the cash table lists exactly the projects the tile sums"),
         ("Open AP Active Flag", 'IF ( [Open AP Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )', None,
          "detail row filter"),
         ("Inspection In Week Active Flag", 'IF ( [Inspection In Week Any Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )',
@@ -518,10 +535,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "DIVIDE ( [Billed To Date (Gross)], [Position Contract] )", '"0.0%"',
          "deck slide 3 BILLING PROGRESS; slide 2 'Determine phase based on Billed %'"),
         ("Project Phase",
-         "VAR B = [Billed % Of Contract]\n"
-         f"RETURN IF ( NOT ISBLANK ( B ), SWITCH ( TRUE (), B < {setting('phase_precon_below')}, \"Precon\",\n"
-         f"    B > {setting('phase_closeout_from')}, \"Closeout\", \"Construction\" ) )",
-         None, "deck slide 2: <10% Precon, 10-95% Construction, >95% Closeout"),
+         # Oct 30 call: from Outbuild milestones, billed % where the schedule names none - worked
+         # out once in fct_ProjectPosition, the same column 47_dashboard_score.sql gates on.
+         "SELECTEDVALUE ( fct_ProjectPosition[Phase] )",
+         None, "Oct 30 call: Outbuild construction-start / substantial-completion milestones, else billed % (deck slide 2)"),
         ("Phase Label", 'COALESCE ( [Project Phase], "Not supplied" )', None,
          "deck slide 2 CURRENT PHASE"),
         ("Last Project Activity",
@@ -560,7 +577,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          '"$#,0"', "Cash Position formula, outflow half"),
         ("Cash Position",
          "VAR I = [Cash Collected]\nVAR O = [Cash Paid Out]\n"
-         "RETURN IF ( NOT ISBLANK ( I ) && NOT ISBLANK ( O ), I - O )",
+         "RETURN IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( NOT ISBLANK ( I ) && NOT ISBLANK ( O ), I - O ),\n"
+         # Several projects (a totals row): the sum of those that have one - the tile's rule.
+         "    SUMX ( VALUES ( dim_Project[ProjectKey] ), VAR I1 = [Cash Collected] VAR O1 = [Cash Paid Out]\n"
+         "        RETURN IF ( NOT ISBLANK ( I1 ) && NOT ISBLANK ( O1 ), I1 - O1 ) ) )",
          '"$#,0"', "Cash Position = Billings - Retainage Receivable - Unpaid Receivables - "
                    "(Costs Incurred - Unpaid Payables - Retainage Payable) - Chris, 2026-10-22"),
         ("Cash Collected / Paid",
@@ -579,8 +599,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
         ("Projected Cost", "SUM ( fct_ProjectPosition[ProjectedCost] )", '"$#,0"',
          "Procore forecast final cost, CM fee excluded"),
         ("Projected Gross Margin %",
-         # No forecast cost = no margin (R - BLANK would read as 100%).
-         "VAR R = [Projected Revenue]\nVAR C = [Projected Cost]\nRETURN IF ( R > 0 && NOT ISBLANK ( C ), DIVIDE ( R - C, R ) )",
+         # No forecast cost = no margin (R - BLANK would read as 100%). Over several projects,
+         # revenue only from those with a forecast - the portfolio tile's formula.
+         "VAR R = SUMX ( VALUES ( dim_Project[ProjectKey] ), IF ( NOT ISBLANK ( [Projected Cost] ), [Projected Revenue] ) )\n"
+         "VAR C = [Projected Cost]\nRETURN IF ( R > 0 && NOT ISBLANK ( C ), DIVIDE ( R - C, R ) )",
          '"0.0%"', "Scorecard.xlsx Profitability (Gross) - DEFINITION TO CONFIRM with Affect"),
         ("Gross Margin Target", setting("gross_margin_target"), '"0.0%"',
          "Oct 21 call: 12.5%, 13% from the end of Q1 - dim_DashSetting"),

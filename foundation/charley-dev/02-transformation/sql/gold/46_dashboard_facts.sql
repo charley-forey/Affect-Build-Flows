@@ -398,11 +398,21 @@ closeout AS (
         FROM ms WHERE rn = 1 AND Marks = 'Closeout' AND reached) x WHERE k = 1
 ),
 start AS (
-    -- The construction-start milestone: the best-named kind (lowest priority), and of those the
-    -- LATEST - City Harvest's schedule re-dates its work-start trigger rather than closing it.
+    -- The construction-start milestone, of the best-named kind (lowest priority): any of them
+    -- reached = construction (the latest reached is named); none reached = the next one due.
+    -- City Harvest's schedule re-dates its work-start trigger rather than closing it.
     SELECT ProjectKey, ActivityName, FinishDate, reached FROM (
-        SELECT ms.*, ROW_NUMBER() OVER (PARTITION BY ProjectKey ORDER BY Priority, FinishDate DESC, ActivityName) AS k
-        FROM ms WHERE rn = 1 AND Marks = 'Construction') x WHERE k = 1
+        SELECT b.*, ROW_NUMBER() OVER (PARTITION BY ProjectKey
+                                       ORDER BY CASE WHEN reached THEN 0 ELSE 1 END,
+                                                CASE WHEN reached THEN datediff(CURRENT_DATE, FinishDate) END,
+                                                FinishDate, ActivityName) AS k
+        FROM (SELECT ms.*, MIN(Priority) OVER (PARTITION BY ProjectKey) AS best
+              FROM ms WHERE rn = 1 AND Marks = 'Construction') b
+        WHERE Priority = best) x WHERE k = 1
+),
+sc_ahead AS (
+    -- A substantial-completion milestone on the schedule that is not reached yet.
+    SELECT DISTINCT ProjectKey FROM ms WHERE rn = 1 AND Marks = 'Closeout' AND NOT reached
 ),
 base AS (
     SELECT p.ProjectKey,
@@ -425,7 +435,8 @@ base AS (
            activity.last_activity AS LastActivityDate,
            closeout.ActivityName AS closeout_name, closeout.FinishDate AS closeout_date,
            start.ActivityName AS start_name, start.FinishDate AS start_date, start.reached AS start_reached,
-           dp.ProcoreProjectId IS NOT NULL AS IsRolloutProject
+           dp.ProcoreProjectId IS NOT NULL AS IsRolloutProject,
+           sc.ProjectKey IS NOT NULL AS sc_ahead
     FROM projects p
     LEFT JOIN cur ON cur.ProjectKey = p.ProjectKey
     LEFT JOIN orig ON orig.ProjectKey = p.ProjectKey
@@ -438,6 +449,7 @@ base AS (
     LEFT JOIN closeout ON closeout.ProjectKey = p.ProjectKey
     LEFT JOIN start ON start.ProjectKey = p.ProjectKey
     LEFT JOIN seed_DashProject dp ON dp.ProcoreProjectId = p.ProjectKey
+    LEFT JOIN sc_ahead sc ON sc.ProjectKey = p.ProjectKey
 ),
 cash AS (
     SELECT b.*,
@@ -454,7 +466,7 @@ phased AS (
                 WHEN c.start_name IS NOT NULL THEN CASE WHEN c.start_reached THEN 'Construction' ELSE 'Precon' END
                 WHEN c.BilledPct IS NULL THEN NULL
                 WHEN c.BilledPct < s.precon_below THEN 'Precon'
-                WHEN c.BilledPct > s.closeout_from THEN 'Closeout'
+                WHEN c.BilledPct > s.closeout_from AND NOT c.sc_ahead THEN 'Closeout'
                 ELSE 'Construction' END AS Phase,
            CASE WHEN c.closeout_name IS NOT NULL
                     THEN CONCAT('Outbuild: "', c.closeout_name, '" reached ', CAST(c.closeout_date AS STRING))
@@ -555,7 +567,8 @@ k AS (
 SELECT k.ProjectKey,
        CONCAT(k.ProjectKey, ':', COALESCE(k.VendorKey, '?'))     AS SubPaymentKey,
        k.VendorKey,
-       COALESCE(r.SubName, v.VendorName, k.VendorKey)           AS SubName,
+       CASE WHEN k.VendorKey = 'UNASSIGNED' THEN 'Sage vendors with no Procore match (combined)'
+            ELSE COALESCE(r.SubName, v.VendorName, k.VendorKey) END AS SubName,
        r.ContractName, r.Commitments, r.Committed, r.Requisitioned, r.RetainageHeld, r.BalanceToFinish,
        r.LastRequisitionDate,
        a.ApInvoiced, a.ApPaid, a.ApOpen, a.ApInvoices, a.LastApInvoiceDate, a.OldestOpenDays,
@@ -593,10 +606,12 @@ dash AS (
     FROM fct_ProjectPosition p
 ),
 dup AS (
-    -- Two live invoices on one job for the same amount: a re-issue left beside its original.
-    SELECT ProjectKey, COUNT(*) AS n, SUM(Amount) AS amt FROM (
-        SELECT ProjectKey, SageJobNumber, Amount, COUNT(*) OVER (PARTITION BY SageJobNumber, Amount) AS c
-        FROM fct_Invoice WHERE NOT IsVoid AND Amount <> 0) x
+    -- Two live invoices on one job for the same amount in the same month: a re-issue left beside
+    -- its original. n and amt are the extra copies only, not the original.
+    SELECT ProjectKey, SUM(c - 1) AS n, SUM((c - 1) * Amount) AS amt FROM (
+        SELECT ProjectKey, SageJobNumber, MonthStart, Amount, COUNT(*) AS c
+        FROM fct_Invoice WHERE NOT IsVoid AND Amount <> 0
+        GROUP BY ProjectKey, SageJobNumber, MonthStart, Amount) x
     WHERE c > 1 GROUP BY ProjectKey
 ),
 old_ar AS (
@@ -604,9 +619,10 @@ old_ar AS (
     WHERE Balance > 0 AND datediff(CURRENT_DATE, SentDate) > 90 GROUP BY ProjectKey
 ),
 la AS (
-    SELECT a.ProjectKey, greatest(MAX(t.UpdatedAt), MAX(t.CreatedAt)) AS last_worked
-    FROM fct_ScheduleActivity a LEFT JOIN fct_LookaheadTask t ON t.ProjectKey = a.ProjectKey
-    GROUP BY a.ProjectKey
+    SELECT a.ProjectKey, t.last_worked
+    FROM (SELECT DISTINCT ProjectKey FROM fct_ScheduleActivity) a
+    LEFT JOIN (SELECT ProjectKey, greatest(MAX(UpdatedAt), MAX(CreatedAt)) AS last_worked
+               FROM fct_LookaheadTask GROUP BY ProjectKey) t ON t.ProjectKey = a.ProjectKey
 ),
 stale AS (
     -- Activities whose forecast finish has passed with progress not marked complete.
@@ -643,7 +659,7 @@ checks AS (
     UNION ALL
     SELECT d.ProjectKey, 3, 'Possible duplicate invoices',
            CASE WHEN COALESCE(u.n, 0) > 0 THEN 'Warn' ELSE 'Pass' END, u.amt,
-           CONCAT(CAST(COALESCE(u.n, 0) AS STRING), ' live invoice(s) share a job and amount with another'),
+           CONCAT(CAST(COALESCE(u.n, 0) AS STRING), ' extra live invoice(s) with the same job, amount and month as another'),
            'Finance: void the copy in Sage if it is a re-issue'
     FROM dash d LEFT JOIN dup u ON u.ProjectKey = d.ProjectKey
     UNION ALL
