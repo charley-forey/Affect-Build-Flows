@@ -60,3 +60,6 @@ ref table fct_LookaheadTask
 ref table fct_ProjectPosition
 ref table fct_MetricScore
 ref table fct_ProjectScore
+ref table fct_DashObservation
+ref table fct_SubPayment
+ref table fct_DashCheck

@@ -126,7 +126,7 @@ table _Measures
 
 	/// Replaces no workbook equivalent - Sage AP job cost (GL 50000-50999 on a job mapped to a Procore project), to date. AP history starts 2025-03-11. NOT added to Spent To Date (no double counting)
 	measure 'AP Job Cost' =
-			CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (),
+			CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE (),
 			NOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
@@ -146,7 +146,7 @@ table _Measures
 
 	/// Replaces no workbook equivalent - AP job cost at vendors with no Procore commitment or direct cost on the project: cost Spent To Date cannot contain. AP history starts 2025-03-11; NOT added to Spent To Date
 	measure 'ERP-only Vendor Cost' =
-			CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (),
+			CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (), fct_ApInvoice[IsVoid] = FALSE (),
 			NOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )
 		formatString: "$#,0"
 		displayFolder: 02 Budget & Cost
@@ -1331,11 +1331,8 @@ table _Measures
 		formatString: "0.0%"
 		displayFolder: 20 Dashboard - week & status
 
-	/// Replaces deck slide 2: <10% Precon, 10-95% Construction, >95% Closeout
-	measure 'Project Phase' =
-			VAR B = [Billed % Of Contract]
-			RETURN IF ( NOT ISBLANK ( B ), SWITCH ( TRUE (), B < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "phase_precon_below" ), "Precon",
-			B > CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "phase_closeout_from" ), "Closeout", "Construction" ) )
+	/// Replaces Oct 30 call: Outbuild construction-start / substantial-completion milestones, else billed % (deck slide 2)
+	measure 'Project Phase' = SELECTEDVALUE ( fct_ProjectPosition[Phase] )
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces deck slide 2 CURRENT PHASE
@@ -1401,7 +1398,9 @@ table _Measures
 	measure 'Cash Position' =
 			VAR I = [Cash Collected]
 			VAR O = [Cash Paid Out]
-			RETURN IF ( NOT ISBLANK ( I ) && NOT ISBLANK ( O ), I - O )
+			RETURN IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( NOT ISBLANK ( I ) && NOT ISBLANK ( O ), I - O ),
+			SUMX ( VALUES ( dim_Project[ProjectKey] ), VAR I1 = [Cash Collected] VAR O1 = [Cash Paid Out]
+			RETURN IF ( NOT ISBLANK ( I1 ) && NOT ISBLANK ( O1 ), I1 - O1 ) ) )
 		formatString: "$#,0"
 		displayFolder: 21 Dashboard - budget drivers
 
@@ -1425,7 +1424,7 @@ table _Measures
 
 	/// Replaces Scorecard.xlsx Profitability (Gross) - DEFINITION TO CONFIRM with Affect
 	measure 'Projected Gross Margin %' =
-			VAR R = [Projected Revenue]
+			VAR R = SUMX ( VALUES ( dim_Project[ProjectKey] ), IF ( NOT ISBLANK ( [Projected Cost] ), [Projected Revenue] ) )
 			VAR C = [Projected Cost]
 			RETURN IF ( R > 0 && NOT ISBLANK ( C ), DIVIDE ( R - C, R ) )
 		formatString: "0.0%"
@@ -1545,21 +1544,31 @@ table _Measures
 
 	/// Replaces Scorecard.xlsx Safety Inspections - performed in the report week
 	measure 'Safety Inspections (Week)' =
-			VAR E = [Report Window End]
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( VAR E = [Report Window End]
 			VAR S = [Report Week End] - 6
-			RETURN IF ( [Is Dashboard Project], COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
 			fct_Inspection[Category] = "Safety", fct_Inspection[IsPerformed] = TRUE (),
-			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) )
+			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
+			fct_Inspection[Category] = "Safety", fct_Inspection[IsPerformed] = TRUE (),
+			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) ) ) )
 		formatString: "#,0"
 		displayFolder: 22 Dashboard - schedule & site drivers
 
 	/// Replaces Scorecard.xlsx Quality Inspections - performed in the report week
 	measure 'Quality Inspections (Week)' =
-			VAR E = [Report Window End]
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( VAR E = [Report Window End]
 			VAR S = [Report Week End] - 6
-			RETURN IF ( [Is Dashboard Project], COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
 			fct_Inspection[Category] = "Quality", fct_Inspection[IsPerformed] = TRUE (),
-			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) )
+			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ),
+			fct_Inspection[Category] = "Quality", fct_Inspection[IsPerformed] = TRUE (),
+			fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) ) ) )
 		formatString: "#,0"
 		displayFolder: 22 Dashboard - schedule & site drivers
 
@@ -2184,9 +2193,9 @@ table _Measures
 			&& D >= S && D <= E, "Yes" )
 		displayFolder: 24 Dashboard - project page
 
-	/// Replaces deck slide 1 REVENUE YTD - Sage AR invoiced this calendar year, every job
+	/// Replaces deck slide 1 REVENUE YTD - Sage AR invoiced Jan 1 to the end of the week picked, every job, voids excluded
 	measure 'Revenue YTD' =
-			VAR A = [Data As Of]
+			VAR A = [Report Window End]
 			RETURN CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),
 			fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= A )
 		formatString: "$#,0"
@@ -2194,7 +2203,7 @@ table _Measures
 
 	/// Replaces deck slide 1 REVENUE - ACTUAL, by month
 	measure 'Revenue Last 6 Months' =
-			VAR A = [Data As Of]
+			VAR A = [Report Window End]
 			VAR M = MAX ( dim_Date[Date] )
 			RETURN IF ( M > EOMONTH ( A, -6 ) && MIN ( dim_Date[Date] ) <= A,
 			CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ) ) )
@@ -2389,9 +2398,9 @@ table _Measures
 	/// Replaces deck slide 1 CHANGE ORDERS APPROVED - approved value over approved + pending
 	measure 'Change Orders Approved %' =
 			VAR Ap = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
-			CALCULATE ( [Approved Change Orders], REMOVEFILTERS ( dim_Date ) ) )
+			[CO Approved Amount] )
 			VAR Pe = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
-			[Pending Change Orders] )
+			[CO Pending Amount] )
 			RETURN DIVIDE ( Ap, Ap + Pe )
 		formatString: "0%"
 		displayFolder: 25 Dashboard - executive
@@ -2479,7 +2488,567 @@ table _Measures
 	/// Replaces derived - why a project is off the active list
 	measure 'Status Note' =
 			VAR S = [Dashboard Status]
-			RETURN IF ( S <> "Active", S & IF ( S = "Inactive", " - no Procore activity in " & CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "active_within_days" ) & " days" ) )
+			RETURN IF ( S <> "Active", S & " - " & SELECTEDVALUE ( fct_ProjectPosition[StatusReason] ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call: the last month closed in Sage (dim_DashSetting sage_closed_through)
+	measure 'Books Closed Through' =
+			VAR V = CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "sage_closed_through" )
+			RETURN IF ( V > 0, DATE ( INT ( V / 10000 ), INT ( MOD ( V, 10000 ) / 100 ), MOD ( V, 100 ) ) )
+		formatString: "mmm d, yyyy"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call: show closed months as final, later ones with a warning
+	measure 'Close Status Text' =
+			VAR C = [Books Closed Through]
+			VAR E = [Report Window End]
+			RETURN IF ( ISBLANK ( C ), "Sage month close not recorded", "SAGE BOOKS CLOSED THROUGH " & UPPER ( FORMAT ( C, "mmm d, yyyy" ) )
+			& IF ( E > C, "  " & UNICHAR ( 8226 ) & "  " & "LATER MONTHS PROVISIONAL (NO WIP ADJUSTMENT YET)" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Revenue YTD to the last closed month - the figure to tie to the interim financials
+	measure 'Revenue YTD Closed' =
+			VAR A = [Report Window End]
+			VAR C = MIN ( A, [Books Closed Through] )
+			RETURN CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),
+			fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= C )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage invoices voided in the same window - left out of Revenue YTD
+	measure 'Revenue YTD Voided' =
+			VAR A = [Report Window End]
+			RETURN CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),
+			fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= A )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces deck slide 1 REVENUE YTD sub-line: the week picked, and the closed-books figure
+	measure 'Revenue YTD Subline' =
+			VAR C = MIN ( [Report Window End], [Books Closed Through] )
+			RETURN "To " & FORMAT ( [Report Window End], "mmm d" ) & "  " & UNICHAR ( 8226 ) & "  " & "closed to " & FORMAT ( C, "mmm d" ) & ": "
+			& ( VAR X = [Revenue YTD Closed] RETURN IF ( ISBLANK ( X ), BLANK (), SWITCH ( TRUE (),     ABS ( X ) >= 1000000, FORMAT ( X / 1000000, "$#,0.0" ) & "M",     ABS ( X ) >= 1000, FORMAT ( X / 1000, "$#,0" ) & "K",     FORMAT ( X, "$#,0" ) ) ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call: what revenue did we do in September - Sage invoiced in the month, voids excluded
+	measure 'Revenue In Month' =
+			VAR A = [Report Window End]
+			VAR M = MAX ( dim_Date[Date] )
+			RETURN IF ( NOT HASONEVALUE ( dim_Date[MonthYear] ), [Revenue YTD],
+			IF ( YEAR ( M ) = YEAR ( A ) && MIN ( dim_Date[Date] ) <= A,
+			CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[SentDate] <= A ) ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage voids dated in the month - shown, not counted
+	measure 'Voided In Month' =
+			VAR A = [Report Window End]
+			VAR M = MAX ( dim_Date[Date] )
+			RETURN IF ( NOT HASONEVALUE ( dim_Date[MonthYear] ), [Revenue YTD Voided],
+			IF ( YEAR ( M ) = YEAR ( A ) && MIN ( dim_Date[Date] ) <= A,
+			CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[SentDate] <= A ) ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived
+	measure 'Invoices In Month' =
+			VAR A = [Report Window End]
+			VAR M = MAX ( dim_Date[Date] )
+			VAR One = HASONEVALUE ( dim_Date[MonthYear] )
+			VAR Lo = IF ( One, MIN ( dim_Date[Date] ), DATE ( YEAR ( A ), 1, 1 ) )
+			VAR Hi = IF ( One && M < A, M, A )
+			RETURN IF ( NOT One || ( YEAR ( M ) = YEAR ( A ) && Lo <= A ),
+			CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), REMOVEFILTERS ( dim_Date ),
+			fct_Invoice[SentDate] >= Lo, fct_Invoice[SentDate] <= Hi, fct_Invoice[IsVoid] = FALSE () ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call: closed months are final; later ones carry a warning
+	measure 'Month Close State' =
+			IF ( NOT ISBLANK ( [Invoices In Month] ) || NOT ISBLANK ( [Voided In Month] ),
+			IF ( EOMONTH ( MAX ( dim_Date[Date] ), 0 ) <= [Books Closed Through], "Closed in Sage", "Provisional - not closed" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - the invoices Revenue YTD adds up (voids listed, at zero)
+	measure 'Invoice In YTD Flag' =
+			VAR A = [Report Window End]
+			VAR D = SELECTEDVALUE ( fct_Invoice[SentDate] )
+			RETURN IF ( HASONEVALUE ( fct_Invoice[InvoiceID] ) && D >= DATE ( YEAR ( A ), 1, 1 ) && D <= A, "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - invoices with a balance still owed, credits included, as Open AR sums them
+	measure 'Open AR Flag' = IF ( HASONEVALUE ( fct_Invoice[InvoiceID] ) && ABS ( SUM ( fct_Invoice[Balance] ) ) > 0.005, "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - whether and how the invoice counts
+	measure 'Invoice Treatment' =
+			IF ( HASONEVALUE ( fct_Invoice[InvoiceID] ), SWITCH ( TRUE (),
+			SELECTEDVALUE ( fct_Invoice[IsVoid] ), "Left out - void in Sage",
+			SELECTEDVALUE ( fct_Invoice[HasUnmatchedProject] ), "Counted - Sage job with no Procore project",
+			"Counted" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - invoiced, voids at zero
+	measure 'Invoice Amount' = SUM ( fct_Invoice[Amount] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - the amount Sage voided
+	measure 'Invoice Voided' = SUM ( fct_Invoice[VoidedAmount] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Sage amount paid
+	measure 'Invoice Paid' = SUM ( fct_Invoice[AmountPaid] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Sage balance still owed
+	measure 'Invoice Balance' = SUM ( fct_Invoice[Balance] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - days since the invoice date, for what is still owed
+	measure 'Invoice Age Days' =
+			VAR D = SELECTEDVALUE ( fct_Invoice[SentDate] )
+			RETURN IF ( HASONEVALUE ( fct_Invoice[InvoiceID] ) && ABS ( SUM ( fct_Invoice[Balance] ) ) > 0.005, DATEDIFF ( D, [Data As Of], DAY ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - AR ageing bucket (AR > 60 DAYS counts the last two)
+	measure 'Invoice Age Band' =
+			VAR N = [Invoice Age Days]
+			RETURN IF ( NOT ISBLANK ( N ), SWITCH ( TRUE (), N <= 30, "0-30 days", N <= 60, "31-60 days", N <= 90, "61-90 days", "Over 90 days" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - open AR on the Sage job
+	measure 'Job Open AR' = SUM ( fct_Invoice[Balance] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Procore forecast on the CM fee division (50) - margin, so left out of cost
+	measure 'Projected Fee' = SUM ( fct_ProjectPosition[ProjectedFee] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces derived - revised budget less forecast cost (fee excluded)
+	measure 'Projected Margin $' = SUMX ( VALUES ( dim_Project[ProjectKey] ), VAR C = [Projected Cost] RETURN IF ( NOT ISBLANK ( C ), [Projected Revenue] - C ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - whether the project's margin is in the portfolio figure
+	measure 'In Margin Tile' =
+			IF ( [Is Dashboard Project], IF ( [Dashboard Status] <> "Active", "No - not active",
+			IF ( ISBLANK ( [Projected Cost] ), "No - no forecast in Procore", "Yes" ) ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - ON BUDGET: forecast final cost within the revised budget
+	measure 'On Budget Row' =
+			IF ( [Is Dashboard Project], VAR V = [Forecast Variance] RETURN SWITCH ( TRUE (), ISBLANK ( V ), "No forecast",
+			V >= 0, "Yes", "No - over by " & FORMAT ( -V, "$#,0" ) ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Procore revised budget on the cost code
+	measure 'Line Budget' = CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Procore forecast final cost
+	measure 'Line Forecast' = CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - subcontracts and purchase orders committed
+	measure 'Line Committed' = CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - job-to-date cost
+	measure 'Line Spent' = CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - committed over budget on buyable lines, dollar-weighted
+	measure 'Line Coverage %' =
+			VAR D = COALESCE ( SELECTEDVALUE ( dim_CostCodeCrosswalk[NewDivisionCode] ), "00" )
+			RETURN IF ( HASONEVALUE ( dim_CostCode[CostCode] ), IF ( D < "45", DIVIDE ( [Line Committed], [Line Budget] ) ),
+			DIVIDE ( [Subcontract Committed], [Subcontract Budget] ) )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - how the line counts in margin and in coverage (new cost-code master divisions)
+	measure 'Line Treatment' =
+			VAR D = COALESCE ( SELECTEDVALUE ( dim_CostCodeCrosswalk[NewDivisionCode] ), "00" )
+			RETURN IF ( HASONEVALUE ( dim_CostCode[CostCode] ) && ( NOT ISBLANK ( [Line Budget] ) || NOT ISBLANK ( [Line Forecast] ) ), SWITCH ( TRUE (),
+			D = "50", "CM fee - margin, not cost",
+			D >= "45", "Cost - not bought out (GCs, insurance, contingency, tax)",
+			"Cost - trade work, in subcontractor coverage" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - why the project is active or not
+	measure 'Status Reason' = SELECTEDVALUE ( fct_ProjectPosition[StatusReason] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Oct 30 call: the Outbuild milestone (or billed %) the phase is read from
+	measure 'Phase Source' = SELECTEDVALUE ( fct_ProjectPosition[PhaseSource] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Procore pay apps (gross) or Sage invoices (net)
+	measure 'Billing Source' = SELECTEDVALUE ( fct_ProjectPosition[BillingSource] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - BACKLOG per project: current contract less billed to date
+	measure 'Project Backlog' = SUMX ( VALUES ( dim_Project[ProjectKey] ), MAX ( 0, [Position Contract] - [Billed To Date (Gross)] ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Procore prime change orders approved
+	measure 'CO Approved Amount' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> "void" )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Procore prime change orders pending or in draft (void excluded)
+	measure 'CO Pending Amount' = CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), fct_ChangeOrder[IsPending] = TRUE () )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - prime contract sum to date on the latest owner pay app
+	measure 'Pay App Contract Sum' = CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail
+	measure 'Pay App Original Sum' = CALCULATE ( SUM ( fct_Billing[OriginalContractSum] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail
+	measure 'Pay App CO Change' = CALCULATE ( SUM ( fct_Billing[NetChangeByChangeOrders] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - completed and stored to date (gross of retainage)
+	measure 'Pay App Completed' = CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail
+	measure 'Pay App Retainage' = CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail
+	measure 'Pay App Balance To Finish' = CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Sage AP job-cost lines, voids excluded
+	measure 'AP Line Amount' = CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), REMOVEFILTERS ( dim_Date ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE () )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - the line's share of its invoice's unpaid balance (Unpaid Payables, line by line)
+	measure 'AP Line Open' =
+			CALCULATE ( SUMX ( fct_ApInvoice, IF ( fct_ApInvoice[InvoiceTotal] <> 0, fct_ApInvoice[LineTotal] * fct_ApInvoice[InvoiceBalance] / fct_ApInvoice[InvoiceTotal] ) ),
+			REMOVEFILTERS ( dim_Date ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE () )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - AP still unpaid
+	measure 'Open AP Flag' = IF ( HASONEVALUE ( fct_ApInvoice[InvoiceKey] ) && ABS ( [AP Line Open] ) > 0.005, "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - days since the AP invoice date
+	measure 'AP Age Days' = IF ( HASONEVALUE ( fct_ApInvoice[InvoiceKey] ), DATEDIFF ( MIN ( fct_ApInvoice[InvoiceDate] ), [Data As Of], DAY ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - ON SCHEDULE: forecast finish on or before the baseline finish
+	measure 'On Schedule Row' =
+			IF ( [Is Dashboard Project], VAR D = [Completion Variance Days] RETURN SWITCH ( TRUE (), ISBLANK ( D ), "No baseline",
+			D <= 0, "Yes", "No - " & D & " days late" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - every inspection dated in the week, counted or not
+	measure 'Inspection In Week Any Flag' =
+			VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			VAR D = SELECTEDVALUE ( fct_Inspection[InspectionDate] )
+			RETURN IF ( HASONEVALUE ( fct_Inspection[InspectionKey] ) && D >= S && D <= E, "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - counted (closed) or why not
+	measure 'Inspection Counted' = IF ( HASONEVALUE ( fct_Inspection[InspectionKey] ), SELECTEDVALUE ( fct_Inspection[CountedReason] ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call: items passed over passed + failed (N/A left out)
+	measure 'Inspection Pass Rate' =
+			VAR P = SUM ( fct_Inspection[PassItemCount] )
+			VAR F = SUM ( fct_Inspection[DeficientItemCount] )
+			RETURN DIVIDE ( P, P + F )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail
+	measure 'Inspection Pass Items' = SUM ( fct_Inspection[PassItemCount] )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail
+	measure 'Inspection Fail Items' = SUM ( fct_Inspection[DeficientItemCount] )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call: created or started in the week but not closed - not counted
+	measure 'Inspections Not Closed (Week)' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ), fct_Inspection[IsPerformed] = FALSE (), fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_Inspection ), fct_Inspection[IsPerformed] = FALSE (), fct_Inspection[InspectionDate] >= S, fct_Inspection[InspectionDate] <= E ), 0 ) ) ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces PROPOSED data point - closed safety inspections, 4 weeks
+	measure 'Safety Pass Rate (4 Weeks)' =
+			VAR E = [Report Window End]
+			VAR T = CALCULATETABLE ( fct_Inspection, fct_Inspection[Category] = "Safety", fct_Inspection[IsPerformed] = TRUE (),
+			fct_Inspection[InspectionDate] > E - 28, fct_Inspection[InspectionDate] <= E )
+			VAR P = SUMX ( T, fct_Inspection[PassItemCount] )
+			VAR F = SUMX ( T, fct_Inspection[DeficientItemCount] )
+			RETURN DIVIDE ( P, P + F )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces PROPOSED data point - closed quality inspections, 4 weeks
+	measure 'Quality Pass Rate (4 Weeks)' =
+			VAR E = [Report Window End]
+			VAR T = CALCULATETABLE ( fct_Inspection, fct_Inspection[Category] = "Quality", fct_Inspection[IsPerformed] = TRUE (),
+			fct_Inspection[InspectionDate] > E - 28, fct_Inspection[InspectionDate] <= E )
+			VAR P = SUMX ( T, fct_Inspection[PassItemCount] )
+			VAR F = SUMX ( T, fct_Inspection[DeficientItemCount] )
+			RETURN DIVIDE ( P, P + F )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Procore observations classed Safety, still open
+	measure 'Open Safety Observations' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( COALESCE ( CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Safety", fct_DashObservation[IsOpen] = TRUE () ), 0 ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( COALESCE ( CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Safety", fct_DashObservation[IsOpen] = TRUE () ), 0 ) ) ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Procore safety observations raised in the week
+	measure 'Safety Observations (Week)' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Safety", fct_DashObservation[CreatedDate] >= S, fct_DashObservation[CreatedDate] <= E ), 0 ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			RETURN COALESCE ( CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Safety", fct_DashObservation[CreatedDate] >= S, fct_DashObservation[CreatedDate] <= E ), 0 ) ) ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Procore corrective actions, NCRs, deficiencies, still open
+	measure 'Open Quality Observations' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( COALESCE ( CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Quality", fct_DashObservation[ItemType] = "Observation", fct_DashObservation[IsOpen] = TRUE () ), 0 ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( COALESCE ( CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Quality", fct_DashObservation[ItemType] = "Observation", fct_DashObservation[IsOpen] = TRUE () ), 0 ) ) ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces PROPOSED data point - safety observations raised in 90 days that are closed
+	measure 'Safety Observation Close Rate' =
+			VAR E = [Report Window End]
+			VAR T = CALCULATETABLE ( fct_DashObservation, fct_DashObservation[Category] = "Safety",
+			fct_DashObservation[CreatedDate] > E - 90, fct_DashObservation[CreatedDate] <= E )
+			RETURN DIVIDE ( COUNTROWS ( FILTER ( T, NOT fct_DashObservation[IsOpen] ) ), COUNTROWS ( T ) )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces PROPOSED data point - quality observations and punch raised in 90 days that are closed
+	measure 'Quality Item Close Rate' =
+			VAR E = [Report Window End]
+			VAR T = CALCULATETABLE ( fct_DashObservation, fct_DashObservation[Category] = "Quality",
+			fct_DashObservation[CreatedDate] > E - 90, fct_DashObservation[CreatedDate] <= E )
+			RETURN DIVIDE ( COUNTROWS ( FILTER ( T, NOT fct_DashObservation[IsOpen] ) ), COUNTROWS ( T ) )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call, step one: a placeholder grade from the data collected - pass rate and close rate, equally weighted. NOT in the grade until Affect agrees it
+	measure 'Safety Data Score (Proposed)' =
+			VAR V0 = [Safety Pass Rate (4 Weeks)]
+			VAR V1 = [Safety Observation Close Rate]
+			VAR N = IF ( ISBLANK ( V0 ), 0, 1 ) + IF ( ISBLANK ( V1 ), 0, 1 )
+			RETURN IF ( N > 0, ( COALESCE ( V0, 0 ) + COALESCE ( V1, 0 ) ) / N )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Oct 30 call, step one: quality's placeholder grade - NOT in the grade
+	measure 'Quality Data Score (Proposed)' =
+			VAR V0 = [Quality Pass Rate (4 Weeks)]
+			VAR V1 = [Quality Item Close Rate]
+			VAR N = IF ( ISBLANK ( V0 ), 0, 1 ) + IF ( ISBLANK ( V1 ), 0, 1 )
+			RETURN IF ( N > 0, ( COALESCE ( V0, 0 ) + COALESCE ( V1, 0 ) ) / N )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - raised in the week, or still open
+	measure 'Observation In View Flag' =
+			VAR E = [Report Window End]
+			VAR S = [Report Week End] - 6
+			VAR D = SELECTEDVALUE ( fct_DashObservation[CreatedDate] )
+			RETURN IF ( HASONEVALUE ( fct_DashObservation[ObservationKey] ) && ( ( D >= S && D <= E ) || SELECTEDVALUE ( fct_DashObservation[IsOpen] ) ), "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces latest approved Procore requisition: contract sum
+	measure 'Sub Committed' = SUM ( fct_SubPayment[Committed] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces work completed to date the sub has billed
+	measure 'Sub Requisitioned' = SUM ( fct_SubPayment[Requisitioned] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces retainage held on the sub
+	measure 'Sub Retainage Held' = SUM ( fct_SubPayment[RetainageHeld] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage AP job cost for the vendor on the job
+	measure 'Sub AP Invoiced' = SUM ( fct_SubPayment[ApInvoiced] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage AP paid
+	measure 'Sub Paid' = SUM ( fct_SubPayment[ApPaid] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage AP still to pay
+	measure 'Sub AP Open' = SUM ( fct_SubPayment[ApOpen] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces committed less paid
+	measure 'Sub Left To Pay' = SUM ( fct_SubPayment[LeftToPay] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces age of the oldest unpaid AP invoice
+	measure 'Sub Oldest Open Days' = MAX ( fct_SubPayment[OldestOpenDays] )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces card text
+	measure 'Open AR Shown' = IF ( [Is Dashboard Project], FORMAT ( [Cash - Unpaid Receivables], "$#,0" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Pass / Warn / Info
+	measure 'Check Result' = SELECTEDVALUE ( fct_DashCheck[Result] )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - the number behind the check
+	measure 'Check Amount' = SUM ( fct_DashCheck[Amount] )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail pill
+	measure 'Check Colour' = SWITCH ( [Check Result], "Warn", "#E5A13B", "Pass", "#278367", "#DDE4EB" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail pill text
+	measure 'Check Ink' = IF ( [Check Result] = "Pass", "#FFFFFF", "#16283F" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Data Health - warnings across active projects
+	measure 'Checks Warning' =
+			COALESCE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			CALCULATE ( SUM ( fct_DashCheck[IsWarning] ) ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Data Health - active projects with at least one warning
+	measure 'Projects With Warnings' =
+			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			CALCULATE ( SUM ( fct_DashCheck[IsWarning] ) ) > 0 ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Data Health - checks passed across active projects
+	measure 'Checks Passed' =
+			COALESCE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			CALCULATE ( COUNTROWS ( fct_DashCheck ), fct_DashCheck[Result] = "Pass" ) ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage voided invoices, all time - Sage still carries each as a balance
+	measure 'Voided AR Left Out' = CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS () )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - Sage jobs with open AR
+	measure 'Open AR Job Flag' = IF ( HASONEVALUE ( fct_Invoice[SageJobNumber] ) && NOT ISEMPTY ( FILTER ( fct_Invoice, ABS ( fct_Invoice[Balance] ) > 0.005 ) ), "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces current contract, active projects
+	measure 'Active Contract Value' =
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Position Contract] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces pending prime change orders, active projects
+	measure 'Active Pending COs' =
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[CO Pending Amount] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Sage AP still to pay, active projects
+	measure 'Active Unpaid Payables' =
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Cash - Unpaid Payables] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces inspections dated in the week and not closed, active projects
+	measure 'Active Inspections Not Closed' =
+			COALESCE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Inspections Not Closed (Week)] ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces open safety observations, active projects
+	measure 'Active Open Safety Observations' =
+			COALESCE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			[Open Safety Observations] ), 0 )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - the cash table lists exactly the projects the tile sums
+	measure 'Cash Row Flag' = IF ( [Dashboard Status] = "Active" && NOT ISBLANK ( [Cash Position] ), "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter
+	measure 'Open AP Active Flag' = IF ( [Open AP Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter
+	measure 'Inspection In Week Active Flag' = IF ( [Inspection In Week Any Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter
+	measure 'Observation Active Flag' = IF ( [Observation In View Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces Data Health header line
+	measure 'Health Header' = [Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail pages header line
+	measure 'Detail Header' = "BALANCES AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Active Projects] & " ACTIVE PROJECTS"
 		displayFolder: 25 Dashboard - executive
 
 	column _placeholder
