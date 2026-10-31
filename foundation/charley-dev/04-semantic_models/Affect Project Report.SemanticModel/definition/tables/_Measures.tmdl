@@ -2502,8 +2502,8 @@ table _Measures
 	measure 'Close Status Text' =
 			VAR C = [Books Closed Through]
 			VAR E = [Report Window End]
-			RETURN IF ( ISBLANK ( C ), "Sage month close not recorded", "SAGE BOOKS CLOSED THROUGH " & UPPER ( FORMAT ( C, "mmm d, yyyy" ) )
-			& IF ( E > C, "  " & UNICHAR ( 8226 ) & "  " & "LATER MONTHS PROVISIONAL (NO WIP ADJUSTMENT YET)" ) )
+			RETURN IF ( ISBLANK ( C ), "Sage month close not recorded", "SAGE CLOSED THROUGH " & UPPER ( FORMAT ( C, "mmm d, yyyy" ) )
+			& IF ( E > C, "  " & UNICHAR ( 8226 ) & "  " & "LATER MONTHS PROVISIONAL" ) )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces Revenue YTD to the last closed month - the figure to tie to the interim financials
@@ -2526,7 +2526,7 @@ table _Measures
 	/// Replaces deck slide 1 REVENUE YTD sub-line: the week picked, and the closed-books figure
 	measure 'Revenue YTD Subline' =
 			VAR C = MIN ( [Report Window End], [Books Closed Through] )
-			RETURN "To " & FORMAT ( [Report Window End], "mmm d" ) & "  " & UNICHAR ( 8226 ) & "  " & "closed to " & FORMAT ( C, "mmm d" ) & ": "
+			RETURN "Closed books to " & FORMAT ( C, "mmm d" ) & ": "
 			& ( VAR X = [Revenue YTD Closed] RETURN IF ( ISBLANK ( X ), BLANK (), SWITCH ( TRUE (),     ABS ( X ) >= 1000000, FORMAT ( X / 1000000, "$#,0.0" ) & "M",     ABS ( X ) >= 1000, FORMAT ( X / 1000, "$#,0" ) & "K",     FORMAT ( X, "$#,0" ) ) ) )
 		displayFolder: 25 Dashboard - executive
 

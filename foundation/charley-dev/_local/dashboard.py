@@ -226,8 +226,8 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          '"mmm d, yyyy"', "Oct 30 call: the last month closed in Sage (dim_DashSetting sage_closed_through)"),
         ("Close Status Text",
          "VAR C = [Books Closed Through]\nVAR E = [Report Window End]\n"
-         "RETURN IF ( ISBLANK ( C ), \"Sage month close not recorded\", \"SAGE BOOKS CLOSED THROUGH \" & UPPER ( FORMAT ( C, \"mmm d, yyyy\" ) )\n"
-         f"    & IF ( E > C, {bullet} & \"LATER MONTHS PROVISIONAL (NO WIP ADJUSTMENT YET)\" ) )",
+         "RETURN IF ( ISBLANK ( C ), \"Sage month close not recorded\", \"SAGE CLOSED THROUGH \" & UPPER ( FORMAT ( C, \"mmm d, yyyy\" ) )\n"
+         f"    & IF ( E > C, {bullet} & \"LATER MONTHS PROVISIONAL\" ) )",
          None, "Oct 30 call: show closed months as final, later ones with a warning"),
         ("Revenue YTD Closed",
          "VAR A = [Report Window End]\nVAR C = MIN ( A, [Books Closed Through] )\n"
@@ -241,7 +241,7 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          '"$#,0"', "Sage invoices voided in the same window - left out of Revenue YTD"),
         ("Revenue YTD Subline",
          "VAR C = MIN ( [Report Window End], [Books Closed Through] )\n"
-         "RETURN \"To \" & FORMAT ( [Report Window End], \"mmm d\" ) & " + bullet + " & \"closed to \" & FORMAT ( C, \"mmm d\" ) & \": \"\n"
+         "RETURN \"Closed books to \" & FORMAT ( C, \"mmm d\" ) & \": \"\n"
          "    & ( " + money_text("[Revenue YTD Closed]").replace("\n", " ") + " )",
          None, "deck slide 1 REVENUE YTD sub-line: the week picked, and the closed-books figure"),
         ("Revenue In Month",

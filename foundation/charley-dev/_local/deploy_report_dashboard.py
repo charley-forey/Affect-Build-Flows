@@ -310,8 +310,9 @@ def proof(p: str, key: str, x, y, w, h, fields: list, alt: str, title: str | Non
     if sort:
         v["visual"]["query"]["sortDefinition"] = {"sort": [{"field": sort[0]["field"], "direction": sort[1]}],
                                                   "isDefaultSort": True}
-    if wide:
-        rs.widen(v, wide)
+    # Measure columns hold money and totals: twice a label column, or a total wraps (seen live).
+    weights = {f["field"]["Measure"]["Property"]: 2 for f in fields if "Measure" in f["field"]}
+    rs.widen(v, {**weights, **(wide or {})})
     return flagged(v, flag) if flag else v
 
 
@@ -348,7 +349,7 @@ def strip(p: str, cards: list[tuple[str, str, str | None]], y: int = 96, h: int 
         out += [panel(p, f"s{i}_bg", x, y, w, h, radius=8),
                 z(text(p, f"s{i}_bar", " ", x, y, 6, h, fill=TEAL), 1),
                 text(p, f"s{i}_l", label_, x + 16, y + 8, w - 24, 20, size=8.5),
-                kpi_value(p, f"s{i}_v", m, x + 10, y + 29, w - 18, 28, size=15,
+                kpi_value(p, f"s{i}_v", m, x + 10, y + 29, w - 18, 28, size=15, units=1, precision=0,
                           alt=f"Card. {label_.title()}: the value ({m}).")]
         if note:
             out.append(text(p, f"s{i}_n", note, x + 16, y + h - 22, w - 24, 18, size=7, color=SLATE, bold=False))
@@ -802,8 +803,8 @@ def page_executive() -> tuple[str, list[dict]]:
              "approved / approved + pending value", "dscontract", "every prime change order")]
     for i, (lbl, val, ratio, color, hint, target, what) in enumerate(rows):
         ry = ey + 48 + i * 64
-        out += [text(p, f"exe_{i}_l", lbl, ex + 18, ry, 176, 24, size=9),
-                nav(p, f"exe_{i}_data", "Data >", ex + 200, ry + 2, 46, 20, target, what),
+        out += [text(p, f"exe_{i}_l", lbl, ex + 18, ry, 210, 24, size=9),
+                nav(p, f"exe_{i}_data", "Data >", ex + 232, ry + 2, 46, 20, target, what),
                 kpi_value(p, f"exe_{i}_v", val, ex + ew - 128, ry - 6, 112, 28, size=11, color=NAVY),
                 *bar(p, f"exe_{i}_bar", ratio, ex + 18, ry + 24, ew - 36, 20, color),
                 text(p, f"exe_{i}_hint", hint, ex + 18, ry + 44, ew - 176, 20, size=6.5, color=SLATE, bold=False)]
