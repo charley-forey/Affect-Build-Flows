@@ -20,6 +20,26 @@ table fct_ProjectPosition
 		summarizeBy: sum
 		sourceColumn: BilledToDateGross
 
+	column BillingSource
+		dataType: string
+		summarizeBy: none
+		sourceColumn: BillingSource
+
+	column ProcoreEarnedLessRetainage
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ProcoreEarnedLessRetainage
+
+	column PrimeContractCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: PrimeContractCount
+
+	column SageInvoicedToDate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: SageInvoicedToDate
+
 	column RetainageReceivable
 		dataType: double
 		summarizeBy: sum
@@ -60,6 +80,11 @@ table fct_ProjectPosition
 		summarizeBy: sum
 		sourceColumn: ProjectedCost
 
+	column ProjectedFee
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ProjectedFee
+
 	column ArOwedBalance
 		dataType: double
 		summarizeBy: sum
@@ -75,11 +100,31 @@ table fct_ProjectPosition
 		summarizeBy: sum
 		sourceColumn: InvoiceCount
 
+	column ArOver60
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ArOver60
+
+	column VoidedInvoiceAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: VoidedInvoiceAmount
+
+	column VoidedInvoiceCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: VoidedInvoiceCount
+
 	column LastActivityDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: LastActivityDate
 		formatString: yyyy-mm-dd
+
+	column IsRolloutProject
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsRolloutProject
 
 	column CashCollected
 		dataType: double
@@ -101,10 +146,20 @@ table fct_ProjectPosition
 		summarizeBy: none
 		sourceColumn: Phase
 
+	column PhaseSource
+		dataType: string
+		summarizeBy: none
+		sourceColumn: PhaseSource
+
 	column DashboardStatus
 		dataType: string
 		summarizeBy: none
 		sourceColumn: DashboardStatus
+
+	column StatusReason
+		dataType: string
+		summarizeBy: none
+		sourceColumn: StatusReason
 
 	partition fct_ProjectPosition = entity
 		mode: directLake

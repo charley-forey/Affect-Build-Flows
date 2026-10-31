@@ -37,6 +37,13 @@ WITH job AS (
     WHERE x.sage_project_id IS NOT NULL
     GROUP BY x.sage_project_id
     HAVING COUNT(DISTINCT x.procore_project_id) = 1
+    -- A second Sage job for a mapped project (seed 'additional', see 22_fct_invoice.sql).
+    UNION ALL
+    SELECT a.SageJobNumber, MAX(p.ProjectKey)
+    FROM seed_ProjectCrosswalk a
+    JOIN dim_Project p ON p.ProjectKey = a.ProcoreProjectId
+    WHERE a.Relationship = 'additional'
+    GROUP BY a.SageJobNumber
 ),
 vendor AS (
     SELECT sage_vendor_id, MAX(procore_vendor_id) AS VendorKey
@@ -89,7 +96,10 @@ SELECT
               OR h.invoice_date < DATE '2015-01-01'
               OR h.invoice_date > DATE '2035-12-31' THEN NULL
          ELSE make_date(year(h.invoice_date), month(h.invoice_date), 1) END AS MonthStart,
-    h.status_code                                   AS StatusCode
+    h.status_code                                   AS StatusCode,
+    -- Sage status 5: a voided payable keeps its full amount as a balance in Sage (77 of them,
+    -- $1.68M, 2026-10-30). Money is conserved as Sage holds it; every reader excludes IsVoid.
+    COALESCE(h.status_code = 5, FALSE)              AS IsVoid
 FROM lines l
 LEFT JOIN sv_ap_invoices h ON h.invoice_uid = l.invoice_uid
 LEFT JOIN procore_cost   c ON c.project_id = l.ProjectKey AND c.vendor_id = l.VendorKey;

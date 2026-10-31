@@ -6,7 +6,7 @@
 -- dim_projects_procoreXsage verbatim. gold dq_CrosswalkCandidate proposes new pairs; a
 -- proposal becomes a row here only through a reviewed CSV edit, never automatically.
 
--- seed_ProjectCrosswalk: 17 row(s) from seed/project_crosswalk.csv
+-- seed_ProjectCrosswalk: 19 row(s) from seed/project_crosswalk.csv
 CREATE OR REPLACE TABLE seed_ProjectCrosswalk AS
 SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
        CAST(c2 AS STRING) AS SageJobNumber,
@@ -29,7 +29,9 @@ FROM (VALUES
     ('562949955375634', '20', 'primary', 'legacy_verified_2026-09-13'),
     ('562949955365267', '22', 'primary', 'legacy_verified_2026-09-13'),
     ('562949955423662', '28', 'primary', 'client_confirmed_2026-10-05'),
-    ('562949955455437', '27', 'primary', 'client_confirmed_2026-10-05')
+    ('562949955455437', '27', 'primary', 'client_confirmed_2026-10-05'),
+    ('562949955455437', '30', 'additional', 'proposed_2026-10-30: Sage job 30 ''360 Lexington 15th floor fitout'' is the exact Procore name (dq_CrosswalkCandidate EXACT_NAME_SECOND_SAGE_JOB); $242.6K open AR was unattributed - confirm with Affect'),
+    ('562949955506246', '29', 'primary', 'proposed_2026-10-30: Sage job 29 ''Profoods 10101 Foster Avenue'' = Procore 26-057 ''Pro Foods - 10101 Foster Av'' (no other job); Affect named it a live project on the Oct 30 call - confirm')
 ) AS t(c1, c2, c3, c4);
 
 -- seed_ProjectExclusion: Procore projects kept out of every report (test projects).

@@ -25,6 +25,11 @@ table fct_Invoice
 		summarizeBy: none
 		sourceColumn: SageJobNumber
 
+	column SageJobName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageJobName
+
 	column SentDate
 		dataType: dateTime
 		summarizeBy: none
@@ -72,6 +77,21 @@ table fct_Invoice
 		dataType: boolean
 		summarizeBy: none
 		sourceColumn: IsPaid
+
+	column IsVoid
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsVoid
+
+	column VoidedAmount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: VoidedAmount
+
+	column SageStatus
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SageStatus
 
 	column PaymentsReceived
 		dataType: double

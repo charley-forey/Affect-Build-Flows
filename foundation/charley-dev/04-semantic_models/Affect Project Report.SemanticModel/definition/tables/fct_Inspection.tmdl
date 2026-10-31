@@ -57,10 +57,35 @@ table fct_Inspection
 		summarizeBy: sum
 		sourceColumn: DeficientItemCount
 
+	column PassItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: PassItemCount
+
+	column NaItemCount
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: NaItemCount
+
+	column PassRate
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: PassRate
+
 	column IsPerformed
 		dataType: boolean
 		summarizeBy: none
 		sourceColumn: IsPerformed
+
+	column IsInProgress
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsInProgress
+
+	column CountedReason
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CountedReason
 
 	partition fct_Inspection = entity
 		mode: directLake

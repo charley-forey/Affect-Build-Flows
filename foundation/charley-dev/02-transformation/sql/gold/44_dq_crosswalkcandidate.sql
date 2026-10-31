@@ -33,6 +33,8 @@ j AS (
     FROM sv_sage_jobs
     WHERE sage_project_id NOT IN (SELECT sage_project_id FROM sv_project_crosswalk
                                   WHERE sage_project_id IS NOT NULL)
+      AND sage_project_id NOT IN (SELECT SageJobNumber FROM seed_ProjectCrosswalk
+                                  WHERE Relationship = 'additional' AND SageJobNumber IS NOT NULL)
 )
 SELECT
     p.project_id                                   AS ProcoreProjectId,

@@ -182,11 +182,14 @@ SOURCE_FIXTURES = (
     ) AS t(project_id, change_order_id, contract_id, created_date, amount, co_number, status, title)""",
 
     """CREATE OR REPLACE VIEW sv_ar_invoices AS SELECT * FROM (VALUES
-        ('INV1', '901', 'AIA 1', 'S100', DATE '2025-05-05', DATE '2025-06-04', 'App 1', 500000.0, 500000.0,      0.0, '5'),
-        ('INV2', '902', 'AIA 2', 'S100', DATE '2025-05-25', DATE '2025-06-24', 'App 2', 300000.0,      0.0, 300000.0, '5'),
-        ('INV3', '903', 'AIA 3', 'S999', DATE '2025-05-05', DATE '2025-06-04', 'Orphan', 1000.0,       0.0,   1000.0, '5')
+        ('INV1', '901', 'AIA 1', 'S100', DATE '2025-05-05', DATE '2025-06-04', 'App 1', 500000.0, 500000.0,      0.0, '5', 4, 'Tower A'),
+        ('INV2', '902', 'AIA 2', 'S100', DATE '2025-05-25', DATE '2025-06-24', 'App 2', 300000.0,      0.0, 300000.0, '5', 1, 'Tower A'),
+        ('INV3', '903', 'AIA 3', 'S999', DATE '2025-05-05', DATE '2025-06-04', 'Orphan', 1000.0,       0.0,   1000.0, '5', 1, 'Orphan job'),
+        -- A voided re-issue of AIA 2: Sage keeps its full amount as a balance. It must count
+        -- as neither revenue nor AR (55 live voids, $5.46M, 2026-10-30).
+        ('INV4', '904', 'AIA 2', 'S100', DATE '2025-05-25', DATE '2025-06-24', 'App 2 (void)', 300000.0, 0.0, 300000.0, '5', 5, 'Tower A')
     ) AS t(invoice_uid, invoice_id, invoice_number, sage_project_id, invoice_date, due_date, description,
-           invoice_total, amount_paid, invoice_balance, billing_period)""",
+           invoice_total, amount_paid, invoice_balance, billing_period, status_code, job_name)""",
 
     # Receipts (Sage acrpmt). INV1 is paid in two instalments, so PaidDate is the SECOND
     # date, not the first. INV2 carries a same-day receipt and its reversal - the live

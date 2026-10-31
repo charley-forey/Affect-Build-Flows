@@ -192,6 +192,8 @@ def test_review_fixes(con) -> None:
              CAST(NULL AS VARCHAR), CAST(NULL AS DATE), TIMESTAMP '2025-05-01 12:00:00', 1)
         ) AS t(project_id, meeting_id, series_title, title, meeting_date, meeting_mode, occurred,
                last_distributed_event, distributed_date, created_at, position)""")
+        # The activity rule, not the Nov 19 rollout list (test_oct30 covers that).
+        con.execute("UPDATE dim_DashSetting SET Value = 0 WHERE SettingKey = 'rollout_only'")
         for sql in seedrunner.split_statements((GOLD / "46_dashboard_facts.sql").read_text(encoding="utf-8")):
             con.execute(sql)
         status = dict(q(con, "SELECT MeetingKey, MinutesStatus FROM fct_Meeting WHERE ProjectKey = 'P1'"))
@@ -212,9 +214,64 @@ def test_review_fixes(con) -> None:
         con.execute("ROLLBACK")
 
 
+def _run(con, file: str, table: str | None = None) -> None:
+    """Run a gold file, or only its CREATE statement for one table."""
+    for sql in seedrunner.split_statements((GOLD / file).read_text(encoding="utf-8")):
+        if table is None or f"CREATE OR REPLACE TABLE {table} AS" in sql:
+            con.execute(sql)
+
+
+def test_oct30(con) -> None:
+    """The Oct 30 call's corrections, each pinned."""
+    got = q(con, "SELECT Amount, Balance, IsVoid, VoidedAmount, SageStatus FROM fct_Invoice WHERE InvoiceKey = 'INV4'")
+    assert got == [(0.0, 0.0, True, 300000.0, "Void")], got
+    assert q(con, "SELECT SageInvoicedToDate, UnpaidReceivables, VoidedInvoiceCount FROM fct_ProjectPosition "
+                  "WHERE ProjectKey = 'P1'") == [(800000.0, 300000.0, 1)]
+    check("a Sage void (status 5) is neither revenue nor AR; the row stays, with its voided amount")
+
+    assert not q(con, "SELECT * FROM fct_Inspection WHERE IsPerformed AND StatusLabel <> 'CLOSED'")
+    assert not q(con, "SELECT * FROM fct_Inspection WHERE IsPerformed AND IsInProgress")
+    check("an inspection counts once CLOSED; one started but open is in progress, not performed")
+
+    con.execute("BEGIN")
+    try:
+        con.execute("INSERT INTO seed_ProjectCrosswalk VALUES ('P1', 'S999', 'additional', 'test')")
+        _run(con, "22_fct_invoice.sql")
+        assert q(con, "SELECT ProjectKey, HasUnmatchedProject FROM fct_Invoice WHERE InvoiceKey = 'INV3'") == [("P1", False)]
+        check("an 'additional' crosswalk row attaches a second Sage job's invoices to its project")
+
+        con.execute("UPDATE dim_DashSetting SET Value = 1 WHERE SettingKey = 'rollout_only'")
+        con.execute("DELETE FROM seed_DashProject")
+        con.execute("INSERT INTO seed_DashProject VALUES ('P1', 'Tower A', 'test')")
+        con.execute("""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
+            ('P1', 'A1', 'Notice to Proceed', TRUE, CURRENT_DATE - 30, 1.0),
+            ('P1', 'A2', 'Notice to Proceed - Work Start Trigger', TRUE, CURRENT_DATE + 30, 0.0),
+            ('P1', 'A3', 'Substantial Completion', TRUE, CURRENT_DATE + 90, 0.0)
+        ) AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, FinishDate, PercentComplete)""")
+        _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
+        status = dict(q(con, "SELECT ProjectKey, DashboardStatus FROM fct_ProjectPosition"))
+        assert status.get("P1") in ("Active", "Archived") and all(v == "Archived" for k, v in status.items() if k != "P1"), status
+        check("rollout_only: only the projects in dashboard_project.csv are Active (Oct 30 call)")
+        row = q(con, "SELECT Phase, PhaseSource FROM fct_ProjectPosition WHERE ProjectKey = 'P1'")[0]
+        assert row[0] == "Precon" and "Work Start Trigger" in row[1], row
+        check("phase: the named work-start milestone not yet reached is Precon, whatever a past NTP says")
+        con.execute("UPDATE fct_ScheduleActivity SET FinishDate = CURRENT_DATE - 1 WHERE ActivityKey = 'A3'")
+        _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
+        assert q(con, "SELECT Phase FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [("Closeout",)]
+        check("phase: substantial completion reached is Closeout")
+    finally:
+        con.execute("ROLLBACK")
+
+    n = q(con, "SELECT COUNT(*), COUNT(DISTINCT CheckKey) FROM fct_DashCheck")[0]
+    assert n[0] == n[1] == 9 * q(con, "SELECT COUNT(*) FROM fct_ProjectPosition")[0][0], n
+    check("data health: nine input checks per project, one row each")
+    assert q(con, "SELECT COUNT(*) FROM fct_SubPayment") == q(con, "SELECT COUNT(DISTINCT SubPaymentKey) FROM fct_SubPayment")
+    check("subcontractor payments: one row per project and vendor")
+
+
 def main() -> int:
     con = build()
-    for fn in (test_position, test_meetings, test_review_fixes, test_scoring):
+    for fn in (test_position, test_meetings, test_oct30, test_review_fixes, test_scoring):
         fn(con)
     for label in CHECKS:
         print(f"  ok  {label}")

@@ -92,6 +92,11 @@ table fct_ApInvoice
 		summarizeBy: sum
 		sourceColumn: StatusCode
 
+	column IsVoid
+		dataType: boolean
+		summarizeBy: none
+		sourceColumn: IsVoid
+
 	partition fct_ApInvoice = entity
 		mode: directLake
 		source

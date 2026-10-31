@@ -187,7 +187,7 @@ def test_fct_changeorder(con) -> None:
 
 
 def test_fct_invoice(con) -> None:
-    assert one(con, "SELECT COUNT(*) FROM fct_Invoice") == 3
+    assert one(con, "SELECT COUNT(*) FROM fct_Invoice") == 4  # INV4 is a Sage void, kept as a row
 
     # An AR row whose Sage job does not resolve must be KEPT and flagged. Dropping it is
     # how a billing total silently stops reconciling.
@@ -197,7 +197,7 @@ def test_fct_invoice(con) -> None:
 
     # The regression guard: if the Sage join dies, EVERY invoice reads UNMATCHED and the
     # count above still passes. This asserts the join actually resolves something.
-    assert one(con, "SELECT COUNT(*) FROM fct_Invoice WHERE NOT HasUnmatchedProject") == 2
+    assert one(con, "SELECT COUNT(*) FROM fct_Invoice WHERE NOT HasUnmatchedProject") == 3
     check("fct_Invoice matches AR rows to projects - the Sage join is live")
 
     assert one(con, "SELECT COUNT(*) FROM fct_Invoice WHERE IsPaid") == 1
@@ -212,6 +212,7 @@ def test_fct_invoice(con) -> None:
         ("INV1", 500000.0, date(2025, 5, 20), date(2025, 6, 10), date(2025, 6, 10), 36),
         ("INV2", 0.0, date(2025, 6, 1), date(2025, 6, 1), None, None),
         ("INV3", None, None, None, None, None),
+        ("INV4", None, None, None, None, None),
     ], rows
     check("fct_Invoice[PaidDate] is when receipts first covered the invoice; reversals and partials stay unpaid")
 

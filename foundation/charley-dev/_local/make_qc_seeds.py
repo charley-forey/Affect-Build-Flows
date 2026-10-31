@@ -135,6 +135,24 @@ DASHBOARD = (
      {"priority": "INT", "pattern": "STRING", "category": "STRING", "note": "STRING"},
      ("priority",),
      ("Priority", "Pattern", "Category", "Note")),
+    # The projects the dashboard counts as Active (Oct 30 call: the Nov 19 rollout keeps five
+    # live, everything else archived). Read only while dim_DashSetting rollout_only = 1.
+    ("dashboard_project.csv", "seed_DashProject",
+     {"procore_project_id": "STRING", "project_name": "STRING", "note": "STRING"},
+     ("procore_project_id",),
+     ("ProcoreProjectId", "ProjectName", "Note")),
+    # Phase from Outbuild milestones (Oct 30 call): the first pattern, by priority, that a
+    # milestone name contains says which phase reaching that milestone starts.
+    # Procore observation categories -> Safety / Quality (Oct 30 call: the right-hand side of
+    # each pillar collects every data point; scored only as a proposal until Affect agrees).
+    ("dashboard_observation_category.csv", "seed_ObservationCategory",
+     {"priority": "INT", "pattern": "STRING", "category": "STRING", "note": "STRING"},
+     ("priority",),
+     ("Priority", "Pattern", "Category", "Note")),
+    ("dashboard_phase_milestone.csv", "seed_PhaseMilestone",
+     {"priority": "INT", "pattern": "STRING", "marks": "STRING", "note": "STRING"},
+     ("priority",),
+     ("Priority", "Pattern", "Marks", "Note")),
 )
 
 # csv file -> (table, {column: sql type}, natural key for de-duplication)
@@ -216,7 +234,7 @@ EXPECTED_ROWS = {
     "qc_seed_TradeAlias": 16,
     # The 15 legacy dim_projects_procoreXsage pairs, plus 25-034 -> job 28 and 26-056 -> job
     # 27 (confirmed 2026-10-05). Bump deliberately when Affect approves one.
-    "seed_ProjectCrosswalk": 17,
+    "seed_ProjectCrosswalk": 19,
     # The two Procore test projects numbered 1234, the Procore project template, and the
     # duplicate "Lillipvt 25-013" (no Sage job, no data).
     "seed_ProjectExclusion": 4,
@@ -228,8 +246,8 @@ EXPECTED_ROWS = {
     # 7 a year, 2023-2027, plus New Year's Day 2028 observed on 2027-12-31.
     "seed_PublicHoliday": 36,
     # The Weekly Dashboard scorecard. Bump deliberately when Affect retunes it.
-    "dim_DashPillar": 5, "dim_DashMetric": 18, "dim_DashBand": 44, "dim_DashSetting": 13,
-    "seed_InspectionCategory": 18, "seed_MeetingCategory": 14,
+    "dim_DashPillar": 5, "dim_DashMetric": 18, "dim_DashBand": 44, "dim_DashSetting": 16,
+    "seed_InspectionCategory": 18, "seed_MeetingCategory": 14, "seed_DashProject": 5, "seed_PhaseMilestone": 7, "seed_ObservationCategory": 16,
 }
 
 

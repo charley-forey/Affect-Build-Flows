@@ -23,8 +23,24 @@
 -- paid by receipts - including opening-balance invoices whose header says paid but which
 -- have no receipt rows; a due date is never substituted.
 
+--
+-- VOIDS ARE ZEROED HERE, ONCE (2026-10-30). Sage 100 Contractor keeps a voided invoice (status
+-- 5) with its full amount as a balance: 55 of them, $5.46M, read as billed revenue and as
+-- unpaid AR on every page - most of the gap between the dashboard's $17.7M revenue to the end
+-- of September and Affect's $15.8M, and of AR that "didn't seem correct". Every reader sums
+-- Amount / Balance, so zeroing them here fixes them all; the row stays, with VoidedAmount,
+-- so the drill-down still shows what was left out and why.
+--
+-- A SECOND SAGE JOB FOR ONE PROJECT. dim_Project holds one Sage job per project (the
+-- 'primary' crosswalk row). Affect sometimes opens a second job for the same Procore project
+-- (job 30 beside job 27 for 360 Lexington 15th floor); seed rows marked 'additional' attach
+-- that job's invoices to the project without changing the project's own Sage id.
+
 CREATE OR REPLACE TABLE fct_Invoice AS
-WITH daily AS (
+WITH extra_job AS (
+    SELECT SageJobNumber, MAX(ProcoreProjectId) AS ProjectKey
+    FROM seed_ProjectCrosswalk WHERE Relationship = 'additional' GROUP BY SageJobNumber
+), daily AS (
     SELECT invoice_uid, payment_date, SUM(amount) AS amount
     FROM sv_ar_payments
     GROUP BY invoice_uid, payment_date
@@ -54,19 +70,25 @@ SELECT
     i.invoice_uid AS InvoiceKey,
     i.invoice_id AS InvoiceID,
     i.invoice_number AS InvoiceNumber,
-    COALESCE(p.ProjectKey, 'UNMATCHED') AS ProjectKey,
+    COALESCE(p.ProjectKey, xp.ProjectKey, 'UNMATCHED') AS ProjectKey,
     i.sage_project_id                   AS SageJobNumber,
+    i.job_name                          AS SageJobName,
     i.invoice_date                      AS SentDate,
     i.due_date                          AS DueDate,
     CASE WHEN i.invoice_date IS NULL THEN NULL
          ELSE make_date(year(i.invoice_date), month(i.invoice_date), 1) END AS MonthStart,
     TRIM(i.description)                 AS Description,
     i.billing_period                    AS BillingPeriod,
-    i.invoice_total                     AS Amount,
-    i.amount_paid                       AS AmountPaid,
-    i.invoice_balance                   AS Balance,
-    CASE WHEN i.invoice_balance IS NULL THEN NULL
+    CASE WHEN i.status_code = 5 THEN 0 ELSE i.invoice_total END   AS Amount,
+    CASE WHEN i.status_code = 5 THEN 0 ELSE i.amount_paid END     AS AmountPaid,
+    CASE WHEN i.status_code = 5 THEN 0 ELSE i.invoice_balance END AS Balance,
+    CASE WHEN i.status_code = 5 THEN NULL
+         WHEN i.invoice_balance IS NULL THEN NULL
          WHEN i.invoice_balance = 0 THEN TRUE ELSE FALSE END AS IsPaid,
+    COALESCE(i.status_code = 5, FALSE)  AS IsVoid,
+    CASE WHEN i.status_code = 5 THEN i.invoice_total END AS VoidedAmount,
+    CASE i.status_code WHEN 1 THEN 'Open' WHEN 2 THEN 'Review' WHEN 3 THEN 'Dispute'
+                       WHEN 4 THEN 'Paid' WHEN 5 THEN 'Void' END AS SageStatus,
     -- Receipts, from sv_ar_payments. PaymentsReceived is NULL when there are none, so an
     -- invoice with no receipt rows is distinguishable from one whose receipts net to 0.
     pm.payments_received                AS PaymentsReceived,
@@ -81,7 +103,8 @@ SELECT
          ELSE datediff(i.due_date, i.invoice_date) END AS DaysToDue,
     -- Data-quality flag: an AR row whose job does not resolve to a project. Surfaced on
     -- the diagnostics page rather than dropped, which is how the Excel's defects survived.
-    CASE WHEN p.ProjectKey IS NULL THEN TRUE ELSE FALSE END AS HasUnmatchedProject
+    CASE WHEN p.ProjectKey IS NULL AND xp.ProjectKey IS NULL THEN TRUE ELSE FALSE END AS HasUnmatchedProject
 FROM sv_ar_invoices i
 LEFT JOIN dim_Project p ON i.sage_project_id = p.SageJobNumber
+LEFT JOIN extra_job xp ON xp.SageJobNumber = i.sage_project_id
 LEFT JOIN payments pm ON pm.invoice_uid = i.invoice_uid;

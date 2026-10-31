@@ -117,7 +117,11 @@ SELECT
     invoice_total,
     amount_paid,
     invoice_balance,
-    billing_period
+    billing_period,
+    -- Sage 100 Contractor 3-2 status: 1 open, 4 paid, 5 VOID. A void keeps its full amount as
+    -- a balance in Sage (55 invoices, $5.46M, 2026-10-30); fct_Invoice zeroes it.
+    status_code,
+    job_name
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_ar_invoices`;
 
 -- Sage AP, which has no equivalent in the existing warehouse at all. The line view is what

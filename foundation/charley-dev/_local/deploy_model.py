@@ -84,6 +84,9 @@ MODEL_TABLES = [
     "dim_DashPillar", "dim_DashMetric", "dim_DashBand", "dim_DashSetting", "dim_ReportWeek",
     "fct_Inspection", "fct_Meeting", "fct_ProjectTeam", "fct_ScheduleActivity", "fct_LookaheadTask",
     "fct_ProjectPosition", "fct_MetricScore", "fct_ProjectScore",
+    # Oct 30 call - the drill-downs behind each number: safety / quality observations,
+    # subcontractor payments (Procore requisitions beside Sage AP), and the input checks.
+    "fct_DashObservation", "fct_SubPayment", "fct_DashCheck",
 ]
 
 # fact.column -> dimension.column. Single direction, no bidirectional filters: they create
@@ -161,6 +164,9 @@ RELATIONSHIPS = [
     ("fct_ProjectPosition", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_MetricScore", "ProjectKey", "dim_Project", "ProjectKey"),
     ("fct_ProjectScore", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_DashObservation", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_SubPayment", "ProjectKey", "dim_Project", "ProjectKey"),
+    ("fct_DashCheck", "ProjectKey", "dim_Project", "ProjectKey"),
 ]
 
 # Inactive: reachable only through USERELATIONSHIP in a measure. fct_Invoice already reaches
@@ -361,7 +367,7 @@ MEASURES = [
     # projects only (a blank ProjectKey is an unmapped Sage job, listed in dq_DataGap), and
     # as of the last load - REMOVEFILTERS(dim_Date) like the budget measures it is set against.
     ("AP Job Cost",
-     "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (),\n"
+     "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE (),\n"
      "\t\t\tNOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )",
      '"$#,0"', "no workbook equivalent - Sage AP job cost (GL 50000-50999 on a job mapped to a Procore "
      "project), to date. AP history starts 2025-03-11. NOT added to Spent To Date (no double counting)"),
@@ -374,7 +380,7 @@ MEASURES = [
      "no workbook equivalent - [AP Job Cost] over [Spent To Date]. AP history starts 2025-03-11; "
      "AP is NOT added to Spent To Date"),
     ("ERP-only Vendor Cost",
-     "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (),\n"
+     "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), fct_ApInvoice[IsErpOnlyVendor] = TRUE (), fct_ApInvoice[IsVoid] = FALSE (),\n"
      "\t\t\tNOT ISBLANK ( fct_ApInvoice[ProjectKey] ), REMOVEFILTERS ( dim_Date ) )",
      '"$#,0"', "no workbook equivalent - AP job cost at vendors with no Procore commitment or direct cost on "
      "the project: cost Spent To Date cannot contain. AP history starts 2025-03-11; NOT added to Spent To Date"),

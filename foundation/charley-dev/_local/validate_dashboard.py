@@ -165,7 +165,7 @@ def expected(E: dict) -> dict:
     D["Cash - Costs Incurred"] = lambda c, s: E["Spent To Date"](c, s)
     D["Cash - Unpaid Payables"] = lambda c, s: _sum(
         r["LineTotal"] * r["InvoiceBalance"] / r["InvoiceTotal"] for r in c.rows("fct_ApInvoice", nomonth(s))
-        if r["IsJobCost"] is True and r["ProjectKey"] is not None and (r["InvoiceTotal"] or 0) != 0
+        if r["IsJobCost"] is True and r["IsVoid"] is not True and r["ProjectKey"] is not None and (r["InvoiceTotal"] or 0) != 0
         and r["LineTotal"] is not None and r["InvoiceBalance"] is not None) or 0
     D["Cash - Retainage Payable"] = lambda c, s: E["Retainage Held Sub"](c, s) or 0
     # fct_ProjectPosition has one row per real project: the UNMATCHED member reads BLANK.
@@ -500,7 +500,7 @@ RAW_COLUMNS = {
 }
 # Columns the dashboard reads on tables validate_model already loads.
 EXTRA_COLUMNS = {
-    "fct_ApInvoice": ["InvoiceBalance", "InvoiceTotal"],
+    "fct_ApInvoice": ["InvoiceBalance", "InvoiceTotal", "IsVoid"],
     "fct_Invoice": ["SageJobNumber"],
     "fct_Milestone": ["BaselineStart"],
     "fct_RfiSubmittal": ["DueDate", "CreatedDate"],

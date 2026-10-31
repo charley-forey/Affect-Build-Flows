@@ -1,0 +1,110 @@
+table fct_SubPayment
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column SubPaymentKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SubPaymentKey
+
+	column VendorKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: VendorKey
+
+	column SubName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: SubName
+
+	column ContractName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ContractName
+
+	column Commitments
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: Commitments
+
+	column Committed
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Committed
+
+	column Requisitioned
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Requisitioned
+
+	column RetainageHeld
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: RetainageHeld
+
+	column BalanceToFinish
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: BalanceToFinish
+
+	column LastRequisitionDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: LastRequisitionDate
+		formatString: yyyy-mm-dd
+
+	column ApInvoiced
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ApInvoiced
+
+	column ApPaid
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ApPaid
+
+	column ApOpen
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: ApOpen
+
+	column ApInvoices
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: ApInvoices
+
+	column LastApInvoiceDate
+		dataType: dateTime
+		summarizeBy: none
+		sourceColumn: LastApInvoiceDate
+		formatString: yyyy-mm-dd
+
+	column OldestOpenDays
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: OldestOpenDays
+
+	column OpenApAge
+		dataType: string
+		summarizeBy: none
+		sourceColumn: OpenApAge
+
+	column LeftToPay
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: LeftToPay
+
+	column Source
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Source
+
+	partition fct_SubPayment = entity
+		mode: directLake
+		source
+			entityName: fct_subpayment
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

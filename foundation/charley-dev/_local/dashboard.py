@@ -171,6 +171,302 @@ def money_text(m: str) -> str:
             "    FORMAT ( X, \"$#,0\" ) ) )")
 
 
+def row_flag(key: str, condition: str) -> str:
+    """'Yes' on a single row of a detail table where the condition holds (a visual filter)."""
+    return f'IF ( HASONEVALUE ( {key} ) && {condition}, "Yes" )'
+
+
+def proof_measures() -> list[tuple[str, str, str | None, str]]:
+    """THE DRILL-DOWNS (Oct 30 call): "for each of these numbers, show where it is calculated
+    from", as a table of the rows behind it with totals that tie to the tile. Each detail page
+    lists the source rows; these measures are the row-level readings, the row filters and the
+    totals. Nothing here changes a tile's value - the tiles read the same columns."""
+    closed = setting("sage_closed_through")
+    aged = setting("ar_aged_days")
+    inv = "fct_Invoice[InvoiceID]"
+    week = "VAR E = [Report Window End]\nVAR S = [Report Week End] - 6\n"
+    bullet = '"  " & UNICHAR ( 8226 ) & "  "'
+
+    def count(table: str, *conds: str) -> str:
+        return f"COALESCE ( CALCULATE ( COUNTROWS ( {table} ), {', '.join(conds)} ), 0 )"
+
+    def pass_rate(category: str, days: int = 28) -> str:
+        # Conforming over conforming + deficient, closed inspections, the 4 weeks to the week end.
+        return (f"VAR E = [Report Window End]\n"
+                f"VAR T = CALCULATETABLE ( fct_Inspection, fct_Inspection[Category] = \"{category}\", fct_Inspection[IsPerformed] = TRUE (),\n"
+                f"    fct_Inspection[InspectionDate] > E - {days}, fct_Inspection[InspectionDate] <= E )\n"
+                "VAR P = SUMX ( T, fct_Inspection[PassItemCount] )\nVAR F = SUMX ( T, fct_Inspection[DeficientItemCount] )\n"
+                "RETURN DIVIDE ( P, P + F )")
+
+    def close_rate(condition: str) -> str:
+        # Items raised in the 90 days to the week end that are now closed, over all raised.
+        return ("VAR E = [Report Window End]\n"
+                f"VAR T = CALCULATETABLE ( fct_DashObservation, {condition},\n"
+                "    fct_DashObservation[CreatedDate] > E - 90, fct_DashObservation[CreatedDate] <= E )\n"
+                "RETURN DIVIDE ( COUNTROWS ( FILTER ( T, NOT fct_DashObservation[IsOpen] ) ), COUNTROWS ( T ) )")
+
+    def mean_of(*names: str) -> str:
+        # The average of whichever parts are measured; BLANK when none is.
+        vs = "".join(f"VAR V{i} = [{n}]\n" for i, n in enumerate(names))
+        num = " + ".join(f"COALESCE ( V{i}, 0 )" for i in range(len(names)))
+        den = " + ".join(f"IF ( ISBLANK ( V{i} ), 0, 1 )" for i in range(len(names)))
+        return f"{vs}VAR N = {den}\nRETURN IF ( N > 0, ( {num} ) / N )"
+
+    return [
+        # ---- the Sage month close (Oct 30 call) ----------------------------------------
+        ("Books Closed Through",
+         f"VAR V = {closed}\nRETURN IF ( V > 0, DATE ( INT ( V / 10000 ), INT ( MOD ( V, 10000 ) / 100 ), MOD ( V, 100 ) ) )",
+         '"mmm d, yyyy"', "Oct 30 call: the last month closed in Sage (dim_DashSetting sage_closed_through)"),
+        ("Close Status Text",
+         "VAR C = [Books Closed Through]\nVAR E = [Report Window End]\n"
+         "RETURN IF ( ISBLANK ( C ), \"Sage month close not recorded\", \"SAGE BOOKS CLOSED THROUGH \" & UPPER ( FORMAT ( C, \"mmm d, yyyy\" ) )\n"
+         f"    & IF ( E > C, {bullet} & \"LATER MONTHS PROVISIONAL (NO WIP ADJUSTMENT YET)\" ) )",
+         None, "Oct 30 call: show closed months as final, later ones with a warning"),
+        ("Revenue YTD Closed",
+         "VAR A = [Report Window End]\nVAR C = MIN ( A, [Books Closed Through] )\n"
+         "RETURN CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),\n"
+         "    fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= C )",
+         '"$#,0"', "Revenue YTD to the last closed month - the figure to tie to the interim financials"),
+        ("Revenue YTD Voided",
+         "VAR A = [Report Window End]\n"
+         "RETURN CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),\n"
+         "    fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= A )",
+         '"$#,0"', "Sage invoices voided in the same window - left out of Revenue YTD"),
+        ("Revenue YTD Subline",
+         "VAR C = MIN ( [Report Window End], [Books Closed Through] )\n"
+         "RETURN \"To \" & FORMAT ( [Report Window End], \"mmm d\" ) & " + bullet + " & \"closed to \" & FORMAT ( C, \"mmm d\" ) & \": \"\n"
+         "    & ( " + money_text("[Revenue YTD Closed]").replace("\n", " ") + " )",
+         None, "deck slide 1 REVENUE YTD sub-line: the week picked, and the closed-books figure"),
+        ("Revenue In Month",
+         # The detail page's month table: this calendar year, to the end of the week picked.
+         # The totals row (no single month) is Revenue YTD itself, so the table ties to the tile.
+         "VAR A = [Report Window End]\nVAR M = MAX ( dim_Date[Date] )\n"
+         "RETURN IF ( NOT HASONEVALUE ( dim_Date[MonthYear] ), [Revenue YTD],\n"
+         "    IF ( YEAR ( M ) = YEAR ( A ) && MIN ( dim_Date[Date] ) <= A,\n"
+         "        CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[SentDate] <= A ) ) )",
+         '"$#,0"', "Oct 30 call: what revenue did we do in September - Sage invoiced in the month, voids excluded"),
+        ("Voided In Month",
+         "VAR A = [Report Window End]\nVAR M = MAX ( dim_Date[Date] )\n"
+         "RETURN IF ( NOT HASONEVALUE ( dim_Date[MonthYear] ), [Revenue YTD Voided],\n"
+         "    IF ( YEAR ( M ) = YEAR ( A ) && MIN ( dim_Date[Date] ) <= A,\n"
+         "        CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS ( dim_Project ), fct_Invoice[SentDate] <= A ) ) )",
+         '"$#,0"', "Sage voids dated in the month - shown, not counted"),
+        ("Invoices In Month",
+         "VAR A = [Report Window End]\nVAR M = MAX ( dim_Date[Date] )\n"
+         "VAR One = HASONEVALUE ( dim_Date[MonthYear] )\n"
+         "VAR Lo = IF ( One, MIN ( dim_Date[Date] ), DATE ( YEAR ( A ), 1, 1 ) )\n"
+         "VAR Hi = IF ( One && M < A, M, A )\n"
+         "RETURN IF ( NOT One || ( YEAR ( M ) = YEAR ( A ) && Lo <= A ),\n"
+         "    CALCULATE ( COUNTROWS ( fct_Invoice ), REMOVEFILTERS ( dim_Project ), REMOVEFILTERS ( dim_Date ),\n"
+         "        fct_Invoice[SentDate] >= Lo, fct_Invoice[SentDate] <= Hi, fct_Invoice[IsVoid] = FALSE () ) )",
+         '"#,0"', "derived"),
+        ("Month Close State",
+         "IF ( NOT ISBLANK ( [Invoices In Month] ) || NOT ISBLANK ( [Voided In Month] ),\n"
+         "    IF ( EOMONTH ( MAX ( dim_Date[Date] ), 0 ) <= [Books Closed Through], \"Closed in Sage\", \"Provisional - not closed\" ) )",
+         None, "Oct 30 call: closed months are final; later ones carry a warning"),
+
+        # ---- invoice rows (Sage AR) ---------------------------------------------------
+        ("Invoice In YTD Flag",
+         "VAR A = [Report Window End]\nVAR D = SELECTEDVALUE ( fct_Invoice[SentDate] )\n"
+         "RETURN " + row_flag(inv, "D >= DATE ( YEAR ( A ), 1, 1 ) && D <= A"),
+         None, "detail row filter - the invoices Revenue YTD adds up (voids listed, at zero)"),
+        ("Open AR Flag", row_flag(inv, "SUM ( fct_Invoice[Balance] ) > 0.005"), None,
+         "detail row filter - invoices with a balance still owed"),
+        ("Invoice Treatment",
+         "IF ( HASONEVALUE ( " + inv + " ), SWITCH ( TRUE (),\n"
+         "    SELECTEDVALUE ( fct_Invoice[IsVoid] ), \"Left out - void in Sage\",\n"
+         "    SELECTEDVALUE ( fct_Invoice[HasUnmatchedProject] ), \"Counted - Sage job with no Procore project\",\n"
+         "    \"Counted\" ) )",
+         None, "detail - whether and how the invoice counts"),
+        ("Invoice Amount", "SUM ( fct_Invoice[Amount] )", '"$#,0"', "detail - invoiced, voids at zero"),
+        ("Invoice Voided", "SUM ( fct_Invoice[VoidedAmount] )", '"$#,0"', "detail - the amount Sage voided"),
+        ("Invoice Paid", "SUM ( fct_Invoice[AmountPaid] )", '"$#,0"', "detail - Sage amount paid"),
+        ("Invoice Balance", "SUM ( fct_Invoice[Balance] )", '"$#,0"', "detail - Sage balance still owed"),
+        ("Invoice Age Days",
+         "VAR D = SELECTEDVALUE ( fct_Invoice[SentDate] )\n"
+         "RETURN IF ( HASONEVALUE ( " + inv + " ) && SUM ( fct_Invoice[Balance] ) > 0.005, DATEDIFF ( D, [Data As Of], DAY ) )",
+         '"#,0"', "detail - days since the invoice date, for what is still owed"),
+        ("Invoice Age Band",
+         "VAR N = [Invoice Age Days]\n"
+         "RETURN IF ( NOT ISBLANK ( N ), SWITCH ( TRUE (), N <= 30, \"0-30 days\", N <= 60, \"31-60 days\", N <= 90, \"61-90 days\", \"Over 90 days\" ) )",
+         None, "detail - AR ageing bucket (AR > 60 DAYS counts the last two)"),
+        ("Job Open AR", "SUM ( fct_Invoice[Balance] )", '"$#,0"', "detail - open AR on the Sage job"),
+
+        # ---- margin, budget, buyout -----------------------------------------------------
+        ("Projected Fee", "SUM ( fct_ProjectPosition[ProjectedFee] )", '"$#,0"',
+         "Procore forecast on the CM fee division (50) - margin, so left out of cost"),
+        ("Projected Margin $",
+         "VAR C = [Projected Cost]\nRETURN IF ( NOT ISBLANK ( C ), [Projected Revenue] - C )", '"$#,0"',
+         "derived - revised budget less forecast cost (fee excluded)"),
+        ("In Margin Tile",
+         'IF ( [Is Dashboard Project], IF ( [Dashboard Status] <> "Active", "No - not active",\n'
+         '    IF ( ISBLANK ( [Projected Cost] ), "No - no forecast in Procore", "Yes" ) ) )',
+         None, "detail - whether the project's margin is in the portfolio figure"),
+        ("On Budget Row",
+         'IF ( [Is Dashboard Project], VAR V = [Forecast Variance] RETURN SWITCH ( TRUE (), ISBLANK ( V ), "No forecast",\n'
+         '    V >= 0, "Yes", "No - over by " & FORMAT ( -V, "$#,0" ) ) )',
+         None, "detail - ON BUDGET: forecast final cost within the revised budget"),
+        ("Line Budget", "CALCULATE ( SUM ( fct_BudgetLine[BudgetAmount] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
+         "detail - Procore revised budget on the cost code"),
+        ("Line Forecast", "CALCULATE ( SUM ( fct_BudgetLine[ForecastAmount] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
+         "detail - Procore forecast final cost"),
+        ("Line Committed", "CALCULATE ( SUM ( fct_BudgetLine[CommittedAmount] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
+         "detail - subcontracts and purchase orders committed"),
+        ("Line Spent", "CALCULATE ( SUM ( fct_BudgetLine[SpentToDate] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
+         "detail - job-to-date cost"),
+        ("Line Coverage %", "DIVIDE ( [Line Committed], [Line Budget] )", '"0%"',
+         "detail - committed over budget on the line, dollar-weighted"),
+        ("Line Treatment",
+         "VAR D = COALESCE ( SELECTEDVALUE ( dim_CostCodeCrosswalk[NewDivisionCode] ), \"00\" )\n"
+         "RETURN IF ( HASONEVALUE ( dim_CostCode[CostCode] ), SWITCH ( TRUE (),\n"
+         "    D = \"50\", \"CM fee - margin, not cost\",\n"
+         "    D >= \"45\", \"Cost - not bought out (GCs, insurance, contingency, tax)\",\n"
+         "    \"Cost - trade work, in subcontractor coverage\" ) )",
+         None, "detail - how the line counts in margin and in coverage (new cost-code master divisions)"),
+
+        # ---- contracts, backlog, change orders -------------------------------------------
+        ("Status Reason", "SELECTEDVALUE ( fct_ProjectPosition[StatusReason] )", None,
+         "detail - why the project is active or not"),
+        ("Phase Source", "SELECTEDVALUE ( fct_ProjectPosition[PhaseSource] )", None,
+         "detail - Oct 30 call: the Outbuild milestone (or billed %) the phase is read from"),
+        ("Billing Source", "SELECTEDVALUE ( fct_ProjectPosition[BillingSource] )", None,
+         "detail - Procore pay apps (gross) or Sage invoices (net)"),
+        ("Project Backlog",
+         "SUMX ( VALUES ( dim_Project[ProjectKey] ), MAX ( 0, [Position Contract] - [Billed To Date (Gross)] ) )",
+         '"$#,0"', "detail - BACKLOG per project: current contract less billed to date"),
+        ("CO Approved Amount",
+         "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), NOT fct_ChangeOrder[IsPending], fct_ChangeOrder[StatusLabel] <> \"void\" )",
+         '"$#,0"', "Procore prime change orders approved"),
+        ("CO Pending Amount",
+         "CALCULATE ( SUM ( fct_ChangeOrder[Amount] ), REMOVEFILTERS ( dim_Date ), fct_ChangeOrder[IsPending] )",
+         '"$#,0"', "Procore prime change orders not yet approved (void excluded)"),
+        ("Pay App Contract Sum", "CALCULATE ( SUM ( fct_Billing[ContractSumToDate] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
+         "detail - prime contract sum to date on the latest owner pay app"),
+        ("Pay App Original Sum", "CALCULATE ( SUM ( fct_Billing[OriginalContractSum] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"', "detail"),
+        ("Pay App CO Change", "CALCULATE ( SUM ( fct_Billing[NetChangeByChangeOrders] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"', "detail"),
+        ("Pay App Completed", "CALCULATE ( SUM ( fct_Billing[CompletedToDate] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"',
+         "detail - completed and stored to date (gross of retainage)"),
+        ("Pay App Retainage", "CALCULATE ( SUM ( fct_Billing[RetainageHeld] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"', "detail"),
+        ("Pay App Balance To Finish", "CALCULATE ( SUM ( fct_Billing[BalanceToFinish] ), REMOVEFILTERS ( dim_Date ) )", '"$#,0"', "detail"),
+
+        # ---- cash: what is still owed to subs and suppliers ----------------------------------
+        ("AP Line Amount",
+         "CALCULATE ( SUM ( fct_ApInvoice[LineTotal] ), REMOVEFILTERS ( dim_Date ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE () )",
+         '"$#,0"', "detail - Sage AP job-cost lines, voids excluded"),
+        ("AP Line Open",
+         "CALCULATE ( SUMX ( fct_ApInvoice, IF ( fct_ApInvoice[InvoiceTotal] <> 0, fct_ApInvoice[LineTotal] * fct_ApInvoice[InvoiceBalance] / fct_ApInvoice[InvoiceTotal] ) ),\n"
+         "    REMOVEFILTERS ( dim_Date ), fct_ApInvoice[IsJobCost] = TRUE (), fct_ApInvoice[IsVoid] = FALSE () )",
+         '"$#,0"', "detail - the line's share of its invoice's unpaid balance (Unpaid Payables, line by line)"),
+        ("Open AP Flag", row_flag("fct_ApInvoice[InvoiceKey]", "[AP Line Open] > 0.005"), None,
+         "detail row filter - AP still unpaid"),
+        ("AP Age Days",
+         "IF ( HASONEVALUE ( fct_ApInvoice[InvoiceKey] ), DATEDIFF ( MIN ( fct_ApInvoice[InvoiceDate] ), [Data As Of], DAY ) )",
+         '"#,0"', "detail - days since the AP invoice date"),
+        ("On Schedule Row",
+         'IF ( [Is Dashboard Project], VAR D = [Completion Variance Days] RETURN SWITCH ( TRUE (), ISBLANK ( D ), "No baseline",\n'
+         '    D <= 0, "Yes", "No - " & D & " days late" ) )',
+         None, "detail - ON SCHEDULE: forecast finish on or before the baseline finish"),
+
+        # ---- safety and quality: the inspections, and every other data point -----------------
+        ("Inspection In Week Any Flag",
+         week + "VAR D = SELECTEDVALUE ( fct_Inspection[InspectionDate] )\n"
+         "RETURN " + row_flag("fct_Inspection[InspectionKey]", "D >= S && D <= E"),
+         None, "detail row filter - every inspection dated in the week, counted or not"),
+        ("Inspection Counted", "IF ( HASONEVALUE ( fct_Inspection[InspectionKey] ), SELECTEDVALUE ( fct_Inspection[CountedReason] ) )",
+         None, "detail - counted (closed) or why not"),
+        ("Inspection Pass Rate",
+         "VAR P = SUM ( fct_Inspection[PassItemCount] )\nVAR F = SUM ( fct_Inspection[DeficientItemCount] )\nRETURN DIVIDE ( P, P + F )",
+         '"0%"', "Oct 30 call: items passed over passed + failed (N/A left out)"),
+        ("Inspection Pass Items", "SUM ( fct_Inspection[PassItemCount] )", '"#,0"', "detail"),
+        ("Inspection Fail Items", "SUM ( fct_Inspection[DeficientItemCount] )", '"#,0"', "detail"),
+        ("Inspections Not Closed (Week)",
+         week + "RETURN IF ( [Is Dashboard Project], " + count("fct_Inspection", "fct_Inspection[IsPerformed] = FALSE ()",
+                                                               "fct_Inspection[InspectionDate] >= S", "fct_Inspection[InspectionDate] <= E") + " )",
+         '"#,0"', "Oct 30 call: created or started in the week but not closed - not counted"),
+        ("Safety Pass Rate (4 Weeks)", pass_rate("Safety"), '"0%"', "PROPOSED data point - closed safety inspections, 4 weeks"),
+        ("Quality Pass Rate (4 Weeks)", pass_rate("Quality"), '"0%"', "PROPOSED data point - closed quality inspections, 4 weeks"),
+        ("Open Safety Observations",
+         "IF ( [Is Dashboard Project], " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Safety"', "fct_DashObservation[IsOpen] = TRUE ()") + " )",
+         '"#,0"', "Procore observations classed Safety, still open"),
+        ("Safety Observations (Week)",
+         week + "RETURN IF ( [Is Dashboard Project], " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Safety"',
+                                                               "fct_DashObservation[CreatedDate] >= S", "fct_DashObservation[CreatedDate] <= E") + " )",
+         '"#,0"', "Procore safety observations raised in the week"),
+        ("Open Quality Observations",
+         "IF ( [Is Dashboard Project], " + count("fct_DashObservation", 'fct_DashObservation[Category] = "Quality"',
+                                                 'fct_DashObservation[ItemType] = "Observation"', "fct_DashObservation[IsOpen] = TRUE ()") + " )",
+         '"#,0"', "Procore corrective actions, NCRs, deficiencies, still open"),
+        ("Safety Observation Close Rate", close_rate('fct_DashObservation[Category] = "Safety"'), '"0%"',
+         "PROPOSED data point - safety observations raised in 90 days that are closed"),
+        ("Quality Item Close Rate", close_rate('fct_DashObservation[Category] = "Quality"'), '"0%"',
+         "PROPOSED data point - quality observations and punch raised in 90 days that are closed"),
+        ("Safety Data Score (Proposed)", mean_of("Safety Pass Rate (4 Weeks)", "Safety Observation Close Rate"), '"0%"',
+         "Oct 30 call, step one: a placeholder grade from the data collected - pass rate and close rate, "
+         "equally weighted. NOT in the grade until Affect agrees it"),
+        ("Quality Data Score (Proposed)", mean_of("Quality Pass Rate (4 Weeks)", "Quality Item Close Rate"), '"0%"',
+         "Oct 30 call, step one: quality's placeholder grade - NOT in the grade"),
+        ("Observation In View Flag",
+         week + "VAR D = SELECTEDVALUE ( fct_DashObservation[CreatedDate] )\n"
+         "RETURN " + row_flag("fct_DashObservation[ObservationKey]",
+                              "( ( D >= S && D <= E ) || SELECTEDVALUE ( fct_DashObservation[IsOpen] ) )"),
+         None, "detail row filter - raised in the week, or still open"),
+
+        # ---- project payments (Oct 30: "have we been paid, has this sub been paid") ----------
+        ("Sub Committed", "SUM ( fct_SubPayment[Committed] )", '"$#,0"', "latest approved Procore requisition: contract sum"),
+        ("Sub Requisitioned", "SUM ( fct_SubPayment[Requisitioned] )", '"$#,0"', "work completed to date the sub has billed"),
+        ("Sub Retainage Held", "SUM ( fct_SubPayment[RetainageHeld] )", '"$#,0"', "retainage held on the sub"),
+        ("Sub AP Invoiced", "SUM ( fct_SubPayment[ApInvoiced] )", '"$#,0"', "Sage AP job cost for the vendor on the job"),
+        ("Sub Paid", "SUM ( fct_SubPayment[ApPaid] )", '"$#,0"', "Sage AP paid"),
+        ("Sub AP Open", "SUM ( fct_SubPayment[ApOpen] )", '"$#,0"', "Sage AP still to pay"),
+        ("Sub Left To Pay", "SUM ( fct_SubPayment[LeftToPay] )", '"$#,0"', "committed less paid"),
+        ("Sub Oldest Open Days", "MAX ( fct_SubPayment[OldestOpenDays] )", '"#,0"', "age of the oldest unpaid AP invoice"),
+        ("Open AR Shown",
+         'IF ( [Is Dashboard Project], FORMAT ( [Cash - Unpaid Receivables], "$#,0" ) )', None, "card text"),
+
+        # ---- data health (Oct 30: validate the INPUT, not just the output) ---------------------
+        ("Check Result", "SELECTEDVALUE ( fct_DashCheck[Result] )", None, "detail - Pass / Warn / Info"),
+        ("Check Amount", "SUM ( fct_DashCheck[Amount] )", '"#,0"', "detail - the number behind the check"),
+        ("Check Colour",
+         f'SWITCH ( [Check Result], "Warn", "{AMBER}", "Pass", "{GREEN}", "{MIST}" )', None, "detail pill"),
+        ("Check Ink", f'IF ( [Check Result] = "Pass", "#FFFFFF", "{NAVY}" )', None, "detail pill text"),
+        ("Checks Warning",
+         "COALESCE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" ),\n"
+         "    CALCULATE ( SUM ( fct_DashCheck[IsWarning] ) ) ), 0 )",
+         '"#,0"', "Data Health - warnings across active projects"),
+        ("Projects With Warnings",
+         count_active("CALCULATE ( SUM ( fct_DashCheck[IsWarning] ) ) > 0"), '"#,0"',
+         "Data Health - active projects with at least one warning"),
+        ("Checks Passed",
+         "COALESCE ( SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" ),\n"
+         "    CALCULATE ( COUNTROWS ( fct_DashCheck ), fct_DashCheck[Result] = \"Pass\" ) ), 0 )",
+         '"#,0"', "Data Health - checks passed across active projects"),
+        # ---- active-project totals and row filters the detail pages tie to --------------------
+        ("Voided AR Left Out", "CALCULATE ( SUM ( fct_Invoice[VoidedAmount] ), REMOVEFILTERS () )", '"$#,0"',
+         "Sage voided invoices, all time - Sage still carries each as a balance"),
+        ("Open AR Job Flag", row_flag("fct_Invoice[SageJobNumber]", "SUM ( fct_Invoice[Balance] ) > 0.005"), None,
+         "detail row filter - Sage jobs with open AR"),
+        ("Active Contract Value", over_active("[Position Contract]"), '"$#,0"', "current contract, active projects"),
+        ("Active Pending COs", over_active("[CO Pending Amount]"), '"$#,0"', "pending prime change orders, active projects"),
+        ("Active Unpaid Payables", over_active("[Cash - Unpaid Payables]"), '"$#,0"', "Sage AP still to pay, active projects"),
+        ("Active Inspections Not Closed", "COALESCE ( " + over_active("[Inspections Not Closed (Week)]") + ", 0 )", '"#,0"',
+         "inspections dated in the week and not closed, active projects"),
+        ("Active Open Safety Observations", "COALESCE ( " + over_active("[Open Safety Observations]") + ", 0 )", '"#,0"',
+         "open safety observations, active projects"),
+        ("Open AP Active Flag", 'IF ( [Open AP Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )', None,
+         "detail row filter"),
+        ("Inspection In Week Active Flag", 'IF ( [Inspection In Week Any Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )',
+         None, "detail row filter"),
+        ("Observation Active Flag", 'IF ( [Observation In View Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )',
+         None, "detail row filter"),
+        ("Health Header",
+         '[Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) )',
+         None, "Data Health header line"),
+        ("Detail Header",
+         '"BALANCES AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Active Projects] & " ACTIVE PROJECTS"',
+         None, "detail pages header line"),
+    ]
+
+
 def measures() -> list[tuple[str, str, str | None, str]]:
     weights = {k: pillar_weight(k) for k, _ in PILLARS}
     out: list[tuple[str, str, str | None, str]] = [
@@ -660,13 +956,15 @@ def measures() -> list[tuple[str, str, str | None, str]]:
 
         # ---- Executive page: the company --------------------------------------------
         ("Revenue YTD",
-         "VAR A = [Data As Of]\n"
+         # Oct 30 call: picking a week has to move the number. Invoiced from Jan 1 to the end
+         # of the week picked (today for this week); Sage voids are zero in fct_Invoice.
+         "VAR A = [Report Window End]\n"
          "RETURN CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Date ), REMOVEFILTERS ( dim_Project ),\n"
          "    fct_Invoice[SentDate] >= DATE ( YEAR ( A ), 1, 1 ), fct_Invoice[SentDate] <= A )",
-         '"$#,0"', "deck slide 1 REVENUE YTD - Sage AR invoiced this calendar year, every job"),
+         '"$#,0"', "deck slide 1 REVENUE YTD - Sage AR invoiced Jan 1 to the end of the week picked, every job, voids excluded"),
         ("Revenue Last 6 Months",
          # The deck's six-month chart. A month is in when it ends after the window opens.
-         "VAR A = [Data As Of]\n"
+         "VAR A = [Report Window End]\n"
          "VAR M = MAX ( dim_Date[Date] )\n"
          "RETURN IF ( M > EOMONTH ( A, -6 ) && MIN ( dim_Date[Date] ) <= A,\n"
          "    CALCULATE ( SUM ( fct_Invoice[Amount] ), REMOVEFILTERS ( dim_Project ) ) )",
@@ -753,8 +1051,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "DIVIDE ( " + over_active("[Subcontract Committed]") + ", " + over_active("[Subcontract Budget]") + " )",
          '"0%"', "deck slide 1 SUBCONTRACTOR COVERAGE"),
         ("Change Orders Approved %",
-         "VAR Ap = " + over_active("CALCULATE ( [Approved Change Orders], REMOVEFILTERS ( dim_Date ) )") + "\n"
-         "VAR Pe = " + over_active("[Pending Change Orders]") + "\n"
+         # Both halves from the change-order log itself (Oct 30: "where is the 190 pending
+         # from?"), so the tile ties to the rows on Detail | Contracts.
+         "VAR Ap = " + over_active("[CO Approved Amount]") + "\n"
+         "VAR Pe = " + over_active("[CO Pending Amount]") + "\n"
          "RETURN DIVIDE ( Ap, Ap + Pe )",
          '"0%"', "deck slide 1 CHANGE ORDERS APPROVED - approved value over approved + pending"),
         ("Active Flag", 'IF ( [Dashboard Status] = "Active", "Yes" )', None,
@@ -805,11 +1105,10 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          '    IF ( SELECTEDVALUE ( fct_Meeting[IsDuplicateDate] ), "Duplicate of an earlier meeting", "No" ) ) )',
          None, "grade detail - did this meeting count"),
         ("Status Note",
-         'VAR S = [Dashboard Status]\nRETURN IF ( S <> "Active", S & IF ( S = "Inactive", " - no Procore activity in " & '
-         + setting("active_within_days") + ' & " days" ) )',
+         'VAR S = [Dashboard Status]\nRETURN IF ( S <> "Active", S & " - " & SELECTEDVALUE ( fct_ProjectPosition[StatusReason] ) )',
          None, "derived - why a project is off the active list"),
     ]
-    return out
+    return out + proof_measures()
 
 
 if __name__ == "__main__":

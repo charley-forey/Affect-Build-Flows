@@ -1186,10 +1186,16 @@ CONSERVATION = (
      "project_id IS NOT NULL"),
     # 22_fct_invoice.sql keeps every AR row (unmatched jobs become 'UNMATCHED'), so there
     # is no filter and no dropped-row warning: a missing invoice here is always a defect.
+    # A Sage void (status 5) is conserved as a row with its money zeroed, repeating the gold
+    # expression; the voided amount itself is conserved in VoidedAmount.
     ("fct_Invoice", "sv_ar_invoices",
-     "invoice_uid, invoice_total, amount_paid, invoice_balance, "
-     "CASE WHEN invoice_balance IS NULL THEN NULL WHEN invoice_balance = 0 THEN TRUE ELSE FALSE END",
-     "InvoiceKey, Amount, AmountPaid, Balance, IsPaid",
+     "invoice_uid, CASE WHEN status_code = 5 THEN 0 ELSE invoice_total END, "
+     "CASE WHEN status_code = 5 THEN 0 ELSE amount_paid END, "
+     "CASE WHEN status_code = 5 THEN 0 ELSE invoice_balance END, "
+     "CASE WHEN status_code = 5 THEN NULL WHEN invoice_balance IS NULL THEN NULL "
+     "WHEN invoice_balance = 0 THEN TRUE ELSE FALSE END, "
+     "CASE WHEN status_code = 5 THEN invoice_total END",
+     "InvoiceKey, Amount, AmountPaid, Balance, IsPaid, VoidedAmount",
      None),
     # 34_fct_apinvoice.sql keeps every AP line (unmapped job -> NULL ProjectKey), so no filter.
     # IsJobCost repeats the gold expression: GL 50000-50999 on a Sage job.

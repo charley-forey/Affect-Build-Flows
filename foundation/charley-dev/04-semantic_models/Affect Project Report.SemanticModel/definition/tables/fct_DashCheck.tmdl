@@ -1,0 +1,53 @@
+table fct_DashCheck
+
+	column ProjectKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: ProjectKey
+
+	column CheckKey
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CheckKey
+
+	column CheckOrder
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: CheckOrder
+
+	column CheckName
+		dataType: string
+		summarizeBy: none
+		sourceColumn: CheckName
+
+	column Result
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Result
+
+	column Amount
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: Amount
+
+	column Detail
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Detail
+
+	column Action
+		dataType: string
+		summarizeBy: none
+		sourceColumn: Action
+
+	column IsWarning
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: IsWarning
+
+	partition fct_DashCheck = entity
+		mode: directLake
+		source
+			entityName: fct_dashcheck
+			schemaName: dbo
+			expressionSource: 'DirectLake - CD_Gold_Lakehouse'

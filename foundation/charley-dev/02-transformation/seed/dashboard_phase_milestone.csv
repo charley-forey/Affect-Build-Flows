@@ -1,0 +1,8 @@
+priority,pattern,marks,note
+1,substantial completion,Closeout,"Oct 30 call: once substantial completion is reached the job is in closeout"
+2,work start,Construction,"Oct 30 call: construction once the construction milestone has started (City Harvest: 'Notice to Proceed - Work Start Trigger')"
+3,work commencement,Construction,
+4,construction start,Construction,
+5,start of construction,Construction,
+6,start construction,Construction,
+7,notice to proceed,Construction,"Used only when no work-start milestone is named"

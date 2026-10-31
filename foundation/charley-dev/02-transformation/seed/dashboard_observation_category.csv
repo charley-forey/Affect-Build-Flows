@@ -1,0 +1,17 @@
+priority,pattern,category,note
+1,safety,Safety,"Safety Hazard, Safety Notice (Oct 30 call: collect every safety data point beside the inspections)"
+2,spill,Safety,environmental
+3,observation report,Safety,"insurer / safety consultant site reports (MdeAS / AmTrust, Falcon)"
+4,near miss,Safety,
+5,incident,Safety,
+6,toolbox,Safety,
+7,safety win,Safety,"Oct 30 call: promote the good as well as the bad"
+20,corrective,Quality,
+21,preventative,Quality,
+22,non-conformance,Quality,
+23,ncr,Quality,
+24,deficiency,Quality,
+25,commissioning,Quality,
+26,inspection,Quality,"3rd party inspections"
+27,punch,Quality,
+28,work to complete,Quality,

@@ -135,6 +135,9 @@ LEFT JOIN sv_sage_jobs j ON j.sage_project_id = g.sage_project_id
 WHERE g.sage_project_id IS NOT NULL
   AND g.sage_project_id NOT IN (SELECT sage_project_id FROM sv_project_crosswalk
                                 WHERE sage_project_id IS NOT NULL)
+  -- A second job attached to a mapped project (seed 'additional', 22_fct_invoice.sql).
+  AND g.sage_project_id NOT IN (SELECT SageJobNumber FROM seed_ProjectCrosswalk
+                                WHERE Relationship = 'additional' AND SageJobNumber IS NOT NULL)
 
 UNION ALL
 -- AP booked to no Sage job at all (overhead, stock, suppliers). No crosswalk can attach it

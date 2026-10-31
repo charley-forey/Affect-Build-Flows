@@ -22,10 +22,14 @@
 -- no pattern matches is 'Unclassified' - counted by neither pillar, and listed on the
 -- dashboard so a new template gets a pattern instead of silently scoring nothing.
 --
--- PERFORMED, not merely scheduled. Procore dates an inspection when it is created and
--- several sit OPEN with future dates. One counts once it is closed or has at least one item
--- answered (conforming, deficient, not applicable or neutral) - "not inspected" is not an
--- answer. The reporting-week window is applied in DAX.
+-- PERFORMED = CLOSED (Oct 30 call). An inspection is "not really done until it is distributed
+-- or the status is closed": one created and half filled in showed up as performed on the
+-- dashboard. Items answered on an OPEN inspection now read IsInProgress - listed on the
+-- drill-down, never counted. The reporting-week window is applied in the score.
+--
+-- PASS RATE (Oct 30 call, the next layer of the safety score): conforming items over
+-- conforming + deficient - "60 passes and 27 fails". N/A and neutral items are left out of
+-- both sides. Collected and shown; not in the grade until Affect agrees how to weight it.
 CREATE OR REPLACE TABLE fct_Inspection AS
 WITH matched AS (
     SELECT i.InspectionKey, c.Category,
@@ -47,10 +51,23 @@ SELECT
     i.DueDate,
     i.SourceItemCount                            AS ItemCount,
     i.DeficientItemCount,
-    CASE WHEN UPPER(COALESCE(i.SourceStatus, '')) = 'CLOSED'
-              OR COALESCE(i.ConformingItemCount, 0) + COALESCE(i.DeficientItemCount, 0)
-                 + COALESCE(i.NotApplicableItemCount, 0) + COALESCE(i.NeutralItemCount, 0) > 0
-         THEN TRUE ELSE FALSE END                AS IsPerformed
+    i.ConformingItemCount                        AS PassItemCount,
+    i.NotApplicableItemCount                     AS NaItemCount,
+    CASE WHEN COALESCE(i.ConformingItemCount, 0) + COALESCE(i.DeficientItemCount, 0) > 0
+         THEN CAST(COALESCE(i.ConformingItemCount, 0) AS DOUBLE)
+              / (COALESCE(i.ConformingItemCount, 0) + COALESCE(i.DeficientItemCount, 0)) END AS PassRate,
+    UPPER(COALESCE(i.SourceStatus, '')) = 'CLOSED' AS IsPerformed,
+    UPPER(COALESCE(i.SourceStatus, '')) <> 'CLOSED'
+        AND COALESCE(i.ConformingItemCount, 0) + COALESCE(i.DeficientItemCount, 0)
+            + COALESCE(i.NotApplicableItemCount, 0) + COALESCE(i.NeutralItemCount, 0) > 0 AS IsInProgress,
+    -- Why the row does or does not count, in words, for the drill-down.
+    CASE WHEN COALESCE(m.Category, 'Unclassified') = 'Unclassified'
+             THEN 'Not counted - template matches no safety / quality pattern'
+         WHEN UPPER(COALESCE(i.SourceStatus, '')) = 'CLOSED' THEN 'Counted - closed'
+         WHEN COALESCE(i.ConformingItemCount, 0) + COALESCE(i.DeficientItemCount, 0)
+              + COALESCE(i.NotApplicableItemCount, 0) + COALESCE(i.NeutralItemCount, 0) > 0
+             THEN 'Not counted - started, not closed'
+         ELSE 'Not counted - created, not started' END AS CountedReason
 FROM fct_ProcoreInspection i
 LEFT JOIN matched m
        ON m.InspectionKey = i.InspectionKey AND m.rn = 1
@@ -284,13 +301,22 @@ FROM anchored;
 --   Cash...             Chris's formula; the Grade Detail page shows each step
 --   ProjectedCost       forecast of every budget line except the FEE division (50)
 --   ArOwed*             unpaid Sage AR, and its balance x days outstanding, for the weighted age
---   DashboardStatus     Archived once 100% paid; Active with Procore activity in 60 days
+--   Phase               Oct 30 call: from Outbuild milestones where the schedule names them -
+--                       substantial completion reached = Closeout; the construction-start
+--                       milestone reached = Construction, not yet = Precon - else billed %
+--                       (seed_PhaseMilestone). PhaseSource says which, in words.
+--   DashboardStatus     Archived once 100% paid. With rollout_only = 1 (Oct 30 call) only the
+--                       projects in seed_DashProject are Active; the rest are Archived, with
+--                       StatusReason. With 0: Active = Procore activity in 60 days.
+-- Sage voids never reach these sums: fct_Invoice zeroes them, AP readers drop IsVoid.
 CREATE OR REPLACE TABLE fct_ProjectPosition AS
 WITH settings AS (
     SELECT MAX(CASE WHEN SettingKey = 'phase_precon_below' THEN Value END)  AS precon_below,
            MAX(CASE WHEN SettingKey = 'phase_closeout_from' THEN Value END) AS closeout_from,
            MAX(CASE WHEN SettingKey = 'archive_paid_from' THEN Value END)   AS archive_from,
-           MAX(CASE WHEN SettingKey = 'active_within_days' THEN Value END)  AS active_days
+           MAX(CASE WHEN SettingKey = 'active_within_days' THEN Value END)  AS active_days,
+           MAX(CASE WHEN SettingKey = 'ar_aged_days' THEN Value END)        AS aged_days,
+           COALESCE(MAX(CASE WHEN SettingKey = 'rollout_only' THEN Value END), 0) AS rollout_only
     FROM dim_DashSetting
 ),
 projects AS (
@@ -311,7 +337,8 @@ orig AS (
         FROM contract_months WHERE orig IS NOT NULL) x WHERE rn = 1
 ),
 owner AS (
-    SELECT ProjectKey, SUM(CompletedToDate) AS billed, SUM(RetainageHeld) AS retainage
+    SELECT ProjectKey, SUM(CompletedToDate) AS billed, SUM(RetainageHeld) AS retainage,
+           SUM(EarnedLessRetainageToDate) AS earned_net, COUNT(*) AS contracts
     FROM fct_Billing WHERE IsLatestPeriod = TRUE AND BillingType = 'Owner' GROUP BY ProjectKey
 ),
 sub AS (
@@ -319,21 +346,26 @@ sub AS (
     FROM fct_Billing WHERE IsLatestApprovedPeriod = TRUE AND BillingType = 'Subcontractor' GROUP BY ProjectKey
 ),
 ar AS (
-    SELECT ProjectKey, SUM(Amount) AS billed, SUM(Balance) AS unpaid, SUM(AmountPaid) AS paid, COUNT(*) AS invoices,
-           SUM(CASE WHEN Balance > 0 AND SentDate IS NOT NULL THEN Balance END) AS owed,
-           SUM(CASE WHEN Balance > 0 AND SentDate IS NOT NULL
-                    THEN Balance * datediff(CURRENT_DATE, SentDate) END) AS owed_days
-    FROM fct_Invoice WHERE COALESCE(HasUnmatchedProject, FALSE) = FALSE GROUP BY ProjectKey
+    SELECT i.ProjectKey, SUM(i.Amount) AS billed, SUM(i.Balance) AS unpaid, SUM(i.AmountPaid) AS paid,
+           SUM(CASE WHEN i.IsVoid THEN 0 ELSE 1 END) AS invoices,
+           SUM(CASE WHEN i.Balance > 0 AND i.SentDate IS NOT NULL THEN i.Balance END) AS owed,
+           SUM(CASE WHEN i.Balance > 0 AND i.SentDate IS NOT NULL
+                    THEN i.Balance * datediff(CURRENT_DATE, i.SentDate) END) AS owed_days,
+           SUM(CASE WHEN i.Balance > 0 AND datediff(CURRENT_DATE, i.SentDate) > s.aged_days THEN i.Balance END) AS over60,
+           SUM(i.VoidedAmount) AS voided, SUM(CASE WHEN i.IsVoid THEN 1 ELSE 0 END) AS voids
+    FROM fct_Invoice i CROSS JOIN settings s
+    WHERE COALESCE(i.HasUnmatchedProject, FALSE) = FALSE GROUP BY i.ProjectKey
 ),
 ap AS (
     SELECT ProjectKey, SUM(LineTotal * InvoiceBalance / InvoiceTotal) AS unpaid
     FROM fct_ApInvoice
-    WHERE IsJobCost = TRUE AND ProjectKey IS NOT NULL AND COALESCE(InvoiceTotal, 0) <> 0
+    WHERE IsJobCost = TRUE AND NOT IsVoid AND ProjectKey IS NOT NULL AND COALESCE(InvoiceTotal, 0) <> 0
     GROUP BY ProjectKey
 ),
 budget AS (
     SELECT b.ProjectKey, SUM(b.BudgetAmount) AS revenue, SUM(b.SpentToDate) AS spent,
-           SUM(CASE WHEN COALESCE(x.NewDivisionCode, '') <> '50' THEN b.ForecastAmount END) AS cost
+           SUM(CASE WHEN COALESCE(x.NewDivisionCode, '') <> '50' THEN b.ForecastAmount END) AS cost,
+           SUM(CASE WHEN COALESCE(x.NewDivisionCode, '') = '50' THEN b.ForecastAmount END) AS fee
     FROM fct_BudgetLine b LEFT JOIN dim_CostCodeCrosswalk x ON x.CostCodeKey = b.CostCodeKey
     GROUP BY b.ProjectKey
 ),
@@ -350,19 +382,50 @@ activity AS (
         UNION ALL SELECT ProjectKey, CreatedDate FROM fct_QualityItem
     ) a GROUP BY ProjectKey
 ),
+-- Phase milestones: each Outbuild milestone classified by the first seed pattern it contains.
+ms AS (
+    SELECT a.ProjectKey, a.ActivityName, a.FinishDate, c.Marks, c.Priority,
+           COALESCE(a.PercentComplete, 0) >= 1 OR a.FinishDate <= CURRENT_DATE AS reached,
+           ROW_NUMBER() OVER (PARTITION BY a.ProjectKey, a.ActivityKey ORDER BY c.Priority) AS rn
+    FROM fct_ScheduleActivity a
+    JOIN seed_PhaseMilestone c ON LOWER(a.ActivityName) LIKE CONCAT('%', c.Pattern, '%')
+    WHERE a.IsMilestone AND a.FinishDate IS NOT NULL
+),
+closeout AS (
+    -- The first substantial-completion milestone reached.
+    SELECT ProjectKey, ActivityName, FinishDate FROM (
+        SELECT ms.*, ROW_NUMBER() OVER (PARTITION BY ProjectKey ORDER BY FinishDate, ActivityName) AS k
+        FROM ms WHERE rn = 1 AND Marks = 'Closeout' AND reached) x WHERE k = 1
+),
+start AS (
+    -- The construction-start milestone: the best-named kind (lowest priority), and of those the
+    -- LATEST - City Harvest's schedule re-dates its work-start trigger rather than closing it.
+    SELECT ProjectKey, ActivityName, FinishDate, reached FROM (
+        SELECT ms.*, ROW_NUMBER() OVER (PARTITION BY ProjectKey ORDER BY Priority, FinishDate DESC, ActivityName) AS k
+        FROM ms WHERE rn = 1 AND Marks = 'Construction') x WHERE k = 1
+),
 base AS (
     SELECT p.ProjectKey,
            cur.cur AS CurrentContract, orig.orig AS OriginalContract,
            CASE WHEN owner.billed IS NOT NULL AND owner.billed <> 0 THEN owner.billed ELSE ar.billed END AS BilledToDateGross,
+           CASE WHEN owner.billed IS NOT NULL AND owner.billed <> 0 THEN 'Procore owner pay apps (gross of retainage)'
+                WHEN ar.billed IS NOT NULL THEN 'Sage AR invoices (no Procore pay app)' END AS BillingSource,
+           owner.earned_net AS ProcoreEarnedLessRetainage, owner.contracts AS PrimeContractCount,
+           ar.billed AS SageInvoicedToDate,
            COALESCE(owner.retainage, 0) AS RetainageReceivable,
            COALESCE(ar.unpaid, 0) AS UnpaidReceivables,
            ar.paid AS PaidToDate,
            budget.spent AS CostsIncurred,
            COALESCE(ap.unpaid, 0) AS UnpaidPayables,
            COALESCE(sub.retainage, 0) AS RetainagePayable,
-           budget.revenue AS ProjectedRevenue, budget.cost AS ProjectedCost,
+           budget.revenue AS ProjectedRevenue, budget.cost AS ProjectedCost, budget.fee AS ProjectedFee,
            ar.owed AS ArOwedBalance, ar.owed_days AS ArOwedBalanceDays, COALESCE(ar.invoices, 0) AS InvoiceCount,
-           activity.last_activity AS LastActivityDate
+           COALESCE(ar.over60, 0) AS ArOver60, COALESCE(ar.voided, 0) AS VoidedInvoiceAmount,
+           COALESCE(ar.voids, 0) AS VoidedInvoiceCount,
+           activity.last_activity AS LastActivityDate,
+           closeout.ActivityName AS closeout_name, closeout.FinishDate AS closeout_date,
+           start.ActivityName AS start_name, start.FinishDate AS start_date, start.reached AS start_reached,
+           dp.ProcoreProjectId IS NOT NULL AS IsRolloutProject
     FROM projects p
     LEFT JOIN cur ON cur.ProjectKey = p.ProjectKey
     LEFT JOIN orig ON orig.ProjectKey = p.ProjectKey
@@ -372,6 +435,9 @@ base AS (
     LEFT JOIN ap ON ap.ProjectKey = p.ProjectKey
     LEFT JOIN budget ON budget.ProjectKey = p.ProjectKey
     LEFT JOIN activity ON activity.ProjectKey = p.ProjectKey
+    LEFT JOIN closeout ON closeout.ProjectKey = p.ProjectKey
+    LEFT JOIN start ON start.ProjectKey = p.ProjectKey
+    LEFT JOIN seed_DashProject dp ON dp.ProcoreProjectId = p.ProjectKey
 ),
 cash AS (
     SELECT b.*,
@@ -381,13 +447,252 @@ cash AS (
                 THEN CostsIncurred - UnpaidPayables - RetainagePayable END AS CashPaidOut,
            CASE WHEN COALESCE(CurrentContract, 0) <> 0 THEN BilledToDateGross / CurrentContract END AS BilledPct
     FROM base b
+),
+phased AS (
+    SELECT c.*,
+           CASE WHEN c.closeout_name IS NOT NULL THEN 'Closeout'
+                WHEN c.start_name IS NOT NULL THEN CASE WHEN c.start_reached THEN 'Construction' ELSE 'Precon' END
+                WHEN c.BilledPct IS NULL THEN NULL
+                WHEN c.BilledPct < s.precon_below THEN 'Precon'
+                WHEN c.BilledPct > s.closeout_from THEN 'Closeout'
+                ELSE 'Construction' END AS Phase,
+           CASE WHEN c.closeout_name IS NOT NULL
+                    THEN CONCAT('Outbuild: "', c.closeout_name, '" reached ', CAST(c.closeout_date AS STRING))
+                WHEN c.start_name IS NOT NULL
+                    THEN CONCAT('Outbuild: "', c.start_name, '" ',
+                                CASE WHEN c.start_reached THEN 'reached ' ELSE 'due ' END,
+                                CAST(c.start_date AS STRING))
+                WHEN c.BilledPct IS NULL THEN 'No contract or billing, and no Outbuild phase milestone'
+                ELSE CONCAT('Billed ', CAST(ROUND(100 * c.BilledPct, 1) AS STRING),
+                            '% of contract (no Outbuild phase milestone)') END AS PhaseSource,
+           s.archive_from, s.active_days, s.rollout_only
+    FROM cash c CROSS JOIN settings s
 )
-SELECT c.*,
-       CASE WHEN c.BilledPct IS NULL THEN NULL
-            WHEN c.BilledPct < s.precon_below THEN 'Precon'
-            WHEN c.BilledPct > s.closeout_from THEN 'Closeout'
-            ELSE 'Construction' END AS Phase,
-       CASE WHEN COALESCE(c.CurrentContract, 0) <> 0 AND c.CashCollected / c.CurrentContract >= s.archive_from THEN 'Archived'
-            WHEN c.LastActivityDate IS NOT NULL AND datediff(CURRENT_DATE, c.LastActivityDate) <= s.active_days THEN 'Active'
-            ELSE 'Inactive' END AS DashboardStatus
-FROM cash c CROSS JOIN settings s;
+SELECT ProjectKey, CurrentContract, OriginalContract, BilledToDateGross, BillingSource, ProcoreEarnedLessRetainage,
+       PrimeContractCount, SageInvoicedToDate, RetainageReceivable, UnpaidReceivables, PaidToDate, CostsIncurred,
+       UnpaidPayables, RetainagePayable, ProjectedRevenue, ProjectedCost, ProjectedFee, ArOwedBalance,
+       ArOwedBalanceDays, InvoiceCount, ArOver60, VoidedInvoiceAmount, VoidedInvoiceCount, LastActivityDate,
+       IsRolloutProject, CashCollected, CashPaidOut, BilledPct, Phase, PhaseSource,
+       CASE WHEN COALESCE(CurrentContract, 0) <> 0 AND CashCollected / CurrentContract >= archive_from THEN 'Archived'
+            WHEN rollout_only = 1 AND IsRolloutProject THEN 'Active'
+            WHEN rollout_only = 1 THEN 'Archived'
+            WHEN LastActivityDate IS NOT NULL AND datediff(CURRENT_DATE, LastActivityDate) <= active_days THEN 'Active'
+            ELSE 'Inactive' END AS DashboardStatus,
+       CASE WHEN COALESCE(CurrentContract, 0) <> 0 AND CashCollected / CurrentContract >= archive_from
+                THEN '100% paid'
+            WHEN rollout_only = 1 AND IsRolloutProject THEN 'In the Nov 19 rollout (Oct 30 call)'
+            WHEN rollout_only = 1 THEN 'Not in the Nov 19 rollout (Oct 30 call)'
+            WHEN LastActivityDate IS NOT NULL AND datediff(CURRENT_DATE, LastActivityDate) <= active_days
+                THEN 'Procore activity in the last 60 days'
+            ELSE 'No Procore activity in the last 60 days' END AS StatusReason
+FROM phased;
+
+-- ---------------------------------------------------------------------------
+-- fct_DashObservation
+-- ---------------------------------------------------------------------------
+--
+-- Oct 30 call: keep the inspection count as the score, and beside it "capture all these safety
+-- data points" - observations, notices, near misses, corrective actions, punch - so a grading
+-- can be agreed from real data. Procore observations and punch items (fct_QualityItem),
+-- classified Safety / Quality by category (seed_ObservationCategory); anything unmatched is
+-- Quality, the tool's default use here. Read by the drill-down and the PROPOSED data scores.
+CREATE OR REPLACE TABLE fct_DashObservation AS
+WITH matched AS (
+    SELECT q.ProjectKey, q.ItemType, q.ItemKey, c.Category,
+           ROW_NUMBER() OVER (PARTITION BY q.ProjectKey, q.ItemType, q.ItemKey ORDER BY c.Priority) AS rn
+    FROM fct_QualityItem q
+    JOIN seed_ObservationCategory c
+      ON LOWER(CONCAT(COALESCE(q.ItemCategory, ''), ' ', COALESCE(q.Title, ''))) LIKE CONCAT('%', c.Pattern, '%')
+)
+SELECT q.ProjectKey,
+       CONCAT(q.ItemType, ':', CAST(q.ItemKey AS STRING)) AS ObservationKey,
+       q.ItemTypeLabel                         AS ItemType,
+       q.ItemNumber, q.Title,
+       COALESCE(q.ItemCategory, '(no category)') AS ProcoreCategory,
+       COALESCE(m.Category, 'Quality')         AS Category,
+       q.StatusLabel, q.IsOpen, q.CreatedDate, q.DueDate, q.ClosedDate, q.DaysOpen, q.IsPastDue,
+       q.AssignedTo
+FROM fct_QualityItem q
+LEFT JOIN matched m ON m.ProjectKey = q.ProjectKey AND m.ItemType = q.ItemType AND m.ItemKey = q.ItemKey AND m.rn = 1
+WHERE q.ProjectKey IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- fct_SubPayment
+-- ---------------------------------------------------------------------------
+--
+-- Oct 30 call: "have we been paid, has this subcontractor been paid" - asked all the time and
+-- 30 minutes to answer. One row per project and subcontractor: what they are committed (their
+-- latest approved Procore requisition's contract sum), what they have requisitioned and what is
+-- held as retainage, then Sage AP for the same vendor on the job - invoiced, paid, still owed,
+-- and how old the oldest unpaid invoice is. A vendor with Sage AP but no Procore requisition
+-- is still listed (Requisitioned blank), so nothing paid goes unseen. Voids excluded.
+CREATE OR REPLACE TABLE fct_SubPayment AS
+WITH req AS (
+    SELECT ProjectKey, VendorKey, MAX(CounterpartyName) AS SubName,
+           MAX(ContractName) AS ContractName, COUNT(*) AS Commitments,
+           SUM(ContractSumToDate) AS Committed, SUM(CompletedToDate) AS Requisitioned,
+           SUM(RetainageHeld) AS RetainageHeld, SUM(BalanceToFinish) AS BalanceToFinish,
+           MAX(BillingDate) AS LastRequisitionDate
+    FROM fct_Billing
+    WHERE BillingType = 'Subcontractor' AND IsLatestApprovedPeriod = TRUE AND ProjectKey IS NOT NULL
+    GROUP BY ProjectKey, VendorKey
+),
+ap AS (
+    SELECT ProjectKey, VendorKey,
+           SUM(LineTotal) AS ApInvoiced,
+           SUM(CASE WHEN COALESCE(InvoiceTotal, 0) <> 0 THEN LineTotal * AmountPaid / InvoiceTotal END) AS ApPaid,
+           SUM(CASE WHEN COALESCE(InvoiceTotal, 0) <> 0 THEN LineTotal * InvoiceBalance / InvoiceTotal END) AS ApOpen,
+           MAX(CASE WHEN InvoiceBalance > 0 THEN datediff(CURRENT_DATE, InvoiceDate) END) AS OldestOpenDays,
+           COUNT(DISTINCT InvoiceKey) AS ApInvoices,
+           MAX(InvoiceDate) AS LastApInvoiceDate
+    FROM fct_ApInvoice
+    WHERE IsJobCost = TRUE AND NOT IsVoid AND ProjectKey IS NOT NULL
+    GROUP BY ProjectKey, VendorKey
+),
+k AS (
+    SELECT ProjectKey, VendorKey FROM req UNION SELECT ProjectKey, VendorKey FROM ap
+)
+SELECT k.ProjectKey,
+       CONCAT(k.ProjectKey, ':', COALESCE(k.VendorKey, '?'))     AS SubPaymentKey,
+       k.VendorKey,
+       COALESCE(r.SubName, v.VendorName, k.VendorKey)           AS SubName,
+       r.ContractName, r.Commitments, r.Committed, r.Requisitioned, r.RetainageHeld, r.BalanceToFinish,
+       r.LastRequisitionDate,
+       a.ApInvoiced, a.ApPaid, a.ApOpen, a.ApInvoices, a.LastApInvoiceDate, a.OldestOpenDays,
+       CASE WHEN a.OldestOpenDays IS NULL THEN 'Nothing owed'
+            WHEN a.OldestOpenDays <= 30 THEN '0-30 days'
+            WHEN a.OldestOpenDays <= 60 THEN '31-60 days'
+            WHEN a.OldestOpenDays <= 90 THEN '61-90 days'
+            ELSE 'Over 90 days' END                              AS OpenApAge,
+       CASE WHEN r.Committed IS NOT NULL THEN r.Committed - COALESCE(a.ApPaid, 0) END AS LeftToPay,
+       CASE WHEN r.ProjectKey IS NULL THEN 'Sage AP only - no Procore requisition'
+            WHEN a.ProjectKey IS NULL THEN 'Procore requisition - no Sage AP yet'
+            ELSE 'Procore and Sage' END                          AS Source
+FROM k
+LEFT JOIN req r ON r.ProjectKey = k.ProjectKey AND COALESCE(r.VendorKey, '?') = COALESCE(k.VendorKey, '?')
+LEFT JOIN ap a ON a.ProjectKey = k.ProjectKey AND COALESCE(a.VendorKey, '?') = COALESCE(k.VendorKey, '?')
+LEFT JOIN dim_Vendor v ON v.VendorKey = k.VendorKey;
+
+-- ---------------------------------------------------------------------------
+-- fct_DashCheck
+-- ---------------------------------------------------------------------------
+--
+-- Oct 30 call: "less validation of the data, more validation of the input" - a check that runs
+-- with every build and says, project by project, where the systems disagree or the source has
+-- not been kept up, so "the data is wrong" becomes "this entry was not made". One row per
+-- project and check: Pass / Warn, the number behind it, and what to do.
+CREATE OR REPLACE TABLE fct_DashCheck AS
+WITH s AS (
+    SELECT COALESCE(MAX(CASE WHEN SettingKey = 'tieout_tolerance' THEN Value END), 0.01) AS tol,
+           MAX(CASE WHEN SettingKey = 'sage_closed_through' THEN Value END) AS closed
+    FROM dim_DashSetting
+),
+dash AS (
+    SELECT p.ProjectKey, p.DashboardStatus, p.ProcoreEarnedLessRetainage, p.SageInvoicedToDate,
+           p.VoidedInvoiceAmount, p.VoidedInvoiceCount, p.ProjectedCost, p.CurrentContract
+    FROM fct_ProjectPosition p
+),
+dup AS (
+    -- Two live invoices on one job for the same amount: a re-issue left beside its original.
+    SELECT ProjectKey, COUNT(*) AS n, SUM(Amount) AS amt FROM (
+        SELECT ProjectKey, SageJobNumber, Amount, COUNT(*) OVER (PARTITION BY SageJobNumber, Amount) AS c
+        FROM fct_Invoice WHERE NOT IsVoid AND Amount <> 0) x
+    WHERE c > 1 GROUP BY ProjectKey
+),
+old_ar AS (
+    SELECT ProjectKey, COUNT(*) AS n, SUM(Balance) AS amt FROM fct_Invoice
+    WHERE Balance > 0 AND datediff(CURRENT_DATE, SentDate) > 90 GROUP BY ProjectKey
+),
+la AS (
+    SELECT a.ProjectKey, greatest(MAX(t.UpdatedAt), MAX(t.CreatedAt)) AS last_worked
+    FROM fct_ScheduleActivity a LEFT JOIN fct_LookaheadTask t ON t.ProjectKey = a.ProjectKey
+    GROUP BY a.ProjectKey
+),
+stale AS (
+    -- Activities whose forecast finish has passed with progress not marked complete.
+    SELECT ProjectKey, COUNT(*) AS n FROM fct_ScheduleActivity
+    WHERE NOT IsSummary AND NOT IsComplete AND FinishDate < CURRENT_DATE GROUP BY ProjectKey
+),
+insp AS (
+    SELECT ProjectKey, COUNT(*) AS n FROM fct_Inspection
+    WHERE NOT IsPerformed AND InspectionDate < date_add(CURRENT_DATE, -7) GROUP BY ProjectKey
+),
+team AS (
+    SELECT ProjectKey, MAX(CASE WHEN RoleCode = 'PM' THEN 1 ELSE 0 END) AS pm,
+           MAX(CASE WHEN RoleCode = 'Super' THEN 1 ELSE 0 END) AS super
+    FROM fct_ProjectTeam GROUP BY ProjectKey
+),
+checks AS (
+    SELECT d.ProjectKey, 1 AS CheckOrder, 'Sage vs Procore billing' AS CheckName,
+           CASE WHEN d.ProcoreEarnedLessRetainage IS NULL OR d.SageInvoicedToDate IS NULL THEN 'Info'
+                WHEN ABS(d.SageInvoicedToDate - d.ProcoreEarnedLessRetainage)
+                     <= s.tol * GREATEST(ABS(d.ProcoreEarnedLessRetainage), 1) THEN 'Pass' ELSE 'Warn' END AS Result,
+           d.SageInvoicedToDate - d.ProcoreEarnedLessRetainage AS Amount,
+           CASE WHEN d.ProcoreEarnedLessRetainage IS NULL THEN 'No Procore owner pay app to compare'
+                WHEN d.SageInvoicedToDate IS NULL THEN 'No Sage AR invoice on this job'
+                ELSE CONCAT('Sage invoiced ', CAST(CAST(ROUND(d.SageInvoicedToDate, 0) AS BIGINT) AS STRING), ' vs Procore earned less retainage ',
+                            CAST(CAST(ROUND(d.ProcoreEarnedLessRetainage, 0) AS BIGINT) AS STRING)) END AS Detail,
+           'Finance: Sage and Procore should tie out; post or void the difference' AS Action
+    FROM dash d CROSS JOIN s
+    UNION ALL
+    SELECT d.ProjectKey, 2, 'Voided Sage invoices',
+           CASE WHEN d.VoidedInvoiceCount > 0 THEN 'Info' ELSE 'Pass' END, d.VoidedInvoiceAmount,
+           CONCAT(CAST(d.VoidedInvoiceCount AS STRING), ' void invoice(s) left out of revenue and AR'),
+           'None - shown so the totals tie to Sage reports that exclude voids'
+    FROM dash d
+    UNION ALL
+    SELECT d.ProjectKey, 3, 'Possible duplicate invoices',
+           CASE WHEN COALESCE(u.n, 0) > 0 THEN 'Warn' ELSE 'Pass' END, u.amt,
+           CONCAT(CAST(COALESCE(u.n, 0) AS STRING), ' live invoice(s) share a job and amount with another'),
+           'Finance: void the copy in Sage if it is a re-issue'
+    FROM dash d LEFT JOIN dup u ON u.ProjectKey = d.ProjectKey
+    UNION ALL
+    SELECT d.ProjectKey, 4, 'AR over 90 days',
+           CASE WHEN COALESCE(o.n, 0) > 0 THEN 'Warn' ELSE 'Pass' END, o.amt,
+           CONCAT(CAST(COALESCE(o.n, 0) AS STRING), ' open invoice(s) older than 90 days'),
+           'Finance: collect, or write off / void old AR that will not be paid'
+    FROM dash d LEFT JOIN old_ar o ON o.ProjectKey = d.ProjectKey
+    UNION ALL
+    SELECT d.ProjectKey, 5, '3-week look-ahead updated',
+           CASE WHEN l.ProjectKey IS NULL THEN 'Info'
+                WHEN l.last_worked IS NULL OR datediff(CURRENT_DATE, CAST(l.last_worked AS DATE)) > 7 THEN 'Warn'
+                ELSE 'Pass' END,
+           CAST(datediff(CURRENT_DATE, CAST(l.last_worked AS DATE)) AS DOUBLE),
+           CASE WHEN l.ProjectKey IS NULL THEN 'Project not linked to Outbuild'
+                WHEN l.last_worked IS NULL THEN 'No look-ahead tasks in Outbuild'
+                ELSE CONCAT('Last worked ', CAST(datediff(CURRENT_DATE, CAST(l.last_worked AS DATE)) AS STRING), ' days ago') END,
+           'Field: update the Outbuild look-ahead every week'
+    FROM dash d LEFT JOIN la l ON l.ProjectKey = d.ProjectKey
+    UNION ALL
+    SELECT d.ProjectKey, 6, 'Schedule progress kept up',
+           CASE WHEN COALESCE(t.n, 0) > 0 THEN 'Warn' ELSE 'Pass' END, CAST(COALESCE(t.n, 0) AS DOUBLE),
+           CONCAT(CAST(COALESCE(t.n, 0) AS STRING), ' activities past their finish date and not marked 100%'),
+           'Field: mark progress in Outbuild, or re-forecast the finish'
+    FROM dash d LEFT JOIN stale t ON t.ProjectKey = d.ProjectKey
+    UNION ALL
+    SELECT d.ProjectKey, 7, 'Inspections closed',
+           CASE WHEN COALESCE(i.n, 0) > 0 THEN 'Warn' ELSE 'Pass' END, CAST(COALESCE(i.n, 0) AS DOUBLE),
+           CONCAT(CAST(COALESCE(i.n, 0) AS STRING), ' inspection(s) dated over a week ago and still not closed - not counted'),
+           'Field: finish and close the inspection in Procore'
+    FROM dash d LEFT JOIN insp i ON i.ProjectKey = d.ProjectKey
+    UNION ALL
+    SELECT d.ProjectKey, 8, 'Team roles in Procore',
+           CASE WHEN COALESCE(m.pm, 0) = 1 AND COALESCE(m.super, 0) = 1 THEN 'Pass' ELSE 'Warn' END, CAST(NULL AS DOUBLE),
+           CASE WHEN COALESCE(m.pm, 0) = 1 AND COALESCE(m.super, 0) = 1 THEN 'PM and Superintendent set'
+                ELSE CONCAT('Missing: ', concat_ws(', ', CASE WHEN COALESCE(m.pm, 0) = 0 THEN 'Project Manager' END,
+                                                     CASE WHEN COALESCE(m.super, 0) = 0 THEN 'Superintendent' END)) END,
+           'PM: set the roles in the Procore directory'
+    FROM dash d LEFT JOIN team m ON m.ProjectKey = d.ProjectKey
+    UNION ALL
+    SELECT d.ProjectKey, 9, 'Budget forecast in Procore',
+           CASE WHEN d.ProjectedCost IS NULL THEN 'Warn' ELSE 'Pass' END, d.ProjectedCost,
+           CASE WHEN d.ProjectedCost IS NULL THEN 'No forecast to complete - margin and on-budget cannot be read'
+                ELSE 'Forecast present' END,
+           'PM / QS: keep the Procore budget forecast current'
+    FROM dash d
+)
+SELECT c.ProjectKey, CONCAT(c.ProjectKey, ':', CAST(c.CheckOrder AS STRING)) AS CheckKey,
+       c.CheckOrder, c.CheckName, c.Result, c.Amount, c.Detail, c.Action,
+       CASE c.Result WHEN 'Warn' THEN 1 ELSE 0 END AS IsWarning
+FROM checks c
+JOIN fct_ProjectPosition p ON p.ProjectKey = c.ProjectKey;

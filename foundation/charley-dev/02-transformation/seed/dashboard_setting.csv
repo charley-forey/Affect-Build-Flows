@@ -12,3 +12,6 @@ risk_high_below,0.50,"PROPOSED: a top risk is High below this score, Medium othe
 lookahead_days,21,"Deck slide 3: near-term milestones and critical path, next 3 weeks"
 ar_aged_days,60,"Deck slide 1: AR > 60 days"
 active_within_days,60,"PROPOSED: Active = any Procore activity (daily log, meeting, inspection, RFI, submittal, observation) within this many days"
+sage_closed_through,20260930,"Last month closed in Sage, as yyyymmdd (Oct 30 call: September just closed; goal is by the 10th-15th of the next month). Update when a month closes; later months show as provisional (no WIP adjustment yet)"
+tieout_tolerance,0.01,"Sage vs Procore billing tie-out: a difference above this share of the Procore figure is flagged on Data Health"
+rollout_only,1,"1 = only the projects in dashboard_project.csv are Active (Oct 30 call); 0 = every project with recent Procore activity"

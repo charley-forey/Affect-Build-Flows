@@ -139,12 +139,15 @@ def kpi_value(p: str, key: str, name: str, x, y, w, h, size: int = 20, color: st
 
 def tile(p: str, key: str, label: str, value: str, sub: str | None, x, y, w, h, accent: str = TEAL,
          size: int = 22, sub_color: str = GREEN, precision: int | None = None, units: int | None = None,
-         pending: str | None = None) -> list[dict]:
+         pending: str | None = None, link: tuple[str, str] | None = None) -> list[dict]:
     """The deck's KPI tile: white card, coloured bar on the left, caps label, big value,
-    one line under it. `pending` replaces the value with what the tile is waiting for."""
+    one line under it. `pending` replaces the value with what the tile is waiting for;
+    `link` (page, what) adds the "Data >" button that opens the rows behind the value."""
     out = [panel(p, f"{key}_bg", x, y, w, h, radius=8),
            z(text(p, f"{key}_bar", " ", x, y, 6, h, fill=accent), 1),
-           text(p, f"{key}_lbl", label, x + 16, y + 10, w - 24, 20, size=9)]
+           text(p, f"{key}_lbl", label, x + 16, y + 10, w - 24 - (52 if link else 0), 20, size=9)]
+    if link:
+        out.append(nav(p, f"{key}_data", "Data >", x + w - 54, y + 8, 46, 20, link[0], link[1]))
     if pending:
         out.append(text(p, f"{key}_pending", pending, x + 16, y + 36, w - 24, h - 44, size=9,
                         color=SLATE, bold=False))
@@ -272,6 +275,457 @@ def button(p: str, key: str, label: str, x, y, w, h, action: str, target: str | 
     return b
 
 
+def nav(p: str, key: str, label: str, x, y, w, h, target: str, what: str) -> dict:
+    """A link to a detail page (Oct 30 call: every number opens the rows it is made from)."""
+    b = button(p, key, label, x, y, w, h, "Back")
+    c = b["visual"]["visualContainerObjects"]
+    c["visualLink"] = [{"properties": {"show": _ON, "type": rs._text("PageNavigation"),
+                                       "navigationSection": rs._text(target)}}]
+    c["general"] = [{"properties": {"altText": lit(f"Button. Opens {what}.")}}]
+    b["visual"]["objects"]["text"][1]["properties"]["fontSize"] = _num(8)
+    return b
+
+
+def where(v: dict, table: str, col: str, value: str) -> dict:
+    """A visual filter on a column: value is a DAX literal ('Owner', true)."""
+    v.setdefault("filterConfig", {"filters": []})["filters"].append({
+        "name": oid(v["name"], "where", table, col), "type": "Categorical",
+        "field": {"Column": {"Expression": {"SourceRef": {"Entity": table}}, "Property": col}},
+        "filter": {"Version": 2, "From": [{"Name": "t", "Entity": table, "Type": 0}],
+                   "Where": [{"Condition": {"In": {"Expressions": [{"Column": {"Expression": {"SourceRef": {
+                       "Source": "t"}}, "Property": col}}], "Values": [[{"Literal": {"Value": value}}]]}}}]},
+        "howCreated": "User"})
+    return v
+
+
+def proof(p: str, key: str, x, y, w, h, fields: list, alt: str, title: str | None = None,
+          pills: dict | None = None, sort: tuple[dict, str] | None = None, wide: dict | None = None,
+          flag: str | None = None) -> dict:
+    """The rows behind a number, WITH the totals row - the total is what ties to the tile.
+    Export data on the visual's menu gives the same rows to Excel."""
+    v = dr.visual(p, key, "tableEx", x, y, w, h, {"Values": fields}, title=title, alt=alt, title_size=10)
+    v = z(styled_table(v, pills), 3000)
+    v["visual"]["objects"]["total"] = [{"properties": {"totals": _ON, "fontColor": _color(NAVY),
+                                                       "backColor": _color("#E7EDF2")}}]
+    if sort:
+        v["visual"]["query"]["sortDefinition"] = {"sort": [{"field": sort[0]["field"], "direction": sort[1]}],
+                                                  "isDefaultSort": True}
+    if wide:
+        rs.widen(v, wide)
+    return flagged(v, flag) if flag else v
+
+
+def detail_header(p: str, title: str, right: str = "Detail Header", project_picker: bool = True) -> list[dict]:
+    """Navy band as the deck pages, with Back, a way home, the week and (optionally) projects."""
+    out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
+           z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
+           text(p, "title", title, 36, 4, 800, 43, size=18, color="#FFFFFF"),
+           kpi_value(p, "hdr_sub", "Week Header", 30, 50, 560, 26, size=9, color="#C7D7E7"),
+           kpi_value(p, "hdr_right", right, 600, 52, 440, 26, size=8, color="#C7D7E7"),
+           week_slicer(p, 1100, 8, 236, 44),
+           button(p, "back", "< Back", 1150, 56, 84, 22, "Back"),
+           nav(p, "home", "Executive >", 1240, 56, 96, 22, "dsexec", "the Executive Dashboard")]
+    if project_picker:
+        pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(
+            p, "slicer_project", "slicer", 860, 8, 230, 44, {"Values": [column("dim_Project", "ProjectName")]},
+            title="Projects (all active if none picked)", tab=2, title_size=8,
+            alt="Slicer. Narrows the tables on this page to the projects picked; none picked shows every active project.")))
+        pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
+                                     "selection": [{"properties": {"singleSelect": _OFF}}],
+                                     "header": [{"properties": {"show": _OFF}}]}
+        out.append(boxed(pick, fill=CARD_BG, radius=6))
+    return out
+
+
+def strip(p: str, cards: list[tuple[str, str, str | None]], y: int = 96, h: int = 84) -> list[dict]:
+    """The dashboard's own figure(s) at the top of a detail page: the number the rows below add to."""
+    n = len(cards)
+    gap = 12
+    w = (W - 72 - gap * (n - 1)) // n
+    out = []
+    for i, (label_, m, note) in enumerate(cards):
+        x = 36 + i * (w + gap)
+        out += [panel(p, f"s{i}_bg", x, y, w, h, radius=8),
+                z(text(p, f"s{i}_bar", " ", x, y, 6, h, fill=TEAL), 1),
+                text(p, f"s{i}_l", label_, x + 16, y + 8, w - 24, 20, size=8.5),
+                kpi_value(p, f"s{i}_v", m, x + 10, y + 29, w - 18, 28, size=15,
+                          alt=f"Card. {label_.title()}: the value ({m}).")]
+        if note:
+            out.append(text(p, f"s{i}_n", note, x + 16, y + h - 22, w - 24, 18, size=7, color=SLATE, bold=False))
+    return out
+
+
+def how(p: str, words: str, y: int = 188, h: int = 40) -> list[dict]:
+    """How the number is calculated, in words, on a pale band."""
+    return [z(text(p, "how_bg", " ", 36, y, W - 72, h, fill="#E7EDF2", radius=8), 1000),
+            text(p, "how", words, 48, y + 4, W - 96, h - 8, size=8, color=NAVY, bold=False)]
+
+
+m_ = measure
+c_ = column
+sa = rs.shown_as
+
+
+def invoice_fields(age: bool = False) -> list:
+    out = [sa(c_("fct_Invoice", "SageJobNumber"), "Job"), sa(c_("fct_Invoice", "SageJobName"), "Sage job"),
+           sa(c_("dim_Project", "ProjectName"), "Procore project"), sa(c_("fct_Invoice", "InvoiceID"), "Sage rec"),
+           sa(c_("fct_Invoice", "InvoiceNumber"), "Invoice"), sa(c_("fct_Invoice", "SentDate"), "Date"),
+           sa(c_("fct_Invoice", "SageStatus"), "Sage status")]
+    if age:
+        out += [sa(m_("Invoice Age Days"), "Days"), sa(m_("Invoice Age Band"), "Age")]
+    return out + [sa(m_("Invoice Amount"), "Counted"), sa(m_("Invoice Voided"), "Voided"),
+                  sa(m_("Invoice Paid"), "Paid"), sa(m_("Invoice Balance"), "Owed"),
+                  sa(m_("Invoice Treatment"), "Treatment")]
+
+
+def page_revenue() -> tuple[str, list[dict]]:
+    p = "dsrevenue"
+    out = detail_header(p, "DETAIL  |  REVENUE", project_picker=False)
+    out += strip(p, [("REVENUE YTD (ON THE DASHBOARD)", "Revenue YTD", "Jan 1 to the end of the week picked"),
+                     ("CLOSED MONTHS ONLY", "Revenue YTD Closed", "To the last month closed in Sage"),
+                     ("VOIDED IN SAGE - LEFT OUT", "Revenue YTD Voided", "Status 5 invoices, counted at $0"),
+                     ("BOOKS CLOSED THROUGH", "Books Closed Through", "Update dashboard_setting when a month closes")])
+    out += how(p, "Revenue YTD = the total of every Sage AR invoice dated from Jan 1 to the end of the week picked, on every "
+                  "Sage job - matched to a Procore project or not (job with no project = 'Counted - Sage job with no Procore "
+                  "project'). Voided invoices are listed and count $0. These are BILLINGS: revenue after the WIP (over / "
+                  "under billing) adjustment needs the Sage general ledger, not yet ingested.")
+    out.append(proof(p, "invoices", 36, 236, W - 72, 328, invoice_fields(),
+                     "Table. Every Sage AR invoice dated this year to the end of the week picked, with what counted, what "
+                     "was voided, paid and still owed. The total of Counted is Revenue YTD.",
+                     title="SAGE AR INVOICES IN REVENUE YTD  -  the Counted total is the tile",
+                     sort=(c_("fct_Invoice", "SentDate"), "Descending"),
+                     wide={"SageJobName": 3, "ProjectName": 3, "Invoice Treatment": 3, "InvoiceNumber": 2},
+                     flag="Invoice In YTD Flag"))
+    months = proof(p, "months", 36, 576, 520, 266,
+                   [sa(c_("dim_Date", "MonthYear"), "Month"), sa(m_("Invoices In Month"), "Invoices"),
+                    sa(m_("Revenue In Month"), "Invoiced (counted)"), sa(m_("Voided In Month"), "Voided"),
+                    sa(m_("Month Close State"), "Sage close")],
+                   "Table. Revenue invoiced in Sage by month this year, voids, and whether the month is closed.",
+                   title="BY MONTH  -  what was invoiced in each month", wide={"Month Close State": 2})
+    out.append(months)
+    out.append(proof(p, "jobs", 568, 576, 756, 266,
+                     [sa(c_("fct_Invoice", "SageJobNumber"), "Job"), sa(c_("fct_Invoice", "SageJobName"), "Sage job"),
+                      sa(c_("dim_Project", "ProjectName"), "Procore project"), sa(m_("Revenue YTD"), "Revenue YTD"),
+                      sa(m_("Revenue YTD Closed"), "Closed months"), sa(m_("Revenue YTD Voided"), "Voided")],
+                     "Table. Revenue YTD by Sage job, with the closed-months figure and voids.",
+                     title="BY SAGE JOB  -  including jobs with no Procore project",
+                     sort=(m_("Revenue YTD"), "Descending"), wide={"SageJobName": 3, "ProjectName": 3}))
+    return p, out
+
+
+def page_ar() -> tuple[str, list[dict]]:
+    p = "dsar"
+    out = detail_header(p, "DETAIL  |  RECEIVABLES (AR)", project_picker=False)
+    out += strip(p, [("OPEN AR - EVERY JOB", "AR Outstanding", "Sage balance still owed, voids at $0"),
+                     ("AR > 60 DAYS (ON THE DASHBOARD)", "AR Over 60 Days", "Invoice dated over 60 days ago"),
+                     ("ON NO PROCORE PROJECT", "Unattributed Open AR", "Sage jobs not in the crosswalk"),
+                     ("VOIDED BALANCES LEFT OUT", "Voided AR Left Out", "Sage keeps a void's full balance")])
+    out += how(p, "Open AR = the Sage balance on every AR invoice not yet paid in full. Ageing counts days from the invoice date "
+                  "to the data date; AR > 60 DAYS adds the 61-90 and over-90 rows. A voided invoice keeps its whole amount as a "
+                  "balance in Sage - those are left out here (they were in the AR the Oct 30 call questioned). Retainage held "
+                  "is not in Sage AR; it sits on the Procore pay app.")
+    out.append(proof(p, "open", 36, 236, W - 72, 380, invoice_fields(age=True),
+                     "Table. Every Sage AR invoice with a balance still owed, oldest first, with its age band. The Owed "
+                     "total is open AR.",
+                     title="OPEN SAGE AR INVOICES  -  oldest first",
+                     sort=(m_("Invoice Age Days"), "Descending"),
+                     wide={"SageJobName": 3, "ProjectName": 3, "Invoice Treatment": 3}, flag="Open AR Flag"))
+    out.append(proof(p, "jobs", 36, 628, W - 72, 214,
+                     [sa(c_("fct_Invoice", "SageJobNumber"), "Job"), sa(c_("fct_Invoice", "SageJobName"), "Sage job"),
+                      sa(c_("dim_Project", "ProjectName"), "Procore project"), sa(m_("Job Open AR"), "Open AR"),
+                      sa(m_("AR Over 60 Days"), "Over 60 days")],
+                     "Table. Open AR and AR over 60 days by Sage job.", title="BY SAGE JOB",
+                     sort=(m_("Job Open AR"), "Descending"), wide={"SageJobName": 3, "ProjectName": 3},
+                     flag="Open AR Job Flag"))
+    return p, out
+
+
+def page_margin() -> tuple[str, list[dict]]:
+    p = "dsmargin"
+    out = detail_header(p, "DETAIL  |  MARGIN, BUDGET & BUYOUT")
+    out += strip(p, [("GROSS MARGIN (ON THE DASHBOARD)", "Portfolio Gross Margin %", "Active projects with a forecast"),
+                     ("TARGET", "Gross Margin Target", "dashboard_setting"),
+                     ("ON BUDGET", "On Budget Text", "Forecast cost within budget"),
+                     ("SUBCONTRACTOR COVERAGE", "Portfolio Subcontractor Coverage", "Committed / buyable budget, $-weighted")])
+    out += how(p, "Margin = (Procore revised budget - forecast final cost) / revised budget. Affect's budgets carry the CM fee "
+                  "as a line (division 50), so the fee is margin, not cost, and is left out of cost. The portfolio figure "
+                  "adds every active project's budget and cost first. Coverage = committed (subcontracts and POs) over the "
+                  "budget of divisions 01-44, dollar for dollar - GCs, insurance, contingency, tax and fee are not bought out.")
+    out.append(proof(p, "projects", 36, 236, W - 72, 250,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Projected Revenue"), "Revised budget"),
+                      sa(m_("Projected Fee"), "CM fee (div 50)"), sa(m_("Projected Cost"), "Forecast cost ex fee"),
+                      sa(m_("Projected Margin $"), "Margin $"), sa(m_("Projected Gross Margin %"), "Margin %"),
+                      sa(m_("Margin vs Target"), "vs target"), sa(m_("Forecast Variance"), "Budget less forecast"),
+                      sa(m_("On Budget Row"), "On budget"), sa(m_("Subcontract Budget"), "Buyable budget"),
+                      sa(m_("Subcontract Committed"), "Committed"), sa(m_("Subcontractor Coverage %"), "Coverage"),
+                      sa(m_("In Margin Tile"), "In the tile")],
+                     "Table. Every active project's budget, forecast cost, CM fee, margin, budget variance and buyout "
+                     "coverage. The totals are the portfolio figures.",
+                     title="BY PROJECT  -  active projects", wide={"ProjectName": 3, "On Budget Row": 2, "In Margin Tile": 2},
+                     flag="Active Flag"))
+    out.append(proof(p, "lines", 36, 498, W - 72, 344,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("dim_CostCode", "CostCode"), "Cost code"),
+                      sa(c_("dim_CostCode", "Description"), "Description"),
+                      sa(c_("dim_CostCodeCrosswalk", "NewDivisionName"), "Division (new master)"),
+                      sa(m_("Line Budget"), "Budget"), sa(m_("Line Forecast"), "Forecast"),
+                      sa(m_("Line Committed"), "Committed"), sa(m_("Line Coverage %"), "Coverage"),
+                      sa(m_("Line Spent"), "Spent"), sa(m_("Line Treatment"), "How it counts")],
+                     "Table. Procore budget lines by cost code for the active projects: budget, forecast, committed, "
+                     "coverage, spent, and how each line counts in margin and coverage. Pick a project above to narrow it.",
+                     title="BUDGET LINES  -  pick a project above to narrow",
+                     wide={"ProjectName": 2, "Description": 3, "NewDivisionName": 2, "Line Treatment": 3},
+                     flag="Active Flag"))
+    return p, out
+
+
+def prime_fields(project: bool = True) -> list:
+    return ([sa(c_("dim_Project", "ProjectName"), "Project")] if project else []) + [
+        sa(c_("fct_Billing", "ContractName"), "Prime contract"), sa(c_("fct_Billing", "PeriodNumber"), "Pay app"),
+        sa(c_("fct_Billing", "BillingDate"), "Date"), sa(m_("Pay App Original Sum"), "Original"),
+        sa(m_("Pay App CO Change"), "Change orders"), sa(m_("Pay App Contract Sum"), "Contract to date"),
+        sa(m_("Pay App Completed"), "Billed (gross)"), sa(m_("Pay App Retainage"), "Retainage"),
+        sa(m_("Pay App Balance To Finish"), "Left to bill")]
+
+
+def latest_owner(v: dict) -> dict:
+    return where(where(v, "fct_Billing", "BillingType", "'Owner'"), "fct_Billing", "IsLatestPeriod", "true")
+
+
+def page_contracts() -> tuple[str, list[dict]]:
+    p = "dscontract"
+    out = detail_header(p, "DETAIL  |  CONTRACTS, BACKLOG & CHANGE ORDERS")
+    out += strip(p, [("ACTIVE PROJECTS", "Active Projects", "The Nov 19 rollout list"),
+                     ("CURRENT CONTRACT", "Active Contract Value", "Active projects"),
+                     ("BACKLOG (ON THE DASHBOARD)", "Backlog", "Contract not yet billed"),
+                     ("CHANGE ORDERS APPROVED", "Change Orders Approved %", "Approved / approved + pending"),
+                     ("PENDING CHANGE ORDERS", "Active Pending COs", "Procore prime COs not approved")])
+    out += how(p, "Current contract = the latest month's Procore prime contract value, every prime contract on the project added "
+                  "together (one Procore project can hold several - landlord / tenant splits). Billed to date = the latest "
+                  "Procore owner pay app's completed and stored (gross of retainage), or Sage invoices where there is no pay "
+                  "app. Backlog = current contract - billed to date. Change orders are Procore prime change orders.")
+    out.append(proof(p, "projects", 36, 236, W - 72, 200,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Status Reason"), "Why active"),
+                      sa(m_("Phase Label"), "Phase"), sa(m_("Phase Source"), "Phase read from"),
+                      sa(m_("Original Contract"), "Original"), sa(m_("CO Approved Amount"), "Approved COs"),
+                      sa(m_("CO Pending Amount"), "Pending COs"), sa(m_("Position Contract"), "Current contract"),
+                      sa(m_("Billed To Date (Gross)"), "Billed to date"), sa(m_("Billing Source"), "Billed from"),
+                      sa(m_("Billed % Of Contract"), "Billed %"), sa(m_("Project Backlog"), "Backlog")],
+                     "Table. Every active project: why it is active, its phase and where the phase is read from, original "
+                     "and current contract, change orders, billed to date and its source, and backlog. The Backlog total "
+                     "is the tile.",
+                     title="BY PROJECT  -  active projects",
+                     wide={"ProjectName": 3, "Status Reason": 2, "Phase Source": 4, "Billing Source": 3},
+                     flag="Active Flag"))
+    out.append(latest_owner(proof(p, "prime", 36, 448, 700, 394, prime_fields(),
+                                  "Table. Each Procore prime contract on the active projects, from its latest owner pay app: "
+                                  "original sum, change orders, contract to date, billed, retainage and left to bill.",
+                                  title="PRIME CONTRACTS  -  latest owner pay app on each", wide={"ProjectName": 2, "ContractName": 3},
+                                  flag="Active Flag")))
+    out.append(proof(p, "cos", 748, 448, 576, 394,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_ChangeOrder", "ChangeOrderNumber"), "CO"),
+                      sa(c_("fct_ChangeOrder", "ChangeOrderTitle"), "Title"), sa(c_("fct_ChangeOrder", "StatusDisplay"), "Status"),
+                      sa(c_("fct_ChangeOrder", "CreatedDate"), "Created"), sa(m_("CO Approved Amount"), "Approved"),
+                      sa(m_("CO Pending Amount"), "Pending")],
+                     "Table. Every Procore prime change order on the active projects, approved or pending.",
+                     title="PRIME CHANGE ORDERS", wide={"ProjectName": 2, "ChangeOrderTitle": 3},
+                     sort=(c_("fct_ChangeOrder", "CreatedDate"), "Descending"), flag="Active Flag"))
+    return p, out
+
+
+def page_cash() -> tuple[str, list[dict]]:
+    p = "dscash"
+    out = detail_header(p, "DETAIL  |  CASH POSITION")
+    out += strip(p, [("CASH POSITION (ON THE DASHBOARD)", "Portfolio Cash Position", "Active projects"),
+                     ("COLLECTED VS PAID", "Cash Subline", None),
+                     ("UNPAID PAYABLES", "Active Unpaid Payables", "Sage AP still to pay, voids excluded")])
+    out += how(p, "Cash position (Chris, Oct 22) = billings to date - retainage receivable - unpaid receivables, less (costs "
+                  "incurred - unpaid payables - retainage payable). Billings: Procore owner pay apps (gross). Retainage: Procore "
+                  "pay apps and requisitions. Unpaid AR and AP: Sage, voids excluded. Costs incurred: Procore job-to-date cost.")
+    out.append(proof(p, "projects", 36, 236, W - 72, 270,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Cash - Billings To Date"), "Billings to date"),
+                      sa(m_("Cash - Retainage Receivable"), "- Retainage rec."), sa(m_("Cash - Unpaid Receivables"), "- Unpaid AR"),
+                      sa(m_("Cash Collected"), "= Collected"), sa(m_("Cash - Costs Incurred"), "Costs incurred"),
+                      sa(m_("Cash - Unpaid Payables"), "- Unpaid AP"), sa(m_("Cash - Retainage Payable"), "- Sub retainage"),
+                      sa(m_("Cash Paid Out"), "= Paid out"), sa(m_("Cash Position"), "Cash position"),
+                      sa(m_("Cash Collected / Paid"), "Collected / paid")],
+                     "Table. Chris's cash position formula for every active project, step by step. The Cash position total "
+                     "is the tile.", title="BY PROJECT  -  every step of the formula", wide={"ProjectName": 3},
+                     flag="Active Flag"))
+    out.append(proof(p, "ap", 36, 518, W - 72, 324,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("dim_Vendor", "VendorName"), "Vendor"),
+                      sa(c_("fct_ApInvoice", "InvoiceNumber"), "AP invoice"), sa(c_("fct_ApInvoice", "InvoiceDate"), "Date"),
+                      sa(m_("AP Age Days"), "Days"), sa(m_("AP Line Amount"), "Job cost"), sa(m_("AP Line Open"), "Still to pay")],
+                     "Table. Sage AP job-cost invoices still unpaid on the active projects: vendor, date, age and amount "
+                     "still to pay. The total is Unpaid payables.",
+                     title="UNPAID PAYABLES  -  Sage AP, oldest first", sort=(m_("AP Age Days"), "Descending"),
+                     wide={"ProjectName": 2, "VendorName": 3}, flag="Open AP Active Flag"))
+    return p, out
+
+
+def page_schedule_detail() -> tuple[str, list[dict]]:
+    p = "dsschedule"
+    out = detail_header(p, "DETAIL  |  SCHEDULE")
+    out += strip(p, [("ON SCHEDULE (ON THE DASHBOARD)", "On Schedule Text", "Forecast finish on or before baseline"),
+                     ("PROJECTS AT RISK", "Projects At Risk (Grade)", "Grade 45 and below"),
+                     ("NEEDING ATTENTION", "Projects Needing Attention", "Below the monitor cut-off")])
+    out += how(p, "On schedule = Outbuild's current critical-path finish on or before the baseline (tracking) finish. The SCHEDULE "
+                  "pillar on the Portfolio page is NOT only this: it averages seven measures - OAC and trade partner meetings, "
+                  "the look-ahead, the monthly update, completion variance, submittals and RFIs - so a job 8 days ahead can "
+                  "still read 54% if minutes or the look-ahead are missing. The second table shows each part.")
+    out.append(proof(p, "finish", 36, 236, W - 72, 250,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Phase Label"), "Phase"),
+                      sa(m_("Phase Source"), "Phase read from"), sa(m_("Tracking Finish"), "Baseline finish"),
+                      sa(m_("Forecast Finish"), "Forecast finish"), sa(m_("Completion Variance Days"), "Days vs baseline"),
+                      sa(m_("Completion Variance %"), "% of duration"), sa(m_("On Schedule Row"), "On schedule")],
+                     "Table. Every active project's baseline and forecast finish from Outbuild, days early or late, and "
+                     "whether it counts as on schedule.", title="FINISH VS BASELINE  -  Outbuild current schedule",
+                     wide={"ProjectName": 3, "Phase Source": 4, "On Schedule Row": 2}, flag="Active Flag"))
+    out.append(proof(p, "parts", 36, 498, W - 72, 344,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Schedule Pillar"), "Schedule pillar"),
+                      *[sa(m_(dash.score_name(n)), n) for k, n, _ in dash.METRICS if 200 < k < 300]],
+                     "Table. For every active project, the schedule pillar and the score of each of the seven measures it "
+                     "averages. Grade Detail shows each reading.",
+                     title="WHAT MAKES THE SCHEDULE PILLAR  -  equal-weighted average of the measures scored",
+                     pills={"Schedule Pillar": ("Schedule Colour", "Schedule Ink")}, wide={"ProjectName": 3},
+                     flag="Active Flag"))
+    return p, out
+
+
+def page_safety_detail() -> tuple[str, list[dict]]:
+    p = "dssafety"
+    out = detail_header(p, "DETAIL  |  SAFETY & QUALITY")
+    out += strip(p, [("SAFETY SCORE (ON THE DASHBOARD)", "Portfolio Safety Score", "Inspections in the week, 5 = 80%"),
+                     ("INSPECTIONS COUNTED", "Safety Subline", None),
+                     ("STARTED, NOT CLOSED", "Active Inspections Not Closed", "Not counted until closed"),
+                     ("OPEN SAFETY OBSERVATIONS", "Active Open Safety Observations", "Procore observations")])
+    out += how(p, "Scored today (left of the call's 'double barrel'): Procore inspections CLOSED in the week - 5 = 80%, 16% less "
+                  "for each one short, 4% more for each extra. Collected beside it, NOT in the grade yet: inspection pass rate "
+                  "(items passed / passed + failed), observations raised and closed, punch. 'Data score (proposed)' averages "
+                  "pass rate and close rate - a placeholder to agree, as the call asked.")
+    out.append(proof(p, "safety", 36, 236, 648, 170,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Safety Inspections (Week)"), "Closed (week)"),
+                      sa(m_(dash.score_name("Safety Inspections")), "Score"), sa(m_("Safety Pass Rate (4 Weeks)"), "Pass rate 4 wk"),
+                      sa(m_("Open Safety Observations"), "Open obs."), sa(m_("Safety Observations (Week)"), "Raised (week)"),
+                      sa(m_("Safety Observation Close Rate"), "Closed 90 d"),
+                      sa(m_("Safety Data Score (Proposed)"), "Data score (proposed)")],
+                     "Table. Safety by active project: inspections closed in the week and their score, the pass rate, "
+                     "safety observations open and raised, and the proposed data score.",
+                     title="SAFETY  -  scored, and collected", wide={"ProjectName": 3}, flag="Active Flag"))
+    out.append(proof(p, "quality", 696, 236, 628, 170,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Quality Inspections (Week)"), "Closed (week)"),
+                      sa(m_(dash.score_name("Quality Inspections")), "Score"), sa(m_("Quality Pass Rate (4 Weeks)"), "Pass rate 4 wk"),
+                      sa(m_("Open Quality Observations"), "Open items"), sa(m_("Open Punch Items"), "Open punch"),
+                      sa(m_("Quality Item Close Rate"), "Closed 90 d"),
+                      sa(m_("Quality Data Score (Proposed)"), "Data score (proposed)")],
+                     "Table. Quality by active project: inspections closed in the week and their score, pass rate, open "
+                     "corrective actions and punch, and the proposed data score.",
+                     title="QUALITY  -  scored, and collected", wide={"ProjectName": 3}, flag="Active Flag"))
+    out.append(proof(p, "insp", 36, 418, W - 72, 210,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_Inspection", "Category"), "Pillar"),
+                      sa(c_("fct_Inspection", "InspectionName"), "Inspection"), sa(c_("fct_Inspection", "TemplateName"), "Template"),
+                      sa(c_("fct_Inspection", "InspectionDate"), "Date"), sa(c_("fct_Inspection", "StatusLabel"), "Status"),
+                      sa(m_("Inspection Counted"), "Counted?"), sa(m_("Inspection Pass Items"), "Passed"),
+                      sa(m_("Inspection Fail Items"), "Failed"), sa(m_("Inspection Pass Rate"), "Pass rate")],
+                     "Table. Every Procore inspection dated in the week on the active projects, whether it counted and why, "
+                     "and its passed and failed items.", title="INSPECTIONS DATED IN THE WEEK  -  counted or not, and why",
+                     wide={"ProjectName": 2, "InspectionName": 3, "TemplateName": 3, "Inspection Counted": 3},
+                     flag="Inspection In Week Active Flag"))
+    out.append(proof(p, "obs", 36, 640, W - 72, 202,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_DashObservation", "Category"), "Pillar"),
+                      sa(c_("fct_DashObservation", "ItemType"), "Type"), sa(c_("fct_DashObservation", "ProcoreCategory"), "Procore category"),
+                      sa(c_("fct_DashObservation", "Title"), "Title"), sa(c_("fct_DashObservation", "StatusLabel"), "Status"),
+                      sa(c_("fct_DashObservation", "CreatedDate"), "Raised"), sa(c_("fct_DashObservation", "DueDate"), "Due")],
+                     "Table. Procore observations and punch items on the active projects raised in the week or still open.",
+                     title="OBSERVATIONS & PUNCH  -  raised in the week, or still open",
+                     wide={"ProjectName": 2, "ProcoreCategory": 2, "Title": 4}, sort=(c_("fct_DashObservation", "CreatedDate"), "Descending"),
+                     flag="Observation Active Flag"))
+    return p, out
+
+
+def page_payments() -> tuple[str, list[dict]]:
+    """Oct 30 call: double-click Project Financials - have we been paid, has the sub been paid."""
+    p = "dspayments"
+    out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
+           z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
+           text(p, "title", "PROJECT PAYMENTS  |", 36, 4, 318, 43, size=20, color="#FFFFFF"),
+           kpi_value(p, "hdr_proj", "Project Title", 358, 8, 482, 38, size=20, color="#FFFFFF"),
+           kpi_value(p, "hdr_sub", "Week Header", 30, 50, 600, 26, size=9, color="#C7D7E7"),
+           kpi_value(p, "hdr_right", "Detail Header", 640, 52, 400, 26, size=8, color="#C7D7E7"),
+           week_slicer(p, 1100, 8, 236, 44),
+           button(p, "back", "< Back", 1150, 56, 84, 22, "Back"),
+           nav(p, "home", "Executive >", 1240, 56, 96, 22, "dsexec", "the Executive Dashboard")]
+    pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(p, "slicer_project", "slicer", 860, 8, 230, 44,
+                                 {"Values": [column("dim_Project", "ProjectName")]}, title="Project", tab=2, title_size=9,
+                                 alt="Slicer. Picks the project this page shows.")))
+    pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
+                                 "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
+                                 "header": [{"properties": {"show": _OFF}}]}
+    out.append(boxed(pick, fill=CARD_BG, radius=6))
+    out += strip(p, [("CONTRACT", "Position Contract", None), ("BILLED (GROSS)", "Billed To Date (Gross)", None),
+                     ("RECEIVED", "Paid To Date", "Sage receipts"), ("OWED TO AFFECT", "Cash - Unpaid Receivables", "Sage AR"),
+                     ("LEFT TO BILL", "Remaining Contract Balance", None), ("OWED TO SUBS", "Sub AP Open", "Sage AP")])
+    out += how(p, "Owner side: Procore prime contracts and their latest pay app; Sage invoices for what was received and is "
+                  "still owed. Sub side: each subcontractor's latest approved Procore requisition (committed, billed, retainage) "
+                  "beside Sage AP for the same vendor on the job (invoiced, paid, still to pay, age of the oldest unpaid). "
+                  "Contract - received - owed = left to collect.")
+    out.append(latest_owner(proof(p, "prime", 36, 236, 648, 230, prime_fields(project=False),
+                                  "Table. The project's Procore prime contracts from their latest owner pay app.",
+                                  title="PRIME CONTRACTS", wide={"ContractName": 3})))
+    out.append(proof(p, "invoices", 696, 236, 628, 230,
+                     [sa(c_("fct_Invoice", "InvoiceNumber"), "Invoice"), sa(c_("fct_Invoice", "InvoiceID"), "Sage rec"),
+                      sa(c_("fct_Invoice", "SentDate"), "Date"), sa(c_("fct_Invoice", "SageStatus"), "Status"),
+                      sa(m_("Invoice Amount"), "Invoiced"), sa(m_("Invoice Paid"), "Received"),
+                      sa(m_("Invoice Balance"), "Owed"), sa(m_("Invoice Age Days"), "Days")],
+                     "Table. The project's Sage AR invoices: invoiced, received and still owed, voids at zero.",
+                     title="OWNER INVOICES (SAGE)", sort=(c_("fct_Invoice", "SentDate"), "Descending")))
+    out.append(proof(p, "subs", 36, 478, W - 72, 364,
+                     [sa(c_("fct_SubPayment", "SubName"), "Subcontractor"), sa(c_("fct_SubPayment", "ContractName"), "Commitment"),
+                      sa(m_("Sub Committed"), "Committed"), sa(m_("Sub Requisitioned"), "Billed to date"),
+                      sa(m_("Sub Retainage Held"), "Retainage"), sa(m_("Sub AP Invoiced"), "Sage AP"),
+                      sa(m_("Sub Paid"), "Paid"), sa(m_("Sub AP Open"), "Still to pay"),
+                      sa(m_("Sub Oldest Open Days"), "Oldest unpaid (days)"), sa(c_("fct_SubPayment", "OpenApAge"), "Age"),
+                      sa(m_("Sub Left To Pay"), "Left on commitment"), sa(c_("fct_SubPayment", "Source"), "Source")],
+                     "Table. Every subcontractor and supplier on the project: committed, billed, retainage, Sage AP invoiced, "
+                     "paid and still to pay, the age of the oldest unpaid invoice, and what is left on the commitment.",
+                     title="SUBCONTRACTORS  -  committed, billed, paid, still to pay",
+                     sort=(m_("Sub AP Open"), "Descending"), wide={"SubName": 3, "ContractName": 3, "Source": 3}))
+    out += footer(p, "Pick the project above, or right-click a project on the Portfolio page and drill through  •  Export any "
+                     "table to Excel from its ... menu")
+    return p, out
+
+
+def page_health() -> tuple[str, list[dict]]:
+    p = "dshealth"
+    out = detail_header(p, "DATA HEALTH  |  IS THE SOURCE KEPT UP?", right="Health Header")
+    out += strip(p, [("WARNINGS", "Checks Warning", "Across active projects"),
+                     ("PROJECTS WITH A WARNING", "Projects With Warnings", None),
+                     ("CHECKS PASSED", "Checks Passed", None),
+                     ("AR ON NO PROCORE PROJECT", "Unattributed Open AR", "Map the Sage job in the crosswalk"),
+                     ("SAGE CLOSED THROUGH", "Books Closed Through", None)])
+    out += how(p, "Oct 30 call: validate the input, not only the output. Each build checks every active project - does Sage tie "
+                  "out to Procore, are there voids or duplicate invoices, old AR, a look-ahead not updated, activities past their "
+                  "finish and not marked complete, inspections left open, roles missing in Procore, no budget forecast. A warning "
+                  "means the number on the dashboard is only as good as that entry.")
+    out.append(proof(p, "checks", 36, 236, W - 72, 420,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_DashCheck", "CheckOrder"), "#"),
+                      sa(c_("fct_DashCheck", "CheckName"), "Check"), sa(m_("Check Result"), "Result"),
+                      sa(c_("fct_DashCheck", "Detail"), "What the data shows"), sa(m_("Check Amount"), "Number"),
+                      sa(c_("fct_DashCheck", "Action"), "To fix")],
+                     "Table. Every input check on every active project: the check, Pass, Warn or Info, what the data shows, "
+                     "the number behind it and who fixes it.",
+                     title="INPUT CHECKS  -  every active project, every build",
+                     pills={"Check Result": ("Check Colour", "Check Ink")},
+                     wide={"ProjectName": 2, "CheckName": 2, "Detail": 5, "Action": 4}, flag="Active Flag"))
+    out.append(where(proof(p, "unmatched", 36, 668, W - 72, 174,
+                           [sa(c_("fct_Invoice", "SageJobNumber"), "Sage job"), sa(c_("fct_Invoice", "SageJobName"), "Job name"),
+                            sa(m_("Job Open AR"), "Open AR"), sa(m_("Revenue YTD"), "Revenue YTD")],
+                           "Table. Sage jobs with AR but no Procore project in the crosswalk: open AR and revenue this year.",
+                           title="SAGE JOBS WITH NO PROCORE PROJECT  -  in Revenue YTD, on no project page",
+                           sort=(m_("Job Open AR"), "Descending"), wide={"SageJobName": 4}),
+                     "fct_Invoice", "HasUnmatchedProject", "true"))
+    return p, out
+
+
 # --------------------------------------------------------------------------- pages
 
 def page_executive() -> tuple[str, list[dict]]:
@@ -281,29 +735,29 @@ def page_executive() -> tuple[str, list[dict]]:
     xs = [37, 254, 470, 686, 903, 1119]
     tw = 204
     out = [*header(p, "EXECUTIVE DASHBOARD", "Week Header", "Data As Of Header")]
-    out += tile(p, "k_rev", "REVENUE YTD", "Revenue YTD", None, xs[0], y0, tw, th, accent=GREEN,
-                precision=1, units=1000000)
-    out.append(text(p, "k_rev_note", "Sage AR invoiced, net of retainage  -  plan not set yet", xs[0] + 16,
-                    y0 + th - 28, tw - 24, 24, size=7, color=SLATE, bold=False))
+    # Every tile opens the rows it is made from (Oct 30 call: "prove the work").
+    out += tile(p, "k_rev", "REVENUE YTD", "Revenue YTD", "Revenue YTD Subline", xs[0], y0, tw, th, accent=GREEN,
+                precision=1, units=1000000, sub_color=SLATE, link=("dsrevenue", "the Sage invoices behind Revenue YTD"))
     out += tile(p, "k_gm", "GROSS MARGIN", "Portfolio Gross Margin %", "Gross Margin Subline", xs[1], y0, tw, th,
-                accent=GREEN, precision=1, sub_color=AMBER_TEXT)
+                accent=GREEN, precision=1, sub_color=AMBER_TEXT, link=("dsmargin", "the budget and forecast behind the margin"))
     out += tile(p, "k_backlog", "BACKLOG", "Backlog", "Backlog Subline", xs[2], y0, tw, th, accent=TEAL,
-                precision=1, units=1000000, sub_color=GREEN)
+                precision=1, units=1000000, sub_color=GREEN, link=("dscontract", "the contracts and billing behind backlog"))
     out += tile(p, "k_active", "ACTIVE PROJECTS", "Active Projects", "Attention Subline", xs[3], y0, tw, th,
-                accent=AMBER, sub_color=AMBER_TEXT)
+                accent=AMBER, sub_color=AMBER_TEXT, link=("dscontract", "the active project list and why each is active"))
     out += tile(p, "k_cash", "CASH POSITION", "Portfolio Cash Position", "Cash Subline", xs[4], y0, tw, th,
-                accent=GREEN, precision=1, units=1000000)
-    out += tile(p, "k_safety", "SAFETY  •  INSPECTIONS", "Portfolio Safety Score", "Safety Subline",
-                xs[5], y0, tw, th, accent=GREEN, sub_color=SLATE)
+                accent=GREEN, precision=1, units=1000000, link=("dscash", "every step of the cash position formula"))
+    out += tile(p, "k_safety", "SAFETY", "Portfolio Safety Score", "Safety Subline",
+                xs[5], y0, tw, th, accent=GREEN, sub_color=SLATE, link=("dssafety", "the inspections and safety data"))
 
     # Financial performance (deck 0.46-6.61 in)
     fx, fy, fw, fh = 37, 230, 492, 381
     out += [panel(p, "fin_bg", fx, fy, fw, fh),
-            text(p, "fin_h", "FINANCIAL PERFORMANCE", fx + 18, fy + 12, fw - 36, 26, size=12, color=NAVY),
+            text(p, "fin_h", "FINANCIAL PERFORMANCE", fx + 18, fy + 12, fw - 140, 26, size=12, color=NAVY),
+            nav(p, "fin_data", "Revenue data >", fx + fw - 116, fy + 14, 98, 20, "dsrevenue", "revenue by month and by job"),
             z(text(p, "fin_rule", " ", fx + 18, fy + 42, fw - 36, 1, fill=LINE), 1),
             text(p, "fin_sub", "REVENUE  •  ACTUAL BY MONTH  (PLAN: AWAITING DATA ENTRY)", fx + 18, fy + 50,
                  fw - 36, 22, size=8.5)]
-    chart = dr.visual(p, "fin_chart", "clusteredColumnChart", fx + 12, fy + 74, fw - 24, 220,
+    chart = dr.visual(p, "fin_chart", "clusteredColumnChart", fx + 12, fy + 74, fw - 24, 198,
                       {"Category": [column("dim_Date", "MonthYear")], "Y": [measure("Revenue Last 6 Months")]},
                       alt="Column chart. Revenue invoiced in Sage by month, the last six months.")
     chart["visual"]["visualContainerObjects"]["title"] = [{"properties": {"show": _OFF}}]
@@ -316,11 +770,16 @@ def page_executive() -> tuple[str, list[dict]]:
                                                                    "showAxisTitle": _OFF}}],
                                   "legend": [{"properties": {"show": _OFF}}]}
     out.append(z(boxed(chart, fill=None), 3000))
+    # Oct 30 call: closed months are final; a month not yet closed in Sage carries a warning.
+    out.append(kpi_value(p, "fin_close", "Close Status Text", fx + 10, fy + 274, fw - 20, 26, size=7, color=AMBER_TEXT,
+                         alt="Card. The last month closed in Sage, and whether later months are provisional."))
     out += [z(text(p, "fin_rule2", " ", fx + 18, fy + 306, fw - 36, 1, fill=LINE), 1),
-            text(p, "fin_ebitda", "EBITDA", fx + 18, fy + 318, 80, 22, size=9),
-            text(p, "fin_ebitda_v", "Needs Sage general ledger (overheads) - not yet ingested", fx + 18, fy + 342,
+            # Oct 30 call: Affect books no depreciation, so this reads as net income.
+            text(p, "fin_ebitda", "NET INCOME", fx + 18, fy + 318, 110, 22, size=9),
+            text(p, "fin_ebitda_v", "Needs the Sage general ledger (overheads) - not yet ingested", fx + 18, fy + 342,
                  220, 34, size=8, color=SLATE, bold=False),
             text(p, "fin_ar", "AR > 60 DAYS", fx + 270, fy + 318, 110, 22, size=9),
+            nav(p, "fin_ar_data", "Data >", fx + fw - 64, fy + 318, 46, 20, "dsar", "the open AR invoices by age"),
             kpi_value(p, "fin_ar_v", "AR Over 60 Days", fx + 262, fy + 342, 200, 34, size=18, color=AMBER_TEXT,
                       precision=1, units=1000000)]
 
@@ -329,21 +788,25 @@ def page_executive() -> tuple[str, list[dict]]:
     out += [panel(p, "exe_bg", ex, ey, ew, eh),
             text(p, "exe_h", "PROJECT EXECUTION", ex + 18, ey + 12, ew - 36, 26, size=12, color=NAVY),
             z(text(p, "exe_rule", " ", ex + 18, ey + 42, ew - 36, 1, fill=LINE), 1)]
-    rows = [("ON SCHEDULE", "On Schedule Text", "On Schedule Ratio", GREEN, "forecast finish on or before baseline"),
-            ("ON BUDGET", "On Budget Text", "On Budget Ratio", TEAL, "forecast final cost within budget"),
+    rows = [("ON SCHEDULE", "On Schedule Text", "On Schedule Ratio", GREEN, "forecast finish on or before baseline",
+             "dsschedule", "baseline and forecast finish by project"),
+            ("ON BUDGET", "On Budget Text", "On Budget Ratio", TEAL, "forecast final cost within budget",
+             "dsmargin", "budget against forecast by project"),
             ("SUBCONTRACTOR COVERAGE", "Portfolio Subcontractor Coverage", "Portfolio Subcontractor Coverage",
-             "#235A89", "committed / buyable budget"),
+             "#235A89", "committed / buyable budget", "dsmargin", "committed against budget by cost code"),
             ("CHANGE ORDERS APPROVED", "Change Orders Approved %", "Change Orders Approved %", AMBER,
-             "approved / approved + pending value")]
-    for i, (lbl, val, ratio, color, hint) in enumerate(rows):
+             "approved / approved + pending value", "dscontract", "every prime change order")]
+    for i, (lbl, val, ratio, color, hint, target, what) in enumerate(rows):
         ry = ey + 48 + i * 64
-        out += [text(p, f"exe_{i}_l", lbl, ex + 18, ry, 250, 24, size=9),
+        out += [text(p, f"exe_{i}_l", lbl, ex + 18, ry, 176, 24, size=9),
+                nav(p, f"exe_{i}_data", "Data >", ex + 200, ry + 2, 46, 20, target, what),
                 kpi_value(p, f"exe_{i}_v", val, ex + ew - 128, ry - 6, 112, 28, size=11, color=NAVY),
                 *bar(p, f"exe_{i}_bar", ratio, ex + 18, ry + 24, ew - 36, 20, color),
                 text(p, f"exe_{i}_hint", hint, ex + 18, ry + 44, ew - 176, 20, size=6.5, color=SLATE, bold=False)]
     out += [z(text(p, "exe_rule2", " ", ex + 18, ey + 308, ew - 36, 1, fill=LINE), 1),
             text(p, "exe_fp", "FIELD PRODUCTIVITY", ex + 18, ey + 312, 170, 24, size=9),
-            text(p, "exe_fp_v", "Calculation criteria needed", ex + 190, ey + 312, 214, 22, size=8,
+            # Oct 30 call: rolling 3-week look-ahead plan against what was put in place - to build.
+            text(p, "exe_fp_v", "Next: 3-week plan vs actual (Outbuild)", ex + 190, ey + 312, 214, 22, size=8,
                  color=SLATE, bold=False),
             text(p, "exe_risk", "PROJECTS AT RISK", ex + 18, ey + 348, 136, 24, size=9),
             kpi_value(p, "exe_risk_v", "Projects At Risk (Grade)", ex + 160, ey + 340, 60, 38, size=20, color=RED),
@@ -389,7 +852,8 @@ def page_executive() -> tuple[str, list[dict]]:
     # Executive decisions / watchlist (deck 11.2-16.6 in) - TBD: Need Data Entry Capability.
     wx, wy, ww, wh = 885, 626, 438, 214
     out += [panel(p, "wl_bg", wx, wy, ww, wh),
-            text(p, "wl_h", "EXECUTIVE DECISIONS / WATCHLIST", wx + 18, wy + 10, ww - 36, 26, size=12, color=NAVY),
+            text(p, "wl_h", "EXECUTIVE DECISIONS / WATCHLIST", wx + 18, wy + 10, ww - 140, 26, size=12, color=NAVY),
+            nav(p, "wl_health", "Data health >", wx + ww - 116, wy + 12, 98, 20, "dshealth", "the data health checks"),
             text(p, "wl_pending",
                  "Awaiting data entry: leadership's three focus items for the month (the decision, and "
                  "the project or issue behind it). A SharePoint list will feed this panel, alongside the "
@@ -397,9 +861,9 @@ def page_executive() -> tuple[str, list[dict]]:
                  wx + 18, wy + 42, ww - 36, 90, size=8.5, color=SLATE, bold=False, fill="#F6F8FA", radius=8),
             z(text(p, "wl_dq_bg", " ", wx + 18, wy + 140, ww - 36, 64, fill="#FFF0CF", radius=8), 1000),
             kpi_value(p, "wl_dq", "Data Notice", wx + 26, wy + 144, ww - 52, 56, size=8, color="#7A4F12")]
-    out += footer(p, "Active projects: Procore activity in 60 days, not 100% paid  •  Margin: Procore forecast, CM fee "
-                     "excluded  •  Cash: billings - retainage - unpaid AR - (cost - unpaid AP - sub retainage)  •  "
-                     "Safety: inspections in the week, 5 = 80%")
+    out += footer(p, "Active: the Nov 19 rollout projects  •  Revenue: Sage invoiced to the week picked, voids excluded  •  "
+                     "Margin: Procore forecast, CM fee excluded  •  Safety: inspections closed in the week, 5 = 80%  •  "
+                     "Data > opens the rows behind each number")
     return p, out
 
 
@@ -540,9 +1004,12 @@ def page_project() -> tuple[str, list[dict]]:
     fx, fw = 517, 390
     out += [panel(p, "pf_bg", fx, r2, fw, h2),
             z(text(p, "pf_bar", " ", fx, r2, 6, h2, fill=TEAL), 1),
-            text(p, "pf_h", "PROJECT FINANCIALS", fx + 20, r2 + 12, fw - 40, 26, size=12, color=NAVY)]
+            text(p, "pf_h", "PROJECT FINANCIALS", fx + 20, r2 + 12, fw - 140, 26, size=12, color=NAVY),
+            # Oct 30 call: double-click the financials - have we been paid, has each sub been paid.
+            button(p, "pf_pay", "Payments >", fx + fw - 112, r2 + 14, 96, 22, "Drillthrough", "dspayments")]
     for i, (lbl, m) in enumerate([("ORIGINAL CONTRACT", "Original Contract"), ("CURRENT CONTRACT", "Current Contract"),
-                                  ("PENDING CHANGE ORDERS", "Pending Change Orders"),
+                                  # The change-order log itself, so it ties to Payments / Contracts.
+                                  ("PENDING CHANGE ORDERS", "CO Pending Amount"),
                                   ("BILLED TO DATE", "Billed To Date (Gross)"), ("PAID TO DATE", "Paid To Date"),
                                   ("REMAINING CONTRACT BALANCE", "Remaining Contract Balance")]):
         ry = r2 + 48 + i * 40
@@ -718,9 +1185,22 @@ PAGES = [
     ("Executive Dashboard", page_executive, False),
     ("Project Portfolio | Status", page_portfolio, False),
     ("Project Overview", page_project, False),
+    # Oct 30 call: the rows behind every number, each opened from its tile's "Data >".
+    ("Detail | Revenue", page_revenue, False),
+    ("Detail | Receivables", page_ar, False),
+    ("Detail | Margin & Budget", page_margin, False),
+    ("Detail | Contracts & COs", page_contracts, False),
+    ("Detail | Cash Position", page_cash, False),
+    ("Detail | Schedule", page_schedule_detail, False),
+    ("Detail | Safety & Quality", page_safety_detail, False),
+    ("Project Payments", page_payments, False),
+    ("Data Health", page_health, False),
     ("Grade Detail", page_grade, True),
 ]
-DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Project", "ProjectName")}
+DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Project", "ProjectName"),
+                "dspayments": ("dim_Project", "ProjectName")}
+# Drill-through targets a reader also opens directly; they keep their own project picker.
+OPEN_DIRECTLY = {"dsproject", "dspayments"}
 
 
 def retab(files: dict[str, str]) -> None:
@@ -778,7 +1258,7 @@ def build(model_id: str) -> dict[str, str]:
         page["objects"] = {"background": [{"properties": {"color": _color(PAGE_BG), "transparency": _num(0)}}],
                            "outspace": [{"properties": {"color": _color(PAGE_BG), "transparency": _num(0)}}]}
         # A drill-through page that is also opened directly keeps its own project picker.
-        if page["name"] == "dsproject":
+        if page["name"] in OPEN_DIRECTLY:
             page.pop("visibility", None)
         files[rel] = json.dumps(page, indent=2)
         (REPORT_DIR / rel).write_text(files[rel], encoding="utf-8", newline="")

@@ -111,7 +111,7 @@ FROM (VALUES
     ('208', '3', NULL, '0.00', '0.00', '3 or more weekdays missed', 'PROPOSED - Oct 21 call; not in Scorecard.xlsx')
 ) AS t(c1, c2, c3, c4, c5, c6, c7);
 
--- dim_DashSetting: 13 row(s) from seed/dashboard_setting.csv
+-- dim_DashSetting: 16 row(s) from seed/dashboard_setting.csv
 CREATE OR REPLACE TABLE dim_DashSetting AS
 SELECT CAST(c1 AS STRING) AS SettingKey,
        CAST(c2 AS DOUBLE) AS Value,
@@ -129,7 +129,10 @@ FROM (VALUES
     ('risk_high_below', '0.50', 'PROPOSED: a top risk is High below this score, Medium otherwise'),
     ('lookahead_days', '21', 'Deck slide 3: near-term milestones and critical path, next 3 weeks'),
     ('ar_aged_days', '60', 'Deck slide 1: AR > 60 days'),
-    ('active_within_days', '60', 'PROPOSED: Active = any Procore activity (daily log, meeting, inspection, RFI, submittal, observation) within this many days')
+    ('active_within_days', '60', 'PROPOSED: Active = any Procore activity (daily log, meeting, inspection, RFI, submittal, observation) within this many days'),
+    ('sage_closed_through', '20260930', 'Last month closed in Sage, as yyyymmdd (Oct 30 call: September just closed; goal is by the 10th-15th of the next month). Update when a month closes; later months show as provisional (no WIP adjustment yet)'),
+    ('tieout_tolerance', '0.01', 'Sage vs Procore billing tie-out: a difference above this share of the Procore figure is flagged on Data Health'),
+    ('rollout_only', '1', '1 = only the projects in dashboard_project.csv are Active (Oct 30 call); 0 = every project with recent Procore activity')
 ) AS t(c1, c2, c3);
 
 -- seed_InspectionCategory: 18 row(s) from seed/dashboard_inspection_category.csv
@@ -180,4 +183,58 @@ FROM (VALUES
     ('12', 'subcontractor biweekly', 'Trade Partner', NULL),
     ('13', 'trade coordination', 'Trade Partner', NULL),
     ('14', 'foreman meeting', 'Trade Partner', NULL)
+) AS t(c1, c2, c3, c4);
+
+-- seed_DashProject: 5 row(s) from seed/dashboard_project.csv
+CREATE OR REPLACE TABLE seed_DashProject AS
+SELECT CAST(c1 AS STRING) AS ProcoreProjectId,
+       CAST(c2 AS STRING) AS ProjectName,
+       CAST(c3 AS STRING) AS Note
+FROM (VALUES
+    ('562949955455437', '360 Lexington 15th Floor Fitout', 'Oct 30 call: the projects kept live for the Nov 19 rollout; every other project is archived from the dashboard'),
+    ('562949955365267', 'SaunaLounge 45 South 3 Street', 'Oct 30 call'),
+    ('562949955423662', 'City Harvest', 'Oct 30 call'),
+    ('562949955506246', 'Pro Foods - 10101 Foster Av', 'Oct 30 call'),
+    ('562949954973684', 'Lillipvt 45 Renwick St', 'Oct 30 call')
+) AS t(c1, c2, c3);
+
+-- seed_ObservationCategory: 16 row(s) from seed/dashboard_observation_category.csv
+CREATE OR REPLACE TABLE seed_ObservationCategory AS
+SELECT CAST(c1 AS INT) AS Priority,
+       CAST(c2 AS STRING) AS Pattern,
+       CAST(c3 AS STRING) AS Category,
+       CAST(c4 AS STRING) AS Note
+FROM (VALUES
+    ('1', 'safety', 'Safety', 'Safety Hazard, Safety Notice (Oct 30 call: collect every safety data point beside the inspections)'),
+    ('2', 'spill', 'Safety', 'environmental'),
+    ('3', 'observation report', 'Safety', 'insurer / safety consultant site reports (MdeAS / AmTrust, Falcon)'),
+    ('4', 'near miss', 'Safety', NULL),
+    ('5', 'incident', 'Safety', NULL),
+    ('6', 'toolbox', 'Safety', NULL),
+    ('7', 'safety win', 'Safety', 'Oct 30 call: promote the good as well as the bad'),
+    ('20', 'corrective', 'Quality', NULL),
+    ('21', 'preventative', 'Quality', NULL),
+    ('22', 'non-conformance', 'Quality', NULL),
+    ('23', 'ncr', 'Quality', NULL),
+    ('24', 'deficiency', 'Quality', NULL),
+    ('25', 'commissioning', 'Quality', NULL),
+    ('26', 'inspection', 'Quality', '3rd party inspections'),
+    ('27', 'punch', 'Quality', NULL),
+    ('28', 'work to complete', 'Quality', NULL)
+) AS t(c1, c2, c3, c4);
+
+-- seed_PhaseMilestone: 7 row(s) from seed/dashboard_phase_milestone.csv
+CREATE OR REPLACE TABLE seed_PhaseMilestone AS
+SELECT CAST(c1 AS INT) AS Priority,
+       CAST(c2 AS STRING) AS Pattern,
+       CAST(c3 AS STRING) AS Marks,
+       CAST(c4 AS STRING) AS Note
+FROM (VALUES
+    ('1', 'substantial completion', 'Closeout', 'Oct 30 call: once substantial completion is reached the job is in closeout'),
+    ('2', 'work start', 'Construction', 'Oct 30 call: construction once the construction milestone has started (City Harvest: ''Notice to Proceed - Work Start Trigger'')'),
+    ('3', 'work commencement', 'Construction', NULL),
+    ('4', 'construction start', 'Construction', NULL),
+    ('5', 'start of construction', 'Construction', NULL),
+    ('6', 'start construction', 'Construction', NULL),
+    ('7', 'notice to proceed', 'Construction', 'Used only when no work-start milestone is named')
 ) AS t(c1, c2, c3, c4);

@@ -16,3 +16,5 @@ procore_project_id,sage_job_number,relationship,source
 562949955365267,22,primary,legacy_verified_2026-09-13
 562949955423662,28,primary,client_confirmed_2026-10-05
 562949955455437,27,primary,client_confirmed_2026-10-05
+562949955455437,30,additional,proposed_2026-10-30: Sage job 30 '360 Lexington 15th floor fitout' is the exact Procore name (dq_CrosswalkCandidate EXACT_NAME_SECOND_SAGE_JOB); $242.6K open AR was unattributed - confirm with Affect
+562949955506246,29,primary,proposed_2026-10-30: Sage job 29 'Profoods 10101 Foster Avenue' = Procore 26-057 'Pro Foods - 10101 Foster Av' (no other job); Affect named it a live project on the Oct 30 call - confirm
