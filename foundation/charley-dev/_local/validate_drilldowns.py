@@ -89,10 +89,69 @@ TIES = [
 ]
 
 
+def rows_sum(metric_filter: str, value: str) -> str:
+    """A Grade Detail table total: the measure rows (dim_DashMetric) that pass the filter."""
+    return (f"SUMX ( FILTER ( VALUES ( dim_DashMetric[MetricKey] ), {metric_filter} ), {value} )")
+
+
+def counted(category: str) -> str:
+    """The inspection list's counted rows for one category in the week."""
+    return (f'COUNTROWS ( FILTER ( VALUES ( fct_Inspection[InspectionKey] ), [Inspection In Week Any Flag] = "Yes" '
+            f'&& CALCULATE ( SELECTEDVALUE ( fct_Inspection[IsPerformed] ) ) '
+            f'&& CALCULATE ( SELECTEDVALUE ( fct_Inspection[Category] ) ) = "{category}" ) ) + 0')
+
+
+# Per project, for every active project: the Portfolio cell or Grade Detail card, against the
+# rows the drill-through shows for that project. (label, value, rows' total)
+PER_PROJECT = [
+    ("Grade = Grade Detail rows: score x share of grade, x 100", "[Grade]",
+     "100 * " + rows_sum("NOT ISBLANK ( [Metric Score] ) && NOT ISBLANK ( [Metric Weight In Grade] )",
+                         "[Metric Score] * [Metric Weight In Grade]")),
+    *[(f"{name} pillar = average of its Grade Detail scores", f"[{name} Pillar]",
+       f"AVERAGEX ( FILTER ( VALUES ( dim_DashMetric[MetricKey] ), CALCULATE ( SELECTEDVALUE ( dim_DashMetric[PillarKey] ) ) = {key} "
+       f"&& NOT ISBLANK ( [Metric Score] ) ), [Metric Score] )")
+      for key, name in [(1, "Schedule"), (2, "Budget"), (3, "Safety"), (4, "Quality")]],
+    # An unscored project (under half the weight measured) shows no count, by the documented rule.
+    ("Below target = Grade Detail rows under 80% (scored projects)", "[Measures Below Target]",
+     "IF ( NOT ISBLANK ( [Grade] ), COUNTROWS ( FILTER ( VALUES ( dim_DashMetric[MetricKey] ), "
+     "NOT ISBLANK ( [Metric Score] ) && [Metric Score] < 0.8 ) ) + 0 )"),
+    ("Safety inspections (week) = counted rows in the inspection list", "[Safety Inspections (Week)]", counted("Safety")),
+    ("Quality inspections (week) = counted rows in the inspection list", "[Quality Inspections (Week)]", counted("Quality")),
+    ("Open safety observations = observation list rows, safety, open", "[Open Safety Observations]",
+     'CALCULATE ( COUNTROWS ( fct_DashObservation ), fct_DashObservation[Category] = "Safety", fct_DashObservation[IsOpen] = TRUE () ) + 0'),
+    ("Owed to subs = Project Payments subcontractor rows", "[Sub AP Open]",
+     "SUMX ( VALUES ( fct_SubPayment[SubPaymentKey] ), CALCULATE ( SUM ( fct_SubPayment[ApOpen] ) ) )"),
+    ("Cash position = its formula's steps", "[Cash Position]",
+     "[Cash - Billings To Date] - [Cash - Retainage Receivable] - [Cash - Unpaid Receivables] "
+     "- ( [Cash - Costs Incurred] - [Cash - Unpaid Payables] - [Cash - Retainage Payable] )"),
+    ("Data Health warnings = check rows reading Warn", "CALCULATE ( SUM ( fct_DashCheck[IsWarning] ) ) + 0",
+     'CALCULATE ( COUNTROWS ( fct_DashCheck ), fct_DashCheck[Result] = "Warn" ) + 0'),
+]
+
+
 def main() -> int:
     tok = vm.pbi_token()
     model = dr.ds.find_item(dr.dp.token(), dr.MODEL_NAME, "SemanticModel")["id"]
     bad = 0
+    for label, value, total in PER_PROJECT:
+        q = (f"EVALUATE ADDCOLUMNS ( {ACTIVE}, \"v\", {value}, \"t\", {total} )")
+        try:
+            rows = vm.dax(model, tok, q)
+        except Exception as exc:  # noqa: BLE001 - reported, not a crash
+            print(f"  ERROR {label}: {str(exc)[:300]}")
+            bad += 1
+            continue
+        diffs = []
+        for r in rows:
+            a, b = r.get("[v]"), r.get("[t]")
+            # A project whose cash position is blank (no budget) has no steps to tie either.
+            if a is None and (b is None or label.startswith("Cash")):
+                continue
+            if a is None or b is None or abs(float(a) - float(b)) > 0.005:
+                diffs.append((r.get("dim_Project[ProjectKey]"), a, b))
+        bad += bool(diffs)
+        print(f"  {'DIFF' if diffs else 'ok  '} {label}: {len(rows)} projects" + (f" {diffs}" if diffs else ""))
+    TIES_PER = len(PER_PROJECT)
     for label, tile, total in TIES:
         q = f'EVALUATE ROW ( "tile", {tile}, "total", {total} )'
         try:
@@ -105,7 +164,8 @@ def main() -> int:
         same = (a is None and b is None) or (a is not None and b is not None and abs(float(a) - float(b)) < 0.005)
         bad += not same
         print(f"  {'ok  ' if same else 'DIFF'} {label}: tile {a!r}, table {b!r}")
-    print(f"\n{len(TIES) - bad} of {len(TIES)} drill-downs tie out")
+    print(f"\n{len(TIES) + TIES_PER - bad} of {len(TIES) + TIES_PER} drill-downs tie out "
+          f"({len(TIES)} portfolio figures, {TIES_PER} per-project checks over every active project)")
     return 1 if bad else 0
 
 
