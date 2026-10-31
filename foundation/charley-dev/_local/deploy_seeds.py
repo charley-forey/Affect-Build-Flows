@@ -92,11 +92,12 @@ built = []
         "dim_ActivityCategory": 28, "dim_ScorecardWeight": 9, "dim_ScorecardBand": 27,
         "qc_seed_Trade": 26, "qc_seed_ChecklistItem": 625, "qc_seed_Gate": 93,
         "qc_seed_DohItem": 101, "dim_QcStatus": 141,
-        "seed_ProjectCrosswalk": 17, "seed_ProjectExclusion": 4, "seed_OutbuildProjectMap": 2,
+        "seed_ProjectCrosswalk": 19, "seed_ProjectExclusion": 4, "seed_OutbuildProjectMap": 2,
         "seed_CostCodeNew": 291, "seed_CostCodeMap": 318, "seed_CostCodeLegacyMap": 156,
         "seed_PublicHoliday": 36,
-        "dim_DashPillar": 5, "dim_DashMetric": 18, "dim_DashBand": 44, "dim_DashSetting": 13,
+        "dim_DashPillar": 5, "dim_DashMetric": 18, "dim_DashBand": 44, "dim_DashSetting": 16,
         "seed_InspectionCategory": 18, "seed_MeetingCategory": 14,
+        "seed_DashProject": 5, "seed_ObservationCategory": 16, "seed_PhaseMilestone": 7,
     }
     cells.append(
         cell(

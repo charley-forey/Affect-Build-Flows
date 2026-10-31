@@ -309,7 +309,9 @@ tables = ["dim_Project", "dim_Vendor", "dim_CostCode",
           # the empty guard: a portfolio that plans no look-ahead in Outbuild is real.
           "fct_Inspection", "fct_Meeting", "fct_ProjectTeam", "fct_ScheduleActivity",
           "fct_LookaheadTask", "dim_ReportWeek", "fct_ProjectPosition",
-          "fct_MetricScore", "fct_ProjectScore"]
+          "fct_MetricScore", "fct_ProjectScore",
+          # The Oct 30 drill-downs: observations and punch, subcontractor payments, input checks.
+          "fct_DashObservation", "fct_SubPayment", "fct_DashCheck"]
 
 counts, bad = {}, []
 for t in tables + manual_tables:
