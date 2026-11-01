@@ -276,8 +276,13 @@ def expected(E: dict) -> dict:
     D["Cash Collected / Paid"] = ratio
 
     # ---- profitability ---------------------------------------------------------------
+    _divisions: dict = {}
+
     def division(c):
-        return {x["CostCodeKey"]: x["NewDivisionCode"] for x in c.data["dim_CostCodeCrosswalk"]}
+        # Built once per run: per budget line it made the live check quadratic (6,743 cost codes).
+        if id(c) not in _divisions:
+            _divisions[id(c)] = {x["CostCodeKey"]: x["NewDivisionCode"] for x in c.data["dim_CostCodeCrosswalk"]}
+        return _divisions[id(c)]
 
     D["Projected Revenue"] = lambda c, s: E["Budget"](c, s)
     D["Projected Cost"] = lambda c, s: _sum(
@@ -756,7 +761,16 @@ def expected(E: dict) -> dict:
     D["Quality Data Score (Proposed)"] = mean_of("Quality Pass Rate (4 Weeks)", "Quality Item Close Rate")
 
     # Data Health: fct_DashCheck rebuilt, (Result, Amount) for each of one project's nine checks.
+    _checks: dict = {}
+
     def checks(c, ps):
+        # The nine checks are read by four measures in every context: worked out once per project.
+        key = (id(c), ps)
+        if key not in _checks:
+            _checks[key] = _checks_for(c, ps)
+        return _checks[key]
+
+    def _checks_for(c, ps):
         a, ps = as_of(c), nomonth(ps)
         invoices = [r for r in c.rows("fct_Invoice", ps) if r["HasUnmatchedProject"] is not True]
         out = []
