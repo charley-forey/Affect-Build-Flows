@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Forecast Finish"
+                  "Property": "Forecast Finish Shown"
                 }
               },
-              "queryRef": "_Measures.Forecast Finish",
-              "nativeQueryRef": "Forecast Finish"
+              "queryRef": "_Measures.Forecast Finish Shown",
+              "nativeQueryRef": "Forecast Finish Shown"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Forecast Finish: the value (Forecast Finish).'"
+                  "Value": "'Card. Forecast Finish: the value (Forecast Finish Shown).'"
                 }
               }
             }

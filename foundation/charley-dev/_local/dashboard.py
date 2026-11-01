@@ -506,6 +506,11 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          '"+0;-0;0"', "detail - current finish less baseline finish, days"),
         ("Line Cost To Complete", "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
          '"$#,0"', "detail - Procore cost to complete on the line; the total is COST TO COMPLETE"),
+        ("Days Vs Baseline Shown",
+         # "8 DAYS" did not say early or late (seen live): say it.
+         'IF ( [Is Dashboard Project], VAR D = [Completion Variance Days] RETURN SWITCH ( TRUE (), ISBLANK ( D ), "No baseline",\n'
+         '    D = 0, "On baseline", D > 0, D & " days late", -D & " days early" ) )',
+         None, "card text - forecast against tracking finish"),
         ("Budget Line Flag",
          row_flag("dim_CostCode[CostCode]", "( NOT ISBLANK ( [Line Budget] ) || NOT ISBLANK ( [Line Forecast] ) )"),
          None, "detail row filter - cost codes the project actually budgets or forecasts"),

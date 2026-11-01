@@ -3092,6 +3092,12 @@ table _Measures
 		formatString: "$#,0"
 		displayFolder: 25 Dashboard - executive
 
+	/// Replaces card text - forecast against tracking finish
+	measure 'Days Vs Baseline Shown' =
+			IF ( [Is Dashboard Project], VAR D = [Completion Variance Days] RETURN SWITCH ( TRUE (), ISBLANK ( D ), "No baseline",
+			D = 0, "On baseline", D > 0, D & " days late", -D & " days early" ) )
+		displayFolder: 25 Dashboard - executive
+
 	/// Replaces detail row filter - cost codes the project actually budgets or forecasts
 	measure 'Budget Line Flag' = IF ( HASONEVALUE ( dim_CostCode[CostCode] ) && ( NOT ISBLANK ( [Line Budget] ) || NOT ISBLANK ( [Line Forecast] ) ), "Yes" )
 		displayFolder: 25 Dashboard - executive

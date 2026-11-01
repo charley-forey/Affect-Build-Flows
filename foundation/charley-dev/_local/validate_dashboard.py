@@ -51,7 +51,7 @@ PRESENTATION = {
     "Observation In View Flag", "Observation Active Flag", "Check Result", "Cash Row Flag", "Unmatched Job Flag",
     # Project Overview, shown working: row readings (BLANK without one activity / milestone / cost
     # code); their totals are tied to the Overview tiles live by validate_drilldowns.py.
-    "Progress Row Flag", "Budget Line Flag", "Manual Baseline Note", "Activity Duration", "Activity % Complete",
+    "Progress Row Flag", "Budget Line Flag", "Days Vs Baseline Shown", "Manual Baseline Note", "Activity Duration", "Activity % Complete",
     "Activity Share Of Progress", "Milestone Baseline Finish", "Milestone Forecast Finish", "Milestone Days Late",
     "Line Cost To Complete",
     *{f"{p} {suffix}" for _, p in dashboard.PILLARS for suffix in ("Cell", "Colour", "Ink")},

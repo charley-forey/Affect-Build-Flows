@@ -3,10 +3,10 @@
   "name": "717920e920faf8b7226b",
   "position": {
     "x": 36,
-    "y": 4,
+    "y": 8,
     "z": 2000,
-    "width": 318,
-    "height": 43,
+    "width": 360,
+    "height": 36,
     "tabOrder": 0
   },
   "visual": {
@@ -23,7 +23,7 @@
                     "value": "CONTRACT & COST  |",
                     "textStyle": {
                       "fontFamily": "Arial",
-                      "fontSize": "20pt",
+                      "fontSize": "15pt",
                       "color": "#FFFFFF",
                       "fontWeight": "bold"
                     }

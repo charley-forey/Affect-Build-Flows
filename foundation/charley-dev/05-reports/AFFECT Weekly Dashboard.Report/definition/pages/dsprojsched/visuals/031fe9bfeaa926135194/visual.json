@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Tracking Finish"
+                  "Property": "Tracking Finish Shown"
                 }
               },
-              "queryRef": "_Measures.Tracking Finish",
-              "nativeQueryRef": "Tracking Finish"
+              "queryRef": "_Measures.Tracking Finish Shown",
+              "nativeQueryRef": "Tracking Finish Shown"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Tracking Finish: the value (Tracking Finish).'"
+                  "Value": "'Card. Tracking Finish: the value (Tracking Finish Shown).'"
                 }
               }
             }

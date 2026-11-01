@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Work Progress %"
+                  "Property": "Work Progress Shown"
                 }
               },
-              "queryRef": "_Measures.Work Progress %",
-              "nativeQueryRef": "Work Progress %"
+              "queryRef": "_Measures.Work Progress Shown",
+              "nativeQueryRef": "Work Progress Shown"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Project Complete: the value (Work Progress %).'"
+                  "Value": "'Card. Project Complete: the value (Work Progress Shown).'"
                 }
               }
             }

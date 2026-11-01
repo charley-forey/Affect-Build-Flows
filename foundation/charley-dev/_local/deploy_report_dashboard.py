@@ -654,8 +654,8 @@ def project_header(p: str, title: str) -> list[dict]:
     buttons), or opened directly with its own project picker."""
     out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
            z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
-           text(p, "title", title, 36, 4, 318, 43, size=20, color="#FFFFFF"),
-           kpi_value(p, "hdr_proj", "Project Title", 358, 8, 482, 38, size=20, color="#FFFFFF"),
+           text(p, "title", title, 36, 8, 360, 36, size=15, color="#FFFFFF"),
+           kpi_value(p, "hdr_proj", "Project Title", 400, 8, 450, 38, size=18, color="#FFFFFF"),
            kpi_value(p, "hdr_sub", "Week Header", 30, 50, 600, 26, size=9, color="#C7D7E7"),
            kpi_value(p, "hdr_right", "Detail Header", 640, 52, 400, 26, size=8, color="#C7D7E7"),
            week_slicer(p, 1100, 8, 236, 44),
@@ -751,7 +751,7 @@ def page_project_cost() -> tuple[str, list[dict]]:
                      "Table. The project's Procore budget lines: budget, forecast, committed, coverage, spent and cost to "
                      "complete, and how each line counts. The totals are COST TO COMPLETE and RISK BOUGHT OUT.",
                      title="BUDGET LINES  -  the totals are the cards above",
-                     wide={"Description": 3, "NewDivisionName": 2, "Line Treatment": 3}, flag="Budget Line Flag"))
+                     wide={"CostCode": 3, "Description": 3, "NewDivisionName": 2, "Line Treatment": 3}, flag="Budget Line Flag"))
     return p, out
 
 
@@ -759,10 +759,11 @@ def page_project_schedule() -> tuple[str, list[dict]]:
     """Project Overview, shown working: PROJECT COMPLETE and the finish dates."""
     p = "dsprojsched"
     out = project_header(p, "SCHEDULE & PROGRESS  |")
-    out += strip(p, [("PROJECT COMPLETE", "Work Progress %", "Duration-weighted, Outbuild"),
-                     ("TRACKING FINISH", "Tracking Finish", "Latest baseline finish"),
-                     ("FORECAST FINISH", "Forecast Finish", "Latest current finish"),
-                     ("DAYS VS BASELINE", "Completion Variance Days", "+ late, - early"),
+    # Cards print BLANK as "(Blank)" (seen live, 11 Essex has no Outbuild schedule): the Shown texts.
+    out += strip(p, [("PROJECT COMPLETE", "Work Progress Shown", "Duration-weighted, Outbuild"),
+                     ("TRACKING FINISH", "Tracking Finish Shown", "Latest baseline finish"),
+                     ("FORECAST FINISH", "Forecast Finish Shown", "Latest current finish"),
+                     ("VS BASELINE", "Days Vs Baseline Shown", "Forecast against tracking finish"),
                      ("BASELINE FROM", "Manual Baseline Note", None)])
     out += how(p, "Project complete = sum of (duration x % complete) over sum of duration, every real activity on the current "
                   "Outbuild schedule (summary bars and zero-duration milestones left out): the 'Share of progress' column adds "

@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "+ late, - early",
+                    "value": "Forecast against tracking finish",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'+ late, - early'"
+                  "Value": "'Forecast against tracking finish'"
                 }
               }
             }

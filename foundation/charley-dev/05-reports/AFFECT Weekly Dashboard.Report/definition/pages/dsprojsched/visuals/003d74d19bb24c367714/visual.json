@@ -23,11 +23,11 @@
                       "Entity": "_Measures"
                     }
                   },
-                  "Property": "Completion Variance Days"
+                  "Property": "Days Vs Baseline Shown"
                 }
               },
-              "queryRef": "_Measures.Completion Variance Days",
-              "nativeQueryRef": "Completion Variance Days"
+              "queryRef": "_Measures.Days Vs Baseline Shown",
+              "nativeQueryRef": "Days Vs Baseline Shown"
             }
           ]
         }
@@ -41,7 +41,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Card. Days Vs Baseline: the value (Completion Variance Days).'"
+                  "Value": "'Card. Vs Baseline: the value (Days Vs Baseline Shown).'"
                 }
               }
             }

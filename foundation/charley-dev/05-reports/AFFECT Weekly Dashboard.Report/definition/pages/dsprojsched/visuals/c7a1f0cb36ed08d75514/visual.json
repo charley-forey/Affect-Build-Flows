@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "DAYS VS BASELINE",
+                    "value": "VS BASELINE",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "8.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'DAYS VS BASELINE'"
+                  "Value": "'VS BASELINE'"
                 }
               }
             }
