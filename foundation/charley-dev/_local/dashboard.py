@@ -478,6 +478,42 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          None, "detail row filter"),
         ("Observation Active Flag", 'IF ( [Observation In View Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )',
          None, "detail row filter"),
+        # ---- Project Overview, shown working: progress and cost to complete -------------------
+        ("Progress Row Flag",
+         row_flag("fct_ScheduleActivity[ActivityKey]",
+                  "NOT SELECTEDVALUE ( fct_ScheduleActivity[IsSummary] ) && SUM ( fct_ScheduleActivity[DurationDays] ) > 0"),
+         None, "detail row filter - the activities PROJECT COMPLETE weighs (real activities with a duration)"),
+        ("Activity Duration", "SUM ( fct_ScheduleActivity[DurationDays] )", '"#,0"', "detail - working days, Outbuild"),
+        ("Activity % Complete", "MAX ( fct_ScheduleActivity[PercentComplete] )", '"0%"', "detail - Outbuild progress"),
+        ("Activity Share Of Progress",
+         # Each activity's duration x % complete over the project's total weighted duration: the rows
+         # add up to PROJECT COMPLETE.
+         # "Rows" / "Total" as VAR names deploy and then fail to parse (seen live 2026-10-31).
+         # Only the table's own row columns are cleared: REMOVEFILTERS ( fct_ScheduleActivity )
+         # clears the expanded table, project included.
+         "VAR Acts = FILTER ( fct_ScheduleActivity, NOT fct_ScheduleActivity[IsSummary] && fct_ScheduleActivity[DurationDays] > 0 )\n"
+         "VAR DoneDays = SUMX ( Acts, fct_ScheduleActivity[DurationDays] * COALESCE ( fct_ScheduleActivity[PercentComplete], 0 ) )\n"
+         "VAR AllDays = CALCULATE ( SUMX ( FILTER ( fct_ScheduleActivity, NOT fct_ScheduleActivity[IsSummary] && fct_ScheduleActivity[DurationDays] > 0 ),\n"
+         "    fct_ScheduleActivity[DurationDays] ), REMOVEFILTERS ( fct_ScheduleActivity[ActivityKey], fct_ScheduleActivity[ActivityName],\n"
+         "    fct_ScheduleActivity[StartDate], fct_ScheduleActivity[FinishDate] ) )\n"
+         "RETURN DIVIDE ( DoneDays, AllDays )",
+         '"0.00%"', "detail - the activity's points of PROJECT COMPLETE; the total is the tile"),
+        ("Milestone Baseline Finish", "CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )",
+         '"mmm d, yyyy"', "detail - Outbuild baseline finish (the latest is TRACKING FINISH)"),
+        ("Milestone Forecast Finish", "CALCULATE ( MAX ( fct_Milestone[CurrentFinish] ), REMOVEFILTERS ( dim_Date ) )",
+         '"mmm d, yyyy"', "detail - Outbuild current finish (the latest is FORECAST FINISH)"),
+        ("Milestone Days Late", "CALCULATE ( MAX ( fct_Milestone[FinishVarianceDays] ), REMOVEFILTERS ( dim_Date ) )",
+         '"+0;-0;0"', "detail - current finish less baseline finish, days"),
+        ("Line Cost To Complete", "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
+         '"$#,0"', "detail - Procore cost to complete on the line; the total is COST TO COMPLETE"),
+        ("Budget Line Flag",
+         row_flag("dim_CostCode[CostCode]", "( NOT ISBLANK ( [Line Budget] ) || NOT ISBLANK ( [Line Forecast] ) )"),
+         None, "detail row filter - cost codes the project actually budgets or forecasts"),
+        ("Manual Baseline Note",
+         'IF ( [Is Dashboard Project], IF ( NOT ISBLANK ( MAX ( man_Milestones[BaselineFinish] ) ),\n'
+         '    "Baseline finish entered by hand (SharePoint) overrides Outbuild: " & FORMAT ( MAX ( man_Milestones[BaselineFinish] ), "mmm d, yyyy" ),\n'
+         '    "Baseline finish from Outbuild (no manual override)" ) )',
+         None, "detail - where the completion variance's baseline comes from"),
         ("Health Header",
          '[Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) )',
          None, "Data Health header line"),

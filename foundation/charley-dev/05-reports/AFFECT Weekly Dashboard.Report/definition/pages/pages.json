@@ -10,9 +10,12 @@
     "dscash",
     "dsschedule",
     "dssafety",
+    "dsportscore",
     "dshealth",
     "dsproject",
     "dspayments",
+    "dsprojcost",
+    "dsprojsched",
     "dsgrade"
   ],
   "activePageName": "dsexec"

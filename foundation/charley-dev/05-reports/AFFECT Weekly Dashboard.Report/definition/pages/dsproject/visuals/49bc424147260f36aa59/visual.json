@@ -5,9 +5,9 @@
     "x": 57,
     "y": 219,
     "z": 2000,
-    "width": 426,
+    "width": 306,
     "height": 29,
-    "tabOrder": 23
+    "tabOrder": 28
   },
   "visual": {
     "visualType": "textbox",

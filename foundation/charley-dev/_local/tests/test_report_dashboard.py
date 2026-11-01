@@ -71,7 +71,7 @@ def main() -> int:
     # for 'Open' is incorrect", seen live 2026-10-26) - nothing offline parses DAX.
     keywords = {"OPEN", "CLOSE", "ORDER", "BY", "START", "AT", "DEFINE", "EVALUATE", "MEASURE", "COLUMN",
                 "TABLE", "VAR", "RETURN", "TRUE", "FALSE", "NOT", "IN", "AND", "OR", "ASC", "DESC", "SELECT",
-                "FROM", "WHERE", "CASE", "WHEN", "THEN", "ELSE", "END", "IF", "CURRENTCUBE", "MEMBER", "SET"}
+                "FROM", "WHERE", "CASE", "WHEN", "THEN", "ELSE", "END", "IF", "CURRENTCUBE", "MEMBER", "SET", "ROWS", "TOTAL"}
     named = {v for m in dm.MEASURES for v in re.findall(r"\bVAR\s+(\w+)", m[1]) if v.upper() in keywords}
     assert not named, f"DAX variables named after keywords: {sorted(named)}"
     CHECKS.append("no DAX variable is named after a keyword")

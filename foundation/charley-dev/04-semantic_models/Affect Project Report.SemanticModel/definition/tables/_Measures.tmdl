@@ -3047,6 +3047,62 @@ table _Measures
 	measure 'Observation Active Flag' = IF ( [Observation In View Flag] = "Yes" && [Dashboard Status] = "Active", "Yes" )
 		displayFolder: 25 Dashboard - executive
 
+	/// Replaces detail row filter - the activities PROJECT COMPLETE weighs (real activities with a duration)
+	measure 'Progress Row Flag' = IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] ) && NOT SELECTEDVALUE ( fct_ScheduleActivity[IsSummary] ) && SUM ( fct_ScheduleActivity[DurationDays] ) > 0, "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - working days, Outbuild
+	measure 'Activity Duration' = SUM ( fct_ScheduleActivity[DurationDays] )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Outbuild progress
+	measure 'Activity % Complete' = MAX ( fct_ScheduleActivity[PercentComplete] )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - the activity's points of PROJECT COMPLETE; the total is the tile
+	measure 'Activity Share Of Progress' =
+			VAR Acts = FILTER ( fct_ScheduleActivity, NOT fct_ScheduleActivity[IsSummary] && fct_ScheduleActivity[DurationDays] > 0 )
+			VAR DoneDays = SUMX ( Acts, fct_ScheduleActivity[DurationDays] * COALESCE ( fct_ScheduleActivity[PercentComplete], 0 ) )
+			VAR AllDays = CALCULATE ( SUMX ( FILTER ( fct_ScheduleActivity, NOT fct_ScheduleActivity[IsSummary] && fct_ScheduleActivity[DurationDays] > 0 ),
+			fct_ScheduleActivity[DurationDays] ), REMOVEFILTERS ( fct_ScheduleActivity[ActivityKey], fct_ScheduleActivity[ActivityName],
+			fct_ScheduleActivity[StartDate], fct_ScheduleActivity[FinishDate] ) )
+			RETURN DIVIDE ( DoneDays, AllDays )
+		formatString: "0.00%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Outbuild baseline finish (the latest is TRACKING FINISH)
+	measure 'Milestone Baseline Finish' = CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "mmm d, yyyy"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Outbuild current finish (the latest is FORECAST FINISH)
+	measure 'Milestone Forecast Finish' = CALCULATE ( MAX ( fct_Milestone[CurrentFinish] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "mmm d, yyyy"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - current finish less baseline finish, days
+	measure 'Milestone Days Late' = CALCULATE ( MAX ( fct_Milestone[FinishVarianceDays] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "+0;-0;0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - Procore cost to complete on the line; the total is COST TO COMPLETE
+	measure 'Line Cost To Complete' = CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail row filter - cost codes the project actually budgets or forecasts
+	measure 'Budget Line Flag' = IF ( HASONEVALUE ( dim_CostCode[CostCode] ) && ( NOT ISBLANK ( [Line Budget] ) || NOT ISBLANK ( [Line Forecast] ) ), "Yes" )
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces detail - where the completion variance's baseline comes from
+	measure 'Manual Baseline Note' =
+			IF ( [Is Dashboard Project], IF ( NOT ISBLANK ( MAX ( man_Milestones[BaselineFinish] ) ),
+			"Baseline finish entered by hand (SharePoint) overrides Outbuild: " & FORMAT ( MAX ( man_Milestones[BaselineFinish] ), "mmm d, yyyy" ),
+			"Baseline finish from Outbuild (no manual override)" ) )
+		displayFolder: 25 Dashboard - executive
+
 	/// Replaces Data Health header line
 	measure 'Health Header' = [Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) )
 		displayFolder: 25 Dashboard - executive

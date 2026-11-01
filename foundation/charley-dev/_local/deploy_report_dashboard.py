@@ -146,7 +146,10 @@ def tile(p: str, key: str, label: str, value: str, sub: str | None, x, y, w, h, 
     out = [panel(p, f"{key}_bg", x, y, w, h, radius=8),
            z(text(p, f"{key}_bar", " ", x, y, 6, h, fill=accent), 1),
            text(p, f"{key}_lbl", label, x + 16, y + 10, w - 24 - (52 if link else 0), 20, size=9)]
-    if link:
+    if link and len(link) > 2:
+        # One project's page: drill through, so the target opens on the same project.
+        out.append(button(p, f"{key}_data", "Data >", x + w - 54, y + 8, 46, 20, "Drillthrough", link[0]))
+    elif link:
         out.append(nav(p, f"{key}_data", "Data >", x + w - 54, y + 8, 46, 20, link[0], link[1]))
     if pending:
         out.append(text(p, f"{key}_pending", pending, x + 16, y + 36, w - 24, h - 44, size=9,
@@ -646,6 +649,145 @@ def page_safety_detail() -> tuple[str, list[dict]]:
     return p, out
 
 
+def project_header(p: str, title: str) -> list[dict]:
+    """A one-project page: drill-through target (from the Portfolio table or the Overview's
+    buttons), or opened directly with its own project picker."""
+    out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
+           z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
+           text(p, "title", title, 36, 4, 318, 43, size=20, color="#FFFFFF"),
+           kpi_value(p, "hdr_proj", "Project Title", 358, 8, 482, 38, size=20, color="#FFFFFF"),
+           kpi_value(p, "hdr_sub", "Week Header", 30, 50, 600, 26, size=9, color="#C7D7E7"),
+           kpi_value(p, "hdr_right", "Detail Header", 640, 52, 400, 26, size=8, color="#C7D7E7"),
+           week_slicer(p, 1100, 8, 236, 44),
+           button(p, "back", "< Back", 1150, 56, 84, 22, "Back"),
+           nav(p, "home", "Executive >", 1240, 56, 96, 22, "dsexec", "the Executive Dashboard")]
+    pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(p, "slicer_project", "slicer", 860, 8, 230, 44,
+                                 {"Values": [column("dim_Project", "ProjectName")]}, title="Project", tab=2, title_size=9,
+                                 alt="Slicer. Picks the project this page shows.")))
+    pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
+                                 "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
+                                 "header": [{"properties": {"show": _OFF}}]}
+    out.append(boxed(pick, fill=CARD_BG, radius=6))
+    return out
+
+
+def page_portfolio_detail() -> tuple[str, list[dict]]:
+    """The Portfolio page, shown working: every project's grade built from its pillars and measures,
+    the counts in the tiles, and the team behind the TEAM column."""
+    p = "dsportscore"
+    out = detail_header(p, "DETAIL  |  PORTFOLIO GRADES")
+    out += strip(p, [("ACTIVE PROJECTS", "Active Projects", None), ("ON TRACK", "Projects On Track", None),
+                     ("MONITOR", "Projects Monitor", None), ("NEEDS ATTENTION", "Projects Needing Attention", None),
+                     ("UNSCORED", "Projects Unscored", "Under half the weight measured")])
+    out += how(p, "Grade = the four pillars weighted Schedule 50, Budget 30, Safety 15, Quality 5, over the weight actually "
+                  "measured (a project with under half the weight measured is Unscored, not failing). Each pillar = the "
+                  "equal-weighted average of its measures scored this week; the measure table below shows every reading, "
+                  "score and band. The tiles count the projects by grade band in the first table.")
+    out.append(proof(p, "grades", 36, 236, W - 72, 200,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(m_("Grade Status"), "Band"),
+                      sa(m_("Grade Cell"), "Grade"), sa(m_("Grade Coverage %"), "Weight measured"),
+                      sa(m_("Schedule Pillar"), "Schedule (50)"), sa(m_("Budget Pillar"), "Budget (30)"),
+                      sa(m_("Safety Pillar"), "Safety (15)"), sa(m_("Quality Pillar"), "Quality (5)"),
+                      sa(m_("Weakest Pillar"), "Costing most"), sa(m_("Measures Below Target"), "Below 80%"),
+                      sa(m_("Phase Label"), "Phase"), sa(m_("Phase Source"), "Phase read from")],
+                     "Table. Every active project: grade band, grade, share of weight measured, the four pillar scores, "
+                     "the pillar costing the grade most, measures below 80%, and the phase with where it is read from.",
+                     title="HOW EACH GRADE IS BUILT  -  pillars weighted 50 / 30 / 15 / 5",
+                     pills={"Grade Cell": ("Grade Colour", "Grade Ink")},
+                     wide={"ProjectName": 3, "Phase Source": 4, "Grade Status": 2}, flag="Active Flag", totals=False))
+    measures = proof(p, "measures", 36, 448, 880, 394,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("dim_DashMetric", "Pillar"), "Pillar"),
+                      sa(c_("dim_DashMetric", "Metric"), "Measure"), sa(m_("Metric Reading"), "Reading"),
+                      sa(m_("Metric Score"), "Score"), sa(m_("Metric State"), "Band, or why not scored"),
+                      sa(m_("Metric Weight In Grade"), "Share of grade")],
+                     "Table. Every scorecard measure for every active project: what the data shows, the score, the band "
+                     "or why it is not scored, and its share of the grade. A project's rows add up to its grade.",
+                     title="EVERY MEASURE, EVERY PROJECT",
+                     pills={"Metric Score": ("Metric Colour", "Metric Ink")},
+                     wide={"ProjectName": 2, "Metric": 2, "Metric Reading": 4, "Metric State": 3},
+                     flag="Active Flag", totals=False)
+    measures["visual"]["query"]["sortDefinition"] = {"sort": [
+        {"field": c_("dim_Project", "ProjectName")["field"], "direction": "Ascending"},
+        {"field": c_("dim_DashMetric", "PillarKey")["field"], "direction": "Ascending"}], "isDefaultSort": True}
+    out.append(where(measures, "dim_DashMetric", "Status", "'Live'"))
+    out.append(proof(p, "team", 928, 448, 396, 394,
+                     [sa(c_("dim_Project", "ProjectName"), "Project"), sa(c_("fct_ProjectTeam", "RoleCode"), "Role"),
+                      sa(c_("fct_ProjectTeam", "MemberName"), "Procore directory name")],
+                     "Table. The Procore directory roles behind the TEAM column: PX, PM, APM, Superintendent and "
+                     "Assistant Superintendent on each active project.",
+                     title="TEAM  -  Procore directory roles", wide={"ProjectName": 2, "MemberName": 3},
+                     flag="Active Flag", totals=False))
+    return p, out
+
+
+def page_project_cost() -> tuple[str, list[dict]]:
+    """Project Overview, shown working: contract, change orders, cost to complete, buyout."""
+    p = "dsprojcost"
+    out = project_header(p, "CONTRACT & COST  |")
+    out += strip(p, [("ORIGINAL CONTRACT", "Original Contract", None), ("CURRENT CONTRACT", "Current Contract", None),
+                     ("PENDING CHANGE ORDERS", "CO Pending Amount", "Procore prime COs not approved"),
+                     ("REMAINING TO BILL", "Remaining Contract Balance", "Contract less billed (gross)"),
+                     ("COST TO COMPLETE", "Cost To Complete", "Procore budget"),
+                     ("RISK BOUGHT OUT", "Subcontractor Coverage %", "Committed / buyable budget")])
+    out += how(p, "Current contract = the latest month's Procore prime contract value, every prime contract on the project added "
+                  "together; the pay-app table shows each contract's own figure. Pending change orders = the change-order log "
+                  "below, not yet approved. Cost to complete and risk bought out = the Procore budget lines below: committed "
+                  "over the budget of divisions 01-44 (GCs, insurance, contingency, tax and fee are not bought out).")
+    out.append(latest_owner(proof(p, "prime", 36, 236, 648, 210, prime_fields(project=False),
+                                  "Table. The project's Procore prime contracts from their latest owner pay app.",
+                                  title="PRIME CONTRACTS  -  latest owner pay app", wide={"ContractName": 3})))
+    out.append(proof(p, "cos", 696, 236, 628, 210,
+                     [sa(c_("fct_ChangeOrder", "ChangeOrderNumber"), "CO"), sa(c_("fct_ChangeOrder", "ChangeOrderTitle"), "Title"),
+                      sa(c_("fct_ChangeOrder", "StatusDisplay"), "Status"), sa(c_("fct_ChangeOrder", "CreatedDate"), "Created"),
+                      sa(m_("CO Approved Amount"), "Approved"), sa(m_("CO Pending Amount"), "Pending")],
+                     "Table. Every Procore prime change order on the project; the Pending total is the card above.",
+                     title="CHANGE ORDERS", wide={"ChangeOrderTitle": 4}, sort=(c_("fct_ChangeOrder", "CreatedDate"), "Descending")))
+    out.append(proof(p, "lines", 36, 458, W - 72, 384,
+                     [sa(c_("dim_CostCode", "CostCode"), "Cost code"), sa(c_("dim_CostCode", "Description"), "Description"),
+                      sa(c_("dim_CostCodeCrosswalk", "NewDivisionName"), "Division (new master)"),
+                      sa(m_("Line Budget"), "Budget"), sa(m_("Line Forecast"), "Forecast"), sa(m_("Line Committed"), "Committed"),
+                      sa(m_("Line Coverage %"), "Coverage"), sa(m_("Line Spent"), "Spent"),
+                      sa(m_("Line Cost To Complete"), "Cost to complete"), sa(m_("Line Treatment"), "How it counts")],
+                     "Table. The project's Procore budget lines: budget, forecast, committed, coverage, spent and cost to "
+                     "complete, and how each line counts. The totals are COST TO COMPLETE and RISK BOUGHT OUT.",
+                     title="BUDGET LINES  -  the totals are the cards above",
+                     wide={"Description": 3, "NewDivisionName": 2, "Line Treatment": 3}, flag="Budget Line Flag"))
+    return p, out
+
+
+def page_project_schedule() -> tuple[str, list[dict]]:
+    """Project Overview, shown working: PROJECT COMPLETE and the finish dates."""
+    p = "dsprojsched"
+    out = project_header(p, "SCHEDULE & PROGRESS  |")
+    out += strip(p, [("PROJECT COMPLETE", "Work Progress %", "Duration-weighted, Outbuild"),
+                     ("TRACKING FINISH", "Tracking Finish", "Latest baseline finish"),
+                     ("FORECAST FINISH", "Forecast Finish", "Latest current finish"),
+                     ("DAYS VS BASELINE", "Completion Variance Days", "+ late, - early"),
+                     ("BASELINE FROM", "Manual Baseline Note", None)])
+    out += how(p, "Project complete = sum of (duration x % complete) over sum of duration, every real activity on the current "
+                  "Outbuild schedule (summary bars and zero-duration milestones left out): the 'Share of progress' column adds "
+                  "up to it. Tracking finish = the latest baseline finish on the critical path; forecast finish = the latest "
+                  "current finish; days vs baseline = forecast less tracking (a hand-entered baseline overrides Outbuild's).")
+    acts = proof(p, "acts", 36, 236, 796, 606,
+                 [sa(c_("fct_ScheduleActivity", "ActivityName"), "Activity"), sa(c_("fct_ScheduleActivity", "StartDate"), "Start"),
+                  sa(c_("fct_ScheduleActivity", "FinishDate"), "Finish"), sa(m_("Activity Duration"), "Days"),
+                  sa(m_("Activity % Complete"), "% complete"), sa(m_("Activity Share Of Progress"), "Share of progress")],
+                 "Table. Every activity PROJECT COMPLETE weighs: start, finish, duration, Outbuild % complete, and the "
+                 "points of progress it contributes. The total is PROJECT COMPLETE.",
+                 title="HOW PROJECT COMPLETE IS BUILT  -  the total is the card above",
+                 wide={"ActivityName": 5}, sort=(m_("Activity Duration"), "Descending"), flag="Progress Row Flag")
+    out.append(acts)
+    out.append(proof(p, "ms", 844, 236, 480, 606,
+                     [sa(c_("fct_Milestone", "MilestoneName"), "Critical-path activity"),
+                      sa(m_("Milestone Baseline Finish"), "Baseline"), sa(m_("Milestone Forecast Finish"), "Forecast"),
+                      sa(m_("Milestone Days Late"), "Days")],
+                     "Table. The critical-path activities on the current Outbuild schedule with baseline and current finish; "
+                     "the latest of each is TRACKING FINISH and FORECAST FINISH.",
+                     title="CRITICAL PATH  -  latest dates first", wide={"MilestoneName": 4},
+                     sort=(m_("Milestone Forecast Finish"), "Descending"), totals=False))
+    return p, out
+
+
 def page_payments() -> tuple[str, list[dict]]:
     """Oct 30 call: double-click Project Financials - have we been paid, has the sub been paid."""
     p = "dspayments"
@@ -884,15 +1026,17 @@ def page_portfolio() -> tuple[str, list[dict]]:
         x = 36 + i * 262
         out += [panel(p, f"k{i}_bg", x, 100, 246, 84, radius=8),
                 z(text(p, f"k{i}_bar", " ", x, 100, 6, 84, fill=color), 1),
-                text(p, f"k{i}_l", lbl, x + 18, 108, 210, 20, size=9),
+                text(p, f"k{i}_l", lbl, x + 18, 108, 160, 20, size=9),
+                nav(p, f"k{i}_data", "Data >", x + 192, 106, 46, 20, "dsportscore", "how every grade is built"),
                 kpi_value(p, f"k{i}_v", m, x + 12, 128, 90, 50, size=24, color=NAVY),
                 # "=Name" is a caption measure (reads the grade settings); anything else is fixed text.
                 kpi_value(p, f"k{i}_s", sub[1:], x + 104, 146, 136, 24, size=8, color=SLATE) if sub.startswith("=")
                 else text(p, f"k{i}_s", sub, x + 104, 148, 136, 20, size=8, color=SLATE, bold=False)]
     out += [panel(p, "tbl_bg", 36, 198, 1288, 370),
             text(p, "tbl_h", "ACTIVE PROJECTS  •  PERFORMANCE & ACCOUNTABILITY", 56, 208, 760, 28, size=13, color=NAVY),
-            text(p, "tbl_note", "Right-click a project and choose Drill through to open it or its grade detail",
-                 820, 212, 484, 20, size=8, color=SLATE, bold=False, align="right")]
+            text(p, "tbl_note", "Right-click a project to drill through  •  How each grade is built:",
+                 820, 212, 370, 20, size=8, color=SLATE, bold=False, align="right"),
+            nav(p, "tbl_data", "Data >", 1200, 210, 100, 22, "dsportscore", "how every grade is built")]
     grid = table(p, "portfolio", 48, 240, 1264, 316,
                  [rs.shown_as(column("dim_Project", "ProjectName"), "Project"),
                   rs.shown_as(measure("Phase Label"), "Current phase"),
@@ -974,24 +1118,27 @@ def page_project() -> tuple[str, list[dict]]:
 
     # KPI row (deck 1.34-2.0 in)
     xs, tw, y0, th = [37, 306, 575, 844, 1113], 246, 96, 104
+    # Every tile opens the rows behind it for this project (Oct 30 call).
     out += tile(p, "k_contract", "CURRENT CONTRACT", "Current Contract", "Contract Change Text", xs[0], y0, tw, th,
-                accent=TEAL, precision=2, units=1000000, sub_color=SLATE)
-    out += tile(p, "k_complete", "PROJECT COMPLETE", "Work Progress Shown", None, xs[1], y0, tw, th, accent=AMBER)
+                accent=TEAL, precision=2, units=1000000, sub_color=SLATE, link=("dsprojcost", "contract", "drill"))
+    out += tile(p, "k_complete", "PROJECT COMPLETE", "Work Progress Shown", None, xs[1], y0, tw, th, accent=AMBER,
+                link=("dsprojsched", "progress", "drill"))
     out.append(text(p, "k_complete_s", "Outbuild work progress (duration-weighted)", xs[1] + 16, y0 + th - 28,
                     tw - 24, 22, size=8, color=SLATE, bold=False))
     out += tile(p, "k_sched", "SCHEDULE", "Schedule Headline", "Schedule Subline", xs[2], y0, tw, th, accent=AMBER,
-                size=20, sub_color=SLATE)
+                size=20, sub_color=SLATE, link=("dsprojsched", "schedule", "drill"))
     out += tile(p, "k_grade", "PROJECT SCORECARD", "Grade Text", "Grade Subline", xs[3], y0, tw, th, accent=AMBER,
-                size=20, sub_color=SLATE)
+                size=20, sub_color=SLATE, link=("dsgrade", "grade", "drill"))
     out += tile(p, "k_billed", "BILLED TO DATE", "Billed To Date (Gross)", "Billed Subline", xs[4], y0, tw, th,
-                accent=GREEN, precision=2, units=1000000, sub_color=SLATE)
+                accent=GREEN, precision=2, units=1000000, sub_color=SLATE, link=("dspayments", "billing", "drill"))
 
     # Row 2 (deck 2.61-4.95 in): schedule & delivery, project financials, delivery & financial health
     r2, h2 = 210, 290
     sx, sw = 37, 466
     out += [panel(p, "sd_bg", sx, r2, sw, h2),
             z(text(p, "sd_bar", " ", sx, r2, 6, h2, fill=TEAL), 1),
-            text(p, "sd_h", "SCHEDULE & DELIVERY", sx + 20, r2 + 12, sw - 40, 26, size=12, color=NAVY),
+            text(p, "sd_h", "SCHEDULE & DELIVERY", sx + 20, r2 + 12, sw - 160, 26, size=12, color=NAVY),
+            button(p, "sd_work", "Schedule detail >", sx + sw - 136, r2 + 14, 120, 22, "Drillthrough", "dsprojsched"),
             text(p, "sd_tl", "TRACKING FINISH (BASELINE)", sx + 20, r2 + 46, 240, 20, size=9),
             kpi_value(p, "sd_tv", "Tracking Finish Shown", sx + 270, r2 + 40, 180, 30, size=13, color=NAVY),
             text(p, "sd_fl", "FORECAST FINISH", sx + 20, r2 + 80, 240, 20, size=9),
@@ -1023,7 +1170,8 @@ def page_project() -> tuple[str, list[dict]]:
     hx, hw = 921, 402
     out += [panel(p, "hf_bg", hx, r2, hw, h2),
             z(text(p, "hf_bar", " ", hx, r2, 6, h2, fill=TEAL), 1),
-            text(p, "hf_h", "DELIVERY & FINANCIAL HEALTH", hx + 20, r2 + 12, hw - 40, 26, size=12, color=NAVY),
+            text(p, "hf_h", "DELIVERY & FINANCIAL HEALTH", hx + 20, r2 + 12, hw - 150, 26, size=12, color=NAVY),
+            button(p, "hf_work", "Cost detail >", hx + hw - 116, r2 + 14, 100, 22, "Drillthrough", "dsprojcost"),
             text(p, "hf_bl", "BILLING PROGRESS", hx + 20, r2 + 48, 200, 20, size=9),
             kpi_value(p, "hf_bv", "Billed % Of Contract", hx + hw - 120, r2 + 40, 104, 30, size=14, color=GREEN,
                       precision=1),
@@ -1197,14 +1345,19 @@ PAGES = [
     ("Detail | Cash Position", page_cash, False),
     ("Detail | Schedule", page_schedule_detail, False),
     ("Detail | Safety & Quality", page_safety_detail, False),
+    ("Detail | Portfolio Grades", page_portfolio_detail, False),
     ("Project Payments", page_payments, False),
+    # The Project Overview's numbers, shown working (drill through from a project).
+    ("Project | Contract & Cost", page_project_cost, False),
+    ("Project | Schedule & Progress", page_project_schedule, False),
     ("Data Health", page_health, False),
     ("Grade Detail", page_grade, True),
 ]
 DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Project", "ProjectName"),
-                "dspayments": ("dim_Project", "ProjectName")}
+                "dspayments": ("dim_Project", "ProjectName"), "dsprojcost": ("dim_Project", "ProjectName"),
+                "dsprojsched": ("dim_Project", "ProjectName")}
 # Drill-through targets a reader also opens directly; they keep their own project picker.
-OPEN_DIRECTLY = {"dsproject", "dspayments"}
+OPEN_DIRECTLY = {"dsproject", "dspayments", "dsprojcost", "dsprojsched"}
 
 
 def retab(files: dict[str, str]) -> None:

@@ -84,6 +84,11 @@ TIES = [
      f"DIVIDE ( SUMX ( FILTER ( {ACTIVE}, NOT ISBLANK ( [Cash Position] ) ), [Cash Collected] ), "
      f"SUMX ( FILTER ( {ACTIVE}, NOT ISBLANK ( [Cash Position] ) ), [Cash Paid Out] ) )",
      f'CALCULATE ( DIVIDE ( [Cash Collected], [Cash Paid Out] ), FILTER ( {ACTIVE}, [Cash Row Flag] = "Yes" ) )'),
+    # The Portfolio page's tiles against Detail | Portfolio Grades (band column).
+    *[(f"Portfolio {band} = grades table rows in that band", f"[{m}]",
+       f'COUNTROWS ( FILTER ( {ACTIVE}, [Grade Status] = "{band}" ) ) + 0')
+      for band, m in [("On track", "Projects On Track"), ("Monitor", "Projects Monitor"),
+                      ("Needs attention", "Projects Needing Attention"), ("Unscored", "Projects Unscored")]],
     ("Projects at risk = project grades at or under the cut-off", "[Projects At Risk (Grade)]",
      f'COUNTROWS ( FILTER ( ADDCOLUMNS ( {ACTIVE}, "@g", [Grade] ), NOT ISBLANK ( [@g] ) && [@g] <= 45 ) )'),
 ]
@@ -124,6 +129,15 @@ PER_PROJECT = [
     ("Cash position = its formula's steps", "[Cash Position]",
      "[Cash - Billings To Date] - [Cash - Retainage Receivable] - [Cash - Unpaid Receivables] "
      "- ( [Cash - Costs Incurred] - [Cash - Unpaid Payables] - [Cash - Retainage Payable] )"),
+    # The Project Overview's tiles against Project | Schedule & Progress and Project | Contract & Cost.
+    ("Project complete = activity table's Share of progress total", "[Work Progress %]",
+     'CALCULATE ( [Activity Share Of Progress], FILTER ( VALUES ( fct_ScheduleActivity[ActivityKey] ), [Progress Row Flag] = "Yes" ) )'),
+    ("Tracking finish = latest baseline finish in the critical-path table", "[Tracking Finish]", "[Milestone Baseline Finish]"),
+    ("Forecast finish = latest current finish in the critical-path table", "[Forecast Finish]", "[Milestone Forecast Finish]"),
+    ("Cost to complete = budget-line table total", "[Cost To Complete]",
+     'CALCULATE ( [Line Cost To Complete], FILTER ( VALUES ( dim_CostCode[CostCode] ), [Budget Line Flag] = "Yes" ) )'),
+    ("Pending change orders = change-order table Pending total", "[CO Pending Amount]",
+     "SUMX ( VALUES ( fct_ChangeOrder[ChangeOrderKey] ), [CO Pending Amount] )"),
     ("Data Health warnings = check rows reading Warn", "CALCULATE ( SUM ( fct_DashCheck[IsWarning] ) ) + 0",
      'CALCULATE ( COUNTROWS ( fct_DashCheck ), fct_DashCheck[Result] = "Warn" ) + 0'),
 ]
@@ -147,7 +161,7 @@ def main() -> int:
             # A project whose cash position is blank (no budget) has no steps to tie either.
             if a is None and (b is None or label.startswith("Cash")):
                 continue
-            if a is None or b is None or abs(float(a) - float(b)) > 0.005:
+            if a is None or b is None or (a != b if isinstance(a, str) else abs(float(a) - float(b)) > 0.005):
                 diffs.append((r.get("dim_Project[ProjectKey]"), a, b))
         bad += bool(diffs)
         print(f"  {'DIFF' if diffs else 'ok  '} {label}: {len(rows)} projects" + (f" {diffs}" if diffs else ""))
