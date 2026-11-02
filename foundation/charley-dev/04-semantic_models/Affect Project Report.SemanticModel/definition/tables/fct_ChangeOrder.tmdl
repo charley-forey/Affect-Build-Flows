@@ -49,13 +49,13 @@ table fct_ChangeOrder
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CreatedDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HasOutOfRangeDate
 		dataType: boolean

@@ -251,8 +251,12 @@ def styled_table(v: dict, pills: dict[str, tuple[str, str]] | None = None, heade
         # Text colour from a measure, or fixed white when ink is None.
         props["fontColor"] = {"solid": {"color": _mref(ink)}} if ink else _color("#FFFFFF")
         objects["values"].append({"properties": props, "selector": sel})
+    # Every column centred, header and values (Cal's Oct 30 notes: "center align for tables").
+    for f in vis["query"]["queryState"]["Values"]["projections"]:
         objects.setdefault("columnFormatting", []).append(
-            {"properties": {"alignment": lit("Center")}, "selector": {"metadata": ref}})
+            {"properties": {"alignment": lit("Center"), "styleHeader": _ON, "styleValues": _ON,
+                            "styleTotal": _ON},
+             "selector": {"metadata": f["queryRef"]}})
     return boxed(v, fill=CARD_BG, header=True)
 
 
@@ -827,7 +831,7 @@ def page_payments() -> tuple[str, list[dict]]:
                      title="OWNER INVOICES (SAGE, NET OF RETAINAGE)", sort=(c_("fct_Invoice", "SentDate"), "Descending")))
     out.append(proof(p, "subs", 36, 478, W - 72, 364,
                      [sa(c_("fct_SubPayment", "SubName"), "Subcontractor"), sa(c_("fct_SubPayment", "ContractName"), "Commitment"),
-                      sa(m_("Sub Committed"), "Committed"), sa(m_("Sub Requisitioned"), "Billed to date"),
+                      sa(m_("Sub Committed"), "Contract (latest req.)"), sa(m_("Sub Requisitioned"), "Billed to date"),
                       sa(m_("Sub Retainage Held"), "Retainage"), sa(m_("Sub AP Invoiced"), "Sage AP"),
                       sa(m_("Sub Paid"), "Paid"), sa(m_("Sub AP Open"), "Still to pay"),
                       sa(m_("Sub Oldest Open Days"), "Oldest unpaid (days)"), sa(c_("fct_SubPayment", "OpenApAge"), "Age"),
@@ -838,6 +842,51 @@ def page_payments() -> tuple[str, list[dict]]:
                      sort=(m_("Sub AP Open"), "Descending"), wide={"SubName": 3, "ContractName": 3, "Source": 3}))
     out += footer(p, "Pick the project above, or right-click a project on the Portfolio page and drill through  •  Export any "
                      "table to Excel from its ... menu")
+    return p, out
+
+
+def page_financials() -> tuple[str, list[dict]]:
+    """Cal's Oct 30 sheet (Project Financial summary.xlsx), column for column, letters and all:
+    the prime contract, then trades & vendors, then cost codes."""
+    p = "dsprojfin"
+    out = project_header(p, "PROJECT FINANCIALS  |")
+    out += strip(p, [("CONTRACT (A)", "Position Contract", "Current contract"), ("AR RECEIVED (B)", "Paid To Date", "Sage receipts"),
+                     ("AR AGING (C)", "Cash - Unpaid Receivables", "Sage AR still owed"),
+                     ("BALANCE TO FINISH (F)", "Prime Balance To Finish", "F = A - B - C"),
+                     ("COMMITTED (H)", "Vendor Total Committed", "Every approved commitment"),
+                     ("VENDOR BALANCE (M)", "Vendor Balance To Finish", "M = H - I - J")])
+    out += how(p, "Prime contract: A = the current Procore prime contract; B and C = Sage AR received and still owed; D = days the "
+                  "oldest unpaid invoice has been out; E = invoices not fully paid; F = A - B - C. Trades & vendors: H = every "
+                  "approved Procore commitment (the latest requisition's contract sum where there is one, as it includes the "
+                  "approved change orders); I, J = Sage AP paid and still owed; K, L = oldest unpaid days and invoices open; "
+                  "M = H - I - J.")
+    out.append(proof(p, "prime", 36, 236, W - 72, 110,
+                     [sa(c_("dim_Project", "ProjectName"), "Description"), sa(m_("Position Contract"), "Current contract amt (A)"),
+                      sa(m_("Paid To Date"), "AR received (B)"), sa(m_("Cash - Unpaid Receivables"), "AR aging (C)"),
+                      sa(m_("AR Oldest Open Days"), "# days aging (D)"), sa(m_("AR Open Invoices"), "# AR apps open (E)"),
+                      sa(m_("Prime Balance To Finish"), "Balance to finish (F = A - B - C)")],
+                     "Table. The prime contract: current contract, Sage AR received and still owed, the age of the oldest "
+                     "unpaid invoice, how many are open, and the balance to finish.",
+                     title="PRIME CONTRACT", wide={"ProjectName": 3}, flag="Active Flag"))
+    out.append(proof(p, "vendors", 36, 358, W - 72, 282,
+                     [sa(c_("fct_SubPayment", "SubName"), "Vendor"), sa(m_("Vendor Total Committed"), "Total committed cost (H)"),
+                      sa(m_("Sub Paid"), "AP paid (I)"), sa(m_("Sub AP Open"), "AP aging (J)"),
+                      sa(m_("Sub Oldest Open Days"), "# days aging (K)"), sa(m_("Vendor AP Open Invoices"), "# AP apps open (L)"),
+                      sa(m_("Vendor Balance To Finish"), "Balance to finish (M = H - I - J)"),
+                      sa(c_("fct_SubPayment", "Source"), "Source")],
+                     "Table. Every trade and vendor on the project: total committed, Sage AP paid and still owed, the age "
+                     "of the oldest unpaid invoice, how many are open, and the balance to finish.",
+                     title="TRADES & VENDORS", sort=(m_("Vendor Total Committed"), "Descending"),
+                     wide={"SubName": 3, "Source": 3}))
+    out.append(proof(p, "costcodes", 36, 652, W - 72, 190,
+                     [sa(c_("dim_CostCode", "CostCode"), "Cost code"), sa(c_("dim_CostCode", "Description"), "Description"),
+                      sa(m_("Line Committed"), "Committed"), sa(m_("Line Spent"), "Spent to date"),
+                      sa(m_("Line Left On Commitment"), "Left on commitment")],
+                     "Table. The project's Procore budget lines by cost code: committed, spent to date and what is left.",
+                     title="COST CODES  -  Procore budget (Sage AP carries no cost code)",
+                     wide={"CostCode": 2, "Description": 4}, flag="Budget Line Flag"))
+    out += footer(p, "Right-click a project on the Portfolio page and drill through, or pick it above  •  Export any table to "
+                     "Excel from its ... menu")
     return p, out
 
 
@@ -879,8 +928,9 @@ def page_executive() -> tuple[str, list[dict]]:
     """Deck slide 1. The company in one screen; every tile Active projects only."""
     p = "dsexec"
     y0, th = 102, 110
-    xs = [37, 254, 470, 686, 903, 1119]
-    tw = 204
+    # Seven tiles: Quality joined Safety on the top bar (Cal's Oct 30 notes).
+    xs = [37 + i * 185 for i in range(7)]
+    tw = 174
     out = [*header(p, "EXECUTIVE DASHBOARD", "Week Header", "Data As Of Header")]
     # Every tile opens the rows it is made from (Oct 30 call: "prove the work").
     out += tile(p, "k_rev", "REVENUE YTD", "Revenue YTD", "Revenue YTD Subline", xs[0], y0, tw, th, accent=GREEN,
@@ -895,6 +945,8 @@ def page_executive() -> tuple[str, list[dict]]:
                 accent=GREEN, precision=1, units=1000000, link=("dscash", "every step of the cash position formula"))
     out += tile(p, "k_safety", "SAFETY", "Portfolio Safety Score", "Safety Subline",
                 xs[5], y0, tw, th, accent=GREEN, sub_color=SLATE, link=("dssafety", "the inspections and safety data"))
+    out += tile(p, "k_quality", "QUALITY", "Portfolio Quality Score", "Quality Subline",
+                xs[6], y0, tw, th, accent=GREEN, sub_color=SLATE, link=("dssafety", "the inspections and quality data"))
 
     # Financial performance (deck 0.46-6.61 in)
     fx, fy, fw, fh = 37, 230, 492, 381
@@ -1041,25 +1093,30 @@ def page_portfolio() -> tuple[str, list[dict]]:
     grid = table(p, "portfolio", 48, 240, 1264, 316,
                  [rs.shown_as(column("dim_Project", "ProjectName"), "Project"),
                   rs.shown_as(measure("Phase Label"), "Current phase"),
-                  rs.shown_as(measure("Safety Cell"), "Safety"),
-                  rs.shown_as(measure("Quality Cell"), "Quality"),
+                  rs.shown_as(measure("Safety Cell"), "Safety insp. (goal 5)"),
+                  rs.shown_as(measure("Safety Data Cell"), "Safety data"),
+                  rs.shown_as(measure("Quality Cell"), "Quality insp. (goal 5)"),
+                  rs.shown_as(measure("Quality Data Cell"), "Quality data"),
                   rs.shown_as(measure("Schedule Cell"), "Schedule"),
                   rs.shown_as(measure("Budget Cell"), "Budget"),
                   rs.shown_as(measure("Team Initials"), "Team"),
                   rs.shown_as(measure("Grade Cell"), "Grade"),
                   rs.shown_as(measure("Measures Below Target"), "Below target")],
                  alt="Table. Every active project: current phase, the Safety, Quality, Schedule and Budget pillars "
-                     "(the headline reading and the pillar score, coloured by the score), the team's initials "
+                     "(the headline reading and the pillar score, coloured by the score), beside Safety and Quality "
+                     "the open Procore items and the proposed data score, the team's initials "
                      "from Procore, the weighted grade out of 100 and how many measures are below target. "
                      "Filtered to active projects; clear the Active Flag filter in the Filters pane to see all. "
                      "Right-click a project to drill through to its overview or grade detail.",
                  pills={"Safety Cell": ("Safety Colour", "Safety Ink"),
                         "Quality Cell": ("Quality Colour", "Quality Ink"),
+                        "Safety Data Cell": ("Safety Data Colour", "Safety Data Ink"),
+                        "Quality Data Cell": ("Quality Data Colour", "Quality Data Ink"),
                         "Schedule Cell": ("Schedule Colour", "Schedule Ink"),
                         "Budget Cell": ("Budget Colour", "Budget Ink"),
                         "Grade Cell": ("Grade Colour", "Grade Ink")})
     rs.widen(grid, {"ProjectName": 4, "Phase Label": 2, "Schedule Cell": 3, "Budget Cell": 3, "Safety Cell": 2,
-                    "Quality Cell": 2, "Team Initials": 1})
+                    "Safety Data Cell": 2, "Quality Cell": 2, "Quality Data Cell": 2, "Team Initials": 1})
     # Stack-ranked, worst grade first (Oct 21 call); unscored projects sort last.
     grid["visual"]["query"]["sortDefinition"] = {"sort": [{"field": measure("Priority Score")["field"],
                                                            "direction": "Descending"}], "isDefaultSort": True}
@@ -1156,9 +1213,11 @@ def page_project() -> tuple[str, list[dict]]:
     fx, fw = 517, 390
     out += [panel(p, "pf_bg", fx, r2, fw, h2),
             z(text(p, "pf_bar", " ", fx, r2, 6, h2, fill=TEAL), 1),
-            text(p, "pf_h", "PROJECT FINANCIALS", fx + 20, r2 + 12, fw - 140, 26, size=12, color=NAVY),
+            text(p, "pf_h", "PROJECT FINANCIALS", fx + 20, r2 + 12, fw - 222, 26, size=12, color=NAVY),
+            # Cal's Oct 30 notes: the drill-down laid out as his Project Financial summary sheet.
+            button(p, "pf_fin", "Financials >", fx + fw - 202, r2 + 14, 86, 22, "Drillthrough", "dsprojfin"),
             # Oct 30 call: double-click the financials - have we been paid, has each sub been paid.
-            button(p, "pf_pay", "Payments >", fx + fw - 112, r2 + 14, 96, 22, "Drillthrough", "dspayments")]
+            button(p, "pf_pay", "Payments >", fx + fw - 108, r2 + 14, 92, 22, "Drillthrough", "dspayments")]
     for i, (lbl, m) in enumerate([("ORIGINAL CONTRACT", "Original Contract"), ("CURRENT CONTRACT", "Current Contract"),
                                   # The change-order log itself, so it ties to Payments / Contracts.
                                   ("PENDING CHANGE ORDERS", "CO Pending Amount"),
@@ -1348,6 +1407,7 @@ PAGES = [
     ("Detail | Safety & Quality", page_safety_detail, False),
     ("Detail | Portfolio Grades", page_portfolio_detail, False),
     ("Project Payments", page_payments, False),
+    ("Project Financials", page_financials, False),
     # The Project Overview's numbers, shown working (drill through from a project).
     ("Project | Contract & Cost", page_project_cost, False),
     ("Project | Schedule & Progress", page_project_schedule, False),
@@ -1356,9 +1416,9 @@ PAGES = [
 ]
 DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Project", "ProjectName"),
                 "dspayments": ("dim_Project", "ProjectName"), "dsprojcost": ("dim_Project", "ProjectName"),
-                "dsprojsched": ("dim_Project", "ProjectName")}
+                "dsprojsched": ("dim_Project", "ProjectName"), "dsprojfin": ("dim_Project", "ProjectName")}
 # Drill-through targets a reader also opens directly; they keep their own project picker.
-OPEN_DIRECTLY = {"dsproject", "dspayments", "dsprojcost", "dsprojsched"}
+OPEN_DIRECTLY = {"dsproject", "dspayments", "dsprojcost", "dsprojsched", "dsprojfin"}
 
 
 def retab(files: dict[str, str]) -> None:

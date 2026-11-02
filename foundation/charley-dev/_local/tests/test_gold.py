@@ -540,8 +540,8 @@ def test_fct_qualityitem(con) -> None:
     orientations. Sourcing the counts from the item records makes that class of mistake
     impossible rather than merely corrected.
     """
-    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem") == 4
-    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='Observation'") == 2
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem") == 5
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='Observation'") == 3
     assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE ItemType='PunchItem'") == 2
     check("fct_QualityItem unions observations and punch items, split by ItemType")
     assert q(con, "SELECT DISTINCT ItemType, ItemTypeLabel FROM fct_QualityItem ORDER BY 1") == [
@@ -562,7 +562,7 @@ def test_fct_qualityitem(con) -> None:
 
     # A punch item with no cost code must survive - dropping it would quietly shrink
     # every quality count on projects that do not code their punch list.
-    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE CostCodeKey IS NULL") == 3
+    assert one(con, "SELECT COUNT(*) FROM fct_QualityItem WHERE CostCodeKey IS NULL") == 4
     check("items without a cost code are kept, not dropped")
 
     rows = rebuild_with(con, """CREATE OR REPLACE VIEW sv_observations AS SELECT * FROM (VALUES

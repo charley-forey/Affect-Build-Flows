@@ -19,13 +19,13 @@ table fct_BudgetLine
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: SnapshotDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column CostCode
 		dataType: string

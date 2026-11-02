@@ -154,10 +154,18 @@ def test_position(con) -> None:
                   "CostsIncurred, UnpaidPayables, RetainagePayable, CashPaidOut, OriginalContract, BilledPct, Phase "
                   "FROM fct_ProjectPosition WHERE BilledToDateGross IS NOT NULL")
     assert rows, "no fixture project has billings"
+    # Cal's Oct 30 notes: an Outbuild schedule decides the phase - 95% of its tasks done = Closeout;
+    # only a project with no schedule falls back to billed %.
+    tasks = {k: (n, d) for k, n, d in q(con, "SELECT ProjectKey, COUNT(*), SUM(CASE WHEN IsComplete THEN 1 ELSE 0 END) "
+                                         "FROM fct_ScheduleActivity WHERE NOT IsSummary AND NOT IsMilestone GROUP BY ProjectKey")}
     for (k, billed, ret_r, unpaid_r, collected, cost, unpaid_p, ret_p, paid_out, original, pct, phase) in rows:
         assert close(collected, float(billed) - float(ret_r) - float(unpaid_r)), k
         assert close(paid_out, float(cost) - float(unpaid_p) - float(ret_p)), k
-        assert phase == ("Precon" if pct < 0.10 else "Closeout" if pct > 0.95 else "Construction"), (k, pct, phase)
+        if k in tasks:
+            n, d = tasks[k]
+            assert (phase == "Closeout") == (d >= 0.95 * n), (k, n, d, phase)
+        else:
+            assert phase == ("Precon" if pct < 0.10 else "Closeout" if pct > 0.95 else "Construction"), (k, pct, phase)
     check("Cash Position follows Chris's formula: billings - retainage - unpaid AR, less cost - unpaid AP - sub retainage")
     check("phase is billed % of contract: under 10% Precon, over 95% Closeout")
     assert q(con, "SELECT OriginalContract FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [(8800000.0,)]
@@ -243,11 +251,13 @@ def test_oct30(con) -> None:
         con.execute("UPDATE dim_DashSetting SET Value = 1 WHERE SettingKey = 'rollout_only'")
         con.execute("DELETE FROM seed_DashProject")
         con.execute("INSERT INTO seed_DashProject VALUES ('P1', 'Tower A', 'test')")
-        con.execute("""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
-            ('P1', 'A1', 'Notice to Proceed', TRUE, CURRENT_DATE - 30, 1.0),
-            ('P1', 'A2', 'Notice to Proceed - Work Start Trigger', TRUE, CURRENT_DATE + 30, 0.0),
-            ('P1', 'A3', 'Substantial Completion', TRUE, CURRENT_DATE + 90, 0.0)
-        ) AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, FinishDate, PercentComplete)""")
+        cols = "AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, IsSummary, FinishDate, PercentComplete, IsComplete)"
+        con.execute(f"""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
+            ('P1', 'A1', 'Notice to Proceed', TRUE, FALSE, CURRENT_DATE - 30, 1.0, TRUE),
+            ('P1', 'A2', 'Notice to Proceed - Work Start Trigger', TRUE, FALSE, CURRENT_DATE + 30, 0.0, FALSE),
+            ('P1', 'T1', 'Demo', FALSE, FALSE, CURRENT_DATE - 5, 1.0, TRUE),
+            ('P1', 'T2', 'Framing', FALSE, FALSE, CURRENT_DATE + 5, 0.0, FALSE)
+        ) {cols}""")
         _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
         status = dict(q(con, "SELECT ProjectKey, DashboardStatus FROM fct_ProjectPosition"))
         assert status.get("P1") in ("Active", "Archived") and all(v == "Archived" for k, v in status.items() if k != "P1"), status
@@ -255,27 +265,31 @@ def test_oct30(con) -> None:
         row = q(con, "SELECT Phase, PhaseSource FROM fct_ProjectPosition WHERE ProjectKey = 'P1'")[0]
         assert row[0] == "Precon" and "Work Start Trigger" in row[1], row
         check("phase: the named work-start milestone not yet reached is Precon, whatever a past NTP says")
-        con.execute("UPDATE fct_ScheduleActivity SET FinishDate = CURRENT_DATE - 1 WHERE ActivityKey = 'A3'")
+        # Cal's Oct 30 notes: 95% of the schedule's tasks complete = Closeout (19 of 20 here).
+        con.execute(f"""CREATE OR REPLACE TABLE fct_ScheduleActivity AS
+            SELECT 'P1' AS ProjectKey, 'T' || i AS ActivityKey, 'Task ' || i AS ActivityName, FALSE AS IsMilestone,
+                   FALSE AS IsSummary, CURRENT_DATE AS FinishDate, CASE WHEN i < 20 THEN 1.0 ELSE 0.5 END AS PercentComplete,
+                   i < 20 AS IsComplete
+            FROM range(1, 21) r(i)""")
         _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
-        assert q(con, "SELECT Phase FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [("Closeout",)]
-        check("phase: substantial completion reached is Closeout")
+        row = q(con, "SELECT Phase, PhaseSource FROM fct_ProjectPosition WHERE ProjectKey = 'P1'")[0]
+        assert row[0] == "Closeout" and "19 of 20" in row[1], row
+        check("phase: 95% of the Outbuild tasks complete is Closeout (Cal's Oct 30 notes)")
+        con.execute("UPDATE fct_ScheduleActivity SET IsComplete = FALSE, PercentComplete = 0.5 WHERE ActivityKey = 'T19'")
+        con.execute("UPDATE fct_FinancialPeriod SET CurrentContract = 1 WHERE ProjectKey = 'P1'")
+        _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
+        assert q(con, "SELECT Phase FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [("Construction",)]
+        check("phase: 18 of 20 tasks is Construction - the schedule decides, not billed % over 95")
         # Phase 1 started, phase 2's start still ahead: Construction, not back to Precon.
-        con.execute("""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
-            ('P1', 'A1', 'Phase 1 Work Start', TRUE, CURRENT_DATE - 30, 1.0),
-            ('P1', 'A2', 'Phase 2 Work Start', TRUE, CURRENT_DATE + 60, 0.0)
-        ) AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, FinishDate, PercentComplete)""")
+        con.execute(f"""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
+            ('P1', 'A1', 'Phase 1 Work Start', TRUE, FALSE, CURRENT_DATE - 30, 1.0, TRUE),
+            ('P1', 'A2', 'Phase 2 Work Start', TRUE, FALSE, CURRENT_DATE + 60, 0.0, FALSE),
+            ('P1', 'T1', 'Demo', FALSE, FALSE, CURRENT_DATE + 5, 0.2, FALSE)
+        ) {cols}""")
         _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
         row = q(con, "SELECT Phase, PhaseSource FROM fct_ProjectPosition WHERE ProjectKey = 'P1'")[0]
         assert row[0] == "Construction" and "Phase 1" in row[1], row
         check("phase: any work-start milestone reached is Construction, a later phase's start notwithstanding")
-        # No start milestone, billed over 95%, but substantial completion still ahead: not Closeout.
-        con.execute("""CREATE OR REPLACE TABLE fct_ScheduleActivity AS SELECT * FROM (VALUES
-            ('P1', 'A3', 'Substantial Completion', TRUE, CURRENT_DATE + 30, 0.0)
-        ) AS t(ProjectKey, ActivityKey, ActivityName, IsMilestone, FinishDate, PercentComplete)""")
-        con.execute("UPDATE fct_FinancialPeriod SET CurrentContract = 1 WHERE ProjectKey = 'P1'")
-        _run(con, "46_dashboard_facts.sql", "fct_ProjectPosition")
-        assert q(con, "SELECT Phase FROM fct_ProjectPosition WHERE ProjectKey = 'P1'") == [("Construction",)]
-        check("phase: a substantial completion still ahead on the schedule rules out Closeout by billed %")
     finally:
         con.execute("ROLLBACK")
 
@@ -284,6 +298,11 @@ def test_oct30(con) -> None:
     check("data health: nine input checks per project, one row each")
     assert q(con, "SELECT COUNT(*) FROM fct_SubPayment") == q(con, "SELECT COUNT(DISTINCT SubPaymentKey) FROM fct_SubPayment")
     check("subcontractor payments: one row per project and vendor")
+    assert q(con, "SELECT Category, ProcoreCategory FROM fct_DashObservation WHERE ObservationKey = 'Observation:OB3'")         == [("Safety", "Safety - Corrective Action")]
+    check("observations: Procore's own category decides - a corrective action filed under Safety is Safety")
+    assert q(con, "SELECT COUNT(*) FROM fct_DashObservation WHERE ItemType = 'Incident' AND Category = 'Safety'")         == q(con, "SELECT COUNT(*) FROM sv_incidents")
+    assert q(con, "SELECT ProcoreCategory FROM fct_DashObservation WHERE ObservationKey = 'Incident:I1'") == [("Incident - OSHA recordable",)]
+    check("observations: every Procore incident is Safety, OSHA recordables named")
 
 
 def main() -> int:

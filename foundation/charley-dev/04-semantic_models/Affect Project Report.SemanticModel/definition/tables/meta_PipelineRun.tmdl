@@ -9,7 +9,7 @@ table meta_PipelineRun
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: RunAt
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column Stage
 		dataType: string

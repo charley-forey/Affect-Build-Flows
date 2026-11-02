@@ -39,13 +39,13 @@ table fct_VendorInsurance
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: EffectiveDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ExpirationDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: ExpirationDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column CoverageLimitRaw
 		dataType: double
@@ -91,7 +91,7 @@ table fct_VendorInsurance
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HasOutOfRangeDate
 		dataType: boolean

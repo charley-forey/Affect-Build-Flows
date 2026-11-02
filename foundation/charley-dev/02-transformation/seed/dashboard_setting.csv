@@ -1,7 +1,8 @@
 setting_key,value,note
 gross_margin_target,0.125,"Oct 21 call: 12.5% now, 13% from the end of Q1"
 phase_precon_below,0.10,"Billed % below this = Precon (deck slide 2)"
-phase_closeout_from,0.95,"Billed % above this = Closeout (deck slide 2)"
+phase_closeout_from,0.95,"Billed % above this = Closeout, for a project with no Outbuild schedule (deck slide 2)"
+phase_closeout_tasks,0.95,"Cal's Oct 30 notes: this share of the Outbuild schedule's tasks complete = Closeout"
 archive_paid_from,0.995,"Collected / contract at or above this = archived (Oct 21 call: once 100% paid)"
 grade_on_track_from,90,"PROPOSED: grade at or above = On track (deck: 100 On track)"
 grade_monitor_from,75,"Deck slide 2: 75 Monitor, below 75 Needs attention"

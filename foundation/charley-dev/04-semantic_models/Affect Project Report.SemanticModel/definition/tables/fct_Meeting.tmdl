@@ -29,7 +29,7 @@ table fct_Meeting
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MeetingDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MeetingMode
 		dataType: string
@@ -50,7 +50,7 @@ table fct_Meeting
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: DistributedDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column IsDuplicateDate
 		dataType: boolean

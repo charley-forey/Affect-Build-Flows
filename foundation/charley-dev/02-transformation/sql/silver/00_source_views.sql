@@ -248,7 +248,8 @@ SELECT CAST(NULL AS STRING) AS project_id, CAST(NULL AS STRING) AS observation_i
        CAST(NULL AS STRING) AS observation_type, CAST(NULL AS STRING) AS status_label,
        CAST(NULL AS STRING) AS priority, CAST(NULL AS STRING) AS trade,
        CAST(NULL AS STRING) AS assignee_name, CAST(NULL AS DATE) AS created_date,
-       CAST(NULL AS DATE) AS due_date, CAST(NULL AS DATE) AS closed_date
+       CAST(NULL AS DATE) AS due_date, CAST(NULL AS DATE) AS closed_date,
+       CAST(NULL AS STRING) AS observation_category
 WHERE 1=0;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_punch_items AS

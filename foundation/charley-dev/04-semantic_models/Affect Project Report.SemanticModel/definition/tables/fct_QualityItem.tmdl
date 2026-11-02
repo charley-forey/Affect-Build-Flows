@@ -64,25 +64,25 @@ table fct_QualityItem
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CreatedDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column DueDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: DueDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ClosedDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: ClosedDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HasOutOfRangeDate
 		dataType: boolean

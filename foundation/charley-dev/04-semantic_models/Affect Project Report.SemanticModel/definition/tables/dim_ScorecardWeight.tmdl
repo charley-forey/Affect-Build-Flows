@@ -26,13 +26,13 @@ table dim_ScorecardWeight
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: EffectiveFrom
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column EffectiveTo
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: EffectiveTo
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column Pillar
 		dataType: string

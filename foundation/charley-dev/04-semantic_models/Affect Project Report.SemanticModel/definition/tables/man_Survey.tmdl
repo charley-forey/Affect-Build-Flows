@@ -9,7 +9,7 @@ table man_Survey
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column QuestionNumber
 		dataType: int64

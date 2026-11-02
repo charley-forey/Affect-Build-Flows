@@ -119,7 +119,7 @@ table fct_ProjectPosition
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: LastActivityDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column IsRolloutProject
 		dataType: boolean

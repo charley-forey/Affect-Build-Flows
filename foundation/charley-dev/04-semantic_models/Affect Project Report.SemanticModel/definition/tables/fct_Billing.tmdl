@@ -59,25 +59,25 @@ table fct_Billing
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: BillingDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column PeriodStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: PeriodStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column PeriodEnd
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: PeriodEnd
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column PaymentDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: PaymentDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column PercentComplete
 		dataType: double
@@ -89,7 +89,7 @@ table fct_Billing
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HasOutOfRangeDate
 		dataType: boolean

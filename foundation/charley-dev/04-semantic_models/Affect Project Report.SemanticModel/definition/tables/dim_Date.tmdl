@@ -4,7 +4,7 @@ table dim_Date
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: Date
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column Year
 		dataType: int64
@@ -30,13 +30,13 @@ table dim_Date
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthEnd
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthEnd
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthName
 		dataType: string

@@ -44,25 +44,25 @@ table fct_RfiSubmittal
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CreatedDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column DueDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: DueDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column RespondedDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: RespondedDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HasOutOfRangeDate
 		dataType: boolean

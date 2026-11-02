@@ -29,19 +29,19 @@ table fct_Milestone
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CurrentStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column CurrentFinish
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CurrentFinish
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column DurationDays
 		dataType: double
@@ -73,13 +73,13 @@ table fct_Milestone
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: BaselineStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column BaselineFinish
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: BaselineFinish
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column FinishVarianceDays
 		dataType: int64

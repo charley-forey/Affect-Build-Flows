@@ -39,13 +39,13 @@ table fct_Inspection
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: InspectionDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column DueDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: DueDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ItemCount
 		dataType: int64

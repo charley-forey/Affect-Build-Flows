@@ -9,13 +9,13 @@ table dim_ReportWeek
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: WeekStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column WeekEnd
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: WeekEnd
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column WeekLabel
 		dataType: string
@@ -32,7 +32,7 @@ table dim_ReportWeek
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: AsOfDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	partition dim_ReportWeek = entity
 		mode: directLake

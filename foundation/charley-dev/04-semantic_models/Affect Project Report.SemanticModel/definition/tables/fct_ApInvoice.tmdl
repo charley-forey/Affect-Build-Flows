@@ -79,13 +79,13 @@ table fct_ApInvoice
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: InvoiceDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column StatusCode
 		dataType: int64

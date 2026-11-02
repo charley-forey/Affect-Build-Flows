@@ -9,7 +9,7 @@ table fct_FinancialPeriod
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column OriginalContract
 		dataType: double

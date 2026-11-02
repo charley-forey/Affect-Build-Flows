@@ -153,7 +153,7 @@ table _Measures
 
 	/// Replaces nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built
 	measure 'Last Checked Run' = MAX ( meta_PipelineRun[RunAt] )
-		formatString: "yyyy-mm-dd hh:nn"
+		formatString: "mm/dd/yy hh:nn"
 		displayFolder: 14 Pipeline liveness
 
 	/// Replaces nothing - hours since the last PUBLISHED validated run: automatic update is off, so the model only moves when cd_50_publish_models frames a run that passed the DQ gate. A blocked gate is NOT visible here (the model keeps the last good run); the alert is the signal
@@ -237,7 +237,7 @@ table _Measures
 
 	/// Replaces D8 - latest certificate expiration on file
 	measure 'Latest Certificate Expiration' = MAX ( fct_VendorInsurance[ExpirationDate] )
-		formatString: "yyyy-mm-dd"
+		formatString: "mm/dd/yy"
 		displayFolder: 15 Insurance
 
 	/// Replaces D8 - a vendor with no certificate never appears in the insurance table
@@ -538,7 +538,7 @@ table _Measures
 
 	/// Replaces no workbook equivalent - the Excel could not say when its numbers were true
 	measure 'Last Refresh' = MAX ( _Measures[_built_at] )
-		formatString: "yyyy-mm-dd hh:nn"
+		formatString: "mm/dd/yy hh:nn"
 		displayFolder: 00 Report context
 
 	/// Replaces DASHBOARD!AU4 - the month anchor, now driven by the slicer
@@ -654,14 +654,14 @@ table _Measures
 
 	/// Replaces no workbook equivalent - first saved capture. SnapshotDate is the UTC date of the DQ batch that saved it, not a source freshness guarantee. The last available capture may precede month end
 	measure 'Snapshot History Starts' = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )
-		formatString: "yyyy-mm-dd"
+		formatString: "mm/dd/yy"
 		displayFolder: 16 Month-end snapshots
 
 	/// Replaces no workbook equivalent - states where saved history begins
 	measure 'Snapshot History Note' =
 			VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )
 			RETURN IF ( ISBLANK ( F ), "No month-end history captured yet",
-			"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero" )
+			"History starts " & FORMAT ( F, "mm/dd/yy" ) & "; earlier months are unavailable, not zero" )
 		displayFolder: 16 Month-end snapshots
 
 	/// Replaces FINANCIALS!F56 - now from Sage AR receipts (acrpmt)
@@ -1283,17 +1283,17 @@ table _Measures
 			RETURN IF ( ISBLANK ( Picked ),
 			CALCULATE ( MAX ( dim_ReportWeek[WeekEnd] ), REMOVEFILTERS ( dim_ReportWeek ), dim_ReportWeek[WeeksAgo] = 1 ),
 			Picked )
-		formatString: "yyyy-mm-dd"
+		formatString: "mm/dd/yy"
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces the gold build date; today's balances are as of this day
 	measure 'Data As Of' = CALCULATE ( MAX ( dim_ReportWeek[AsOfDate] ), REMOVEFILTERS ( dim_ReportWeek ) )
-		formatString: "yyyy-mm-dd"
+		formatString: "mm/dd/yy"
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces derived
 	measure 'Report Window End' = MIN ( [Report Week End], [Data As Of] )
-		formatString: "yyyy-mm-dd"
+		formatString: "mm/dd/yy"
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces derived
@@ -1307,7 +1307,7 @@ table _Measures
 			VAR S = E - 6
 			VAR W = [Report Weeks Ago]
 			RETURN SWITCH ( W, 0, "This week", 1, "Last week", "Week" ) & "  "
-			& FORMAT ( S, "mmm d" ) & " - " & FORMAT ( E, "mmm d, yyyy" )
+			& FORMAT ( S, "mm/dd/yy" ) & " - " & FORMAT ( E, "mm/dd/yy" )
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces derived - one real project in context
@@ -1341,7 +1341,7 @@ table _Measures
 
 	/// Replaces derived - latest daily log, meeting, inspection, RFI/submittal or observation
 	measure 'Last Project Activity' = MAX ( fct_ProjectPosition[LastActivityDate] )
-		formatString: "yyyy-mm-dd"
+		formatString: "mm/dd/yy"
 		displayFolder: 20 Dashboard - week & status
 
 	/// Replaces Oct 21 call: archived once 100% paid; Active = recent Procore activity (proposed 60 days)
@@ -1977,6 +1977,52 @@ table _Measures
 			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
 		displayFolder: 23 Dashboard - scorecard
 
+	/// Replaces Cal's Oct 30 notes: SAFETY cell 2 - open Procore items and the proposed data score
+	measure 'Safety Data Cell' =
+			VAR O = [Open Safety Observations]
+			VAR S = [Safety Data Score (Proposed)]
+			RETURN IF ( [Is Dashboard Project], COALESCE ( O, 0 ) & " open  " & UNICHAR ( 183 ) & "  "
+			& IF ( ISBLANK ( S ), UNICHAR ( 8212 ), FORMAT ( S, "0%" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces SAFETY data cell pill
+	measure 'Safety Data Colour' =
+			VAR S = [Safety Data Score (Proposed)]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces SAFETY data cell pill text
+	measure 'Safety Data Ink' =
+			VAR S = [Safety Data Score (Proposed)]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces Cal's Oct 30 notes: QUALITY cell 2 - open Procore items and the proposed data score
+	measure 'Quality Data Cell' =
+			VAR O = [Open Quality Observations]
+			VAR S = [Quality Data Score (Proposed)]
+			RETURN IF ( [Is Dashboard Project], COALESCE ( O, 0 ) & " open  " & UNICHAR ( 183 ) & "  "
+			& IF ( ISBLANK ( S ), UNICHAR ( 8212 ), FORMAT ( S, "0%" ) ) )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces QUALITY data cell pill
+	measure 'Quality Data Colour' =
+			VAR S = [Quality Data Score (Proposed)]
+			RETURN SWITCH ( TRUE (), ISBLANK ( S ), "#DDE4EB",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1, "#278367",
+			S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1, "#E5A13B",
+			"#BF534E" )
+		displayFolder: 23 Dashboard - scorecard
+
+	/// Replaces QUALITY data cell pill text
+	measure 'Quality Data Ink' =
+			VAR S = [Quality Data Score (Proposed)]
+			RETURN IF ( NOT ISBLANK ( S ) && ( S >= CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_on_track_from" ) / 100 * 1 || S < CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "grade_monitor_from" ) / 100 * 1 ), "#FFFFFF", "#16283F" )
+		displayFolder: 23 Dashboard - scorecard
+
 	/// Replaces deck slide 2 TEAM - initials of PM, APM, Super, Asst Super from Procore
 	measure 'Team Initials' =
 			VAR T = SUMMARIZE ( FILTER ( fct_ProjectTeam, fct_ProjectTeam[RoleOrder] <= 4 ),
@@ -2023,12 +2069,12 @@ table _Measures
 
 	/// Replaces deck slide 3 TRACKING FINISH - the baseline finish
 	measure 'Tracking Finish' = CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )
-		formatString: "mmm d, yyyy"
+		formatString: "mm/dd/yy"
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces deck slide 3 ACTUAL FINISH FORECAST - the current critical-path finish
 	measure 'Forecast Finish' = [Scheduled Finish]
-		formatString: "mmm d, yyyy"
+		formatString: "mm/dd/yy"
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces card text for Work Progress %
@@ -2036,11 +2082,11 @@ table _Measures
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces card text for Tracking Finish
-	measure 'Tracking Finish Shown' = IF ( [Is Dashboard Project], VAR V = [Tracking Finish] RETURN IF ( ISBLANK ( V ), "No baseline", FORMAT ( V, "mmm d, yyyy" ) ) )
+	measure 'Tracking Finish Shown' = IF ( [Is Dashboard Project], VAR V = [Tracking Finish] RETURN IF ( ISBLANK ( V ), "No baseline", FORMAT ( V, "mm/dd/yy" ) ) )
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces card text for Forecast Finish
-	measure 'Forecast Finish Shown' = IF ( [Is Dashboard Project], VAR V = [Forecast Finish] RETURN IF ( ISBLANK ( V ), "No forecast", FORMAT ( V, "mmm d, yyyy" ) ) )
+	measure 'Forecast Finish Shown' = IF ( [Is Dashboard Project], VAR V = [Forecast Finish] RETURN IF ( ISBLANK ( V ), "No forecast", FORMAT ( V, "mm/dd/yy" ) ) )
 		displayFolder: 24 Dashboard - project page
 
 	/// Replaces deck slide 3 SCHEDULE tile
@@ -2159,7 +2205,7 @@ table _Measures
 			VAR S = SELECTEDVALUE ( fct_ScheduleActivity[StartDate] )
 			VAR F = SELECTEDVALUE ( fct_ScheduleActivity[FinishDate] )
 			RETURN IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] ),
-			IF ( S > A, "Starts " & FORMAT ( S, "mmm d" ), "Finish " & FORMAT ( F, "mmm d" ) )
+			IF ( S > A, "Starts " & FORMAT ( S, "mm/dd/yy" ), "Finish " & FORMAT ( F, "mm/dd/yy" ) )
 			& IF ( SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) > 0,
 			"  " & UNICHAR ( 183 ) & "  " & SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) & " days behind baseline" ) )
 		displayFolder: 24 Dashboard - project page
@@ -2341,6 +2387,21 @@ table _Measures
 			RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"
 		displayFolder: 25 Dashboard - executive
 
+	/// Replaces Cal's Oct 30 notes: QUALITY on the Executive top bar, as SAFETY
+	measure 'Portfolio Quality Score' =
+			VAR T = ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), "@s", [Quality Pillar] )
+			RETURN AVERAGEX ( FILTER ( T, NOT ISBLANK ( [@s] ) ), [@s] )
+		formatString: "0%"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces QUALITY tile sub-line
+	measure 'Quality Subline' =
+			VAR N = SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
+			IF ( [Project Phase] = "Construction", [Quality Inspections (Week)] ) )
+			VAR P = COUNTROWS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" && [Project Phase] = "Construction" ) )
+			RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"
+		displayFolder: 25 Dashboard - executive
+
 	/// Replaces deck slide 1 ON SCHEDULE - forecast finish on or before baseline
 	measure 'Projects On Schedule' =
 			COALESCE ( COUNTROWS ( FILTER ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ),
@@ -2449,7 +2510,7 @@ table _Measures
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces deck header - when the numbers were true
-	measure 'Data As Of Header' = "DATA AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Pipeline Status]
+	measure 'Data As Of Header' = "DATA AS OF " & UPPER ( FORMAT ( [Data As Of], "mm/dd/yy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Pipeline Status]
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces deck slide 2 header
@@ -2495,14 +2556,14 @@ table _Measures
 	measure 'Books Closed Through' =
 			VAR V = CALCULATE ( MAX ( dim_DashSetting[Value] ), REMOVEFILTERS ( dim_DashSetting ), dim_DashSetting[SettingKey] = "sage_closed_through" )
 			RETURN IF ( V > 0, DATE ( INT ( V / 10000 ), INT ( MOD ( V, 10000 ) / 100 ), MOD ( V, 100 ) ) )
-		formatString: "mmm d, yyyy"
+		formatString: "mm/dd/yy"
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces Oct 30 call: show closed months as final, later ones with a warning
 	measure 'Close Status Text' =
 			VAR C = [Books Closed Through]
 			VAR E = [Report Window End]
-			RETURN IF ( ISBLANK ( C ), "Sage month close not recorded", "SAGE CLOSED THROUGH " & UPPER ( FORMAT ( C, "mmm d, yyyy" ) )
+			RETURN IF ( ISBLANK ( C ), "Sage month close not recorded", "SAGE CLOSED THROUGH " & UPPER ( FORMAT ( C, "mm/dd/yy" ) )
 			& IF ( E > C, "  " & UNICHAR ( 8226 ) & "  " & "LATER MONTHS PROVISIONAL" ) )
 		displayFolder: 25 Dashboard - executive
 
@@ -2526,7 +2587,7 @@ table _Measures
 	/// Replaces deck slide 1 REVENUE YTD sub-line: the week picked, and the closed-books figure
 	measure 'Revenue YTD Subline' =
 			VAR C = MIN ( [Report Window End], [Books Closed Through] )
-			RETURN "Closed books to " & FORMAT ( C, "mmm d" ) & ": "
+			RETURN "Closed books to " & FORMAT ( C, "mm/dd/yy" ) & ": "
 			& ( VAR X = [Revenue YTD Closed] RETURN IF ( ISBLANK ( X ), BLANK (), SWITCH ( TRUE (),     ABS ( X ) >= 1000000, FORMAT ( X / 1000000, "$#,0.0" ) & "M",     ABS ( X ) >= 1000, FORMAT ( X / 1000, "$#,0" ) & "K",     FORMAT ( X, "$#,0" ) ) ) )
 		displayFolder: 25 Dashboard - executive
 
@@ -2945,6 +3006,51 @@ table _Measures
 	measure 'Open AR Shown' = IF ( [Is Dashboard Project], FORMAT ( [Cash - Unpaid Receivables], "$#,0" ) )
 		displayFolder: 25 Dashboard - executive
 
+	/// Replaces D - days the oldest unpaid Sage invoice has been out
+	measure 'AR Oldest Open Days' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( VAR D = [Data As Of]
+			RETURN CALCULATE ( MAXX ( FILTER ( fct_Invoice, fct_Invoice[Balance] > 0.005 && NOT ISBLANK ( fct_Invoice[SentDate] ) ),
+			DATEDIFF ( fct_Invoice[SentDate], D, DAY ) ), REMOVEFILTERS ( dim_Date ) ) ) ),
+			MAXX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( VAR D = [Data As Of]
+			RETURN CALCULATE ( MAXX ( FILTER ( fct_Invoice, fct_Invoice[Balance] > 0.005 && NOT ISBLANK ( fct_Invoice[SentDate] ) ),
+			DATEDIFF ( fct_Invoice[SentDate], D, DAY ) ), REMOVEFILTERS ( dim_Date ) ) ) ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces E - Sage invoices (pay apps billed) not fully paid
+	measure 'AR Open Invoices' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( CALCULATE ( COUNTROWS ( FILTER ( fct_Invoice, fct_Invoice[Balance] > 0.005 ) ), REMOVEFILTERS ( dim_Date ) ) ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( CALCULATE ( COUNTROWS ( FILTER ( fct_Invoice, fct_Invoice[Balance] > 0.005 ) ), REMOVEFILTERS ( dim_Date ) ) ) ) )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces F = A - B - C: current contract less received less still owed
+	measure 'Prime Balance To Finish' =
+			IF ( HASONEVALUE ( dim_Project[ProjectKey] ), IF ( [Is Dashboard Project], ( [Position Contract] - [Paid To Date] - [Cash - Unpaid Receivables] ) ),
+			SUMX ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = "Active" ), ( [Position Contract] - [Paid To Date] - [Cash - Unpaid Receivables] ) ) )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces H - every approved Procore commitment; the requisition's contract sum where there is one (it has the COs)
+	measure 'Vendor Total Committed' = SUM ( fct_SubPayment[TotalCommitted] )
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces L - Sage AP invoices not fully paid
+	measure 'Vendor AP Open Invoices' = SUM ( fct_SubPayment[ApOpenInvoices] )
+		formatString: "#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces M = H - I - J: committed less paid less still owed
+	measure 'Vendor Balance To Finish' = [Vendor Total Committed] - [Sub Paid] - [Sub AP Open]
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
+	/// Replaces cost code: committed less spent to date (Sage AP has no cost code)
+	measure 'Line Left On Commitment' = [Line Committed] - [Line Spent]
+		formatString: "$#,0"
+		displayFolder: 25 Dashboard - executive
+
 	/// Replaces detail - Pass / Warn / Info
 	measure 'Check Result' = SELECTEDVALUE ( fct_DashCheck[Result] )
 		displayFolder: 25 Dashboard - executive
@@ -3074,12 +3180,12 @@ table _Measures
 
 	/// Replaces detail - Outbuild baseline finish (the latest is TRACKING FINISH)
 	measure 'Milestone Baseline Finish' = CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )
-		formatString: "mmm d, yyyy"
+		formatString: "mm/dd/yy"
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail - Outbuild current finish (the latest is FORECAST FINISH)
 	measure 'Milestone Forecast Finish' = CALCULATE ( MAX ( fct_Milestone[CurrentFinish] ), REMOVEFILTERS ( dim_Date ) )
-		formatString: "mmm d, yyyy"
+		formatString: "mm/dd/yy"
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail - current finish less baseline finish, days
@@ -3105,16 +3211,16 @@ table _Measures
 	/// Replaces detail - where the completion variance's baseline comes from
 	measure 'Manual Baseline Note' =
 			IF ( [Is Dashboard Project], IF ( NOT ISBLANK ( MAX ( man_Milestones[BaselineFinish] ) ),
-			"Baseline finish entered by hand (SharePoint) overrides Outbuild: " & FORMAT ( MAX ( man_Milestones[BaselineFinish] ), "mmm d, yyyy" ),
+			"Baseline finish entered by hand (SharePoint) overrides Outbuild: " & FORMAT ( MAX ( man_Milestones[BaselineFinish] ), "mm/dd/yy" ),
 			"Baseline finish from Outbuild (no manual override)" ) )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces Data Health header line
-	measure 'Health Header' = [Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) )
+	measure 'Health Header' = [Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mm/dd/yy" ) )
 		displayFolder: 25 Dashboard - executive
 
 	/// Replaces detail pages header line
-	measure 'Detail Header' = "BALANCES AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Active Projects] & " ACTIVE PROJECTS"
+	measure 'Detail Header' = "BALANCES AS OF " & UPPER ( FORMAT ( [Data As Of], "mm/dd/yy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Active Projects] & " ACTIVE PROJECTS"
 		displayFolder: 25 Dashboard - executive
 
 	column _placeholder

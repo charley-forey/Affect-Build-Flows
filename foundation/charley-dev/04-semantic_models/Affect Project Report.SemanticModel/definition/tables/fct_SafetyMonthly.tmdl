@@ -9,7 +9,7 @@ table fct_SafetyMonthly
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HoursWorked
 		dataType: double
@@ -50,13 +50,13 @@ table fct_SafetyMonthly
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: FirstLogDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column LastLogDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: LastLogDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column WeekdaysLogged
 		dataType: int64

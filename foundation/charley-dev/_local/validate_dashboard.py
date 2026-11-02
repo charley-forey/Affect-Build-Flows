@@ -40,7 +40,8 @@ PRESENTATION = {
     "Days Behind Baseline", "Recent Win Flag", "Inspection In Week Flag",
     # Drill-down text over checked measures (Oct 30 call).
     "Close Status Text", "Revenue YTD Subline", "In Margin Tile", "On Budget Row", "On Schedule Row",
-    "Open AR Shown", "Health Header", "Detail Header", "Check Colour", "Check Ink",
+    "Open AR Shown", "Quality Subline", "Safety Data Cell", "Safety Data Colour", "Safety Data Ink",
+    "Quality Data Cell", "Quality Data Colour", "Quality Data Ink", "Health Header", "Detail Header", "Check Colour", "Check Ink",
     # Outbuild milestone wording: the seed_PhaseMilestone patterns are not in the model.
     "Phase Source",
     # Drill-down row readings and filters: BLANK without one invoice, AP invoice, cost code,
@@ -552,6 +553,8 @@ def expected(E: dict) -> dict:
     D["Portfolio Cash Position"] = lambda c, s: over(c, s, D["Cash Position"])
     D["Portfolio Safety Score"] = lambda c, s: (
         (lambda v: sum(v) / len(v) if v else None)([x for ps in active(c, s) if (x := D["Safety Pillar"](c, ps)) is not None]))
+    D["Portfolio Quality Score"] = lambda c, s: (
+        (lambda v: sum(v) / len(v) if v else None)([x for ps in active(c, s) if (x := D["Quality Pillar"](c, ps)) is not None]))
     D["Projects On Schedule"] = lambda c, s: count(
         c, s, lambda c, ps: (v := E["Completion Variance Days"](c, ps)) is not None and v <= 0)
     D["Projects With Baseline"] = lambda c, s: count(c, s, lambda c, ps: E["Completion Variance Days"](c, ps) is not None)
@@ -700,6 +703,46 @@ def expected(E: dict) -> dict:
         return _sum(k - (p or 0) for k, p in found)
 
     D["Sub Left To Pay"] = left_to_pay
+
+    # Project Financials (Cal's sheet). Total committed: the requisition's contract sum, else the
+    # approved commitments; open AP invoices counted from the AP lines.
+    def vendor_committed(c, s):
+        out = {}
+        for r in c.rows("fct_Billing", nomonth(s)):
+            if _eq(r["BillingType"], "Subcontractor") and r["IsLatestApprovedPeriod"] is True and r["ProjectKey"] is not None:
+                k = (r["ProjectKey"], r["VendorKey"])
+                out[k] = (out.get(k) or 0) + (r["ContractSumToDate"] or 0)
+        for r in c.rows("fct_SubPayment", nomonth(s)):
+            k = (r["ProjectKey"], r["VendorKey"])
+            if k not in out and r["CommitmentTotal"] is not None:
+                out[k] = r["CommitmentTotal"]
+        return _sum(out.values())
+
+    D["Vendor Total Committed"] = vendor_committed
+    D["Vendor AP Open Invoices"] = lambda c, s: len(
+        {(r["ProjectKey"], r["VendorKey"], r["InvoiceKey"]) for r in ap_lines(c, s)
+         if (r["InvoiceBalance"] or 0) > 0 and r["ProjectKey"] is not None}
+    ) if c.rows("fct_SubPayment", nomonth(s)) else None
+    D["Vendor Balance To Finish"] = lambda c, s: (
+        None if (h := D["Vendor Total Committed"](c, s)) is None and D["Sub Paid"](c, s) is None and D["Sub AP Open"](c, s) is None
+        else (h or 0) - (D["Sub Paid"](c, s) or 0) - (D["Sub AP Open"](c, s) or 0))
+    D["Line Left On Commitment"] = lambda c, s: (
+        None if D["Line Committed"](c, s) is None and D["Line Spent"](c, s) is None
+        else (D["Line Committed"](c, s) or 0) - (D["Line Spent"](c, s) or 0))
+
+    def open_invoices(c, s):
+        return [r for r in c.rows("fct_Invoice", nomonth(s)) if (r["Balance"] or 0) > 0.005]
+
+    D["AR Open Invoices"] = by_project(lambda c, s: len(open_invoices(c, s)) or None)
+    D["Prime Balance To Finish"] = by_project(lambda c, s: (D["Position Contract"](c, s) or 0)
+                                              - (D["Paid To Date"](c, s) or 0) - (D["Cash - Unpaid Receivables"](c, s) or 0))
+
+    def oldest_open(c, s):
+        return max(((as_of(c) - _d(r["SentDate"])).days for r in open_invoices(c, s) if r["SentDate"]), default=None)
+
+    D["AR Oldest Open Days"] = lambda c, s: ((oldest_open(c, s) if is_project(s) else None) if s.project is not None
+                                             else max((v for ps in active(c, s) if (v := oldest_open(c, ps)) is not None),
+                                                      default=None))
     D["Sub Oldest Open Days"] = lambda c, s: max(
         ((as_of(c) - _d(r["InvoiceDate"])).days for g in subs(c, s) for r in g[1]
          if (r["InvoiceBalance"] or 0) > 0 and r["InvoiceDate"]), default=None)
@@ -848,11 +891,13 @@ RAW_COLUMNS = {
     # Read by the measures; every value is recomputed from the raw facts above, never from it.
     # IsRolloutProject is the one exception: seed_DashProject membership, an input (see standing).
     "fct_ProjectPosition": ["IsRolloutProject"], "fct_MetricScore": [], "fct_ProjectScore": [],
-    "fct_SubPayment": [], "fct_DashCheck": [],
+    # CommitmentTotal is the second exception: the approved Procore commitments (sv_commitments)
+    # are not a gold fact of their own, so the commitment side is read as an input.
+    "fct_SubPayment": ["VendorKey", "CommitmentTotal"], "fct_DashCheck": [],
 }
 # Columns the dashboard reads on tables validate_model already loads.
 EXTRA_COLUMNS = {
-    "fct_ApInvoice": ["InvoiceBalance", "InvoiceTotal", "IsVoid", "AmountPaid", "InvoiceDate", "VendorKey"],
+    "fct_ApInvoice": ["InvoiceBalance", "InvoiceTotal", "IsVoid", "AmountPaid", "InvoiceDate", "VendorKey", "InvoiceKey"],
     "fct_Invoice": ["SageJobNumber", "IsVoid", "VoidedAmount"],
     "fct_Billing": ["OriginalContractSum", "NetChangeByChangeOrders", "EarnedLessRetainageToDate", "VendorKey"],
     "fct_Milestone": ["BaselineStart"],

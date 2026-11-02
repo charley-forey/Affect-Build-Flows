@@ -277,7 +277,7 @@ SELECT
     date_add(this_monday, 6 - 7 * WeeksAgo)                      AS WeekEnd,
     CASE WHEN WeeksAgo = 0 THEN 'This week'
          WHEN WeeksAgo = 1 THEN 'Last week'
-         ELSE CONCAT('Week of ', CAST(date_add(this_monday, -7 * WeeksAgo) AS STRING)) END AS WeekLabel,
+         ELSE CONCAT('Week of ', date_format(date_add(this_monday, -7 * WeeksAgo), 'MM/dd/yy')) END AS WeekLabel,
     CAST(-WeeksAgo AS INT)                                       AS WeekSort,
     CURRENT_DATE                                                 AS AsOfDate
 FROM anchored;
@@ -301,10 +301,10 @@ FROM anchored;
 --   Cash...             Chris's formula; the Grade Detail page shows each step
 --   ProjectedCost       forecast of every budget line except the FEE division (50)
 --   ArOwed*             unpaid Sage AR, and its balance x days outstanding, for the weighted age
---   Phase               Oct 30 call: from Outbuild milestones where the schedule names them -
---                       substantial completion reached = Closeout; the construction-start
---                       milestone reached = Construction, not yet = Precon - else billed %
---                       (seed_PhaseMilestone). PhaseSource says which, in words.
+--   Phase               Cal's Oct 30 notes: from the Outbuild schedule - 95% of its tasks
+--                       complete = Closeout (phase_closeout_tasks); else the construction-start
+--                       milestone reached = Construction, not yet = Precon (seed_PhaseMilestone);
+--                       no schedule = billed %. PhaseSource says which, in words.
 --   DashboardStatus     Archived once 100% paid. With rollout_only = 1 (Oct 30 call) only the
 --                       projects in seed_DashProject are Active; the rest are Archived, with
 --                       StatusReason. With 0: Active = Procore activity in 60 days.
@@ -313,6 +313,7 @@ CREATE OR REPLACE TABLE fct_ProjectPosition AS
 WITH settings AS (
     SELECT MAX(CASE WHEN SettingKey = 'phase_precon_below' THEN Value END)  AS precon_below,
            MAX(CASE WHEN SettingKey = 'phase_closeout_from' THEN Value END) AS closeout_from,
+           MAX(CASE WHEN SettingKey = 'phase_closeout_tasks' THEN Value END) AS closeout_tasks,
            MAX(CASE WHEN SettingKey = 'archive_paid_from' THEN Value END)   AS archive_from,
            MAX(CASE WHEN SettingKey = 'active_within_days' THEN Value END)  AS active_days,
            MAX(CASE WHEN SettingKey = 'ar_aged_days' THEN Value END)        AS aged_days,
@@ -391,11 +392,10 @@ ms AS (
     JOIN seed_PhaseMilestone c ON LOWER(a.ActivityName) LIKE CONCAT('%', c.Pattern, '%')
     WHERE a.IsMilestone AND a.FinishDate IS NOT NULL
 ),
-closeout AS (
-    -- The first substantial-completion milestone reached.
-    SELECT ProjectKey, ActivityName, FinishDate FROM (
-        SELECT ms.*, ROW_NUMBER() OVER (PARTITION BY ProjectKey ORDER BY FinishDate, ActivityName) AS k
-        FROM ms WHERE rn = 1 AND Marks = 'Closeout' AND reached) x WHERE k = 1
+tasks AS (
+    -- The schedule's tasks: every activity but the summary bars and the milestones.
+    SELECT ProjectKey, COUNT(*) AS n, SUM(CASE WHEN IsComplete THEN 1 ELSE 0 END) AS done
+    FROM fct_ScheduleActivity WHERE NOT IsSummary AND NOT IsMilestone GROUP BY ProjectKey
 ),
 start AS (
     -- The construction-start milestone, of the best-named kind (lowest priority): any of them
@@ -409,10 +409,6 @@ start AS (
         FROM (SELECT ms.*, MIN(Priority) OVER (PARTITION BY ProjectKey) AS best
               FROM ms WHERE rn = 1 AND Marks = 'Construction') b
         WHERE Priority = best) x WHERE k = 1
-),
-sc_ahead AS (
-    -- A substantial-completion milestone on the schedule that is not reached yet.
-    SELECT DISTINCT ProjectKey FROM ms WHERE rn = 1 AND Marks = 'Closeout' AND NOT reached
 ),
 base AS (
     SELECT p.ProjectKey,
@@ -433,10 +429,9 @@ base AS (
            COALESCE(ar.over60, 0) AS ArOver60, COALESCE(ar.voided, 0) AS VoidedInvoiceAmount,
            COALESCE(ar.voids, 0) AS VoidedInvoiceCount,
            activity.last_activity AS LastActivityDate,
-           closeout.ActivityName AS closeout_name, closeout.FinishDate AS closeout_date,
+           tasks.n AS task_n, tasks.done AS task_done,
            start.ActivityName AS start_name, start.FinishDate AS start_date, start.reached AS start_reached,
-           dp.ProcoreProjectId IS NOT NULL AS IsRolloutProject,
-           sc.ProjectKey IS NOT NULL AS sc_ahead
+           dp.ProcoreProjectId IS NOT NULL AS IsRolloutProject
     FROM projects p
     LEFT JOIN cur ON cur.ProjectKey = p.ProjectKey
     LEFT JOIN orig ON orig.ProjectKey = p.ProjectKey
@@ -446,10 +441,9 @@ base AS (
     LEFT JOIN ap ON ap.ProjectKey = p.ProjectKey
     LEFT JOIN budget ON budget.ProjectKey = p.ProjectKey
     LEFT JOIN activity ON activity.ProjectKey = p.ProjectKey
-    LEFT JOIN closeout ON closeout.ProjectKey = p.ProjectKey
+    LEFT JOIN tasks ON tasks.ProjectKey = p.ProjectKey
     LEFT JOIN start ON start.ProjectKey = p.ProjectKey
     LEFT JOIN seed_DashProject dp ON dp.ProcoreProjectId = p.ProjectKey
-    LEFT JOIN sc_ahead sc ON sc.ProjectKey = p.ProjectKey
 ),
 cash AS (
     SELECT b.*,
@@ -462,18 +456,24 @@ cash AS (
 ),
 phased AS (
     SELECT c.*,
-           CASE WHEN c.closeout_name IS NOT NULL THEN 'Closeout'
+           CASE WHEN c.task_done >= s.closeout_tasks * c.task_n THEN 'Closeout'
                 WHEN c.start_name IS NOT NULL THEN CASE WHEN c.start_reached THEN 'Construction' ELSE 'Precon' END
+                WHEN c.task_n > 0 THEN 'Construction'
                 WHEN c.BilledPct IS NULL THEN NULL
                 WHEN c.BilledPct < s.precon_below THEN 'Precon'
-                WHEN c.BilledPct > s.closeout_from AND NOT c.sc_ahead THEN 'Closeout'
+                WHEN c.BilledPct > s.closeout_from THEN 'Closeout'
                 ELSE 'Construction' END AS Phase,
-           CASE WHEN c.closeout_name IS NOT NULL
-                    THEN CONCAT('Outbuild: "', c.closeout_name, '" reached ', CAST(c.closeout_date AS STRING))
+           CASE WHEN c.task_done >= s.closeout_tasks * c.task_n
+                    THEN CONCAT('Outbuild: ', CAST(c.task_done AS STRING), ' of ', CAST(c.task_n AS STRING),
+                                ' tasks complete (', CAST(CAST(ROUND(100 * s.closeout_tasks, 0) AS INT) AS STRING), '% = closeout)')
                 WHEN c.start_name IS NOT NULL
                     THEN CONCAT('Outbuild: "', c.start_name, '" ',
                                 CASE WHEN c.start_reached THEN 'reached ' ELSE 'due ' END,
-                                CAST(c.start_date AS STRING))
+                                date_format(c.start_date, 'MM/dd/yy'), '; ',
+                                CAST(COALESCE(c.task_done, 0) AS STRING), ' of ', CAST(COALESCE(c.task_n, 0) AS STRING), ' tasks complete')
+                WHEN c.task_n > 0
+                    THEN CONCAT('Outbuild: no construction-start milestone; ', CAST(c.task_done AS STRING), ' of ',
+                                CAST(c.task_n AS STRING), ' tasks complete')
                 WHEN c.BilledPct IS NULL THEN 'No contract or billing, and no Outbuild phase milestone'
                 ELSE CONCAT('Billed ', CAST(ROUND(100 * c.BilledPct, 1) AS STRING),
                             '% of contract (no Outbuild phase milestone)') END AS PhaseSource,
@@ -508,6 +508,10 @@ FROM phased;
 -- can be agreed from real data. Procore observations and punch items (fct_QualityItem),
 -- classified Safety / Quality by category (seed_ObservationCategory); anything unmatched is
 -- Quality, the tool's default use here. Read by the drill-down and the PROPOSED data scores.
+-- Cal's Oct 30 notes list them as Procore shows them, "Safety - Near Miss": Procore's own
+-- category decides first (safety = Safety; quality, commissioning, environmental, warranty,
+-- work to complete = Quality), the seed patterns after. Incidents (OSHA recordable or not)
+-- are Safety.
 CREATE OR REPLACE TABLE fct_DashObservation AS
 WITH matched AS (
     SELECT q.ProjectKey, q.ItemType, q.ItemKey, c.Category,
@@ -520,13 +524,24 @@ SELECT q.ProjectKey,
        CONCAT(q.ItemType, ':', CAST(q.ItemKey AS STRING)) AS ObservationKey,
        q.ItemTypeLabel                         AS ItemType,
        q.ItemNumber, q.Title,
-       COALESCE(q.ItemCategory, '(no category)') AS ProcoreCategory,
-       COALESCE(m.Category, 'Quality')         AS Category,
+       CASE WHEN o.observation_category IS NOT NULL
+            THEN CONCAT(initcap(REPLACE(o.observation_category, '_', ' ')), ' - ', COALESCE(q.ItemCategory, '(no type)'))
+            ELSE COALESCE(q.ItemCategory, '(no category)') END AS ProcoreCategory,
+       CASE WHEN LOWER(o.observation_category) = 'safety' THEN 'Safety'
+            ELSE COALESCE(m.Category, 'Quality') END AS Category,
        q.StatusLabel, q.IsOpen, q.CreatedDate, q.DueDate, q.ClosedDate, q.DaysOpen, q.IsPastDue,
        q.AssignedTo
 FROM fct_QualityItem q
 LEFT JOIN matched m ON m.ProjectKey = q.ProjectKey AND m.ItemType = q.ItemType AND m.ItemKey = q.ItemKey AND m.rn = 1
-WHERE q.ProjectKey IS NOT NULL;
+LEFT JOIN sv_observations o ON q.ItemType = 'Observation' AND o.observation_id = q.ItemKey
+WHERE q.ProjectKey IS NOT NULL
+UNION ALL
+SELECT project_id, CONCAT('Incident:', incident_id), 'Incident', CAST(NULL AS STRING), title,
+       CASE WHEN is_recordable THEN 'Incident - OSHA recordable' ELSE 'Incident' END, 'Safety',
+       status_label, UPPER(COALESCE(status_label, '')) <> 'CLOSED', event_date, CAST(NULL AS DATE),
+       CAST(NULL AS DATE), datediff(CURRENT_DATE, event_date), FALSE, 'UNASSIGNED'
+FROM sv_incidents
+WHERE project_id IS NOT NULL;
 
 -- ---------------------------------------------------------------------------
 -- fct_SubPayment
@@ -556,34 +571,53 @@ ap AS (
            SUM(CASE WHEN COALESCE(InvoiceTotal, 0) <> 0 THEN LineTotal * InvoiceBalance / InvoiceTotal END) AS ApOpen,
            MAX(CASE WHEN InvoiceBalance > 0 THEN datediff(CURRENT_DATE, InvoiceDate) END) AS OldestOpenDays,
            COUNT(DISTINCT InvoiceKey) AS ApInvoices,
+           COUNT(DISTINCT CASE WHEN InvoiceBalance > 0 THEN InvoiceKey END) AS ApOpenInvoices,
            MAX(InvoiceDate) AS LastApInvoiceDate
     FROM fct_ApInvoice
     WHERE IsJobCost = TRUE AND NOT IsVoid AND ProjectKey IS NOT NULL
     GROUP BY ProjectKey, VendorKey
 ),
+com AS (
+    -- Cal's Project Financials sheet, TOTAL COMMITTED COST: every approved Procore commitment
+    -- (subcontract or purchase order), billed against or not. A requisition's contract sum is
+    -- used where there is one, because it includes the approved commitment change orders that
+    -- the commitment's own total does not.
+    SELECT project_id AS ProjectKey, vendor_id AS VendorKey, MAX(vendor_name) AS VendorName,
+           SUM(grand_total) AS Committed, COUNT(*) AS Commitments
+    FROM sv_commitments
+    WHERE project_id IS NOT NULL AND UPPER(status_label) IN ('APPROVED', 'COMPLETE', 'CLOSED')
+    GROUP BY project_id, vendor_id
+),
 k AS (
     SELECT ProjectKey, VendorKey FROM req UNION SELECT ProjectKey, VendorKey FROM ap
+    UNION SELECT ProjectKey, VendorKey FROM com
 )
 SELECT k.ProjectKey,
        CONCAT(k.ProjectKey, ':', COALESCE(k.VendorKey, '?'))     AS SubPaymentKey,
        k.VendorKey,
        CASE WHEN k.VendorKey = 'UNASSIGNED' THEN 'Sage vendors with no Procore match (combined)'
-            ELSE COALESCE(r.SubName, v.VendorName, k.VendorKey) END AS SubName,
+            ELSE COALESCE(r.SubName, v.VendorName, c.VendorName, k.VendorKey) END AS SubName,
        r.ContractName, r.Commitments, r.Committed, r.Requisitioned, r.RetainageHeld, r.BalanceToFinish,
        r.LastRequisitionDate,
-       a.ApInvoiced, a.ApPaid, a.ApOpen, a.ApInvoices, a.LastApInvoiceDate, a.OldestOpenDays,
+       a.ApInvoiced, a.ApPaid, a.ApOpen, a.ApInvoices, COALESCE(a.ApOpenInvoices, 0) AS ApOpenInvoices,
+       a.LastApInvoiceDate, a.OldestOpenDays,
+       c.Committed AS CommitmentTotal,
+       COALESCE(r.Committed, c.Committed)                       AS TotalCommitted,
        CASE WHEN a.OldestOpenDays IS NULL THEN 'Nothing owed'
             WHEN a.OldestOpenDays <= 30 THEN '0-30 days'
             WHEN a.OldestOpenDays <= 60 THEN '31-60 days'
             WHEN a.OldestOpenDays <= 90 THEN '61-90 days'
             ELSE 'Over 90 days' END                              AS OpenApAge,
        CASE WHEN r.Committed IS NOT NULL THEN r.Committed - COALESCE(a.ApPaid, 0) END AS LeftToPay,
-       CASE WHEN r.ProjectKey IS NULL THEN 'Sage AP only - no Procore requisition'
+       CASE WHEN r.ProjectKey IS NULL AND a.ProjectKey IS NULL THEN 'Procore commitment - nothing billed yet'
+            WHEN r.ProjectKey IS NULL AND c.ProjectKey IS NULL THEN 'Sage AP only - no Procore commitment'
+            WHEN r.ProjectKey IS NULL THEN 'Procore commitment and Sage AP - no requisition'
             WHEN a.ProjectKey IS NULL THEN 'Procore requisition - no Sage AP yet'
             ELSE 'Procore and Sage' END                          AS Source
 FROM k
 LEFT JOIN req r ON r.ProjectKey = k.ProjectKey AND COALESCE(r.VendorKey, '?') = COALESCE(k.VendorKey, '?')
 LEFT JOIN ap a ON a.ProjectKey = k.ProjectKey AND COALESCE(a.VendorKey, '?') = COALESCE(k.VendorKey, '?')
+LEFT JOIN com c ON c.ProjectKey = k.ProjectKey AND COALESCE(c.VendorKey, '?') = COALESCE(k.VendorKey, '?')
 LEFT JOIN dim_Vendor v ON v.VendorKey = k.VendorKey;
 
 -- ---------------------------------------------------------------------------

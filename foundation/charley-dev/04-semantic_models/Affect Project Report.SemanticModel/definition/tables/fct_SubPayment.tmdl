@@ -54,7 +54,7 @@ table fct_SubPayment
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: LastRequisitionDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ApInvoiced
 		dataType: double
@@ -76,16 +76,31 @@ table fct_SubPayment
 		summarizeBy: sum
 		sourceColumn: ApInvoices
 
+	column ApOpenInvoices
+		dataType: int64
+		summarizeBy: sum
+		sourceColumn: ApOpenInvoices
+
 	column LastApInvoiceDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: LastApInvoiceDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column OldestOpenDays
 		dataType: int64
 		summarizeBy: none
 		sourceColumn: OldestOpenDays
+
+	column CommitmentTotal
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: CommitmentTotal
+
+	column TotalCommitted
+		dataType: double
+		summarizeBy: sum
+		sourceColumn: TotalCommitted
 
 	column OpenApAge
 		dataType: string

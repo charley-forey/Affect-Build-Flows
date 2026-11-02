@@ -34,19 +34,19 @@ table fct_Invoice
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: SentDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column DueDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: DueDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column MonthStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: MonthStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column Description
 		dataType: string
@@ -102,19 +102,19 @@ table fct_Invoice
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: FirstPaymentDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column LastPaymentDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: LastPaymentDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column PaidDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: PaidDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column DaysToPayment
 		dataType: int64

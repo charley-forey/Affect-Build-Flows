@@ -24,13 +24,13 @@ table fct_LookaheadTask
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: StartDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column FinishDate
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: FinishDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column PercentComplete
 		dataType: double
@@ -52,13 +52,13 @@ table fct_LookaheadTask
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CreatedAt
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column UpdatedAt
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: UpdatedAt
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	partition fct_LookaheadTask = entity
 		mode: directLake

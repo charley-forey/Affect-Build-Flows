@@ -216,6 +216,25 @@ These figures are billings, not recognised revenue. Cal: "while we may have bill
 if we over-bill 200 thousand, we can only recognize 15.6". The WIP adjustment is in the general
 ledger, which is not ingested.
 
+## Cal's follow-up notes (Oct 30 email)
+
+Notes Cal sent after the call, which the transcript does not hold.
+
+| Note | Done |
+|---|---|
+| Center-align tables; dates MM/DD/YY | Every table column centred; every date in the model and the dashboard text reads MM/DD/YY |
+| Quality on the Executive top bar | QUALITY tile (`Portfolio Quality Score`), beside SAFETY |
+| Portfolio Safety and Quality, two cells each | Cell 1 unchanged: inspections in the week and the pillar score, goal of 5. Cell 2: open Procore items and the proposed data score (`Safety Data Cell`, `Quality Data Cell`) |
+| All Procore safety and quality data | Observations classed by Procore's own category ("Safety - Corrective Action"): before, 81 Safety corrective actions, management observations and preventative actions were counted as Quality. Incidents now included as Safety, OSHA recordables named |
+| Phase from the Outbuild schedule | Before the construction milestone = Precon; after it = Construction; 95% of the schedule's tasks complete = Closeout (`phase_closeout_tasks`). Billed % only when there is no schedule |
+| Project Financials drill-down (his sheet) | New page, Project Financials: prime contract A-F, trades & vendors H-M, cost codes. TOTAL COMMITTED counts every approved Procore commitment (`fct_SubPayment.TotalCommitted`); the old figure counted only subcontractors who had billed |
+
+Still open from the notes: the risk register (Procore Correspondence is not ingested yet; 11 Essex St
+to test against), field productivity from Outbuild, the Apollo pipeline, and "original, current
+contract and pending change orders don't look correct" - which project and which number is expected.
+Committed by vendor leaves out approved commitment change orders where the vendor has not billed
+(the Procore budget's committed column has them): SaunaLounge $2.60M vs $3.23M.
+
 ## Where each number is proved
 
 Each Executive tile has a **Data >** link. The revenue panel has **Revenue data >** and the

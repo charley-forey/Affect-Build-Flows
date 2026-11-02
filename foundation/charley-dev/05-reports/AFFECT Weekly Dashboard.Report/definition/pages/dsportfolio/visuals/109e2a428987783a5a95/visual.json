@@ -58,7 +58,22 @@
               },
               "queryRef": "_Measures.Safety Cell",
               "nativeQueryRef": "Safety Cell",
-              "displayName": "Safety"
+              "displayName": "Safety insp. (goal 5)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Safety Data Cell"
+                }
+              },
+              "queryRef": "_Measures.Safety Data Cell",
+              "nativeQueryRef": "Safety Data Cell",
+              "displayName": "Safety data"
             },
             {
               "field": {
@@ -73,7 +88,22 @@
               },
               "queryRef": "_Measures.Quality Cell",
               "nativeQueryRef": "Quality Cell",
-              "displayName": "Quality"
+              "displayName": "Quality insp. (goal 5)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "_Measures"
+                    }
+                  },
+                  "Property": "Quality Data Cell"
+                }
+              },
+              "queryRef": "_Measures.Quality Data Cell",
+              "nativeQueryRef": "Quality Data Cell",
+              "displayName": "Quality data"
             },
             {
               "field": {
@@ -180,7 +210,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Every active project: current phase, the Safety, Quality, Schedule and Budget pillars (the headline reading and the pillar score, coloured by the score), the team''s initials from Procore, the weighted grade out of 100 and how many measures are below target. Filtered to active projects; clear the Active Flag filter in the Filters pane to see all. Right-click a project to drill through to its overview or grade detail.'"
+                  "Value": "'Table. Every active project: current phase, the Safety, Quality, Schedule and Budget pillars (the headline reading and the pillar score, coloured by the score), beside Safety and Quality the open Procore items and the proposed data score, the team''s initials from Procore, the weighted grade out of 100 and how many measures are below target. Filtered to active projects; clear the Active Flag filter in the Filters pane to see all. Right-click a project to drill through to its overview or grade detail.'"
                 }
               }
             }
@@ -490,6 +520,98 @@
                           "Entity": "_Measures"
                         }
                       },
+                      "Property": "Safety Data Colour"
+                    }
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Safety Data Ink"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Safety Data Cell"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Quality Data Colour"
+                    }
+                  }
+                }
+              }
+            },
+            "fontColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
+                      "Property": "Quality Data Ink"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "selector": {
+            "data": [
+              {
+                "dataViewWildcard": {
+                  "matchingOption": 1
+                }
+              }
+            ],
+            "metadata": "_Measures.Quality Data Cell"
+          }
+        },
+        {
+          "properties": {
+            "backColor": {
+              "solid": {
+                "color": {
+                  "expr": {
+                    "Measure": {
+                      "Expression": {
+                        "SourceRef": {
+                          "Entity": "_Measures"
+                        }
+                      },
                       "Property": "Schedule Colour"
                     }
                   }
@@ -623,7 +745,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "200D"
+                  "Value": "146D"
                 }
               }
             }
@@ -637,7 +759,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "141D"
+                  "Value": "114D"
                 }
               }
             }
@@ -651,7 +773,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "141D"
+                  "Value": "114D"
                 }
               }
             }
@@ -665,7 +787,21 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "141D"
+                  "Value": "114D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Safety Data Cell"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "114D"
                 }
               }
             }
@@ -679,7 +815,21 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "170D"
+                  "Value": "114D"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Quality Data Cell"
+          }
+        },
+        {
+          "properties": {
+            "value": {
+              "expr": {
+                "Literal": {
+                  "Value": "130D"
                 }
               }
             }
@@ -693,7 +843,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "170D"
+                  "Value": "130D"
                 }
               }
             }
@@ -707,7 +857,7 @@
             "value": {
               "expr": {
                 "Literal": {
-                  "Value": "111D"
+                  "Value": "98D"
                 }
               }
             }
@@ -805,6 +955,97 @@
                   "Value": "'Center'"
                 }
               }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "dim_Project.ProjectName"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Phase Label"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           },
           "selector": {
@@ -817,6 +1058,62 @@
               "expr": {
                 "Literal": {
                   "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Safety Data Cell"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }
@@ -833,6 +1130,62 @@
                   "Value": "'Center'"
                 }
               }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Quality Data Cell"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           },
           "selector": {
@@ -845,6 +1198,27 @@
               "expr": {
                 "Literal": {
                   "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
                 }
               }
             }
@@ -861,10 +1235,101 @@
                   "Value": "'Center'"
                 }
               }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Team Initials"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
             }
           },
           "selector": {
             "metadata": "_Measures.Grade Cell"
+          }
+        },
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "_Measures.Measures Below Target"
           }
         }
       ]

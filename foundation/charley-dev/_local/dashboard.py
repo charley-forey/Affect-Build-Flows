@@ -223,10 +223,10 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         # ---- the Sage month close (Oct 30 call) ----------------------------------------
         ("Books Closed Through",
          f"VAR V = {closed}\nRETURN IF ( V > 0, DATE ( INT ( V / 10000 ), INT ( MOD ( V, 10000 ) / 100 ), MOD ( V, 100 ) ) )",
-         '"mmm d, yyyy"', "Oct 30 call: the last month closed in Sage (dim_DashSetting sage_closed_through)"),
+         '"mm/dd/yy"', "Oct 30 call: the last month closed in Sage (dim_DashSetting sage_closed_through)"),
         ("Close Status Text",
          "VAR C = [Books Closed Through]\nVAR E = [Report Window End]\n"
-         "RETURN IF ( ISBLANK ( C ), \"Sage month close not recorded\", \"SAGE CLOSED THROUGH \" & UPPER ( FORMAT ( C, \"mmm d, yyyy\" ) )\n"
+         "RETURN IF ( ISBLANK ( C ), \"Sage month close not recorded\", \"SAGE CLOSED THROUGH \" & UPPER ( FORMAT ( C, \"mm/dd/yy\" ) )\n"
          f"    & IF ( E > C, {bullet} & \"LATER MONTHS PROVISIONAL\" ) )",
          None, "Oct 30 call: show closed months as final, later ones with a warning"),
         ("Revenue YTD Closed",
@@ -241,7 +241,7 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          '"$#,0"', "Sage invoices voided in the same window - left out of Revenue YTD"),
         ("Revenue YTD Subline",
          "VAR C = MIN ( [Report Window End], [Books Closed Through] )\n"
-         "RETURN \"Closed books to \" & FORMAT ( C, \"mmm d\" ) & \": \"\n"
+         "RETURN \"Closed books to \" & FORMAT ( C, \"mm/dd/yy\" ) & \": \"\n"
          "    & ( " + money_text("[Revenue YTD Closed]").replace("\n", " ") + " )",
          None, "deck slide 1 REVENUE YTD sub-line: the week picked, and the closed-books figure"),
         ("Revenue In Month",
@@ -435,6 +435,27 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
         ("Open AR Shown",
          'IF ( [Is Dashboard Project], FORMAT ( [Cash - Unpaid Receivables], "$#,0" ) )', None, "card text"),
 
+        # ---- project financials (Cal's Oct 30 sheet, letters as on the sheet) ----------------
+        ("AR Oldest Open Days",
+         # CALCULATE: on the totals row each project filters its own invoices; balances are today's.
+         by_project("VAR D = [Data As Of]\n"
+                    "RETURN CALCULATE ( MAXX ( FILTER ( fct_Invoice, fct_Invoice[Balance] > 0.005 && NOT ISBLANK ( fct_Invoice[SentDate] ) ),\n"
+                    "    DATEDIFF ( fct_Invoice[SentDate], D, DAY ) ), REMOVEFILTERS ( dim_Date ) )").replace("SUMX", "MAXX"),
+         '"#,0"', "D - days the oldest unpaid Sage invoice has been out"),
+        ("AR Open Invoices",
+         by_project("CALCULATE ( COUNTROWS ( FILTER ( fct_Invoice, fct_Invoice[Balance] > 0.005 ) ), REMOVEFILTERS ( dim_Date ) )"),
+         '"#,0"', "E - Sage invoices (pay apps billed) not fully paid"),
+        ("Prime Balance To Finish",
+         by_project("[Position Contract] - [Paid To Date] - [Cash - Unpaid Receivables]"),
+         '"$#,0"', "F = A - B - C: current contract less received less still owed"),
+        ("Vendor Total Committed", "SUM ( fct_SubPayment[TotalCommitted] )", '"$#,0"',
+         "H - every approved Procore commitment; the requisition's contract sum where there is one (it has the COs)"),
+        ("Vendor AP Open Invoices", "SUM ( fct_SubPayment[ApOpenInvoices] )", '"#,0"', "L - Sage AP invoices not fully paid"),
+        ("Vendor Balance To Finish", "[Vendor Total Committed] - [Sub Paid] - [Sub AP Open]", '"$#,0"',
+         "M = H - I - J: committed less paid less still owed"),
+        ("Line Left On Commitment", "[Line Committed] - [Line Spent]", '"$#,0"',
+         "cost code: committed less spent to date (Sage AP has no cost code)"),
+
         # ---- data health (Oct 30: validate the INPUT, not just the output) ---------------------
         ("Check Result", "SELECTEDVALUE ( fct_DashCheck[Result] )", None, "detail - Pass / Warn / Info"),
         ("Check Amount", "SUM ( fct_DashCheck[Amount] )", '"#,0"', "detail - the number behind the check"),
@@ -499,9 +520,9 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          "RETURN DIVIDE ( DoneDays, AllDays )",
          '"0.00%"', "detail - the activity's points of PROJECT COMPLETE; the total is the tile"),
         ("Milestone Baseline Finish", "CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )",
-         '"mmm d, yyyy"', "detail - Outbuild baseline finish (the latest is TRACKING FINISH)"),
+         '"mm/dd/yy"', "detail - Outbuild baseline finish (the latest is TRACKING FINISH)"),
         ("Milestone Forecast Finish", "CALCULATE ( MAX ( fct_Milestone[CurrentFinish] ), REMOVEFILTERS ( dim_Date ) )",
-         '"mmm d, yyyy"', "detail - Outbuild current finish (the latest is FORECAST FINISH)"),
+         '"mm/dd/yy"', "detail - Outbuild current finish (the latest is FORECAST FINISH)"),
         ("Milestone Days Late", "CALCULATE ( MAX ( fct_Milestone[FinishVarianceDays] ), REMOVEFILTERS ( dim_Date ) )",
          '"+0;-0;0"', "detail - current finish less baseline finish, days"),
         ("Line Cost To Complete", "CALCULATE ( SUM ( fct_BudgetLine[CostToComplete] ), REMOVEFILTERS ( dim_Date ) )",
@@ -516,14 +537,14 @@ def proof_measures() -> list[tuple[str, str, str | None, str]]:
          None, "detail row filter - cost codes the project actually budgets or forecasts"),
         ("Manual Baseline Note",
          'IF ( [Is Dashboard Project], IF ( NOT ISBLANK ( MAX ( man_Milestones[BaselineFinish] ) ),\n'
-         '    "Baseline finish entered by hand (SharePoint) overrides Outbuild: " & FORMAT ( MAX ( man_Milestones[BaselineFinish] ), "mmm d, yyyy" ),\n'
+         '    "Baseline finish entered by hand (SharePoint) overrides Outbuild: " & FORMAT ( MAX ( man_Milestones[BaselineFinish] ), "mm/dd/yy" ),\n'
          '    "Baseline finish from Outbuild (no manual override)" ) )',
          None, "detail - where the completion variance's baseline comes from"),
         ("Health Header",
-         '[Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) )',
+         '[Checks Warning] & " WARNINGS ON " & [Projects With Warnings] & " OF " & [Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( FORMAT ( [Data As Of], "mm/dd/yy" ) )',
          None, "Data Health header line"),
         ("Detail Header",
-         '"BALANCES AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Active Projects] & " ACTIVE PROJECTS"',
+         '"BALANCES AS OF " & UPPER ( FORMAT ( [Data As Of], "mm/dd/yy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Active Projects] & " ACTIVE PROJECTS"',
          None, "detail pages header line"),
     ]
 
@@ -538,13 +559,13 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "RETURN IF ( ISBLANK ( Picked ),\n"
          "    CALCULATE ( MAX ( dim_ReportWeek[WeekEnd] ), REMOVEFILTERS ( dim_ReportWeek ), dim_ReportWeek[WeeksAgo] = 1 ),\n"
          "    Picked )",
-         '"yyyy-mm-dd"', "deck slide 3 - the time-window selection box, defaulting to current"),
+         '"mm/dd/yy"', "deck slide 3 - the time-window selection box, defaulting to current"),
         ("Data As Of",
          "CALCULATE ( MAX ( dim_ReportWeek[AsOfDate] ), REMOVEFILTERS ( dim_ReportWeek ) )",
-         '"yyyy-mm-dd"', "the gold build date; today's balances are as of this day"),
+         '"mm/dd/yy"', "the gold build date; today's balances are as of this day"),
         ("Report Window End",
          # This week stops today, not at a Sunday still to come.
-         "MIN ( [Report Week End], [Data As Of] )", '"yyyy-mm-dd"', "derived"),
+         "MIN ( [Report Week End], [Data As Of] )", '"mm/dd/yy"', "derived"),
         ("Report Weeks Ago",
          "IF ( HASONEVALUE ( dim_ReportWeek[WeeksAgo] ), VALUES ( dim_ReportWeek[WeeksAgo] ), 1 )",
          '"0"', "derived"),
@@ -553,7 +574,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR S = E - 6\n"
          "VAR W = [Report Weeks Ago]\n"
          "RETURN SWITCH ( W, 0, \"This week\", 1, \"Last week\", \"Week\" ) & \"  \"\n"
-         "    & FORMAT ( S, \"mmm d\" ) & \" - \" & FORMAT ( E, \"mmm d, yyyy\" )",
+         "    & FORMAT ( S, \"mm/dd/yy\" ) & \" - \" & FORMAT ( E, \"mm/dd/yy\" )",
          None, "deck header - the week the page reports"),
 
         # ---- which projects --------------------------------------------------
@@ -589,7 +610,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          # The latest sign of a working project in any Procore tool - a daily log alone
          # missed City Harvest, which logs nothing but holds weekly OAC meetings.
          "MAX ( fct_ProjectPosition[LastActivityDate] )",
-         '"yyyy-mm-dd"', "derived - latest daily log, meeting, inspection, RFI/submittal or observation"),
+         '"mm/dd/yy"', "derived - latest daily log, meeting, inspection, RFI/submittal or observation"),
         ("Dashboard Status",
          # Archived once 100% paid (the Oct 21 call). Inactive = no Procore activity in the
          # window (PROPOSED 60 days) - listed on the Portfolio page but not counted.
@@ -850,6 +871,19 @@ def measures() -> list[tuple[str, str, str | None, str]]:
             (f"{n} Colour", colour_for(f"[{n} Pillar]"), None, f"deck slide 2 {n.upper()} pill"),
             (f"{n} Ink", ink_for(f"[{n} Pillar]"), None, f"deck slide 2 {n.upper()} pill text"),
         ]
+    # Cal's Oct 30 notes: Safety and Quality each split in two - the inspection cell above, and
+    # beside it the PROPOSED score from all the Procore data (open items and the data score).
+    for n in ("Safety", "Quality"):
+        score = f"[{n} Data Score (Proposed)]"
+        out += [
+            (f"{n} Data Cell",
+             f"VAR O = [Open {n} Observations]\nVAR S = {score}\n"
+             "RETURN IF ( [Is Dashboard Project], COALESCE ( O, 0 ) & \" open  \" & UNICHAR ( 183 ) & \"  \"\n"
+             "    & IF ( ISBLANK ( S ), UNICHAR ( 8212 ), FORMAT ( S, \"0%\" ) ) )",
+             None, f"Cal's Oct 30 notes: {n.upper()} cell 2 - open Procore items and the proposed data score"),
+            (f"{n} Data Colour", colour_for(score), None, f"{n.upper()} data cell pill"),
+            (f"{n} Data Ink", ink_for(score), None, f"{n.upper()} data cell pill text"),
+        ]
 
     out += [
         # ---- team -------------------------------------------------------------
@@ -898,18 +932,18 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          '"0%"', "deck slide 3 PROJECT COMPLETE - Outbuild, duration-weighted"),
         ("Tracking Finish",
          "CALCULATE ( MAX ( fct_Milestone[BaselineFinish] ), REMOVEFILTERS ( dim_Date ) )",
-         '"mmm d, yyyy"', "deck slide 3 TRACKING FINISH - the baseline finish"),
-        ("Forecast Finish", "[Scheduled Finish]", '"mmm d, yyyy"',
+         '"mm/dd/yy"', "deck slide 3 TRACKING FINISH - the baseline finish"),
+        ("Forecast Finish", "[Scheduled Finish]", '"mm/dd/yy"',
          "deck slide 3 ACTUAL FINISH FORECAST - the current critical-path finish"),
         # Card text: a card prints BLANK as "(Blank)", so say what is missing instead.
         ("Work Progress Shown",
          'IF ( [Is Dashboard Project], VAR V = [Work Progress %] RETURN IF ( ISBLANK ( V ), "No schedule", FORMAT ( V, "0%" ) ) )',
          None, "card text for Work Progress %"),
         ("Tracking Finish Shown",
-         'IF ( [Is Dashboard Project], VAR V = [Tracking Finish] RETURN IF ( ISBLANK ( V ), "No baseline", FORMAT ( V, "mmm d, yyyy" ) ) )',
+         'IF ( [Is Dashboard Project], VAR V = [Tracking Finish] RETURN IF ( ISBLANK ( V ), "No baseline", FORMAT ( V, "mm/dd/yy" ) ) )',
          None, "card text for Tracking Finish"),
         ("Forecast Finish Shown",
-         'IF ( [Is Dashboard Project], VAR V = [Forecast Finish] RETURN IF ( ISBLANK ( V ), "No forecast", FORMAT ( V, "mmm d, yyyy" ) ) )',
+         'IF ( [Is Dashboard Project], VAR V = [Forecast Finish] RETURN IF ( ISBLANK ( V ), "No forecast", FORMAT ( V, "mm/dd/yy" ) ) )',
          None, "card text for Forecast Finish"),
         ("Schedule Headline",
          "VAR D = [Completion Variance Days]\n"
@@ -997,7 +1031,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR S = SELECTEDVALUE ( fct_ScheduleActivity[StartDate] )\n"
          "VAR F = SELECTEDVALUE ( fct_ScheduleActivity[FinishDate] )\n"
          "RETURN IF ( HASONEVALUE ( fct_ScheduleActivity[ActivityKey] ),\n"
-         "    IF ( S > A, \"Starts \" & FORMAT ( S, \"mmm d\" ), \"Finish \" & FORMAT ( F, \"mmm d\" ) )\n"
+         "    IF ( S > A, \"Starts \" & FORMAT ( S, \"mm/dd/yy\" ), \"Finish \" & FORMAT ( F, \"mm/dd/yy\" ) )\n"
          "    & IF ( SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) > 0,\n"
          "        \"  \" & UNICHAR ( 183 ) & \"  \" & SELECTEDVALUE ( fct_ScheduleActivity[FinishVarianceDays] ) & \" days behind baseline\" ) )",
          None, "deck slide 3 milestone sub-line"),
@@ -1103,6 +1137,15 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "VAR P = COUNTROWS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" && [Project Phase] = \"Construction\" ) )\n"
          'RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"',
          None, "deck slide 1 SAFETY sub-line"),
+        ("Portfolio Quality Score",
+         "VAR T = ADDCOLUMNS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" ), \"@s\", [Quality Pillar] )\n"
+         "RETURN AVERAGEX ( FILTER ( T, NOT ISBLANK ( [@s] ) ), [@s] )",
+         '"0%"', "Cal's Oct 30 notes: QUALITY on the Executive top bar, as SAFETY"),
+        ("Quality Subline",
+         "VAR N = " + over_active("IF ( [Project Phase] = \"Construction\", [Quality Inspections (Week)] )") + "\n"
+         "VAR P = COUNTROWS ( FILTER ( VALUES ( dim_Project[ProjectKey] ), [Dashboard Status] = \"Active\" && [Project Phase] = \"Construction\" ) )\n"
+         'RETURN COALESCE ( N, 0 ) & " inspections across " & COALESCE ( P, 0 ) & " sites (5 each)"',
+         None, "QUALITY tile sub-line"),
         ("Projects On Schedule", count_active("NOT ISBLANK ( [Completion Variance Days] ) && [Completion Variance Days] <= 0"), '"#,0"',
          "deck slide 1 ON SCHEDULE - forecast finish on or before baseline"),
         ("Projects With Baseline", count_active("NOT ISBLANK ( [Completion Variance Days] )"), '"#,0"', "derived"),
@@ -1153,7 +1196,7 @@ def measures() -> list[tuple[str, str, str | None, str]]:
          "    \"Every open AR invoice is matched to a project\" )",
          None, "derived - the crosswalk gap, in words"),
         ("Data As Of Header",
-         '"DATA AS OF " & UPPER ( FORMAT ( [Data As Of], "mmm d, yyyy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Pipeline Status]',
+         '"DATA AS OF " & UPPER ( FORMAT ( [Data As Of], "mm/dd/yy" ) ) & "  " & UNICHAR ( 8226 ) & "  " & [Pipeline Status]',
          None, "deck header - when the numbers were true"),
         ("Portfolio Header",
          '[Active Projects] & " ACTIVE PROJECTS  " & UNICHAR ( 8226 ) & "  " & UPPER ( [Report Week Label] )', None,

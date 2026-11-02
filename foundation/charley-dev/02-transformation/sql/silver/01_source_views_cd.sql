@@ -296,7 +296,8 @@ FROM delta.`{CD_SILVER_ABFSS}/cd_silver_sage_vendors`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_observations AS
 SELECT project_id, observation_id, observation_number, title, observation_type,
-       status_label, priority, trade, assignee_name, created_date, due_date, closed_date
+       status_label, priority, trade, assignee_name, created_date, due_date, closed_date,
+       category AS observation_category
 FROM delta.`{CD_SILVER_ABFSS}/cd_silver_observations`;
 
 CREATE OR REPLACE TEMPORARY VIEW sv_punch_items AS

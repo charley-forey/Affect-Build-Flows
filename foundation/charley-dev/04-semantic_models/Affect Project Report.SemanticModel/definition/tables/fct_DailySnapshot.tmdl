@@ -4,7 +4,7 @@ table fct_DailySnapshot
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: SnapshotDate
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ProjectKey
 		dataType: string
@@ -85,7 +85,7 @@ table fct_DailySnapshot
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: CapturedAt
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	partition fct_DailySnapshot = entity
 		mode: directLake

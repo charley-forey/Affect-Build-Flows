@@ -111,7 +111,7 @@ FROM (VALUES
     ('208', '3', NULL, '0.00', '0.00', '3 or more weekdays missed', 'PROPOSED - Oct 21 call; not in Scorecard.xlsx')
 ) AS t(c1, c2, c3, c4, c5, c6, c7);
 
--- dim_DashSetting: 16 row(s) from seed/dashboard_setting.csv
+-- dim_DashSetting: 17 row(s) from seed/dashboard_setting.csv
 CREATE OR REPLACE TABLE dim_DashSetting AS
 SELECT CAST(c1 AS STRING) AS SettingKey,
        CAST(c2 AS DOUBLE) AS Value,
@@ -119,7 +119,8 @@ SELECT CAST(c1 AS STRING) AS SettingKey,
 FROM (VALUES
     ('gross_margin_target', '0.125', 'Oct 21 call: 12.5% now, 13% from the end of Q1'),
     ('phase_precon_below', '0.10', 'Billed % below this = Precon (deck slide 2)'),
-    ('phase_closeout_from', '0.95', 'Billed % above this = Closeout (deck slide 2)'),
+    ('phase_closeout_from', '0.95', 'Billed % above this = Closeout, for a project with no Outbuild schedule (deck slide 2)'),
+    ('phase_closeout_tasks', '0.95', 'Cal''s Oct 30 notes: this share of the Outbuild schedule''s tasks complete = Closeout'),
     ('archive_paid_from', '0.995', 'Collected / contract at or above this = archived (Oct 21 call: once 100% paid)'),
     ('grade_on_track_from', '90', 'PROPOSED: grade at or above = On track (deck: 100 On track)'),
     ('grade_monitor_from', '75', 'Deck slide 2: 75 Monitor, below 75 Needs attention'),

@@ -19,25 +19,25 @@ table man_Milestones
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: ContractStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ContractFinish
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: ContractFinish
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column BaselineStart
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: BaselineStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column BaselineFinish
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: BaselineFinish
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column IsSubstantialCompletion
 		dataType: boolean

@@ -230,11 +230,11 @@ SNAPSHOT_MEASURES = [
 ] + [
     ("Snapshot History Starts",
      "CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )",
-     '"yyyy-mm-dd"', f"no workbook equivalent - first saved capture. {SNAPSHOT_DATE_NOTE}"),
+     '"mm/dd/yy"', f"no workbook equivalent - first saved capture. {SNAPSHOT_DATE_NOTE}"),
     ("Snapshot History Note",
      "VAR F = CALCULATE ( MIN ( fct_DailySnapshot[SnapshotDate] ), REMOVEFILTERS ( dim_Date ) )\n"
      'RETURN IF ( ISBLANK ( F ), "No month-end history captured yet",\n'
-     '"History starts " & FORMAT ( F, "yyyy-MM-dd" ) & "; earlier months are unavailable, not zero" )',
+     '"History starts " & FORMAT ( F, "mm/dd/yy" ) & "; earlier months are unavailable, not zero" )',
      None, "no workbook equivalent - states where saved history begins"),
 ]
 
@@ -394,7 +394,7 @@ MEASURES = [
     # never runs, no row is written, and this number climbs. Absence of a heartbeat is the
     # signal - which is exactly the failure mode that went unnoticed for a month, when the
     # nightly pipeline failed every night while reporting itself as enabled.
-    ("Last Checked Run", "MAX ( meta_PipelineRun[RunAt] )", '"yyyy-mm-dd hh:nn"',
+    ("Last Checked Run", "MAX ( meta_PipelineRun[RunAt] )", '"mm/dd/yy hh:nn"',
      "nothing - when the last PUBLISHED run passed the DQ gate, not when gold was last built"),
     # UTCNOW, the same clock [Pipeline Status] uses, so the two cards cannot disagree.
     ("Hours Since Last Checked Run",
@@ -459,7 +459,7 @@ MEASURES = [
                       'fct_VendorInsurance[ExpiryStatus] = "Expiring within 30 days" )'), '"#,0"',
      "D8 - the renewals to chase this month"),
     # Explains an all-expired page: the newest certificate in Procore, not a count.
-    ("Latest Certificate Expiration", "MAX ( fct_VendorInsurance[ExpirationDate] )", '"yyyy-mm-dd"',
+    ("Latest Certificate Expiration", "MAX ( fct_VendorInsurance[ExpirationDate] )", '"mm/dd/yy"',
      "D8 - latest certificate expiration on file"),
     # The gap the vendor list is really for: vendors on a project with NO certificate at
     # all. Counted from the bridge rather than the insurance table, because a vendor with
@@ -762,7 +762,7 @@ MEASURES = [
     #
     # Last Refresh reads a real timestamp stamped into the anchor table when gold is built,
     # not NOW() - NOW() is when the report was VIEWED, which is the same lie in a new place.
-    ("Last Refresh", "MAX ( _Measures[_built_at] )", '"yyyy-mm-dd hh:nn"',
+    ("Last Refresh", "MAX ( _Measures[_built_at] )", '"mm/dd/yy hh:nn"',
      "no workbook equivalent - the Excel could not say when its numbers were true"),
     # Follows the slicer. With no month selected it says so: the calendar spans 2015-2035,
     # and "January 2015 - December 2035" on a printed page implied data out to 2035.
@@ -894,7 +894,7 @@ def table_tmdl(name: str, columns: list[tuple[str, str]]) -> str:
             f"\t\tsourceColumn: {col}",
         ]
         if dtype == "dateTime":
-            lines.append('\t\tformatString: yyyy-mm-dd')
+            lines.append('\t\tformatString: mm/dd/yy')
         elif source_completion:
             lines.append('\t\tformatString: 0.##')
         elif dtype in ("double", "decimal") and PERCENT_COLUMNS.match(col):

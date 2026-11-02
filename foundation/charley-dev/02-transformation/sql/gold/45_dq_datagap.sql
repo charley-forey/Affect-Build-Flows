@@ -76,7 +76,7 @@ SELECT 'Unmatched AR invoice', 'Sage', 'fct_Invoice', i.InvoiceKey, CAST(NULL AS
               ' does not resolve to a Procore project'),
        i.Amount,
        concat_ws('; ', CONCAT('invoice ', i.InvoiceNumber),
-                 CONCAT('sent ', CAST(i.SentDate AS STRING))),
+                 CONCAT('sent ', date_format(i.SentDate, 'MM/dd/yy'))),
        CAST(NULL AS STRING)
 FROM fct_Invoice i
 WHERE i.HasUnmatchedProject

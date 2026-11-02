@@ -44,13 +44,13 @@ table dim_Project
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: ContractStart
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column ContractFinish
 		dataType: dateTime
 		summarizeBy: none
 		sourceColumn: ContractFinish
-		formatString: yyyy-mm-dd
+		formatString: mm/dd/yy
 
 	column HasPrimeContract
 		dataType: boolean

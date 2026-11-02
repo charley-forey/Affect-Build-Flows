@@ -88,7 +88,8 @@ MACROS = (
     # which is all the StatusDisplay columns feed it (21/23 gold files).
     "CREATE OR REPLACE MACRO initcap(s) AS array_to_string(list_transform("
     "string_split(lower(s), ' '), w -> upper(left(w, 1)) || substr(w, 2)), ' ')",
-    "CREATE OR REPLACE MACRO date_format(d, f) AS strftime(CAST(d AS DATE), '%Y-%m')",
+    "CREATE OR REPLACE MACRO date_format(d, f) AS CASE f WHEN 'MM/dd/yy' "
+    "THEN strftime(CAST(d AS DATE), '%m/%d/%y') ELSE strftime(CAST(d AS DATE), '%Y-%m') END",
     # NO trunc() MACRO, deliberately. Spark spells month-flooring trunc(date, 'MM') and the
     # obvious bridge is a 2-arg macro - but unlike datediff, DuckDB does NOT overload it by
     # arity: the macro REPLACES the builtin trunc(), which DuckDB's own date functions call
@@ -284,11 +285,15 @@ SOURCE_FIXTURES = (
     # no cost code.
     """CREATE OR REPLACE VIEW sv_observations AS SELECT * FROM (VALUES
         ('P1','OB1','1','Site walk finding','Safety','OPEN','High','Concrete','Alex R',
-         DATE '2025-05-01', DATE '2025-05-10', NULL),
+         DATE '2025-05-01', DATE '2025-05-10', NULL, 'safety'),
         ('P1','OB2','2','Closed finding',    'Quality','CLOSED','Normal','Metals','Sam T',
-         DATE '2025-04-01', DATE '2025-04-05', DATE '2025-04-04')
+         DATE '2025-04-01', DATE '2025-04-05', DATE '2025-04-04', 'quality'),
+        -- Procore's category decides: a corrective action filed under Safety is safety.
+        ('P1','OB3','3','Guardrail fixed', 'Corrective Action','OPEN','High','Metals','Sam T',
+         DATE '2025-05-03', NULL, NULL, 'safety')
     ) AS t(project_id, observation_id, observation_number, title, observation_type,
-           status_label, priority, trade, assignee_name, created_date, due_date, closed_date)""",
+           status_label, priority, trade, assignee_name, created_date, due_date, closed_date,
+           observation_category)""",
 
     """CREATE OR REPLACE VIEW sv_punch_items AS SELECT * FROM (VALUES
         ('P1','PI1','1','Fix grid','Punch','OPEN','High','Concrete','Pat M','CC1',

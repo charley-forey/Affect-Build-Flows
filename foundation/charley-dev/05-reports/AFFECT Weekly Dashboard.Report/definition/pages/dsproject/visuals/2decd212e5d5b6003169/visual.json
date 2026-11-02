@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 318,
     "height": 72,
-    "tabOrder": 67
+    "tabOrder": 68
   },
   "visual": {
     "visualType": "tableEx",
@@ -313,6 +313,43 @@
                 }
               }
             }
+          }
+        }
+      ],
+      "columnFormatting": [
+        {
+          "properties": {
+            "alignment": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Center'"
+                }
+              }
+            },
+            "styleHeader": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleValues": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "styleTotal": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          },
+          "selector": {
+            "metadata": "fct_ScheduleActivity.ActivityName"
           }
         }
       ]

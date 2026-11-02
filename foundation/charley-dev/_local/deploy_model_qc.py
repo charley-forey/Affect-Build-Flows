@@ -101,7 +101,7 @@ DAYS = '"#,0.0"'
 PCT = '"0.0%"'
 
 dm.MEASURES = [
-    ("Last Refresh", "MAX('_Measures'[_built_at])", '"yyyy-mm-dd hh:nn"',
+    ("Last Refresh", "MAX('_Measures'[_built_at])", '"mm/dd/yy hh:nn"',
      "nothing - the workbook could not say when it was last true"),
     # The four below are what chrome() renders in the footer on every page. Model A has
     # them; the shared page furniture needs them here too or every page loses its header.
