@@ -3,6 +3,7 @@
   "pageOrder": [
     "dsexec",
     "dsportfolio",
+    "dsproject",
     "dsrevenue",
     "dsar",
     "dsmargin",
@@ -11,12 +12,11 @@
     "dsschedule",
     "dssafety",
     "dsportscore",
-    "dshealth",
-    "dsproject",
     "dspayments",
     "dsprojfin",
     "dsprojcost",
     "dsprojsched",
+    "dshealth",
     "dsgrade"
   ],
   "activePageName": "dsexec"

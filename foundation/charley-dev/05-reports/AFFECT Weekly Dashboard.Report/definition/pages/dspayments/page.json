@@ -5,45 +5,6 @@
   "displayOption": "FitToPage",
   "height": 880,
   "width": 1360,
-  "pageBinding": {
-    "name": "dspayments_binding",
-    "type": "Drillthrough",
-    "parameters": [
-      {
-        "name": "ProjectName",
-        "boundFilter": "dspayments_drill",
-        "fieldExpr": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_Project"
-              }
-            },
-            "Property": "ProjectName"
-          }
-        }
-      }
-    ]
-  },
-  "filterConfig": {
-    "filters": [
-      {
-        "name": "dspayments_drill",
-        "field": {
-          "Column": {
-            "Expression": {
-              "SourceRef": {
-                "Entity": "dim_Project"
-              }
-            },
-            "Property": "ProjectName"
-          }
-        },
-        "type": "Categorical",
-        "howCreated": "Drillthrough"
-      }
-    ]
-  },
   "objects": {
     "background": [
       {

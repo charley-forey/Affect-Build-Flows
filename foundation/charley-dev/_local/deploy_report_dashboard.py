@@ -9,9 +9,9 @@ shape at (x in, y in) sits at (80x, 80y) px:
 
   1. Executive Dashboard       the company: revenue, margin, backlog, cash, safety, execution
   2. Project Portfolio | Status every active project: phase, the four pillars, team, grade
-  3. Project Overview           one project; reached by drill-through or its project picker
+  3. Project Overview           one project, picked in its header
 
-plus Grade Detail, the drill-through behind a grade - the "Detail Scorecard" the deck's
+plus Grade Detail, the page behind a grade - the "Detail Scorecard" the deck's
 slide 2 asks for: every Scorecard.xlsx measure, its reading, band, score and weight.
 
 The deck's TBD callouts are honoured, not papered over. A tile whose data does not exist yet
@@ -663,7 +663,7 @@ def project_picker(p: str, x=860, y=8, w=230, h=44) -> dict:
 
 
 def project_header(p: str, title: str) -> list[dict]:
-    """A one-project page: drill-through target (from the Portfolio table or the Overview's
+    """A one-project page: opened from the Overview's
     buttons), or opened directly with its own project picker."""
     out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
            z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
@@ -837,8 +837,7 @@ def page_payments() -> tuple[str, list[dict]]:
                      "paid and still to pay, the age of the oldest unpaid invoice, and what is left on the commitment.",
                      title="SUBCONTRACTORS  -  committed, billed, paid, still to pay",
                      sort=(m_("Sub AP Open"), "Descending"), wide={"SubName": 3, "ContractName": 3, "Source": 3}))
-    out += footer(p, "Pick the project above, or right-click a project on the Portfolio page and drill through  •  Export any "
-                     "table to Excel from its ... menu")
+    out += footer(p, "Pick the project above (it carries across the project pages)  •  Export any table to Excel from its ... menu")
     return p, out
 
 
@@ -882,8 +881,7 @@ def page_financials() -> tuple[str, list[dict]]:
                      "Table. The project's Procore budget lines by cost code: committed, spent to date and what is left.",
                      title="COST CODES  -  Procore budget (Sage AP carries no cost code)",
                      wide={"CostCode": 2, "Description": 4}, flag="Budget Line Flag"))
-    out += footer(p, "Right-click a project on the Portfolio page and drill through, or pick it above  •  Export any table to "
-                     "Excel from its ... menu")
+    out += footer(p, "Pick the project above (it carries across the project pages)  •  Export any table to Excel from its ... menu")
     return p, out
 
 
@@ -1084,8 +1082,9 @@ def page_portfolio() -> tuple[str, list[dict]]:
                 else text(p, f"k{i}_s", sub, x + 104, 148, 136, 20, size=8, color=SLATE, bold=False)]
     out += [panel(p, "tbl_bg", 36, 198, 1288, 370),
             text(p, "tbl_h", "ACTIVE PROJECTS  •  PERFORMANCE & ACCOUNTABILITY", 56, 208, 760, 28, size=13, color=NAVY),
-            text(p, "tbl_note", "Right-click a project to drill through  •  How each grade is built:",
-                 820, 212, 370, 20, size=8, color=SLATE, bold=False, align="right"),
+            nav(p, "tbl_proj", "Open a project >", 820, 210, 130, 22, "dsproject", "the Project Overview"),
+            text(p, "tbl_note", "How each grade is built:", 960, 212, 230, 20, size=8, color=SLATE, bold=False,
+                 align="right"),
             nav(p, "tbl_data", "Data >", 1200, 210, 100, 22, "dsportscore", "how every grade is built")]
     grid = table(p, "portfolio", 48, 240, 1264, 316,
                  [rs.shown_as(column("dim_Project", "ProjectName"), "Project"),
@@ -1104,7 +1103,7 @@ def page_portfolio() -> tuple[str, list[dict]]:
                      "the open Procore items and the proposed data score, the team's initials "
                      "from Procore, the weighted grade out of 100 and how many measures are below target. "
                      "Filtered to active projects; clear the Active Flag filter in the Filters pane to see all. "
-                     "Right-click a project to drill through to its overview or grade detail.",
+                     "Open a project from the button above the table.",
                  pills={"Safety Cell": ("Safety Colour", "Safety Ink"),
                         "Quality Cell": ("Quality Colour", "Quality Ink"),
                         "Safety Data Cell": ("Safety Data Colour", "Safety Data Ink"),
@@ -1150,7 +1149,7 @@ def page_portfolio() -> tuple[str, list[dict]]:
 
 
 def page_project() -> tuple[str, list[dict]]:
-    """Deck slide 3. One project; drill-through target, or pick it in the header."""
+    """Deck slide 3. One project, picked in the header."""
     p = "dsproject"
     out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
            z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
@@ -1399,17 +1398,15 @@ PAGES = [
     ("Detail | Portfolio Grades", page_portfolio_detail, False),
     ("Project Payments", page_payments, False),
     ("Project Financials", page_financials, False),
-    # The Project Overview's numbers, shown working (drill through from a project).
+    # The Project Overview's numbers, shown working (its buttons open these).
     ("Project | Contract & Cost", page_project_cost, False),
     ("Project | Schedule & Progress", page_project_schedule, False),
     ("Data Health", page_health, False),
-    ("Grade Detail", page_grade, True),
+    ("Grade Detail", page_grade, False),
 ]
-DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Project", "ProjectName"),
-                "dspayments": ("dim_Project", "ProjectName"), "dsprojcost": ("dim_Project", "ProjectName"),
-                "dsprojsched": ("dim_Project", "ProjectName"), "dsprojfin": ("dim_Project", "ProjectName")}
-# Drill-through targets a reader also opens directly; they keep their own project picker.
-OPEN_DIRECTLY = {"dsproject", "dspayments", "dsprojcost", "dsprojsched", "dsprojfin", "dsgrade"}
+# None: a drill-through filter stays on its page afterwards, so each project page sat on the last
+# project drilled into, whatever the synced picker said (2026-11-02). The picker is the one way in.
+DRILLTHROUGH: dict = {}
 
 
 def retab(files: dict[str, str]) -> None:
@@ -1466,9 +1463,6 @@ def build(model_id: str) -> dict[str, str]:
         page.update(width=W, height=H, displayOption="FitToPage")
         page["objects"] = {"background": [{"properties": {"color": _color(PAGE_BG), "transparency": _num(0)}}],
                            "outspace": [{"properties": {"color": _color(PAGE_BG), "transparency": _num(0)}}]}
-        # A drill-through page that is also opened directly keeps its own project picker.
-        if page["name"] in OPEN_DIRECTLY:
-            page.pop("visibility", None)
         files[rel] = json.dumps(page, indent=2)
         (REPORT_DIR / rel).write_text(files[rel], encoding="utf-8", newline="")
     retab(files)

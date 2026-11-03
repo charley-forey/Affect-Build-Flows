@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "left",
                 "textRuns": [
                   {
-                    "value": "Pick the project above, or right-click a project on the Portfolio page and drill through  \u2022  Export any table to Excel from its ... menu",
+                    "value": "Pick the project above (it carries across the project pages)  \u2022  Export any table to Excel from its ... menu",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "7.5pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Pick the project above, or right-click a project on the Portfolio page and drill through  \u2022  Export any table to Excel from its ... menu'"
+                  "Value": "'Pick the project above (it carries across the project pages)  \u2022  Export any table to Excel from its ... menu'"
                 }
               }
             }

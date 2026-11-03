@@ -2,12 +2,12 @@
   "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/1.0.0/schema.json",
   "name": "4bea860c9c5b90ce6019",
   "position": {
-    "x": 820,
+    "x": 960,
     "y": 210,
     "z": 2000,
-    "width": 370,
+    "width": 230,
     "height": 22,
-    "tabOrder": 25
+    "tabOrder": 26
   },
   "visual": {
     "visualType": "textbox",
@@ -20,7 +20,7 @@
                 "horizontalTextAlignment": "right",
                 "textRuns": [
                   {
-                    "value": "Right-click a project to drill through  \u2022  How each grade is built:",
+                    "value": "How each grade is built:",
                     "textStyle": {
                       "fontFamily": "Arial",
                       "fontSize": "8pt",
@@ -42,7 +42,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Right-click a project to drill through  \u2022  How each grade is built:'"
+                  "Value": "'How each grade is built:'"
                 }
               }
             }

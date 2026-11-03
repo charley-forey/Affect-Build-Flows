@@ -7,7 +7,7 @@
     "z": 3000,
     "width": 1264,
     "height": 316,
-    "tabOrder": 27
+    "tabOrder": 28
   },
   "visual": {
     "visualType": "tableEx",
@@ -210,7 +210,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Table. Every active project: current phase, the Safety, Quality, Schedule and Budget pillars (the headline reading and the pillar score, coloured by the score), beside Safety and Quality the open Procore items and the proposed data score, the team''s initials from Procore, the weighted grade out of 100 and how many measures are below target. Filtered to active projects; clear the Active Flag filter in the Filters pane to see all. Right-click a project to drill through to its overview or grade detail.'"
+                  "Value": "'Table. Every active project: current phase, the Safety, Quality, Schedule and Budget pillars (the headline reading and the pillar score, coloured by the score), beside Safety and Quality the open Procore items and the proposed data score, the team''s initials from Procore, the weighted grade out of 100 and how many measures are below target. Filtered to active projects; clear the Active Flag filter in the Filters pane to see all. Open a project from the button above the table.'"
                 }
               }
             }
