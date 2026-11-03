@@ -49,7 +49,7 @@
             "fontSize": {
               "expr": {
                 "Literal": {
-                  "Value": "10D"
+                  "Value": "8D"
                 }
               }
             }
@@ -74,11 +74,11 @@
             "type": {
               "expr": {
                 "Literal": {
-                  "Value": "'Drillthrough'"
+                  "Value": "'PageNavigation'"
                 }
               }
             },
-            "drillthroughSection": {
+            "navigationSection": {
               "expr": {
                 "Literal": {
                   "Value": "'dsprojsched'"
@@ -94,7 +94,7 @@
             "altText": {
               "expr": {
                 "Literal": {
-                  "Value": "'Button. Opens the details behind this section for this project.'"
+                  "Value": "'Button. Opens progress.'"
                 }
               }
             }

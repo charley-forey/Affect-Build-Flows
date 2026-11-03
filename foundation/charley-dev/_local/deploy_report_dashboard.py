@@ -146,10 +146,7 @@ def tile(p: str, key: str, label: str, value: str, sub: str | None, x, y, w, h, 
     out = [panel(p, f"{key}_bg", x, y, w, h, radius=8),
            z(text(p, f"{key}_bar", " ", x, y, 6, h, fill=accent), 1),
            text(p, f"{key}_lbl", label, x + 16, y + 10, w - 24 - (52 if link else 0), 20, size=9)]
-    if link and len(link) > 2:
-        # One project's page: drill through, so the target opens on the same project.
-        out.append(button(p, f"{key}_data", "Data >", x + w - 54, y + 8, 46, 20, "Drillthrough", link[0]))
-    elif link:
+    if link:
         out.append(nav(p, f"{key}_data", "Data >", x + w - 54, y + 8, 46, 20, link[0], link[1]))
     if pending:
         out.append(text(p, f"{key}_pending", pending, x + 16, y + 36, w - 24, h - 44, size=9,
@@ -653,6 +650,18 @@ def page_safety_detail() -> tuple[str, list[dict]]:
     return p, out
 
 
+def project_picker(p: str, x=860, y=8, w=230, h=44) -> dict:
+    """The one-project pages' picker. Synced across them, so Overview's buttons open the
+    Payments / Financials / Grade pages on the same project."""
+    pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(p, "slicer_project", "slicer", x, y, w, h,
+                                 {"Values": [column("dim_Project", "ProjectName")]}, title="Project", tab=2, title_size=9,
+                                 alt="Slicer. Picks the project this page shows.", sync="project")))
+    pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
+                                 "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
+                                 "header": [{"properties": {"show": _OFF}}]}
+    return boxed(pick, fill=CARD_BG, radius=6)
+
+
 def project_header(p: str, title: str) -> list[dict]:
     """A one-project page: drill-through target (from the Portfolio table or the Overview's
     buttons), or opened directly with its own project picker."""
@@ -665,13 +674,7 @@ def project_header(p: str, title: str) -> list[dict]:
            week_slicer(p, 1100, 8, 236, 44),
            button(p, "back", "< Back", 1150, 56, 84, 22, "Back"),
            nav(p, "home", "Executive >", 1240, 56, 96, 22, "dsexec", "the Executive Dashboard")]
-    pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(p, "slicer_project", "slicer", 860, 8, 230, 44,
-                                 {"Values": [column("dim_Project", "ProjectName")]}, title="Project", tab=2, title_size=9,
-                                 alt="Slicer. Picks the project this page shows.")))
-    pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
-                                 "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
-                                 "header": [{"properties": {"show": _OFF}}]}
-    out.append(boxed(pick, fill=CARD_BG, radius=6))
+    out.append(project_picker(p))
     return out
 
 
@@ -805,13 +808,7 @@ def page_payments() -> tuple[str, list[dict]]:
            week_slicer(p, 1100, 8, 236, 44),
            button(p, "back", "< Back", 1150, 56, 84, 22, "Back"),
            nav(p, "home", "Executive >", 1240, 56, 96, 22, "dsexec", "the Executive Dashboard")]
-    pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(p, "slicer_project", "slicer", 860, 8, 230, 44,
-                                 {"Values": [column("dim_Project", "ProjectName")]}, title="Project", tab=2, title_size=9,
-                                 alt="Slicer. Picks the project this page shows.")))
-    pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
-                                 "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
-                                 "header": [{"properties": {"show": _OFF}}]}
-    out.append(boxed(pick, fill=CARD_BG, radius=6))
+    out.append(project_picker(p))
     out += strip(p, [("CONTRACT", "Position Contract", None), ("BILLED (GROSS)", "Billed To Date (Gross)", "Procore pay apps, before retainage"),
                      ("RECEIVED", "Paid To Date", "Sage receipts"), ("OWED TO AFFECT", "Cash - Unpaid Receivables", "Sage AR"),
                      ("LEFT TO BILL", "Remaining Contract Balance", None), ("OWED TO SUBS", "Sub AP Open", "Sage AP")])
@@ -1162,33 +1159,26 @@ def page_project() -> tuple[str, list[dict]]:
            kpi_value(p, "hdr_sub", "Week Header", 30, 50, 600, 26, size=9, color="#C7D7E7"),
            kpi_value(p, "hdr_team", "Project Team", 640, 52, 450, 26, size=8, color="#C7D7E7"),
            week_slicer(p, 1100, 8, 236, 44)]
-    pick = rs.exclude_blank_name(dr.exclude_unmatched(dr.visual(p, "slicer_project", "slicer", 860, 8, 230, 44,
-                                          {"Values": [column("dim_Project", "ProjectName")]},
-                                          title="Project", tab=2, title_size=9,
-                                          alt="Slicer. Picks the project this page shows.")))
-    pick["visual"]["objects"] = {"data": [{"properties": {"mode": lit("Dropdown")}}],
-                                 "selection": [{"properties": {"singleSelect": _ON, "strictSingleSelect": _ON}}],
-                                 "header": [{"properties": {"show": _OFF}}]}
-    out.append(boxed(pick, fill=CARD_BG, radius=6))
+    out.append(project_picker(p))
     # In the header band (audit 2026-10-26): the 24px they took above the tiles goes to row 3.
-    out.append(button(p, "go_grade", "Grade detail >", 1226, 56, 110, 22, "Drillthrough", "dsgrade"))
+    out.append(nav(p, "go_grade", "Grade detail >", 1226, 56, 110, 22, "dsgrade", "this project's grade detail"))
     out.append(button(p, "back", "< Back", 1140, 56, 80, 22, "Back"))
 
     # KPI row (deck 1.34-2.0 in)
     xs, tw, y0, th = [37, 306, 575, 844, 1113], 246, 96, 104
     # Every tile opens the rows behind it for this project (Oct 30 call).
     out += tile(p, "k_contract", "CURRENT CONTRACT", "Current Contract", "Contract Change Text", xs[0], y0, tw, th,
-                accent=TEAL, precision=2, units=1000000, sub_color=SLATE, link=("dsprojcost", "contract", "drill"))
+                accent=TEAL, precision=2, units=1000000, sub_color=SLATE, link=("dsprojcost", "contract"))
     out += tile(p, "k_complete", "PROJECT COMPLETE", "Work Progress Shown", None, xs[1], y0, tw, th, accent=AMBER,
-                link=("dsprojsched", "progress", "drill"))
+                link=("dsprojsched", "progress"))
     out.append(text(p, "k_complete_s", "Outbuild work progress (duration-weighted)", xs[1] + 16, y0 + th - 28,
                     tw - 24, 22, size=8, color=SLATE, bold=False))
     out += tile(p, "k_sched", "SCHEDULE", "Schedule Headline", "Schedule Subline", xs[2], y0, tw, th, accent=AMBER,
-                size=20, sub_color=SLATE, link=("dsprojsched", "schedule", "drill"))
+                size=20, sub_color=SLATE, link=("dsprojsched", "schedule"))
     out += tile(p, "k_grade", "PROJECT SCORECARD", "Grade Text", "Grade Subline", xs[3], y0, tw, th, accent=AMBER,
-                size=20, sub_color=SLATE, link=("dsgrade", "grade", "drill"))
+                size=20, sub_color=SLATE, link=("dsgrade", "grade"))
     out += tile(p, "k_billed", "BILLED TO DATE", "Billed To Date (Gross)", "Billed Subline", xs[4], y0, tw, th,
-                accent=GREEN, precision=2, units=1000000, sub_color=SLATE, link=("dspayments", "billing", "drill"))
+                accent=GREEN, precision=2, units=1000000, sub_color=SLATE, link=("dspayments", "billing"))
 
     # Row 2 (deck 2.61-4.95 in): schedule & delivery, project financials, delivery & financial health
     r2, h2 = 210, 290
@@ -1196,7 +1186,7 @@ def page_project() -> tuple[str, list[dict]]:
     out += [panel(p, "sd_bg", sx, r2, sw, h2),
             z(text(p, "sd_bar", " ", sx, r2, 6, h2, fill=TEAL), 1),
             text(p, "sd_h", "SCHEDULE & DELIVERY", sx + 20, r2 + 12, sw - 160, 26, size=12, color=NAVY),
-            button(p, "sd_work", "Schedule detail >", sx + sw - 136, r2 + 14, 120, 22, "Drillthrough", "dsprojsched"),
+            nav(p, "sd_work", "Schedule detail >", sx + sw - 136, r2 + 14, 120, 22, "dsprojsched", "this project's schedule detail"),
             text(p, "sd_tl", "TRACKING FINISH (BASELINE)", sx + 20, r2 + 46, 240, 20, size=9),
             kpi_value(p, "sd_tv", "Tracking Finish Shown", sx + 270, r2 + 40, 180, 30, size=13, color=NAVY),
             text(p, "sd_fl", "FORECAST FINISH", sx + 20, r2 + 80, 240, 20, size=9),
@@ -1215,9 +1205,9 @@ def page_project() -> tuple[str, list[dict]]:
             z(text(p, "pf_bar", " ", fx, r2, 6, h2, fill=TEAL), 1),
             text(p, "pf_h", "PROJECT FINANCIALS", fx + 20, r2 + 12, fw - 222, 26, size=12, color=NAVY),
             # Cal's Oct 30 notes: the drill-down laid out as his Project Financial summary sheet.
-            button(p, "pf_fin", "Financials >", fx + fw - 202, r2 + 14, 86, 22, "Drillthrough", "dsprojfin"),
+            nav(p, "pf_fin", "Financials >", fx + fw - 202, r2 + 14, 86, 22, "dsprojfin", "this project's financials"),
             # Oct 30 call: double-click the financials - have we been paid, has each sub been paid.
-            button(p, "pf_pay", "Payments >", fx + fw - 108, r2 + 14, 92, 22, "Drillthrough", "dspayments")]
+            nav(p, "pf_pay", "Payments >", fx + fw - 108, r2 + 14, 92, 22, "dspayments", "this project's payments")]
     for i, (lbl, m) in enumerate([("ORIGINAL CONTRACT", "Original Contract"), ("CURRENT CONTRACT", "Current Contract"),
                                   # The change-order log itself, so it ties to Payments / Contracts.
                                   ("PENDING CHANGE ORDERS", "CO Pending Amount"),
@@ -1231,7 +1221,7 @@ def page_project() -> tuple[str, list[dict]]:
     out += [panel(p, "hf_bg", hx, r2, hw, h2),
             z(text(p, "hf_bar", " ", hx, r2, 6, h2, fill=TEAL), 1),
             text(p, "hf_h", "DELIVERY & FINANCIAL HEALTH", hx + 20, r2 + 12, hw - 150, 26, size=12, color=NAVY),
-            button(p, "hf_work", "Cost detail >", hx + hw - 116, r2 + 14, 100, 22, "Drillthrough", "dsprojcost"),
+            nav(p, "hf_work", "Cost detail >", hx + hw - 116, r2 + 14, 100, 22, "dsprojcost", "this project's cost detail"),
             text(p, "hf_bl", "BILLING PROGRESS", hx + 20, r2 + 48, 200, 20, size=9),
             kpi_value(p, "hf_bv", "Billed % Of Contract", hx + hw - 120, r2 + 40, 104, 30, size=14, color=GREEN,
                       precision=1),
@@ -1323,8 +1313,9 @@ def page_grade() -> tuple[str, list[dict]]:
     out = [z(text(p, "hdr_band", " ", 0, 0, W, 81, fill=NAVY), 0),
            z(text(p, "hdr_rule", " ", 0, 81, W, 3, fill=TEAL), 1),
            text(p, "title", "GRADE DETAIL  |", 36, 4, 240, 43, size=20, color="#FFFFFF"),
-           kpi_value(p, "hdr_proj", "Project Title", 280, 8, 700, 38, size=20, color="#FFFFFF"),
+           kpi_value(p, "hdr_proj", "Project Title", 280, 8, 600, 38, size=20, color="#FFFFFF"),
            kpi_value(p, "hdr_sub", "Week Header", 30, 50, 700, 26, size=9, color="#C7D7E7"),
+           project_picker(p, 900, 8, 330, 44),
            button(p, "back", "< Back", 1240, 20, 84, 30, "Back")]
     cards = [("GRADE", "Grade", "Grade Colour"), ("SHARE MEASURED", "Grade Coverage %", None),
              ("SCHEDULE  50%", "Schedule Pillar", "Schedule Colour"), ("BUDGET  30%", "Budget Pillar", "Budget Colour"),
@@ -1418,7 +1409,7 @@ DRILLTHROUGH = {"dsproject": ("dim_Project", "ProjectName"), "dsgrade": ("dim_Pr
                 "dspayments": ("dim_Project", "ProjectName"), "dsprojcost": ("dim_Project", "ProjectName"),
                 "dsprojsched": ("dim_Project", "ProjectName"), "dsprojfin": ("dim_Project", "ProjectName")}
 # Drill-through targets a reader also opens directly; they keep their own project picker.
-OPEN_DIRECTLY = {"dsproject", "dspayments", "dsprojcost", "dsprojsched", "dsprojfin"}
+OPEN_DIRECTLY = {"dsproject", "dspayments", "dsprojcost", "dsprojsched", "dsprojfin", "dsgrade"}
 
 
 def retab(files: dict[str, str]) -> None:

@@ -216,6 +216,11 @@
         }
       ]
     },
+    "syncGroup": {
+      "groupName": "project",
+      "fieldChanges": false,
+      "filterChanges": true
+    },
     "objects": {
       "data": [
         {

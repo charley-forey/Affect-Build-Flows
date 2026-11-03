@@ -5,7 +5,6 @@
   "displayOption": "FitToPage",
   "height": 880,
   "width": 1360,
-  "visibility": "HiddenInViewMode",
   "pageBinding": {
     "name": "dsgrade_binding",
     "type": "Drillthrough",
